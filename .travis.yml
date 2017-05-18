@@ -7,7 +7,7 @@ python:
   - "3.4"
   - "3.5"
   - "3.6"
-install: "pip install .[DEV]"
+install: "pip install .[dev]"
 script:
 - pytest
 - sentinelhub PRODUCT_ID
