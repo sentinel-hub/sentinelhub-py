@@ -340,16 +340,6 @@ class SafeTile():
             name = '_'.join([info[1], info[3], 'PVI'])
         return name + '.jp2'
 
-
-
-def safe_format(productId, folder=DEFAULT_DATA_LOCATION):
-    safeProduct = SafeProduct(productId, folder)
-    return safeProduct.get_structure()
-
-def download_safe_format(productId, folder=DEFAULT_DATA_LOCATION):
-    safeProduct = SafeProduct(productId, folder)
-    safeProduct.download_structure()
-
 def edit_name(name, code, addCode=None, deleteEnd=False):
     info = name.split('_')
     info[2] = code
@@ -368,6 +358,16 @@ def structure_recursion(struct, folder, downloadList, createFolders):
             downloadList.append((struct[name], subfolder))
         else:
             structure_recursion(struct[name], subfolder, downloadList, createFolders)
+
+### Public functions:
+
+def get_safe_format(productId, folder=DEFAULT_DATA_LOCATION):
+    safeProduct = SafeProduct(productId, folder)
+    return safeProduct.get_structure()
+
+def download_safe_format(productId, folder=DEFAULT_DATA_LOCATION):
+    safeProduct = SafeProduct(productId, folder)
+    safeProduct.download_structure()
 
 if __name__ == '__main__':
     download_safe_format('S2A_OPER_PRD_MSIL1C_PDMC_20160121T043931_R069_V20160103T171947_20160103T171947')

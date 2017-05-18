@@ -6,29 +6,33 @@ import os
 import requests
 import time
 import threading
+import queue
 
 
 REDOWNLOAD = False
 THREADED_DOWNLOAD = True
 RETURN_DATA = False
 
-# Due to bad connection some requests might fail and need to be repeated
-MAX_NUMBER_OF_DOWNLOAD_TRIES = 3
+MAX_THREAD_NUMBER = 8
+MAX_NUMBER_OF_DOWNLOAD_TRIES = 3 # Due to bad connection some requests might fail and need to be repeated
 SLEEP_TIME = 5
 
 SUCCESS_STATUS_CODE = 200
 
 VERBOSE = True
 
-# Threaded download class
-class MyThread (threading.Thread):
-    def __init__(self, url, filename):
+class MyThread(threading.Thread):
+    def __init__(self, myQueue=None):
         threading.Thread.__init__(self)
-        self.url = url
-        self.filename = filename
+        self.myQueue = myQueue
 
     def run(self):
-        make_request(self.url, self.filename)
+        while True:
+            request = self.myQueue.get()
+            if request is None:
+                break
+            make_request(request[0], request[1])
+            self.myQueue.task_done()
 
 
 def download_data(requestList, redownload=REDOWNLOAD, threadedDownload=THREADED_DOWNLOAD):
@@ -45,11 +49,18 @@ def download_data(requestList, redownload=REDOWNLOAD, threadedDownload=THREADED_
         for url, filename in requestList:
             make_request(url, filename)
     else:
+        myQueue = queue.Queue()
         threads = []
-        for url, filename in requestList:
-            threads.append(MyThread(url, filename))
-        for thread in threads:
-            thread.start()
+        for i in range (MAX_THREAD_NUMBER):
+            threads.append(MyThread(myQueue=myQueue))
+            threads[-1].start()
+
+        for request in requestList:
+            myQueue.put(request)
+
+        myQueue.join() # waits until all threads are done
+        for i in range (MAX_THREAD_NUMBER):
+            myQueue.put(None)
         for thread in threads:
             thread.join()
 
@@ -68,11 +79,12 @@ def make_request(url, filename=None, returnData=RETURN_DATA, verbose=VERBOSE):
             tryNum -= 1
             if tryNum > 0:
                 if verbose:
-                    print('Unsuccessful download from ' + url + '... will retry in ' + str(SLEEP_TIME) + 's\n', end = '')
+                    print('Unsuccessful download from ' + url + ' ... will retry in ' + str(SLEEP_TIME) + 's\n', end = '')
                 time.sleep(SLEEP_TIME)
             else:
                 if verbose:
                     print('Failed to download from ' + url + '\n', end = '')
+                return
     if filename is not None:
         with open(filename, 'wb') as f:
             f.write(response.content)
