@@ -1,13 +1,17 @@
 """
 Script for downloading data
 """
+from __future__ import print_function
 
 import os
-import requests
 import time
 import threading
-import queue
+import requests
 
+try:
+    import queue
+except ImportError:
+    import Queue as queue
 
 REDOWNLOAD = False
 THREADED_DOWNLOAD = True

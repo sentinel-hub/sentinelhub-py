@@ -28,5 +28,5 @@ setup(
     zip_safe=False,
     entry_points='''
       [console_scripts]
-      sentinelhub=sentinelhub.commands:hello
+      sentinelhub=sentinelhub.commands:download
     ''',)
