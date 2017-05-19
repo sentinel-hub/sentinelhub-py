@@ -2,7 +2,6 @@ language: python
 notifications:
   email: false
 python:
-  - "2.6"
   - "2.7"
   - "3.3"
   - "3.4"
@@ -13,4 +12,4 @@ install:
 - pip install .
 script:
 - pytest
-- sentinelhub PRODUCT_ID
+- sentinelhub S2A_MSIL1C_20170414T003551_N0204_R016_T54HVH_20170414T003551
