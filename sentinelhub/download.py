@@ -14,11 +14,11 @@ except ImportError:
     import Queue as queue
 
 REDOWNLOAD = False
-THREADED_DOWNLOAD = True
+THREADED_DOWNLOAD = False
 RETURN_DATA = False
 
 MAX_THREAD_NUMBER = 8
-MAX_NUMBER_OF_DOWNLOAD_TRIES = 3 # Due to bad connection some requests might fail and need to be repeated
+MAX_NUMBER_OF_DOWNLOAD_TRIES = 2 # Due to bad connection some requests might fail and need to be repeated
 SLEEP_TIME = 5
 
 SUCCESS_STATUS_CODE = 200

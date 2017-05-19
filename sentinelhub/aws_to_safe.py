@@ -5,12 +5,10 @@ http://sentinel-s2-l1c.s3-website.eu-central-1.amazonaws.com
 Product url examples:
 http://sentinel-s2-l1c.s3-website.eu-central-1.amazonaws.com/#products/2016/1/3/S2A_OPER_PRD_MSIL1C_PDMC_20160121T043931_R069_V20160103T171947_20160103T171947/
 http://sentinel-s2-l1c.s3-website.eu-central-1.amazonaws.com/#products/2017/4/14/S2A_MSIL1C_20170414T003551_N0204_R016_T54HVH_20170414T003551/
-http://sentinel-s2-l1c.s3.amazonaws.com/products/2017/4/14/S2A_MSIL1C_20170414T003551_N0204_R016_T54HVH_20170414T003551/productInfo.json
-DS_SGS__20170414T033348_S20170414T003551
 
-Tile url example:
+Tile url examples:
+http://sentinel-s2-l1c.s3-website.eu-central-1.amazonaws.com/#tiles/13/P/HS/2016/1/3/0/
 http://sentinel-s2-l1c.s3-website.eu-central-1.amazonaws.com/#tiles/54/H/VH/2017/4/14/0/
-http://sentinel-s2-l1c.s3.amazonaws.com/tiles/54/H/VH/2017/4/14/0/productInfo.json
 """
 
 from xml.etree import ElementTree
@@ -24,12 +22,12 @@ TILE_INFO = 'tileInfo.json'
 PRODUCT_INFO = 'productInfo.json'
 
 BANDS = ['B01', 'B02', 'B03', 'B04', 'B05', 'B06', 'B07', 'B08', 'B8A', 'B09', 'B10', 'B11', 'B12']
-
 QI_LIST = ['DEFECT', 'DETFOO', 'NODATA', 'SATURA', 'TECQUA']
 
 MAIN_URL = 'http://sentinel-s2-l1c.s3.amazonaws.com'
 
 REDOWNLOAD = False
+THREADED_DOWNLOAD = False
 
 AUX_DATA = 'AUX_DATA'
 DATASTRIP = 'DATASTRIP'
@@ -45,6 +43,12 @@ OLD_SAFE_TYPE = 'old type'
 COMPACT_SAFE_TYPE = 'compact type'
 TYPE_CHANGE_DATE = DATE_SEPARATOR.join(['2016', '12', '06'])
 
+class InvalidInputNameError(Exception):
+    pass
+
+# Examples
+# old format: S2A_OPER_PRD_MSIL1C_PDMC_20160121T043931_R069_V20160103T171947_20160103T171947
+# compact format: S2A_MSIL1C_20170414T003551_N0204_R016_T54HVH_20170414T003551
 class SafeProduct():
     def __init__(self, productId, folder=DEFAULT_DATA_LOCATION):
         self.folder = folder
@@ -53,6 +57,8 @@ class SafeProduct():
         self.read_structure()
 
     def read_structure(self):
+        self.check_input_name()
+
         self.safeType = self.get_safe_type()
         self.date = self.get_date()
 
@@ -99,10 +105,10 @@ class SafeProduct():
 
         return self.safe
 
-    def download_structure(self):
+    def download_structure(self, redownload=REDOWNLOAD, threadedDownload=THREADED_DOWNLOAD):
         self.get_download_list(True)
         #print(self.downloadList)
-        download.download_data(self.downloadList)
+        download.download_data(self.downloadList, redownload, threadedDownload)
 
     def get_download_list(self, createFolders=False):
         if self.safe is None:
@@ -167,6 +173,30 @@ class SafeProduct():
 
     def get_tile_url(self, tileInfo):
         return MAIN_URL + '/' + tileInfo['path']
+
+    # old format: S2A_OPER_PRD_MSIL1C_PDMC_20160121T043931_R069_V20160103T171947_20160103T171947
+    # compact format: S2A_MSIL1C_20170414T003551_N0204_R016_T54HVH_20170414T003551
+    def check_input_name(self):
+        pass
+        '''info = self.productId.split('_')
+        if info[0] not in {'S2A', 'S2B'}': # mission id
+            raise InvalidInputNameError(self.make_error_message([], '<mission id>'))
+        if len(info) < 2 or info[2] not in {'OPER', 'TEST', 'MSIL1C'}:
+            raise InvalidInputNameError(self.make_error_message(info[:1], '<file class/file name>'))
+        if info[1] != 'MSIL1C':
+            if len(info) < 3 or info[3]!='PRD':
+                raise InvalidInputNameError(self.make_error_message(info[:2], 'PRD'))
+            if len(info) < 4 or info[3] not in {''}:
+                raise InvalidInputNameError(self.make_error_message(info[:2], 'PRD'))
+        else:
+
+    def make_error_message(self, info, nextPart=None, finalPart=False):
+        if nextPart is None:
+            'Too long product Id'
+        msg = '_'.join(info + [nextPart])
+        if not finalPart:
+            return 'Product Id must start with ' + msg + '_*'
+        return 'Product Id must be ' + msg'''
 
 
 class SafeTile():
@@ -365,9 +395,10 @@ def get_safe_format(productId, folder=DEFAULT_DATA_LOCATION):
     safeProduct = SafeProduct(productId, folder)
     return safeProduct.get_structure()
 
-def download_safe_format(productId, folder=DEFAULT_DATA_LOCATION):
+def download_safe_format(productId, folder=DEFAULT_DATA_LOCATION, redownload=REDOWNLOAD, threadedDownload=THREADED_DOWNLOAD):
     safeProduct = SafeProduct(productId, folder)
-    safeProduct.download_structure()
+    print('ok')
+    safeProduct.download_structure(redownload=redownload, threadedDownload=threadedDownload)
 
 if __name__ == '__main__':
     download_safe_format('S2A_OPER_PRD_MSIL1C_PDMC_20160121T043931_R069_V20160103T171947_20160103T171947')
