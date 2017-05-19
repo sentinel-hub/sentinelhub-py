@@ -397,7 +397,6 @@ def get_safe_format(productId, folder=DEFAULT_DATA_LOCATION):
 
 def download_safe_format(productId, folder=DEFAULT_DATA_LOCATION, redownload=REDOWNLOAD, threadedDownload=THREADED_DOWNLOAD):
     safeProduct = SafeProduct(productId, folder)
-    print('ok')
     safeProduct.download_structure(redownload=redownload, threadedDownload=threadedDownload)
 
 if __name__ == '__main__':

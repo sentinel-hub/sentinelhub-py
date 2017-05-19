@@ -76,18 +76,18 @@ def make_request(url, filename=None, returnData=RETURN_DATA, verbose=VERBOSE):
             if response.status_code == SUCCESS_STATUS_CODE:
                 tryNum = 0
                 if verbose:
-                    print('Downloaded from ' + url + '\n', end='')
+                    print('Downloaded from %s' % url)
             else:
                 raise
         except:
             tryNum -= 1
             if tryNum > 0:
                 if verbose:
-                    print('Unsuccessful download from ' + url + ' ... will retry in ' + str(SLEEP_TIME) + 's\n', end='')
+                    print('Unsuccessful download from %s ... will retry in %ds' % (url, SLEEP_TIME))
                 time.sleep(SLEEP_TIME)
             else:
                 if verbose:
-                    print('Failed to download from ' + url + '\n', end='')
+                    print('Failed to download from %s' % url)
                 return
     if filename is not None:
         with open(filename, 'wb') as f:
