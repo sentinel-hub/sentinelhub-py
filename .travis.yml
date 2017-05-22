@@ -7,9 +7,13 @@ python:
   - "3.4"
   - "3.5"
   - "3.6"
-install: 
+install:
 - pip install -r requirements-dev.txt
 - pip install .
 script:
 - pytest
-- sentinelhub S2A_MSIL1C_20170414T003551_N0204_R016_T54HVH_20170414T003551
+- sentinelhub.aws --product S2A_MSIL1C_20170414T003551_N0204_R016_T54HVH_20170414T003551 -rt
+- sentinelhub.aws --product S2A_OPER_PRD_MSIL1C_PDMC_20160121T043931_R069_V20160103T171947_20160103T171947 -i
+- sentinelhub.aws --tile T38TML 2015-12-19 -rt
+- sentinelhub.aws --tile T54HVH 2017-04-14 -ei
+- sentinelhub.download http://sentinel-s2-l1c.s3.amazonaws.com/tiles/54/H/VH/2017/4/14/0/metadata.xml MyFolder/example.xml -rt
