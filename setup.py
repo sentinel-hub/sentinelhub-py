@@ -26,7 +26,9 @@ setup(
         'DEV' : EXTRA_REQUIRES
     },
     zip_safe=False,
-    entry_points='''
-      [console_scripts]
-      sentinelhub=sentinelhub.commands:main
-    ''',)
+    entry_points={
+    'console_scripts' : [
+        'sentinelhub.aws=sentinelhub.commands:aws',
+        'sentinelhub.download=sentinelhub.commands:download'
+        ]
+    },)

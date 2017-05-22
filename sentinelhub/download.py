@@ -25,6 +25,9 @@ SUCCESS_STATUS_CODE = 200
 
 VERBOSE = True
 
+class DownloadError(Exception):
+    pass
+
 class MyThread(threading.Thread):
     def __init__(self, myQueue=None):
         threading.Thread.__init__(self)
@@ -38,7 +41,7 @@ class MyThread(threading.Thread):
             make_request(request[0], request[1])
             self.myQueue.task_done()
 
-
+# Public function
 def download_data(requestList, redownload=REDOWNLOAD, threadedDownload=THREADED_DOWNLOAD):
     if not isinstance(requestList, list): # in case only one request would be given
         return download_data([requestList], redownload, threadedDownload)
@@ -70,6 +73,7 @@ def download_data(requestList, redownload=REDOWNLOAD, threadedDownload=THREADED_
 
 def make_request(url, filename=None, returnData=RETURN_DATA, verbose=VERBOSE):
     tryNum = MAX_NUMBER_OF_DOWNLOAD_TRIES
+    response = None
     while tryNum > 0:
         try:
             response = requests.get(url)
@@ -88,7 +92,7 @@ def make_request(url, filename=None, returnData=RETURN_DATA, verbose=VERBOSE):
             else:
                 if verbose:
                     print('Failed to download from %s' % url)
-                return
+                return response
     if filename is not None:
         with open(filename, 'wb') as f:
             f.write(response.content)
@@ -99,7 +103,14 @@ def reduce_requests(requestList):
     return [request for request in requestList if not os.path.exists(request[1])]
 
 def get_json(url):
-    return make_request(url, returnData=True, verbose=False).json()
+    response = make_request(url, returnData=True, verbose=False)
+    try:
+        return response.json()
+    except:
+        if response is not None:
+            raise DownloadError('Invalid url request %s' % url)
+        else:
+            raise DownloadError('No internet connection')
 
 def set_file_location(filename):
     path = '/'.join(filename.split('/')[:-1])
@@ -113,4 +124,5 @@ def set_folder(path):
 
 
 if __name__ == '__main__':
+    # Example:
     download_data([('http://sentinel-s2-l1c.s3.amazonaws.com/tiles/54/H/VH/2017/4/14/0/metadata.xml', 'example.xml')], redownload=True, threadedDownload=True)
