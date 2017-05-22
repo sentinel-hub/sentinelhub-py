@@ -365,20 +365,20 @@ def structure_recursion(struct, folder, downloadList, createFolders):
 
 ### Public functions:
 
-def get_safe_format(productId=None, tile=None, entire=False):
+def get_safe_format(productId=None, tile=None, entireProduct=False):
     if tile is not None:
         safeTile = SafeTile(tileName=tile[0], date=tile[1])
-        if not entire:
+        if not entireProduct:
             return safeTile.get_structure()
         productId = safeTile.get_product_id()
     if productId is not None:
         safeProduct = SafeProduct(productId)
         return safeProduct.get_structure()
 
-def download_safe_format(productId=None, tile=None,folder=DEFAULT_DATA_LOCATION, redownload=REDOWNLOAD, threadedDownload=THREADED_DOWNLOAD, entire=False):
+def download_safe_format(productId=None, tile=None, folder=DEFAULT_DATA_LOCATION, redownload=REDOWNLOAD, threadedDownload=THREADED_DOWNLOAD, entireProduct=False):
     if tile is not None:
         safeTile = SafeTile(tileName=tile[0], date=tile[1], folder=folder)
-        if not entire:
+        if not entireProduct:
             return safeTile.download_structure(redownload=redownload, threadedDownload=threadedDownload)
         productId = safeTile.get_product_id()
     if productId is not None:
@@ -386,8 +386,9 @@ def download_safe_format(productId=None, tile=None,folder=DEFAULT_DATA_LOCATION,
         return safeProduct.download_structure(redownload=redownload, threadedDownload=threadedDownload)
 
 if __name__ == '__main__':
+    pass
     # Examples:
-    download_safe_format('S2A_OPER_PRD_MSIL1C_PDMC_20160121T043931_R069_V20160103T171947_20160103T171947')
-    download_safe_format('S2A_MSIL1C_20170414T003551_N0204_R016_T54HVH_20170414T003551')
-    download_safe_format(tile=('T38TML','2015-12-19'))
-    download_safe_format(tile=('T54HVH','2017-04-14'))
+    #download_safe_format('S2A_OPER_PRD_MSIL1C_PDMC_20160121T043931_R069_V20160103T171947_20160103T171947')
+    #download_safe_format('S2A_MSIL1C_20170414T003551_N0204_R016_T54HVH_20170414T003551')
+    #download_safe_format(tile=('T38TML','2015-12-19'), entireProduct=True)
+    #download_safe_format(tile=('T54HVH','2017-04-14'))

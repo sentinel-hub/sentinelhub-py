@@ -124,5 +124,6 @@ def set_folder(path):
 
 
 if __name__ == '__main__':
+    pass
     # Example:
-    download_data([('http://sentinel-s2-l1c.s3.amazonaws.com/tiles/54/H/VH/2017/4/14/0/metadata.xml', 'example.xml')], redownload=True, threadedDownload=True)
+    #download_data([('http://sentinel-s2-l1c.s3.amazonaws.com/tiles/54/H/VH/2017/4/14/0/metadata.xml', 'example.xml')], redownload=True, threadedDownload=True)

@@ -23,12 +23,12 @@ def aws(product, tile, folder, redownload, threaded, info, entire):
     """
     if info:
         if product is None:
-            click.echo(get_safe_format(tile=tile, entire=entire))
+            click.echo(get_safe_format(tile=tile, entireProduct=entire))
         else:
             click.echo(get_safe_format(productId=product))
     else:
         if product is None:
-            download_safe_format(tile=tile, folder=folder, redownload=redownload, threadedDownload=threaded, entire=entire)
+            download_safe_format(tile=tile, folder=folder, redownload=redownload, threadedDownload=threaded, entireProduct=entire)
         else:
             download_safe_format(productId=product, folder=folder, redownload=redownload, threadedDownload=threaded)
 
@@ -37,7 +37,7 @@ def aws(product, tile, folder, redownload, threaded, info, entire):
 @click.argument('url')
 @click.argument('filename', type=click.Path())
 @click.option('-r', '--redownload', is_flag=True, default=False, help='Redownload existing files')
-@click.option('-t', '--threaded', is_flag=True, default=False, help='Use threaded download')
+@click.option('-t', '--threaded', is_flag=True, default=False, help='Use threaded download') # Currently not relevant
 def download(url, filename, redownload, threaded):
     """Download Sentinel-2 data from Sentinel-2 on AWS to ESA SAFE format.
 
