@@ -26,7 +26,7 @@ Tool for downloading Sentinel-2 data from [Sentinel-2 on AWS](http://sentinel-pd
 **Overview:**
  * Supports old and new (i.e. compact) .SAFE formats.
  * Requires either S-2 product ID or name and date of one tile inside the product.
- * Can either download entire product or only returns a map of a .SAFE file structure.
+ * Can either download entire product or only return a map of a .SAFE file structure.
  * Supports command line entries.
  * Supports threaded download and redownloading existing data (not by default).
 
@@ -40,7 +40,8 @@ Files in reconstructed .SAFE format follow the rules of [ESA naming convention](
  ```
  download_safe_format(productId=None, tile=None, folder='.', redownload=False, threadedDownload=False, entireProduct=False)
  ```
- It can either take ID name of a product or name and date of a tile in form ```tile=(name, date)``` (e.g. ```tile=('T38TML','2015-12-19')```). In case ```tile``` is specified and ```entireProduct=True``` it will download entire product corresponding to that tile. Otherwise it will download only the tile.
+ It can either take ID name of a product or name and date of a tile in form ```tile=(name, date)``` (e.g. ```tile=('T38TML','2015-12-19')```). </br>
+ In case ```tile``` is specified and ```entireProduct=True``` it will download entire product corresponding to that tile. Otherwise it will download only the tile.
  * Function for returning map structure of .SAFE format
  ```
  get_safe_format(productId=None, tile=None, entireProduct=False)
@@ -67,7 +68,7 @@ $ sentinelhub.aws --product S2A_MSIL1C_20170414T003551_N0204_R016_T54HVH_2017041
  * Download tile
  ```
  With Python
- >>> sentinelhub.download_safe_format(tile=('T38TML','2015-12-19'))
+ >>> sentinelhub.download_safe_format(tile=('T38TML', '2015-12-19'))
  or with command line
  $ sentinelhub.aws --tile T54HVH 2017-04-14
  ```
@@ -75,7 +76,7 @@ $ sentinelhub.aws --product S2A_MSIL1C_20170414T003551_N0204_R016_T54HVH_2017041
  * Download entire product corresponding to tile
  ```
  With Python
- >>> sentinelhub.download_safe_format(tile=('T38TML','2015-12-19'), entireProduct=True)
+ >>> sentinelhub.download_safe_format(tile=('T38TML', '2015-12-19'), entireProduct=True)
  or with command line
  $ sentinelhub.aws --tile T54HVH 2017-04-14 -e
  ```
