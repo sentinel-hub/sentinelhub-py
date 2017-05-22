@@ -16,4 +16,4 @@ script:
 - sentinelhub.aws --product S2A_OPER_PRD_MSIL1C_PDMC_20160121T043931_R069_V20160103T171947_20160103T171947 -i
 - sentinelhub.aws --tile T38TML 2015-12-19 -rt
 - sentinelhub.aws --tile T54HVH 2017-04-14 -ei
-- sentinelhub.download http://sentinel-s2-l1c.s3.amazonaws.com/tiles/54/H/VH/2017/4/14/0/metadata.xml MyFolder/example.xml -rt
+- sentinelhub.download http://sentinel-s2-l1c.s3.amazonaws.com/tiles/54/H/VH/2017/4/14/0/metadata.xml MyFolder/example.xml -r
