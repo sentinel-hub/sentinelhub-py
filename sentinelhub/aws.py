@@ -218,9 +218,9 @@ class SafeTile():
 
         safe[main_folder][QI_DATA] = {}
         safe[main_folder][QI_DATA][self.get_gml_name('CLOUDS')] = self.get_gml_url('CLOUDS')
-        for qiType in QI_LIST:
+        for qi_type in QI_LIST:
             for band in BANDS:
-                safe[main_folder][QI_DATA][self.get_gml_name(qiType, band)] = self.get_gml_url(qiType, band)
+                safe[main_folder][QI_DATA][self.get_gml_name(qi_type, band)] = self.get_gml_url(qi_type, band)
         safe[main_folder][QI_DATA][self.get_preview_name()] = self.tile_url + '/preview.jp2'
 
         safe[main_folder][self.get_tile_metadata_name()] = self.tile_url + '/metadata.xml'
@@ -279,7 +279,7 @@ class SafeTile():
 
     def get_tile_metadata_name(self):
         if self.safe_type == OLD_SAFE_TYPE:
-            name = edit_name(self.tile_id, 'MTD', deleteEnd=True)
+            name = edit_name(self.tile_id, 'MTD', delete_end=True)
         if self.safe_type == COMPACT_SAFE_TYPE:
             name = 'MTD_TL'
         return name + '.xml'
@@ -304,21 +304,21 @@ class SafeTile():
 
     # old format: S2A_OPER_MSK_DEFECT_EPA__20160120T231011_A002783_T13PHS_B01_MSIL1C
     # compact format: MSK_CLOUDS_B00
-    def get_gml_name(self, qiType, band='B00'):
+    def get_gml_name(self, qi_type, band='B00'):
         if self.safe_type == OLD_SAFE_TYPE:
-            name = edit_name(self.tile_id, 'MSK', deleteEnd=True)
-            name = name.replace('L1C_TL', qiType)
+            name = edit_name(self.tile_id, 'MSK', delete_end=True)
+            name = name.replace('L1C_TL', qi_type)
             name += '_' + band + '_MSIL1C'
         if self.safe_type == COMPACT_SAFE_TYPE:
-            name = 'MSK_' + qiType + '_' + band
+            name = 'MSK_' + qi_type + '_' + band
         return name + '.gml'
 
-    def get_gml_url(self, qiType, band='B00'):
-        return self.tile_url + '/qi/MSK_' + qiType + '_' + band + '.gml'
+    def get_gml_url(self, qi_type, band='B00'):
+        return self.tile_url + '/qi/MSK_' + qi_type + '_' + band + '.gml'
 
     def get_preview_name(self):
         if self.safe_type == OLD_SAFE_TYPE:
-            name = edit_name(self.tile_id, 'PVI', deleteEnd=True)
+            name = edit_name(self.tile_id, 'PVI', delete_end=True)
         if self.safe_type == COMPACT_SAFE_TYPE:
             info = self.tile_id.split('_')
             name = '_'.join([info[1], info[3], 'PVI'])
@@ -347,12 +347,12 @@ def url_to_namedate(url):
     date = DATE_SEPARATOR.join(info[-4: -1])
     return name, date
 
-def edit_name(name, code, addCode=None, deleteEnd=False):
+def edit_name(name, code, addCode=None, delete_end=False):
     info = name.split('_')
     info[2] = code
     if addCode is not None:
         info[3] = addCode
-    if deleteEnd:
+    if delete_end:
         info.pop()
     return '_'.join(info)
 
