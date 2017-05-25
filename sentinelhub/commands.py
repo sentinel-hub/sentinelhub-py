@@ -23,14 +23,14 @@ def aws(product, tile, folder, redownload, threaded, info, entire):
     """
     if info:
         if product is None:
-            click.echo(get_safe_format(tile=tile, entireProduct=entire))
+            click.echo(get_safe_format(tile=tile, entire_product=entire))
         else:
-            click.echo(get_safe_format(productId=product))
+            click.echo(get_safe_format(product_id=product))
     else:
         if product is None:
-            download_safe_format(tile=tile, folder=folder, redownload=redownload, threadedDownload=threaded, entireProduct=entire)
+            download_safe_format(tile=tile, folder=folder, redownload=redownload, threaded_download=threaded, entire_product=entire)
         else:
-            download_safe_format(productId=product, folder=folder, redownload=redownload, threadedDownload=threaded)
+            download_safe_format(product_id=product, folder=folder, redownload=redownload, threaded_download=threaded)
 
 
 @click.command()
@@ -45,4 +45,4 @@ def download(url, filename, redownload, threaded):
     Example:
       sentinelhub.download http://sentinel-s2-l1c.s3.amazonaws.com/tiles/54/H/VH/2017/4/14/0/metadata.xml MyFolder/example.xml
     """
-    download_data([(url, filename)], redownload=redownload, threadedDownload=threaded)
+    download_data([(url, filename)], redownload=redownload, threaded_download=threaded)

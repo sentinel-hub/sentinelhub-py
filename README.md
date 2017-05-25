@@ -38,13 +38,13 @@ Files in reconstructed .SAFE format follow the rules of [ESA naming convention](
 **Functions:**
  * Function for downloading .SAFE format
  ```
- download_safe_format(productId=None, tile=None, folder='.', redownload=False, threadedDownload=False, entireProduct=False)
+ download_safe_format(product_id=None, tile=None, folder='.', redownload=False, threaded_download=False, entire_product=False)
  ```
  It can either take ID name of a product or name and date of a tile in form ```tile=(name, date)``` (e.g. ```tile=('T38TML','2015-12-19')```). </br>
- In case ```tile``` is specified and ```entireProduct=True``` it will download entire product corresponding to that tile. Otherwise it will download only the tile.
+ In case ```tile``` is specified and ```entire_product=True``` it will download entire product corresponding to that tile. Otherwise it will download only the tile.
  * Function for returning map structure of .SAFE format
  ```
- get_safe_format(productId=None, tile=None, entireProduct=False)
+ get_safe_format(product_id=None, tile=None, entire_product=False)
  ```
  It returns map in a form ```{'folder_name' : { 'subfolder_name' : { ... {'file_name': 'url_of_file_on_aws', ...}... }...}...}```.
 
@@ -76,7 +76,7 @@ $ sentinelhub.aws --product S2A_MSIL1C_20170414T003551_N0204_R016_T54HVH_2017041
  * Download entire product corresponding to tile
  ```
  With Python
- >>> sentinelhub.download_safe_format(tile=('T38TML', '2015-12-19'), entireProduct=True)
+ >>> sentinelhub.download_safe_format(tile=('T38TML', '2015-12-19'), entire_product=True)
  or with command line
  $ sentinelhub.aws --tile T54HVH 2017-04-14 -e
  ```
@@ -91,7 +91,7 @@ Tool for downloading data from any URL address into file with specified name.
 
 **Functions:**
 ```
-sentinelhub.download_data(requstList, redownload=False, threadedDownload=False)
+sentinelhub.download_data(requstList, redownload=False, threaded_download=False)
 ```
 where ```requestList = (url, filename)``` or ``` requestList = [(url1, filename1), (url2, filename2), ...]```
 
