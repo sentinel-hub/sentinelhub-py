@@ -72,6 +72,7 @@ $ sentinelhub.aws --product S2A_MSIL1C_20170414T003551_N0204_R016_T54HVH_2017041
  or with command line
  $ sentinelhub.aws --tile T54HVH 2017-04-14
  ```
+ *(Please note that this specification is not always unique as there might be multiple tiles with the same name and date.)*
 
  * Download entire product corresponding to tile
  ```

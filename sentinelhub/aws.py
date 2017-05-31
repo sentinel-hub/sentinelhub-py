@@ -269,6 +269,9 @@ class SafeTile():
     def get_sensing_time(self):
         return self.tile_info['timestamp'].split('.')[0].replace('-', '').replace(':', '')
 
+    def get_datatake_time(self):
+        return self.tile_info['productName'].split('_')[2]
+
     def get_main_folder(self):
         return self.tile_id
 
@@ -298,8 +301,7 @@ class SafeTile():
             info[-1] = band
             name = '_'.join(info)
         if self.safe_type == COMPACT_SAFE_TYPE:
-            info = self.tile_id.split('_')
-            name = '_'.join([info[1], info[3], band])
+            name = '_'.join([self.tile_id.split('_')[1], self.get_datatake_time(), band])
         return name + '.jp2'
 
     # old format: S2A_OPER_MSK_DEFECT_EPA__20160120T231011_A002783_T13PHS_B01_MSIL1C
@@ -320,8 +322,7 @@ class SafeTile():
         if self.safe_type == OLD_SAFE_TYPE:
             name = edit_name(self.tile_id, 'PVI', delete_end=True)
         if self.safe_type == COMPACT_SAFE_TYPE:
-            info = self.tile_id.split('_')
-            name = '_'.join([info[1], info[3], 'PVI'])
+            name = '_'.join([self.tile_id.split('_')[1], self.get_datatake_time(), 'PVI'])
         return name + '.jp2'
 
 # old format: S2A_OPER_MSI_L1C_TL_EPA__20160120T231011_A002783_T13PHS_N02.01
@@ -347,11 +348,11 @@ def url_to_namedate(url):
     date = DATE_SEPARATOR.join(info[-4: -1])
     return name, date
 
-def edit_name(name, code, addCode=None, delete_end=False):
+def edit_name(name, code, add_code=None, delete_end=False):
     info = name.split('_')
     info[2] = code
-    if addCode is not None:
-        info[3] = addCode
+    if add_code is not None:
+        info[3] = add_code
     if delete_end:
         info.pop()
     return '_'.join(info)
