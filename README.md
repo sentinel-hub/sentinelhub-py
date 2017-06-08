@@ -88,7 +88,7 @@ $ sentinelhub.aws --product S2A_MSIL1C_20170414T003551_N0204_R016_T54HVH_2017041
 $ sentinelhub.aws --help
 ```
 
-### Costum download tool
+### Custom download tool
 Tool for downloading data from any URL address into file with specified name.
 
 **Functions:**
