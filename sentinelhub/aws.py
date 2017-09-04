@@ -47,9 +47,12 @@ TYPE_CHANGE_DATE = DATE_SEPARATOR.join(['2016', '12', '06'])
 # old format: S2A_OPER_PRD_MSIL1C_PDMC_20160121T043931_R069_V20160103T171947_20160103T171947
 # compact format: S2A_MSIL1C_20170414T003551_N0204_R016_T54HVH_20170414T003551
 class SafeProduct():
-    def __init__(self, product_id, folder=DEFAULT_DATA_LOCATION):
+    def __init__(self, product_id, folder=DEFAULT_DATA_LOCATION, bands=BANDS):
         self.folder = folder
         self.product_id = product_id
+        self.bands = bands
+
+        validate_bands(bands)
 
         self.read_structure()
 
@@ -59,7 +62,7 @@ class SafeProduct():
 
         self.product_info = download.get_json(self.get_product_url() + '/' + PRODUCT_INFO)
 
-        self.tile_list = [SafeTile(url=self.get_tile_url(self.product_info['tiles'][i])) for i in range(len(self.product_info['tiles']))]
+        self.tile_list = [SafeTile(url=self.get_tile_url(self.product_info['tiles'][i]), bands=self.bands) for i in range(len(self.product_info['tiles']))]
 
         self.safe = None
 
@@ -169,12 +172,15 @@ class SafeProduct():
 
 
 class SafeTile():
-    def __init__(self, tile_id=None, url=None, tile_name=None, date=None, folder='.'):
+    def __init__(self, tile_id=None, url=None, tile_name=None, date=None, folder='.', bands=BANDS):
         self.folder = folder
         self.tile_id = tile_id
         self.tile_url = url
         self.tile_name = tile_name
         self.date = date
+        self.bands = bands
+
+        validate_bands(bands)
 
         self.read_structure()
 
@@ -211,7 +217,7 @@ class SafeTile():
         safe[main_folder][AUX_DATA][self.get_aux_data_name()] = self.tile_url + '/auxiliary/ECMWFT'
 
         safe[main_folder][IMG_DATA] = {}
-        for band in BANDS:
+        for band in self.bands:
             safe[main_folder][IMG_DATA][self.get_img_name(band)] = self.tile_url + '/' + band + '.jp2'
         if self.safe_type == COMPACT_SAFE_TYPE:
             safe[main_folder][IMG_DATA][self.get_img_name('TCI')] = self.tile_url + '/TCI.jp2'
@@ -219,7 +225,7 @@ class SafeTile():
         safe[main_folder][QI_DATA] = {}
         safe[main_folder][QI_DATA][self.get_gml_name('CLOUDS')] = self.get_gml_url('CLOUDS')
         for qi_type in QI_LIST:
-            for band in BANDS:
+            for band in self.bands:
                 safe[main_folder][QI_DATA][self.get_gml_name(qi_type, band)] = self.get_gml_url(qi_type, band)
         safe[main_folder][QI_DATA][self.get_preview_name()] = self.tile_url + '/preview.jp2'
 
@@ -367,6 +373,11 @@ def structure_recursion(struct, folder, download_list, create_folders):
         else:
             structure_recursion(substruct, subfolder, download_list, create_folders)
 
+def validate_bands(bands):
+    invalid = set(bands) - set(BANDS).intersection(bands)
+    if bool(invalid):
+        raise Exception('Invalid bands specified: ' + str(list(invalid)))
+
 ### Public functions:
 
 def get_safe_format(product_id=None, tile=None, entire_product=False):
@@ -379,14 +390,15 @@ def get_safe_format(product_id=None, tile=None, entire_product=False):
         safe_product = SafeProduct(product_id)
         return safe_product.get_structure()
 
-def download_safe_format(product_id=None, tile=None, folder=DEFAULT_DATA_LOCATION, redownload=REDOWNLOAD, threaded_download=THREADED_DOWNLOAD, entire_product=False):
+def download_safe_format(product_id=None, tile=None, folder=DEFAULT_DATA_LOCATION, redownload=REDOWNLOAD, threaded_download=THREADED_DOWNLOAD, entire_product=False, bands=BANDS):
+    bands = BANDS if bands is None else bands
     if tile is not None:
-        safe_tile = SafeTile(tile_name=tile[0], date=tile[1], folder=folder)
+        safe_tile = SafeTile(tile_name=tile[0], date=tile[1], folder=folder, bands=bands)
         if not entire_product:
             return safe_tile.download_structure(redownload=redownload, threaded_download=threaded_download)
         product_id = safe_tile.get_product_id()
     if product_id is not None:
-        safe_product = SafeProduct(product_id, folder=folder)
+        safe_product = SafeProduct(product_id, folder=folder, bands=bands)
         return safe_product.download_structure(redownload=redownload, threaded_download=threaded_download)
 
 if __name__ == '__main__':
