@@ -345,7 +345,7 @@ def tile_id_to_namedate(tile_id):
     return name, date
 
 def namedate_to_url(name, date, index=0):
-    return '/'.join([MAIN_URL, 'tiles', name[:2], name[2], name[3:5], date.replace(DATE_SEPARATOR, '/'), str(index)])
+    return '/'.join([MAIN_URL, 'tiles', name[:-3], name[-3], name[-2:], date.replace(DATE_SEPARATOR, '/'), str(index)])
 
 # "tiles/13/P/HS/2016/1/3/0"
 def url_to_namedate(url):
