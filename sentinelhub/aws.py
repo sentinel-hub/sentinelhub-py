@@ -188,7 +188,7 @@ class SafeTile():
         if self.tile_url is not None:
             self.tile_url = self.tile_url.rstrip('/')
         if self.tile_name is not None:
-            self.tile_name = self.tile_name.lstrip('T')
+            self.tile_name = self.tile_name.lstrip('T0')
         if self.date is not None:
             self.date = DATE_SEPARATOR.join(date_part.lstrip('0') for date_part in self.date.split(DATE_SEPARATOR))
 

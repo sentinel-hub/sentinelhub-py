@@ -14,7 +14,7 @@ EXTRA_REQUIRES = parse_requirements("requirements-dev.txt")
 
 setup(
     name='sentinelhub',
-    version='0.1.6',
+    version='0.1.7',
     description='Sentinel Hub Utilities',
     url='https://github.com/sinergise/sentinelhub',
     author='Sinergise ltd.',
