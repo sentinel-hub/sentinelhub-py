@@ -105,3 +105,7 @@ With Python
 or with command line
 $ sentinelhub.download http://sentinel-s2-l1c.s3.amazonaws.com/tiles/54/H/VH/2017/4/14/0/B01.jp2 MyFolder/TestImage.jp2 -rt
 ```
+
+## License
+
+See [LICENSE.md](https://github.com/sinergise/sentinelhub/blob/master/LICENSE.md)
