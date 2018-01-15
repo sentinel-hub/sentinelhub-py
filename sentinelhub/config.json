@@ -1,0 +1,11 @@
+{
+  "instance_id": "",
+  "ogc_base_url": "http://services.sentinel-hub.com/ogc/",
+  "aws_base_url": "http://sentinel-s2-l1c.s3.amazonaws.com/",
+  "aws_website_url": "http://sentinel-s2-l1c.s3-website.eu-central-1.amazonaws.com/#tiles/",
+  "opensearch_url": "http://opensearch.sentinel-hub.com/resto/api/collections/Sentinel2/",
+  "max_opensearch_records_per_query": 500,
+  "s2_start_date": "2015-01-01",
+  "max_download_attempts": 2,
+  "download_sleep_time": 5
+}

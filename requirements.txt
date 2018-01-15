@@ -1,2 +1,13 @@
+pip==9.0.1
+wheel
 requests
 click
+numpy
+matplotlib
+opencv-python
+tifffile
+glymur
+cython
+python-dateutil
+pyproj
+utm

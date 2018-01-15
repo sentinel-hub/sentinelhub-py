@@ -1,0 +1,29 @@
+.. sentinel_hub documentation master file, created by
+   sphinx-quickstart on Thu Dec 21 14:02:56 2017.
+   You can adapt this file completely to your liking, but it should at least
+   contain the root `toctree` directive.
+
+Documentation for Sentinel-Hub Python packages
+**********************************************
+
+Documentation for Python utility packages developed by the 
+EO research team at `Sinergise <http://www.sinergise.com/>`_.
+
+This code allows one to reproduce some of the functionalities of the 
+EO service `Sentinel-Hub <http://www.sentinel-hub.com/>`_. 
+The code is available on `GitHub <https://github.com/sentinel-hub/sentinelhub-py/>`_.
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Contents:
+
+   install
+   docs
+   examples
+
+Indices and tables
+==================
+
+* :ref:`genindex`
+* :ref:`modindex`
+* :ref:`search`

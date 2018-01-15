@@ -1,6 +1,6 @@
 import os
-
 from setuptools import setup, find_packages
+
 
 def parse_requirements(file):
     return sorted(set(
@@ -8,27 +8,28 @@ def parse_requirements(file):
         for line in open(os.path.join(os.path.dirname(__file__), file))
     ) - set(''))
 
-INSTALL_REQUIRES = parse_requirements("requirements.txt")
 
-EXTRA_REQUIRES = parse_requirements("requirements-dev.txt")
+def get_version():
+    for line in open(os.path.join(os.path.dirname(__file__), 'sentinelhub', '__init__.py')):
+        if line.find("__version__") >= 0:
+            version = line.split("=")[1].strip()
+            version = version.strip('"').strip("'")
+    return version
+
 
 setup(
     name='sentinelhub',
-    version='0.1.7',
+    version=get_version(),
     description='Sentinel Hub Utilities',
-    url='https://github.com/sinergise/sentinelhub',
+    url='https://github.com/sentinel-hub/sentinelhub-py',
     author='Sinergise ltd.',
     author_email='info@sinergise.com',
     packages=find_packages(),
+    package_data={'sentinelhub': ['sentinelhub/config.json']},
     include_package_data=True,
-    install_requires=INSTALL_REQUIRES,
-    extras_require={
-        'DEV' : EXTRA_REQUIRES
-    },
+    install_requires=parse_requirements("requirements.txt"),
+    extras_require={'DEV': parse_requirements("requirements-dev.txt")},
     zip_safe=False,
-    entry_points={
-    'console_scripts' : [
-        'sentinelhub.aws=sentinelhub.commands:aws',
-        'sentinelhub.download=sentinelhub.commands:download'
-        ]
-    },)
+    entry_points={'console_scripts': ['sentinelhub.aws=sentinelhub.commands:aws',
+                                      'sentinelhub.download=sentinelhub.commands:download']}
+)

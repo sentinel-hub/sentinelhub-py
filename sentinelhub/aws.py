@@ -1,410 +1,482 @@
 """
-Script for creating safe structure of data from
-http://sentinel-s2-l1c.s3-website.eu-central-1.amazonaws.com
-
-
-Product url examples:
-http://sentinel-s2-l1c.s3-website.eu-central-1.amazonaws.com/#products/2016/1/3/S2A_OPER_PRD_MSIL1C_PDMC_20160121T043931_R069_V20160103T171947_20160103T171947/
-http://sentinel-s2-l1c.s3-website.eu-central-1.amazonaws.com/#products/2017/4/14/S2A_MSIL1C_20170414T003551_N0204_R016_T54HVH_20170414T003551/
-Tile url examples:
-http://sentinel-s2-l1c.s3-website.eu-central-1.amazonaws.com/#tiles/13/P/HS/2016/1/3/0/
-http://sentinel-s2-l1c.s3-website.eu-central-1.amazonaws.com/#tiles/54/H/VH/2017/4/14/0/
+Module for obtaining data from Amazon Web Service
 """
 
-from xml.etree import ElementTree
+from abc import ABC, abstractmethod
+import logging
+import os.path
 
-from . import download
+from .download import DownloadRequest, get_json
+from .opensearch import get_tile_info, get_tile_info_id
+from .time_utils import parse_time
+from .config import SGConfig
+from .constants import AwsConstants, EsaSafeType, MimeType
 
 
-DEFAULT_DATA_LOCATION = '.'
+LOGGER = logging.getLogger(__name__)
 
-TILE_INFO = 'tileInfo.json'
-PRODUCT_INFO = 'productInfo.json'
 
-BANDS = ['B01', 'B02', 'B03', 'B04', 'B05', 'B06', 'B07', 'B08', 'B8A', 'B09', 'B10', 'B11', 'B12']
-QI_LIST = ['DEFECT', 'DETFOO', 'NODATA', 'SATURA', 'TECQUA']
+class AwsService(ABC):
+    """ Amazon Web Service (AWS) base class
 
-MAIN_URL = 'http://sentinel-s2-l1c.s3.amazonaws.com'
+    :param data_folder: location of the directory where the fetched data will be saved.
+    :type data_folder: str
+    :param bands: List of Sentinel-2 bands for request. If parameter is set to None all bands will be used.
+    :type bands: list(str) or None
+    :param metafiles: List of additional metafiles available on AWS
+                      (e.g. ['metadata', 'tileInfo', 'preview/B01', 'TCI']).
+                      If parameter is set to None the list will be set automatically.
+    :type metafiles: list(str) or None
+    """
+    def __init__(self, data_folder='', bands=None, metafiles=None):
+        self.data_folder = data_folder
+        self.bands = self.parse_bands(bands)
+        self.metafiles = self.parse_metafiles(metafiles)
 
-REDOWNLOAD = False
-THREADED_DOWNLOAD = False
+        self.base_url = SGConfig().aws_base_url
+        self.download_list = []
 
-AUX_DATA = 'AUX_DATA'
-DATASTRIP = 'DATASTRIP'
-GRANULE = 'GRANULE'
-HTML = 'HTML'
-INFO = 'rep_info'
-QI_DATA = 'QI_DATA'
-IMG_DATA = 'IMG_DATA'
+    @abstractmethod
+    def get_requests(self):
+        raise NotImplementedError
 
-DATE_SEPARATOR = '-'
+    @staticmethod
+    def parse_bands(band_input):
+        """
+        Parses class input and verifies band names
 
-OLD_SAFE_TYPE = 'old type'
-COMPACT_SAFE_TYPE = 'compact type'
-TYPE_CHANGE_DATE = DATE_SEPARATOR.join(['2016', '12', '06'])
+        :param band_input: class input parameter 'bands'
+        :type band_input: str or list(str)
+        :return: verified list of bands
+        :rtype: list(str)
+        """
+        if band_input is None:
+            return AwsConstants.BANDS
+        if isinstance(band_input, str):
+            band_list = band_input.split(',')
+        elif isinstance(band_input, list):
+            band_list = band_input.copy()
+        else:
+            raise ValueError('bands parameter must be a list or a string')
+        band_list = [band.strip().split('.')[0] for band in band_list]
+        if not set(band_list) <= set(AwsConstants.BANDS):
+            raise ValueError('bands must be a subset of {}'.format(AwsConstants.BANDS))
+        return band_list
 
-# Examples
-# old format: S2A_OPER_PRD_MSIL1C_PDMC_20160121T043931_R069_V20160103T171947_20160103T171947
-# compact format: S2A_MSIL1C_20170414T003551_N0204_R016_T54HVH_20170414T003551
-class SafeProduct():
-    def __init__(self, product_id, folder=DEFAULT_DATA_LOCATION, bands=BANDS):
-        self.folder = folder
-        self.product_id = product_id
-        self.bands = bands
+    def parse_metafiles(self, metafile_input):
+        """
+        Parses class input and verifies metadata file names
 
-        validate_bands(bands)
+        :param metafile_input: class input parameter 'metafiles'
+        :type metafile_input: str or list(str)
+        :return: verified list of metadata files
+        :rtype: list(str)
+        """
+        if metafile_input is None:
+            if self.__class__.__name__ == 'SafeProduct' or self.__class__.__name__ == 'SafeTile':
+                return sorted(AwsConstants.FILE_FORMATS.keys())
+            return []
+        if isinstance(metafile_input, str):
+            metafile_list = metafile_input.split(',')
+        elif isinstance(metafile_input, list):
+            metafile_list = metafile_input.copy()
+        else:
+            raise ValueError('metafiles parameter must be a list or a string')
+        metafile_list = [metafile.strip().split('.')[0] for metafile in metafile_list]
+        if not set(metafile_list) <= set(AwsConstants.FILE_FORMATS.keys()):
+            raise ValueError('metafiles must be a subset of {}'.format(
+                list(AwsConstants.FILE_FORMATS.keys())))
+        return metafile_list
 
-        self.read_structure()
+    @staticmethod
+    def url_to_tile(url):
+        """
+        Extracts tile name, date and AWS index from tile url on AWS
 
-    def read_structure(self):
+        :param url: class input parameter 'metafiles'
+        :type url: str
+        :return: Name of tile, date and AWS index which uniquely identifies tile on AWS
+        :rtype: (str, str, int)
+        """
+        info = url.strip('/').split('/')
+        name = ''.join(info[-7: -4])
+        date = '-'.join(info[-4: -1])
+        return name, date, int(info[-1])
+
+    def sort_download_list(self):
+        """
+        Method that sorts the list of download requests. Band images have priority before metadata files. If bands
+        images or metadata files are specified with a list they will be sorted in the same order as in the list.
+        Otherwise they will be sorted alphabetically (band B8A will be between B08 and B09).
+        """
+        def aws_sort_function(download_request):
+            data_name = download_request.properties['data_name']
+            tile_url = download_request.url.rsplit('.', 1)[0].rstrip(data_name).rstrip('/')
+            if data_name in AwsConstants.BANDS:
+                return 0, tile_url, self.bands.index(data_name)
+            return 1, tile_url, self.metafiles.index(data_name)
+        self.download_list.sort(key=aws_sort_function)
+
+    def structure_recursion(self, struct, folder):
+        """
+        From nested dictionaries representing .SAFE structure it recursively extracts all the files that need to be
+        downloaded and stores them into class attribute 'download_list'
+
+        :param struct:
+        :type struct: dict
+        :param folder: name of folder where this structure will be saved
+        :type folder: str
+        """
+        if not struct:
+            # This happens if the folder is empty. In current package version empty folder will not be created
+            return
+        for name, substruct in struct.items():
+            subfolder = os.path.join(folder, name)
+            if not isinstance(substruct, dict):
+                if substruct.split('/')[3] == 'products':
+                    data_name = substruct.split('/', 8)[-1]
+                    if '/' in data_name:
+                        items = data_name.split('/')
+                        data_name = '/'.join([items[0], '*', items[2]])
+                else:
+                    data_name = substruct.split('/', 11)[-1]
+                if '.' in data_name:
+                    data_type = MimeType(substruct.split('.')[-1])
+                    data_name = data_name.rsplit('.', 1)[0]
+                else:
+                    data_type = MimeType.RAW
+                if data_name in self.bands + self.metafiles:
+                    self.download_list.append(DownloadRequest(url=substruct, filename=subfolder, data_type=data_type,
+                                                              data_name=data_name))
+            else:
+                self.structure_recursion(substruct, subfolder)
+
+
+class AwsProduct(AwsService):
+    """ Service class for Sentinel-2 product on AWS
+
+    :param product_id: ESA ID of the product
+    :type product_id: str
+    :param tile_list: list of tile names
+    :type tile_list: list(str) or None
+    :param data_folder: location of the directory where the fetched data will be saved.
+    :type data_folder: str
+    :param bands: List of Sentinel-2 bands for request. If parameter is set to None all bands will be used.
+    :type bands: list(str) or None
+    :param metafiles: List of additional metafiles available on AWS
+                      (e.g. ['metadata', 'tileInfo', 'preview/B01', 'TCI']).
+                      If parameter is set to None the list will be set automatically.
+    :type metafiles: list(str) or None
+    """
+    def __init__(self, product_id, tile_list=None, **kwargs):
+        super(AwsProduct, self).__init__(**kwargs)
+
+        self.product_id = product_id.split('.')[0]
+        self.tile_list = self.parse_tile_list(tile_list)
+
         self.safe_type = self.get_safe_type()
         self.date = self.get_date()
+        self.product_url = self.get_product_url()
+        self.product_info = get_json(self.get_url(AwsConstants.PRODUCT_INFO))
 
-        self.product_info = download.get_json(self.get_product_url() + '/' + PRODUCT_INFO)
+    @staticmethod
+    def parse_tile_list(tile_input):
+        """
+        Parses class input and verifies band names
 
-        self.tile_list = [SafeTile(url=self.get_tile_url(self.product_info['tiles'][i]), bands=self.bands) for i in range(len(self.product_info['tiles']))]
+        :param tile_input: class input parameter 'tile_list'
+        :type tile_input: str or list(str)
+        :return: parsed list of tiles
+        :rtype: list(str) or None
+        """
+        if tile_input is None:
+            return None
+        if isinstance(tile_input, str):
+            tile_list = tile_input.split(',')
+        elif isinstance(tile_input, list):
+            tile_list = tile_input.copy()
+        else:
+            raise ValueError('tile_list parameter must be a list of tile names')
+        tile_list = [AwsTile.parse_tile_name(tile_name) for tile_name in tile_list]
+        return tile_list
 
-        self.safe = None
+    def get_requests(self):
+        """
+        Creates product structure and returns list of files for download
 
-    def get_structure(self):
-        safe = {}
-        main_folder = self.get_main_folder()
-        safe[main_folder] = {}
+        :return: List of download requests
+        :rtype: list(download.DownloadRequest)
+        """
+        self.download_list = [DownloadRequest(url=self.get_url(metafile), filename=self.get_filepath(metafile),
+                                              data_type=AwsConstants.FILE_FORMATS[metafile], data_name=metafile) for
+                              metafile in self.metafiles if metafile in AwsConstants.PRODUCT_METAFILES]
 
-        product_url = self.get_product_url()
-
-        safe[main_folder][AUX_DATA] = {}
-
-        safe[main_folder][DATASTRIP] = {}
-        datastrip_list = self.get_datastrip_list()
-        for datastrip_folder, datastrip_url in datastrip_list:
-            safe[main_folder][DATASTRIP][datastrip_folder] = {}
-            safe[main_folder][DATASTRIP][datastrip_folder][QI_DATA] = {}
-            safe[main_folder][DATASTRIP][datastrip_folder][self.get_datastrip_metadata_name(datastrip_folder)] = datastrip_url + '/metadata.xml'
-
-        safe[main_folder][GRANULE] = {}
-        for safe_tile in self.tile_list:
-            tile_struct = safe_tile.get_structure()
-            for tile_name, safe_struct in tile_struct.items():
-                safe[main_folder][GRANULE][tile_name] = safe_struct
-
-        safe[main_folder][HTML] = {}
-        # aws doesn't have this data
-
-        safe[main_folder][INFO] = {}
-        # aws doesn't have this data
-
-        safe[main_folder]['INSPIRE.xml'] = product_url + '/inspire.xml'
-        safe[main_folder]['manifest.safe'] = product_url + '/manifest.safe'
-        safe[main_folder][self.get_product_metadata_name()] = product_url + '/metadata.xml'
-        if self.safe_type == OLD_SAFE_TYPE:
-            safe[main_folder][edit_name(self.product_id, 'BWI') + '.png'] = product_url + '/preview.png'
-
-        return safe
-
-    def download_structure(self, redownload=REDOWNLOAD, threaded_download=THREADED_DOWNLOAD):
-        download_list = self.get_download_list(True)
-        download.download_data(download_list, redownload, threaded_download)
-
-    def get_download_list(self, create_folders=False):
-        if self.safe is None:
-            self.safe = self.get_structure()
-        download_list = []
-        structure_recursion(self.safe, self.folder, download_list, create_folders)
-        return download_list
-
-    def set_folder(self, new_folder):
-        self.folder = new_folder
-
-    def set_product_id(self, newproduct_id):
-        self.product_id = newproduct_id
-        self.read_structure()
-
-    def get_main_folder(self):
-        return self.product_id + '.SAFE'
+        tile_data_folder = os.path.join(self.data_folder, self.product_id)
+        for tile_info in self.product_info['tiles']:
+            tile_name, date, aws_index = self.url_to_tile(self.get_tile_url(tile_info))
+            if self.tile_list is None or AwsTile.parse_tile_name(tile_name) in self.tile_list:
+                self.download_list.extend(AwsTile(tile_name, date, aws_index, data_folder=tile_data_folder,
+                                                  bands=self.bands, metafiles=self.metafiles).get_requests())
+        self.sort_download_list()
+        return self.download_list
 
     def get_safe_type(self):
+        """ Determines the type of ESA product.
+
+        In 2016 ESA changed structure and naming of data. Therefore the class must
+        distinguish between old product type and compact (new) product type.
+
+        :return: type of ESA product
+        :rtype: constants.EsaSafeType
+        """
         if self.product_id.split('_')[1] == 'MSIL1C':
-            return COMPACT_SAFE_TYPE
-        return OLD_SAFE_TYPE
+            return EsaSafeType.COMPACT_SAFE_TYPE
+        return EsaSafeType.OLD_SAFE_TYPE
 
     def get_date(self):
-        if self.safe_type == OLD_SAFE_TYPE:
+        """ Collects sensing date of the product.
+
+        :return: Sensing date
+        :rtype: str
+        """
+        if self.safe_type == EsaSafeType.OLD_SAFE_TYPE:
             name = self.product_id.split('_')[-2]
             date = [name[1:5], name[5:7], name[7:9]]
-        if self.safe_type == COMPACT_SAFE_TYPE:
+        elif self.safe_type == EsaSafeType.COMPACT_SAFE_TYPE:
             name = self.product_id.split('_')[2]
             date = [name[:4], name[4:6], name[6:8]]
-        return DATE_SEPARATOR.join(date_part.lstrip('0') for date_part in date)
+        return '-'.join(date_part.lstrip('0') for date_part in date)
 
-    # Example: http://sentinel-s2-l1c.s3.amazonaws.com/products/2017/4/14/S2A_MSIL1C_20170414T003551_N0204_R016_T54HVH_20170414T003551
+    def get_url(self, filename):
+        """
+        Creates url of file location on AWS
+
+        :param filename: name of file
+        :type filename: str
+        :return: url of file location
+        :rtype: str
+        """
+        if self.product_url is None:
+            self.product_url = self.get_product_url()
+        return '{}/{}.{}'.format(self.product_url, filename, AwsConstants.FILE_FORMATS[filename].value)
+
     def get_product_url(self):
-        return MAIN_URL + '/products/' + self.date.replace(DATE_SEPARATOR, '/') + '/' + self.product_id
+        """
+        Creates base url of product location on AWS
 
-    def get_datastrip_list(self):
-        datastrips = self.product_info['datastrips']
-        return [(self.get_datastrip_name(datastrips[i]['id']), MAIN_URL + '/' + datastrips[i]['path']) for i in range(len(datastrips))]
-
-    # old format: S2A_OPER_MSI_L1C_DS_EPA__20160120T231011_S20160103T171621_N02.01
-    # compact format: DS_SGS__20170414T033348_S20170414T003551
-    def get_datastrip_name(self, datastrip):
-        if self.safe_type == OLD_SAFE_TYPE:
-            return datastrip
-        if self.safe_type == COMPACT_SAFE_TYPE:
-            return '_'.join(datastrip.split('_')[4:9])
-
-    def get_datastrip_metadata_name(self, datastrip_folder):
-        if self.safe_type == OLD_SAFE_TYPE:
-            name = '_'.join(datastrip_folder.split('_')[:-1])
-        if self.safe_type == COMPACT_SAFE_TYPE:
-            name = 'MTD_DS'
-        return name + '.xml'
-
-    def get_product_metadata_name(self):
-        if self.safe_type == OLD_SAFE_TYPE:
-            name = edit_name(self.product_id, 'MTD', 'SAFL1C')
-        if self.safe_type == COMPACT_SAFE_TYPE:
-            name = 'MTD_MSIL1C'
-        return name + '.xml'
+        :return: url of product location
+        :rtype: str
+        """
+        return self.base_url + 'products/' + self.date.replace('-', '/') + '/' + self.product_id
 
     def get_tile_url(self, tile_info):
-        return MAIN_URL + '/' + tile_info['path']
+        """
+        Collects tile url from productInfo.json file.
+
+        :param tile_info: information about tile from productInfo.json
+        :type tile_info: dict
+        :return: url of tile location
+        :rtype: str
+        """
+        return self.base_url + '/' + tile_info['path']
+
+    def get_filepath(self, filename):
+        """
+        Creates file path for the file
+
+        :param filename: name of
+        :type filename: str
+        :return: filename with path on disk
+        :rtype: str
+        """
+        return '{}/{}/{}.{}'.format(self.data_folder, self.product_id, filename,
+                                    AwsConstants.FILE_FORMATS[filename].value).replace(':', '.')
 
 
-class SafeTile():
-    def __init__(self, tile_id=None, url=None, tile_name=None, date=None, folder='.', bands=BANDS):
-        self.folder = folder
-        self.tile_id = tile_id
-        self.tile_url = url
-        self.tile_name = tile_name
-        self.date = date
-        self.bands = bands
+class AwsTile(AwsService):
+    """ Service class for Sentinel-2 product on AWS
 
-        validate_bands(bands)
+    :param tile: Tile name (e.g. 'T10UEV')
+    :type tile: str
+    :param time: Tile sensing time in ISO8601 format
+    :type time: str
+    :param aws_index: There exist Sentinel-2 tiles with the same tile and time parameter. Therefore each tile on AWS
+                      also has an index which is visible in their url path. If aws_index is set to None the class will
+                      try to find the index automatically. If there will be multiple choices it will choose the lowest
+                      index and inform the user.
+    :type aws_index: int or None
+    :param data_folder: location of the directory where the fetched data will be saved.
+    :type data_folder: str
+    :param bands: List of Sentinel-2 bands for request. If parameter is set to None all bands will be used.
+    :type bands: list(str) or None
+    :param metafiles: List of additional metafiles available on AWS
+                      (e.g. ['metadata', 'tileInfo', 'preview/B01', 'TCI']).
+                      If parameter is set to None the list will be set automatically.
+    :type metafiles: list(str) or None
+    """
+    def __init__(self, tile_name, time, aws_index=None, **kwargs):
+        super(AwsTile, self).__init__(**kwargs)
 
-        self.read_structure()
+        self.tile_name = self.parse_tile_name(tile_name)
+        self.datetime = self.parse_datetime(time)
+        self.date = self.datetime.split('T')[0]
+        self.aws_index = aws_index
 
-    def read_structure(self):
-        if self.tile_url is not None:
-            self.tile_url = self.tile_url.rstrip('/')
-        if self.tile_name is not None:
-            self.tile_name = self.tile_name.lstrip('T0')
-        if self.date is not None:
-            self.date = DATE_SEPARATOR.join(date_part.lstrip('0') for date_part in self.date.split(DATE_SEPARATOR))
+        LOGGER.debug('tile_name=%s, date=%s, bands=%s, metafiles=%s', self.tile_name, self.date,
+                     self.bands, self.metafiles)
 
-        if self.tile_url is not None or (self.tile_name is not None and self.date is not None):
-            if self.tile_url is not None:
-                self.tile_name, self.date = url_to_namedate(self.tile_url)
-            else:
-                self.tile_url = namedate_to_url(self.tile_name, self.date)
-            self.tile_info = self.get_tile_info()
-            self.safe_type = self.get_safe_type()
-            self.tile_id = self.url_to_tile_id()
-        elif self.tile_id is not None:
-            self.tile_name, self.date = tile_id_to_namedate(self.tile_id)
-            self.tile_url = namedate_to_url(self.tile_name, self.date)
-            self.tile_info = self.get_tile_info()
-            self.safe_type = self.get_safe_type()
+        self.aws_index = self.get_aws_index()
+        self.tile_url = self.get_tile_url()
+        self.tile_info = self.get_tile_info()
+        if not self.tile_is_valid():
+            raise ValueError('Cannot find data on AWS for specified tile, time and aws_index')
 
-        self.safe = None
+    @staticmethod
+    def parse_tile_name(name):
+        """
+        Parses and verifies tile name.
 
-    def get_structure(self):
-        safe = {}
-        main_folder = self.get_main_folder()
-        safe[main_folder] = {}
+        :param name: class input parameter 'tile_name'
+        :type name: str
+        :return: parsed tile name
+        :rtype: str
+        """
+        tile_name = name.lstrip('T0')
+        if len(tile_name) == 4:
+            tile_name = '0' + tile_name
+        if len(tile_name) != 5:
+            raise ValueError('Invalid tile name {}'.format(name))
+        return tile_name
 
-        safe[main_folder][AUX_DATA] = {}
-        safe[main_folder][AUX_DATA][self.get_aux_data_name()] = self.tile_url + '/auxiliary/ECMWFT'
+    @staticmethod
+    def parse_datetime(time):
+        """
+        Parses and verifies tile sensing time.
 
-        safe[main_folder][IMG_DATA] = {}
-        for band in self.bands:
-            safe[main_folder][IMG_DATA][self.get_img_name(band)] = self.tile_url + '/' + band + '.jp2'
-        if self.safe_type == COMPACT_SAFE_TYPE:
-            safe[main_folder][IMG_DATA][self.get_img_name('TCI')] = self.tile_url + '/TCI.jp2'
+        :param time: tile sensing time
+        :type time: str
+        :return: tile sensing time in ISO8601 format
+        :rtype: str
+        """
+        try:
+            return parse_time(time)
+        except Exception:
+            raise ValueError('Time must be in format YYYY-MM-DD or YYYY-MM-DDTHH:MM:SS')
 
-        safe[main_folder][QI_DATA] = {}
-        safe[main_folder][QI_DATA][self.get_gml_name('CLOUDS')] = self.get_gml_url('CLOUDS')
-        for qi_type in QI_LIST:
-            for band in self.bands:
-                safe[main_folder][QI_DATA][self.get_gml_name(qi_type, band)] = self.get_gml_url(qi_type, band)
-        safe[main_folder][QI_DATA][self.get_preview_name()] = self.tile_url + '/preview.jp2'
+    def set_data_folder(self, data_folder):
+        """
+        Sets folder where data will be stored
 
-        safe[main_folder][self.get_tile_metadata_name()] = self.tile_url + '/metadata.xml'
+        :param data_folder: name of folder
+        :type data_folder: str
+        """
+        self.data_folder = data_folder
 
-        return safe
+    def get_requests(self):
+        """
+        Creates tile structure and returns list of files for download
 
-    def download_structure(self, redownload=REDOWNLOAD, threaded_download=THREADED_DOWNLOAD):
-        download_list = self.get_download_list(True)
-        download.download_data(download_list, redownload, threaded_download)
+        :return: List of download requests for
+        :rtype: list(download.DownloadRequest)
+        """
+        self.download_list = []
+        for data_name in self.bands + self.metafiles:
+            if data_name in AwsConstants.TILE_FILES:
+                url = self.get_url(data_name)
+                filename = self.get_filepath(data_name)
+                self.download_list.append(DownloadRequest(url=url, filename=filename,
+                                                          data_type=AwsConstants.FILE_FORMATS[data_name],
+                                                          data_name=data_name))
+        self.sort_download_list()
+        return self.download_list
 
-    def get_download_list(self, create_folders=False):
-        if self.safe is None:
-            self.safe = self.get_structure()
-        download_list = []
-        structure_recursion(self.safe, self.folder, download_list, create_folders)
-        return download_list
+    def get_aws_index(self):
+        """
+        Returns tile index on AWS. If it was not set it collects it with Opensearch
 
-    def set_folder(self, new_folder):
-        self.folder = new_folder
+        :return: Index of tile on AWS
+        :rtype: int
+        """
+        if self.aws_index is not None:
+            return self.aws_index
+        tile_info = get_tile_info(self.tile_name, self.datetime)
+        if tile_info is not None:
+            return int(tile_info['properties']['s3Path'].split('/')[-1])
+        raise ValueError('Cannot find aws_index for specified tile and time')
 
-    def url_to_tile_id(self):
-        response = download.make_request(self.tile_url + '/metadata.xml', return_data=True, verbose=False)
-        tree = ElementTree.fromstring(response.content)
-        tile_id = tree[0].find('TILE_ID').text
-        if self.safe_type == COMPACT_SAFE_TYPE:
-            info = tile_id.split('_')
-            tile_id = '_'.join([info[3], info[-2], info[-3], self.get_sensing_time()])
-        return tile_id
+    def tile_is_valid(self):
+        return self.tile_info is not None \
+               and (self.datetime == self.date or self.datetime == self.parse_datetime(self.tile_info['timestamp']))
 
     def get_tile_info(self):
-        try:
-            return download.get_json(self.tile_url + '/' + TILE_INFO)
-        except:
-            self.increase_url()
-            return download.get_json(self.tile_url + '/' + TILE_INFO)
+        """
+        Collects basic info about tile from tileInfo.json
 
-    # .../tiles/38/T/ML/2015/12/19/0 -> .../tiles/38/T/ML/2015/12/19/1
-    def increase_url(self):
-        info = self.tile_url.split('/')
-        info[-1] = str(int(info[-1]) + 1)
-        self.tile_url = '/'.join(info)
+        :return: dictionary with tile information
+        :rtype: dict
+        """
+        url = self.get_url('tileInfo')
+        try:
+            return get_json(url)
+        except Exception as err:
+            LOGGER.error('Download from url %s failed with %s', url, err)
+            raise
+
+    def get_url(self, filename):
+        """
+        Creates url of file location on AWS
+
+        :param filename: name of file
+        :type filename: str
+        :return: url of file location
+        :rtype: str
+        """
+        if self.tile_url is None or filename == AwsConstants.TILE_INFO:
+            self.tile_url = self.get_tile_url()
+        return '{}/{}.{}'.format(self.tile_url, filename, AwsConstants.FILE_FORMATS[filename].value)
+
+    def get_tile_url(self):
+        """
+        Creates base url of tile location on AWS
+
+        :return: url of tile location
+        :rtype: str
+        """
+        url = self.base_url + 'tiles/' + self.tile_name[0:2].lstrip('0') + '/' + self.tile_name[2] + '/' \
+            + self.tile_name[3:5] + '/'
+        date_params = self.date.split('-')
+        for param in date_params:
+            url += param.lstrip('0') + '/'
+        return url + str(self.aws_index)
+
+    def get_filepath(self, filename):
+        """
+        Creates file path for the file
+
+        :param filename: name of
+        :type filename: str
+        :return: filename with path on disk
+        :rtype: str
+        """
+        return '{}/{},{},{}/{}.{}'.format(self.data_folder, self.tile_name, self.date, self.aws_index, filename,
+                                          AwsConstants.FILE_FORMATS[filename].value).replace(':', '.')
 
     def get_product_id(self):
+        """
+        Obtains ESA ID of product which contains the tile
+
+        :return: ESA ID of the product
+        :rtype: str
+        """
         return self.tile_info['productName']
 
-    def get_sensing_time(self):
-        return self.tile_info['timestamp'].split('.')[0].replace('-', '').replace(':', '')
-
-    def get_datatake_time(self):
-        return self.tile_info['productName'].split('_')[2]
-
-    def get_main_folder(self):
-        return self.tile_id
-
-    def get_safe_type(self):
-        if self.get_product_id().split('_')[1] == 'MSIL1C':
-            return COMPACT_SAFE_TYPE
-        return OLD_SAFE_TYPE
-
-    def get_tile_metadata_name(self):
-        if self.safe_type == OLD_SAFE_TYPE:
-            name = edit_name(self.tile_id, 'MTD', delete_end=True)
-        if self.safe_type == COMPACT_SAFE_TYPE:
-            name = 'MTD_TL'
-        return name + '.xml'
-
-    def get_aux_data_name(self):
-        if self.safe_type == OLD_SAFE_TYPE:
-            return 'AUX_ECMWFT' # this is not correct, but we cannot reconstruct last two timestamps in name S2A_OPER_AUX_ECMWFT_EPA__20160120T231011_V20160103T150000_20160104T030000
-        if self.safe_type == COMPACT_SAFE_TYPE:
-            return 'AUX_ECMWFT'
-
-    # old format: S2A_OPER_MSI_L1C_TL_EPA__20160120T231011_A002783_T13PHS_B01
-    # compact format: T54HVH_20170414T003551_B01
-    def get_img_name(self, band):
-        if self.safe_type == OLD_SAFE_TYPE:
-            info = self.tile_id.split('_')
-            info[-1] = band
-            name = '_'.join(info)
-        if self.safe_type == COMPACT_SAFE_TYPE:
-            name = '_'.join([self.tile_id.split('_')[1], self.get_datatake_time(), band])
-        return name + '.jp2'
-
-    # old format: S2A_OPER_MSK_DEFECT_EPA__20160120T231011_A002783_T13PHS_B01_MSIL1C
-    # compact format: MSK_CLOUDS_B00
-    def get_gml_name(self, qi_type, band='B00'):
-        if self.safe_type == OLD_SAFE_TYPE:
-            name = edit_name(self.tile_id, 'MSK', delete_end=True)
-            name = name.replace('L1C_TL', qi_type)
-            name += '_' + band + '_MSIL1C'
-        if self.safe_type == COMPACT_SAFE_TYPE:
-            name = 'MSK_' + qi_type + '_' + band
-        return name + '.gml'
-
-    def get_gml_url(self, qi_type, band='B00'):
-        return self.tile_url + '/qi/MSK_' + qi_type + '_' + band + '.gml'
-
-    def get_preview_name(self):
-        if self.safe_type == OLD_SAFE_TYPE:
-            name = edit_name(self.tile_id, 'PVI', delete_end=True)
-        if self.safe_type == COMPACT_SAFE_TYPE:
-            name = '_'.join([self.tile_id.split('_')[1], self.get_datatake_time(), 'PVI'])
-        return name + '.jp2'
-
-# old format: S2A_OPER_MSI_L1C_TL_EPA__20160120T231011_A002783_T13PHS_N02.01
-# compact format: L1C_T54HVH_A009451_20170414T003551
-def tile_id_to_namedate(tile_id):
-    info = tile_id.split('_')
-    if tile_id[:2] == 'S2A': # for old format this isn't possible
-        raise Exception('Cannot find tile from tile ID in old format')
-    if tile_id[:2] == 'L1C': # compact format
-        name = info[1].lstrip('T')
-        time = info[-1]
-        date = [time[:4], time[4:6], time[6:8]]
-        date = DATE_SEPARATOR.join(date_part.lstrip('0') for date_part in date)
-    return name, date
-
-def namedate_to_url(name, date, index=0):
-    return '/'.join([MAIN_URL, 'tiles', name[:-3], name[-3], name[-2:], date.replace(DATE_SEPARATOR, '/'), str(index)])
-
-# "tiles/13/P/HS/2016/1/3/0"
-def url_to_namedate(url):
-    info = url.split('/')
-    name = ''.join(info[-7: -4])
-    date = DATE_SEPARATOR.join(info[-4: -1])
-    return name, date
-
-def edit_name(name, code, add_code=None, delete_end=False):
-    info = name.split('_')
-    info[2] = code
-    if add_code is not None:
-        info[3] = add_code
-    if delete_end:
-        info.pop()
-    return '_'.join(info)
-
-def structure_recursion(struct, folder, download_list, create_folders):
-    if create_folders and len(struct) == 0:
-        download.make_folder(folder)
-    for name, substruct in struct.items():
-        subfolder = folder + '/' + name
-        if not isinstance(substruct, dict):
-            download_list.append((substruct, subfolder))
-        else:
-            structure_recursion(substruct, subfolder, download_list, create_folders)
-
-def validate_bands(bands):
-    invalid = set(bands) - set(BANDS).intersection(bands)
-    if bool(invalid):
-        raise Exception('Invalid bands specified: ' + str(list(invalid)))
-
-### Public functions:
-
-def get_safe_format(product_id=None, tile=None, entire_product=False):
-    if tile is not None:
-        safe_tile = SafeTile(tile_name=tile[0], date=tile[1])
-        if not entire_product:
-            return safe_tile.get_structure()
-        product_id = safe_tile.get_product_id()
-    if product_id is not None:
-        safe_product = SafeProduct(product_id)
-        return safe_product.get_structure()
-
-def download_safe_format(product_id=None, tile=None, folder=DEFAULT_DATA_LOCATION, redownload=REDOWNLOAD, threaded_download=THREADED_DOWNLOAD, entire_product=False, bands=BANDS):
-    bands = BANDS if bands is None else bands
-    if tile is not None:
-        safe_tile = SafeTile(tile_name=tile[0], date=tile[1], folder=folder, bands=bands)
-        if not entire_product:
-            return safe_tile.download_structure(redownload=redownload, threaded_download=threaded_download)
-        product_id = safe_tile.get_product_id()
-    if product_id is not None:
-        safe_product = SafeProduct(product_id, folder=folder, bands=bands)
-        return safe_product.download_structure(redownload=redownload, threaded_download=threaded_download)
-
-if __name__ == '__main__':
-    pass
-    # Examples:
-    #download_safe_format('S2A_OPER_PRD_MSIL1C_PDMC_20160121T043931_R069_V20160103T171947_20160103T171947')
-    #download_safe_format('S2A_MSIL1C_20170414T003551_N0204_R016_T54HVH_20170414T003551')
-    #download_safe_format(tile=('T38TML','2015-12-19'), entire_product=True)
-    #download_safe_format(tile=('T54HVH','2017-04-14'))
+    @staticmethod
+    def tile_id_to_tile(tile_id):
+        """
+        :param tile_id: original ESA tile ID
+        :type: str
+        :return: tile name, sensing date and AWS index
+        :rtype: (str, str, int)
+        """
+        tile_info = get_tile_info_id(tile_id)
+        return AwsService.url_to_tile(tile_info['properties']['s3Path'])
