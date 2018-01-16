@@ -25,7 +25,7 @@ def get_dates_in_range(start_date, end_date):
 def next_date(date):
     """ Get date of day after input date in ISO 8601 format
 
-    For instance, if input date is '2017-03-12', the function returns '2017-03-13'
+    For instance, if input date is ``'2017-03-12'``, the function returns ``'2017-03-13'``
 
     :param date: input date in ISO 8601 format
     :type date: str
@@ -39,7 +39,7 @@ def next_date(date):
 def prev_date(date):
     """ Get date of day previous to input date in ISO 8601 format
 
-    For instance, if input date is '2017-03-12', the function returns '2017-03-11'
+    For instance, if input date is ``'2017-03-12'``, the function returns ``'2017-03-11'``
 
     :param date: input date in ISO 8601 format
     :type date: str
@@ -53,8 +53,8 @@ def prev_date(date):
 def iso_to_datetime(date):
     """ Convert ISO 8601 time format to datetime format
 
-    This function converts a date in ISO format, e.g. 2017-09-14 to a datetime instance, e.g.
-    datetime.datetime(2017,9,14,0,0)
+    This function converts a date in ISO format, e.g. ``2017-09-14`` to a ``datetime`` instance, e.g.
+    ``datetime.datetime(2017,9,14,0,0)``
 
     :param date: date in ISO 8601 format
     :type date: str
@@ -68,12 +68,12 @@ def iso_to_datetime(date):
 def datetime_to_iso(date, only_date=True):
     """ Convert datetime format to ISO 8601 time format
 
-    This function converts a date in datetime instance, e.g. datetime.datetime(2017,9,14,0,0) to ISO format,
-    e.g. 2017-09-14
+    This function converts a date in datetime instance, e.g. ``datetime.datetime(2017,9,14,0,0)`` to ISO format,
+    e.g. ``2017-09-14``
 
     :param date: datetime instance to convert
     :type date: datetime
-    :param only_date: whether to return date only or also time information. Default is `True`
+    :param only_date: whether to return date only or also time information. Default is ``True``
     :type only_date: bool
     :return: date in ISO 8601 format
     :rtype: str
@@ -98,7 +98,7 @@ def is_valid_time(time):
 
     :param time: a string containing a time/date stamp
     :type time: str
-    :return: `True` is string is a valid time/date stamp, `False` otherwise
+    :return: ``True`` is string is a valid time/date stamp, ``False`` otherwise
     :rtype: bool
     """
     try:

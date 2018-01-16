@@ -26,7 +26,7 @@ def get_tile_info_id(tile_id):
 
     :param tile_id: original tile identification string provided by ESA
     :type tile_id: str
-    :return: dictionary with info provided by Opensearch REST service or None if such tile does not exist on AWS.
+    :return: dictionary with info provided by Opensearch REST service or ``None`` if such tile does not exist on AWS.
     :rtype: dict or None
     :raises: TileMissingException if no tile with tile ID `tile_id` exists
     """
@@ -44,7 +44,7 @@ def get_tile_info_id(tile_id):
 def get_tile_info(tile, time, aws_index=None):
     """ Get basic information about image tile
 
-    :param tile: tile name (e.g. 'T10UEV')
+    :param tile: tile name (e.g. ``'T10UEV'``)
     :type tile: str
     :param time: time in ISO8601 format
     :type time: str
@@ -235,7 +235,7 @@ def _add_param(params, value, key):
     :type: dict
     :param value: Value
     :param key: Key
-    :return: if value not None then a copy of params with (key, value) added, otherwise returns params
+    :return: if value not ``None`` then a copy of params with (key, value) added, otherwise returns params
     """
     if value:
         return {**params, **{key:  value}}

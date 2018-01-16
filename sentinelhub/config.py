@@ -21,8 +21,8 @@ class SGConfig:
 
     Usage in the code:
 
-        * SGConfig().ogc_base_url
-        * SGConfig().instance_id
+        * ``SGConfig().ogc_base_url``
+        * ``SGConfig().instance_id``
 
     """
     class _SGConfig:
@@ -40,7 +40,7 @@ class SGConfig:
             """
             Checks if configuration file has contains all keys.
 
-            :param config: configuration dictionary read from config.json
+            :param config: configuration dictionary read from `config.json`
             :type config: dict
             """
 

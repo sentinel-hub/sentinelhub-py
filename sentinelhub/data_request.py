@@ -71,16 +71,16 @@ class DataRequest(ABC):
         Get requested data either by downloading it or by reading it from the disk (if it
         was previously downloaded and saved).
 
-        :param save_data: flag to turn on/off saving of data to disk. Default is `False`.
+        :param save_data: flag to turn on/off saving of data to disk. Default is ``False``.
         :type save_data: bool
-        :param redownload: if True, download again the requested data even though it's already saved to disk. Default is
-                            `False`, do not download if data is already available on disk.
+        :param redownload: if ``True``, download again the requested data even though it's already saved to disk.
+                            Default is ``False``, do not download if data is already available on disk.
         :type redownload: bool
-        :param max_threads: number of threads to use when downloading data; default is max_threads=None which uses
-                            5*N where N is the number of processors on the system
+        :param max_threads: number of threads to use when downloading data; default is ``max_threads=None`` which uses
+                            ``5*N`` workers where ``N`` is the number of processors on the system
         :type max_threads: int
         :return: requested images as numpy arrays, where each array corresponds to a single acquisition and has
-                    shape [height, width, channels].
+                    shape ``[height, width, channels]``.
         :rtype: list of numpy arrays
         """
         if not self.is_valid_request():
@@ -113,11 +113,11 @@ class DataRequest(ABC):
 
     def save_data(self, redownload=False, max_threads=None):
         """
-        Saves data to disk. If redownload=True then the data is redownloaded using max_threads workers.
+        Saves data to disk. If ``redownload=True`` then the data is redownloaded using ``max_threads`` workers.
 
-        :param redownload: data is redownloaded if redownload is `True`. Default is `False`
+        :param redownload: data is redownloaded if ``redownload=True``. Default is ``False``
         :type redownload: bool
-        :param max_threads: the number of workers to use when downloading, default `max_threads=None`
+        :param max_threads: the number of workers to use when downloading, default ``max_threads=None``
         :type max_threads: int
         """
         if not self.is_valid_request():
@@ -155,28 +155,28 @@ class OgcRequest(DataRequest):
 
     :param source: type of OGC request (WMS or WCS)
     :type source: constants.DataSource
-    :param size_x: number of pixels in x or resolution in x (i.e. `512` or `10m`)
+    :param size_x: number of pixels in x or resolution in x (i.e. ``512`` or ``10m``)
     :type size_x: int or str
-    :param size_y: number of pixels in x or resolution in y (i.e. `512` or `10m`)
+    :param size_y: number of pixels in x or resolution in y (i.e. ``512`` or ``10m``)
     :type size_y: int or str
     :param bbox: specifies the bounding box of the requested image. Coordinates must be in
                     the specified coordinate reference system. Required.
     :type bbox: common.BBox
     :param time: time or time range for which to return the results, in ISO8601 format
-                (year-month-date, for example: 2016-01-01, or year-month-dateThours:minuts:seconds format,
-                i.e. 2016-01-01T16:31:21). When a single time is specified the request will return
+                (year-month-date, for example: ``2016-01-01``, or year-month-dateThours:minuts:seconds format,
+                i.e. ``2016-01-01T16:31:21``). When a single time is specified the request will return
                 data for that specific date, if it exists. If a time range is specified the result is a list of all
                 scenes between the specified dates conforming to the cloud coverage criteria. Most recent acquisition
                 being first in the list. For the latest acquisition use ``latest``.
-                Examples: ``latest``, '2016-01-01', or ('2016-01-01', ' 2016-01-31')
+                Examples: ``latest``, ``'2016-01-01'``, or ``('2016-01-01', ' 2016-01-31')``
     :type time: str, or tuple of str
     :param layer: the preconfigured layer (image) to be returned as comma separated layer names. Required.
     :type layer: str
-    :param maxcc: maximum accepted cloud coverage of an image. Float between 0.0 and 1.0. Default is 1.0.
+    :param maxcc: maximum accepted cloud coverage of an image. Float between 0.0 and 1.0. Default is ``1.0``.
     :type maxcc: float
     :param image_format: format of the returned image by the Sentinel Hub's WMS getMap service. Default is PNG, but
                         in some cases 32-bit TIFF is required, i.e. if requesting unprocessed raw bands.
-                        Default is constants.MimeType.PNG.
+                        Default is ``constants.MimeType.PNG``.
     :type image_format: constants.MimeType
     :param instance_id: user's instance id. If None the instance id is taken from the config.json configuration file.
     :type instance_id: str
@@ -184,10 +184,10 @@ class OgcRequest(DataRequest):
                               services. All available parameters are described at
                               http://www.sentinel-hub.com/develop/documentation/api/custom-url-parameters.
     :type custom_url_params: dictionary of CustomUrlParameter enum and its value, i.e.
-                              {constants.CustomUrlParam.ATMFILTER:'ATMCOR'}
+                              ``{constants.CustomUrlParam.ATMFILTER:'ATMCOR'}``
     :param time_difference: The time difference below which dates are deemed equal. That is, if for the given set of OGC
-                            parameters the images are available at datestimes d1<=d2<=...<=dn then only those with
-                            dk-dj>time_difference will be considered. The default time difference is negative (-1s),
+                            parameters the images are available at datestimes `d1<=d2<=...<=dn` then only those with
+                            `dk-dj>time_difference` will be considered. The default time difference is negative (`-1s`),
                             meaning that all dates are considered by default.
     :type time_difference: datetime.timedelta
     :param data_folder: location of the directory where the fetched data will be saved.
@@ -267,20 +267,20 @@ class WmsRequest(OgcRequest):
                     the specified coordinate reference system. Required.
     :type bbox: common.BBox
     :param time: time or time range for which to return the results, in ISO8601 format
-                (year-month-date, for example: 2016-01-01, or year-month-dateThours:minuts:seconds format,
-                i.e. 2016-01-01T16:31:21). When a single time is specified the request will return
+                (year-month-date, for example: ``2016-01-01``, or year-month-dateThours:minuts:seconds format,
+                i.e. ``2016-01-01T16:31:21``). When a single time is specified the request will return
                 data for that specific date, if it exists. If a time range is specified the result is a list of all
                 scenes between the specified dates conforming to the cloud coverage criteria. Most recent acquisition
                 being first in the list. For the latest acquisition use ``latest``.
-                Examples: ``latest``, '2016-01-01', or ('2016-01-01', ' 2016-01-31')
+                Examples: ``latest``, ``'2016-01-01'``, or ``('2016-01-01', ' 2016-01-31')``
     :type time: str, or tuple of str
     :param layer: the preconfigured layer (image) to be returned as comma separated layer names. Required.
     :type layer: str
-    :param maxcc: maximum accepted cloud coverage of an image. Float between 0.0 and 1.0. Default is 1.0.
+    :param maxcc: maximum accepted cloud coverage of an image. Float between 0.0 and 1.0. Default is ``1.0``.
     :type maxcc: float
     :param image_format: format of the returned image by the Sentinel Hub's WMS getMap service. Default is PNG, but
                         in some cases 32-bit TIFF is required, i.e. if requesting unprocessed raw bands.
-                        Default is constants.MimeType.PNG.
+                        Default is ``constants.MimeType.PNG``.
     :type image_format: constants.MimeType
     :param instance_id: user's instance id. If None the instance id is taken from the config.json configuration file.
     :type instance_id: str
@@ -288,10 +288,10 @@ class WmsRequest(OgcRequest):
                               services. All available parameters are described at
                               http://www.sentinel-hub.com/develop/documentation/api/custom-url-parameters.
     :type custom_url_params: dictionary of CustomUrlParameter enum and its value, i.e.
-                              {constants.CustomUrlParam.ATMFILTER:'ATMCOR'}
+                              ``{constants.CustomUrlParam.ATMFILTER:'ATMCOR'}``
     :param time_difference: The time difference below which dates are deemed equal. That is, if for the given set of OGC
-                            parameters the images are available at datestimes d1<=d2<=...<=dn then only those with
-                            dk-dj>time_difference will be considered. The default time difference is negative (-1s),
+                            parameters the images are available at datestimes `d1<=d2<=...<=dn` then only those with
+                            `dk-dj>time_difference` will be considered. The default time difference is negative (`-1s`),
                             meaning that all dates are considered by default.
     :type time_difference: datetime.timedelta
     :param data_folder: location of the directory where the fetched data will be saved.
@@ -326,20 +326,20 @@ class WcsRequest(OgcRequest):
                     the specified coordinate reference system. Required.
     :type bbox: common.BBox
     :param time: time or time range for which to return the results, in ISO8601 format
-                (year-month-date, for example: 2016-01-01, or year-month-dateThours:minuts:seconds format,
-                i.e. 2016-01-01T16:31:21). When a single time is specified the request will return
+                (year-month-date, for example: ``2016-01-01``, or year-month-dateThours:minuts:seconds format,
+                i.e. ``2016-01-01T16:31:21``). When a single time is specified the request will return
                 data for that specific date, if it exists. If a time range is specified the result is a list of all
                 scenes between the specified dates conforming to the cloud coverage criteria. Most recent acquisition
                 being first in the list. For the latest acquisition use ``latest``.
-                Examples: ``latest``, '2016-01-01', or ('2016-01-01', ' 2016-01-31')
+                Examples: ``latest``, ``'2016-01-01'``, or ``('2016-01-01', ' 2016-01-31')``
     :type time: str, or tuple of str
     :param layer: the preconfigured layer (image) to be returned as comma separated layer names. Required.
     :type layer: str
-    :param maxcc: maximum accepted cloud coverage of an image. Float between 0.0 and 1.0. Default is 1.0.
+    :param maxcc: maximum accepted cloud coverage of an image. Float between 0.0 and 1.0. Default is ``1.0``.
     :type maxcc: float
     :param image_format: format of the returned image by the Sentinel Hub's WMS getMap service. Default is PNG, but
                         in some cases 32-bit TIFF is required, i.e. if requesting unprocessed raw bands.
-                        Default is constants.MimeType.PNG.
+                        Default is ``constants.MimeType.PNG``.
     :type image_format: constants.MimeType
     :param instance_id: user's instance id. If None the instance id is taken from the config.json configuration file.
     :type instance_id: str
@@ -347,10 +347,10 @@ class WcsRequest(OgcRequest):
                               services. All available parameters are described at
                               http://www.sentinel-hub.com/develop/documentation/api/custom-url-parameters.
     :type custom_url_params: dictionary of CustomUrlParameter enum and its value, i.e.
-                              {constants.CustomUrlParam.ATMFILTER:'ATMCOR'}
+                              ``{constants.CustomUrlParam.ATMFILTER:'ATMCOR'}``
     :param time_difference: The time difference below which dates are deemed equal. That is, if for the given set of OGC
-                            parameters the images are available at datestimes d1<=d2<=...<=dn then only those with
-                            dk-dj>time_difference will be considered. The default time difference is negative (-1s),
+                            parameters the images are available at datestimes `d1<=d2<=...<=dn` then only those with
+                            `dk-dj>time_difference` will be considered. The default time difference is negative (`-1s`),
                             meaning that all dates are considered by default.
     :type time_difference: datetime.timedelta
     :param data_folder: location of the directory where the fetched data will be saved.
@@ -371,10 +371,10 @@ class AwsRequest(DataRequest):
     :param bands: list of Sentinel-2 bands for request
     :type bands: list(str)
     :param metafiles: list of additional metafiles available on AWS
-                      (e.g. ['metadata', 'tileInfo', 'preview/B01', 'TCI'])
+                      (e.g. ``['metadata', 'tileInfo', 'preview/B01', 'TCI']``)
     :type metafiles: list(str)
-    :param safe_format: flag that determines the structure of saved data. If True it will be saved in .SAFE format
-                        defined by ESA. If False it will be saved in the same structure as the stucture at AWS.
+    :param safe_format: flag that determines the structure of saved data. If ``True`` it will be saved in .SAFE format
+                        defined by ESA. If ``False`` it will be saved in the same structure as the stucture at AWS.
     :type safe_format: bool
     :param data_folder: location of the directory where the fetched data will be saved.
     :type data_folder: str
@@ -406,18 +406,18 @@ class AwsProductRequest(AwsRequest):
     http://sentinel-s2-l1c.s3-website.eu-central-1.amazonaws.com/#products/
 
     :param product_id: original ESA product identification string
-                       (e.g. 'S2A_MSIL1C_20170414T003551_N0204_R016_T54HVH_20170414T003551')
+                       (e.g. ``'S2A_MSIL1C_20170414T003551_N0204_R016_T54HVH_20170414T003551'``)
     :type product_id: str
-    :param tile_list: list of tiles inside the product to be downloaded. If parameter is set to None all tiles inside
-                      the product will be downloaded.
+    :param tile_list: list of tiles inside the product to be downloaded. If parameter is set to ``None`` all
+                      tiles inside the product will be downloaded.
     :type tile_list: list(str) or None
     :param bands: list of Sentinel-2 bands for request
     :type bands: list(str)
     :param metafiles: list of additional metafiles available on AWS
-                      (e.g. ['metadata', 'tileInfo', 'preview/B01', 'TCI'])
+                      (e.g. ``['metadata', 'tileInfo', 'preview/B01', 'TCI']``)
     :type metafiles: list(str)
-    :param safe_format: flag that determines the structure of saved data. If True it will be saved in .SAFE format
-                        defined by ESA. If False it will be saved in the same structure as the stucture at AWS.
+    :param safe_format: flag that determines the structure of saved data. If ``True`` it will be saved in .SAFE format
+                        defined by ESA. If ``False`` it will be saved in the same structure as the stucture at AWS.
     :type safe_format: bool
     :param data_folder: location of the directory where the fetched data will be saved.
     :type data_folder: str
@@ -450,17 +450,17 @@ class AwsTileRequest(AwsRequest):
     :param time: tile sensing time in ISO8601 format
     :type time: str
     :param aws_index: there exist Sentinel-2 tiles with the same tile and time parameter. Therefore each tile on AWS
-                      also has an index which is visible in their url path. If aws_index is set to None the class will
-                      try to find the index automatically. If there will be multiple choices it will choose the lowest
-                      index and inform the user.
+                      also has an index which is visible in their url path. If aws_index is set to ``None`` the class
+                      will try to find the index automatically. If there will be multiple choices it will choose the
+                      lowest index and inform the user.
     :type aws_index: int or None
     :param bands: list of Sentinel-2 bands for request
     :type bands: list(str)
     :param metafiles: list of additional metafiles available on AWS
-                      (e.g. ['metadata', 'tileInfo', 'preview/B01', 'TCI'])
+                      (e.g. ``['metadata', 'tileInfo', 'preview/B01', 'TCI']``)
     :type metafiles: list(str)
-    :param safe_format: flag that determines the structure of saved data. If True it will be saved in .SAFE format
-                        defined by ESA. If False it will be saved in the same structure as the stucture at AWS.
+    :param safe_format: flag that determines the structure of saved data. If ``True`` it will be saved in .SAFE format
+                        defined by ESA. If ``False`` it will be saved in the same structure as the stucture at AWS.
     :type safe_format: bool
     :param data_folder: location of the directory where the fetched data will be saved.
     :type data_folder: str
@@ -486,14 +486,14 @@ def get_safe_format(product_id=None, tile=None, entire_product=False, bands=None
     """
     Returns .SAFE format structure in form of nested dictionaries. Either product_id or tile must be specified.
 
-    :param product_id: original ESA product identification string. Default is `None`
+    :param product_id: original ESA product identification string. Default is ``None``
     :type product_id: str
-    :param tile: tuple containing tile name and sensing time/date. Default is `None`
+    :param tile: tuple containing tile name and sensing time/date. Default is ``None``
     :type tile: (str, str)
     :param entire_product: in case tile is specified this flag determines if it will be place inside a .SAFE structure
-                           of the product. Default is `False`
+                           of the product. Default is ``False``
     :type entire_product: bool
-    :param bands: list of bands to download. If None all bands will be downloaded. Default is `None`
+    :param bands: list of bands to download. If None all bands will be downloaded. Default is ``None``
     :type bands: list(str) or None
     :return: Nested dictionaries representing .SAFE structure.
     :rtype: dict
@@ -516,19 +516,19 @@ def download_safe_format(product_id=None, tile=None, folder='.', redownload=Fals
     """
     Downloads .SAFE format structure in form of nested dictionaries. Either product_id or tile must be specified.
 
-    :param product_id: original ESA product identification string. Default is `None`
+    :param product_id: original ESA product identification string. Default is ``None``
     :type product_id: str
-    :param tile: tuple containing tile name and sensing time/date. Default is `None`
+    :param tile: tuple containing tile name and sensing time/date. Default is ``None``
     :type tile: (str, str)
-    :param folder: location of the directory where the fetched data will be saved. Default is `'.'`
+    :param folder: location of the directory where the fetched data will be saved. Default is ``'.'``
     :type folder: str
-    :param redownload: if True, download again the requested data even though it's already saved to disk. Default is
-                       `False`, do not download if data is already available on disk. Default is `False`
+    :param redownload: if ``True``, download again the requested data even though it's already saved to disk. If
+                       ``False``, do not download if data is already available on disk. Default is ``False``
     :type redownload: bool
     :param entire_product: in case tile is specified this flag determines if it will be place inside a .SAFE structure
-                           of the product. Default is `False`
+                           of the product. Default is ``False``
     :type entire_product: bool
-    :param bands: list of bands to download. If None all bands will be downloaded. Default is `None`
+    :param bands: list of bands to download. If None all bands will be downloaded. Default is ``None``
     :type bands: list(str) or None
     :return: Nested dictionaries representing .SAFE structure.
     :rtype: dict

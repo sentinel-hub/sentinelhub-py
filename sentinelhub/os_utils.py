@@ -9,7 +9,7 @@ import errno
 def get_content_list(folder='.'):
     """ Get list of contents in input folder
 
-    :param folder: input folder to list contents. Default is `'.'`
+    :param folder: input folder to list contents. Default is ``'.'``
     :type folder: str
     :return: list of folder contents
     :rtype: list(str)
@@ -20,7 +20,7 @@ def get_content_list(folder='.'):
 def get_folder_list(folder='.'):
     """ Get list of sub-folders contained in input folder
 
-    :param folder: input folder to list sub-folders. Default is `'.'`
+    :param folder: input folder to list sub-folders. Default is ``'.'``
     :type folder: str
     :return: list of sub-folders
     :rtype: list(str)
@@ -32,7 +32,7 @@ def get_folder_list(folder='.'):
 def get_file_list(folder='.'):
     """ Get list of files contained in input folder
 
-    :param folder: input folder to list files only. Default is `'.'`
+    :param folder: input folder to list files only. Default is ``'.'``
     :type folder: str
     :return: list of files
     :rtype: list(str)
@@ -77,7 +77,7 @@ def rename(old_path, new_path, edit_folders=True):
 
     :param old_path: name of file or folder to rename
     :param new_path: name of new file or folder
-    :param edit_folders: flag to allow recursive renaming of folders. Default is `True`
+    :param edit_folders: flag to allow recursive renaming of folders. Default is ``True``
     :type old_path: str
     :type new_path: str
     :type edit_folders: bool

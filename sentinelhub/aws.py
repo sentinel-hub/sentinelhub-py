@@ -21,11 +21,11 @@ class AwsService(ABC):
 
     :param data_folder: location of the directory where the fetched data will be saved.
     :type data_folder: str
-    :param bands: List of Sentinel-2 bands for request. If parameter is set to None all bands will be used.
+    :param bands: List of Sentinel-2 bands for request. If parameter is set to ``None`` all bands will be used.
     :type bands: list(str) or None
     :param metafiles: List of additional metafiles available on AWS
-                      (e.g. ['metadata', 'tileInfo', 'preview/B01', 'TCI']).
-                      If parameter is set to None the list will be set automatically.
+                      (e.g. ``['metadata', 'tileInfo', 'preview/B01', 'TCI']``).
+                      If parameter is set to ``None`` the list will be set automatically.
     :type metafiles: list(str) or None
     """
     def __init__(self, data_folder='', bands=None, metafiles=None):
@@ -164,7 +164,7 @@ class AwsProduct(AwsService):
     :param bands: List of Sentinel-2 bands for request. If parameter is set to None all bands will be used.
     :type bands: list(str) or None
     :param metafiles: List of additional metafiles available on AWS
-                      (e.g. ['metadata', 'tileInfo', 'preview/B01', 'TCI']).
+                      (e.g. ``['metadata', 'tileInfo', 'preview/B01', 'TCI']``).
                       If parameter is set to None the list will be set automatically.
     :type metafiles: list(str) or None
     """
@@ -301,17 +301,17 @@ class AwsTile(AwsService):
     :param time: Tile sensing time in ISO8601 format
     :type time: str
     :param aws_index: There exist Sentinel-2 tiles with the same tile and time parameter. Therefore each tile on AWS
-                      also has an index which is visible in their url path. If aws_index is set to None the class will
-                      try to find the index automatically. If there will be multiple choices it will choose the lowest
-                      index and inform the user.
+                      also has an index which is visible in their url path. If ``aws_index`` is set to ``None`` the
+                      class will try to find the index automatically. If there will be multiple choices it will choose
+                      the lowest index and inform the user.
     :type aws_index: int or None
     :param data_folder: location of the directory where the fetched data will be saved.
     :type data_folder: str
-    :param bands: List of Sentinel-2 bands for request. If parameter is set to None all bands will be used.
+    :param bands: List of Sentinel-2 bands for request. If parameter is set to ``None`` all bands will be used.
     :type bands: list(str) or None
     :param metafiles: List of additional metafiles available on AWS
-                      (e.g. ['metadata', 'tileInfo', 'preview/B01', 'TCI']).
-                      If parameter is set to None the list will be set automatically.
+                      (e.g. ``['metadata', 'tileInfo', 'preview/B01', 'TCI']``).
+                      If parameter is set to ``None`` the list will be set automatically.
     :type metafiles: list(str) or None
     """
     def __init__(self, tile_name, time, aws_index=None, **kwargs):

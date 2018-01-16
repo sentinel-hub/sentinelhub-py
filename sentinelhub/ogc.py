@@ -22,10 +22,10 @@ class OgcService:
     Intermediate layer between QGC-type requests (WmsRequest and WcsRequest) and the Sentinel Hub OGC (WMS and WCS)
     services.
 
-    :param base_url: base url of Sentinel Hub's OGC services. If `None`, the url specified in the configuration
+    :param base_url: base url of Sentinel Hub's OGC services. If ``None``, the url specified in the configuration
                     file is taken.
     :type base_url: None or str
-    :param instance_id: user's instance id granting access to Sentinel Hub's OGC services. If `None`, the instance id
+    :param instance_id: user's instance id granting access to Sentinel Hub's OGC services. If ``None``, the instance id
                         specified in the configuration file is taken.
     :type instance_id: None or str
     """
@@ -110,7 +110,7 @@ class OgcService:
 
         {source}_{layer}_{crs}_{bbox}_{time}_{size_x}X{size_y}_{custom_url_param}_{custom_url_param_val}.{image_format}
 
-        In case of TIFF_d32f a '_tiff_depth32f' is added at the end of the filename (before format suffix)
+        In case of `TIFF_d32f` a `'_tiff_depth32f'` is added at the end of the filename (before format suffix)
         to differentiate it from 16-bit float tiff.
 
         :param request: OGC request with specified bounding box, cloud coverage for specific product.
@@ -152,20 +152,20 @@ class OgcService:
 
         Parses specified time into common form - tuple of start and end dates, i.e.:
 
-        (2017-01-15:T00:00:00, 2017-01-16:T23:59:59)
+        ``(2017-01-15:T00:00:00, 2017-01-16:T23:59:59)``
 
         The parameter can have the following values/format, which will be parsed as:
 
-        * None -> [s2_start_date from config.json, current date]
-        * YYYY-MM-DD -> [YYYY-MM-DD:T00:00:00, YYYY-MM-DD:T23:59:59]
-        * YYYY-MM-DDThh:mm:ss -> [YYYY-MM-DDThh:mm:ss, YYYY-MM-DDThh:mm:ss]
-        * list or tuple of two dates (YYYY-MM-DD) -> [YYYY-MM-DDT00:00:00, YYYY-MM-DDT23:59:59], where the first
+        * ``None`` -> `[s2_start_date from config.json, current date]`
+        * `YYYY-MM-DD` -> `[YYYY-MM-DD:T00:00:00, YYYY-MM-DD:T23:59:59]`
+        * `YYYY-MM-DDThh:mm:ss` -> `[YYYY-MM-DDThh:mm:ss, YYYY-MM-DDThh:mm:ss]`
+        * list or tuple of two dates (`YYYY-MM-DD`) -> `[YYYY-MM-DDT00:00:00, YYYY-MM-DDT23:59:59]`, where the first
           (second) element is start (end) date
-        * list or tuple of two dates (YYYY-MM-DDThh:mm:ss) -> [YYYY-MM-DDThh:mm:ss, YYYY-MM-DDThh:mm:ss],
+        * list or tuple of two dates (`YYYY-MM-DDThh:mm:ss`) -> `[YYYY-MM-DDThh:mm:ss, YYYY-MM-DDThh:mm:ss]`,
           where the first (second) element is start (end) date
 
         :param time: time window of acceptable acquisitions. See above for all acceptable argument formats.
-        :type time: None, str of form `YYYY-MM-DD` or 'YYYY-MM-DDThh:mm:ss', list or tuple of two such strings
+        :type time: ``None``, str of form `YYYY-MM-DD` or `'YYYY-MM-DDThh:mm:ss'`, list or tuple of two such strings
         :return: interval of start and end date of the form YYYY-MM-DDThh:mm:ss
         :rtype: tuple of start and end date
         """
@@ -221,8 +221,8 @@ class OgcService:
         Filters out dates within time_difference, preserving only the oldest date.
 
         :param dates: a list of datetime objects
-        :param time_difference: a datetime.timedelta representing the time difference threshold
-        :return: an ordered list of datetimes d1<=d2<=...<=dn such that d[i+1]-di > time_difference
+        :param time_difference: a ``datetime.timedelta`` representing the time difference threshold
+        :return: an ordered list of datetimes `d1<=d2<=...<=dn` such that `d[i+1]-di > time_difference`
         :rtype: list[datetime.datetime]
         """
 

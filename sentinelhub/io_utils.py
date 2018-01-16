@@ -29,7 +29,7 @@ def read_data(filename, data_format=None):
 
     :param filename: filename to read data from
     :type filename: str
-    :param data_format: format of filename. Default is `None`
+    :param data_format: format of filename. Default is ``None``
     :type data_format: str
     :return: data read from filename
     :raises: exception if filename does not exist
@@ -103,7 +103,7 @@ def read_csv(filename, delimiter=CSV_DELIMITER):
 
     :param filename: name of CSV file to be read
     :type filename: str
-    :param delimiter: type of CSV delimiter. Default is `;`
+    :param delimiter: type of CSV delimiter. Default is ``;``
     :type delimiter: str
     :return: data stored in CSV file as list
     """
@@ -153,11 +153,11 @@ def write_data(filename, data, data_format=None, compress=False, add=False):
     :type filename: str
     :param data: image data to write to file
     :type data: numpy array
-    :param data_format: format of output file. Default is `None`
+    :param data_format: format of output file. Default is ``None``
     :type data_format: str
-    :param compress: whether to compress data or not. Default is `False`
+    :param compress: whether to compress data or not. Default is ``False``
     :type compress: bool
-    :param add: whether to append to existing text file or not. Default is `False`
+    :param add: whether to append to existing text file or not. Default is ``False``
     :type add: bool
     :raises: exception if numpy format is not supported or file cannot be written
     """
@@ -192,7 +192,7 @@ def write_tiff_image(filename, image, compress=False):
     :type filename: str
     :param image: image data to write to file
     :type image: numpy array
-    :param compress: whether to compress data. If True, lzma compression is used. Default is `False`
+    :param compress: whether to compress data. If True, lzma compression is used. Default is ``False``
     :type compress: bool
     """
     if compress:
@@ -233,7 +233,7 @@ def write_text(filename, data, add=False):
     :type filename: str
     :param data: image data to write to text file
     :type data: numpy array
-    :param add: whether to append to existing file or not. Default is `False`
+    :param add: whether to append to existing file or not. Default is ``False``
     :type add: bool
     """
     write_type = 'a' if add else 'w'
@@ -248,7 +248,7 @@ def write_csv(filename, data, delimiter=CSV_DELIMITER):
     :type filename: str
     :param data: image data to write to CSV file
     :type data: numpy array
-    :param delimiter: delimiter used in CSV file. Default is `;`
+    :param delimiter: delimiter used in CSV file. Default is ``;``
     :type delimiter: str
     """
     with open(filename, 'w') as file:
