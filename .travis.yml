@@ -2,9 +2,6 @@ language: python
 notifications:
   email: false
 python:
-- "2.7"
-- "3.3"
-- "3.4"
 - "3.5"
 - "3.6"
 before_install:
