@@ -3,7 +3,6 @@ import unittest
 import shutil
 
 from sentinelhub.data_request import AwsTileRequest, AwsProductRequest
-from sentinelhub.aws import AwsTile
 
 logging.basicConfig(level=logging.INFO,
                     format='%(asctime)-15s %(module)s:%(lineno)d [%(levelname)s] %(funcName)s  %(message)s')

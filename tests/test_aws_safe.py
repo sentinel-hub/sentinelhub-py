@@ -3,7 +3,6 @@ import unittest
 import shutil
 
 from sentinelhub.data_request import AwsTileRequest, AwsProductRequest
-from sentinelhub.aws_safe import SafeTile
 
 logging.basicConfig(level=logging.INFO,
                     format='%(asctime)-15s %(module)s:%(lineno)d [%(levelname)s] %(funcName)s  %(message)s')
