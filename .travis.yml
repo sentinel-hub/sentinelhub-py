@@ -12,6 +12,6 @@ install:
 - pip install -r requirements-dev.txt
 - pip install .
 script:
-- pytest --cov
 - pylint sentinelhub/*.py
 - radon cc sentinelhub/*.py -a -nb
+- pytest --cov
