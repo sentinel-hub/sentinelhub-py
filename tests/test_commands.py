@@ -2,6 +2,7 @@ import logging
 import unittest
 import shutil
 import subprocess
+import os
 
 logging.basicConfig(level=logging.INFO,
                     format='%(asctime)-15s %(module)s:%(lineno)d [%(levelname)s] %(funcName)s  %(message)s')
@@ -11,7 +12,11 @@ class TestCommands(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.status = 0
+
         folder = 'TestOutputs'
+        if os.path.exists(folder):
+            os.mkdir(folder)
+
         compact_product_id = 'S2A_MSIL1C_20170414T003551_N0204_R016_T54HVH_20170414T003551'
         cls.status += subprocess.call('sentinelhub.aws --product {} -rf ./{}'.format(compact_product_id, folder),
                                       shell=True)
