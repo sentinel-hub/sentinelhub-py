@@ -58,6 +58,12 @@ class BBox:
         return self.max_x, self.max_y
 
     def get_crs(self):
+        """
+        Returns the coordinate reference system (CRS) of the bounding box.
+
+        :return: CRS that the BBox is given in
+        :rtype: constants.CRS
+        """
         return self.crs
 
     def __repr__(self):
