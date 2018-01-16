@@ -1,0 +1,17 @@
+language: python
+notifications:
+  email: false
+python:
+- "2.7"
+- "3.3"
+- "3.4"
+- "3.5"
+- "3.6"
+before_install:
+- sudo apt-get -qq update
+- sudo apt-get install -y libopenjp2-7
+install:
+- pip install -r requirements-dev.txt
+- pip install .
+script:
+- pytest --cov
