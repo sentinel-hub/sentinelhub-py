@@ -30,7 +30,7 @@ class BBox:
 
     :param bbox: a bbox in a number of representations.
     :param crs: Coordinate Reference System that bbox is in. Expect one of the constants from the const.CRS enum.
-    :type: constants.CRS
+    :type crs: constants.CRS
     """
     def __init__(self, bbox, crs):
         x_fst, y_fst, x_snd, y_snd = BBox._to_tuple(bbox)
@@ -58,8 +58,7 @@ class BBox:
         return self.max_x, self.max_y
 
     def get_crs(self):
-        """
-        Returns the coordinate reference system (CRS) of the bounding box.
+        """ Returns the coordinate reference system (CRS) of the bounding box.
 
         :return: CRS that the BBox is given in
         :rtype: constants.CRS
