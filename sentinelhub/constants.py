@@ -174,11 +174,11 @@ class MimeType(Enum):
         """ Canonical extension of file format extension
 
         Converts the format extension fmt_ext into the canonical extension for that format. For example,
-        canonical_extension('tif') = 'tiff'. Here we agree that the canonical extension for format F is F.value
+        `canonical_extension('tif') == 'tiff'`. Here we agree that the canonical extension for format F is F.value
 
-        :param fmt_ext: A string representing an extension (e.g. 'txt', 'png', etc.)
+        :param fmt_ext: A string representing an extension (e.g. `'txt'`, `'png'`, etc.)
         :type fmt_ext: str
-        :return: The canonical form of the extension (e.g. if fmt_ext='tif' then we return 'tiff')
+        :return: The canonical form of the extension (e.g. if `fmt_ext='tif'` then we return `'tiff'`)
         :rtype: str
         """
         if MimeType.has_value(fmt_ext):
