@@ -13,11 +13,11 @@ format.
 
 # Installation
 
-The package requires a Python 3.\* version. The package is available on
+The package requires a Python version >= 3.5. The package is available on
 the PyPI package manager and can be installed with
 
 ```
-$ pip install -U sentinelhub
+$ pip install sentinelhub
 ```
 
 To install the package manually, clone the repository and
@@ -35,8 +35,8 @@ on the package and to access the documentation, visit the [docs](http://sentinel
 
 ### OGC web service
 
-Some of the major features introduced in version 1.0 are linked to one's [Sentinel-Hub account](https://services.sentinel-hub.com/oauth/subscription):
- * support for Web Map Service (WMS) and Web Coverage Service (WCS) requests using your Sentinel-Hub account;
+Some of the major features introduced in version 1.0 are linked to one's [Sentinel Hub account](https://services.sentinel-hub.com/oauth/subscription):
+ * support for Web Map Service (WMS) and Web Coverage Service (WCS) requests using your Sentinel Hub account;
  * support for standard and custom multi-spectra layers, such as unprocessed
  bands, true color imagery, or NDVI;
  * support for multi-temporal requests;
@@ -49,14 +49,14 @@ Some of the major features introduced in version 1.0 are linked to one's [Sentin
 ### AWS data download
 
 The package allows to download Sentinel-2 data from Sentinel-2 on AWS
-and reconstruct data into ESA .SAFE format. Sentinel-Hub account is not required to use this functionality.
+and reconstruct data into ESA .SAFE format. Sentinel Hub account is not required to use this functionality.
 
 The following are implemented:
  * support of old and new (i.e. compact) .SAFE format;
  * support for downloading of either entire product, or a map of the .SAFE
  structure only;
  * support of command lines entries;
- * support of threaded downloads, and redownloads of existing data (not default);
+ * adjustable threaded downloads, and optional redownloads of existing data (not default);
  * requires either S-2 product ID, or tile name and date of a product.
 
 # Examples
