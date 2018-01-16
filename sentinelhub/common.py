@@ -20,16 +20,16 @@ class BBox:
     Throughout the sentinelhub package this class serves as the canonical representation of a bounding
     box. It can instantiate itself from multiple representations:
 
-        1) ((min_x,min_y),(max_x,max_y))
-        2) (min_x,min_y,max_x,max_y)
-        3) [min_x,min_y,max_x,max_y]
-        4) [[min_x, min_y],[max_x,max_y]],
-        5) 'min_x,min_y,max_x,max_y'
-        6) {'min_x':min_x, 'max_x':max_x, 'min_y':min_y, 'max_y':max_y}
-        7) bbox, where bbox is an instance of BBox
+        1) ``((min_x,min_y),(max_x,max_y))``,
+        2) ``(min_x,min_y,max_x,max_y)``,
+        3) ``[min_x,min_y,max_x,max_y]``,
+        4) ``[[min_x, min_y],[max_x,max_y]]``,
+        5) ``'min_x,min_y,max_x,max_y'``,
+        6) ``{'min_x':min_x, 'max_x':max_x, 'min_y':min_y, 'max_y':max_y}``,
+        7) ``bbox``, where ``bbox`` is an instance of ``BBox``.
 
     :param bbox: a bbox in a number of representations.
-    :param crs: Coordinate Reference System that bbox is in. Expect one of the constants from the const.CRS enum.
+    :param crs: Coordinate Reference System that bbox is in. Expect one of the constants from the ``const.CRS`` enum.
     :type crs: constants.CRS
     """
     def __init__(self, bbox, crs):

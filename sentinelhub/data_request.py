@@ -155,9 +155,9 @@ class OgcRequest(DataRequest):
 
     :param source: type of OGC request (WMS or WCS)
     :type source: constants.DataSource
-    :param size_x: number of pixels in x or resolution in x (i.e. 512 or `10m`)
+    :param size_x: number of pixels in x or resolution in x (i.e. `512` or `10m`)
     :type size_x: int or str
-    :param size_y: number of pixels in x or resolution in y (i.e. 512 or `10m`)
+    :param size_y: number of pixels in x or resolution in y (i.e. `512` or `10m`)
     :type size_y: int or str
     :param bbox: specifies the bounding box of the requested image. Coordinates must be in
                     the specified coordinate reference system. Required.

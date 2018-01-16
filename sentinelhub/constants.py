@@ -92,11 +92,11 @@ class _BaseCRS(Enum):
 
     @classmethod
     def has_value(cls, value):
-        """ Tests whether CRS contains a constant defined with string `value`.
+        """ Tests whether CRS contains a constant defined with string ``value``.
 
         :param value: The string representation of the enum constant.
         :type value: str
-        :return: `True` if there exists a constant with string value `value`, `False` otherwise
+        :return: ``True`` if there exists a constant with string value ``value``, ``False`` otherwise
         :rtype: bool
         """
         return any(value == item.value for item in cls)
@@ -126,11 +126,11 @@ class CustomUrlParam(Enum):
 
     @classmethod
     def has_value(cls, value):
-        """ Tests whether CustomUrlParam contains a constant defined with a string `value`
+        """ Tests whether CustomUrlParam contains a constant defined with a string ``value``
 
         :param value: The string representation of the enum constant
         :type value: str
-        :return: `True` if there exists a constant with a string value `value`, `False` otherwise
+        :return: ``True`` if there exists a constant with a string value ``value``, ``False`` otherwise
         :rtype: bool
         """
         return any(value.lower() == item.value.lower() for item in cls)
@@ -174,11 +174,11 @@ class MimeType(Enum):
         """ Canonical extension of file format extension
 
         Converts the format extension fmt_ext into the canonical extension for that format. For example,
-        `canonical_extension('tif') == 'tiff'`. Here we agree that the canonical extension for format F is F.value
+        ``canonical_extension('tif') == 'tiff'``. Here we agree that the canonical extension for format F is F.value
 
-        :param fmt_ext: A string representing an extension (e.g. `'txt'`, `'png'`, etc.)
+        :param fmt_ext: A string representing an extension (e.g. ``'txt'``, ``'png'``, etc.)
         :type fmt_ext: str
-        :return: The canonical form of the extension (e.g. if `fmt_ext='tif'` then we return `'tiff'`)
+        :return: The canonical form of the extension (e.g. if ``fmt_ext='tif'`` then we return ``'tiff'``)
         :rtype: str
         """
         if MimeType.has_value(fmt_ext):
@@ -199,18 +199,18 @@ class MimeType(Enum):
 
         :param value: File format
         :type value: str
-        :return: `True` if file is in image format, `False` otherwise
+        :return: ``True`` if file is in image format, ``False`` otherwise
         :rtype: bool
         """
         return value in frozenset([MimeType.TIFF, MimeType.TIFF_d32f, MimeType.PNG, MimeType.JP2, MimeType.JPG])
 
     @classmethod
     def has_value(cls, value):
-        """ Tests whether MimeType contains a constant defined with string `value`
+        """ Tests whether MimeType contains a constant defined with string ``value``
 
         :param value: The string representation of the enum constant
         :type value: str
-        :return: `True` if there exists a constant with string value `value`, `False` otherwise
+        :return: ``True`` if there exists a constant with string value ``value``, ``False`` otherwise
         :rtype: bool
         """
         return any(value == item.value for item in cls)
