@@ -14,7 +14,7 @@ class TestCommands(unittest.TestCase):
         cls.status = 0
 
         folder = 'TestOutputs'
-        if os.path.exists(folder):
+        if not os.path.exists(folder):
             os.mkdir(folder)
 
         compact_product_id = 'S2A_MSIL1C_20170414T003551_N0204_R016_T54HVH_20170414T003551'
