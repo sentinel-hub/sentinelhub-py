@@ -33,7 +33,7 @@ class SGConfig:
             self.config_params = ['ogc_base_url', 'instance_id', 'aws_base_url',
                                   'aws_website_url', 'opensearch_url',
                                   'max_opensearch_records_per_query', 's2_start_date',
-                                  'max_download_attempts', 'download_sleep_time']
+                                  'max_download_attempts', 'download_sleep_time', 'download_timeout_seconds']
             self._load_configuration()
 
         def _check_configuration(self, config):
