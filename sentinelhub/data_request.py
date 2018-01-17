@@ -102,7 +102,7 @@ class DataRequest(ABC):
 
     def _update_download_requests(self, save_data):
         """
-        Updates attributes of download requests in download_list
+        Updates attributes of download requests in ``self.download_list``
         :param save_data: Tells whether to save data or not
         :type: bool
         """
@@ -178,7 +178,8 @@ class OgcRequest(DataRequest):
                         in some cases 32-bit TIFF is required, i.e. if requesting unprocessed raw bands.
                         Default is ``constants.MimeType.PNG``.
     :type image_format: constants.MimeType
-    :param instance_id: user's instance id. If None the instance id is taken from the config.json configuration file.
+    :param instance_id: user's instance id. If ``None`` the instance id is taken from the ``config.json``
+                        configuration file.
     :type instance_id: str
     :param custom_url_params: dictionary of CustomUrlParameters and their values supported by Sentinel Hub's WMS and WCS
                               services. All available parameters are described at
@@ -282,7 +283,8 @@ class WmsRequest(OgcRequest):
                         in some cases 32-bit TIFF is required, i.e. if requesting unprocessed raw bands.
                         Default is ``constants.MimeType.PNG``.
     :type image_format: constants.MimeType
-    :param instance_id: user's instance id. If None the instance id is taken from the config.json configuration file.
+    :param instance_id: user's instance id. If ``None`` the instance id is taken from the ``config.json``
+                        configuration file.
     :type instance_id: str
     :param custom_url_params: dictionary of CustomUrlParameters and their values supported by Sentinel Hub's WMS and WCS
                               services. All available parameters are described at
@@ -341,7 +343,8 @@ class WcsRequest(OgcRequest):
                         in some cases 32-bit TIFF is required, i.e. if requesting unprocessed raw bands.
                         Default is ``constants.MimeType.PNG``.
     :type image_format: constants.MimeType
-    :param instance_id: user's instance id. If None the instance id is taken from the config.json configuration file.
+    :param instance_id: user's instance id. If ``None`` the instance id is taken from the ``config.json``
+                        configuration file.
     :type instance_id: str
     :param custom_url_params: dictionary of CustomUrlParameters and their values supported by Sentinel Hub's WMS and WCS
                               services. All available parameters are described at
@@ -484,7 +487,7 @@ class AwsTileRequest(AwsRequest):
 
 def get_safe_format(product_id=None, tile=None, entire_product=False, bands=None):
     """
-    Returns .SAFE format structure in form of nested dictionaries. Either product_id or tile must be specified.
+    Returns .SAFE format structure in form of nested dictionaries. Either ``product_id`` or ``tile`` must be specified.
 
     :param product_id: original ESA product identification string. Default is ``None``
     :type product_id: str
@@ -493,7 +496,7 @@ def get_safe_format(product_id=None, tile=None, entire_product=False, bands=None
     :param entire_product: in case tile is specified this flag determines if it will be place inside a .SAFE structure
                            of the product. Default is ``False``
     :type entire_product: bool
-    :param bands: list of bands to download. If None all bands will be downloaded. Default is ``None``
+    :param bands: list of bands to download. If ``None`` all bands will be downloaded. Default is ``None``
     :type bands: list(str) or None
     :return: Nested dictionaries representing .SAFE structure.
     :rtype: dict
@@ -514,7 +517,8 @@ def get_safe_format(product_id=None, tile=None, entire_product=False, bands=None
 
 def download_safe_format(product_id=None, tile=None, folder='.', redownload=False, entire_product=False, bands=None):
     """
-    Downloads .SAFE format structure in form of nested dictionaries. Either product_id or tile must be specified.
+    Downloads .SAFE format structure in form of nested dictionaries. Either ``product_id`` or ``tile`` must
+    be specified.
 
     :param product_id: original ESA product identification string. Default is ``None``
     :type product_id: str
@@ -528,7 +532,7 @@ def download_safe_format(product_id=None, tile=None, folder='.', redownload=Fals
     :param entire_product: in case tile is specified this flag determines if it will be place inside a .SAFE structure
                            of the product. Default is ``False``
     :type entire_product: bool
-    :param bands: list of bands to download. If None all bands will be downloaded. Default is ``None``
+    :param bands: list of bands to download. If ``None`` all bands will be downloaded. Default is ``None``
     :type bands: list(str) or None
     :return: Nested dictionaries representing .SAFE structure.
     :rtype: dict

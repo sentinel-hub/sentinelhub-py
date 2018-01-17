@@ -217,8 +217,7 @@ def execute_download_request(request):
 
 
 def _do_request(request):
-    """
-    Executes download request
+    """ Executes download request
     :param request: A request
     :type: DownloadRequest
     :return: Response of the request
@@ -231,8 +230,7 @@ def _do_request(request):
 
 
 def _save_if_needed(request, response):
-    """
-    Save data to disk, if requested by the user
+    """ Save data to disk, if requested by the user
     :param request: Download request
     :type: DownloadRequest
     :param response: Response object from requests module

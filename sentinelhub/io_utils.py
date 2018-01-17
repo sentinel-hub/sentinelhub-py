@@ -24,7 +24,7 @@ def read_data(filename, data_format=None):
     """ Read image data from file
 
     This function reads input data from file. The format of the file
-    can be specified in data_format. If not specified, the format is
+    can be specified in ``data_format``. If not specified, the format is
     guessed from the extension of the filename.
 
     :param filename: filename to read data from
@@ -192,7 +192,7 @@ def write_tiff_image(filename, image, compress=False):
     :type filename: str
     :param image: image data to write to file
     :type image: numpy array
-    :param compress: whether to compress data. If True, lzma compression is used. Default is ``False``
+    :param compress: whether to compress data. If ``True``, lzma compression is used. Default is ``False``
     :type compress: bool
     """
     if compress:

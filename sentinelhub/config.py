@@ -11,13 +11,13 @@ class SGConfig:
     """ This is a singleton implementation of the sentinelhub configuration class.
 
     The class reads during its first initialisation the configurable settings from
-    ./config.json file:
+    ``./config.json`` file:
 
         - ogc_base_url: base url for Sentinel Hub's services (should not be changed by the user)
         - aws_base_url: base url for Sentinel-2 data on AWS (should not be changed by the user)
         - aws_website_url: base url for AWS' public Sentinel-2 image browser
-        - instance_id: users' instance id. User can set it to his/hers instance id in config.json instead of specifying
-          it explicitly every time he/she creates new ogc request.
+        - instance_id: users' instance id. User can set it to his/hers instance id in ``config.json`` instead
+          of specifying it explicitly every time he/she creates new ogc request.
 
     Usage in the code:
 
@@ -40,7 +40,7 @@ class SGConfig:
             """
             Checks if configuration file has contains all keys.
 
-            :param config: configuration dictionary read from `config.json`
+            :param config: configuration dictionary read from ``config.json``
             :type config: dict
             """
 
