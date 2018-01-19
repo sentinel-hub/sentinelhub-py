@@ -4,13 +4,14 @@ Module for working with Sentinel Hub OGC services
 
 import logging
 import datetime
+import base64
 
 from urllib.parse import urlencode
 
 from .time_utils import get_current_date, parse_time
 from .opensearch import get_area_dates
 from .download import DownloadRequest
-from .constants import CRS, DataSource, MimeType, OgcConstants
+from .constants import CRS, DataSource, MimeType, OgcConstants, CustomUrlParam
 from .config import SGConfig
 
 LOGGER = logging.getLogger(__name__)
@@ -97,6 +98,10 @@ class OgcService:
         if request.custom_url_params is not None:
             params = {**params,
                       **{k.value: str(v) for k, v in request.custom_url_params.items()}}
+
+            if CustomUrlParam.EVALSCRIPT.value in params:
+                evalscript = params[CustomUrlParam.EVALSCRIPT.value]
+                params[CustomUrlParam.EVALSCRIPT.value] = base64.b64encode(evalscript.encode()).decode()
 
         return '{0}/{1}?{2}'.format(url, self.instance_id, urlencode(params))
 

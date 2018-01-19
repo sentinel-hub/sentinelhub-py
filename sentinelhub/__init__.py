@@ -21,4 +21,4 @@ from .geo_utils import bbox_to_resolution, get_utm_bbox, wgs84_to_utm, to_wgs84,
 from .time_utils import next_date, prev_date, get_current_date
 
 
-__version__ = "1.0.0"
+__version__ = "1.0.1"

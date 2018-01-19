@@ -118,6 +118,7 @@ class CustomUrlParam(Enum):
     See http://sentinel-hub.com/develop/documentation/api/custom-url-parameters for more information.
     """
     ATMFILTER = 'AtmFilter'
+    EVALSCRIPT = 'EvalScript'
     EVALSCRIPTURL = 'EvalScriptUrl'
     PREVIEW = 'Preview'
     QUALITY = 'Quality'

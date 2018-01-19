@@ -21,11 +21,10 @@ class TestOgcServices(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         bbox = BBox(bbox=(47.94, -5.23, 48.17, -5.03), crs=CRS.WGS84)
-        cls.request = OgcRequest(image_format=MimeType.TIFF_d32f,
-                                                 layer='ALL_BANDS', maxcc=1.0, data_folder='TestOutputs',
-                                                 bbox=bbox, time=('2017-10-01', '2017-10-31'),
-                                                 time_difference=datetime.timedelta(days=10),
-                                                 source=DataSource.WMS, instance_id=INSTANCE_ID)
+        cls.request = OgcRequest(image_format=MimeType.TIFF_d32f, layer='ALL_BANDS', maxcc=1.0,
+                                 data_folder='TestOutputs', bbox=bbox, time=('2017-10-01', '2017-10-31'),
+                                 time_difference=datetime.timedelta(days=10),
+                                 source=DataSource.WMS, instance_id=INSTANCE_ID)
 
     def test_get_dates(self):
         dates = OgcService.get_dates(self.request)
@@ -86,7 +85,8 @@ class TestCustomUrlParameters(unittest.TestCase):
 
         cls.stat_expect_atmfilter = {'min': 12, 'max': 255, 'mean': 190.0, 'median': 199.0}
         cls.stat_expect_preview = {'min': 28, 'max': 253, 'mean': 171.8, 'median': 171.0}
-        cls.stat_expect_evalscript = {'min': 17, 'max': 255, 'mean': 162.4, 'median': 159.0}
+        cls.stat_expect_evalscript_url = {'min': 17, 'max': 255, 'mean': 162.4, 'median': 159.0}
+        cls.stat_expect_evalscript = {'min': 0, 'max': 233, 'mean': 45.8, 'median': 54.0}
 
         cls.request_atmfilter = WmsRequest(data_folder='TestOutputs', image_format=MimeType.PNG, layer='TRUE_COLOR',
                                            maxcc=1.0, width=512, height=512, bbox=bbox, instance_id=INSTANCE_ID,
@@ -100,16 +100,21 @@ class TestCustomUrlParameters(unittest.TestCase):
                                          maxcc=1.0, width=512, height=512, bbox=bbox, time=('2017-10-01', '2017-10-02'),
                                          instance_id=INSTANCE_ID, custom_url_params={CustomUrlParam.PREVIEW: 2})
 
+        cls.request_evalscript_url = WmsRequest(data_folder='TestOutputs', image_format=MimeType.PNG,
+                                                layer='TRUE_COLOR', maxcc=1.0, width=512, height=512, bbox=bbox,
+                                                time=('2017-10-01', '2017-10-02'), instance_id=INSTANCE_ID,
+                                                custom_url_params={CustomUrlParam.EVALSCRIPTURL:
+                                                                   'https://raw.githubusercontent.com/sentinel-hub/'
+                                                                   'customScripts/master/sentinel-2/false_color_'
+                                                                   'infrared/script.js'})
         cls.request_evalscript = WmsRequest(data_folder='TestOutputs', image_format=MimeType.PNG, layer='TRUE_COLOR',
                                             maxcc=1.0, width=512, height=512, bbox=bbox,
                                             time=('2017-10-01', '2017-10-02'), instance_id=INSTANCE_ID,
-                                            custom_url_params={CustomUrlParam.EVALSCRIPTURL:
-                                                               'https://raw.githubusercontent.com/sentinel-hub/'
-                                                               'customScripts/master/sentinel-2/false_color_infrared/'
-                                                               'script.js'})
+                                            custom_url_params={CustomUrlParam.EVALSCRIPT: 'return [B10,B8A,B03]'})
 
         cls.data_atmfilter = cls.request_atmfilter.get_data(redownload=True)
         cls.data_preview = cls.request_preview.get_data(redownload=True)
+        cls.data_evalscript_url = cls.request_evalscript_url.get_data(redownload=True)
         cls.data_evalscript = cls.request_evalscript.get_data(redownload=True)
 
     def test_return_type(self):
@@ -119,9 +124,12 @@ class TestCustomUrlParameters(unittest.TestCase):
         self.assertTrue(isinstance(self.data_preview, list), "Expected a list")
         self.assertEqual(len(self.data_preview), 1,
                          "Expected a list of length 1, got length {}".format(str(len(self.data_preview))))
+        self.assertTrue(isinstance(self.data_evalscript_url, list), "Expected a list")
+        self.assertEqual(len(self.data_evalscript_url), 1,
+                         "Expected a list of length 1, got length {}".format(str(len(self.data_evalscript_url))))
         self.assertTrue(isinstance(self.data_evalscript, list), "Expected a list")
         self.assertEqual(len(self.data_evalscript), 1,
-                         "Expected a list of length 1, got length {}".format(str(len(self.data_evalscript))))
+                         "Expected a list of length 1, got length {}".format(str(len(self.data_evalscript_url))))
 
     def test_download_url(self):
         self.assertTrue(CustomUrlParam.ATMFILTER.value in self.request_atmfilter.get_url_list()[-1],
@@ -138,6 +146,10 @@ class TestCustomUrlParameters(unittest.TestCase):
                             'mean': np.mean(self.data_atmfilter[0]), 'median': np.median(self.data_atmfilter[0])}
         preview_values = {'min': np.amin(self.data_preview[0]), 'max': np.amax(self.data_preview[0]),
                           'mean': np.mean(self.data_preview[0]), 'median': np.median(self.data_preview[0])}
+        evalscript_url_values = {'min': np.amin(self.data_evalscript_url[0]),
+                                 'max': np.amax(self.data_evalscript_url[0]),
+                                 'mean': np.mean(self.data_evalscript_url[0]),
+                                 'median': np.median(self.data_evalscript_url[0])}
         evalscript_values = {'min': np.amin(self.data_evalscript[0]), 'max': np.amax(self.data_evalscript[0]),
                              'mean': np.mean(self.data_evalscript[0]), 'median': np.median(self.data_evalscript[0])}
 
@@ -155,8 +167,15 @@ class TestCustomUrlParameters(unittest.TestCase):
                 self.assertAlmostEqual(expected, real_val, delta=1e-1,
                                        msg="Expected {}, got {}".format(str(expected), str(real_val)))
 
+        for stat_name in self.stat_expect_evalscript_url.keys():
+            with self.subTest(msg='evalscripturl_'+stat_name):
+                expected = self.stat_expect_evalscript_url[stat_name]
+                real_val = evalscript_url_values[stat_name]
+                self.assertAlmostEqual(expected, real_val, delta=1e-1,
+                                       msg="Expected {}, got {}".format(str(expected), str(real_val)))
+
         for stat_name in self.stat_expect_evalscript.keys():
-            with self.subTest(msg='preview_'+stat_name):
+            with self.subTest(msg='evalscript_'+stat_name):
                 expected = self.stat_expect_evalscript[stat_name]
                 real_val = evalscript_values[stat_name]
                 self.assertAlmostEqual(expected, real_val, delta=1e-1,
