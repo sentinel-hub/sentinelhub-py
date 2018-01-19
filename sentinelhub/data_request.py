@@ -185,7 +185,9 @@ class OgcRequest(DataRequest):
     :type instance_id: str
     :param custom_url_params: dictionary of CustomUrlParameters and their values supported by Sentinel Hub's WMS and WCS
                               services. All available parameters are described at
-                              http://www.sentinel-hub.com/develop/documentation/api/custom-url-parameters.
+                              http://www.sentinel-hub.com/develop/documentation/api/custom-url-parameters. Note: in
+                              case of constants.CustomUrlParam.EVALSCRIPT the dictionary value must be a string
+                              of Javascript code that is not encoded into base64.
     :type custom_url_params: dictionary of CustomUrlParameter enum and its value, i.e.
                               ``{constants.CustomUrlParam.ATMFILTER:'ATMCOR'}``
     :param time_difference: The time difference below which dates are deemed equal. That is, if for the given set of OGC
@@ -196,15 +198,9 @@ class OgcRequest(DataRequest):
     :param data_folder: location of the directory where the fetched data will be saved.
     :type data_folder: str
     """
-    def __init__(self, layer, bbox, *, time='latest',
-                 source=None, size_x=None, size_y=None,
-                 maxcc=1.0,
-                 image_format=MimeType.PNG,
-                 instance_id=None,
-                 custom_url_params=None,
-                 time_difference=datetime.timedelta(seconds=-1),
-                 **kwargs):
-        # bbox must have lat/lon instead of lon/lat
+    def __init__(self, layer, bbox, *, time='latest', source=None, size_x=None, size_y=None, maxcc=1.0,
+                 image_format=MimeType.PNG, instance_id=None, custom_url_params=None,
+                 time_difference=datetime.timedelta(seconds=-1), **kwargs):
         self.layer = layer
         self.bbox = bbox
         self.time = time
@@ -304,7 +300,7 @@ class WmsRequest(OgcRequest):
     More info available at:
     https://www.sentinel-hub.com/develop/documentation/api/ogc_api/wms-parameters
     """
-    def __init__(self, *, width=512, height=512, **kwargs):
+    def __init__(self, *, width=None, height=None, **kwargs):
         super(WmsRequest, self).__init__(source=DataSource.WMS, size_x=width, size_y=height, **kwargs)
 
 

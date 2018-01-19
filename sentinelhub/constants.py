@@ -112,7 +112,7 @@ CRS = _BaseCRS("CRS", dict(
 class CustomUrlParam(Enum):
     """ Enum class to represent supported custom url parameters of OGC services
 
-    Supported parameters are `AtmFilter`, `EvalScriptUrl`, `Preview`, `Quality`, `Upsampling`,
+    Supported parameters are `AtmFilter`, `EvalScript`, `EvalScriptUrl`, `Preview`, `Quality`, `Upsampling`,
     `Downsampling`.
 
     See http://sentinel-hub.com/develop/documentation/api/custom-url-parameters for more information.

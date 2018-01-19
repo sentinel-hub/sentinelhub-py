@@ -28,6 +28,11 @@ class BBox:
         6) ``{'min_x':min_x, 'max_x':max_x, 'min_y':min_y, 'max_y':max_y}``,
         7) ``bbox``, where ``bbox`` is an instance of ``BBox``.
 
+    Note that BBox coordinate system depends on ``crs`` parameter:
+        - In case of ``constants.CRS.WGS84`` axis x represents latitude and axis y represents longitude
+        - In case of ``constants.CRS.POP_WEB`` axis x represents easting and axis y represents northing
+        - In case of ``constants.CRS.UTM_*`` axis x represents easting and axis y represents northing
+
     :param bbox: a bbox in a number of representations.
     :param crs: Coordinate Reference System that bbox is in. Expect one of the constants from the ``const.CRS`` enum.
     :type crs: constants.CRS
