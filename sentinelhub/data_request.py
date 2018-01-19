@@ -258,10 +258,14 @@ class WmsRequest(OgcRequest):
     or processed products such as true color imagery, NDVI, etc. The only difference is that in
     the case od WMS request the user specifies the desired image size instead of its resolution.
 
-    :param width: width (number of columns) of the returned image (array). Required.
-    :type width: int
-    :param height: height (number of rows) of the returned image (array), Required.
-    :type height: int
+    It is required to specify at least one of `width` and `height` parameters. If only one of them is specified the
+    the other one will be calculated to best fit the bounding box ratio. If both of them are specified they will be used
+    no matter the bounding box ratio.
+
+    :param width: width (number of columns) of the returned image (array)
+    :type width: int or None
+    :param height: height (number of rows) of the returned image (array)
+    :type height: int or None
     :param bbox: specifies the bounding box of the requested image. Coordinates must be in
                     the specified coordinate reference system. Required.
     :type bbox: common.BBox
@@ -286,7 +290,9 @@ class WmsRequest(OgcRequest):
     :type instance_id: str
     :param custom_url_params: dictionary of CustomUrlParameters and their values supported by Sentinel Hub's WMS and WCS
                               services. All available parameters are described at
-                              http://www.sentinel-hub.com/develop/documentation/api/custom-url-parameters.
+                              http://www.sentinel-hub.com/develop/documentation/api/custom-url-parameters. Note: in
+                              case of constants.CustomUrlParam.EVALSCRIPT the dictionary value must be a string
+                              of Javascript code that is not encoded into base64.
     :type custom_url_params: dictionary of CustomUrlParameter enum and its value, i.e.
                               ``{constants.CustomUrlParam.ATMFILTER:'ATMCOR'}``
     :param time_difference: The time difference below which dates are deemed equal. That is, if for the given set of OGC
@@ -346,7 +352,9 @@ class WcsRequest(OgcRequest):
     :type instance_id: str
     :param custom_url_params: dictionary of CustomUrlParameters and their values supported by Sentinel Hub's WMS and WCS
                               services. All available parameters are described at
-                              http://www.sentinel-hub.com/develop/documentation/api/custom-url-parameters.
+                              http://www.sentinel-hub.com/develop/documentation/api/custom-url-parameters. Note: in
+                              case of constants.CustomUrlParam.EVALSCRIPT the dictionary value must be a string
+                              of Javascript code that is not encoded into base64.
     :type custom_url_params: dictionary of CustomUrlParameter enum and its value, i.e.
                               ``{constants.CustomUrlParam.ATMFILTER:'ATMCOR'}``
     :param time_difference: The time difference below which dates are deemed equal. That is, if for the given set of OGC

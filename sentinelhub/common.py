@@ -52,6 +52,7 @@ class BBox:
         """ Returns the lower left vertex of the bounding box
 
         :return: min_x, min_y
+        :rtype: (float, float)
         """
         return self.min_x, self.min_y
 
@@ -59,8 +60,17 @@ class BBox:
         """ Returns the upper right vertex of the bounding box
 
         :return: max_x, max_y
+        :rtype: (float, float)
         """
         return self.max_x, self.max_y
+
+    def get_middle(self):
+        """ Returns the middle point of the bounding box
+
+        :return: middle point
+        :rtype: (float, float)
+        """
+        return (self.min_x + self.max_x) / 2, (self.min_y + self.max_y) / 2
 
     def get_crs(self):
         """ Returns the coordinate reference system (CRS) of the bounding box.

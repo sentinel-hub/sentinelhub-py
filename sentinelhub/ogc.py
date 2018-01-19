@@ -13,6 +13,7 @@ from .opensearch import get_area_dates
 from .download import DownloadRequest
 from .constants import CRS, DataSource, MimeType, OgcConstants, CustomUrlParam
 from .config import SGConfig
+from .geo_utils import get_image_dimension
 
 LOGGER = logging.getLogger(__name__)
 
@@ -47,17 +48,24 @@ class OgcService:
         :type request: OgcRequest
         :return: list of DownloadRequests
         """
-        return [DownloadRequest(url=self.get_url(request, date), filename=self.get_filename(request, date),
+        size_x, size_y = self.get_image_dimensions(request)
+        return [DownloadRequest(url=self.get_url(request, date, size_x, size_y),
+                                filename=self.get_filename(request, date, size_x, size_y),
                                 data_type=request.image_format) for date in self.get_dates(request)]
 
-    def get_url(self, request, date):
+    def get_url(self, request, date, size_x, size_y):
         """ Returns url to Sentinel Hub's OGC service for the product specified by the OgcRequest and date.
 
         :param request: OGC request with specified bounding box, cloud coverage for specific product.
         :type request: OgcRequest
-        :param date: acquisition date of this product
-        :type date: datetime
+        :param date: acquisition date of this product in `YYYY-MM-DDThh:mm:ss` format
+        :type date: str
+        :param size_x: horizontal image dimension
+        :type size_x: int or str
+        :param size_y: vertical image dimension
+        :type size_y: int or str
         :return: url to Sentinel Hub's OGC service for this product.
+        :rtype: str
         """
 
         LOGGER.debug('MimeType: %s', request.image_format)
@@ -73,16 +81,16 @@ class OgcService:
         if request.source is DataSource.WMS:
             params = {**params,
                       **{
-                          'WIDTH': request.size_x,
-                          'HEIGHT': request.size_y,
+                          'WIDTH': size_x,
+                          'HEIGHT': size_y,
                           'LAYERS': request.layer,
                           'REQUEST': 'GetMap'
                       }}
         elif request.source is DataSource.WCS:
             params = {**params,
                       **{
-                          'RESX': request.size_x,
-                          'RESY': request.size_y,
+                          'RESX': size_x,
+                          'RESY': size_y,
                           'COVERAGE': request.layer,
                           'REQUEST': 'GetCoverage'
                       }}
@@ -106,7 +114,7 @@ class OgcService:
         return '{0}/{1}?{2}'.format(url, self.instance_id, urlencode(params))
 
     @staticmethod
-    def get_filename(request, date):
+    def get_filename(request, date, size_x, size_y):
         """ Get filename location
 
         Returns the filename's location on disk where data is or is going to be stored.
@@ -122,7 +130,12 @@ class OgcService:
         :type request: OgcRequest
         :param date: acquisition date of this product in `YYYY-MM-DDThh:mm:ss` format
         :type date: str
+        :param size_x: horizontal image dimension
+        :type size_x: int or str
+        :param size_y: vertical image dimension
+        :type size_y: int or str
         :return: filename for this request and date
+        :rtype: str
         """
         bbox_str = str(request.bbox).replace(',', '_')
         suffix = str(request.image_format.value)
@@ -136,7 +149,7 @@ class OgcService:
                              str(request.bbox.get_crs()).replace(':', ''),
                              bbox_str,
                              date.strftime("%Y-%m-%dT%H-%M-%S"),
-                             str(request.size_x)+'X'+str(request.size_y)])
+                             str(size_x)+'X'+str(size_y)])
 
         LOGGER.debug("filename=%s", filename)
 
@@ -243,3 +256,24 @@ class OgcService:
             if curr_date - separate_dates[-1] > time_difference:
                 separate_dates.append(curr_date)
         return separate_dates
+
+    @staticmethod
+    def get_image_dimensions(request):
+        """
+        Verifies or calculates image dimensions.
+
+        :param request: OGC-type request
+        :type request: WmsRequest or WcsRequest
+        :return: horizontal and vertical dimensions of requested image
+        :rtype: (int or str, int or str)
+        """
+        if request.source is DataSource.WCS or (isinstance(request.size_x, int) and isinstance(request.size_y, int)):
+            return request.size_x, request.size_y
+        if not isinstance(request.size_x, int) and not isinstance(request.size_y, int):
+            raise ValueError("At least one of parameters 'width' and 'height' must have an integer value")
+        missing_dimension = get_image_dimension(request.bbox, width=request.size_x, height=request.size_y)
+        if request.size_x is None:
+            return missing_dimension, request.size_y
+        if request.size_y is None:
+            return request.size_x, missing_dimension
+        raise ValueError("Parameters 'width' and 'height' must be integers or None")

@@ -4,6 +4,7 @@ Module with enum constants and utm utils
 import itertools as it
 import mimetypes
 import utm
+from pyproj import Proj
 
 from enum import Enum
 
@@ -89,6 +90,28 @@ class _BaseCRS(Enum):
         :rtype: str
         """
         return 'EPSG:' + CRS(crs).value
+
+    @staticmethod
+    def is_utm(crs):
+        """ Checks if crs is one of the 64 possible UTM coordinate reference systems.
+
+        :param crs: An enum constant representing a coordinate reference system.
+        :type crs: Enum constant
+        :return: True if crs is UTM and False otherwise
+        :rtype: bool
+        """
+        return crs.name.startswith('UTM')
+
+    @classmethod
+    def projection(cls, crs):
+        """ Returns a projection in form of pyproj class
+
+        :param crs: An enum constant representing a coordinate reference system.
+        :type crs: Enum constant
+        :return: pyproj projection class
+        :rtype: pyproj.Proj
+        """
+        return Proj(init=cls.ogc_string(crs))
 
     @classmethod
     def has_value(cls, value):

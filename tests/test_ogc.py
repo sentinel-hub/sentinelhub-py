@@ -21,7 +21,7 @@ class TestOgcServices(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         bbox = BBox(bbox=(47.94, -5.23, 48.17, -5.03), crs=CRS.WGS84)
-        cls.request = OgcRequest(image_format=MimeType.TIFF_d32f, layer='ALL_BANDS', maxcc=1.0,
+        cls.request = OgcRequest(image_format=MimeType.TIFF_d32f, layer='ALL_BANDS', maxcc=1.0, size_x=100, size_y=100,
                                  data_folder='TestOutputs', bbox=bbox, time=('2017-10-01', '2017-10-31'),
                                  time_difference=datetime.timedelta(days=10),
                                  source=DataSource.WMS, instance_id=INSTANCE_ID)
@@ -39,14 +39,14 @@ class TestWmsService(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         bbox = BBox(bbox=(47.94, -5.23, 48.17, -5.03), crs=CRS.WGS84)
-        cls.stat_expect = {'min': 0.0008, 'max': 0.6438, 'mean': 0.2307, 'median': 0.2397}
+        cls.stat_expect = {'min': 0.0008, 'max': 0.6511, 'mean': 0.2307, 'median': 0.2397}
         cls.request_save = WmsRequest(data_folder='TestOutputs', image_format=MimeType.TIFF_d32f, layer='ALL_BANDS',
-                                      maxcc=1.0, width=512, height=512, bbox=bbox, time=('2017-10-01', '2017-10-02'),
+                                      maxcc=1.0, width=512, bbox=bbox, time=('2017-10-01', '2017-10-02'),
                                       instance_id=INSTANCE_ID)
         cls.data_save = cls.request_save.get_data(save_data=True, redownload=True)
 
         cls.request_get = WmsRequest(image_format=MimeType.TIFF_d32f, layer='ALL_BANDS',
-                                     maxcc=1.0, width=512, height=512, bbox=bbox, time=('2017-10-01', '2017-10-02'),
+                                     maxcc=1.0, width=512, bbox=bbox, time=('2017-10-01', '2017-10-02'),
                                      instance_id=INSTANCE_ID)
         cls.data_get = cls.request_get.get_data()
 
@@ -86,7 +86,7 @@ class TestCustomUrlParameters(unittest.TestCase):
         cls.stat_expect_atmfilter = {'min': 12, 'max': 255, 'mean': 190.0, 'median': 199.0}
         cls.stat_expect_preview = {'min': 28, 'max': 253, 'mean': 171.8, 'median': 171.0}
         cls.stat_expect_evalscript_url = {'min': 17, 'max': 255, 'mean': 162.4, 'median': 159.0}
-        cls.stat_expect_evalscript = {'min': 0, 'max': 233, 'mean': 45.8, 'median': 54.0}
+        cls.stat_expect_evalscript = {'min': 0, 'max': 235, 'mean': 46.22, 'median': 54.0}
 
         cls.request_atmfilter = WmsRequest(data_folder='TestOutputs', image_format=MimeType.PNG, layer='TRUE_COLOR',
                                            maxcc=1.0, width=512, height=512, bbox=bbox, instance_id=INSTANCE_ID,
@@ -108,7 +108,7 @@ class TestCustomUrlParameters(unittest.TestCase):
                                                                    'customScripts/master/sentinel-2/false_color_'
                                                                    'infrared/script.js'})
         cls.request_evalscript = WmsRequest(data_folder='TestOutputs', image_format=MimeType.PNG, layer='TRUE_COLOR',
-                                            maxcc=1.0, width=512, height=512, bbox=bbox,
+                                            maxcc=1.0, height=512, bbox=bbox,
                                             time=('2017-10-01', '2017-10-02'), instance_id=INSTANCE_ID,
                                             custom_url_params={CustomUrlParam.EVALSCRIPT: 'return [B10,B8A,B03]'})
 
