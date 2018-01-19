@@ -207,10 +207,10 @@ def transform_point(point, source_crs, target_crs):
     :return: point in target CRS
     :rtype: (float, float)
     """
-    x, y = point
+    old_x, old_y = point
     if source_crs is CRS.WGS84:
-        x, y = y, x
-    new_x, new_y = pyproj.transform(CRS.projection(source_crs), CRS.projection(target_crs), x, y)
+        old_x, old_y = old_y, old_x
+    new_x, new_y = pyproj.transform(CRS.projection(source_crs), CRS.projection(target_crs), old_x, old_y)
     if target_crs is CRS.WGS84:
         new_x, new_y = new_y, new_x
     return new_x, new_y
