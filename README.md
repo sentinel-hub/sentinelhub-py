@@ -30,9 +30,6 @@ The package is backward compatible with the previous version.
 
 # Content
 
-A summary of the package content is provided below. For more information
-on the package and to access the documentation, visit the [docs](http://sentinelhub-py.readthedocs.io/).
-
 ### OGC web service
 
 Some of the major features introduced in version 1.0 are linked to one's [Sentinel Hub account](https://services.sentinel-hub.com/oauth/subscription):
@@ -58,6 +55,11 @@ The following are implemented:
  * support of command lines entries;
  * adjustable threaded downloads, and optional redownloads of existing data (not default);
  * requires either S-2 product ID, or tile name and date of a product.
+
+### Documentation
+
+For more information on the package and to access the documentation, visit [readthedocs](http://sentinelhub-py.readthedocs.io/).
+
 
 # Examples
 
