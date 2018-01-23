@@ -11,6 +11,7 @@ from .opensearch import get_tile_info, get_tile_info_id
 from .time_utils import parse_time
 from .config import SGConfig
 from .constants import AwsConstants, EsaSafeType, MimeType
+from .os_utils import make_folder
 
 
 LOGGER = logging.getLogger(__name__)
@@ -122,13 +123,13 @@ class AwsService(ABC):
         From nested dictionaries representing .SAFE structure it recursively extracts all the files that need to be
         downloaded and stores them into class attribute 'download_list'
 
-        :param struct:
+        :param struct: nested dictionaries representing a part of .SAFE structure
         :type struct: dict
         :param folder: name of folder where this structure will be saved
         :type folder: str
         """
-        if not struct:
-            # This happens if the folder is empty. In current package version empty folder will not be created
+        if not struct:  # This happens if the folder is empty.
+            make_folder(folder)
             return
         for name, substruct in struct.items():
             subfolder = os.path.join(folder, name)
