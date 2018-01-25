@@ -19,7 +19,7 @@ class SafeProduct(AwsProduct):
         safe = self.get_safe_struct()
 
         self.download_list = []
-        self.structure_recursion(safe, self.data_folder)
+        self.structure_recursion(safe, self.parent_folder)
         self.sort_download_list()
         return self.download_list, self.folder_list
 
@@ -51,7 +51,7 @@ class SafeProduct(AwsProduct):
         for tile_info in self.product_info['tiles']:
             tile_name, date, aws_index = self.url_to_tile(self.get_tile_url(tile_info))
             if self.tile_list is None or AwsTile.parse_tile_name(tile_name) in self.tile_list:
-                tile_struct = SafeTile(tile_name, date, aws_index, data_folder=None, bands=self.bands,
+                tile_struct = SafeTile(tile_name, date, aws_index, parent_folder=None, bands=self.bands,
                                        metafiles=self.metafiles).get_safe_struct()
                 for tile_name, safe_struct in tile_struct.items():
                     safe[main_folder][AwsConstants.GRANULE][tile_name] = safe_struct
@@ -136,7 +136,7 @@ class SafeTile(AwsTile):
         safe = self.get_safe_struct()
 
         self.download_list = []
-        self.structure_recursion(safe, self.data_folder)
+        self.structure_recursion(safe, self.parent_folder)
         self.sort_download_list()
         return self.download_list, self.folder_list
 

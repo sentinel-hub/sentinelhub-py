@@ -245,7 +245,7 @@ def decode_data(response, data_type):
     """ Interprets downloaded data and returns it.
 
     :param response: downloaded data (i.e. json, png, tiff, xml, zip, ... file)
-    :type response: any of possible data types returned by the download request
+    :type response: requests.models.Response object
     :param data_type: expected downloaded data type
     :type data_type: constants.MimeType
     :return: downloaded data

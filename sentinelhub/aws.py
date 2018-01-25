@@ -20,8 +20,8 @@ LOGGER = logging.getLogger(__name__)
 class AwsService(ABC):
     """ Amazon Web Service (AWS) base class
 
-    :param data_folder: location of the directory where the fetched data will be saved.
-    :type data_folder: str
+    :param parent_folder: Folder where the fetched data will be saved.
+    :type parent_folder: str
     :param bands: List of Sentinel-2 bands for request. If parameter is set to ``None`` all bands will be used.
     :type bands: list(str) or None
     :param metafiles: List of additional metafiles available on AWS
@@ -29,8 +29,8 @@ class AwsService(ABC):
                       If parameter is set to ``None`` the list will be set automatically.
     :type metafiles: list(str) or None
     """
-    def __init__(self, data_folder='', bands=None, metafiles=None):
-        self.data_folder = data_folder
+    def __init__(self, parent_folder='', bands=None, metafiles=None):
+        self.parent_folder = parent_folder
         self.bands = self.parse_bands(bands)
         self.metafiles = self.parse_metafiles(metafiles)
 
@@ -161,8 +161,8 @@ class AwsProduct(AwsService):
     :type product_id: str
     :param tile_list: list of tile names
     :type tile_list: list(str) or None
-    :param data_folder: location of the directory where the fetched data will be saved.
-    :type data_folder: str
+    :param parent_folder: location of the directory where the fetched data will be saved.
+    :type parent_folder: str
     :param bands: List of Sentinel-2 bands for request. If parameter is set to ``None`` all bands will be used.
     :type bands: list(str) or None
     :param metafiles: List of additional metafiles available on AWS
@@ -213,11 +213,11 @@ class AwsProduct(AwsService):
                                               data_type=AwsConstants.FILE_FORMATS[metafile], data_name=metafile) for
                               metafile in self.metafiles if metafile in AwsConstants.PRODUCT_METAFILES]
 
-        tile_data_folder = os.path.join(self.data_folder, self.product_id)
+        tile_parent_folder = os.path.join(self.parent_folder, self.product_id)
         for tile_info in self.product_info['tiles']:
             tile_name, date, aws_index = self.url_to_tile(self.get_tile_url(tile_info))
             if self.tile_list is None or AwsTile.parse_tile_name(tile_name) in self.tile_list:
-                tile_downloads, tile_folders = AwsTile(tile_name, date, aws_index, data_folder=tile_data_folder,
+                tile_downloads, tile_folders = AwsTile(tile_name, date, aws_index, parent_folder=tile_parent_folder,
                                                        bands=self.bands, metafiles=self.metafiles).get_requests()
                 self.download_list.extend(tile_downloads)
                 self.folder_list.extend(tile_folders)
@@ -293,7 +293,7 @@ class AwsProduct(AwsService):
         :return: filename with path on disk
         :rtype: str
         """
-        return os.path.join(self.data_folder, self.product_id,
+        return os.path.join(self.parent_folder, self.product_id,
                             '{}.{}'.format(filename,AwsConstants.FILE_FORMATS[filename].value)).replace(':', '.')
 
 
@@ -309,8 +309,8 @@ class AwsTile(AwsService):
                       class will try to find the index automatically. If there will be multiple choices it will choose
                       the lowest index and inform the user.
     :type aws_index: int or None
-    :param data_folder: location of the directory where the fetched data will be saved.
-    :type data_folder: str
+    :param parent_folder: folder where the fetched data will be saved.
+    :type parent_folder: str
     :param bands: List of Sentinel-2 bands for request. If parameter is set to ``None`` all bands will be used.
     :type bands: list(str) or None
     :param metafiles: List of additional metafiles available on AWS
@@ -366,15 +366,6 @@ class AwsTile(AwsService):
             return parse_time(time)
         except Exception:
             raise ValueError('Time must be in format YYYY-MM-DD or YYYY-MM-DDTHH:MM:SS')
-
-    def set_data_folder(self, data_folder):
-        """
-        Sets folder where data will be stored
-
-        :param data_folder: name of folder
-        :type data_folder: str
-        """
-        self.data_folder = data_folder
 
     def get_requests(self):
         """
@@ -462,7 +453,7 @@ class AwsTile(AwsService):
         :return: filename with path on disk
         :rtype: str
         """
-        return os.path.join(self.data_folder, '{},{},{}'.format(self.tile_name, self.date, self.aws_index),
+        return os.path.join(self.parent_folder, '{},{},{}'.format(self.tile_name, self.date, self.aws_index),
                             '{}.{}'.format(filename, AwsConstants.FILE_FORMATS[filename].value)).replace(':', '.')
 
     def get_product_id(self):
