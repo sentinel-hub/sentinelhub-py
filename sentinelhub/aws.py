@@ -28,8 +28,8 @@ class AwsService(ABC):
                       If parameter is set to ``None`` the list will be set automatically.
     :type metafiles: list(str) or None
     """
-    def __init__(self, parent_folder='', bands=None, metafiles=None):
-        self.parent_folder = parent_folder
+    def __init__(self, parent_folder=None, bands=None, metafiles=None):
+        self.parent_folder = parent_folder or '.'
         self.bands = self.parse_bands(bands)
         self.metafiles = self.parse_metafiles(metafiles)
 
