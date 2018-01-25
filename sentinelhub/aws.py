@@ -36,6 +36,7 @@ class AwsService(ABC):
 
         self.base_url = SGConfig().aws_base_url
         self.download_list = []
+        self.folder_list = []
 
     @abstractmethod
     def get_requests(self):
@@ -128,8 +129,8 @@ class AwsService(ABC):
         :param folder: name of folder where this structure will be saved
         :type folder: str
         """
-        if not struct:  # This happens if the folder is empty.
-            make_folder(folder)
+        if not struct:
+            self.folder_list.append(folder)
             return
         for name, substruct in struct.items():
             subfolder = os.path.join(folder, name)
@@ -205,8 +206,8 @@ class AwsProduct(AwsService):
         """
         Creates product structure and returns list of files for download
 
-        :return: List of download requests
-        :rtype: list(download.DownloadRequest)
+        :return: List of download requests and list of empty folders that need to be created
+        :rtype: (list(download.DownloadRequest), list(str))
         """
         self.download_list = [DownloadRequest(url=self.get_url(metafile), filename=self.get_filepath(metafile),
                                               data_type=AwsConstants.FILE_FORMATS[metafile], data_name=metafile) for
@@ -216,10 +217,12 @@ class AwsProduct(AwsService):
         for tile_info in self.product_info['tiles']:
             tile_name, date, aws_index = self.url_to_tile(self.get_tile_url(tile_info))
             if self.tile_list is None or AwsTile.parse_tile_name(tile_name) in self.tile_list:
-                self.download_list.extend(AwsTile(tile_name, date, aws_index, data_folder=tile_data_folder,
-                                                  bands=self.bands, metafiles=self.metafiles).get_requests())
+                tile_downloads, tile_folders = AwsTile(tile_name, date, aws_index, data_folder=tile_data_folder,
+                                                       bands=self.bands, metafiles=self.metafiles).get_requests()
+                self.download_list.extend(tile_downloads)
+                self.folder_list.extend(tile_folders)
         self.sort_download_list()
-        return self.download_list
+        return self.download_list, self.folder_list
 
     def get_safe_type(self):
         """ Determines the type of ESA product.
@@ -290,8 +293,8 @@ class AwsProduct(AwsService):
         :return: filename with path on disk
         :rtype: str
         """
-        return '{}/{}/{}.{}'.format(self.data_folder, self.product_id, filename,
-                                    AwsConstants.FILE_FORMATS[filename].value).replace(':', '.')
+        return os.path.join(self.data_folder, self.product_id,
+                            '{}.{}'.format(filename,AwsConstants.FILE_FORMATS[filename].value)).replace(':', '.')
 
 
 class AwsTile(AwsService):
@@ -377,8 +380,8 @@ class AwsTile(AwsService):
         """
         Creates tile structure and returns list of files for download
 
-        :return: List of download requests for
-        :rtype: list(download.DownloadRequest)
+        :return: List of download requests and list of empty folders that need to be created
+        :rtype: (list(download.DownloadRequest), list(str))
         """
         self.download_list = []
         for data_name in self.bands + self.metafiles:
@@ -389,7 +392,7 @@ class AwsTile(AwsService):
                                                           data_type=AwsConstants.FILE_FORMATS[data_name],
                                                           data_name=data_name))
         self.sort_download_list()
-        return self.download_list
+        return self.download_list, self.folder_list
 
     def get_aws_index(self):
         """
@@ -459,8 +462,8 @@ class AwsTile(AwsService):
         :return: filename with path on disk
         :rtype: str
         """
-        return '{}/{},{},{}/{}.{}'.format(self.data_folder, self.tile_name, self.date, self.aws_index, filename,
-                                          AwsConstants.FILE_FORMATS[filename].value).replace(':', '.')
+        return os.path.join(self.data_folder, '{},{},{}'.format(self.tile_name, self.date, self.aws_index),
+                            '{}.{}'.format(filename, AwsConstants.FILE_FORMATS[filename].value)).replace(':', '.')
 
     def get_product_id(self):
         """

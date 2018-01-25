@@ -21,7 +21,7 @@ class SafeProduct(AwsProduct):
         self.download_list = []
         self.structure_recursion(safe, self.data_folder)
         self.sort_download_list()
-        return self.download_list
+        return self.download_list, self.folder_list
 
     def get_safe_struct(self):
         """
@@ -138,7 +138,7 @@ class SafeTile(AwsTile):
         self.download_list = []
         self.structure_recursion(safe, self.data_folder)
         self.sort_download_list()
-        return self.download_list
+        return self.download_list, self.folder_list
 
     def get_safe_struct(self):
         """

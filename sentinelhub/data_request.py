@@ -34,11 +34,8 @@ class DataRequest(ABC):
     def __init__(self, *, data_folder=None):
         self.data_folder = data_folder.rstrip('/') if data_folder else None
 
-        # check the output directory location
-        if self.data_folder:
-            make_folder(self.data_folder)
-
         self.download_list = []
+        self.folder_list = []
         self.create_request()
 
     @abstractmethod
@@ -84,10 +81,7 @@ class DataRequest(ABC):
                     shape ``[height, width, channels]``.
         :rtype: list of numpy arrays
         """
-        if not self.is_valid_request():
-            raise ValueError('Cannot obtain data because request is invalid')
-
-        self._update_download_requests(save_data)
+        self._preprocess_request(save_data, True)
 
         timeout = SGConfig().download_timeout_seconds
         data_list = []
@@ -96,22 +90,11 @@ class DataRequest(ABC):
                 data_list.append(future.result(timeout=timeout))
             except ImageDecodingError as err:
                 data_list.append(None)
-                LOGGER.warning('Error %s while downloading data; will try to load it from disk if it was saved', err)
+                LOGGER.warning('%s while downloading data; will try to load it from disk if it was saved', err)
             except Exception as err:
                 LOGGER.error("Error %s while downloading", err)
                 raise
         return self._add_saved_data(data_list)
-
-    def _update_download_requests(self, save_data):
-        """
-        Updates attributes of download requests in ``self.download_list``
-        :param save_data: Tells whether to save data or not
-        :type: bool
-        """
-        for download_request in self.download_list:
-            download_request.set_save_response(save_data)
-            download_request.set_return_data(True)
-            download_request.set_data_folder(self.data_folder)
 
     def save_data(self, redownload=False, max_threads=None):
         """
@@ -122,12 +105,7 @@ class DataRequest(ABC):
         :param max_threads: the number of workers to use when downloading, default ``max_threads=None``
         :type max_threads: int
         """
-        if not self.is_valid_request():
-            raise ValueError('Cannot obtain data because request is invalid')
-        for download_request in self.download_list:
-            download_request.set_save_response(True)
-            download_request.set_return_data(False)
-            download_request.set_data_folder(self.data_folder)
+        self._preprocess_request(True, False)
 
         try:
             download_data(self.download_list, redownload=redownload, max_threads=max_threads)
@@ -136,6 +114,27 @@ class DataRequest(ABC):
             LOGGER.warning('Exception %s while downloading data', err)
         except Exception:
             raise
+
+    def _preprocess_request(self, save_data, return_data):
+        """
+        Prepares requests for download and creates empty folders
+
+        :param save_data: Tells whether to save data or not
+        :type: bool
+        :param return_data: Tells whether to return data or not
+        :type: bool
+        """
+        if not self.is_valid_request():
+            raise ValueError('Cannot obtain data because request is invalid')
+
+        for download_request in self.download_list:
+            download_request.set_save_response(save_data)
+            download_request.set_return_data(return_data)
+            download_request.set_data_folder(self.data_folder)
+
+        if save_data:
+            for folder in self.folder_list:
+                make_folder(os.path.join(self.data_folder, folder))
 
     def _add_saved_data(self, data_list):
         """
@@ -439,13 +438,13 @@ class AwsProductRequest(AwsRequest):
 
     def create_request(self):
         if self.safe_format:
-            self.aws_service = SafeProduct(self.product_id, tile_list=self.tile_list, bands=self.bands,
-                                           metafiles=self.metafiles)
+            self.aws_service = SafeProduct(self.product_id, tile_list=self.tile_list,
+                                           bands=self.bands, metafiles=self.metafiles)
         else:
-            self.aws_service = AwsProduct(self.product_id, tile_list=self.tile_list, bands=self.bands,
-                                          metafiles=self.metafiles)
+            self.aws_service = AwsProduct(self.product_id, tile_list=self.tile_list,
+                                          bands=self.bands, metafiles=self.metafiles)
 
-        self.download_list = self.aws_service.get_requests()
+        self.download_list, self.folder_list = self.aws_service.get_requests()
 
 
 class AwsTileRequest(AwsRequest):
@@ -483,12 +482,13 @@ class AwsTileRequest(AwsRequest):
 
     def create_request(self):
         if self.safe_format:
-            self.aws_service = SafeTile(self.tile, self.time, self.aws_index, bands=self.bands,
-                                        metafiles=self.metafiles)
+            self.aws_service = SafeTile(self.tile, self.time, self.aws_index,
+                                        bands=self.bands, metafiles=self.metafiles)
         else:
-            self.aws_service = AwsTile(self.tile, self.time, self.aws_index, bands=self.bands, metafiles=self.metafiles)
+            self.aws_service = AwsTile(self.tile, self.time, self.aws_index,
+                                       bands=self.bands, metafiles=self.metafiles)
 
-        self.download_list = self.aws_service.get_requests()
+        self.download_list, self.folder_list = self.aws_service.get_requests()
 
 
 def get_safe_format(product_id=None, tile=None, entire_product=False, bands=None):
