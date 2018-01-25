@@ -6,7 +6,7 @@ numpy
 matplotlib
 opencv-python
 tifffile
-glymur
+glymur==0.8.12
 cython
 python-dateutil
 pyproj
