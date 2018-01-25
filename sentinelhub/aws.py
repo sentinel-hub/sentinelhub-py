@@ -11,7 +11,6 @@ from .opensearch import get_tile_info, get_tile_info_id
 from .time_utils import parse_time
 from .config import SGConfig
 from .constants import AwsConstants, EsaSafeType, MimeType
-from .os_utils import make_folder
 
 
 LOGGER = logging.getLogger(__name__)
@@ -294,7 +293,7 @@ class AwsProduct(AwsService):
         :rtype: str
         """
         return os.path.join(self.parent_folder, self.product_id,
-                            '{}.{}'.format(filename,AwsConstants.FILE_FORMATS[filename].value)).replace(':', '.')
+                            '{}.{}'.format(filename, AwsConstants.FILE_FORMATS[filename].value)).replace(':', '.')
 
 
 class AwsTile(AwsService):
