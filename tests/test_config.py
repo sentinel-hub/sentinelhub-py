@@ -1,11 +1,12 @@
 import unittest
 import json
 import os.path
+from tests_all import TestSentinelHub
 
 from sentinelhub.config import SGConfig
 
 
-class TestSGConfig(unittest.TestCase):
+class TestSGConfig(TestSentinelHub):
     def test_configuration(self):
         config_file = '{}/../sentinelhub/config.json'.format(os.path.dirname(os.path.realpath(__file__)))
 

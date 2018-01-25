@@ -1,11 +1,12 @@
 import unittest
+from tests_all import TestSentinelHub
 
 from sentinelhub import geo_utils
 from sentinelhub.constants import CRS
 from sentinelhub.common import BBox
 
 
-class TestGeo(unittest.TestCase):
+class TestGeo(TestSentinelHub):
     def test_wgs84_to_utm33N(self):
         x, y = geo_utils.wgs84_to_utm(44.1440478, 15.525078, CRS.UTM_33N)
         expected_x = 541995.694062

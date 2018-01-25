@@ -1,16 +1,12 @@
-import logging
 import unittest
+from tests_all import TestSentinelHub
 
 from sentinelhub.common import BBox
 from sentinelhub.constants import CRS
 from sentinelhub.opensearch import get_tile_info, get_area_dates
 
 
-logging.basicConfig(level=logging.DEBUG,
-                    format='%(asctime)-15s %(module)s:%(lineno)d [%(levelname)s] %(funcName)s  %(message)s')
-
-
-class TestOpensearch(unittest.TestCase):
+class TestOpensearch(TestSentinelHub):
     def test_get_tile_info(self):
         tile_info = get_tile_info('T30SVH', '2015-11-29', aws_index=1)
         self.assertTrue(isinstance(tile_info, dict), msg="Expected a dict, got {}".format(type(tile_info)))

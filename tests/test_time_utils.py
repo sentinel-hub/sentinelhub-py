@@ -1,10 +1,11 @@
 import unittest
 import datetime
+from tests_all import TestSentinelHub
 
 from sentinelhub import time_utils
 
 
-class TestTime(unittest.TestCase):
+class TestTime(TestSentinelHub):
     def test_get_dates_in_range(self):
         test_pairs = [
                          (('2018-01-01', '2017-12-31'), 0),

@@ -1,13 +1,14 @@
 import unittest
+from tests_all import TestSentinelHub
 
 from sentinelhub.common import BBox
 from sentinelhub.constants import CRS
 
 
-class TestBBox(unittest.TestCase):
+class TestBBox(TestSentinelHub):
     def test_bbox_no_crs(self):
         with self.assertRaises(TypeError):
-            bbox = BBox('46,13,47,20')
+            BBox('46,13,47,20')
 
     def test_bbox_from_string(self):
         bbox_str = '46.07, 13.23, 46.24, 13.57'
@@ -20,7 +21,7 @@ class TestBBox(unittest.TestCase):
         with self.subTest(msg="Too few coordinates"):
             bbox_str = '46.07, 13.23, 46.24'
             with self.assertRaises(ValueError):
-                bbox = BBox(bbox_str, CRS.WGS84)
+                BBox(bbox_str, CRS.WGS84)
 
         with self.subTest(msg="Invalid string"):
             bbox_str = '46N,13E,45N,12E'
@@ -67,7 +68,7 @@ class TestBBox(unittest.TestCase):
     def test_bbox_from_bad_dict(self):
         bbox_dict = {'x1': 46.07, 'y1': 13.23, 'x2': 46.24, 'y2': 13.57}
         with self.assertRaises(KeyError):
-            bbox = BBox(bbox_dict, CRS.WGS84)
+            BBox(bbox_dict, CRS.WGS84)
 
     def test_bbox_from_bbox(self):
         bbox_dict = {'min_x': 46.07, 'min_y': 13.23, 'max_x': 46.24, 'max_y': 13.57}

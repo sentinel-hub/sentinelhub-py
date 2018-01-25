@@ -1,9 +1,10 @@
 import unittest
+from tests_all import TestSentinelHub
 
 from sentinelhub.constants import CRS, MimeType, RequestType
 
 
-class TestCRS(unittest.TestCase):
+class TestCRS(TestSentinelHub):
     def test_utm(self):
         known_values = (
             (46, 13, '32633'),
@@ -38,7 +39,7 @@ class TestCRS(unittest.TestCase):
             self.assertTrue(CRS.has_value(crs.value), msg="Expected support for CRS {}".format(crs.value))
 
 
-class TestMimeType(unittest.TestCase):
+class TestMimeType(TestSentinelHub):
     def test_canonical_extension(self):
         extension_pairs = (
             ('tiff', 'tiff'),
@@ -83,7 +84,7 @@ class TestMimeType(unittest.TestCase):
             self.assertEqual(img_str, res, msg="Expected {}, got {}".format(img_str, res))
 
 
-class TestRequestType(unittest.TestCase):
+class TestRequestType(TestSentinelHub):
     def test_request_type(self):
         with self.assertRaises(ValueError):
             RequestType('post')
@@ -92,8 +93,8 @@ class TestRequestType(unittest.TestCase):
             RequestType('get')
 
         try:
-            post = RequestType('POST')
-            get = RequestType('GET')
+            RequestType('POST')
+            RequestType('GET')
         except:
             self.fail("Couldn't instantiate enum")
 
