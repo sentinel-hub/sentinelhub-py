@@ -60,7 +60,7 @@ class AwsService(ABC):
         else:
             raise ValueError('bands parameter must be a list or a string')
         band_list = [band.strip().split('.')[0] for band in band_list]
-        band_list = [band for band in band_list if band is not '']
+        band_list = [band for band in band_list if band != '']
         if not set(band_list) <= set(AwsConstants.BANDS):
             raise ValueError('bands must be a subset of {}'.format(AwsConstants.BANDS))
         return band_list
@@ -85,7 +85,7 @@ class AwsService(ABC):
         else:
             raise ValueError('metafiles parameter must be a list or a string')
         metafile_list = [metafile.strip().split('.')[0] for metafile in metafile_list]
-        metafile_list = [metafile for metafile in metafile_list if metafile is not '']
+        metafile_list = [metafile for metafile in metafile_list if metafile != '']
         if not set(metafile_list) <= set(AwsConstants.FILE_FORMATS.keys()):
             raise ValueError('metafiles must be a subset of {}'.format(
                 list(AwsConstants.FILE_FORMATS.keys())))
