@@ -14,5 +14,5 @@ install:
 script:
 - pylint sentinelhub/*.py
 - radon cc sentinelhub/*.py -a -nb
-- 'if [ "$TRAVIS_PULL_REQUEST" != "false" ]; then pytest --cov ./tests/ --ignore tests\test_ogc.py --ignore tests\test_data_request.py ; fi'
+- 'if [ "$TRAVIS_PULL_REQUEST" != "false" ]; then pytest --cov ./tests/ --ignore tests/test_ogc.py --ignore tests/test_data_request.py ; fi'
 - 'if [ "$TRAVIS_PULL_REQUEST" = "false" ]; then pytest --cov ./tests/; fi'
