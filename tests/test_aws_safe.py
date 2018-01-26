@@ -34,7 +34,7 @@ class TestPartialAwsSafeProduct(TestSentinelHub):
     @classmethod
     def setUpClass(cls):
         bands = 'B12'
-        metafiles = 'manifest,preview/B02'
+        metafiles = 'manifest,preview/B02, datastrip/*/metadata '
         tile = 'T1WCV'
         cls.request = AwsProductRequest(data_folder=cls.OUTPUT_FOLDER, bands=bands,
                                         metafiles=metafiles, safe_format=True, tile_list=[tile],
@@ -43,7 +43,7 @@ class TestPartialAwsSafeProduct(TestSentinelHub):
 
     def test_return_type(self):
         self.assertTrue(isinstance(self.data, list), "Expected a list")
-        self.assertEqual(len(self.data), 2, "Expected a list of length 2")
+        self.assertEqual(len(self.data), 3, "Expected a list of length 3")
 
 
 if __name__ == '__main__':

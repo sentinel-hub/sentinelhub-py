@@ -90,7 +90,7 @@ class DataRequest(ABC):
                 data_list.append(future.result(timeout=timeout))
             except ImageDecodingError as err:
                 data_list.append(None)
-                LOGGER.warning('%s while downloading data; will try to load it from disk if it was saved', err)
+                LOGGER.debug('%s while downloading data; will try to load it from disk if it was saved', err)
             except Exception as err:
                 LOGGER.error("Error %s while downloading", err)
                 raise
@@ -127,6 +127,10 @@ class DataRequest(ABC):
         if not self.is_valid_request():
             raise ValueError('Cannot obtain data because request is invalid')
 
+        if save_data and self.data_folder is None:
+            raise ValueError('Request parameter `data_folder` is not specified. '
+                             'In order to save data please set `data_folder` to location on your disk.')
+
         for download_request in self.download_list:
             download_request.set_save_response(save_data)
             download_request.set_return_data(return_data)
@@ -142,10 +146,11 @@ class DataRequest(ABC):
         """
         for i, request in enumerate(self.download_list):
             if request.return_data and data_list[i] is None:
-                if request.data_type is MimeType.JP2 and not request.save_response and not os.path.exists(
-                        request.file_location):
+                if request.data_type is MimeType.JP2 and not request.save_response and \
+                        (request.file_location is None or not os.path.exists(request.file_location)):
                     raise NotImplementedError(
-                        'Currently direct reading of jp2 files is not implemented. Please set parameter save_data=True')
+                        'Currently decoding jp2 files without saving them first is not implemented. '
+                        'Please set parameter save_data=True')
                 data_list[i] = read_data(request.file_location)
         return data_list
 

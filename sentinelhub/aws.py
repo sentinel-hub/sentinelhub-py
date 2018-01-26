@@ -60,6 +60,7 @@ class AwsService(ABC):
         else:
             raise ValueError('bands parameter must be a list or a string')
         band_list = [band.strip().split('.')[0] for band in band_list]
+        band_list = [band for band in band_list if band is not '']
         if not set(band_list) <= set(AwsConstants.BANDS):
             raise ValueError('bands must be a subset of {}'.format(AwsConstants.BANDS))
         return band_list
@@ -84,6 +85,7 @@ class AwsService(ABC):
         else:
             raise ValueError('metafiles parameter must be a list or a string')
         metafile_list = [metafile.strip().split('.')[0] for metafile in metafile_list]
+        metafile_list = [metafile for metafile in metafile_list if metafile is not '']
         if not set(metafile_list) <= set(AwsConstants.FILE_FORMATS.keys()):
             raise ValueError('metafiles must be a subset of {}'.format(
                 list(AwsConstants.FILE_FORMATS.keys())))
@@ -151,6 +153,20 @@ class AwsService(ABC):
                                                               data_name=data_name))
             else:
                 self.structure_recursion(substruct, subfolder)
+
+    @staticmethod
+    def add_filename_extension(filename):
+        """
+        Joins filename and corresponding file extension if it has one.
+
+        :param filename: Name of the file without extension
+        :type filename: str
+        :return: Name of the file with extension
+        :rtype: str
+        """
+        if AwsConstants.FILE_FORMATS[filename] is MimeType.RAW:
+            return filename
+        return '{}.{}'.format(filename, AwsConstants.FILE_FORMATS[filename].value)
 
 
 class AwsProduct(AwsService):
@@ -261,7 +277,7 @@ class AwsProduct(AwsService):
         """
         if self.product_url is None:
             self.product_url = self.get_product_url()
-        return '{}/{}.{}'.format(self.product_url, filename, AwsConstants.FILE_FORMATS[filename].value)
+        return '{}/{}'.format(self.product_url, self.add_filename_extension(filename))
 
     def get_product_url(self):
         """
@@ -287,13 +303,13 @@ class AwsProduct(AwsService):
         """
         Creates file path for the file
 
-        :param filename: name of
+        :param filename: name of the file
         :type filename: str
         :return: filename with path on disk
         :rtype: str
         """
         return os.path.join(self.parent_folder, self.product_id,
-                            '{}.{}'.format(filename, AwsConstants.FILE_FORMATS[filename].value)).replace(':', '.')
+                            self.add_filename_extension(filename)).replace(':', '.')
 
 
 class AwsTile(AwsService):
@@ -427,7 +443,7 @@ class AwsTile(AwsService):
         """
         if self.tile_url is None or filename == AwsConstants.TILE_INFO:
             self.tile_url = self.get_tile_url()
-        return '{}/{}.{}'.format(self.tile_url, filename, AwsConstants.FILE_FORMATS[filename].value)
+        return '{}/{}'.format(self.tile_url, self.add_filename_extension(filename))
 
     def get_tile_url(self):
         """
@@ -447,13 +463,13 @@ class AwsTile(AwsService):
         """
         Creates file path for the file
 
-        :param filename: name of
+        :param filename: name of the file
         :type filename: str
         :return: filename with path on disk
         :rtype: str
         """
         return os.path.join(self.parent_folder, '{},{},{}'.format(self.tile_name, self.date, self.aws_index),
-                            '{}.{}'.format(filename, AwsConstants.FILE_FORMATS[filename].value)).replace(':', '.')
+                            self.add_filename_extension(filename)).replace(':', '.')
 
     def get_product_id(self):
         """
