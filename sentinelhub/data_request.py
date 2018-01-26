@@ -32,7 +32,7 @@ class DataRequest(ABC):
     :type data_folder: str
     """
     def __init__(self, *, data_folder=None):
-        self.data_folder = data_folder.rstrip('/') if data_folder else None
+        self.data_folder = data_folder.rstrip('/') if data_folder else '.'
 
         self.download_list = []
         self.folder_list = []

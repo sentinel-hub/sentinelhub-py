@@ -41,7 +41,7 @@ class DownloadRequest:
 
     :param url: url to Sentinel Hub's services or other sources from where the data is downloaded. Default is ``None``
     :type url: str
-    :param data_folder: folder name where the fetched data will be (or already is) saved. Default is ``None``
+    :param data_folder: folder name where the fetched data will be (or already is) saved. Default is ``'.'``
     :type data_folder: str
     :param filename: filename of the file where the fetched data will be (or already is) saved. Default is ``None``
     :type filename: str
@@ -63,7 +63,7 @@ class DownloadRequest:
                  post_values=None, save_response=True, return_data=True, data_type=MimeType.RAW, **properties):
 
         self.url = url
-        self.data_folder = data_folder
+        self.data_folder = data_folder or '.'
         self.filename = filename
         self.headers = headers
         self.post_values = post_values
@@ -104,11 +104,11 @@ class DownloadRequest:
         :param data_folder: folder name where the fetched data will be (or already is) saved.
         :return: str
         """
-        self.data_folder = data_folder
+        self.data_folder = data_folder or '.'
         self._set_file_location()
 
     def _set_file_location(self):
-        if self.data_folder is not None and self.filename is not None:
+        if self.filename is not None:
             self.file_location = os.path.join(self.data_folder, self.filename.lstrip('/'))
 
     def is_downloaded(self):
@@ -117,8 +117,6 @@ class DownloadRequest:
         :return: returns ``True`` if data for this request has already been downloaded and is saved to disk.
         :rtype: bool
         """
-        if self.data_folder is None:
-            return False
         self._set_file_location()
         return os.path.exists(self.file_location)
 
@@ -128,9 +126,7 @@ class DownloadRequest:
         :return: full filename (data folder + filename)
         :rtype: str
         """
-        if self.data_folder:
-            return os.path.join(self.data_folder, self.filename)
-        return None
+        return os.path.join(self.data_folder, self.filename)
 
 
 def download_data(request_list, redownload=False, max_threads=None):
