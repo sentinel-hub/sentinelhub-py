@@ -4,6 +4,7 @@ constants
 Module defining constants and enumerate types used in the package.
 
 .. module:: sentinelhub.constants
+.. autoclass:: PackageProps
 .. autoclass:: DataSource
 .. autoclass:: _Direction
 .. autoclass:: MimeType

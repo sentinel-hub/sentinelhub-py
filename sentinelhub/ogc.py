@@ -51,7 +51,8 @@ class OgcService:
         size_x, size_y = self.get_image_dimensions(request)
         return [DownloadRequest(url=self.get_url(request, date, size_x, size_y),
                                 filename=self.get_filename(request, date, size_x, size_y),
-                                data_type=request.image_format) for date in self.get_dates(request)]
+                                data_type=request.image_format, headers=OgcConstants.HEADERS)
+                for date in self.get_dates(request)]
 
     def get_url(self, request, date, size_x, size_y):
         """ Returns url to Sentinel Hub's OGC service for the product specified by the OgcRequest and date.

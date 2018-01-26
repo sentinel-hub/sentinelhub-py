@@ -4,12 +4,24 @@ Module with enum constants and utm utils
 import itertools as it
 import mimetypes
 import utm
+import os.path
 from pyproj import Proj
-
 from enum import Enum
 
 
 mimetypes.add_type('application/json', '.json')
+
+
+class PackageProps:
+    """ Class for obtaining package properties. Currently it supports obtaining package version."""
+
+    @staticmethod
+    def get_version():
+        for line in open(os.path.join(os.path.dirname(__file__), '__init__.py')):
+            if line.find("__version__") >= 0:
+                version = line.split("=")[1].strip()
+                version = version.strip('"').strip("'")
+        return version
 
 
 class DataSource(Enum):
@@ -271,6 +283,7 @@ class OgcConstants:
         Constants are LATEST
     """
     LATEST = 'latest'
+    HEADERS = {'User-Agent': 'sentinelhub-py/v{}'.format(PackageProps.get_version())}
 
 
 class AwsConstants:
