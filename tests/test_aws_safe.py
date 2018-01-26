@@ -7,14 +7,14 @@ from sentinelhub.data_request import AwsTileRequest, AwsProductRequest
 class TestAwsSafeTile(TestSentinelHub):
     @classmethod
     def setUpClass(cls):
-        cls.request = AwsTileRequest(data_folder=cls.OUTPUT_FOLDER, tile='10UEV',
+        cls.request = AwsTileRequest(data_folder=cls.OUTPUT_FOLDER, tile='10UEV', bands=['B01', 'B09', 'B10'],
                                      metafiles='metadata,tileInfo', time='2016-01-09', safe_format=True)
         cls.request.save_data(redownload=True)
         cls.filename_list = cls.request.get_filename_list()
 
     def test_return_type(self):
         self.assertTrue(isinstance(self.filename_list, list), "Expected a list")
-        self.assertEqual(len(self.filename_list), 14, "Expected a list of length 14")
+        self.assertEqual(len(self.filename_list), 4, "Expected a list of length 4")
 
 
 class TestAwsSafeProduct(TestSentinelHub):
