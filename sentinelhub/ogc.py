@@ -155,7 +155,8 @@ class OgcService:
         LOGGER.debug("filename=%s", filename)
 
         if request.custom_url_params is not None:
-            for param, value in request.custom_url_params.items():
+            for param, value in sorted(request.custom_url_params.items(),
+                                       key=lambda parameter_item: parameter_item[0].value):
                 filename = '_'.join([filename, param.value, str(value).replace('/', '_')])
 
         if fmt:

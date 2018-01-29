@@ -35,7 +35,7 @@ def read_data(filename, data_format=None):
     :raises: exception if filename does not exist
     """
     if not os.path.exists(filename):
-        raise Exception('Filename {} does not exist'.format(filename))
+        raise ValueError('Filename {} does not exist'.format(filename))
 
     if data_format is None:
         data_format = get_data_format(filename)
