@@ -195,19 +195,36 @@ def execute_download_request(request):
         try:
             response = _do_request(request)
             response.raise_for_status()
-            LOGGER.debug('Downloaded from %s', request.url)
+            LOGGER.debug('Successful download from %s', request.url)
             break
-        except (requests.HTTPError, requests.ConnectionError, requests.ConnectTimeout, requests.ReadTimeout,
-                requests.Timeout) as exception:
-            LOGGER.info('Download attempt failed with %s', exception)
-        try_num -= 1
-        if try_num > 0:
-            LOGGER.debug('Unsuccessful download from %s ... will retry in %ds',
-                         request.url, SGConfig().download_sleep_time)
-            time.sleep(SGConfig().download_sleep_time)
-        else:
-            LOGGER.info('Failed to download from %s', request.url)
-            raise DownloadFailedException('Failed to download from {}'.format(request.url))
+        except requests.RequestException as exception:
+            try_num -= 1
+            if try_num > 0 and _is_temporal_problem(exception):
+                LOGGER.debug('Download attempt failed: %s\n%d attempts left, will retry in %ds', exception,
+                             try_num, SGConfig().download_sleep_time)
+                time.sleep(SGConfig().download_sleep_time)
+            else:
+                message = 'Failed to download with {}:\n{}'.format(exception.__class__.__name__, exception)
+
+                if _is_temporal_problem(exception):
+                    if isinstance(exception, requests.ConnectionError):
+                        message += '\nPlease check your internet connection and try again.'
+                    else:
+                        message += '\nThere might be a problem in connection or the server failed to process '\
+                                   'your request. Please try again.'
+
+                elif isinstance(exception, requests.HTTPError) and \
+                        exception.response.status_code == requests.status_codes.codes.BAD_REQUEST:
+                    try:
+                        server_message = ''
+                        for elem in decode_data(exception.response, MimeType.XML):
+                            if 'ServiceException' in elem.tag:
+                                server_message += elem.text.strip('\n\t ')
+                    except ElementTree.ParseError:
+                        server_message = exception.response.text
+                    message += '\nYour request is incorrect, server response: "{}"'.format(server_message)
+
+                raise DownloadFailedException(message)
 
     _save_if_needed(request, response)
 
@@ -219,7 +236,7 @@ def execute_download_request(request):
 def _do_request(request):
     """ Executes download request
     :param request: A request
-    :type: DownloadRequest
+    :type request: DownloadRequest
     :return: Response of the request
     """
     if request.request_type is RequestType.GET:
@@ -227,6 +244,20 @@ def _do_request(request):
     elif request.request_type is RequestType.POST:
         return requests.post(request.url, data=json.dumps(request.post_values), headers=request.headers)
     raise ValueError('Invalid request type {}'.format(request.request_type))
+
+
+def _is_temporal_problem(exception):
+    """ Checks if the obtained exception is temporal and if download attempt should be repeated
+
+    :param exception: Exception raised during download
+    :type exception: Exception
+    :return: True if exception is temporal and False otherwise
+    :rtype: bool
+    """
+    return isinstance(exception, (requests.ConnectionError, requests.ConnectTimeout, requests.ReadTimeout,
+                                  requests.Timeout))\
+        or (isinstance(exception, requests.HTTPError) and
+            exception.response.status_code != requests.status_codes.codes.BAD_REQUEST)
 
 
 def _save_if_needed(request, response):
@@ -239,6 +270,7 @@ def _save_if_needed(request, response):
         create_parent_folder(request.file_location)
         with open(request.file_location, 'wb') as file:
             file.write(response.content)
+        LOGGER.debug('Saved data from %s to %s', request.url, request.file_location)
 
 
 def decode_data(response, data_type):
@@ -320,13 +352,8 @@ def get_json(url, post_values=None, headers=None):
 
     request = DownloadRequest(url=url, headers=json_headers, request_type=request_type, post_values=post_values,
                               save_response=False, return_data=True, data_type=MimeType.JSON)
-    try:
-        return execute_download_request(request)
-    except DownloadFailedException:
-        raise RuntimeError('Failed to obtain json from %s' % url)
-    except Exception as err:
-        LOGGER.debug('Failed with an non-DownloadFailedException on url=%s with an exception %s', url, err)
-        raise
+
+    return execute_download_request(request)
 
 
 def get_xml(url):
@@ -340,10 +367,5 @@ def get_xml(url):
     """
     request = DownloadRequest(url=url, request_type=RequestType.GET, save_response=False, return_data=True,
                               data_type=MimeType.XML)
-    try:
-        return execute_download_request(request)
-    except DownloadFailedException:
-        raise RuntimeError('Failed to obtain xml from {}'.format(url))
-    except Exception as err:
-        LOGGER.debug('Failed with an non-DownloadFailedException on url=%s with an exception %s', url, err)
-        raise
+
+    return execute_download_request(request)

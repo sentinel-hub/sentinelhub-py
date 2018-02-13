@@ -91,9 +91,6 @@ class DataRequest(ABC):
             except ImageDecodingError as err:
                 data_list.append(None)
                 LOGGER.debug('%s while downloading data; will try to load it from disk if it was saved', err)
-            except Exception as err:
-                LOGGER.error("Error %s while downloading", err)
-                raise
         return self._add_saved_data(data_list)
 
     def save_data(self, redownload=False, max_threads=None):
@@ -109,11 +106,9 @@ class DataRequest(ABC):
 
         try:
             download_data(self.download_list, redownload=redownload, max_threads=max_threads)
-            LOGGER.info('The fetched data was saved to %s', self.data_folder)
+            LOGGER.info('The data is available in folder %s', self.data_folder)
         except ImageDecodingError as err:
             LOGGER.warning('Exception %s while downloading data', err)
-        except Exception:
-            raise
 
     def _preprocess_request(self, save_data, return_data):
         """
