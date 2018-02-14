@@ -236,9 +236,7 @@ def _is_temporal_problem(exception):
     :rtype: bool
     """
     return isinstance(exception, (requests.ConnectionError, requests.ConnectTimeout, requests.ReadTimeout,
-                                  requests.Timeout))\
-        or (isinstance(exception, requests.HTTPError) and
-            exception.response.status_code != requests.status_codes.codes.BAD_REQUEST)
+                                  requests.Timeout))
 
 
 def _create_download_failed_message(exception):
@@ -257,8 +255,7 @@ def _create_download_failed_message(exception):
         else:
             message += '\nThere might be a problem in connection or the server failed to process ' \
                        'your request. Please try again.'
-    elif isinstance(exception, requests.HTTPError) and \
-            exception.response.status_code == requests.status_codes.codes.BAD_REQUEST:
+    elif isinstance(exception, requests.HTTPError):
         try:
             server_message = ''
             for elem in decode_data(exception.response, MimeType.XML):
@@ -266,7 +263,7 @@ def _create_download_failed_message(exception):
                     server_message += elem.text.strip('\n\t ')
         except ElementTree.ParseError:
             server_message = exception.response.text
-        message += '\nYour request is incorrect, server response: "{}"'.format(server_message)
+        message += '\nServer response: "{}"'.format(server_message)
 
     return message
 
