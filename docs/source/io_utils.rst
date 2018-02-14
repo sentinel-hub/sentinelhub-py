@@ -23,4 +23,4 @@ Utility functions to read/write image data from/to file.
 .. autofunction:: write_xml
 .. autofunction:: write_numpy
 .. autofunction:: get_data_format
-
+.. autofunction:: get_jp2_bit_depth

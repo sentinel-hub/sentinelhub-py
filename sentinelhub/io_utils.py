@@ -4,6 +4,7 @@ Module for local reading and writing of data
 import csv
 import json
 import os
+import struct
 import logging
 import cv2
 import glymur
@@ -73,8 +74,7 @@ def read_jp2_image(filename):
     :type filename: str
     :return: data stored in JPEG2000 file
     """
-    image_object = glymur.Jp2k(filename)
-    return image_object[:]
+    return glymur.Jp2k(filename)[:]
 
 
 def read_image(filename):
@@ -303,3 +303,44 @@ def get_data_format(filename):
     """
     fmt_ext = filename.split('.')[-1]
     return MimeType(MimeType.canonical_extension(fmt_ext))
+
+
+def get_jp2_bit_depth(stream):
+    """Reads bit encoding depth of jpeg2000 file in binary stream format
+
+    :param stream: binary stream format
+    :type stream: Binary I/O (e.g. io.BytesIO, io.BufferedReader, ...)
+    :return: bit depth
+    :rtype: int
+    """
+    stream.seek(0)
+    while True:
+        read_buffer = stream.read(8)
+        if len(read_buffer) < 8:
+            raise ValueError('Image Header Box not found in Jpeg2000 file')
+
+        box_length, box_id = struct.unpack('>I4s', read_buffer)
+
+        if box_id == b'ihdr':
+            read_buffer = stream.read(14)
+            params = struct.unpack('>IIHBBBB', read_buffer)
+            return (params[3] & 0x7f) + 1
+
+
+def _fix_jp2_image(image, bit_depth):
+    """Because opencv library incorrectly reads jpeg2000 images with 15-bit encoding this function corrects the
+    values in image.
+
+    :param image: image read by opencv library
+    :type image: numpy array
+    :param bit_depth: bit depth of jp2 image encoding
+    :type bit_depth: int
+    :return: corrected image
+    :rtype: numpy array
+    """
+    if bit_depth == 8:
+        return image
+    if bit_depth == 15:
+        return image >> 1
+    raise ValueError('Bit depth {} of jp2 image is currently not supported.'
+                     'Please raise an issue on package Github page'.format(bit_depth))

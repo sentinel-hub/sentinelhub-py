@@ -23,7 +23,7 @@ class TestAwsSafeProduct(TestSentinelHub):
         cls.request = AwsProductRequest(data_folder=cls.OUTPUT_FOLDER, bands='B01', safe_format=True,
                                         product_id='S2A_OPER_PRD_MSIL1C_PDMC_20160121T043931_R069_V20160103T171947_'
                                                    '20160103T171947')
-        cls.data = cls.request.get_data(save_data=True, redownload=True)
+        cls.data = cls.request.get_data(redownload=True)
 
     def test_return_type(self):
         self.assertTrue(isinstance(self.data, list), "Expected a list")

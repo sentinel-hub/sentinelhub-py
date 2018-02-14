@@ -19,6 +19,7 @@ from xml.etree import ElementTree
 from .os_utils import create_parent_folder
 from .constants import MimeType, RequestType
 from .config import SGConfig
+from .io_utils import get_jp2_bit_depth, _fix_jp2_image
 
 LOGGER = logging.getLogger(__name__)
 
@@ -204,27 +205,7 @@ def execute_download_request(request):
                              try_num, SGConfig().download_sleep_time)
                 time.sleep(SGConfig().download_sleep_time)
             else:
-                message = 'Failed to download with {}:\n{}'.format(exception.__class__.__name__, exception)
-
-                if _is_temporal_problem(exception):
-                    if isinstance(exception, requests.ConnectionError):
-                        message += '\nPlease check your internet connection and try again.'
-                    else:
-                        message += '\nThere might be a problem in connection or the server failed to process '\
-                                   'your request. Please try again.'
-
-                elif isinstance(exception, requests.HTTPError) and \
-                        exception.response.status_code == requests.status_codes.codes.BAD_REQUEST:
-                    try:
-                        server_message = ''
-                        for elem in decode_data(exception.response, MimeType.XML):
-                            if 'ServiceException' in elem.tag:
-                                server_message += elem.text.strip('\n\t ')
-                    except ElementTree.ParseError:
-                        server_message = exception.response.text
-                    message += '\nYour request is incorrect, server response: "{}"'.format(server_message)
-
-                raise DownloadFailedException(message)
+                raise DownloadFailedException(_create_download_failed_message(exception))
 
     _save_if_needed(request, response)
 
@@ -258,6 +239,36 @@ def _is_temporal_problem(exception):
                                   requests.Timeout))\
         or (isinstance(exception, requests.HTTPError) and
             exception.response.status_code != requests.status_codes.codes.BAD_REQUEST)
+
+
+def _create_download_failed_message(exception):
+    """ Creates message describing why download has failed
+
+    :param exception: Exception raised during download
+    :type exception: Exception
+    :return: Error message
+    :rtype: str
+    """
+    message = 'Failed to download with {}:\n{}'.format(exception.__class__.__name__, exception)
+
+    if _is_temporal_problem(exception):
+        if isinstance(exception, requests.ConnectionError):
+            message += '\nPlease check your internet connection and try again.'
+        else:
+            message += '\nThere might be a problem in connection or the server failed to process ' \
+                       'your request. Please try again.'
+    elif isinstance(exception, requests.HTTPError) and \
+            exception.response.status_code == requests.status_codes.codes.BAD_REQUEST:
+        try:
+            server_message = ''
+            for elem in decode_data(exception.response, MimeType.XML):
+                if 'ServiceException' in elem.tag:
+                    server_message += elem.text.strip('\n\t ')
+        except ElementTree.ParseError:
+            server_message = exception.response.text
+        message += '\nYour request is incorrect, server response: "{}"'.format(server_message)
+
+    return message
 
 
 def _save_if_needed(request, response):
@@ -316,16 +327,18 @@ def decode_image(data, image_type):
     :raises: ImageDecodingError
     """
     if image_type is MimeType.TIFF or image_type is MimeType.TIFF_d32f:
-        return tiff.imread(BytesIO(data))
-    elif image_type is MimeType.JP2:
-        raise ImageDecodingError('Decoding JP2 images is currently not supported')
+        image = tiff.imread(BytesIO(data))
+    else:
+        img_array = np.asarray(bytearray(data))
+        image = cv2.imdecode(img_array, cv2.IMREAD_UNCHANGED)
 
-    img_array = np.asarray(bytearray(data))
-    img = cv2.imdecode(img_array, cv2.IMREAD_UNCHANGED)
+        if image_type is MimeType.JP2:
+            bit_depth = get_jp2_bit_depth(BytesIO(data))
+            image = _fix_jp2_image(image, bit_depth)
 
-    if img is None:
+    if image is None:
         raise ImageDecodingError('Unable to decode image')
-    return img
+    return image
 
 
 def get_json(url, post_values=None, headers=None):

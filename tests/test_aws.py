@@ -10,20 +10,11 @@ class TestAwsTile(TestSentinelHub):
         cls.request = AwsTileRequest(data_folder=cls.OUTPUT_FOLDER, bands='B01',
                                      metafiles='metadata,tileInfo,  productInfo, qi/MSK_TECQUA_B04,  auxiliary/ECMWFT ',
                                      tile='10UEV', time='2016-01-09', aws_index=0)
-        cls.data = cls.request.get_data(save_data=True, redownload=True)
+        cls.data = cls.request.get_data(redownload=True)
 
     def test_return_type(self):
         self.assertTrue(isinstance(self.data, list), "Expected a list")
         self.assertEqual(len(self.data), 6, "Expected a list of length 6")
-
-
-class TestAwsTileNoDataFolder(TestSentinelHub):
-    @classmethod
-    def setUpClass(cls):
-        cls.request = AwsTileRequest(bands='B10', tile='12HTE', time='2017-8-15')
-
-    def test_error(self):
-        self.assertRaises(NotImplementedError, self.request.get_data)
 
 
 class TestAwsProduct(TestSentinelHub):
