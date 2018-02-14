@@ -1,4 +1,5 @@
 import unittest
+import numpy as np
 from tests_all import TestSentinelHub
 
 from sentinelhub.data_request import AwsTileRequest, AwsProductRequest
@@ -15,6 +16,7 @@ class TestAwsTile(TestSentinelHub):
     def test_return_type(self):
         self.assertTrue(isinstance(self.data, list), "Expected a list")
         self.assertEqual(len(self.data), 6, "Expected a list of length 6")
+        self.assertAlmostEqual(np.mean(self.data[0]), 1357.99, delta=1e-1, msg="Image has incorrect values")
 
 
 class TestAwsProduct(TestSentinelHub):

@@ -7,7 +7,6 @@ import os
 import struct
 import logging
 import cv2
-import glymur
 import numpy as np
 import tifffile as tiff
 from xml.etree import ElementTree
@@ -74,7 +73,14 @@ def read_jp2_image(filename):
     :type filename: str
     :return: data stored in JPEG2000 file
     """
-    return glymur.Jp2k(filename)[:]
+    # Reading with glymur library:
+    # return glymur.Jp2k(filename)[:]
+    image = cv2.imread(filename, cv2.IMREAD_UNCHANGED)
+
+    with open(filename, 'rb') as f:
+        bit_depth = get_jp2_bit_depth(f)
+
+    return _fix_jp2_image(image, bit_depth)
 
 
 def read_image(filename):
@@ -209,7 +215,9 @@ def write_jp2_image(filename, image):
     :type image: numpy array
     :return: jp2k object
     """
-    return glymur.Jp2k(filename, data=image)
+    # Writing with glymur library:
+    # return glymur.Jp2k(filename, data=image)
+    return cv2.imwrite(filename, image)
 
 
 def write_image(filename, image):
