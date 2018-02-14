@@ -77,8 +77,8 @@ def read_jp2_image(filename):
     # return glymur.Jp2k(filename)[:]
     image = cv2.imread(filename, cv2.IMREAD_UNCHANGED)
 
-    with open(filename, 'rb') as f:
-        bit_depth = get_jp2_bit_depth(f)
+    with open(filename, 'rb') as file:
+        bit_depth = get_jp2_bit_depth(file)
 
     return _fix_jp2_image(image, bit_depth)
 
@@ -327,7 +327,7 @@ def get_jp2_bit_depth(stream):
         if len(read_buffer) < 8:
             raise ValueError('Image Header Box not found in Jpeg2000 file')
 
-        box_length, box_id = struct.unpack('>I4s', read_buffer)
+        _, box_id = struct.unpack('>I4s', read_buffer)
 
         if box_id == b'ihdr':
             read_buffer = stream.read(14)
