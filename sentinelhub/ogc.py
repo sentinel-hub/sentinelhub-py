@@ -9,9 +9,8 @@ import base64
 from urllib.parse import urlencode
 
 from .time_utils import get_current_date, parse_time
-from .opensearch import get_area_dates
-from .download import DownloadRequest
-from .constants import CRS, DataSource, MimeType, OgcConstants, CustomUrlParam
+from .download import DownloadRequest, get_json
+from .constants import CRS, DataSource, MimeType, OgcConstants, CustomUrlParam, ProductType
 from .config import SGConfig
 from .geo_utils import get_image_dimension
 
@@ -68,12 +67,12 @@ class OgcService:
         :return: url to Sentinel Hub's OGC service for this product.
         :rtype: str
         """
+        url = self.base_url + request.source.value
+        # These 2 lines are temporal and will be removed after the use of uswest url wont be required anymore:
+        if ProductType.is_uswest_source(request.product_type):
+            url = 'https://services-uswest2.sentinel-hub.com/ogc/{}'.format(request.source.value)
 
-        LOGGER.debug('MimeType: %s', request.image_format)
-
-        url = self.base_url+str(request.source.value)
-
-        params = {'SERVICE': str(request.source.value),
+        params = {'SERVICE': request.source.value,
                   'BBOX': str(request.bbox),
                   'FORMAT': MimeType.get_string(request.image_format),
                   'CRS': CRS.ogc_string(request.bbox.get_crs()),
@@ -101,8 +100,7 @@ class OgcService:
                 seconds=0) else date - request.time_difference
             end_date = date if request.time_difference < datetime.timedelta(
                 seconds=0) else date + request.time_difference
-            params = {**params,
-                      **{'TIME': '{0}/{1}'.format(start_date.isoformat(), end_date.isoformat())}}
+            params['TIME'] = '{}/{}'.format(start_date.isoformat(), end_date.isoformat())
 
         if request.custom_url_params is not None:
             params = {**params,
@@ -112,7 +110,7 @@ class OgcService:
                 evalscript = params[CustomUrlParam.EVALSCRIPT.value]
                 params[CustomUrlParam.EVALSCRIPT.value] = base64.b64encode(evalscript.encode()).decode()
 
-        return '{0}/{1}?{2}'.format(url, self.instance_id, urlencode(params))
+        return '{}/{}?{}'.format(url, self.instance_id, urlencode(params))
 
     @staticmethod
     def get_filename(request, date, size_x, size_y):
@@ -149,7 +147,7 @@ class OgcService:
                              request.layer,
                              str(request.bbox.get_crs()).replace(':', ''),
                              bbox_str,
-                             date.strftime("%Y-%m-%dT%H-%M-%S"),
+                             '' if date is None else date.strftime("%Y-%m-%dT%H-%M-%S"),
                              str(size_x)+'X'+str(size_y)])
 
         LOGGER.debug("filename=%s", filename)
@@ -208,8 +206,7 @@ class OgcService:
 
         return date_interval
 
-    @staticmethod
-    def get_dates(request):
+    def get_dates(self, request):
         """ Get available Sentinel-2 acquisitions at least time_difference apart
 
         List of all available Sentinel-2 acquisitions for given bbox with max cloud coverage and the specified
@@ -223,17 +220,24 @@ class OgcService:
         :param request: OGC-type request
         :type request: WmsRequest or WcsRequest
         """
-        LOGGER.debug('CRS=%s', request.bbox.get_crs())
+        if ProductType.is_timeless(request.product_type):
+            return [None]
 
         date_interval = OgcService._parse_date_interval(request.time)
 
         LOGGER.debug('date_interval=%s', date_interval)
 
+        dates = []
+        for tile_info in self.wfs_search_iter(request, date_interval):  # TODO: fix S1 cases
+            date = tile_info['properties']['date']
+            time = tile_info['properties']['time'].split('.')[0]
+            dates.append(datetime.datetime.strptime('{}T{}'.format(date, time), '%Y-%m-%dT%H:%M:%S'))
+        dates = sorted(set(dates))
+
+        # dates = get_area_dates(request.bbox, date_interval, maxcc=request.maxcc)
         if request.time is OgcConstants.LATEST:
-            return OgcService._filter_dates(get_area_dates(request.bbox, date_interval, maxcc=request.maxcc)[-1:],
-                                            request.time_difference)
-        return OgcService._filter_dates(get_area_dates(request.bbox, date_interval, maxcc=request.maxcc),
-                                        request.time_difference)
+            dates = dates[-1:]
+        return OgcService._filter_dates(dates, request.time_difference)
 
     @staticmethod
     def _filter_dates(dates, time_difference):
@@ -279,3 +283,43 @@ class OgcService:
         if request.size_y is None:
             return request.size_x, missing_dimension
         raise ValueError("Parameters 'width' and 'height' must be integers or None")
+
+    def wfs_search_iter(self, request, date_interval):
+        main_url = '{}{}/{}?'.format(self.base_url, DataSource.WFS.value, self.instance_id)
+
+        params = {'SERVICE': DataSource.WFS.value,
+                  'REQUEST': 'GetFeature',
+                  'TYPENAMES': ProductType.get_wfs_typename(request.product_type),
+                  'BBOX': str(request.bbox),
+                  'OUTPUTFORMAT': MimeType.get_string(MimeType.JSON),
+                  'SRSNAME': CRS.ogc_string(request.bbox.get_crs()),
+                  'TIME': '{}/{}'.format(date_interval[0], date_interval[1]),
+                  'MAXCC': 100.0 * request.maxcc,
+                  'MAXFEATURES': SGConfig().max_wfs_records_per_query}
+
+        is_sentinel1 = ProductType.is_sentinel1(request.product_type)
+        feature_offset = 0
+        while True:
+            params['FEATURE_OFFSET'] = feature_offset
+
+            url = main_url + urlencode(params)
+            LOGGER.debug("URL=%s", url)
+
+            response = get_json(url)
+            for tile_info in response["features"]:
+                if not is_sentinel1 or self._sentinel1_product_check(tile_info['properties']['id'],
+                                                                           request.product_type):
+                    yield tile_info
+
+            if len(response["features"]) < SGConfig().max_wfs_records_per_query:
+                break
+            feature_offset += SGConfig().max_wfs_records_per_query
+
+    @staticmethod
+    def _sentinel1_product_check(product_id, product_type):
+        props = product_id.split('_')
+        acquisition, resolution, polarisation = props[1], props[2][3], props[3][2:4]
+        if acquisition in ['IW', 'EW'] and resolution in ['M', 'H'] and polarisation in ['DV', 'DH', 'SV', 'SH']:
+            return acquisition == product_type.value[2].name and polarisation == product_type.value[3].name and \
+                   resolution == product_type.value[4].name[0]
+        raise ValueError('Unknown Sentinel-1 tile type: {}'.format(product_id))

@@ -4,8 +4,8 @@ For more search parameters check: http://opensearch.sentinel-hub.com/resto/api/c
 """
 
 import logging
-import urllib.parse
 import datetime
+from urllib.parse import urlencode
 
 from .common import BBox
 from .constants import CRS
@@ -175,28 +175,23 @@ def search_iter(text_query=None, tile_id=None, bbox=None, start_date=None, end_d
         raise ValueError('opensearch works only with crs=WGS84')
 
     url_params = _prepare_url_params(bbox, cloud_cover, end_date, start_date, text_query, tile_id)
+    url_params['maxRecords'] = SGConfig().max_opensearch_records_per_query
 
     start_index = 1
 
     while True:
-        url_params = {**url_params,
-                      **{
-                          'maxRecords': SGConfig().max_opensearch_records_per_query,
-                          'index': start_index
-                      }}
+        url_params['index'] = start_index
 
-        url = '{}search.json?{}'.format(SGConfig().opensearch_url, urllib.parse.urlencode(url_params))
-
+        url = '{}search.json?{}'.format(SGConfig().opensearch_url, urlencode(url_params))
         LOGGER.debug("URL=%s", url)
 
         response = get_json(url)
         for tile_info in response["features"]:
             yield tile_info
 
-        start_index += SGConfig().max_opensearch_records_per_query
-
         if len(response["features"]) < SGConfig().max_opensearch_records_per_query:
             break
+        start_index += SGConfig().max_opensearch_records_per_query
 
 
 def _prepare_url_params(bbox, cloud_cover, end_date, start_date, text_query, tile_id):
@@ -238,5 +233,5 @@ def _add_param(params, value, key):
     :return: if value not ``None`` then a copy of params with (key, value) added, otherwise returns params
     """
     if value:
-        return {**params, **{key:  value}}
+        params[key] = value
     return params

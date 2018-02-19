@@ -16,7 +16,7 @@ from .aws_safe import SafeProduct, SafeTile
 from .download import download_data, ImageDecodingError
 from .io_utils import read_data
 from .os_utils import make_folder
-from .constants import MimeType, CustomUrlParam, DataSource, AwsConstants
+from .constants import ProductType, MimeType, CustomUrlParam, DataSource, AwsConstants
 from .config import SGConfig
 
 LOGGER = logging.getLogger(__name__)
@@ -154,6 +154,7 @@ class OgcRequest(DataRequest):
     """ The base class for OGC-type requests (WMS and WCS) where all common parameters are
     defined.
 
+    # TODO: add product documentation
     :param source: type of OGC request (WMS or WCS)
     :type source: constants.DataSource
     :param size_x: number of pixels in x or resolution in x (i.e. ``512`` or ``10m``)
@@ -197,12 +198,13 @@ class OgcRequest(DataRequest):
     :param data_folder: location of the directory where the fetched data will be saved.
     :type data_folder: str
     """
-    def __init__(self, layer, bbox, *, time='latest', source=None, size_x=None, size_y=None, maxcc=1.0,
-                 image_format=MimeType.PNG, instance_id=None, custom_url_params=None,
-                 time_difference=datetime.timedelta(seconds=-1), **kwargs):
+    def __init__(self, layer, bbox, *, time='latest', source=None, product_type=ProductType.SENTINEL2_L1C,
+                 size_x=None, size_y=None, maxcc=1.0, image_format=MimeType.PNG, instance_id=None,
+                 custom_url_params=None, time_difference=datetime.timedelta(seconds=-1), **kwargs):
         self.layer = layer
         self.bbox = bbox
         self.time = time
+        self.product_type = product_type
         self.maxcc = maxcc
         self.image_format = image_format
         self.instance_id = instance_id

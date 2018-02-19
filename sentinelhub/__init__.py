@@ -9,7 +9,7 @@ from .aws import AwsProduct, AwsTile
 from .aws_safe import SafeProduct, SafeTile
 
 from .common import BBox
-from .constants import CRS, CustomUrlParam, MimeType, OgcConstants, AwsConstants
+from .constants import CRS, CustomUrlParam, MimeType, OgcConstants, AwsConstants, ProductType
 
 from .download import DownloadRequest, download_data, get_json, get_xml
 from .opensearch import get_tile_info_id, get_tile_info, get_area_dates, get_area_info
@@ -21,4 +21,4 @@ from .geo_utils import bbox_to_resolution, get_image_dimension, to_utm_bbox, get
 from .time_utils import next_date, prev_date, get_current_date
 
 
-__version__ = "1.0.8"
+__version__ = "1.1.0"

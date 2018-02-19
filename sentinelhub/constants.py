@@ -1,6 +1,9 @@
 """
 Module with enum constants and utm utils
 """
+
+# pylint: disable=invalid-name
+
 import itertools as it
 import mimetypes
 import utm
@@ -27,11 +30,87 @@ class PackageProps:
 class DataSource(Enum):
     """ Enum constant class for data source services
 
-    Supported types are WMS, WCS, AWS
+    Supported types are WMS, WCS, WFS, AWS
     """
     WMS = 'wms'
     WCS = 'wcs'
+    WFS = 'wfs'
     AWS = 'aws'
+
+
+class ProductType(Enum):
+    """ Enum constant class for types of satellite data
+
+    Supported types are SENTINEL2_L1C, SENTINEL2_L2A, LANDSAT8, SENTINEL1_IW, SENTINEL1_EW, SENTINEL1_EW_SH, DEM, MODIS
+    """
+    class Source(Enum):
+        SENTINEL2 = 'Sentinel-2'
+        SENTINEL1 = 'Sentinel-1'
+        LANDSAT8 = 'Landsat 8'
+        MODIS = 'MODIS'
+        DEM = 'Mapzen DEM'
+
+    class ProcessingLevel(Enum):
+        L1C = 'L1C'
+        L2A = 'L2A'
+        GRD = 'GRD'
+        MCD43A4 = 'MCD43A4'
+
+    class Acquisition(Enum):
+        IW = 'IW'
+        EW = 'EW'
+
+    class Polarisation(Enum):
+        DV = 'VV+VH'
+        DH = 'HH+HV'
+        SV = 'VV'
+        SH = 'HH'
+
+    class Resolution(Enum):
+        MEDIUM = 'medium'
+        HIGH = 'high'
+
+    class OrbitDirection(Enum):
+        ASCENDING = 'ascending'
+        DESCENDING = 'descending'
+        BOTH = 'both'
+
+    SENTINEL2_L1C = (Source.SENTINEL2, ProcessingLevel.L1C)
+    SENTINEL2_L2A = (Source.SENTINEL2, ProcessingLevel.L2A)
+    SENTINEL1_IW = (Source.SENTINEL1, ProcessingLevel.GRD, Acquisition.IW, Polarisation.DV, Resolution.HIGH,
+                    OrbitDirection.BOTH)
+    SENTINEL1_EW = (Source.SENTINEL1, ProcessingLevel.GRD, Acquisition.EW, Polarisation.DH, Resolution.MEDIUM,
+                    OrbitDirection.BOTH)
+    SENTINEL1_EW_SH = (Source.SENTINEL1, ProcessingLevel.GRD, Acquisition.EW, Polarisation.SH, Resolution.MEDIUM,
+                       OrbitDirection.BOTH)
+    DEM = (Source.DEM, )
+    MODIS = (Source.MODIS, ProcessingLevel.MCD43A4)
+    LANDSAT8 = (Source.LANDSAT8, ProcessingLevel.GRD)
+
+    @classmethod
+    def get_wfs_typename(cls, product_type):
+        return {
+            cls.SENTINEL2_L1C: 'S2.TILE',
+            cls.SENTINEL2_L2A: 'DSS2',
+            cls.SENTINEL1_IW: 'DSS3',
+            cls.SENTINEL1_EW: 'DSS3',
+            cls.SENTINEL1_EW_SH: 'DSS3',
+            cls.DEM: 'DSS4',
+            cls.MODIS: 'DSS5',
+            cls.LANDSAT8: 'DSS6'
+        }[product_type]
+
+    @classmethod
+    def is_sentinel1(cls, product_type):
+        return product_type.value[0] is cls.Source.value.SENTINEL1
+
+    @classmethod
+    def is_timeless(cls, product_type):
+        return product_type.value[0] is cls.Source.value.DEM
+
+    @classmethod
+    def is_uswest_source(cls, product_type):
+        return product_type.value[0] in [cls.Source.value.LANDSAT8, cls.Source.value.MODIS, cls.Source.value.DEM]
 
 
 class _Direction(Enum):

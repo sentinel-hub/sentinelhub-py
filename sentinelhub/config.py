@@ -31,7 +31,7 @@ class SGConfig:
         """
         def __init__(self):
             self.config_params = ['ogc_base_url', 'instance_id', 'aws_base_url',
-                                  'aws_website_url', 'opensearch_url',
+                                  'aws_website_url', 'opensearch_url', 'max_wfs_records_per_query',
                                   'max_opensearch_records_per_query', 's2_start_date',
                                   'max_download_attempts', 'download_sleep_time', 'download_timeout_seconds']
             self._load_configuration()
@@ -47,6 +47,8 @@ class SGConfig:
             for key in self.config_params:
                 if key not in config:
                     raise ValueError('Configuration file does not contain %s key.' % key)
+            if config['max_wfs_records_per_query'] > 100:
+                raise ValueError("Value of config parameter 'max_wfs_records_per_query' must be at most 100")
             if config['max_opensearch_records_per_query'] > 500:
                 raise ValueError("Value of config parameter 'max_opensearch_records_per_query' must be at most 500")
 
