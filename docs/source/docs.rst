@@ -1,7 +1,7 @@
 sentinelhub
 ===========
 
-Documentation of the **sentinelhub** package.
+Content of the **sentinelhub** package.
 
 Modules
 ~~~~~~~

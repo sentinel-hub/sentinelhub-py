@@ -460,7 +460,7 @@ class AwsTileRequest(AwsRequest):
     List of available products:
     http://sentinel-s2-l1c.s3-website.eu-central-1.amazonaws.com/#tiles/
 
-    :param tile: tile name (e.g. 'T10UEV')
+    :param tile: tile name (e.g. ``'T10UEV'``)
     :type tile: str
     :param time: tile sensing time in ISO8601 format
     :type time: str

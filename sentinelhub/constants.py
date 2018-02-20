@@ -131,7 +131,7 @@ class DataSource(Enum):
 
         :param data_source: One of the supported data sources
         :type: DataSource
-        :return: True if source is Sentinel-1 and False otherwise
+        :return: ``True`` if source is Sentinel-1 and ``False`` otherwise
         :rtype: bool
         """
         return data_source.value[0] is cls.Source.value.SENTINEL1
@@ -142,7 +142,7 @@ class DataSource(Enum):
 
         :param data_source: One of the supported data sources
         :type: DataSource
-        :return: True if data source is time independent and False otherwise
+        :return: ``True`` if data source is time independent and ``False`` otherwise
         :rtype: bool
         """
         return data_source.value[0] is cls.Source.value.DEM
@@ -153,7 +153,7 @@ class DataSource(Enum):
 
         :param data_source: One of the supported data sources
         :type: DataSource
-        :return: True if data source exists at US West server and False otherwise
+        :return: ``True`` if data source exists at US West server and ``False`` otherwise
         :rtype: bool
         """
         return data_source.value[0] in [cls.Source.value.LANDSAT8, cls.Source.value.MODIS, cls.Source.value.DEM]

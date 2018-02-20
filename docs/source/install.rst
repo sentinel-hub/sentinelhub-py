@@ -6,13 +6,13 @@ This package requires Python 3 and can be installed by the PyPI package manager:
 
 $ pip install sentinelhub
 
-or::
+If want to install the latest (development) version clone the GitHub_ repository and install::
 
-$ pip install -e .[dev]
+$ pip install -e .
 
-if you clone the repository and want to install the latest (development) version.
-
-Manual installation is also possible::   
+or manually::
 
 $ python setup.py build
 $ python setup.py install
+
+.. _Github: https://github.com/sentinel-hub/sentinelhub-py

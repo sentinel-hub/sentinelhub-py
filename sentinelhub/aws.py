@@ -44,9 +44,9 @@ class AwsService(ABC):
     @staticmethod
     def parse_bands(band_input):
         """
-        Parses class input and verifies band names
+        Parses class input and verifies band names.
 
-        :param band_input: class input parameter 'bands'
+        :param band_input: input parameter `bands`
         :type band_input: str or list(str)
         :return: verified list of bands
         :rtype: list(str)
@@ -67,9 +67,9 @@ class AwsService(ABC):
 
     def parse_metafiles(self, metafile_input):
         """
-        Parses class input and verifies metadata file names
+        Parses class input and verifies metadata file names.
 
-        :param metafile_input: class input parameter 'metafiles'
+        :param metafile_input: class input parameter `metafiles`
         :type metafile_input: str or list(str)
         :return: verified list of metadata files
         :rtype: list(str)
@@ -94,7 +94,7 @@ class AwsService(ABC):
     @staticmethod
     def url_to_tile(url):
         """
-        Extracts tile name, date and AWS index from tile url on AWS
+        Extracts tile name, date and AWS index from tile url on AWS.
 
         :param url: class input parameter 'metafiles'
         :type url: str
@@ -108,7 +108,7 @@ class AwsService(ABC):
 
     def sort_download_list(self):
         """
-        Method that sorts the list of download requests. Band images have priority before metadata files. If bands
+        Method for sorting the list of download requests. Band images have priority before metadata files. If bands
         images or metadata files are specified with a list they will be sorted in the same order as in the list.
         Otherwise they will be sorted alphabetically (band B8A will be between B08 and B09).
         """
@@ -123,7 +123,7 @@ class AwsService(ABC):
     def structure_recursion(self, struct, folder):
         """
         From nested dictionaries representing .SAFE structure it recursively extracts all the files that need to be
-        downloaded and stores them into class attribute 'download_list'
+        downloaded and stores them into class attribute `download_list`.
 
         :param struct: nested dictionaries representing a part of .SAFE structure
         :type struct: dict
@@ -199,9 +199,9 @@ class AwsProduct(AwsService):
     @staticmethod
     def parse_tile_list(tile_input):
         """
-        Parses class input and verifies band names
+        Parses class input and verifies band names.
 
-        :param tile_input: class input parameter 'tile_list'
+        :param tile_input: class input parameter `tile_list`
         :type tile_input: str or list(str)
         :return: parsed list of tiles
         :rtype: list(str) or None
@@ -219,7 +219,7 @@ class AwsProduct(AwsService):
 
     def get_requests(self):
         """
-        Creates product structure and returns list of files for download
+        Creates product structure and returns list of files for download.
 
         :return: List of download requests and list of empty folders that need to be created
         :rtype: (list(download.DownloadRequest), list(str))
@@ -268,7 +268,7 @@ class AwsProduct(AwsService):
 
     def get_url(self, filename):
         """
-        Creates url of file location on AWS
+        Creates url of file location on AWS.
 
         :param filename: name of file
         :type filename: str
@@ -281,7 +281,7 @@ class AwsProduct(AwsService):
 
     def get_product_url(self):
         """
-        Creates base url of product location on AWS
+        Creates base url of product location on AWS.
 
         :return: url of product location
         :rtype: str
@@ -301,7 +301,7 @@ class AwsProduct(AwsService):
 
     def get_filepath(self, filename):
         """
-        Creates file path for the file
+        Creates file path for the file.
 
         :param filename: name of the file
         :type filename: str
@@ -355,7 +355,7 @@ class AwsTile(AwsService):
         """
         Parses and verifies tile name.
 
-        :param name: class input parameter 'tile_name'
+        :param name: class input parameter `tile_name`
         :type name: str
         :return: parsed tile name
         :rtype: str
@@ -384,7 +384,7 @@ class AwsTile(AwsService):
 
     def get_requests(self):
         """
-        Creates tile structure and returns list of files for download
+        Creates tile structure and returns list of files for download.
 
         :return: List of download requests and list of empty folders that need to be created
         :rtype: (list(download.DownloadRequest), list(str))
@@ -402,7 +402,8 @@ class AwsTile(AwsService):
 
     def get_aws_index(self):
         """
-        Returns tile index on AWS. If it was not set it collects it with Opensearch
+        Returns tile index on AWS. If `tile_index` was not set during class initialization it will be determined
+        according to existing tiles on AWS.
 
         :return: Index of tile on AWS
         :rtype: int
@@ -420,7 +421,7 @@ class AwsTile(AwsService):
 
     def get_tile_info(self):
         """
-        Collects basic info about tile from tileInfo.json
+        Collects basic info about tile from tileInfo.json.
 
         :return: dictionary with tile information
         :rtype: dict
@@ -434,7 +435,7 @@ class AwsTile(AwsService):
 
     def get_url(self, filename):
         """
-        Creates url of file location on AWS
+        Creates url of file location on AWS.
 
         :param filename: name of file
         :type filename: str
@@ -447,7 +448,7 @@ class AwsTile(AwsService):
 
     def get_tile_url(self):
         """
-        Creates base url of tile location on AWS
+        Creates base url of tile location on AWS.
 
         :return: url of tile location
         :rtype: str
@@ -461,7 +462,7 @@ class AwsTile(AwsService):
 
     def get_filepath(self, filename):
         """
-        Creates file path for the file
+        Creates file path for the file.
 
         :param filename: name of the file
         :type filename: str
@@ -473,7 +474,7 @@ class AwsTile(AwsService):
 
     def get_product_id(self):
         """
-        Obtains ESA ID of product which contains the tile
+        Obtains ESA ID of product which contains the tile.
 
         :return: ESA ID of the product
         :rtype: str

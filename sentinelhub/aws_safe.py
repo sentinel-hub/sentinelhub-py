@@ -8,7 +8,7 @@ from .aws import AwsProduct, AwsTile
 
 
 class SafeProduct(AwsProduct):
-    """ Class inherits from aws.AwsProduct """
+    """ Class inherits from `aws.AwsProduct`"""
     def get_requests(self):
         """
         Creates product structure and returns list of files for download
@@ -119,7 +119,7 @@ class SafeProduct(AwsProduct):
 
 
 class SafeTile(AwsTile):
-    """ Class inherits from aws.AwsTile """
+    """ Class inherits from `aws.AwsTile`"""
     def __init__(self, *args, **kwargs):
         super(SafeTile, self).__init__(*args, **kwargs)
 
@@ -128,7 +128,7 @@ class SafeTile(AwsTile):
 
     def get_requests(self):
         """
-        Creates tile structure and returns list of files for download
+        Creates tile structure and returns list of files for download.
 
         :return: list of download requests for
         :rtype: list(download.DownloadRequest)
@@ -142,7 +142,7 @@ class SafeTile(AwsTile):
 
     def get_safe_struct(self):
         """
-        Describes a structure inside tile folder of ESA product .SAFE structure
+        Describes a structure inside tile folder of ESA product .SAFE structure.
 
         :return: nested dictionaries representing .SAFE structure
         :rtype: dict

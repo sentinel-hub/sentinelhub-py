@@ -9,10 +9,7 @@ Module defining constants and enumerate types used in the package.
     :members:
 .. autoclass:: DataSource
     :members:
-.. autoclass:: _Direction
 .. autoclass:: MimeType
-    :members:
-.. autoclass:: _BaseCRS
     :members:
 .. autoclass:: CustomUrlParam
     :members:
