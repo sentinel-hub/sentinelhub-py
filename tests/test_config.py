@@ -19,7 +19,7 @@ class TestSGConfig(TestSentinelHub):
             ogc_base_url = config['ogc_base_url']
             aws_base_url = config['aws_base_url']
             aws_website_url = config['aws_website_url']
-            s2_start_date = config['s2_start_date']
+            default_start_date = config['default_start_date']
             max_download_attempts = config['max_download_attempts']
             download_sleep_time = config['download_sleep_time']
 
@@ -35,8 +35,8 @@ class TestSGConfig(TestSentinelHub):
                          msg="Expected {}, got {}".format(aws_website_url, SGConfig().aws_website_url))
         self.assertEqual(SGConfig().instance_id, instance_id,
                          msg="Expected {}, got {}".format(instance_id, SGConfig().instance_id))
-        self.assertEqual(SGConfig().s2_start_date, s2_start_date,
-                         msg="Expected {}, got {}".format(s2_start_date, SGConfig().s2_start_date))
+        self.assertEqual(SGConfig().default_start_date, default_start_date,
+                         msg="Expected {}, got {}".format(default_start_date, SGConfig().default_start_date))
         self.assertEqual(SGConfig().max_download_attempts, max_download_attempts,
                          msg="Expected {}, got {}".format(max_download_attempts,
                                                           SGConfig().max_download_attempts))
