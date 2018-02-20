@@ -59,7 +59,7 @@ class OgcService:
         :param request: OGC request with specified bounding box, cloud coverage for specific product.
         :type request: OgcRequest
         :param date: acquisition date of this product in `YYYY-MM-DDThh:mm:ss` format
-        :type date: str
+        :type date: str or None
         :param size_x: horizontal image dimension
         :type size_x: int or str
         :param size_y: vertical image dimension
@@ -128,7 +128,7 @@ class OgcService:
         :param request: OGC request with specified bounding box, cloud coverage for specific product.
         :type request: OgcRequest
         :param date: acquisition date of this product in `YYYY-MM-DDThh:mm:ss` format
-        :type date: str
+        :type date: str or None
         :param size_x: horizontal image dimension
         :type size_x: int or str
         :param size_y: vertical image dimension
@@ -174,7 +174,7 @@ class OgcService:
 
         The parameter can have the following values/format, which will be parsed as:
 
-        * ``None`` -> `[s2_start_date from config.json, current date]`
+        * ``None`` -> `[default_start_date from config.json, current date]`
         * `YYYY-MM-DD` -> `[YYYY-MM-DD:T00:00:00, YYYY-MM-DD:T23:59:59]`
         * `YYYY-MM-DDThh:mm:ss` -> `[YYYY-MM-DDThh:mm:ss, YYYY-MM-DDThh:mm:ss]`
         * list or tuple of two dates (`YYYY-MM-DD`) -> `[YYYY-MM-DDT00:00:00, YYYY-MM-DDT23:59:59]`, where the first
@@ -188,7 +188,7 @@ class OgcService:
         :rtype: tuple of start and end date
         """
         if time is None or time is OgcConstants.LATEST:
-            date_interval = (SGConfig().s2_start_date, get_current_date())
+            date_interval = (SGConfig().default_start_date, get_current_date())
         else:
             if isinstance(time, str):
                 date_interval = (parse_time(time), parse_time(time))
@@ -228,13 +228,12 @@ class OgcService:
         LOGGER.debug('date_interval=%s', date_interval)
 
         dates = []
-        for tile_info in self.wfs_search_iter(request, date_interval):  # TODO: fix S1 cases
+        for tile_info in self.wfs_search_iter(request, date_interval):
             date = tile_info['properties']['date']
             time = tile_info['properties']['time'].split('.')[0]
             dates.append(datetime.datetime.strptime('{}T{}'.format(date, time), '%Y-%m-%dT%H:%M:%S'))
         dates = sorted(set(dates))
 
-        # dates = get_area_dates(request.bbox, date_interval, maxcc=request.maxcc)
         if request.time is OgcConstants.LATEST:
             dates = dates[-1:]
         return OgcService._filter_dates(dates, request.time_difference)
@@ -285,6 +284,16 @@ class OgcService:
         raise ValueError("Parameters 'width' and 'height' must be integers or None")
 
     def wfs_search_iter(self, request, date_interval):
+        """Iterator method that uses Sentinel Hub WFS service to provide info about all available product for the given
+        OGC-type request and date interval
+
+        :param request: OGC-type request
+        :type request: WmsRequest or WcsRequest
+        :param date_interval: interval of start and end date of the form YYYY-MM-DDThh:mm:ss
+        :type date_interval: (str, str)
+        :return: dictionaries containing info about product tiles
+        :rtype: Iterator[dict]
+        """
         main_url = '{}{}/{}?'.format(self.base_url, DataSource.WFS.value, self.instance_id)
 
         params = {'SERVICE': DataSource.WFS.value,
@@ -308,7 +317,7 @@ class OgcService:
             response = get_json(url)
             for tile_info in response["features"]:
                 if not is_sentinel1 or self._sentinel1_product_check(tile_info['properties']['id'],
-                                                                           request.product_type):
+                                                                     request.product_type):
                     yield tile_info
 
             if len(response["features"]) < SGConfig().max_wfs_records_per_query:
@@ -317,6 +326,15 @@ class OgcService:
 
     @staticmethod
     def _sentinel1_product_check(product_id, product_type):
+        """Checks if Sentinel-1 product ID matches Sentinel-1 ProductType configuration
+
+        :param product_id: Sentinel-1 product ID
+        :type product_id: str
+        :param product_type: One of the supported Sentinel-1 product types
+        :type product_type: constants.ProductType
+        :return: True if product_id is of type product_type and False otherwise
+        :rtype: bool
+        """
         props = product_id.split('_')
         acquisition, resolution, polarisation = props[1], props[2][3], props[3][2:4]
         if acquisition in ['IW', 'EW'] and resolution in ['M', 'H'] and polarisation in ['DV', 'DH', 'SV', 'SH']:

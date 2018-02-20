@@ -154,7 +154,8 @@ class OgcRequest(DataRequest):
     """ The base class for OGC-type requests (WMS and WCS) where all common parameters are
     defined.
 
-    # TODO: add product documentation
+    :param product_type: Type of satellite data product requested. Default is Sentinel-2 L1C data.
+    :type product_type: constants.ProductType
     :param source: type of OGC request (WMS or WCS)
     :type source: constants.DataSource
     :param size_x: number of pixels in x or resolution in x (i.e. ``512`` or ``10m``)
@@ -267,6 +268,8 @@ class WmsRequest(OgcRequest):
     :type width: int or None
     :param height: height (number of rows) of the returned image (array)
     :type height: int or None
+    :param product_type: Type of satellite data product requested. Default is Sentinel-2 L1C data.
+    :type product_type: constants.ProductType
     :param bbox: specifies the bounding box of the requested image. Coordinates must be in
                     the specified coordinate reference system. Required.
     :type bbox: common.BBox
@@ -329,6 +332,8 @@ class WcsRequest(OgcRequest):
     :param resy: resolution in y (resolution of a row) given in meters in the format (examples ``10m``, ``20m``, ...).
                 Default is ``10m``, which is the best native resolution of some Sentinel-2 bands.
     :type resy: str
+    :param product_type: Type of satellite data product requested. Default is Sentinel-2 L1C data.
+    :type product_type: constants.ProductType
     :param bbox: specifies the bounding box of the requested image. Coordinates must be in
                     the specified coordinate reference system. Required.
     :type bbox: common.BBox

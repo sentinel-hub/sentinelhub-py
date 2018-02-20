@@ -7,17 +7,24 @@ import json
 
 # pylint: disable=E0203
 
+
 class SGConfig:
     """ This is a singleton implementation of the sentinelhub configuration class.
 
     The class reads during its first initialisation the configurable settings from
     ``./config.json`` file:
 
-        - ogc_base_url: base url for Sentinel Hub's services (should not be changed by the user)
-        - aws_base_url: base url for Sentinel-2 data on AWS (should not be changed by the user)
-        - aws_website_url: base url for AWS' public Sentinel-2 image browser
         - instance_id: users' instance id. User can set it to his/hers instance id in ``config.json`` instead
           of specifying it explicitly every time he/she creates new ogc request.
+        - ogc_base_url: base url for Sentinel Hub's services (should not be changed by the user).
+        - aws_base_url: base url for Sentinel-2 data on AWS (should not be changed by the user).
+        - aws_website_url: base url for AWS' public Sentinel-2 image browser.
+        - opensearch_url: base url for Sentinelhub Opensearch service.
+        - max_wfs_records_per_query: maximum number of records returned for each WFS query.
+        - max_opensearch_records_per_query: maximum number of records returned for each Opensearch query.
+        - default_start_date: In case time parameter for OGC data requests is not specified this will be used for
+          start date of the interval.
+        - download_timeout_seconds: maximum number of seconds before download attempt is canceled.
 
     Usage in the code:
 
@@ -32,7 +39,7 @@ class SGConfig:
         def __init__(self):
             self.config_params = ['ogc_base_url', 'instance_id', 'aws_base_url',
                                   'aws_website_url', 'opensearch_url', 'max_wfs_records_per_query',
-                                  'max_opensearch_records_per_query', 's2_start_date',
+                                  'max_opensearch_records_per_query', 'default_start_date',
                                   'max_download_attempts', 'download_sleep_time', 'download_timeout_seconds']
             self._load_configuration()
 

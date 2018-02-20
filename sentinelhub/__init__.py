@@ -8,6 +8,8 @@ from .data_request import WmsRequest, WcsRequest, AwsTileRequest, AwsProductRequ
 from .aws import AwsProduct, AwsTile
 from .aws_safe import SafeProduct, SafeTile
 
+from .ogc import OgcService
+
 from .common import BBox
 from .constants import CRS, CustomUrlParam, MimeType, OgcConstants, AwsConstants, ProductType
 

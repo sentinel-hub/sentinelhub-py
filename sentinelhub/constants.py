@@ -44,6 +44,9 @@ class ProductType(Enum):
     Supported types are SENTINEL2_L1C, SENTINEL2_L2A, LANDSAT8, SENTINEL1_IW, SENTINEL1_EW, SENTINEL1_EW_SH, DEM, MODIS
     """
     class Source(Enum):
+        """
+        Types of satellite sources
+        """
         SENTINEL2 = 'Sentinel-2'
         SENTINEL1 = 'Sentinel-1'
         LANDSAT8 = 'Landsat 8'
@@ -51,26 +54,41 @@ class ProductType(Enum):
         DEM = 'Mapzen DEM'
 
     class ProcessingLevel(Enum):
+        """
+        Types of processing level
+        """
         L1C = 'L1C'
         L2A = 'L2A'
         GRD = 'GRD'
         MCD43A4 = 'MCD43A4'
 
     class Acquisition(Enum):
+        """
+        Types of Sentinel-1 acquisition
+        """
         IW = 'IW'
         EW = 'EW'
 
     class Polarisation(Enum):
+        """
+        Types of Sentinel-1 polarisation
+        """
         DV = 'VV+VH'
         DH = 'HH+HV'
         SV = 'VV'
         SH = 'HH'
 
     class Resolution(Enum):
+        """
+        Types of Sentinel-1 resolution
+        """
         MEDIUM = 'medium'
         HIGH = 'high'
 
     class OrbitDirection(Enum):
+        """
+        Types of Sentinel-1 orbit direction
+        """
         ASCENDING = 'ascending'
         DESCENDING = 'descending'
         BOTH = 'both'
@@ -89,6 +107,13 @@ class ProductType(Enum):
 
     @classmethod
     def get_wfs_typename(cls, product_type):
+        """ Maps product type to string identifier for WFS
+
+        :param product_type: One of the supported product types
+        :type: ProductType
+        :return: Product identifier for WFS
+        :rtype: str
+        """
         return {
             cls.SENTINEL2_L1C: 'S2.TILE',
             cls.SENTINEL2_L2A: 'DSS2',
@@ -102,14 +127,35 @@ class ProductType(Enum):
 
     @classmethod
     def is_sentinel1(cls, product_type):
+        """Checks if product source is Sentinel-1
+
+        :param product_type: One of the supported product types
+        :type: ProductType
+        :return: True if product source is Sentinel-1 and False otherwise
+        :rtype: bool
+        """
         return product_type.value[0] is cls.Source.value.SENTINEL1
 
     @classmethod
     def is_timeless(cls, product_type):
+        """Checks if product is time independent
+
+        :param product_type: One of the supported product types
+        :type: ProductType
+        :return: True if product is time independent and False otherwise
+        :rtype: bool
+        """
         return product_type.value[0] is cls.Source.value.DEM
 
     @classmethod
     def is_uswest_source(cls, product_type):
+        """Checks if product data via Sentinel Hub services is available at US West server
+
+        :param product_type: One of the supported product types
+        :type: ProductType
+        :return: True if product exists at US West server and False otherwise
+        :rtype: bool
+        """
         return product_type.value[0] in [cls.Source.value.LANDSAT8, cls.Source.value.MODIS, cls.Source.value.DEM]
 
 
