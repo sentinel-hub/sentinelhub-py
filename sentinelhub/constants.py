@@ -27,8 +27,8 @@ class PackageProps:
         return version
 
 
-class DataSource(Enum):
-    """ Enum constant class for data source services
+class ServiceType(Enum):
+    """ Enum constant class for type of service
 
     Supported types are WMS, WCS, WFS, AWS
     """
@@ -38,7 +38,7 @@ class DataSource(Enum):
     AWS = 'aws'
 
 
-class ProductType(Enum):
+class DataSource(Enum):
     """ Enum constant class for types of satellite data
 
     Supported types are SENTINEL2_L1C, SENTINEL2_L2A, LANDSAT8, SENTINEL1_IW, SENTINEL1_EW, SENTINEL1_EW_SH, DEM, MODIS
@@ -106,11 +106,11 @@ class ProductType(Enum):
     LANDSAT8 = (Source.LANDSAT8, ProcessingLevel.GRD)
 
     @classmethod
-    def get_wfs_typename(cls, product_type):
-        """ Maps product type to string identifier for WFS
+    def get_wfs_typename(cls, data_source):
+        """ Maps data source to string identifier for WFS
 
-        :param product_type: One of the supported product types
-        :type: ProductType
+        :param data_source: One of the supported data sources
+        :type: DataSource
         :return: Product identifier for WFS
         :rtype: str
         """
@@ -123,40 +123,40 @@ class ProductType(Enum):
             cls.DEM: 'DSS4',
             cls.MODIS: 'DSS5',
             cls.LANDSAT8: 'DSS6'
-        }[product_type]
+        }[data_source]
 
     @classmethod
-    def is_sentinel1(cls, product_type):
-        """Checks if product source is Sentinel-1
+    def is_sentinel1(cls, data_source):
+        """Checks if source is Sentinel-1
 
-        :param product_type: One of the supported product types
-        :type: ProductType
-        :return: True if product source is Sentinel-1 and False otherwise
+        :param data_source: One of the supported data sources
+        :type: DataSource
+        :return: True if source is Sentinel-1 and False otherwise
         :rtype: bool
         """
-        return product_type.value[0] is cls.Source.value.SENTINEL1
+        return data_source.value[0] is cls.Source.value.SENTINEL1
 
     @classmethod
-    def is_timeless(cls, product_type):
-        """Checks if product is time independent
+    def is_timeless(cls, data_source):
+        """Checks if data source is time independent
 
-        :param product_type: One of the supported product types
-        :type: ProductType
-        :return: True if product is time independent and False otherwise
+        :param data_source: One of the supported data sources
+        :type: DataSource
+        :return: True if data source is time independent and False otherwise
         :rtype: bool
         """
-        return product_type.value[0] is cls.Source.value.DEM
+        return data_source.value[0] is cls.Source.value.DEM
 
     @classmethod
-    def is_uswest_source(cls, product_type):
-        """Checks if product data via Sentinel Hub services is available at US West server
+    def is_uswest_source(cls, data_source):
+        """Checks if data source via Sentinel Hub services is available at US West server
 
-        :param product_type: One of the supported product types
-        :type: ProductType
-        :return: True if product exists at US West server and False otherwise
+        :param data_source: One of the supported data sources
+        :type: DataSource
+        :return: True if data source exists at US West server and False otherwise
         :rtype: bool
         """
-        return product_type.value[0] in [cls.Source.value.LANDSAT8, cls.Source.value.MODIS, cls.Source.value.DEM]
+        return data_source.value[0] in [cls.Source.value.LANDSAT8, cls.Source.value.MODIS, cls.Source.value.DEM]
 
 
 class _Direction(Enum):
@@ -289,11 +289,11 @@ class CustomUrlParam(Enum):
 
     @classmethod
     def has_value(cls, value):
-        """ Tests whether CustomUrlParam contains a constant defined with a string ``value``
+        """ Tests whether CustomUrlParam contains a constant defined with a string `value`
 
         :param value: The string representation of the enum constant
         :type value: str
-        :return: ``True`` if there exists a constant with a string value ``value``, ``False`` otherwise
+        :return: `True` if there exists a constant with a string value `value`, `False` otherwise
         :rtype: bool
         """
         return any(value.lower() == item.value.lower() for item in cls)

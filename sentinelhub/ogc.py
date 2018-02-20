@@ -10,7 +10,7 @@ from urllib.parse import urlencode
 
 from .time_utils import get_current_date, parse_time
 from .download import DownloadRequest, get_json
-from .constants import CRS, DataSource, MimeType, OgcConstants, CustomUrlParam, ProductType
+from .constants import ServiceType, DataSource, MimeType, CRS, OgcConstants, CustomUrlParam
 from .config import SGConfig
 from .geo_utils import get_image_dimension
 
@@ -67,18 +67,18 @@ class OgcService:
         :return: url to Sentinel Hub's OGC service for this product.
         :rtype: str
         """
-        url = self.base_url + request.source.value
+        url = self.base_url + request.service_type.value
         # These 2 lines are temporal and will be removed after the use of uswest url wont be required anymore:
-        if ProductType.is_uswest_source(request.product_type):
-            url = 'https://services-uswest2.sentinel-hub.com/ogc/{}'.format(request.source.value)
+        if DataSource.is_uswest_source(request.data_source):
+            url = 'https://services-uswest2.sentinel-hub.com/ogc/{}'.format(request.service_type.value)
 
-        params = {'SERVICE': request.source.value,
+        params = {'SERVICE': request.service_type.value,
                   'BBOX': str(request.bbox),
                   'FORMAT': MimeType.get_string(request.image_format),
                   'CRS': CRS.ogc_string(request.bbox.get_crs()),
                   'MAXCC': 100.0 * request.maxcc}
 
-        if request.source is DataSource.WMS:
+        if request.service_type is ServiceType.WMS:
             params = {**params,
                       **{
                           'WIDTH': size_x,
@@ -86,7 +86,7 @@ class OgcService:
                           'LAYERS': request.layer,
                           'REQUEST': 'GetMap'
                       }}
-        elif request.source is DataSource.WCS:
+        elif request.service_type is ServiceType.WCS:
             params = {**params,
                       **{
                           'RESX': size_x,
@@ -120,7 +120,7 @@ class OgcService:
         The files are stored in the folder specified by the user when initialising OGC-type
         of request. The name of the file has the following structure:
 
-        {source}_{layer}_{crs}_{bbox}_{time}_{size_x}X{size_y}_{custom_url_param}_{custom_url_param_val}.{image_format}
+        {service_type}_{layer}_{crs}_{bbox}_{time}_{size_x}X{size_y}_{custom_url_param}_{custom_url_param_val}.{image_format}
 
         In case of `TIFF_d32f` a `'_tiff_depth32f'` is added at the end of the filename (before format suffix)
         to differentiate it from 16-bit float tiff.
@@ -143,7 +143,7 @@ class OgcService:
             suffix = str(MimeType.TIFF.value)
             fmt = str(request.image_format.value).replace(';', '_')
 
-        filename = '_'.join([str(request.source.value),
+        filename = '_'.join([str(request.service_type.value),
                              request.layer,
                              str(request.bbox.get_crs()).replace(':', ''),
                              bbox_str,
@@ -220,7 +220,7 @@ class OgcService:
         :param request: OGC-type request
         :type request: WmsRequest or WcsRequest
         """
-        if ProductType.is_timeless(request.product_type):
+        if DataSource.is_timeless(request.data_source):
             return [None]
 
         date_interval = OgcService._parse_date_interval(request.time)
@@ -272,7 +272,7 @@ class OgcService:
         :return: horizontal and vertical dimensions of requested image
         :rtype: (int or str, int or str)
         """
-        if request.source is DataSource.WCS or (isinstance(request.size_x, int) and isinstance(request.size_y, int)):
+        if request.service_type is ServiceType.WCS or (isinstance(request.size_x, int) and isinstance(request.size_y, int)):
             return request.size_x, request.size_y
         if not isinstance(request.size_x, int) and not isinstance(request.size_y, int):
             raise ValueError("At least one of parameters 'width' and 'height' must have an integer value")
@@ -294,11 +294,11 @@ class OgcService:
         :return: dictionaries containing info about product tiles
         :rtype: Iterator[dict]
         """
-        main_url = '{}{}/{}?'.format(self.base_url, DataSource.WFS.value, self.instance_id)
+        main_url = '{}{}/{}?'.format(self.base_url, ServiceType.WFS.value, self.instance_id)
 
-        params = {'SERVICE': DataSource.WFS.value,
+        params = {'SERVICE': ServiceType.WFS.value,
                   'REQUEST': 'GetFeature',
-                  'TYPENAMES': ProductType.get_wfs_typename(request.product_type),
+                  'TYPENAMES': DataSource.get_wfs_typename(request.data_source),
                   'BBOX': str(request.bbox),
                   'OUTPUTFORMAT': MimeType.get_string(MimeType.JSON),
                   'SRSNAME': CRS.ogc_string(request.bbox.get_crs()),
@@ -306,7 +306,7 @@ class OgcService:
                   'MAXCC': 100.0 * request.maxcc,
                   'MAXFEATURES': SGConfig().max_wfs_records_per_query}
 
-        is_sentinel1 = ProductType.is_sentinel1(request.product_type)
+        is_sentinel1 = DataSource.is_sentinel1(request.data_source)
         feature_offset = 0
         while True:
             params['FEATURE_OFFSET'] = feature_offset
@@ -317,7 +317,7 @@ class OgcService:
             response = get_json(url)
             for tile_info in response["features"]:
                 if not is_sentinel1 or self._sentinel1_product_check(tile_info['properties']['id'],
-                                                                     request.product_type):
+                                                                     request.data_source):
                     yield tile_info
 
             if len(response["features"]) < SGConfig().max_wfs_records_per_query:
@@ -325,19 +325,19 @@ class OgcService:
             feature_offset += SGConfig().max_wfs_records_per_query
 
     @staticmethod
-    def _sentinel1_product_check(product_id, product_type):
-        """Checks if Sentinel-1 product ID matches Sentinel-1 ProductType configuration
+    def _sentinel1_product_check(product_id, data_source):
+        """Checks if Sentinel-1 product ID matches Sentinel-1 DataSource configuration
 
         :param product_id: Sentinel-1 product ID
         :type product_id: str
-        :param product_type: One of the supported Sentinel-1 product types
-        :type product_type: constants.ProductType
-        :return: True if product_id is of type product_type and False otherwise
+        :param data_source: One of the supported Sentinel-1 data sources
+        :type data_source: constants.DataSource
+        :return: True if data_source contains product_id and False otherwise
         :rtype: bool
         """
         props = product_id.split('_')
         acquisition, resolution, polarisation = props[1], props[2][3], props[3][2:4]
         if acquisition in ['IW', 'EW'] and resolution in ['M', 'H'] and polarisation in ['DV', 'DH', 'SV', 'SH']:
-            return acquisition == product_type.value[2].name and polarisation == product_type.value[3].name and \
-                   resolution == product_type.value[4].name[0]
+            return acquisition == data_source.value[2].name and polarisation == data_source.value[3].name and \
+                   resolution == data_source.value[4].name[0]
         raise ValueError('Unknown Sentinel-1 tile type: {}'.format(product_id))

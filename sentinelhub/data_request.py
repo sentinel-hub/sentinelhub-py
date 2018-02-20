@@ -16,7 +16,7 @@ from .aws_safe import SafeProduct, SafeTile
 from .download import download_data, ImageDecodingError
 from .io_utils import read_data
 from .os_utils import make_folder
-from .constants import ProductType, MimeType, CustomUrlParam, DataSource, AwsConstants
+from .constants import DataSource, MimeType, CustomUrlParam, ServiceType, AwsConstants
 from .config import SGConfig
 
 LOGGER = logging.getLogger(__name__)
@@ -154,10 +154,10 @@ class OgcRequest(DataRequest):
     """ The base class for OGC-type requests (WMS and WCS) where all common parameters are
     defined.
 
-    :param product_type: Type of satellite data product requested. Default is Sentinel-2 L1C data.
-    :type product_type: constants.ProductType
-    :param source: type of OGC request (WMS or WCS)
-    :type source: constants.DataSource
+    :param data_source: Source of requested satellite data. Default is Sentinel-2 L1C data.
+    :type data_source: constants.DataSource
+    :param service_type: type of OGC service (WMS or WCS)
+    :type service_type: constants.ServiceType
     :param size_x: number of pixels in x or resolution in x (i.e. ``512`` or ``10m``)
     :type size_x: int or str
     :param size_y: number of pixels in x or resolution in y (i.e. ``512`` or ``10m``)
@@ -199,17 +199,17 @@ class OgcRequest(DataRequest):
     :param data_folder: location of the directory where the fetched data will be saved.
     :type data_folder: str
     """
-    def __init__(self, layer, bbox, *, time='latest', source=None, product_type=ProductType.SENTINEL2_L1C,
+    def __init__(self, layer, bbox, *, time='latest', service_type=None, data_source=DataSource.SENTINEL2_L1C,
                  size_x=None, size_y=None, maxcc=1.0, image_format=MimeType.PNG, instance_id=None,
                  custom_url_params=None, time_difference=datetime.timedelta(seconds=-1), **kwargs):
         self.layer = layer
         self.bbox = bbox
         self.time = time
-        self.product_type = product_type
+        self.data_source = data_source
         self.maxcc = maxcc
         self.image_format = image_format
         self.instance_id = instance_id
-        self.source = source
+        self.service_type = service_type
         self.size_x = size_x
         self.size_y = size_y
         self.custom_url_params = custom_url_params
@@ -268,8 +268,8 @@ class WmsRequest(OgcRequest):
     :type width: int or None
     :param height: height (number of rows) of the returned image (array)
     :type height: int or None
-    :param product_type: Type of satellite data product requested. Default is Sentinel-2 L1C data.
-    :type product_type: constants.ProductType
+    :param data_source: Source of requested satellite data. Default is Sentinel-2 L1C data.
+    :type data_source: constants.DataSource
     :param bbox: specifies the bounding box of the requested image. Coordinates must be in
                     the specified coordinate reference system. Required.
     :type bbox: common.BBox
@@ -311,7 +311,7 @@ class WmsRequest(OgcRequest):
     https://www.sentinel-hub.com/develop/documentation/api/ogc_api/wms-parameters
     """
     def __init__(self, *, width=None, height=None, **kwargs):
-        super(WmsRequest, self).__init__(source=DataSource.WMS, size_x=width, size_y=height, **kwargs)
+        super(WmsRequest, self).__init__(service_type=ServiceType.WMS, size_x=width, size_y=height, **kwargs)
 
 
 class WcsRequest(OgcRequest):
@@ -332,8 +332,8 @@ class WcsRequest(OgcRequest):
     :param resy: resolution in y (resolution of a row) given in meters in the format (examples ``10m``, ``20m``, ...).
                 Default is ``10m``, which is the best native resolution of some Sentinel-2 bands.
     :type resy: str
-    :param product_type: Type of satellite data product requested. Default is Sentinel-2 L1C data.
-    :type product_type: constants.ProductType
+    :param data_source: Source of requested satellite data. Default is Sentinel-2 L1C data.
+    :type data_source: constants.DataSource
     :param bbox: specifies the bounding box of the requested image. Coordinates must be in
                     the specified coordinate reference system. Required.
     :type bbox: common.BBox
@@ -372,7 +372,7 @@ class WcsRequest(OgcRequest):
     :type data_folder: str
     """
     def __init__(self, *, resx='10m', resy='10m', **kwargs):
-        super(WcsRequest, self).__init__(source=DataSource.WCS, size_x=resx, size_y=resy, **kwargs)
+        super(WcsRequest, self).__init__(service_type=ServiceType.WCS, size_x=resx, size_y=resy, **kwargs)
 
 
 class AwsRequest(DataRequest):

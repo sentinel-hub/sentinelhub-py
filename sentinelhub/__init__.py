@@ -11,7 +11,7 @@ from .aws_safe import SafeProduct, SafeTile
 from .ogc import OgcService
 
 from .common import BBox
-from .constants import CRS, CustomUrlParam, MimeType, OgcConstants, AwsConstants, ProductType
+from .constants import DataSource, CustomUrlParam, CRS, MimeType, OgcConstants, AwsConstants
 
 from .download import DownloadRequest, download_data, get_json, get_xml
 from .opensearch import get_tile_info_id, get_tile_info, get_area_dates, get_area_info
