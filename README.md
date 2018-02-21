@@ -4,8 +4,8 @@
 # Description
 
 The **sentinelhub** Python package allows users to make OGC (WMS and WCS)
-web requests to download and process Sentinel-2 images within your Python
-scripts.
+web requests to download and process satellite images within your Python
+scripts. It supports Sentinel-2 L1C and L2A, Sentinel-1, Landsat 8, MODIS and DEM data source.
 
 Version 1.0 is backwards compatible with previous releases,
 and therefore allows users to also download raw data from AWS to .SAFE
@@ -41,6 +41,13 @@ Some of the major features introduced in version 1.0 are linked to one's [Sentin
  * support for different Coordinate Reference Systems;
  * support to read and write downloaded data to disk in the most common
  image and data formats.
+ * support for various data sources (new in version 1.1.0):
+   * Sentinel-2 L1C,
+   * Sentinel-2 L2A,
+   * Sentinel-1,
+   * Landsat 8,
+   * MODIS,
+   * DEM
 
 
 ### AWS data download
