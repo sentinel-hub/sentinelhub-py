@@ -30,7 +30,7 @@ class TestBBox(TestSentinelHub):
 
     def test_bbox_from_flat_list(self):
         for bbox_lst in [[46.07, 13.23, 46.24, 13.57], [46.24, 13.23, 46.07, 13.57],
-                             [46.07, 13.57, 46.24, 13.23], [46.24, 13.57, 46.07, 13.23]]:
+                         [46.07, 13.57, 46.24, 13.23], [46.24, 13.57, 46.07, 13.23]]:
             with self.subTest(msg="bbox={}".format(bbox_lst)):
                 bbox = BBox(bbox_lst, CRS.WGS84)
                 self.assertEqual(bbox.get_lower_left(), (46.07, 13.23))
@@ -58,6 +58,13 @@ class TestBBox(TestSentinelHub):
         self.assertEqual(bbox.get_lower_left(), (46.07, 13.23))
         self.assertEqual(bbox.get_crs(), CRS.WGS84)
 
+    def test_bbox_from_list_tuple_combo(self):
+        bbox_list = [(46.07, 13.23), (46.24, 13.57)]
+        bbox = BBox(bbox_list, CRS.WGS84)
+        self.assertEqual(bbox.get_upper_right(), (46.24, 13.57))
+        self.assertEqual(bbox.get_lower_left(), (46.07, 13.23))
+        self.assertEqual(bbox.get_crs(), CRS.WGS84)
+
     def test_bbox_from_dict(self):
         bbox_dict = {'min_x': 46.07, 'min_y': 13.23, 'max_x': 46.24, 'max_y': 13.57}
         bbox = BBox(bbox_dict, CRS.WGS84)
@@ -80,7 +87,7 @@ class TestBBox(TestSentinelHub):
         self.assertEqual(bbox.get_crs(), CRS.WGS84)
 
     def test_bbox_to_str(self):
-        x1, y1, x2, y2 = 45, 12, 47, 14
+        x1, y1, x2, y2 = 45.0, 12.0, 47.0, 14.0
         crs = CRS.WGS84
         expect_str = "{},{},{},{}".format(x1, y1, x2, y2)
         bbox = BBox(((x1, y1), (x2, y2)), crs)

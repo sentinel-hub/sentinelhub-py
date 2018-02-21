@@ -24,9 +24,11 @@ class BBox:
         2) ``(min_x,min_y,max_x,max_y)``,
         3) ``[min_x,min_y,max_x,max_y]``,
         4) ``[[min_x, min_y],[max_x,max_y]]``,
-        5) ``'min_x,min_y,max_x,max_y'``,
-        6) ``{'min_x':min_x, 'max_x':max_x, 'min_y':min_y, 'max_y':max_y}``,
-        7) ``bbox``, where ``bbox`` is an instance of ``BBox``.
+        5) ``[(min_x, min_y),(max_x,max_y)]``,
+        6) ``([min_x, min_y],[max_x,max_y])``,
+        7) ``'min_x,min_y,max_x,max_y'``,
+        8) ``{'min_x':min_x, 'max_x':max_x, 'min_y':min_y, 'max_y':max_y}``,
+        9) ``bbox``, where ``bbox`` is an instance of ``BBox``.
 
     Note that BBox coordinate system depends on ``crs`` parameter:
         - In case of ``constants.CRS.WGS84`` axis x represents latitude and axis y represents longitude
@@ -81,7 +83,8 @@ class BBox:
         return self.crs
 
     def __repr__(self):
-        return self.get_lower_left(), self.get_upper_right(), self.crs
+        return "{}((({}, {}), ({}, {})), crs={})".format(self.__class__.__name__, self.min_x, self.min_y, self.max_x,
+                                                         self.max_y, self.crs)
 
     def __str__(self):
         return "{},{},{},{}".format(self.min_x, self.min_y, self.max_x, self.max_y)
@@ -95,21 +98,30 @@ class BBox:
         :return: A flat tuple of size
         :raises: TypeError
         """
-
-        if isinstance(bbox, list):
-            return BBox._tuple_from_list(bbox)
+        if isinstance(bbox, list) or isinstance(bbox, tuple):
+            return BBox._tuple_from_list_or_tuple(bbox)
         elif isinstance(bbox, str):
             return BBox._tuple_from_str(bbox)
-        elif isinstance(bbox, tuple):
-            if len(bbox) == 2 and all([isinstance(p, tuple) for p in bbox]):
-                return bbox[0] + bbox[1]
-            elif len(bbox) == 4 and all([isinstance(p, float) for p in bbox]):
-                return bbox
         elif isinstance(bbox, dict):
             return BBox._tuple_from_dict(bbox)
         elif isinstance(bbox, BBox):
             return BBox._tuple_from_bbox(bbox)
         raise TypeError('Invalid bbox representation')
+
+    @staticmethod
+    def _tuple_from_list_or_tuple(bbox):
+        """ Converts a list or tuple representation of a bbox into a flat tuple representation.
+
+        :param bbox: a list or tuple with 4 coordinates that is either flat or nested
+        :return: tuple (min_x,min_y,max_x,max_y)
+        :raises: TypeError
+        """
+        if len(bbox) == 4:
+            return tuple(map(float, bbox))
+        elif len(bbox) == 2 and all([isinstance(point, list) or isinstance(point, tuple) for point in bbox]):
+            return BBox._tuple_from_list_or_tuple(bbox[0] + bbox[1])
+        raise TypeError('Expected a valid list or tuple representation of a bbox')
+
 
     @staticmethod
     def _tuple_from_str(bbox):
@@ -119,20 +131,6 @@ class BBox:
         :return: tuple (min_x,min_y,max_x,max_y)
         """
         return tuple([float(s) for s in bbox.split(",")])
-
-    @staticmethod
-    def _tuple_from_list(bbox):
-        """ Converts a list representation of a bbox into a flat tuple representation.
-
-        :param bbox: a list of the form [min_x,min_y,max_x,max_y] or form [[min_x,min_y], [max_x,max_y]]
-        :return: tuple (min_x,min_y,max_x,max_y)
-        :raises: TypeError
-        """
-        if len(bbox) == 4 and all([isinstance(x, float) for x in bbox]):
-            return tuple(bbox)
-        elif len(bbox) == 2 and all([isinstance(lst, list) for lst in bbox]):
-            return BBox._tuple_from_list(bbox[0] + bbox[1])
-        raise TypeError('Expected a valid list representation of a bbox')
 
     @staticmethod
     def _tuple_from_dict(bbox):
