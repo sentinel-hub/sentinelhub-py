@@ -98,7 +98,7 @@ class BBox:
         :return: A flat tuple of size
         :raises: TypeError
         """
-        if isinstance(bbox, list) or isinstance(bbox, tuple):
+        if isinstance(bbox, (list, tuple)):
             return BBox._tuple_from_list_or_tuple(bbox)
         elif isinstance(bbox, str):
             return BBox._tuple_from_str(bbox)
@@ -118,7 +118,7 @@ class BBox:
         """
         if len(bbox) == 4:
             return tuple(map(float, bbox))
-        elif len(bbox) == 2 and all([isinstance(point, list) or isinstance(point, tuple) for point in bbox]):
+        elif len(bbox) == 2 and all([isinstance(point, (list, tuple)) for point in bbox]):
             return BBox._tuple_from_list_or_tuple(bbox[0] + bbox[1])
         raise TypeError('Expected a valid list or tuple representation of a bbox')
 

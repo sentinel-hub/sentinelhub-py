@@ -120,7 +120,8 @@ class OgcService:
         The files are stored in the folder specified by the user when initialising OGC-type
         of request. The name of the file has the following structure:
 
-        {service_type}_{layer}_{crs}_{bbox}_{time}_{size_x}X{size_y}_{custom_url_param}_{custom_url_param_val}.{image_format}
+        {service_type}_{layer}_{crs}_{bbox}_{time}_{size_x}X{size_y}_{custom_url_param}_
+        {custom_url_param_val}.{image_format}
 
         In case of `TIFF_d32f` a `'_tiff_depth32f'` is added at the end of the filename (before format suffix)
         to differentiate it from 16-bit float tiff.
@@ -272,7 +273,8 @@ class OgcService:
         :return: horizontal and vertical dimensions of requested image
         :rtype: (int or str, int or str)
         """
-        if request.service_type is ServiceType.WCS or (isinstance(request.size_x, int) and isinstance(request.size_y, int)):
+        if request.service_type is ServiceType.WCS or (isinstance(request.size_x, int) and
+                                                       isinstance(request.size_y, int)):
             return request.size_x, request.size_y
         if not isinstance(request.size_x, int) and not isinstance(request.size_y, int):
             raise ValueError("At least one of parameters 'width' and 'height' must have an integer value")
