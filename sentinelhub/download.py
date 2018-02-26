@@ -199,10 +199,12 @@ def execute_download_request(request):
             LOGGER.debug('Successful download from %s', request.url)
             break
         except requests.RequestException as exception:
+            if 'EvalScriptUrl' in request.url:
+                print(response.status_code, try_num, '$$$')
             try_num -= 1
-            if try_num > 0 and _is_temporal_problem(exception) or\
-                    (isinstance(exception, requests.HTTPError) and
-                     exception.response.status_code != requests.status_codes.codes.BAD_REQUEST):
+            if try_num > 0 and (_is_temporal_problem(exception) or
+                                (isinstance(exception, requests.HTTPError) and
+                                 exception.response.status_code != requests.status_codes.codes.BAD_REQUEST)):
                 LOGGER.debug('Download attempt failed: %s\n%d attempts left, will retry in %ds', exception,
                              try_num, SGConfig().download_sleep_time)
                 time.sleep(SGConfig().download_sleep_time)
