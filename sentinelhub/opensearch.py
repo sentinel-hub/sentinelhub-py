@@ -218,8 +218,7 @@ def _prepare_url_params(bbox, cloud_cover, end_date, start_date, text_query, til
     url_params = _add_param(url_params, end_date, 'completionDate')
     url_params = _add_param(url_params, cloud_cover, 'cloudCover')
     if bbox:
-        x_mn, y_mn, x_mx, y_mx = bbox.get_lower_left() + bbox.get_upper_right()
-        url_params = _add_param(url_params, ','.join(map(str, [y_mn, x_mn, y_mx, x_mx])), 'box')
+        url_params = _add_param(url_params, bbox.__str__(reverse=True), 'box')
     return url_params
 
 

@@ -82,11 +82,39 @@ class BBox:
         """
         return self.crs
 
+    def get_polygon(self, reverse=False):
+        """ Returns a list of coordinates of 5 points describing a polygon. Points are listed in clockwise order, first
+        point is the same as the last.
+
+        :param reverse: True if x and y coordinates should be switched and False otherwise
+        :type reverse: bool
+        :return: [[x_1, y_1], ... , [x_5, y_5]]
+        :rtype: list(list(float))
+        """
+        polygon = [[self.min_x, self.min_y],
+                   [self.min_x, self.max_y],
+                   [self.max_x, self.max_y],
+                   [self.max_x, self.min_y],
+                   [self.min_x, self.min_y]]
+        if reverse:
+            for i, point in enumerate(polygon):
+                polygon[i] = point[-1::-1]
+        return polygon
+
     def __repr__(self):
         return "{}((({}, {}), ({}, {})), crs={})".format(self.__class__.__name__, self.min_x, self.min_y, self.max_x,
                                                          self.max_y, self.crs)
 
-    def __str__(self):
+    def __str__(self, reverse=False):
+        """ Transforms bounding box into string of coordinates
+
+        :param reverse: True if x and y coordinates should be switched and False otherwise
+        :type reverse: bool
+        :return: String of coordinates
+        :rtype: str
+        """
+        if reverse:
+            return "{},{},{},{}".format(self.min_y, self.min_x, self.max_y, self.max_x)
         return "{},{},{},{}".format(self.min_x, self.min_y, self.max_x, self.max_y)
 
     @staticmethod
