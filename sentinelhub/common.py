@@ -122,15 +122,14 @@ class BBox:
             return BBox._tuple_from_list_or_tuple(bbox[0] + bbox[1])
         raise TypeError('Expected a valid list or tuple representation of a bbox')
 
-
     @staticmethod
     def _tuple_from_str(bbox):
-        """ Parses a string of the form 'min_x,min_y,max_x,max_y' into a flat tuple
+        """ Parses a string of numbers separated by any combination of commas and spaces
 
-        :param bbox: str of the form 'min_x,min_y,max_x,max_y'
+        :param bbox: e.g. str of the form 'min_x ,min_y  max_x, max_y'
         :return: tuple (min_x,min_y,max_x,max_y)
         """
-        return tuple([float(s) for s in bbox.split(",")])
+        return tuple([float(s) for s in bbox.replace(',', ' ').split() if s])
 
     @staticmethod
     def _tuple_from_dict(bbox):
