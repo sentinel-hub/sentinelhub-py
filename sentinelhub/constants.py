@@ -9,7 +9,7 @@ import mimetypes
 import utm
 import os.path
 from pyproj import Proj
-from enum import Enum
+from enum import Enum, EnumMeta
 
 
 mimetypes.add_type('application/json', '.json')
@@ -38,7 +38,17 @@ class ServiceType(Enum):
     AWS = 'aws'
 
 
-class DataSource(Enum):
+class _DataSourceMeta(EnumMeta):
+    """ EnumMeta class for `DataSource` Enum class
+    """
+    def __iter__(cls):
+        return (member for name, member in cls._member_map_.items() if isinstance(member.value, tuple))
+
+    def __len__(cls):
+        return len(list(cls.__iter__()))
+
+
+class DataSource(Enum, metaclass=_DataSourceMeta):
     """ Enum constant class for types of satellite data
 
     Supported types are SENTINEL2_L1C, SENTINEL2_L2A, LANDSAT8, SENTINEL1_IW, SENTINEL1_EW, SENTINEL1_EW_SH, DEM, MODIS
