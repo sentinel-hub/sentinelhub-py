@@ -269,6 +269,24 @@ CRS = _BaseCRS("CRS", dict(
 ))
 
 
+def _crs_parser(cls, value):
+    """ Parses user input for class CRS
+
+    :param cls: class object
+    :param value: user input for CRS
+    :type value: str, int or CRS
+    """
+    parsed_value = value
+    if isinstance(parsed_value, int):
+        parsed_value = str(parsed_value)
+    if isinstance(parsed_value, str):
+        parsed_value = parsed_value.strip('epsgEPSG: ')
+    return super(_BaseCRS, cls).__new__(cls, parsed_value)
+
+
+setattr(CRS, '__new__', _crs_parser)
+
+
 class CustomUrlParam(Enum):
     """ Enum class to represent supported custom url parameters of OGC services
 
