@@ -17,7 +17,7 @@ The package requires a Python version >= 3.5. The package is available on
 the PyPI package manager and can be installed with
 
 ```
-$ pip install sentinelhub
+$ pip install sentinelhub --upgrade
 ```
 
 To install the package manually, clone the repository and
