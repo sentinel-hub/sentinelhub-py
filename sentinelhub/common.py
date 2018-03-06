@@ -98,7 +98,7 @@ class BBox:
                    [self.min_x, self.min_y]]
         if reverse:
             for i, point in enumerate(polygon):
-                polygon[i] = point[-1::-1]
+                polygon[i] = point[::-1]
         return polygon
 
     def __repr__(self):
