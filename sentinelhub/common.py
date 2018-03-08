@@ -101,6 +101,21 @@ class BBox:
                 polygon[i] = point[::-1]
         return polygon
 
+    def get_partition(self, num_x=1, num_y=1):
+        """ Partitions bounding box into smaller bounding boxes of the same size.
+
+        :param num_x: Number of parts BBox will be horizontally divided into.
+        :type num_x: int
+        :param num_y: Number of parts BBox will be vertically divided into.
+        :type num_y: int or None
+        :return: Two-dimensional list of smaller bounding boxes. Their location is
+        :rtype: list(list(BBox))
+        """
+        size_x, size_y = (self.max_x - self.min_x) / num_x, (self.max_y - self.min_y) / num_y
+        return [[BBox([self.min_x + i * size_x, self.min_y + j * size_y,
+                       self.min_x + (i + 1) * size_x, self.min_y + (j + 1) * size_y],
+                      crs=self.crs) for j in range(num_y)] for i in range(num_x)]
+
     def __repr__(self):
         return "{}((({}, {}), ({}, {})), crs={})".format(self.__class__.__name__, self.min_x, self.min_y, self.max_x,
                                                          self.max_y, self.crs)

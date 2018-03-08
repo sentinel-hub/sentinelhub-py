@@ -11,7 +11,7 @@ from .aws_safe import SafeProduct, SafeTile
 from .ogc import OgcService
 
 from .common import BBox
-from .constants import DataSource, CustomUrlParam, CRS, MimeType, OgcConstants, AwsConstants
+from .constants import DataSource, CustomUrlParam, CRS, MimeType, OgcConstants, AwsConstants, ServiceType
 
 from .download import DownloadRequest, download_data, get_json, get_xml
 from .opensearch import get_tile_info_id, get_tile_info, get_area_dates, get_area_info
@@ -23,4 +23,4 @@ from .geo_utils import bbox_to_resolution, get_image_dimension, to_utm_bbox, get
 from .time_utils import next_date, prev_date, get_current_date
 
 
-__version__ = "1.1.0"
+__version__ = "1.1.1"
