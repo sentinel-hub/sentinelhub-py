@@ -320,8 +320,9 @@ class OgcImageService(OgcService):
     def get_wfs_iterator(self):
         """Returns iterator over info about all satellite tiles used for the request
 
-        :return: Iterator of dictionaries containing info about all satellite tiles used in the request
-        :rtype: Iterator[dict]
+        :return: Iterator of dictionaries containing info about all satellite tiles used in the request. In case of
+                 DataSource.DEM it returns None.
+        :rtype: Iterator[dict] or None
         """
         return self.wfs_iterator
 
