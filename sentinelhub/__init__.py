@@ -8,7 +8,7 @@ from .data_request import WmsRequest, WcsRequest, AwsTileRequest, AwsProductRequ
 from .aws import AwsProduct, AwsTile
 from .aws_safe import SafeProduct, SafeTile
 
-from .ogc import OgcService
+from .ogc import WebFeatureService
 
 from .common import BBox
 from .constants import DataSource, CustomUrlParam, CRS, MimeType, OgcConstants, AwsConstants, ServiceType

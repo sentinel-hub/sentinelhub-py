@@ -18,17 +18,14 @@ LOGGER = logging.getLogger(__name__)
 
 
 class OgcService:
-    """ Sentinel Hub OGC service class
-
-    Intermediate layer between QGC-type requests (WmsRequest and WcsRequest) and the Sentinel Hub OGC (WMS and WCS)
-    services.
+    """ The base class for Sentinel Hub OGC services
 
     :param base_url: base url of Sentinel Hub's OGC services. If ``None``, the url specified in the configuration
                     file is taken.
-    :type base_url: None or str
+    :type base_url: str or None
     :param instance_id: user's instance id granting access to Sentinel Hub's OGC services. If ``None``, the instance id
                         specified in the configuration file is taken.
-    :type instance_id: None or str
+    :type instance_id: str or None
     """
     def __init__(self, base_url=None, instance_id=None):
         self.base_url = SGConfig().ogc_base_url if base_url is None else base_url
@@ -36,6 +33,109 @@ class OgcService:
         if not self.instance_id:
             raise ValueError('Instance ID is not set. '
                              'Set it either in request initialisation or in configuration file.')
+
+    @staticmethod
+    def _parse_time_interval(time):
+        """ Parses times into common form
+
+        Parses specified time into common form - tuple of start and end dates, i.e.:
+
+        ``(2017-01-15:T00:00:00, 2017-01-16:T23:59:59)``
+
+        The parameter can have the following values/format, which will be parsed as:
+
+        * ``None`` -> `[default_start_date from config.json, current date]`
+        * `YYYY-MM-DD` -> `[YYYY-MM-DD:T00:00:00, YYYY-MM-DD:T23:59:59]`
+        * `YYYY-MM-DDThh:mm:ss` -> `[YYYY-MM-DDThh:mm:ss, YYYY-MM-DDThh:mm:ss]`
+        * list or tuple of two dates (`YYYY-MM-DD`) -> `[YYYY-MM-DDT00:00:00, YYYY-MM-DDT23:59:59]`, where the first
+          (second) element is start (end) date
+        * list or tuple of two dates (`YYYY-MM-DDThh:mm:ss`) -> `[YYYY-MM-DDThh:mm:ss, YYYY-MM-DDThh:mm:ss]`,
+          where the first (second) element is start (end) date
+
+        :param time: time window of acceptable acquisitions. See above for all acceptable argument formats.
+        :type time: ``None``, str of form `YYYY-MM-DD` or `'YYYY-MM-DDThh:mm:ss'`, list or tuple of two such strings
+        :return: interval of start and end date of the form YYYY-MM-DDThh:mm:ss
+        :rtype: tuple of start and end date
+        """
+        if time is None or time is OgcConstants.LATEST:
+            date_interval = (SGConfig().default_start_date, get_current_date())
+        else:
+            if isinstance(time, str):
+                date_interval = (parse_time(time), parse_time(time))
+            elif isinstance(time, list) or isinstance(time, tuple) and len(time) == 2:
+                date_interval = (parse_time(time[0]), parse_time(time[1]))
+            else:
+                raise TabError('time must be a string or tuple of 2 strings or list of 2 strings')
+            if date_interval[0] > date_interval[1]:
+                raise ValueError('First time must be smaller or equal to second time')
+
+        if len(date_interval[0].split('T')) == 1:
+            date_interval = (date_interval[0] + 'T00:00:00', date_interval[1])
+        if len(date_interval[1].split('T')) == 1:
+            date_interval = (date_interval[0], date_interval[1] + 'T23:59:59')
+
+        return date_interval
+
+    @staticmethod
+    def _filter_dates(dates, time_difference):
+        """
+        Filters out dates within time_difference, preserving only the oldest date.
+
+        :param dates: a list of datetime objects
+        :param time_difference: a ``datetime.timedelta`` representing the time difference threshold
+        :return: an ordered list of datetimes `d1<=d2<=...<=dn` such that `d[i+1]-di > time_difference`
+        :rtype: list[datetime.datetime]
+        """
+
+        LOGGER.debug("dates=%s", dates)
+
+        if len(dates) <= 1:
+            return dates
+
+        sorted_dates = sorted(dates)
+
+        separate_dates = [sorted_dates[0]]
+        for curr_date in sorted_dates[1:]:
+            if curr_date - separate_dates[-1] > time_difference:
+                separate_dates.append(curr_date)
+        return separate_dates
+
+    @staticmethod
+    def _sentinel1_product_check(product_id, data_source):
+        """Checks if Sentinel-1 product ID matches Sentinel-1 DataSource configuration
+
+        :param product_id: Sentinel-1 product ID
+        :type product_id: str
+        :param data_source: One of the supported Sentinel-1 data sources
+        :type data_source: constants.DataSource
+        :return: True if data_source contains product_id and False otherwise
+        :rtype: bool
+        """
+        props = product_id.split('_')
+        acquisition, resolution, polarisation = props[1], props[2][3], props[3][2:4]
+        if acquisition in ['IW', 'EW'] and resolution in ['M', 'H'] and polarisation in ['DV', 'DH', 'SV', 'SH']:
+            return acquisition == data_source.value[2].name and polarisation == data_source.value[3].name and \
+                   resolution == data_source.value[4].name[0]
+        raise ValueError('Unknown Sentinel-1 tile type: {}'.format(product_id))
+
+
+class OgcImageService(OgcService):
+    """Sentinel Hub OGC services class for providing image data
+
+    Intermediate layer between QGC-type requests (WmsRequest and WcsRequest) and the Sentinel Hub OGC (WMS and WCS)
+    services.
+
+    :param base_url: base url of Sentinel Hub's OGC services. If ``None``, the url specified in the configuration
+                    file is taken.
+    :type base_url: str or None
+    :param instance_id: user's instance id granting access to Sentinel Hub's OGC services. If ``None``, the instance id
+                        specified in the configuration file is taken.
+    :type instance_id: str or None
+    """
+    def __init__(self, **kwargs):
+        super(OgcImageService, self).__init__(**kwargs)
+
+        self.wfs_iterator = None
 
     def get_request(self, request):
         """ Get download requests
@@ -149,7 +249,7 @@ class OgcService:
                              str(request.bbox.get_crs()).replace(':', ''),
                              bbox_str,
                              '' if date is None else date.strftime("%Y-%m-%dT%H-%M-%S"),
-                             str(size_x)+'X'+str(size_y)])
+                             '{}X{}'.format(size_x, size_y)])
 
         LOGGER.debug("filename=%s", filename)
 
@@ -164,48 +264,6 @@ class OgcService:
         filename = '.'.join([filename, suffix])
 
         return filename
-
-    @staticmethod
-    def _parse_date_interval(time):
-        """ Parses dates into common form
-
-        Parses specified time into common form - tuple of start and end dates, i.e.:
-
-        ``(2017-01-15:T00:00:00, 2017-01-16:T23:59:59)``
-
-        The parameter can have the following values/format, which will be parsed as:
-
-        * ``None`` -> `[default_start_date from config.json, current date]`
-        * `YYYY-MM-DD` -> `[YYYY-MM-DD:T00:00:00, YYYY-MM-DD:T23:59:59]`
-        * `YYYY-MM-DDThh:mm:ss` -> `[YYYY-MM-DDThh:mm:ss, YYYY-MM-DDThh:mm:ss]`
-        * list or tuple of two dates (`YYYY-MM-DD`) -> `[YYYY-MM-DDT00:00:00, YYYY-MM-DDT23:59:59]`, where the first
-          (second) element is start (end) date
-        * list or tuple of two dates (`YYYY-MM-DDThh:mm:ss`) -> `[YYYY-MM-DDThh:mm:ss, YYYY-MM-DDThh:mm:ss]`,
-          where the first (second) element is start (end) date
-
-        :param time: time window of acceptable acquisitions. See above for all acceptable argument formats.
-        :type time: ``None``, str of form `YYYY-MM-DD` or `'YYYY-MM-DDThh:mm:ss'`, list or tuple of two such strings
-        :return: interval of start and end date of the form YYYY-MM-DDThh:mm:ss
-        :rtype: tuple of start and end date
-        """
-        if time is None or time is OgcConstants.LATEST:
-            date_interval = (SGConfig().default_start_date, get_current_date())
-        else:
-            if isinstance(time, str):
-                date_interval = (parse_time(time), parse_time(time))
-            elif isinstance(time, list) or isinstance(time, tuple) and len(time) == 2:
-                date_interval = (parse_time(time[0]), parse_time(time[1]))
-            else:
-                raise TabError('time must be a string or tuple of 2 strings or list of 2 strings')
-            if date_interval[0] > date_interval[1]:
-                raise ValueError('First time must be smaller or equal to second time')
-
-        if len(date_interval[0].split('T')) == 1:
-            date_interval = (date_interval[0] + 'T00:00:00', date_interval[1])
-        if len(date_interval[1].split('T')) == 1:
-            date_interval = (date_interval[0], date_interval[1] + 'T23:59:59')
-
-        return date_interval
 
     def get_dates(self, request):
         """ Get available Sentinel-2 acquisitions at least time_difference apart
@@ -224,44 +282,18 @@ class OgcService:
         if DataSource.is_timeless(request.data_source):
             return [None]
 
-        date_interval = OgcService._parse_date_interval(request.time)
+        date_interval = OgcService._parse_time_interval(request.time)
 
         LOGGER.debug('date_interval=%s', date_interval)
 
-        dates = []
-        for tile_info in self.wfs_search_iter(request, date_interval):
-            date = tile_info['properties']['date']
-            time = tile_info['properties']['time'].split('.')[0]
-            dates.append(datetime.datetime.strptime('{}T{}'.format(date, time), '%Y-%m-%dT%H:%M:%S'))
-        dates = sorted(set(dates))
+        self.wfs_iterator = WebFeatureService(request.bbox, date_interval, data_source=request.data_source,
+                                              maxcc=request.maxcc, base_url=self.base_url, instance_id=self.instance_id)
+
+        dates = sorted(set(self.wfs_iterator.get_dates()))
 
         if request.time is OgcConstants.LATEST:
             dates = dates[-1:]
         return OgcService._filter_dates(dates, request.time_difference)
-
-    @staticmethod
-    def _filter_dates(dates, time_difference):
-        """
-        Filters out dates within time_difference, preserving only the oldest date.
-
-        :param dates: a list of datetime objects
-        :param time_difference: a ``datetime.timedelta`` representing the time difference threshold
-        :return: an ordered list of datetimes `d1<=d2<=...<=dn` such that `d[i+1]-di > time_difference`
-        :rtype: list[datetime.datetime]
-        """
-
-        LOGGER.debug("dates=%s", dates)
-
-        if len(dates) <= 1:
-            return dates
-
-        sorted_dates = sorted(dates)
-
-        separate_dates = [sorted_dates[0]]
-        for curr_date in sorted_dates[1:]:
-            if curr_date - separate_dates[-1] > time_difference:
-                separate_dates.append(curr_date)
-        return separate_dates
 
     @staticmethod
     def get_image_dimensions(request):
@@ -285,61 +317,114 @@ class OgcService:
             return request.size_x, missing_dimension
         raise ValueError("Parameters 'width' and 'height' must be integers or None")
 
-    def wfs_search_iter(self, request, date_interval):
-        """Iterator method that uses Sentinel Hub WFS service to provide info about all available product for the given
-        OGC-type request and date interval
+    def get_wfs_iterator(self):
+        """Returns iterator over info about all satellite tiles used for the request
 
-        :param request: OGC-type request
-        :type request: WmsRequest or WcsRequest
-        :param date_interval: interval of start and end date of the form YYYY-MM-DDThh:mm:ss
-        :type date_interval: (str, str)
-        :return: dictionaries containing info about product tiles
+        :return: Iterator of dictionaries containing info about all satellite tiles used in the request
         :rtype: Iterator[dict]
         """
+        return self.wfs_iterator
+
+
+class WebFeatureService(OgcService):
+    """Class for interaction with Sentinel Hub WFS service
+
+    The class is an iterator over info data of all available satellite tiles for requested parameters. It collects data
+    from Sentinel Hub service only during the first iteration. During next iterations it returns already obtained data.
+
+    :param bbox: Bounding box of the requested image. Coordinates must be in the specified coordinate reference system.
+    :type bbox: common.BBox
+    :param time_interval: interval of start and end date of the form YYYY-MM-DDThh:mm:ss or YYYY-MM-DD
+    :type time_interval: (str, str)
+    :param data_source: Source of requested satellite data. Default is Sentinel-2 L1C data.
+    :type data_source: constants.DataSource
+    :param maxcc: Maximum accepted cloud coverage of an image. Float between 0.0 and 1.0. Default is 1.0.
+    :type maxcc: float
+    :param base_url: base url of Sentinel Hub's OGC services. If ``None``, the url specified in the configuration
+                    file is taken.
+    :type base_url: str or None
+    :param instance_id: user's instance id granting access to Sentinel Hub's OGC services. If ``None``, the instance id
+                        specified in the configuration file is taken.
+    :type instance_id: str or None
+    """
+    def __init__(self, bbox, time_interval, *, data_source=DataSource.SENTINEL2_L1C,  maxcc=1.0, **kwargs):
+        super(WebFeatureService, self).__init__(**kwargs)
+
+        self.bbox = bbox
+        self.time_interval = self._parse_time_interval(time_interval)
+        self.data_source = data_source
+        self.maxcc = maxcc
+
+        self.tile_list = []
+        self.index = 0
+        self.feature_offset = 0
+
+    def __iter__(self):
+        """Iteration method
+
+        :return: iterator of dictionaries containing info about product tiles
+        :rtype: Iterator[dict]
+        """
+        self.index = 0
+        return self
+
+    def __next__(self):
+        """Next method
+
+        :return: dictionary containing info about product tiles
+        :rtype: dict
+        """
+        while self.index >= len(self.tile_list) and self.feature_offset is not None:
+            self._fetch_features()
+
+        if self.index < len(self.tile_list):
+            self.index += 1
+            return self.tile_list[self.index - 1]
+
+        raise StopIteration
+
+    def _fetch_features(self):
+        """Collects data from WFS service
+
+        :return: dictionary containing info about product tiles
+        :rtype: dict
+        """
+        if self.feature_offset is None:
+            return
+
         main_url = '{}{}/{}?'.format(self.base_url, ServiceType.WFS.value, self.instance_id)
 
         params = {'SERVICE': ServiceType.WFS.value,
                   'REQUEST': 'GetFeature',
-                  'TYPENAMES': DataSource.get_wfs_typename(request.data_source),
-                  'BBOX': str(request.bbox),
+                  'TYPENAMES': DataSource.get_wfs_typename(self.data_source),
+                  'BBOX': str(self.bbox),
                   'OUTPUTFORMAT': MimeType.get_string(MimeType.JSON),
-                  'SRSNAME': CRS.ogc_string(request.bbox.get_crs()),
-                  'TIME': '{}/{}'.format(date_interval[0], date_interval[1]),
-                  'MAXCC': 100.0 * request.maxcc,
-                  'MAXFEATURES': SGConfig().max_wfs_records_per_query}
+                  'SRSNAME': CRS.ogc_string(self.bbox.get_crs()),
+                  'TIME': '{}/{}'.format(self.time_interval[0], self.time_interval[1]),
+                  'MAXCC': 100.0 * self.maxcc,
+                  'MAXFEATURES': SGConfig().max_wfs_records_per_query,
+                  'FEATURE_OFFSET': self.feature_offset}
 
-        is_sentinel1 = DataSource.is_sentinel1(request.data_source)
-        feature_offset = 0
-        while True:
-            params['FEATURE_OFFSET'] = feature_offset
+        url = main_url + urlencode(params)
+        LOGGER.debug("URL=%s", url)
+        response = get_json(url)
 
-            url = main_url + urlencode(params)
-            LOGGER.debug("URL=%s", url)
+        is_sentinel1 = DataSource.is_sentinel1(self.data_source)
+        for tile_info in response["features"]:
+            if not is_sentinel1 or self._sentinel1_product_check(tile_info['properties']['id'], self.data_source):
+                self.tile_list.append(tile_info)
 
-            response = get_json(url)
-            for tile_info in response["features"]:
-                if not is_sentinel1 or self._sentinel1_product_check(tile_info['properties']['id'],
-                                                                     request.data_source):
-                    yield tile_info
+        if len(response["features"]) < SGConfig().max_wfs_records_per_query:
+            self.feature_offset = None
+        else:
+            self.feature_offset += SGConfig().max_wfs_records_per_query
 
-            if len(response["features"]) < SGConfig().max_wfs_records_per_query:
-                break
-            feature_offset += SGConfig().max_wfs_records_per_query
+    def get_dates(self):
+        """ Returns dates from tile info data
 
-    @staticmethod
-    def _sentinel1_product_check(product_id, data_source):
-        """Checks if Sentinel-1 product ID matches Sentinel-1 DataSource configuration
-
-        :param product_id: Sentinel-1 product ID
-        :type product_id: str
-        :param data_source: One of the supported Sentinel-1 data sources
-        :type data_source: constants.DataSource
-        :return: True if data_source contains product_id and False otherwise
-        :rtype: bool
+        :return: List of aquisition dates for each tile.
+        :rtype: list(datetime.datetime)
         """
-        props = product_id.split('_')
-        acquisition, resolution, polarisation = props[1], props[2][3], props[3][2:4]
-        if acquisition in ['IW', 'EW'] and resolution in ['M', 'H'] and polarisation in ['DV', 'DH', 'SV', 'SH']:
-            return acquisition == data_source.value[2].name and polarisation == data_source.value[3].name and \
-                   resolution == data_source.value[4].name[0]
-        raise ValueError('Unknown Sentinel-1 tile type: {}'.format(product_id))
+        return [datetime.datetime.strptime('{}T{}'.format(tile_info['properties']['date'],
+                                                          tile_info['properties']['time'].split('.')[0]),
+                                           '%Y-%m-%dT%H:%M:%S') for tile_info in self]

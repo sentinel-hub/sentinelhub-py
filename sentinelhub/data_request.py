@@ -10,7 +10,7 @@ import datetime
 import os.path
 import logging
 
-from .ogc import OgcService
+from .ogc import OgcImageService
 from .aws import AwsProduct, AwsTile
 from .aws_safe import SafeProduct, SafeTile
 from .download import download_data, ImageDecodingError
@@ -162,8 +162,7 @@ class OgcRequest(DataRequest):
     :type size_x: int or str
     :param size_y: number of pixels in x or resolution in y (i.e. ``512`` or ``10m``)
     :type size_y: int or str
-    :param bbox: specifies the bounding box of the requested image. Coordinates must be in
-                    the specified coordinate reference system. Required.
+    :param bbox: Bounding box of the requested image. Coordinates must be in the specified coordinate reference system.
     :type bbox: common.BBox
     :param time: time or time range for which to return the results, in ISO8601 format
                 (year-month-date, for example: ``2016-01-01``, or year-month-dateThours:minuts:seconds format,
@@ -218,7 +217,18 @@ class OgcRequest(DataRequest):
         if self.custom_url_params is not None:
             self._check_custom_url_parameters()
 
+        self.wfs_iterator = None
+
         super(OgcRequest, self).__init__(**kwargs)
+
+    def _check_custom_url_parameters(self):
+        """Checks if custom url parameters are valid parameters.
+
+        Throws ValueError if the provided parameter is not a valid parameter.
+        """
+        for param in self.custom_url_params.keys():
+            if param not in CustomUrlParam:
+                raise ValueError('Parameter %s is not a valid custom url parameter. Please check and fix.' % param)
 
     def create_request(self):
         """Set download requests
@@ -226,7 +236,9 @@ class OgcRequest(DataRequest):
         Create a list of DownloadRequests for all Sentinel-2 acquisitions within request's time interval and
         acceptable cloud coverage.
         """
-        self.download_list = OgcService(instance_id=self.instance_id).get_request(self)
+        ogc_service = OgcImageService(instance_id=self.instance_id)
+        self.download_list = ogc_service.get_request(self)
+        self.wfs_iterator = ogc_service.get_wfs_iterator()
 
     def get_dates(self):
         """Get list of dates
@@ -240,16 +252,15 @@ class OgcRequest(DataRequest):
                 acceptable cloud coverage.
         :rtype: list of strings of form `YYYY:MM:DDThh:mm:ss` representing Sentinel-2 image acquisition time
         """
-        return OgcService(instance_id=self.instance_id).get_dates(self)
+        return OgcImageService(instance_id=self.instance_id).get_dates(self)
 
-    def _check_custom_url_parameters(self):
-        """Checks if custom url parameters are valid parameters.
+    def get_tiles(self):
+        """Returns iterator over info about all satellite tiles used for the OgcRequest
 
-        Throws ValueError if the provided parameter is not a valid parameter.
+        :return: Iterator of dictionaries containing info about all satellite tiles used in the request
+        :rtype: Iterator[dict]
         """
-        for param in self.custom_url_params.keys():
-            if param not in CustomUrlParam:
-                raise ValueError('Parameter %s is not a valid custom url parameter. Please check and fix.' % param)
+        return self.wfs_iterator
 
 
 class WmsRequest(OgcRequest):
@@ -270,8 +281,7 @@ class WmsRequest(OgcRequest):
     :type height: int or None
     :param data_source: Source of requested satellite data. Default is Sentinel-2 L1C data.
     :type data_source: constants.DataSource
-    :param bbox: specifies the bounding box of the requested image. Coordinates must be in
-                    the specified coordinate reference system. Required.
+    :param bbox: Bounding box of the requested image. Coordinates must be in the specified coordinate reference system.
     :type bbox: common.BBox
     :param time: time or time range for which to return the results, in ISO8601 format
                 (year-month-date, for example: ``2016-01-01``, or year-month-dateThours:minuts:seconds format,
@@ -334,8 +344,7 @@ class WcsRequest(OgcRequest):
     :type resy: str
     :param data_source: Source of requested satellite data. Default is Sentinel-2 L1C data.
     :type data_source: constants.DataSource
-    :param bbox: specifies the bounding box of the requested image. Coordinates must be in
-                    the specified coordinate reference system. Required.
+    :param bbox: Bounding box of the requested image. Coordinates must be in the specified coordinate reference system.
     :type bbox: common.BBox
     :param time: time or time range for which to return the results, in ISO8601 format
                 (year-month-date, for example: ``2016-01-01``, or year-month-dateThours:minuts:seconds format,
