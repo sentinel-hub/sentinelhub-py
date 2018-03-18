@@ -78,7 +78,7 @@ class GeopediaImageService(GeopediaService):
                           'REQUEST': 'GetCoverage'
                       }}
 
-        return '{}/{}?{}'.format(url, request.instance_id, urlencode(params))
+        return '{}/{}?{}'.format(url, request.theme, urlencode(params))
 
     @staticmethod
     def get_filename(request):

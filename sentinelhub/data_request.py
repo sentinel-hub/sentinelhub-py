@@ -401,9 +401,8 @@ class GeopediaRequest(DataRequest):
     :type bbox: common.BBox
     :param layer: the preconfigured layer (image) to be returned as comma separated layer names. Required.
     :type layer: str
-    :param instance_id: user's instance id. If ``None`` the instance id is taken from the ``config.json``
-                        configuration file.
-    :type instance_id: str
+    :param theme: Geopedia's theme for which the layer is defined.
+    :type theme: str
     :param image_format: format of the returned image by the Sentinel Hub's WMS getMap service. Default is PNG, but
                         in some cases 32-bit TIFF is required, i.e. if requesting unprocessed raw bands.
                         Default is ``constants.MimeType.PNG``.
@@ -411,10 +410,10 @@ class GeopediaRequest(DataRequest):
     :param data_folder: location of the directory where the fetched data will be saved.
     :type data_folder: str
     """
-    def __init__(self, layer, bbox, instance_id, *, service_type=None, size_x=None, size_y=None,
+    def __init__(self, layer, bbox, theme, *, service_type=None, size_x=None, size_y=None,
                  image_format=MimeType.PNG, **kwargs):
         self.layer = layer
-        self.instance_id = instance_id
+        self.theme = theme
         self.bbox = bbox
         self.image_format = image_format
         self.service_type = service_type
@@ -452,6 +451,8 @@ class WmsGeopediaRequest(GeopediaRequest):
     :type bbox: common.BBox
     :param layer: the preconfigured layer (image) to be returned. Required.
     :type layer: str
+    :param theme: Geopedia's theme for which the layer is defined.
+    :type theme: str
     :param image_format: format of the returned image by the Geopedia WMS getMap service. Default is PNG.
     :type image_format: constants.MimeType
     :param data_folder: location of the directory where the fetched data will be saved.
