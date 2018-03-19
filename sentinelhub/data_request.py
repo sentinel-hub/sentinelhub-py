@@ -141,12 +141,11 @@ class DataRequest(ABC):
         """
         for i, request in enumerate(self.download_list):
             if request.return_data and data_list[i] is None:
-                if request.data_type is MimeType.JP2 and not request.save_response and \
-                        (request.file_location is None or not os.path.exists(request.file_location)):
-                    raise NotImplementedError(
-                        'Currently decoding jp2 files without saving them first is not implemented. '
-                        'Please set parameter save_data=True')
-                data_list[i] = read_data(request.file_location)
+                if os.path.exists(request.file_location):
+                    data_list[i] = read_data(request.file_location)
+                else:
+                    raise ValueError('Failed to download data from {}.\n No previously downloaded data exists in '
+                                     'file {}.'.format(request.url, request.file_location))
         return data_list
 
 
