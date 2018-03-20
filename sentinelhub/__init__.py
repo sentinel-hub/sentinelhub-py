@@ -2,7 +2,7 @@
 This module lists all externally useful classes and functions
 """
 
-from .data_request import WmsRequest, WcsRequest, AwsTileRequest, AwsProductRequest, \
+from .data_request import WmsRequest, WcsRequest, AwsTileRequest, AwsProductRequest, WmsGeopediaRequest,\
     get_safe_format, download_safe_format
 
 from .aws import AwsProduct, AwsTile

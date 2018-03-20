@@ -11,12 +11,13 @@ import os.path
 import logging
 
 from .ogc import OgcImageService
+from .geopedia import GeopediaImageService
 from .aws import AwsProduct, AwsTile
 from .aws_safe import SafeProduct, SafeTile
 from .download import download_data, ImageDecodingError
 from .io_utils import read_data
 from .os_utils import make_folder
-from .constants import DataSource, MimeType, CustomUrlParam, ServiceType, AwsConstants
+from .constants import DataSource, MimeType, CustomUrlParam, ServiceType, AwsConstants, CRS
 from .config import SGConfig
 
 LOGGER = logging.getLogger(__name__)
@@ -383,6 +384,81 @@ class WcsRequest(OgcRequest):
     """
     def __init__(self, *, resx='10m', resy='10m', **kwargs):
         super(WcsRequest, self).__init__(service_type=ServiceType.WCS, size_x=resx, size_y=resy, **kwargs)
+
+
+class GeopediaRequest(DataRequest):
+    """ The base class for Geopedia's OGC-type requests (WMS and WCS) where all common parameters are
+    defined.
+
+    :param service_type: type of OGC service (WMS or WCS)
+    :type service_type: constants.ServiceType
+    :param size_x: number of pixels in x or resolution in x (i.e. ``512`` or ``10m``)
+    :type size_x: int or str
+    :param size_y: number of pixels in x or resolution in y (i.e. ``512`` or ``10m``)
+    :type size_y: int or str
+    :param bbox: Bounding box of the requested image. Coordinates must be in the specified coordinate reference system.
+    :type bbox: common.BBox
+    :param layer: the preconfigured layer (image) to be returned as comma separated layer names. Required.
+    :type layer: str
+    :param theme: Geopedia's theme for which the layer is defined.
+    :type theme: str
+    :param image_format: format of the returned image by the Sentinel Hub's WMS getMap service. Default is PNG, but
+                        in some cases 32-bit TIFF is required, i.e. if requesting unprocessed raw bands.
+                        Default is ``constants.MimeType.PNG``.
+    :type image_format: constants.MimeType
+    :param data_folder: location of the directory where the fetched data will be saved.
+    :type data_folder: str
+    """
+    def __init__(self, layer, bbox, theme, *, service_type=None, size_x=None, size_y=None,
+                 image_format=MimeType.PNG, **kwargs):
+        self.layer = layer
+        self.theme = theme
+        self.bbox = bbox
+        self.image_format = image_format
+        self.service_type = service_type
+        self.size_x = size_x
+        self.size_y = size_y
+
+        if bbox.crs is not CRS.POP_WEB:
+            raise ValueError('Geopedia Request at the moment supports only CRS = {}'.format(CRS.POP_WEB))
+
+        super(GeopediaRequest, self).__init__(**kwargs)
+
+    def create_request(self):
+        """Set download requests
+
+        Create a list of DownloadRequests for all Sentinel-2 acquisitions within request's time interval and
+        acceptable cloud coverage.
+        """
+        gpd_service = GeopediaImageService()
+        self.download_list = gpd_service.get_request(self)
+
+
+class WmsGeopediaRequest(GeopediaRequest):
+    """ Web Map Service request class for Geopedia
+
+    Creates an instance of Geopedia's WMS (Web Map Service) GetMap request,
+    which provides access to various layers in Geopedia.
+
+    :param width: width (number of columns) of the returned image (array)
+    :type width: int or None
+    :param height: height (number of rows) of the returned image (array)
+    :type height: int or None
+    :param data_source: Source of requested satellite data. Default is Sentinel-2 L1C data.
+    :type data_source: constants.DataSource
+    :param bbox: Bounding box of the requested image. Coordinates must be in the specified coordinate reference system.
+    :type bbox: common.BBox
+    :param layer: the preconfigured layer (image) to be returned. Required.
+    :type layer: str
+    :param theme: Geopedia's theme for which the layer is defined.
+    :type theme: str
+    :param image_format: format of the returned image by the Geopedia WMS getMap service. Default is PNG.
+    :type image_format: constants.MimeType
+    :param data_folder: location of the directory where the fetched data will be saved.
+    :type data_folder: str
+    """
+    def __init__(self, *, width=None, height=None, **kwargs):
+        super(WmsGeopediaRequest, self).__init__(service_type=ServiceType.WMS, size_x=width, size_y=height, **kwargs)
 
 
 class AwsRequest(DataRequest):
