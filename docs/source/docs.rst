@@ -15,6 +15,7 @@ Modules
    data_request
    download
    geo_utils
+   geopedia
    io_utils
    ogc
    opensearch

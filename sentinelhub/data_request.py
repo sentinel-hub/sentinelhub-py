@@ -434,7 +434,7 @@ class GeopediaRequest(DataRequest):
         self.download_list = gpd_service.get_request(self)
 
 
-class WmsGeopediaRequest(GeopediaRequest):
+class GeopediaWmsRequest(GeopediaRequest):
     """ Web Map Service request class for Geopedia
 
     Creates an instance of Geopedia's WMS (Web Map Service) GetMap request,
@@ -458,7 +458,7 @@ class WmsGeopediaRequest(GeopediaRequest):
     :type data_folder: str
     """
     def __init__(self, *, width=None, height=None, **kwargs):
-        super(WmsGeopediaRequest, self).__init__(service_type=ServiceType.WMS, size_x=width, size_y=height, **kwargs)
+        super(GeopediaWmsRequest, self).__init__(service_type=ServiceType.WMS, size_x=width, size_y=height, **kwargs)
 
 
 class AwsRequest(DataRequest):

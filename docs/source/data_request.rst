@@ -12,6 +12,10 @@ Main module to handle data requests.
     :members:
 .. autoclass:: WcsRequest
     :members:
+.. autoclass:: GeopediaRequest
+    :members:
+.. autoclass:: GeopediaWmsRequest
+    :members:
 .. autoclass:: AwsRequest
     :members:
 .. autoclass:: AwsProductRequest

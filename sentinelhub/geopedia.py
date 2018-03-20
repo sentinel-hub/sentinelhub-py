@@ -12,10 +12,11 @@ from .config import SGConfig
 
 LOGGER = logging.getLogger(__name__)
 
+
 class GeopediaService:
     """ The class for Geopedia OGC services
 
-    :param base_url: base url of Geopedia's OGC services. If ``None``, the url specified in the configuration
+    :param base_url: Base url of Geopedia's OGC services. If ``None``, the url specified in the configuration
                     file is taken.
     :type base_url: str or None
     """
@@ -26,7 +27,7 @@ class GeopediaService:
 class GeopediaImageService(GeopediaService):
     """Geopedia OGC services class for providing image data
 
-    :param base_url: base url of Geopedia's OGC services. If ``None``, the url specified in the configuration
+    :param base_url: Base url of Geopedia's OGC services. If ``None``, the url specified in the configuration
                     file is taken.
     :type base_url: str or None
     """
@@ -51,7 +52,7 @@ class GeopediaImageService(GeopediaService):
 
         :param request: Geopedia request with specified bounding box for specific product/layer.
         :type request: GeopediaRequest
-        :return: url to Sentinel Hub's OGC service for this product.
+        :return: Url to Sentinel Hub's OGC service for this product.
         :rtype: str
         """
         url = self.base_url + request.service_type.value
@@ -95,7 +96,7 @@ class GeopediaImageService(GeopediaService):
 
         :param request: OGC request with specified bounding box, cloud coverage for specific product.
         :type request: OgcRequest
-        :return: filename for this request and date
+        :return: Filename for this request and date
         :rtype: str
         """
         bbox_str = str(request.bbox).replace(',', '_')
