@@ -143,8 +143,9 @@ class OgcImageService(OgcService):
         Create a list of DownloadRequests for all Sentinel-2 acquisitions within request's time interval and
         acceptable cloud coverage.
 
-        :param request: QGC request with specified bounding box, time interval, and cloud coverage for specific product.
-        :type request: OgcRequest
+        :param request: QGC-type request with specified bounding box, time interval, and cloud coverage for specific
+                        product.
+        :type request: OgcRequest or GeopediaRequest
         :return: list of DownloadRequests
         """
         size_x, size_y = self.get_image_dimensions(request)
@@ -156,10 +157,10 @@ class OgcImageService(OgcService):
     def get_url(self, request, date, size_x, size_y):
         """ Returns url to Sentinel Hub's OGC service for the product specified by the OgcRequest and date.
 
-        :param request: OGC request with specified bounding box, cloud coverage for specific product.
-        :type request: OgcRequest
-        :param date: acquisition date of this product in `YYYY-MM-DDThh:mm:ss` format
-        :type date: str or None
+        :param request: OGC-type request with specified bounding box, cloud coverage for specific product.
+        :type request: OgcRequest or GeopediaRequest
+        :param date: acquisition date or None
+        :type date: datetime.datetime or None
         :param size_x: horizontal image dimension
         :type size_x: int or str
         :param size_y: vertical image dimension
@@ -169,14 +170,13 @@ class OgcImageService(OgcService):
         """
         url = self.base_url + request.service_type.value
         # These 2 lines are temporal and will be removed after the use of uswest url wont be required anymore:
-        if DataSource.is_uswest_source(request.data_source):
+        if hasattr(request, 'data_source') and DataSource.is_uswest_source(request.data_source):
             url = 'https://services-uswest2.sentinel-hub.com/ogc/{}'.format(request.service_type.value)
 
         params = {'SERVICE': request.service_type.value,
                   'BBOX': str(request.bbox),
                   'FORMAT': MimeType.get_string(request.image_format),
-                  'CRS': CRS.ogc_string(request.bbox.get_crs()),
-                  'MAXCC': 100.0 * request.maxcc}
+                  'CRS': CRS.ogc_string(request.bbox.get_crs())}
 
         if request.service_type is ServiceType.WMS:
             params = {**params,
@@ -202,7 +202,10 @@ class OgcImageService(OgcService):
                 seconds=0) else date + request.time_difference
             params['TIME'] = '{}/{}'.format(start_date.isoformat(), end_date.isoformat())
 
-        if request.custom_url_params is not None:
+        if hasattr(request, 'maxcc'):
+            params['MAXCC'] = 100.0 * request.maxcc
+
+        if hasattr(request, 'custom_url_params') and request.custom_url_params is not None:
             params = {**params,
                       **{k.value: str(v) for k, v in request.custom_url_params.items()}}
 
@@ -210,7 +213,8 @@ class OgcImageService(OgcService):
                 evalscript = params[CustomUrlParam.EVALSCRIPT.value]
                 params[CustomUrlParam.EVALSCRIPT.value] = base64.b64encode(evalscript.encode()).decode()
 
-        return '{}/{}?{}'.format(url, self.instance_id, urlencode(params))
+        authority = self.instance_id if hasattr(self, 'instance_id') else request.theme
+        return '{}/{}?{}'.format(url, authority, urlencode(params))
 
     @staticmethod
     def get_filename(request, date, size_x, size_y):
@@ -226,10 +230,10 @@ class OgcImageService(OgcService):
         In case of `TIFF_d32f` a `'_tiff_depth32f'` is added at the end of the filename (before format suffix)
         to differentiate it from 16-bit float tiff.
 
-        :param request: OGC request with specified bounding box, cloud coverage for specific product.
-        :type request: OgcRequest
-        :param date: acquisition date of this product in `YYYY-MM-DDThh:mm:ss` format
-        :type date: str or None
+        :param request: OGC-type request with specified bounding box, cloud coverage for specific product.
+        :type request: OgcRequest or GeopediaRequest
+        :param date: acquisition date or None
+        :type date: datetime.datetime or None
         :param size_x: horizontal image dimension
         :type size_x: int or str
         :param size_y: vertical image dimension
@@ -253,16 +257,14 @@ class OgcImageService(OgcService):
 
         LOGGER.debug("filename=%s", filename)
 
-        if request.custom_url_params is not None:
+        if hasattr(request, 'custom_url_params') and request.custom_url_params is not None:
             for param, value in sorted(request.custom_url_params.items(),
                                        key=lambda parameter_item: parameter_item[0].value):
                 filename = '_'.join([filename, param.value, str(value).replace('/', '_')])
 
         if fmt:
             filename = '_'.join([filename, fmt])
-
         filename = '.'.join([filename, suffix])
-
         return filename
 
     def get_dates(self, request):
@@ -278,6 +280,8 @@ class OgcImageService(OgcService):
 
         :param request: OGC-type request
         :type request: WmsRequest or WcsRequest
+        :return: List of dates of existing acquisitions for the given request
+        :rtype: list(datetime.datetime) or [None]
         """
         if DataSource.is_timeless(request.data_source):
             return [None]
@@ -348,7 +352,7 @@ class WebFeatureService(OgcService):
                         specified in the configuration file is taken.
     :type instance_id: str or None
     """
-    def __init__(self, bbox, time_interval, *, data_source=DataSource.SENTINEL2_L1C,  maxcc=1.0, **kwargs):
+    def __init__(self, bbox, time_interval, *, data_source=DataSource.SENTINEL2_L1C, maxcc=1.0, **kwargs):
         super(WebFeatureService, self).__init__(**kwargs)
 
         self.bbox = bbox
@@ -423,7 +427,7 @@ class WebFeatureService(OgcService):
     def get_dates(self):
         """ Returns dates from tile info data
 
-        :return: List of aquisition dates for each tile.
+        :return: List of acquisition dates for each tile.
         :rtype: list(datetime.datetime)
         """
         return [datetime.datetime.strptime('{}T{}'.format(tile_info['properties']['date'],
