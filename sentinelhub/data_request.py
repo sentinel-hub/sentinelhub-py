@@ -402,6 +402,10 @@ class GeopediaRequest(DataRequest):
     :type layer: str
     :param theme: Geopedia's theme for which the layer is defined.
     :type theme: str
+    :param custom_url_params: dictionary of CustomUrlParameters and their values supported by Geopedia's WMS services.
+                              At the moment only the transparancy is supported (CustomUrlParam.TRANSPARENT).
+    :type custom_url_params: dictionary of CustomUrlParameter enum and its value, i.e.
+                              ``{constants.CustomUrlParam.TRANSPARENT:True}``
     :param image_format: format of the returned image by the Sentinel Hub's WMS getMap service. Default is PNG, but
                         in some cases 32-bit TIFF is required, i.e. if requesting unprocessed raw bands.
                         Default is ``constants.MimeType.PNG``.
@@ -409,7 +413,7 @@ class GeopediaRequest(DataRequest):
     :param data_folder: location of the directory where the fetched data will be saved.
     :type data_folder: str
     """
-    def __init__(self, layer, bbox, theme, *, service_type=None, size_x=None, size_y=None,
+    def __init__(self, layer, bbox, theme, *, service_type=None, size_x=None, size_y=None, custom_url_params=None,
                  image_format=MimeType.PNG, **kwargs):
         self.layer = layer
         self.theme = theme
@@ -419,10 +423,24 @@ class GeopediaRequest(DataRequest):
         self.size_x = size_x
         self.size_y = size_y
 
+        self.custom_url_params = custom_url_params
+
+        if self.custom_url_params is not None:
+            self._check_custom_url_parameters()
+
         if bbox.crs is not CRS.POP_WEB:
             raise ValueError('Geopedia Request at the moment supports only CRS = {}'.format(CRS.POP_WEB))
 
         super(GeopediaRequest, self).__init__(**kwargs)
+
+    def _check_custom_url_parameters(self):
+        """Checks if custom url parameters are valid parameters.
+
+        Throws ValueError if the provided parameter is not a valid parameter.
+        """
+        for param in self.custom_url_params.keys():
+            if param not in [CustomUrlParam.TRANSPARENT]:
+                raise ValueError('Parameter %s is not a valid custom url parameter. Please check and fix.' % param)
 
     def create_request(self):
         """Set download requests
