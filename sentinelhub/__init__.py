@@ -23,4 +23,4 @@ from .geo_utils import bbox_to_resolution, get_image_dimension, to_utm_bbox, get
 from .time_utils import next_date, prev_date, get_current_date
 
 
-__version__ = "1.1.1"
+__version__ = "2.0.0"

@@ -66,8 +66,8 @@ def to_utm_bbox(bbox):
     """
     if CRS.is_utm(bbox.get_crs()):
         return bbox
-    lat, lng = bbox.get_middle()
-    utm_crs = get_utm_crs(lat, lng, source_crs=bbox.get_crs())
+    lng, lat = bbox.get_middle()
+    utm_crs = get_utm_crs(lng, lat, source_crs=bbox.get_crs())
     return transform_bbox(bbox, utm_crs)
 
 
@@ -86,21 +86,21 @@ def get_utm_bbox(img_bbox, transform):
     return [east1, north1, east2, north2]
 
 
-def wgs84_to_utm(lat, lng, utm_crs=None):
+def wgs84_to_utm(lng, lat, utm_crs=None):
     """ Convert WGS84 coordinates to UTM. If UTM CRS is not set it will be calculated automatically.
 
-    :param lat: latitude in WGS84 system
-    :type lat: float
     :param lng: longitude in WGS84 system
     :type lng: float
+    :param lat: latitude in WGS84 system
+    :type lat: float
     :param utm_crs: UTM coordinate reference system enum constants
     :type utm_crs: constants.CRS or None
     :return: east, north coordinates in UTM system
     :rtype: float, float
     """
     if utm_crs is None:
-        utm_crs = get_utm_crs(lat, lng)
-    return transform_point((lat, lng), CRS.WGS84, utm_crs)
+        utm_crs = get_utm_crs(lng, lat)
+    return transform_point((lng, lat), CRS.WGS84, utm_crs)
 
 
 def to_wgs84(east, north, crs):
@@ -156,14 +156,14 @@ def pixel_to_utm(row, column, transform):
     return east, north
 
 
-def wgs84_to_pixel(lat, lng, transform, utm_epsg=None, truncate=True):
+def wgs84_to_pixel(lng, lat, transform, utm_epsg=None, truncate=True):
     """ Convert WGS84 coordinates to pixel image coordinates given transform and UTM CRS. If no CRS is given it will be
     calculated it automatically.
 
-    :param lat: latitude of point
-    :type lat: float
     :param lng: longitude of point
     :type lng: float
+    :param lat: latitude of point
+    :type lat: float
     :param transform: georeferencing transform
     :type transform: list
     :param utm_epsg: UTM coordinate reference system enum constants
@@ -173,26 +173,26 @@ def wgs84_to_pixel(lat, lng, transform, utm_epsg=None, truncate=True):
     :return: row and column pixel image coordinates
     :rtype: float, float or int, int
     """
-    east, north = wgs84_to_utm(lat, lng, utm_epsg)
+    east, north = wgs84_to_utm(lng, lat, utm_epsg)
     row, column = utm_to_pixel(east, north, transform, truncate=truncate)
     return row, column
 
 
-def get_utm_crs(lat, lng, source_crs=CRS.WGS84):
+def get_utm_crs(lng, lat, source_crs=CRS.WGS84):
     """ Get CRS for UTM zone in which (lat, lng) is contained.
 
-    :param lat: latitude
-    :type lat: float
     :param lng: longitude
     :type lng: float
+    :param lat: latitude
+    :type lat: float
     :param source_crs: source CRS
     :type source_crs: constants.CRS
     :return: CRS of the zone containing the lat,lon point
     :rtype: constants.CRS
     """
     if source_crs is not CRS.WGS84:
-        lat, lng = transform_point((lat, lng), source_crs, CRS.WGS84)
-    return CRS.get_utm_from_wgs84(lat, lng)
+        lng, lat = transform_point((lng, lat), source_crs, CRS.WGS84)
+    return CRS.get_utm_from_wgs84(lng, lat)
 
 
 def transform_point(point, source_crs, target_crs):
@@ -207,12 +207,10 @@ def transform_point(point, source_crs, target_crs):
     :return: point in target CRS
     :rtype: (float, float)
     """
+    if source_crs == target_crs:
+        return point
     old_x, old_y = point
-    if source_crs is CRS.WGS84:
-        old_x, old_y = old_y, old_x
     new_x, new_y = pyproj.transform(CRS.projection(source_crs), CRS.projection(target_crs), old_x, old_y)
-    if target_crs is CRS.WGS84:
-        new_x, new_y = new_y, new_x
     return new_x, new_y
 
 

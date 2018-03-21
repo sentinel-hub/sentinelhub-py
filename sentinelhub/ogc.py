@@ -174,7 +174,8 @@ class OgcImageService(OgcService):
             url = 'https://services-uswest2.sentinel-hub.com/ogc/{}'.format(request.service_type.value)
 
         params = {'SERVICE': request.service_type.value,
-                  'BBOX': str(request.bbox),
+                  'BBOX': request.bbox.__str__(reverse=True) if request.bbox.get_crs() is CRS.WGS84 else str(
+                      request.bbox),
                   'FORMAT': MimeType.get_string(request.image_format),
                   'CRS': CRS.ogc_string(request.bbox.get_crs())}
 
@@ -241,7 +242,6 @@ class OgcImageService(OgcService):
         :return: filename for this request and date
         :rtype: str
         """
-        bbox_str = str(request.bbox).replace(',', '_')
         suffix = str(request.image_format.value)
         fmt = ''
         if request.image_format is MimeType.TIFF_d32f:
@@ -251,7 +251,7 @@ class OgcImageService(OgcService):
         filename = '_'.join([str(request.service_type.value),
                              request.layer,
                              str(request.bbox.get_crs()).replace(':', ''),
-                             bbox_str,
+                             str(request.bbox).replace(',', '_'),
                              '' if date is None else date.strftime("%Y-%m-%dT%H-%M-%S"),
                              '{}X{}'.format(size_x, size_y)])
 
@@ -402,7 +402,7 @@ class WebFeatureService(OgcService):
         params = {'SERVICE': ServiceType.WFS.value,
                   'REQUEST': 'GetFeature',
                   'TYPENAMES': DataSource.get_wfs_typename(self.data_source),
-                  'BBOX': str(self.bbox),
+                  'BBOX': self.bbox.__str__(reverse=True) if self.bbox.get_crs() is CRS.WGS84 else str(self.bbox),
                   'OUTPUTFORMAT': MimeType.get_string(MimeType.JSON),
                   'SRSNAME': CRS.ogc_string(self.bbox.get_crs()),
                   'TIME': '{}/{}'.format(self.time_interval[0], self.time_interval[1]),

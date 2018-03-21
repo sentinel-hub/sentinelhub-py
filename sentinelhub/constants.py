@@ -213,13 +213,13 @@ class _BaseCRS(Enum):
         return self.ogc_string(self)
 
     @staticmethod
-    def get_utm_from_wgs84(lat, lng):
+    def get_utm_from_wgs84(lng, lat):
         """ Convert from WGS84 to UTM coordinate system
 
-        :param lat: Latitude
-        :type lat: float
         :param lng: Longitude
         :type lng: float
+        :param lat: Latitude
+        :type lat: float
         :return: UTM coordinates
         :rtype: tuple
         """
