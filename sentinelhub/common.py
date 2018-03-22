@@ -49,10 +49,11 @@ class BBox:
         self.crs = CRS(crs)
 
         if self.crs is CRS.WGS84:
-            warnings.warn('Since sentinelhub version 2.0.0 the order of coordinates for BBox in CRS.WGS84 has been '
-                          'reversed from latitide-longitude to longitude-latitude. Please make sure to initialize '
-                          'bounding box with BBox([lng_1, lat_1, lng_2, lat_2], CRS.WGS84). The order of coordinates '
-                          'in other coordinate reference systems has not changed.')
+            message = 'Since sentinelhub version 2.0.0 the order of coordinates for BBox in CRS.WGS84 has been ' \
+                      'reversed from latitide-longitude to longitude-latitude. Please make sure to initialize ' \
+                      'bounding box with BBox([lng_1, lat_1, lng_2, lat_2], CRS.WGS84). The order of coordinates ' \
+                      'in other coordinate reference systems has not changed.'
+            warnings.warn(message)
 
     def __iter__(self):
         return iter(self.get_lower_left() + self.get_upper_right())
