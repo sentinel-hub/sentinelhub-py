@@ -10,3 +10,4 @@ cython
 python-dateutil
 pyproj
 utm
+shapely
