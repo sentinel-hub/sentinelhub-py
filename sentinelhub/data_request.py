@@ -257,9 +257,8 @@ class OgcRequest(DataRequest):
     def get_tiles(self):
         """Returns iterator over info about all satellite tiles used for the OgcRequest
 
-        :return: Iterator of dictionaries containing info about all satellite tiles used in the request. Iterator of
-                 dictionaries containing info about all satellite tiles used in the request. In case of DataSource.DEM
-                 it returns None.
+        :return: Iterator of dictionaries containing info about all satellite tiles used in the request. In case of
+                 DataSource.DEM it returns None.
         :rtype: Iterator[dict] or None
         """
         return self.wfs_iterator

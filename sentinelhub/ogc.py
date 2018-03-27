@@ -4,9 +4,10 @@ Module for working with Sentinel Hub OGC services
 
 import logging
 import datetime
-import base64
 
+from base64 import b64encode
 from urllib.parse import urlencode
+from shapely.geometry import shape as geo_shape
 
 from .time_utils import get_current_date, parse_time
 from .download import DownloadRequest, get_json
@@ -28,7 +29,7 @@ class OgcService:
     :type instance_id: str or None
     """
     def __init__(self, base_url=None, instance_id=None):
-        self.base_url = SGConfig().ogc_base_url if base_url is None else base_url
+        self.base_url = SGConfig().ogc_base_url if not base_url else base_url
         self.instance_id = SGConfig().instance_id if instance_id is None else instance_id
         if not self.instance_id:
             raise ValueError('Instance ID is not set. '
@@ -212,7 +213,7 @@ class OgcImageService(OgcService):
 
             if CustomUrlParam.EVALSCRIPT.value in params:
                 evalscript = params[CustomUrlParam.EVALSCRIPT.value]
-                params[CustomUrlParam.EVALSCRIPT.value] = base64.b64encode(evalscript.encode()).decode()
+                params[CustomUrlParam.EVALSCRIPT.value] = b64encode(evalscript.encode()).decode()
 
         authority = self.instance_id if hasattr(self, 'instance_id') else request.theme
         return '{}/{}?{}'.format(url, authority, urlencode(params))
@@ -336,6 +337,7 @@ class WebFeatureService(OgcService):
 
     The class is an iterator over info data of all available satellite tiles for requested parameters. It collects data
     from Sentinel Hub service only during the first iteration. During next iterations it returns already obtained data.
+    The data is in the order returned by Sentinel Hub WFS service.
 
     :param bbox: Bounding box of the requested image. Coordinates must be in the specified coordinate reference system.
     :type bbox: common.BBox
@@ -425,11 +427,19 @@ class WebFeatureService(OgcService):
             self.feature_offset += SGConfig().max_wfs_records_per_query
 
     def get_dates(self):
-        """ Returns dates from tile info data
+        """ Returns a list of acquisition times from tile info data
 
-        :return: List of acquisition dates for each tile.
+        :return: List of acquisition times in the order returned by WFS service.
         :rtype: list(datetime.datetime)
         """
         return [datetime.datetime.strptime('{}T{}'.format(tile_info['properties']['date'],
                                                           tile_info['properties']['time'].split('.')[0]),
                                            '%Y-%m-%dT%H:%M:%S') for tile_info in self]
+
+    def get_geometries(self):
+        """ Returns a list of geometries from tile info data
+
+        :return: List of multipolygon geometries in the order returned by WFS service.
+        :rtype: list(shapely.geometry.MultiPolygon)
+        """
+        return [geo_shape(tile_info['geometry']) for tile_info in self]

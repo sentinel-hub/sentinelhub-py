@@ -8,6 +8,8 @@ from .data_request import WmsRequest, WcsRequest, AwsTileRequest, AwsProductRequ
 from .aws import AwsProduct, AwsTile
 from .aws_safe import SafeProduct, SafeTile
 
+from .areas import BBoxSplitter, OsmSplitter, TileSplitter
+
 from .ogc import WebFeatureService
 
 from .common import BBox
