@@ -18,7 +18,7 @@ from xml.etree import ElementTree
 
 from .os_utils import create_parent_folder
 from .constants import MimeType, RequestType
-from .config import SGConfig
+from .config import SHConfig
 from .io_utils import get_jp2_bit_depth, _fix_jp2_image
 
 LOGGER = logging.getLogger(__name__)
@@ -190,7 +190,7 @@ def execute_download_request(request):
     if not request.will_download:
         return None
 
-    try_num = SGConfig().max_download_attempts
+    try_num = SHConfig().max_download_attempts
     response = None
     while try_num > 0:
         try:
@@ -204,8 +204,8 @@ def execute_download_request(request):
                                 (isinstance(exception, requests.HTTPError) and
                                  exception.response.status_code != requests.status_codes.codes.BAD_REQUEST)):
                 LOGGER.debug('Download attempt failed: %s\n%d attempts left, will retry in %ds', exception,
-                             try_num, SGConfig().download_sleep_time)
-                time.sleep(SGConfig().download_sleep_time)
+                             try_num, SHConfig().download_sleep_time)
+                time.sleep(SHConfig().download_sleep_time)
             else:
                 raise DownloadFailedException(_create_download_failed_message(exception))
 

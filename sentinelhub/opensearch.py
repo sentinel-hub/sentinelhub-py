@@ -8,7 +8,7 @@ import datetime
 from urllib.parse import urlencode
 
 from .constants import CRS
-from .config import SGConfig
+from .config import SHConfig
 from .download import get_json
 from .geo_utils import transform_bbox
 
@@ -162,23 +162,23 @@ def search_iter(text_query=None, tile_id=None, bbox=None, start_date=None, end_d
         bbox = transform_bbox(bbox, CRS.WGS84)
 
     url_params = _prepare_url_params(bbox, cloud_cover, end_date, start_date, text_query, tile_id)
-    url_params['maxRecords'] = SGConfig().max_opensearch_records_per_query
+    url_params['maxRecords'] = SHConfig().max_opensearch_records_per_query
 
     start_index = 1
 
     while True:
         url_params['index'] = start_index
 
-        url = '{}search.json?{}'.format(SGConfig().opensearch_url, urlencode(url_params))
+        url = '{}search.json?{}'.format(SHConfig().opensearch_url, urlencode(url_params))
         LOGGER.debug("URL=%s", url)
 
         response = get_json(url)
         for tile_info in response["features"]:
             yield tile_info
 
-        if len(response["features"]) < SGConfig().max_opensearch_records_per_query:
+        if len(response["features"]) < SHConfig().max_opensearch_records_per_query:
             break
-        start_index += SGConfig().max_opensearch_records_per_query
+        start_index += SHConfig().max_opensearch_records_per_query
 
 
 def _prepare_url_params(bbox, cloud_cover, end_date, start_date, text_query, tile_id):

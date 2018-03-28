@@ -18,7 +18,7 @@ from .download import download_data, ImageDecodingError
 from .io_utils import read_data
 from .os_utils import make_folder
 from .constants import DataSource, MimeType, CustomUrlParam, ServiceType, AwsConstants, CRS
-from .config import SGConfig
+from .config import SHConfig
 
 LOGGER = logging.getLogger(__name__)
 
@@ -84,7 +84,7 @@ class DataRequest(ABC):
         """
         self._preprocess_request(save_data, True)
 
-        timeout = SGConfig().download_timeout_seconds
+        timeout = SHConfig().download_timeout_seconds
         data_list = []
         for future in download_data(self.download_list, redownload=redownload, max_threads=max_threads):
             try:

@@ -4,5 +4,5 @@ config
 Module to collect configuration data from config.json.
 
 .. module:: sentinelhub.config
-.. autoclass:: SGConfig
+.. autoclass:: SHConfig
     :members:

@@ -8,7 +8,7 @@ import json
 # pylint: disable=E0203
 
 
-class SGConfig:
+class SHConfig:
     """ This is a singleton implementation of the sentinelhub configuration class.
 
     The class reads during its first initialisation the configurable settings from
@@ -29,11 +29,11 @@ class SGConfig:
 
     Usage in the code:
 
-        * ``SGConfig().ogc_base_url``
-        * ``SGConfig().instance_id``
+        * ``SHConfig().ogc_base_url``
+        * ``SHConfig().instance_id``
 
     """
-    class _SGConfig:
+    class _SHConfig:
         """
         Private class.
         """
@@ -64,8 +64,8 @@ class SGConfig:
             """
             Method reads and loads the configuration file.
             """
-            sentinelhub_dir = os.path.dirname(__file__)
-            config_file = os.path.join(sentinelhub_dir, 'config.json')
+            package_dir = os.path.dirname(__file__)
+            config_file = os.path.join(package_dir, 'config.json')
 
             if not os.path.isfile(config_file):
                 raise IOError('Configuration file does not exist: %s' % os.path.abspath(config_file))
@@ -84,8 +84,8 @@ class SGConfig:
     instance = None
 
     def __init__(self):
-        if not SGConfig.instance:
-            SGConfig.instance = SGConfig._SGConfig()
+        if not SHConfig.instance:
+            SHConfig.instance = SHConfig._SHConfig()
 
     def __getattr__(self, name):
         return getattr(self.instance, name)

@@ -9,7 +9,7 @@ import os.path
 from .download import DownloadRequest, get_json
 from .opensearch import get_tile_info, get_tile_info_id
 from .time_utils import parse_time
-from .config import SGConfig
+from .config import SHConfig
 from .constants import AwsConstants, EsaSafeType, MimeType
 
 
@@ -33,7 +33,7 @@ class AwsService(ABC):
         self.bands = self.parse_bands(bands)
         self.metafiles = self.parse_metafiles(metafiles)
 
-        self.base_url = SGConfig().aws_base_url
+        self.base_url = SHConfig().aws_base_url
         self.download_list = []
         self.folder_list = []
 

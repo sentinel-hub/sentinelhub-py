@@ -12,7 +12,7 @@ from shapely.geometry import shape as geo_shape
 from .time_utils import get_current_date, parse_time
 from .download import DownloadRequest, get_json
 from .constants import ServiceType, DataSource, MimeType, CRS, OgcConstants, CustomUrlParam
-from .config import SGConfig
+from .config import SHConfig
 from .geo_utils import get_image_dimension
 
 LOGGER = logging.getLogger(__name__)
@@ -29,8 +29,8 @@ class OgcService:
     :type instance_id: str or None
     """
     def __init__(self, base_url=None, instance_id=None):
-        self.base_url = SGConfig().ogc_base_url if not base_url else base_url
-        self.instance_id = SGConfig().instance_id if not instance_id else instance_id
+        self.base_url = SHConfig().ogc_base_url if not base_url else base_url
+        self.instance_id = SHConfig().instance_id if not instance_id else instance_id
 
         if not self.instance_id:
             raise ValueError('Instance ID is not set. '
@@ -60,7 +60,7 @@ class OgcService:
         :rtype: tuple of start and end date
         """
         if time is None or time is OgcConstants.LATEST:
-            date_interval = (SGConfig().default_start_date, get_current_date())
+            date_interval = (SHConfig().default_start_date, get_current_date())
         else:
             if isinstance(time, str):
                 date_interval = (parse_time(time), parse_time(time))
@@ -410,7 +410,7 @@ class WebFeatureService(OgcService):
                   'SRSNAME': CRS.ogc_string(self.bbox.get_crs()),
                   'TIME': '{}/{}'.format(self.time_interval[0], self.time_interval[1]),
                   'MAXCC': 100.0 * self.maxcc,
-                  'MAXFEATURES': SGConfig().max_wfs_records_per_query,
+                  'MAXFEATURES': SHConfig().max_wfs_records_per_query,
                   'FEATURE_OFFSET': self.feature_offset}
 
         url = main_url + urlencode(params)
@@ -422,10 +422,10 @@ class WebFeatureService(OgcService):
             if not is_sentinel1 or self._sentinel1_product_check(tile_info['properties']['id'], self.data_source):
                 self.tile_list.append(tile_info)
 
-        if len(response["features"]) < SGConfig().max_wfs_records_per_query:
+        if len(response["features"]) < SHConfig().max_wfs_records_per_query:
             self.feature_offset = None
         else:
-            self.feature_offset += SGConfig().max_wfs_records_per_query
+            self.feature_offset += SHConfig().max_wfs_records_per_query
 
     def get_dates(self):
         """ Returns a list of acquisition times from tile info data
