@@ -8,6 +8,8 @@ from sentinelhub.config import SHConfig
 
 class TestSHConfig(TestSentinelHub):
     def test_configuration(self):
+        SHConfig().save()
+
         config_file = '{}/../sentinelhub/config.json'.format(os.path.dirname(os.path.realpath(__file__)))
 
         if not os.path.isfile(config_file):

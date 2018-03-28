@@ -93,11 +93,23 @@ class SHConfig:
                 if not self.instance_id:
                     self.instance_id = None
 
+        def get_config(self):
+            """Returns ordered dictionary with configuration parameters
+
+            :return: Ordered dictionary
+            :rtype: collections.OrderedDict
+            """
+            config = OrderedDict((prop, getattr(self, prop)) for prop in self.config_params)
+            if config['instance_id'] is None:
+                config['instance_id'] = ''
+            return config
+
         def save_configuration(self):
             """
             Method saves changed parameter values to the configuration file.
             """
-            config = OrderedDict((prop, getattr(self, prop)) for prop in self.config_params)
+            config = self.get_config()
+
             self._check_configuration(config)
 
             with open(self._get_config_file(), 'w') as cfg_file:
@@ -113,7 +125,10 @@ class SHConfig:
         return getattr(self._instance, name)
 
     def __dir__(self):
-        return sorted(super(SHConfig, self).__dir__() + self._instance.config_params)
+        return sorted(list(dir(super(SHConfig, self))) + self._instance.config_params)
+
+    def __str__(self):
+        return json.dumps(self._instance.get_config(), indent=2)
 
     def save(self):
         """Method that saves configuration parameter changes from instance of SHConfig class to global config class and
@@ -127,3 +142,11 @@ class SHConfig:
         for prop in self._instance.config_params:
             setattr(self._instance, prop, getattr(self, prop))
         self._instance.save_configuration()
+
+    def get_params(self):
+        """Returns a list of parameter names
+
+        :return: List of parameter names
+        :rtype: list(str)
+        """
+        return self._instance.config_params

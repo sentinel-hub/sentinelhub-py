@@ -2,9 +2,27 @@ import click
 
 from .data_request import get_safe_format, download_safe_format
 from .download import download_data, DownloadRequest
-
+from .config import SHConfig
 
 # pylint: disable=unused-argument
+
+
+@click.command()
+def main_help():
+    """
+    Welcome to sentinelhub Python library command line help.
+
+    \b
+    There are multiple modules with command line functionality:\n
+       - sentinelhub.aws \n
+       - senitnelhub.config \n
+       - sentinelhub.download \n
+
+    To check more about certain module command use: \n
+      sentinelhub.<module name> --help
+    """
+    pass
+
 
 @click.command()
 @click.option('--product', help='Product ID input')
@@ -40,12 +58,45 @@ def aws(product, tile, folder, redownload, info, entire, bands):
             download_safe_format(product_id=product, folder=folder, redownload=redownload, bands=band_list)
 
 
+def config_options(f):
+    for param in SHConfig().get_params():
+        f = click.option('--{}'.format(param), param,
+                         help='Set new values to configuration parameter "{}"'.format(param))(f)
+    return f
+
+
+@click.command()
+@click.option('--show', is_flag=True, default=False, help='Show current configurations')
+@config_options
+def config(show, **params):
+    """Inspect and configure parameters in your local sentinelhub configuration file
+
+    \b
+    Example:
+      sentinelhub.config --show
+      sentinelhub.config --instance_id <new instance id>
+      sentinelhub.config --max_download_attempts 5 --download_sleep_time 20 --download_timeout_seconds 120
+    """
+    sh_config = SHConfig()
+    for param, value in params.items():
+        if value is not None:
+            try:
+                value = int(value)
+            except ValueError:
+                pass
+            setattr(sh_config, param, value)
+    sh_config.save()
+
+    if show:
+        click.echo(str(sh_config))
+
+
 @click.command()
 @click.argument('url')
 @click.argument('filename', type=click.Path())
 @click.option('-r', '--redownload', is_flag=True, default=False, help='Redownload existing files')
 def download(url, filename, redownload):
-    """Download Sentinel-2 data from Sentinel-2 on AWS to ESA SAFE format. Download uses multiple threads.
+    """Download from custom created URL into custom created file path
 
     \b
     Example:
