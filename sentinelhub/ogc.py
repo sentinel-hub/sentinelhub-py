@@ -30,7 +30,8 @@ class OgcService:
     """
     def __init__(self, base_url=None, instance_id=None):
         self.base_url = SGConfig().ogc_base_url if not base_url else base_url
-        self.instance_id = SGConfig().instance_id if instance_id is None else instance_id
+        self.instance_id = SGConfig().instance_id if not instance_id else instance_id
+
         if not self.instance_id:
             raise ValueError('Instance ID is not set. '
                              'Set it either in request initialisation or in configuration file.')
@@ -341,7 +342,7 @@ class WebFeatureService(OgcService):
 
     :param bbox: Bounding box of the requested image. Coordinates must be in the specified coordinate reference system.
     :type bbox: common.BBox
-    :param time_interval: interval of start and end date of the form YYYY-MM-DDThh:mm:ss or YYYY-MM-DD
+    :param time_interval: interval with start and end date of the form YYYY-MM-DDThh:mm:ss or YYYY-MM-DD
     :type time_interval: (str, str)
     :param data_source: Source of requested satellite data. Default is Sentinel-2 L1C data.
     :type data_source: constants.DataSource

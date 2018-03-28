@@ -4,46 +4,51 @@ from shapely.geometry import shape
 
 from tests_all import TestSentinelHub
 
-from sentinelhub.areas import BBoxSplitter
+from sentinelhub.areas import BBoxSplitter, OsmSplitter, TileSplitter
 from sentinelhub.io_utils import read_data
-from sentinelhub.constants import CRS
+from sentinelhub.constants import CRS, DataSource
 
 
 class TestOgc(TestSentinelHub):
+
+    class SplitterTestCase:
+
+        def __init__(self, name, splitter, bbox_len):
+            self.name = name
+            self.splitter = splitter
+            self.bbox_len = bbox_len
 
     @classmethod
     def setUpClass(cls):
         geojson = read_data(os.path.join(cls.INPUT_FOLDER, 'cies_islands.json'))
         cls.area = shape(geojson)
 
-        cls.splitter = BBoxSplitter([cls.area], CRS.WGS84, 5)
-        cls.bbox_list = cls.splitter.get_bbox_list()
+        cls.test_cases = [
+            cls.SplitterTestCase('BBoxSplitter',
+                                 BBoxSplitter([cls.area], CRS.WGS84, 5, reduce_bbox_sizes=True), bbox_len=19),
+            cls.SplitterTestCase('OsmSplitter',
+                                 OsmSplitter([cls.area], CRS.WGS84, 15, reduce_bbox_sizes=True), bbox_len=24),
+            cls.SplitterTestCase('TileSplitter',
+                                 TileSplitter([cls.area], CRS.WGS84, ('2017-10-01', '2018-03-01'), tile_split_shape=40,
+                                              data_source=DataSource.SENTINEL2_L1C, instance_id=cls.INSTANCE_ID,
+                                              reduce_bbox_sizes=True),
+                                 bbox_len=13)
+        ]
 
     def test_return_type(self):
-        data_len = 19
-        self.assertTrue(isinstance(self.bbox_list, list), "Expected a list")
-        self.assertEqual(len(self.bbox_list), data_len,
-                         "Expected a list of length {}, got length {}".format(data_len, len(self.bbox_list)))
+        for test_case in self.test_cases:
+            with self.subTest(msg='Test case {}'.format(test_case.name)):
+                bbox_list = test_case.splitter.get_bbox_list()
+                info_list = test_case.splitter.get_info_list()
+                self.assertTrue(isinstance(bbox_list, list), "Expected a list")
+                self.assertTrue(isinstance(info_list, list), "Expected a list")
+                self.assertEqual(len(bbox_list), test_case.bbox_len,
+                                 "Expected a list of length {}, got length {}".format(test_case.bbox_len,
+                                                                                      len(bbox_list)))
+                self.assertEqual(len(info_list), test_case.bbox_len,
+                                 "Expected a list of length {}, got length {}".format(test_case.bbox_len,
+                                                                                      len(info_list)))
 
-    '''    
-    def test_stats(self):
-        delta = 1e-1 if np.issubdtype(self.data[0].dtype, np.integer) else 1e-4
-
-        min_val = np.amin(self.data[0])
-        min_exp = 0
-        self.assertAlmostEqual(min_exp, min_val, delta=delta, msg="Expected min {}, got {}".format(min_exp, min_val))
-        max_val = np.amax(self.data[0])
-        max_exp = 255
-        self.assertAlmostEqual(max_exp, max_val, delta=delta, msg="Expected max {}, got {}".format(max_exp, max_val))
-        mean_val = np.mean(self.data[0])
-        mean_exp = 150.9248
-        self.assertAlmostEqual(mean_exp, mean_val, delta=delta,
-                               msg="Expected mean {}, got {}".format(mean_exp, mean_val))
-        median_val = np.median(self.data[0])
-        media_exp = 255
-        self.assertAlmostEqual(media_exp, median_val, delta=delta,
-                               msg="Expected median {}, got {}".format(media_exp, median_val))
-    '''
 
 if __name__ == '__main__':
     unittest.main()

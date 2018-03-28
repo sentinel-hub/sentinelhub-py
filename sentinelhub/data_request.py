@@ -300,7 +300,7 @@ class WmsRequest(OgcRequest):
                         in some cases 32-bit TIFF is required, i.e. if requesting unprocessed raw bands.
                         Default is ``constants.MimeType.PNG``.
     :type image_format: constants.MimeType
-    :param instance_id: user's instance id. If ``None`` the instance id is taken from the ``config.json``
+    :param instance_id: User's Sentinel Hub instance id. If ``None`` the instance id is taken from the ``config.json``
                         configuration file.
     :type instance_id: str
     :param custom_url_params: dictionary of CustomUrlParameters and their values supported by Sentinel Hub's WMS and WCS
