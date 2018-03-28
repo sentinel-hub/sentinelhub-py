@@ -1,8 +1,8 @@
 {
   "instance_id": "",
   "ogc_base_url": "https://services.sentinel-hub.com/ogc/",
-  "aws_base_url": "http://sentinel-s2-l1c.s3.amazonaws.com/",
   "gpd_base_url": "http://service.geopedia.world/",
+  "aws_base_url": "http://sentinel-s2-l1c.s3.amazonaws.com/",
   "aws_website_url": "http://sentinel-s2-l1c.s3-website.eu-central-1.amazonaws.com/#tiles/",
   "opensearch_url": "http://opensearch.sentinel-hub.com/resto/api/collections/Sentinel2/",
   "max_wfs_records_per_query": 100,

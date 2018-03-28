@@ -14,6 +14,7 @@ from .ogc import WebFeatureService
 
 from .common import BBox
 from .constants import DataSource, CustomUrlParam, CRS, MimeType, OgcConstants, AwsConstants, ServiceType
+from .config import SHConfig
 
 from .download import DownloadRequest, download_data, get_json, get_xml
 from .opensearch import get_tile_info_id, get_tile_info, get_area_dates, get_area_info
