@@ -58,11 +58,11 @@ def aws(product, tile, folder, redownload, info, entire, bands):
             download_safe_format(product_id=product, folder=folder, redownload=redownload, bands=band_list)
 
 
-def config_options(f):
+def config_options(func):
     for param in SHConfig().get_params():
-        f = click.option('--{}'.format(param), param,
-                         help='Set new values to configuration parameter "{}"'.format(param))(f)
-    return f
+        func = click.option('--{}'.format(param), param,
+                            help='Set new values to configuration parameter "{}"'.format(param))(func)
+    return func
 
 
 @click.command()
