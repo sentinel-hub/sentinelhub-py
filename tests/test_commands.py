@@ -24,6 +24,13 @@ class TestCommands(TestSentinelHub):
         cls.status += subprocess.call('sentinelhub.download {} {}/example.xml -r'.format(url, cls.OUTPUT_FOLDER),
                                       shell=True)
 
+        cls.status += subprocess.call('sentinelhub.config --show', shell=True)
+
+        cls.status += subprocess.call('sentinelhub --help', shell=True)
+        cls.status += subprocess.call('sentinelhub.aws --help', shell=True)
+        cls.status += subprocess.call('sentinelhub.config --help', shell=True)
+        cls.status += subprocess.call('sentinelhub.download --help', shell=True)
+
     def test_return_type(self):
         self.assertTrue(self.status == 0, "Commands failed")
 

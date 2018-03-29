@@ -15,4 +15,5 @@ or manually::
 $ python setup.py build
 $ python setup.py install
 
+
 .. _Github: https://github.com/sentinel-hub/sentinelhub-py

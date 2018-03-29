@@ -14,12 +14,13 @@ EO service `Sentinel-Hub <http://www.sentinel-hub.com/>`_.
 The code is available on `GitHub <https://github.com/sentinel-hub/sentinelhub-py/>`_.
 
 .. toctree::
-   :maxdepth: 2
-   :caption: Contents:
+    :maxdepth: 3
+    :caption: Contents:
 
-   install
-   docs
-   examples
+    install
+    configure
+    examples
+    docs
 
 Indices and tables
 ==================

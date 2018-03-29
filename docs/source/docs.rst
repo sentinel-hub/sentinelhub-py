@@ -1,5 +1,6 @@
-sentinelhub
-===========
+***************
+Package content
+***************
 
 Content of the **sentinelhub** package.
 
