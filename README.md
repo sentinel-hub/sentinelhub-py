@@ -73,9 +73,10 @@ For more information on the package and to access the documentation, visit [read
 Jupyter notebooks on how to use the modules to execute OGC requests, or
 download raw data from AWS in .SAFE format can be found in the [examples](examples/)
 folder, or viewed in the [docs](http://sentinelhub-py.readthedocs.io/):
- * AWS data download cli ([link](http://sentinelhub-py.readthedocs.io/en/latest/aws_cli.html));
- * AWS data download using Jupyter notebook ([link](http://sentinelhub-py.readthedocs.io/en/latest/examples/aws_request.html));
- * Using OGC web services within Jupyter notebook ([link](http://sentinelhub-py.readthedocs.io/en/latest/examples/ogc_request.html)).
+ * Using OGC web services ([link](http://sentinelhub-py.readthedocs.io/en/latest/examples/ogc_request.html))
+ * Using utilities for large geographical areas ([link](http://sentinelhub-py.readthedocs.io/en/latest/examples/large_area_utilities.html))
+ * AWS data download ([link](http://sentinelhub-py.readthedocs.io/en/latest/examples/aws_request.html))
+ * AWS data download from command line in .SAFE format ([link](http://sentinelhub-py.readthedocs.io/en/latest/aws_cli.html))
 
 # License
 
