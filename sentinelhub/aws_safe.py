@@ -3,7 +3,7 @@ Module for creating .SAFE structure with data from AWS
 """
 
 from .download import get_xml
-from .constants import AwsConstants, EsaSafeType, MimeType
+from .constants import AwsConstants, EsaSafeType, MimeType, DataSource
 from .aws import AwsProduct, AwsTile
 
 
@@ -34,8 +34,6 @@ class SafeProduct(AwsProduct):
         main_folder = self.get_main_folder()
         safe[main_folder] = {}
 
-        product_url = self.get_product_url()
-
         safe[main_folder][AwsConstants.AUX_DATA] = {}
 
         safe[main_folder][AwsConstants.DATASTRIP] = {}
@@ -43,8 +41,18 @@ class SafeProduct(AwsProduct):
         for datastrip_folder, datastrip_url in datastrip_list:
             safe[main_folder][AwsConstants.DATASTRIP][datastrip_folder] = {}
             safe[main_folder][AwsConstants.DATASTRIP][datastrip_folder][AwsConstants.QI_DATA] = {}
+
+            if self.data_source is DataSource.SENTINEL2_L2A:
+                for metafile in [AwsConstants.FORMAT_CORRECTNESS, AwsConstants.GENERAL_QUALITY,
+                                 AwsConstants.GEOMETRIC_QUALITY, AwsConstants.RADIOMETRIC_QUALITY,
+                                 AwsConstants.SENSOR_QUALITY]:
+                    metafile_name = self.add_file_extension(metafile)
+                    safe[main_folder][AwsConstants.DATASTRIP][datastrip_folder][AwsConstants.QI_DATA][
+                        metafile_name] = '{}/qi/{}'.format(datastrip_url, metafile_name)
+
             safe[main_folder][AwsConstants.DATASTRIP][datastrip_folder][
-                self.get_datastrip_metadata_name(datastrip_folder)] = datastrip_url + '/metadata.xml'
+                self.get_datastrip_metadata_name(datastrip_folder)] = '{}/{}'.format(
+                    datastrip_url, self.add_file_extension(AwsConstants.METADATA))
 
         safe[main_folder][AwsConstants.GRANULE] = {}
 
@@ -59,11 +67,17 @@ class SafeProduct(AwsProduct):
         safe[main_folder][AwsConstants.HTML] = {}  # AWS doesn't have this data
         safe[main_folder][AwsConstants.INFO] = {}  # AWS doesn't have this data
 
-        safe[main_folder]['INSPIRE.xml'] = self.get_url('inspire')
-        safe[main_folder]['manifest.safe'] = product_url + '/manifest.safe'
-        safe[main_folder][self.get_product_metadata_name()] = self.get_url('metadata')
+        safe[main_folder][self.get_product_metadata_name()] = self.get_url(AwsConstants.METADATA)
+        safe[main_folder]['INSPIRE.xml'] = self.get_url(AwsConstants.INSPIRE)
+        safe[main_folder][self.add_file_extension(AwsConstants.MANIFEST)] = self.get_url(AwsConstants.MANIFEST)
+
+        if self.safe_type is EsaSafeType.L2A_2017_SAFE_TYPE:
+            safe[main_folder]['L2A_Manifest.xml'] = self.get_url(AwsConstants.L2A_MANIFEST)
+            safe[main_folder][self.get_report_name()] = self.get_url(AwsConstants.REPORT)
+
         if self.safe_type == EsaSafeType.OLD_SAFE_TYPE:
-            safe[main_folder][edit_name(self.product_id, 'BWI') + '.png'] = product_url + '/preview.png'
+            safe[main_folder][edit_name(self.product_id, 'BWI') + '.png'] = self.get_url(AwsConstants.PREVIEW,
+                                                                                         MimeType.PNG)
         return safe
 
     def get_main_folder(self):
@@ -71,7 +85,7 @@ class SafeProduct(AwsProduct):
         :return: name of main folder
         :rtype: str
         """
-        return self.product_id + '.SAFE'
+        return '{}.SAFE'.format(self.product_id)
 
     def get_datastrip_list(self):
         """
@@ -114,8 +128,15 @@ class SafeProduct(AwsProduct):
         if self.safe_type == EsaSafeType.OLD_SAFE_TYPE:
             name = edit_name(self.product_id, 'MTD', 'SAFL1C')
         if self.safe_type == EsaSafeType.COMPACT_SAFE_TYPE:
-            name = 'MTD_MSIL1C'
+            name = 'MTD_{}'.format(self.product_id.split('_')[1])
         return '{}.{}'.format(name, MimeType.XML.value)
+
+    def get_report_name(self):
+        """
+        :return: name of the report file of L2A products
+        :rtype: str
+        """
+        return '{}_{}.{}'.format(self.product_id, '???', MimeType.XML.value)
 
 
 class SafeTile(AwsTile):
@@ -123,7 +144,6 @@ class SafeTile(AwsTile):
     def __init__(self, *args, **kwargs):
         super(SafeTile, self).__init__(*args, **kwargs)
 
-        self.safe_type = self.get_safe_type()
         self.tile_id = self.get_tile_id()
 
     def get_requests(self):
@@ -172,21 +192,8 @@ class SafeTile(AwsTile):
 
         return safe
 
-    def get_safe_type(self):
-        """
-        Determines the type of ESA product. In 2016 ESA changed structure and naming of data. Therefore the class must
-        distinguish between old product type and compact (new) product type.
-
-        :return: type of ESA product
-        :rtype: constants.EsaSafeType
-        """
-        if self.get_product_id().split('_')[1] == 'MSIL1C':
-            return EsaSafeType.COMPACT_SAFE_TYPE
-        return EsaSafeType.OLD_SAFE_TYPE
-
     def get_tile_id(self):
-        """
-        Creates ESA tile ID
+        """Creates ESA tile ID
 
         :return: ESA tile ID
         :rtype: str

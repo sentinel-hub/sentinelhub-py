@@ -10,3 +10,4 @@ python-dateutil
 pyproj
 utm
 shapely
+boto3

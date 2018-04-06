@@ -11,6 +11,7 @@ import concurrent.futures
 import requests
 import json
 import cv2
+import boto3
 import numpy as np
 import tifffile as tiff
 from io import BytesIO
@@ -133,6 +134,14 @@ class DownloadRequest:
             return os.path.join(self.data_folder, self.filename)
         return None
 
+    def is_aws_s3(self):
+        """Checks if data has to be downloaded from AWS s3 bucket
+
+        :return: True if url describes location at AWS s3 bucket and False otherwise
+        :rtype: bool
+        """
+        return self.url.startswith('s3://')
+
 
 def download_data(request_list, redownload=False, max_threads=None):
     """ Download all requested data or read data from disk, if already downloaded and available and redownload is
@@ -194,8 +203,13 @@ def execute_download_request(request):
     response = None
     while try_num > 0:
         try:
-            response = _do_request(request)
-            response.raise_for_status()
+            if request.is_aws_s3():
+                response = _do_aws_request(request)
+                response_content = response['Body'].read()  # TODO: test for errors
+            else:
+                response = _do_request(request)
+                response.raise_for_status()
+                response_content = response.content
             LOGGER.debug('Successful download from %s', request.url)
             break
         except requests.RequestException as exception:
@@ -209,10 +223,10 @@ def execute_download_request(request):
             else:
                 raise DownloadFailedException(_create_download_failed_message(exception))
 
-    _save_if_needed(request, response)
+    _save_if_needed(request, response_content)
 
     if request.return_data:
-        return decode_data(response, request.data_type)
+        return decode_data(response_content, request.data_type, entire_response=response)
     return None
 
 
@@ -221,12 +235,26 @@ def _do_request(request):
     :param request: A request
     :type request: DownloadRequest
     :return: Response of the request
+    :rtype: requests.Response
     """
     if request.request_type is RequestType.GET:
         return requests.get(request.url, headers=request.headers)
     elif request.request_type is RequestType.POST:
         return requests.post(request.url, data=json.dumps(request.post_values), headers=request.headers)
     raise ValueError('Invalid request type {}'.format(request.request_type))
+
+
+def _do_aws_request(request):
+    """ Executes download request from AWS service
+    :param request: A request
+    :type request: DownloadRequest
+    :return: Response of the request
+    :rtype: dict
+    """
+    aws_service, _, bucket_name, url_key = request.url.split('/', 3)
+    s3_client = boto3.client(aws_service.strip(':'), aws_access_key_id=SHConfig().aws_access_key_id,
+                             aws_secret_access_key=SHConfig().aws_secret_access_key)
+    return s3_client.get_object(Bucket=bucket_name, Key=url_key, RequestPayer='requester')
 
 
 def _is_temporal_problem(exception):
@@ -272,26 +300,29 @@ def _create_download_failed_message(exception):
     return message
 
 
-def _save_if_needed(request, response):
+def _save_if_needed(request, response_content):
     """ Save data to disk, if requested by the user
     :param request: Download request
-    :type: DownloadRequest
-    :param response: Response object from requests module
+    :type request: DownloadRequest
+    :param response_content: content of the download response
+    :type response_content: bytes
     """
     if request.save_response:
         create_parent_folder(request.file_location)
         with open(request.file_location, 'wb') as file:
-            file.write(response.content)
+            file.write(response_content)
         LOGGER.debug('Saved data from %s to %s', request.url, request.file_location)
 
 
-def decode_data(response, data_type):
+def decode_data(response_content, data_type, entire_response=None):
     """ Interprets downloaded data and returns it.
 
-    :param response: downloaded data (i.e. json, png, tiff, xml, zip, ... file)
-    :type response: requests.models.Response object
+    :param response_content: downloaded data (i.e. json, png, tiff, xml, zip, ... file)
+    :type response_content: bytes
     :param data_type: expected downloaded data type
     :type data_type: constants.MimeType
+    :param entire_response: A response obtained from execution of download request
+    :type entire_response: requests.Response or dict or None
     :return: downloaded data
     :rtype: numpy array in case of image data type, or other possible data type
     :raises: ValueError
@@ -299,18 +330,19 @@ def decode_data(response, data_type):
     LOGGER.debug('data_type=%s', data_type)
 
     if data_type is MimeType.JSON:
-        return response.json()
+        if isinstance(entire_response, requests.Response):
+            return entire_response.json()
+        return json.loads(response_content.decode('utf-8'))
     elif MimeType.is_image_format(data_type):
-        return decode_image(response.content, data_type)
+        return decode_image(response_content, data_type)
     elif data_type is MimeType.RAW or data_type is MimeType.TXT:
-        return response.content
+        return response_content
     elif data_type is MimeType.REQUESTS_RESPONSE:
-        return response
+        return entire_response
     elif data_type is MimeType.ZIP:
-        return BytesIO(response.content)
-    elif data_type is MimeType.XML or data_type is MimeType.GML or \
-            data_type is MimeType.SAFE:
-        return ElementTree.fromstring(response.content)
+        return BytesIO(response_content)
+    elif data_type is MimeType.XML or data_type is MimeType.GML or data_type is MimeType.SAFE:
+        return ElementTree.fromstring(response_content)
 
     raise ValueError('Unknown response data type {}'.format(data_type))
 

@@ -572,6 +572,9 @@ class AwsTileRequest(AwsRequest):
                       will try to find the index automatically. If there will be multiple choices it will choose the
                       lowest index and inform the user.
     :type aws_index: int or None
+    :param data_source: Source of requested AWS data. Supported sources are Sentinel-2 L1C and Sentinel-2 L2A, default
+                        is Sentinel-2 L1C data.
+    :type data_source: constants.DataSource
     :param bands: list of Sentinel-2 bands for request
     :type bands: list(str)
     :param metafiles: list of additional metafiles available on AWS
@@ -583,20 +586,21 @@ class AwsTileRequest(AwsRequest):
     :param data_folder: location of the directory where the fetched data will be saved.
     :type data_folder: str
     """
-    def __init__(self, *, tile=None, time=None, aws_index=None, **kwargs):
+    def __init__(self, *, tile=None, time=None, aws_index=None, data_source=DataSource.SENTINEL2_L1C, **kwargs):
         self.tile = tile
         self.time = time
         self.aws_index = aws_index
+        self.data_source = data_source
 
         super(AwsTileRequest, self).__init__(**kwargs)
 
     def create_request(self):
         if self.safe_format:
             self.aws_service = SafeTile(self.tile, self.time, self.aws_index,
-                                        bands=self.bands, metafiles=self.metafiles)
+                                        bands=self.bands, metafiles=self.metafiles, data_source=self.data_source)
         else:
             self.aws_service = AwsTile(self.tile, self.time, self.aws_index,
-                                       bands=self.bands, metafiles=self.metafiles)
+                                       bands=self.bands, metafiles=self.metafiles, data_source=self.data_source)
 
         self.download_list, self.folder_list = self.aws_service.get_requests()
 
