@@ -103,11 +103,32 @@ class AwsService(ABC):
         :return: type of ESA product
         :rtype: constants.EsaSafeType
         """
+
         if self.product_id.split('_')[1].startswith('MSI'):
-            return EsaSafeType.COMPACT_SAFE_TYPE
+            if self.data_source is DataSource.SENTINEL2_L1C:
+                return EsaSafeType.COMPACT_SAFE_TYPE
+            baseline_id = self._get_processing_baseline_id()
+            if baseline_id == '02.06':
+                return EsaSafeType.L2A_2017_SAFE_TYPE
+            if baseline_id == '02.07':
+                return EsaSafeType.L2A_2018_SAFE_TYPE
+            return EsaSafeType.UNKNOWN
+
         if self.data_source is DataSource.SENTINEL2_L2A:
             raise ValueError('L2A for old ESA format is not supported.')  # TODO: check!
         return EsaSafeType.OLD_SAFE_TYPE
+
+    def _get_processing_baseline_id(self):
+        """Tries to find and return processing baseline number which indicates in which version of SAFE format has to be
+        created. If no info about that has already been loaded into class it returns None.
+
+        :return: Processing ID
+        :rtype: str or None
+        """
+        if hasattr(self, 'tile_info'):
+            return self.tile_info['datastrip']['id'][-5:]
+        if hasattr(self, 'product_info'):
+            return self.product_info['datastrips'][0]['id'][-5:]
 
     @staticmethod
     def url_to_tile(url):
@@ -154,6 +175,7 @@ class AwsService(ABC):
         for name, substruct in struct.items():
             subfolder = os.path.join(folder, name)
             if not isinstance(substruct, dict):
+                print(substruct, '######')
                 if substruct.split('/')[3] == 'products':
                     data_name = substruct.split('/', 8)[-1]
                     if '/' in data_name:
@@ -221,6 +243,11 @@ class AwsProduct(AwsService):
         self.product_url = self.get_product_url()
         self.product_info = get_json(self.get_url(AwsConstants.PRODUCT_INFO))
 
+        if self.safe_type is EsaSafeType.UNKNOWN:
+            self.safe_type = self.get_safe_type()
+            if self.safe_type is EsaSafeType.UNKNOWN:
+                raise ValueError('SAFE structure of product {} is not recognized'.format(self.product_id))
+
     @staticmethod
     def parse_tile_list(tile_input):
         """
@@ -281,7 +308,7 @@ class AwsProduct(AwsService):
         if self.safe_type == EsaSafeType.OLD_SAFE_TYPE:
             name = self.product_id.split('_')[-2]
             date = [name[1:5], name[5:7], name[7:9]]
-        elif self.safe_type == EsaSafeType.COMPACT_SAFE_TYPE:
+        else:
             name = self.product_id.split('_')[2]
             date = [name[:4], name[4:6], name[6:8]]
         return '-'.join(date_part.lstrip('0') for date_part in date)
@@ -368,7 +395,6 @@ class AwsTile(AwsService):
         self.data_source = data_source
 
         self.base_url = self.get_base_url()
-        print(self.base_url)
         LOGGER.debug('tile_name=%s, date=%s, bands=%s, metafiles=%s', self.tile_name, self.date, self.bands,
                      self.metafiles)
 
@@ -421,7 +447,7 @@ class AwsTile(AwsService):
         :rtype: (list(download.DownloadRequest), list(str))
         """
         self.download_list = []
-        for data_name in self.bands + self.metafiles:
+        for data_name in self.bands + self.metafiles:  # TODO: Band resolution for L2A
             if data_name in AwsConstants.TILE_FILES:
                 url = self.get_url(data_name)
                 filename = self.get_filepath(data_name)
@@ -477,6 +503,22 @@ class AwsTile(AwsService):
             self.tile_url = self.get_tile_url()
         return '{}/{}'.format(self.tile_url, self.add_file_extension(filename))
 
+    def get_band_url(self, band, resolution=None):
+        """Creates url of band location on AWS
+
+        :param band: Name of the band
+        :type band: str
+        :param resolution: In case of L2A product this specifies the resolution folder in which the band is contained.
+        :type resolution: str or None
+        :return: url of band location
+        :rtype: str
+        """
+        url = self.get_url(band)
+        if resolution is None:
+            return url
+        base_url, band_name = url.rsplit('/', 1)
+        return '/'.join([base_url, resolution, band_name])
+
     def get_tile_url(self):
         """
         Creates base url of tile location on AWS.
@@ -520,5 +562,8 @@ class AwsTile(AwsService):
         :return: tile name, sensing date and AWS index
         :rtype: (str, str, int)
         """
+        if tile_id.split('_')[0] not in ['S2A', 'L1C']:
+            raise ValueError('Transformation from tile_id to tile works currently only for Sentinel-2 L1C products')
+
         tile_info = get_tile_info_id(tile_id)
         return AwsService.url_to_tile(tile_info['properties']['s3Path'])

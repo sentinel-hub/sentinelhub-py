@@ -2,6 +2,8 @@
 Module for creating .SAFE structure with data from AWS
 """
 
+import warnings
+
 from .download import get_xml
 from .constants import AwsConstants, EsaSafeType, MimeType, DataSource
 from .aws import AwsProduct, AwsTile
@@ -41,7 +43,6 @@ class SafeProduct(AwsProduct):
         for datastrip_folder, datastrip_url in datastrip_list:
             safe[main_folder][AwsConstants.DATASTRIP][datastrip_folder] = {}
             safe[main_folder][AwsConstants.DATASTRIP][datastrip_folder][AwsConstants.QI_DATA] = {}
-
             if self.data_source is DataSource.SENTINEL2_L2A:
                 for metafile in [AwsConstants.FORMAT_CORRECTNESS, AwsConstants.GENERAL_QUALITY,
                                  AwsConstants.GEOMETRIC_QUALITY, AwsConstants.RADIOMETRIC_QUALITY,
@@ -60,7 +61,7 @@ class SafeProduct(AwsProduct):
             tile_name, date, aws_index = self.url_to_tile(self.get_tile_url(tile_info))
             if self.tile_list is None or AwsTile.parse_tile_name(tile_name) in self.tile_list:
                 tile_struct = SafeTile(tile_name, date, aws_index, parent_folder=None, bands=self.bands,
-                                       metafiles=self.metafiles).get_safe_struct()
+                                       metafiles=self.metafiles, data_source=self.data_source).get_safe_struct()
                 for tile_name, safe_struct in tile_struct.items():
                     safe[main_folder][AwsConstants.GRANULE][tile_name] = safe_struct
 
@@ -116,7 +117,7 @@ class SafeProduct(AwsProduct):
         """
         if self.safe_type == EsaSafeType.OLD_SAFE_TYPE:
             name = datastrip_folder.rsplit('_', 1)[0]
-        if self.safe_type == EsaSafeType.COMPACT_SAFE_TYPE:
+        else:
             name = 'MTD_DS'
         return '{}.{}'.format(name, MimeType.XML.value)
 
@@ -127,7 +128,7 @@ class SafeProduct(AwsProduct):
         """
         if self.safe_type == EsaSafeType.OLD_SAFE_TYPE:
             name = edit_name(self.product_id, 'MTD', 'SAFL1C')
-        if self.safe_type == EsaSafeType.COMPACT_SAFE_TYPE:
+        else:
             name = 'MTD_{}'.format(self.product_id.split('_')[1])
         return '{}.{}'.format(name, MimeType.XML.value)
 
@@ -136,7 +137,21 @@ class SafeProduct(AwsProduct):
         :return: name of the report file of L2A products
         :rtype: str
         """
-        return '{}_{}.{}'.format(self.product_id, '???', MimeType.XML.value)
+        return '{}_{}_report.{}'.format(self.product_id, self.get_report_time(), MimeType.XML.value)
+
+    def get_report_time(self):
+        """ Returns time when the L2A processing started and reports was created.
+        :return: String in a form YYYYMMDDTHHMMSS
+        :rtype: str
+        """
+        tree = get_xml(self.get_url(AwsConstants.REPORT))
+
+        try:
+            timestamp = tree.find('check/inspection').attrib['execution']
+            return timestamp.split(',')[0].replace(' ', 'T').replace(':', '').replace('-', '')
+        except AttributeError:
+            warnings.warn('Could not obtain the L2A report creation time')
+            return 'unknown'
 
 
 class SafeTile(AwsTile):
@@ -172,21 +187,55 @@ class SafeTile(AwsTile):
         safe[main_folder] = {}
 
         safe[main_folder][AwsConstants.AUX_DATA] = {}
-        safe[main_folder][AwsConstants.AUX_DATA][self.get_aux_data_name()] = self.tile_url + '/auxiliary/ECMWFT'
+        safe[main_folder][AwsConstants.AUX_DATA][self.get_aux_data_name()] = self.get_url(AwsConstants.ECMWFT)
+        if self.data_source is DataSource.SENTINEL2_L2A:
+            safe[main_folder][AwsConstants.AUX_DATA]['GIP_TL.xml'] = self.get_url(AwsConstants.GIPP)
 
         safe[main_folder][AwsConstants.IMG_DATA] = {}
-        for band in self.bands:
-            safe[main_folder][AwsConstants.IMG_DATA][self.get_img_name(band)] = self.get_url(band)
-        if self.safe_type == EsaSafeType.COMPACT_SAFE_TYPE:
-            safe[main_folder][AwsConstants.IMG_DATA][self.get_img_name('TCI')] = self.get_url('TCI')
+        if self.data_source is DataSource.SENTINEL2_L1C:
+            for band in self.bands:
+                safe[main_folder][AwsConstants.IMG_DATA][self.get_img_name(band)] = self.get_band_url(band)
+            if self.safe_type == EsaSafeType.COMPACT_SAFE_TYPE:
+                safe[main_folder][AwsConstants.IMG_DATA][self.get_img_name(AwsConstants.TCI)] =\
+                    self.get_url(AwsConstants.TCI)
+        else:
+            for resolution, band_list in AwsConstants.L2A_BANDS.items():
+                safe[main_folder][AwsConstants.IMG_DATA][resolution] = {}
+                for band in set(band_list).intersection(self.bands).union([AwsConstants.AOT, AwsConstants.SLC,
+                                                                           AwsConstants.TCI, AwsConstants.WVP]):
+                    if band != AwsConstants.SLC or resolution != AwsConstants.R10m:
+                        safe[main_folder][AwsConstants.IMG_DATA][resolution][self.get_img_name(band, resolution)] =\
+                            self.get_band_url(band, resolution)
+            if self.safe_type is EsaSafeType.L2A_2017_SAFE_TYPE:
+                safe[main_folder][AwsConstants.IMG_DATA][AwsConstants.R20m][
+                    self.get_img_name(AwsConstants.VIS, AwsConstants.R20m)] = self.get_band_url(AwsConstants.VIS,
+                                                                                                AwsConstants.R20m)
 
         safe[main_folder][AwsConstants.QI_DATA] = {}
-        safe[main_folder][AwsConstants.QI_DATA][self.get_gml_name('CLOUDS')] = self.get_gml_url('CLOUDS')
+        safe[main_folder][AwsConstants.QI_DATA][self.get_qi_name('CLOUDS')] = self.get_gml_url('CLOUDS')
         for qi_type in AwsConstants.QI_LIST:
             for band in self.bands:
-                safe[main_folder][AwsConstants.QI_DATA][self.get_gml_name(qi_type, band)] = self.get_gml_url(qi_type,
-                                                                                                             band)
-        safe[main_folder][AwsConstants.QI_DATA][self.get_preview_name()] = self.tile_url + '/preview.jp2'
+                safe[main_folder][AwsConstants.QI_DATA][self.get_qi_name(qi_type, band)] = self.get_gml_url(qi_type,
+                                                                                                            band)
+        safe[main_folder][AwsConstants.QI_DATA][self.get_preview_name()] = self.get_preview_url()
+        if self.data_source is DataSource.SENTINEL2_L2A:
+            for metafile in [AwsConstants.FORMAT_CORRECTNESS, AwsConstants.GENERAL_QUALITY,
+                             AwsConstants.GEOMETRIC_QUALITY, AwsConstants.SENSOR_QUALITY]:
+                metafile_name = self.add_file_extension(metafile)
+                safe[main_folder][AwsConstants.QI_DATA][metafile_name] = self.get_qi_url(metafile_name)
+
+            for mask in ['SNW', 'CLD']:
+                for resolution in [AwsConstants.R20m, AwsConstants.R60m]:
+                    if self.safe_type is EsaSafeType.L2A_2017_SAFE_TYPE:
+                        mask_name = self.get_img_name(mask, resolution)
+                    else:
+                        mask_name = self.get_qi_name('{}PRB'.format(mask), resolution.lstrip('R'))
+                    safe[main_folder][AwsConstants.QI_DATA][mask_name] =\
+                        self.get_qi_url('{}_{}.jp2'.format(mask, resolution.lstrip('R')))
+
+            if self.safe_type is EsaSafeType.L2A_2017_SAFE_TYPE:
+                safe[main_folder][AwsConstants.QI_DATA][self.get_img_name(AwsConstants.PVI)] =\
+                    self.get_qi_url('L2A_PVI.jp2')
 
         safe[main_folder][self.get_tile_metadata_name()] = self.get_url(AwsConstants.METADATA)
 
@@ -200,8 +249,9 @@ class SafeTile(AwsTile):
         """
         tree = get_xml(self.get_url(AwsConstants.METADATA))
 
-        tile_id = tree[0].find('TILE_ID').text
-        if self.safe_type == EsaSafeType.COMPACT_SAFE_TYPE:
+        tile_id_tag = 'TILE_ID_2A' if self.safe_type is EsaSafeType.L2A_2017_SAFE_TYPE else 'TILE_ID'
+        tile_id = tree[0].find(tile_id_tag).text
+        if self.safe_type is not EsaSafeType.OLD_SAFE_TYPE:
             info = tile_id.split('_')
             tile_id = '_'.join([info[3], info[-2], info[-3], self.get_sensing_time()])
         return tile_id
@@ -234,9 +284,9 @@ class SafeTile(AwsTile):
         """
         if self.safe_type == EsaSafeType.OLD_SAFE_TYPE:
             name = edit_name(self.tile_id, 'MTD', delete_end=True)
-        if self.safe_type == EsaSafeType.COMPACT_SAFE_TYPE:
+        else:
             name = 'MTD_TL'
-        return name + '.xml'
+        return '{}.xml'.format(name)
 
     def get_aux_data_name(self):
         """
@@ -249,25 +299,33 @@ class SafeTile(AwsTile):
             return 'AUX_ECMWFT'
         return 'AUX_ECMWFT'
 
-    def get_img_name(self, band):
+    def get_img_name(self, band, resolution=None):
         """
         :param band: band name
         :type band: str
+        :param resolution: Specifies the resolution in case of Sentinel-2 L2A products
+        :type resolution: str or None
         :return: name of band image file
         :rtype: str
         """
-        if self.safe_type == EsaSafeType.OLD_SAFE_TYPE:
+        if self.safe_type is EsaSafeType.OLD_SAFE_TYPE:
             name = self.tile_id.rsplit('_', 1)[0] + '_' + band
-        if self.safe_type == EsaSafeType.COMPACT_SAFE_TYPE:
+        else:
             name = '_'.join([self.tile_id.split('_')[1], self.get_datatake_time(), band])
-        return name + '.jp2'
+        if self.data_source is DataSource.SENTINEL2_L2A and resolution is not None:
+            name = '{}_{}'.format(name, resolution.lstrip('R'))
+        if self.safe_type is EsaSafeType.L2A_2017_SAFE_TYPE:
+            name = 'L2A_{}'.format(name)
+        return '{}.jp2'.format(name)
 
-    def get_gml_name(self, qi_type, band='B00'):
+    def get_qi_name(self, qi_type, band='B00', data_format=MimeType.GML):
         """
         :param qi_type: type of quality indicator
         :type qi_type: str
         :param band: band name
         :type band: str
+        :param data_format: format of the file
+        :type data_format: MimeType
         :return: name of gml file
         :rtype: str
         """
@@ -275,9 +333,19 @@ class SafeTile(AwsTile):
             name = edit_name(self.tile_id, 'MSK', delete_end=True)
             name = name.replace('L1C_TL', qi_type)
             name += '_' + band + '_MSIL1C'
-        if self.safe_type == EsaSafeType.COMPACT_SAFE_TYPE:
-            name = 'MSK_' + qi_type + '_' + band
-        return name + '.gml'
+        else:
+            name = 'MSK_{}_{}'.format(qi_type, band)
+        return '{}.{}'.format(name, data_format.value)
+
+    def get_qi_url(self, metafile):
+        """Returns url of tile metadata products
+
+        :param metafile: Name of metadata product at AWS
+        :type metafile: str
+        :return: url location of metadata product at AWS
+        :rtype: str
+        """
+        return '{}/qi/{}'.format(self.tile_url, metafile)
 
     def get_gml_url(self, qi_type, band='B00'):
         """
@@ -288,18 +356,26 @@ class SafeTile(AwsTile):
         :return: location of gml file on AWS
         :rtype: str
         """
-        return self.tile_url + '/qi/MSK_' + qi_type + '_' + band + '.gml'
+        return self.get_qi_url('MSK_{}_{}.gml'.format(qi_type, band))
 
     def get_preview_name(self):
-        """
+        """Returns .SAFE name of full resolution L1C preview
         :return: name of preview file
         :rtype: str
         """
         if self.safe_type == EsaSafeType.OLD_SAFE_TYPE:
-            name = edit_name(self.tile_id, 'PVI', delete_end=True)
-        if self.safe_type == EsaSafeType.COMPACT_SAFE_TYPE:
-            name = '_'.join([self.tile_id.split('_')[1], self.get_datatake_time(), 'PVI'])
-        return name + '.jp2'
+            name = edit_name(self.tile_id, AwsConstants.PVI, delete_end=True)
+        else:
+            name = '_'.join([self.tile_id.split('_')[1], self.get_datatake_time(), AwsConstants.PVI])
+        return '{}.jp2'.format(name)
+
+    def get_preview_url(self):
+        """Returns url location of full resolution L1C preview
+        :return:
+        """
+        if self.data_source is DataSource.SENTINEL2_L1C:
+            return '{}/preview.jp2'.format(self.tile_url)
+        return '{}/qi/L1C_PVI.jp2'.format(self.tile_url)
 
 
 def edit_name(name, code, add_code=None, delete_end=False):

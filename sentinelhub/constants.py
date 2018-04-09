@@ -460,12 +460,45 @@ class AwsConstants:
     IMG_DATA = 'IMG_DATA'
     INSPIRE = 'inspire'
     MANIFEST = 'manifest'
+    TCI = 'TCI'
+    PVI = 'PVI'
+    ECMWFT = 'auxiliary/ECMWFT'
     DATASTRIP_FILE = 'datastrip/*/metadata'
 
-    FILE_FORMATS = {METADATA: MimeType.XML, PREVIEW: MimeType.JPG, TILE_INFO: MimeType.JSON,
-                    PRODUCT_INFO: MimeType.JSON, 'TCI': MimeType.JP2, INSPIRE: MimeType.XML,
-                    'auxiliary/ECMWFT': MimeType.RAW, MANIFEST: MimeType.SAFE, 'qi/MSK_CLOUDS_B00': MimeType.GML,
-                    DATASTRIP_FILE: MimeType.XML}
+    # L2A constants:
+    R10m = 'R10m'
+    R20m = 'R20m'
+    R60m = 'R60m'
+    L2A_BANDS = {R10m: ['B02', 'B03', 'B04', 'B08'],
+                 R20m: ['B02', 'B03', 'B04', 'B05', 'B06', 'B07', 'B08', 'B8A', 'B11', 'B12'],
+                 R60m: ['B01', 'B02', 'B03', 'B04', 'B05', 'B06', 'B07', 'B08', 'B8A', 'B09', 'B11', 'B12']}
+    # main product folder:
+    L2A_MANIFEST = 'L2AManifest'
+    REPORT = 'report'
+    # datastrip:
+    FORMAT_CORRECTNESS = 'FORMAT_CORRECTNESS'
+    GENERAL_QUALITY = 'GENERAL_QUALITY'
+    GEOMETRIC_QUALITY = 'GEOMETRIC_QUALITY'
+    RADIOMETRIC_QUALITY = 'RADIOMETRIC_QUALITY'
+    SENSOR_QUALITY = 'SENSOR_QUALITY'
+    # auxiliary tile data
+    GIPP = 'auxiliary/GIP_TL'
+    # image data
+    AOT = 'AOT'
+    WVP = 'WPV'
+    SLC = 'SLC'
+    VIS = 'VIS'
+
+    FILE_FORMATS = {PREVIEW: MimeType.JPG, TILE_INFO: MimeType.JSON, PRODUCT_INFO: MimeType.JSON,
+                    ECMWFT: MimeType.RAW, MANIFEST: MimeType.SAFE, 'qi/MSK_CLOUDS_B00': MimeType.GML}
+
+    for metafile in [METADATA, INSPIRE, DATASTRIP_FILE, FORMAT_CORRECTNESS, GENERAL_QUALITY, GEOMETRIC_QUALITY,
+                     RADIOMETRIC_QUALITY, SENSOR_QUALITY, L2A_MANIFEST, REPORT, GIPP]:
+        FILE_FORMATS[metafile] = MimeType.XML
+
+    for raster_product in [TCI, AOT, WVP, SLC, VIS]:
+        FILE_FORMATS[raster_product] = MimeType.JP2
+
     for band in BANDS:
         FILE_FORMATS[band] = MimeType.JP2
         FILE_FORMATS['preview/' + band] = MimeType.JP2
@@ -482,7 +515,10 @@ class AwsConstants:
 class EsaSafeType(Enum):
     """ Enum constants class for ESA .SAFE type.
 
-     Types are OLD_SAFE_TYPE or COMPACT_SAFE_TYPE
+     Types are OLD_SAFE_TYPE, COMPACT_SAFE_TYPE, L2A_2017_SAFE_TYPE, L2A_2018_SAFE_TYPE
      """
     OLD_SAFE_TYPE = 'old_type'
     COMPACT_SAFE_TYPE = 'compact_type'
+    L2A_2017_SAFE_TYPE = 'l2a_2017_type'
+    L2A_2018_SAFE_TYPE = 'l2a_2018_type'
+    UNKNOWN = 'unknown'
