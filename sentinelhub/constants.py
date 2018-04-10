@@ -442,15 +442,17 @@ class OgcConstants:
 class AwsConstants:
     """ Initialisation of constants used by AWS classes
 
-        Constants are BANDS, TILE_INFO, PRODUCT_INFO, METADATA, PREVIEW, QI_LIST, AUX_DATA, DATASTRIP, GRANULE, HTML,
-        INFO, QI_DATA, IMG_DATA, INSPIRE, MANIFEST, DATASTRIP_FILE, FILEFORMATS, PRODUCT_METAFILES, TILE_FILES
+        TODO: write something
     """
-    BANDS = ['B01', 'B02', 'B03', 'B04', 'B05', 'B06', 'B07', 'B08', 'B8A', 'B09', 'B10', 'B11', 'B12']
+    # General constants:
+    SOURCE_ID_LIST = ['L1C', 'L2A']
     TILE_INFO = 'tileInfo'
     PRODUCT_INFO = 'productInfo'
     METADATA = 'metadata'
     PREVIEW = 'preview'
+    PREVIEW_JP2 = 'preview*'
     QI_LIST = ['DEFECT', 'DETFOO', 'NODATA', 'SATURA', 'TECQUA']
+    QI_MSK_CLOUD = 'qi/MSK_CLOUDS_B00'
     AUX_DATA = 'AUX_DATA'
     DATASTRIP = 'DATASTRIP'
     GRANULE = 'GRANULE'
@@ -463,53 +465,78 @@ class AwsConstants:
     TCI = 'TCI'
     PVI = 'PVI'
     ECMWFT = 'auxiliary/ECMWFT'
-    DATASTRIP_FILE = 'datastrip/*/metadata'
+    DATASTRIP_METADATA = 'datastrip/*/metadata'
 
-    # L2A constants:
-    R10m = 'R10m'
-    R20m = 'R20m'
-    R60m = 'R60m'
-    L2A_BANDS = {R10m: ['B02', 'B03', 'B04', 'B08'],
-                 R20m: ['B02', 'B03', 'B04', 'B05', 'B06', 'B07', 'B08', 'B8A', 'B11', 'B12'],
-                 R60m: ['B01', 'B02', 'B03', 'B04', 'B05', 'B06', 'B07', 'B08', 'B8A', 'B09', 'B11', 'B12']}
-    # main product folder:
+    AOT = 'AOT'
+    WVP = 'WPV'
+    SLC = 'SLC'
+    VIS = 'VIS'
     L2A_MANIFEST = 'L2AManifest'
     REPORT = 'report'
-    # datastrip:
+    GIPP = 'auxiliary/GIP_TL'
     FORMAT_CORRECTNESS = 'FORMAT_CORRECTNESS'
     GENERAL_QUALITY = 'GENERAL_QUALITY'
     GEOMETRIC_QUALITY = 'GEOMETRIC_QUALITY'
     RADIOMETRIC_QUALITY = 'RADIOMETRIC_QUALITY'
     SENSOR_QUALITY = 'SENSOR_QUALITY'
-    # auxiliary tile data
-    GIPP = 'auxiliary/GIP_TL'
-    # image data
-    AOT = 'AOT'
-    WVP = 'WPV'
-    SLC = 'SLC'
-    VIS = 'VIS'
+    QUALITY_REPORTS = [FORMAT_CORRECTNESS, GENERAL_QUALITY, GEOMETRIC_QUALITY, RADIOMETRIC_QUALITY, SENSOR_QUALITY]
+    CLASS_MASKS = ['SNW', 'CLD']
 
-    FILE_FORMATS = {PREVIEW: MimeType.JPG, TILE_INFO: MimeType.JSON, PRODUCT_INFO: MimeType.JSON,
-                    ECMWFT: MimeType.RAW, MANIFEST: MimeType.SAFE, 'qi/MSK_CLOUDS_B00': MimeType.GML}
+    # Sentinel-2 L1C products:
+    S2_L1C_BANDS = ['B01', 'B02', 'B03', 'B04', 'B05', 'B06', 'B07', 'B08', 'B8A', 'B09', 'B10', 'B11', 'B12']
+    S2_L1C_METAFILES = [PRODUCT_INFO, TILE_INFO, METADATA, INSPIRE, MANIFEST, DATASTRIP_METADATA] +\
+                       [PREVIEW, PREVIEW_JP2, TCI] + ['{}/{}'.format(PREVIEW, band) for band in S2_L1C_BANDS] +\
+                       [QI_MSK_CLOUD] + ['qi/MSK_{}_{}'.format(qi, band)for band in S2_L1C_BANDS for qi in QI_LIST] +\
+                       [ECMWFT]
+    # Sentinel-2 L2A products:
+    R10m = 'R10m'
+    R20m = 'R20m'
+    R60m = 'R60m'
+    S2_L2A_BAND_MAP = {R10m: ['B02', 'B03', 'B04', 'B08', AOT, TCI, WVP],
+                       R20m: ['B02', 'B03', 'B04', 'B05', 'B06', 'B07', 'B08', 'B8A', 'B11', 'B12', AOT, SLC, TCI, VIS,
+                              WVP],
+                       R60m: ['B01', 'B02', 'B03', 'B04', 'B05', 'B06', 'B07', 'B08', 'B8A', 'B09', 'B11', 'B12', AOT,
+                              SLC, TCI, WVP]}
+    S2_L2A_BANDS = ['{}/{}'.format(resolution, band) for resolution, band_list in S2_L2A_BAND_MAP.items() for band in
+                    band_list]
+    S2_L2A_METAFILES = [PRODUCT_INFO, TILE_INFO, METADATA, INSPIRE, MANIFEST, L2A_MANIFEST, REPORT,
+                        DATASTRIP_METADATA] + ['datastrip/*/qi/{}'.format(qi_report)for qi_report in QUALITY_REPORTS] +\
+                       ['qi/{}_PVI'.format(source_id) for source_id in SOURCE_ID_LIST] +\
+                       ['qi/{}_{}'.format(mask, res.lstrip('R')) for mask in CLASS_MASKS for res in [R20m, R60m]] +\
+                       ['qi/MSK_{}_{}'.format(qi, band) for band in S2_L1C_BANDS for qi in QI_LIST] +\
+                       [QI_MSK_CLOUD] + ['qi/{}'.format(qi_report) for qi_report in QUALITY_REPORTS] +\
+                       [ECMWFT, GIPP]
 
-    for metafile in [METADATA, INSPIRE, DATASTRIP_FILE, FORMAT_CORRECTNESS, GENERAL_QUALITY, GEOMETRIC_QUALITY,
-                     RADIOMETRIC_QUALITY, SENSOR_QUALITY, L2A_MANIFEST, REPORT, GIPP]:
-        FILE_FORMATS[metafile] = MimeType.XML
-
-    for raster_product in [TCI, AOT, WVP, SLC, VIS]:
-        FILE_FORMATS[raster_product] = MimeType.JP2
-
-    for band in BANDS:
-        FILE_FORMATS[band] = MimeType.JP2
-        FILE_FORMATS['preview/' + band] = MimeType.JP2
-        for quality_indicator in QI_LIST:
-            FILE_FORMATS['qi/MSK_{}_{}'.format(quality_indicator, band)] = MimeType.GML
-
-    PRODUCT_METAFILES = [METADATA, PRODUCT_INFO, INSPIRE, MANIFEST, DATASTRIP_FILE]
-    TILE_FILES = []
-    for filename in FILE_FORMATS:
-        if filename not in [INSPIRE, MANIFEST, DATASTRIP_FILE]:
-            TILE_FILES.append(filename)
+    # Product files with formats:
+    PRODUCT_FILES = {**{PRODUCT_INFO: MimeType.JSON,
+                        METADATA: MimeType.XML,
+                        INSPIRE: MimeType.XML,
+                        MANIFEST: MimeType.SAFE,
+                        L2A_MANIFEST: MimeType.XML,
+                        REPORT: MimeType.XML,
+                        DATASTRIP_METADATA: MimeType.XML},
+                     **{'datastrip/*/qi/{}'.format(qi_report): MimeType.XML for qi_report in QUALITY_REPORTS}}
+    # Tile files with formats:
+    TILE_FILES = {**{TILE_INFO: MimeType.JSON,
+                     PRODUCT_INFO: MimeType.JSON,
+                     METADATA: MimeType.XML,
+                     PREVIEW: MimeType.JPG,
+                     PREVIEW_JP2: MimeType.JP2,
+                     TCI: MimeType.JP2,
+                     QI_MSK_CLOUD: MimeType.GML,
+                     ECMWFT: MimeType.RAW,
+                     GIPP: MimeType.XML},
+                  **{'qi/{}'.format(qi_report): MimeType.XML for qi_report in QUALITY_REPORTS},
+                  **{'{}/{}'.format(PREVIEW, band): MimeType.JP2 for band in S2_L1C_BANDS},
+                  **{'qi/MSK_{}_{}'.format(qi, band): MimeType.GML for band in S2_L1C_BANDS for qi in QI_LIST},
+                  **{band: MimeType.JP2 for band in S2_L1C_BANDS},
+                  **{band: MimeType.JP2 for band in S2_L2A_BANDS},
+                  **{'qi/{}_PVI'.format(source_id): MimeType.JP2 for source_id in SOURCE_ID_LIST},
+                  **{'qi/{}_{}'.format(mask, res.lstrip('R')): MimeType.JP2 for mask in CLASS_MASKS
+                     for res in [R20m, R60m]}
+                  }
+    # All files joined together
+    ALL_FILES = {**PRODUCT_FILES, **TILE_FILES}
 
 
 class EsaSafeType(Enum):
