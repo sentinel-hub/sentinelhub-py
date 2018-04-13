@@ -172,7 +172,7 @@ class DataSource(Enum, metaclass=_DataSourceMeta):
         :return: ``True`` if data source exists at US West server and ``False`` otherwise
         :rtype: bool
         """
-        return data_source.value[0] in [cls.Source.value.LANDSAT8, cls.Source.value.MODIS, cls.Source.value.DEM]
+        return data_source.value[0] in [Source.value.LANDSAT8, Source.value.MODIS, Source.value.DEM]
 
 
 class _Direction(Enum):
