@@ -29,6 +29,13 @@ class DownloadFailedException(Exception):
     pass
 
 
+class AwsDownloadFailedException(DownloadFailedException):
+    """
+    This exception is raised when download fails because of a missing file in AWS
+    """
+    pass
+
+
 class ImageDecodingError(Exception):
     pass
 
@@ -205,7 +212,7 @@ def execute_download_request(request):
         try:
             if request.is_aws_s3():
                 response = _do_aws_request(request)
-                response_content = response['Body'].read()  # TODO: test for errors
+                response_content = response['Body'].read()
             else:
                 response = _do_request(request)
                 response.raise_for_status()
@@ -216,11 +223,14 @@ def execute_download_request(request):
             try_num -= 1
             if try_num > 0 and (_is_temporal_problem(exception) or
                                 (isinstance(exception, requests.HTTPError) and
-                                 exception.response.status_code != requests.status_codes.codes.BAD_REQUEST)):
+                                 exception.response.status_code >= requests.status_codes.codes.INTERNAL_SERVER_ERROR)):
                 LOGGER.debug('Download attempt failed: %s\n%d attempts left, will retry in %ds', exception,
                              try_num, SHConfig().download_sleep_time)
                 time.sleep(SHConfig().download_sleep_time)
             else:
+                if request.url.startswith(SHConfig().aws_base_url) and isinstance(exception, requests.HTTPError)\
+                        and exception.response.status_code == requests.status_codes.codes.NOT_FOUND:
+                    raise AwsDownloadFailedException('File in location %s is missing' % request.url)
                 raise DownloadFailedException(_create_download_failed_message(exception))
 
     _save_if_needed(request, response_content)
@@ -250,11 +260,17 @@ def _do_aws_request(request):
     :type request: DownloadRequest
     :return: Response of the request
     :rtype: dict
+    :raises: AwsDownloadFailedException, ValueError
     """
     aws_service, _, bucket_name, url_key = request.url.split('/', 3)
     s3_client = boto3.client(aws_service.strip(':'), aws_access_key_id=SHConfig().aws_access_key_id,
                              aws_secret_access_key=SHConfig().aws_secret_access_key)
-    return s3_client.get_object(Bucket=bucket_name, Key=url_key, RequestPayer='requester')
+    try:
+        return s3_client.get_object(Bucket=bucket_name, Key=url_key, RequestPayer='requester')
+    except s3_client.exceptions.NoSuchKey:
+        raise AwsDownloadFailedException('File in location %s is missing' % request.url)
+    except s3_client.exceptions.NoSuchBucket:
+        raise ValueError('Aws bucket %s does not exist' % bucket_name)
 
 
 def _is_temporal_problem(exception):
@@ -290,8 +306,8 @@ def _create_download_failed_message(exception):
     elif isinstance(exception, requests.HTTPError):
         try:
             server_message = ''
-            for elem in decode_data(exception.response, MimeType.XML):
-                if 'ServiceException' in elem.tag:
+            for elem in decode_data(exception.response.content, MimeType.XML):
+                if 'ServiceException' in elem.tag or 'Message' in elem.tag:
                     server_message += elem.text.strip('\n\t ')
         except ElementTree.ParseError:
             server_message = exception.response.text
@@ -335,14 +351,15 @@ def decode_data(response_content, data_type, entire_response=None):
         return json.loads(response_content.decode('utf-8'))
     elif MimeType.is_image_format(data_type):
         return decode_image(response_content, data_type)
-    elif data_type is MimeType.RAW or data_type is MimeType.TXT:
-        return response_content
-    elif data_type is MimeType.REQUESTS_RESPONSE:
-        return entire_response
-    elif data_type is MimeType.ZIP:
-        return BytesIO(response_content)
     elif data_type is MimeType.XML or data_type is MimeType.GML or data_type is MimeType.SAFE:
         return ElementTree.fromstring(response_content)
+    else:
+        return {
+            MimeType.RAW: response_content,
+            MimeType.TXT: response_content,
+            MimeType.REQUESTS_RESPONSE: entire_response,
+            MimeType.ZIP: BytesIO(response_content)
+        }[data_type]
 
     raise ValueError('Unknown response data type {}'.format(data_type))
 

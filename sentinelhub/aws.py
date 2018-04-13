@@ -30,8 +30,8 @@ class AwsService(ABC):
     """
     def __init__(self, parent_folder='', bands=None, metafiles=None):
         self.parent_folder = parent_folder
-        self.bands = self.parse_bands(bands)
-        self.metafiles = self.parse_metafiles(metafiles)
+        self.bands = self._parse_bands(bands)
+        self.metafiles = self._parse_metafiles(metafiles)
 
         self.download_list = []
         self.folder_list = []
@@ -40,18 +40,20 @@ class AwsService(ABC):
     def get_requests(self):
         raise NotImplementedError
 
-    @staticmethod
-    def parse_bands(band_input):
+    def _parse_bands(self, band_input):
         """
         Parses class input and verifies band names.
 
         :param band_input: input parameter `bands`
-        :type band_input: str or list(str)
+        :type band_input: str or list(str) or None
         :return: verified list of bands
         :rtype: list(str)
         """
+        all_bands = AwsConstants.S2_L1C_BANDS if self.data_source is DataSource.SENTINEL2_L1C else \
+            AwsConstants.S2_L2A_BANDS
+
         if band_input is None:
-            return AwsConstants.BANDS
+            return all_bands
         if isinstance(band_input, str):
             band_list = band_input.split(',')
         elif isinstance(band_input, list):
@@ -60,22 +62,27 @@ class AwsService(ABC):
             raise ValueError('bands parameter must be a list or a string')
         band_list = [band.strip().split('.')[0] for band in band_list]
         band_list = [band for band in band_list if band != '']
-        if not set(band_list) <= set(AwsConstants.BANDS):
-            raise ValueError('bands must be a subset of {}'.format(AwsConstants.BANDS))
+        if not set(band_list) <= set(all_bands):
+            raise ValueError('bands {} must be a subset of {}'.format(band_list, all_bands))
         return band_list
 
-    def parse_metafiles(self, metafile_input):
+    def _parse_metafiles(self, metafile_input):
         """
         Parses class input and verifies metadata file names.
 
         :param metafile_input: class input parameter `metafiles`
-        :type metafile_input: str or list(str)
+        :type metafile_input: str or list(str) or None
         :return: verified list of metadata files
         :rtype: list(str)
         """
+        all_metafiles = AwsConstants.S2_L1C_METAFILES if self.data_source is DataSource.SENTINEL2_L1C else \
+            AwsConstants.S2_L2A_METAFILES
+
         if metafile_input is None:
-            if self.__class__.__name__ == 'SafeProduct' or self.__class__.__name__ == 'SafeTile':
-                return sorted(AwsConstants.FILE_FORMATS.keys())
+            if self.__class__.__name__ == 'SafeProduct':
+                return all_metafiles
+            elif self.__class__.__name__ == 'SafeTile':
+                return [metafile for metafile in all_metafiles if metafile in AwsConstants.TILE_FILES]
             return []
         if isinstance(metafile_input, str):
             metafile_list = metafile_input.split(',')
@@ -85,14 +92,14 @@ class AwsService(ABC):
             raise ValueError('metafiles parameter must be a list or a string')
         metafile_list = [metafile.strip().split('.')[0] for metafile in metafile_list]
         metafile_list = [metafile for metafile in metafile_list if metafile != '']
-        if not set(metafile_list) <= set(AwsConstants.FILE_FORMATS.keys()):
-            raise ValueError('metafiles must be a subset of {}'.format(list(AwsConstants.FILE_FORMATS.keys())))
+        if not set(metafile_list) <= set(all_metafiles):
+            raise ValueError('metadata files {} must be a subset of {}'.format(metafile_list, all_metafiles))
         return metafile_list
 
     def get_base_url(self):
         if self.data_source is DataSource.SENTINEL2_L1C:
             return SHConfig().aws_base_url
-        return 's3://{}/'.format(SHConfig().aws_s3_l2a)
+        return 's3://{}/'.format(SHConfig().aws_s3_l2a_bucket)
 
     def get_safe_type(self):
         """ Determines the type of ESA product.
@@ -103,7 +110,6 @@ class AwsService(ABC):
         :return: type of ESA product
         :rtype: constants.EsaSafeType
         """
-
         if self.product_id.split('_')[1].startswith('MSI'):
             if self.data_source is DataSource.SENTINEL2_L1C:
                 return EsaSafeType.COMPACT_SAFE_TYPE
@@ -129,6 +135,7 @@ class AwsService(ABC):
             return self.tile_info['datastrip']['id'][-5:]
         if hasattr(self, 'product_info'):
             return self.product_info['datastrips'][0]['id'][-5:]
+        return None
 
     @staticmethod
     def url_to_tile(url):
@@ -153,10 +160,11 @@ class AwsService(ABC):
         """
         def aws_sort_function(download_request):
             data_name = download_request.properties['data_name']
-            tile_url = download_request.url.rsplit('.', 1)[0].rstrip(data_name).rstrip('/')
-            if data_name in AwsConstants.BANDS:
-                return 0, tile_url, self.bands.index(data_name)
-            return 1, tile_url, self.metafiles.index(data_name)
+            url_part = download_request.url[len(self.base_url):].strip('/')
+            url_part = ''.join(url_part.split('/', 4)[:-1])
+            if data_name in self.bands:
+                return 0, url_part, self.bands.index(data_name)
+            return 1, url_part, self.metafiles.index(data_name)
         self.download_list.sort(key=aws_sort_function)
 
     def structure_recursion(self, struct, folder):
@@ -169,17 +177,14 @@ class AwsService(ABC):
         :param folder: name of folder where this structure will be saved
         :type folder: str
         """
-        if not struct:
-            self.folder_list.append(folder)
-            return
+        has_subfolder = False
         for name, substruct in struct.items():
             subfolder = os.path.join(folder, name)
             if not isinstance(substruct, dict):
-                print(substruct, '######')
                 if substruct.split('/')[3] == 'products':
                     data_name = substruct.split('/', 8)[-1]
-                    if '/' in data_name:
-                        items = data_name.split('/')
+                    if data_name.startswith('datastrip'):
+                        items = data_name.split('/', 2)
                         data_name = '/'.join([items[0], '*', items[2]])
                 else:
                     data_name = substruct.split('/', 11)[-1]
@@ -192,7 +197,10 @@ class AwsService(ABC):
                     self.download_list.append(DownloadRequest(url=substruct, filename=subfolder, data_type=data_type,
                                                               data_name=data_name))
             else:
+                has_subfolder = True
                 self.structure_recursion(substruct, subfolder)
+        if not has_subfolder:
+            self.folder_list.append(folder)
 
     @staticmethod
     def add_file_extension(filename, data_format=None):
@@ -206,10 +214,10 @@ class AwsService(ABC):
         :return: Name of the file with extension
         :rtype: str
         """
-        if AwsConstants.FILE_FORMATS[filename] is MimeType.RAW:
+        if AwsConstants.AWS_FILES[filename] is MimeType.RAW:
             return filename
         if data_format is None:
-            data_format = AwsConstants.FILE_FORMATS[filename]
+            data_format = AwsConstants.AWS_FILES[filename]
         return '{}.{}'.format(filename, data_format.value)
 
 
@@ -230,12 +238,11 @@ class AwsProduct(AwsService):
     :type metafiles: list(str) or None
     """
     def __init__(self, product_id, tile_list=None, **kwargs):
-        super(AwsProduct, self).__init__(**kwargs)
-
         self.product_id = product_id.split('.')[0]
         self.tile_list = self.parse_tile_list(tile_list)
 
         self.data_source = self.get_data_source()
+        # self.baseline = self.get_baseline()
         self.safe_type = self.get_safe_type()
         self.base_url = self.get_base_url()
 
@@ -247,6 +254,8 @@ class AwsProduct(AwsService):
             self.safe_type = self.get_safe_type()
             if self.safe_type is EsaSafeType.UNKNOWN:
                 raise ValueError('SAFE structure of product {} is not recognized'.format(self.product_id))
+
+        super(AwsProduct, self).__init__(**kwargs)
 
     @staticmethod
     def parse_tile_list(tile_input):
@@ -277,8 +286,8 @@ class AwsProduct(AwsService):
         :rtype: (list(download.DownloadRequest), list(str))
         """
         self.download_list = [DownloadRequest(url=self.get_url(metafile), filename=self.get_filepath(metafile),
-                                              data_type=AwsConstants.FILE_FORMATS[metafile], data_name=metafile) for
-                              metafile in self.metafiles if metafile in AwsConstants.PRODUCT_METAFILES]
+                                              data_type=AwsConstants.AWS_FILES[metafile], data_name=metafile) for
+                              metafile in self.metafiles if metafile in AwsConstants.PRODUCT_FILES]
 
         tile_parent_folder = os.path.join(self.parent_folder, self.product_id)
         for tile_info in self.product_info['tiles']:
@@ -293,10 +302,17 @@ class AwsProduct(AwsService):
         return self.download_list, self.folder_list
 
     def get_data_source(self):
-        if self.product_id.split('_')[1].endswith('L2A'):
-            return DataSource.SENTINEL2_L2A
-        if self.product_id.split('_')[1].endswith('L1C'):
+        """The method determines data source from product ID.
+
+        :return: Data source of the product
+        :rtype: DataSource
+        :raises: ValueError
+        """
+        product_type = self.product_id.split('_')[1]
+        if product_type.endswith('L1C') or product_type == 'OPER':
             return DataSource.SENTINEL2_L1C
+        if product_type.endswith('L2A') or product_type == 'USER':
+            return DataSource.SENTINEL2_L2A
         raise ValueError('Unknown data source of product {}'.format(self.product_id))
 
     def get_date(self):
@@ -386,8 +402,6 @@ class AwsTile(AwsService):
     :type metafiles: list(str) or None
     """
     def __init__(self, tile_name, time, aws_index=None, data_source=DataSource.SENTINEL2_L1C, **kwargs):
-        super(AwsTile, self).__init__(**kwargs)
-
         self.tile_name = self.parse_tile_name(tile_name)
         self.datetime = self.parse_datetime(time)
         self.date = self.datetime.split('T')[0]
@@ -395,8 +409,6 @@ class AwsTile(AwsService):
         self.data_source = data_source
 
         self.base_url = self.get_base_url()
-        LOGGER.debug('tile_name=%s, date=%s, bands=%s, metafiles=%s', self.tile_name, self.date, self.bands,
-                     self.metafiles)
 
         self.aws_index = self.get_aws_index()
         self.tile_url = self.get_tile_url()
@@ -406,6 +418,8 @@ class AwsTile(AwsService):
 
         self.product_id = self.get_product_id()
         self.safe_type = self.get_safe_type()
+
+        super(AwsTile, self).__init__(**kwargs)
 
     @staticmethod
     def parse_tile_name(name):
@@ -452,7 +466,7 @@ class AwsTile(AwsService):
                 url = self.get_url(data_name)
                 filename = self.get_filepath(data_name)
                 self.download_list.append(DownloadRequest(url=url, filename=filename,
-                                                          data_type=AwsConstants.FILE_FORMATS[data_name],
+                                                          data_type=AwsConstants.AWS_FILES[data_name],
                                                           data_name=data_name))
         self.sort_download_list()
         return self.download_list, self.folder_list
@@ -503,22 +517,6 @@ class AwsTile(AwsService):
             self.tile_url = self.get_tile_url()
         return '{}/{}'.format(self.tile_url, self.add_file_extension(filename))
 
-    def get_band_url(self, band, resolution=None):
-        """Creates url of band location on AWS
-
-        :param band: Name of the band
-        :type band: str
-        :param resolution: In case of L2A product this specifies the resolution folder in which the band is contained.
-        :type resolution: str or None
-        :return: url of band location
-        :rtype: str
-        """
-        url = self.get_url(band)
-        if resolution is None:
-            return url
-        base_url, band_name = url.rsplit('/', 1)
-        return '/'.join([base_url, resolution, band_name])
-
     def get_tile_url(self):
         """
         Creates base url of tile location on AWS.
@@ -532,6 +530,36 @@ class AwsTile(AwsService):
         for param in date_params:
             url += param.lstrip('0') + '/'
         return url + str(self.aws_index)
+
+    def get_qi_url(self, metafile):
+        """Returns url of tile metadata products
+
+        :param metafile: Name of metadata product at AWS
+        :type metafile: str
+        :return: url location of metadata product at AWS
+        :rtype: str
+        """
+        return '{}/qi/{}'.format(self.tile_url, metafile)
+
+    def get_gml_url(self, qi_type, band='B00'):
+        """
+        :param qi_type: type of quality indicator
+        :type qi_type: str
+        :param band: band name
+        :type band: str
+        :return: location of gml file on AWS
+        :rtype: str
+        """
+        band = band.split('/')[-1]
+        return self.get_qi_url('MSK_{}_{}.gml'.format(qi_type, band))
+
+    def get_preview_url(self):
+        """Returns url location of full resolution L1C preview
+        :return:
+        """
+        if self.data_source is DataSource.SENTINEL2_L1C:
+            return '{}/preview.jp2'.format(self.tile_url)
+        return '{}/qi/L1C_PVI.jp2'.format(self.tile_url)
 
     def get_filepath(self, filename):
         """
