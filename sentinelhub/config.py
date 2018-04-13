@@ -22,8 +22,7 @@ class SHConfig:
         - `ogc_base_url`: Base url for Sentinel Hub's services (should not be changed by the user).
         - `gpd_base_url`: Base url for Geopedia's services (should not be changed by the user).
         - `aws_base_url`: Base url for Sentinel-2 data on AWS (should not be changed by the user).
-        - `aws_website_url`: Base url for AWS' public Sentinel-2 image browser.
-        - `aws_s3_l2a`: Name of Sentinel-2 L2A bucket at AWS s3 service.
+        - `aws_s3_l2a_bucket`: Name of Sentinel-2 L2A bucket at AWS s3 service.
         - `opensearch_url`: Base url for Sentinelhub Opensearch service.
         - `max_wfs_records_per_query`: Maximum number of records returned for each WFS query.
         - `max_opensearch_records_per_query`: Maximum number of records returned for each Opensearch query.
@@ -45,7 +44,7 @@ class SHConfig:
         """
         def __init__(self):
             self.config_params = ['instance_id', 'aws_access_key_id', 'aws_secret_access_key', 'ogc_base_url',
-                                  'gpd_base_url', 'aws_base_url', 'aws_website_url', 'aws_s3_l2a', 'opensearch_url',
+                                  'gpd_base_url', 'aws_base_url', 'aws_s3_l2a_bucket', 'opensearch_url',
                                   'max_wfs_records_per_query', 'max_opensearch_records_per_query', 'default_start_date',
                                   'max_download_attempts', 'download_sleep_time', 'download_timeout_seconds']
             self.load_configuration()
