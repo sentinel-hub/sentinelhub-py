@@ -48,61 +48,67 @@ class _DataSourceMeta(EnumMeta):
         return len(list(cls.__iter__()))
 
 
+class Source(Enum):
+    """
+    Types of satellite sources
+    """
+    SENTINEL2 = 'Sentinel-2'
+    SENTINEL1 = 'Sentinel-1'
+    LANDSAT8 = 'Landsat 8'
+    MODIS = 'MODIS'
+    DEM = 'Mapzen DEM'
+
+
+class ProcessingLevel(Enum):
+    """
+    Types of processing level
+    """
+    L1C = 'L1C'
+    L2A = 'L2A'
+    GRD = 'GRD'
+    MCD43A4 = 'MCD43A4'
+
+
+class Acquisition(Enum):
+    """
+    Types of Sentinel-1 acquisition
+    """
+    IW = 'IW'
+    EW = 'EW'
+
+
+class Polarisation(Enum):
+    """
+    Types of Sentinel-1 polarisation
+    """
+    DV = 'VV+VH'
+    DH = 'HH+HV'
+    SV = 'VV'
+    SH = 'HH'
+
+
+class Resolution(Enum):
+    """
+    Types of Sentinel-1 resolution
+    """
+    MEDIUM = 'medium'
+    HIGH = 'high'
+
+
+class OrbitDirection(Enum):
+    """
+    Types of Sentinel-1 orbit direction
+    """
+    ASCENDING = 'ascending'
+    DESCENDING = 'descending'
+    BOTH = 'both'
+
+
 class DataSource(Enum, metaclass=_DataSourceMeta):
     """ Enum constant class for types of satellite data
 
     Supported types are SENTINEL2_L1C, SENTINEL2_L2A, LANDSAT8, SENTINEL1_IW, SENTINEL1_EW, SENTINEL1_EW_SH, DEM, MODIS
     """
-    class Source(Enum):
-        """
-        Types of satellite sources
-        """
-        SENTINEL2 = 'Sentinel-2'
-        SENTINEL1 = 'Sentinel-1'
-        LANDSAT8 = 'Landsat 8'
-        MODIS = 'MODIS'
-        DEM = 'Mapzen DEM'
-
-    class ProcessingLevel(Enum):
-        """
-        Types of processing level
-        """
-        L1C = 'L1C'
-        L2A = 'L2A'
-        GRD = 'GRD'
-        MCD43A4 = 'MCD43A4'
-
-    class Acquisition(Enum):
-        """
-        Types of Sentinel-1 acquisition
-        """
-        IW = 'IW'
-        EW = 'EW'
-
-    class Polarisation(Enum):
-        """
-        Types of Sentinel-1 polarisation
-        """
-        DV = 'VV+VH'
-        DH = 'HH+HV'
-        SV = 'VV'
-        SH = 'HH'
-
-    class Resolution(Enum):
-        """
-        Types of Sentinel-1 resolution
-        """
-        MEDIUM = 'medium'
-        HIGH = 'high'
-
-    class OrbitDirection(Enum):
-        """
-        Types of Sentinel-1 orbit direction
-        """
-        ASCENDING = 'ascending'
-        DESCENDING = 'descending'
-        BOTH = 'both'
-
     SENTINEL2_L1C = (Source.SENTINEL2, ProcessingLevel.L1C)
     SENTINEL2_L2A = (Source.SENTINEL2, ProcessingLevel.L2A)
     SENTINEL1_IW = (Source.SENTINEL1, ProcessingLevel.GRD, Acquisition.IW, Polarisation.DV, Resolution.HIGH,
