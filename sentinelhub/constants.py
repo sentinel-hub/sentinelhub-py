@@ -505,7 +505,9 @@ class AwsConstants:
                        ['{}/{}'.format(preview, band) for preview, band in it.zip_longest([], S2_L1C_BANDS,
                                                                                           fillvalue=PREVIEW)] +\
                        [QI_MSK_CLOUD] +\
-                       ['qi/MSK_{}_{}'.format(qi, band) for qi, band in it.product(QI_LIST, S2_L1C_BANDS)] +\
+                       ['qi/MSK_{}_{}'.format(qi, band) for qi, band in it.product(QI_LIST, S2_L1C_BANDS)] + \
+                       ['qi/{}'.format(qi_report) for qi_report in [FORMAT_CORRECTNESS, GENERAL_QUALITY,
+                                                                    GEOMETRIC_QUALITY, SENSOR_QUALITY]] +\
                        [ECMWFT]
 
     # Sentinel-2 L2A products:
@@ -520,7 +522,7 @@ class AwsConstants:
                        [QI_MSK_CLOUD] +\
                        ['qi/{}'.format(qi_report) for qi_report in [FORMAT_CORRECTNESS, GENERAL_QUALITY,
                                                                     GEOMETRIC_QUALITY, SENSOR_QUALITY]] +\
-                       [AUX_ECMWFT, GIPP]
+                       [ECMWFT, AUX_ECMWFT, GIPP]
 
     # Product files with formats:
     PRODUCT_FILES = {**{PRODUCT_INFO: MimeType.JSON,
@@ -564,10 +566,7 @@ class AwsConstants:
 class EsaSafeType(Enum):
     """ Enum constants class for ESA .SAFE type.
 
-     Types are OLD_SAFE_TYPE, COMPACT_SAFE_TYPE, L2A_2017_SAFE_TYPE, L2A_2018_SAFE_TYPE
+     Types are OLD_TYPE and COMPACT_TYPE
      """
-    OLD_SAFE_TYPE = 'old_type'
-    COMPACT_SAFE_TYPE = 'compact_type'
-    L2A_2017_SAFE_TYPE = 'l2a_2017_type'
-    L2A_2018_SAFE_TYPE = 'l2a_2018_type'
-    UNKNOWN = 'unknown'
+    OLD_TYPE = 'old_type'
+    COMPACT_TYPE = 'compact_type'

@@ -262,6 +262,11 @@ def _do_aws_request(request):
     :rtype: dict
     :raises: AwsDownloadFailedException, ValueError
     """
+    if not SHConfig().aws_access_key_id or not SHConfig().aws_secret_access_key:
+        raise ValueError('The requested data is in Requester Pays AWS bucket. In order to download the data please set '
+                         'your access key in command line:\n'
+                         '$ sentinelhub.config --aws_access_key_id <your AWS key> --aws_secret_access_key '
+                         '<your AWS secret key>')
     aws_service, _, bucket_name, url_key = request.url.split('/', 3)
     s3_client = boto3.client(aws_service.strip(':'), aws_access_key_id=SHConfig().aws_access_key_id,
                              aws_secret_access_key=SHConfig().aws_secret_access_key)

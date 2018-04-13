@@ -102,40 +102,48 @@ class AwsService(ABC):
         return 's3://{}/'.format(SHConfig().aws_s3_l2a_bucket)
 
     def get_safe_type(self):
-        """ Determines the type of ESA product.
+        """Determines the type of ESA product.
 
         In 2016 ESA changed structure and naming of data. Therefore the class must
         distinguish between old product type and compact (new) product type.
 
         :return: type of ESA product
         :rtype: constants.EsaSafeType
+        :raises: ValueError
         """
-        if self.product_id.split('_')[1].startswith('MSI'):
-            if self.data_source is DataSource.SENTINEL2_L1C:
-                return EsaSafeType.COMPACT_SAFE_TYPE
-            baseline_id = self._get_processing_baseline_id()
-            if baseline_id == '02.06':
-                return EsaSafeType.L2A_2017_SAFE_TYPE
-            if baseline_id == '02.07':
-                return EsaSafeType.L2A_2018_SAFE_TYPE
-            return EsaSafeType.UNKNOWN
+        product_type = self.product_id.split('_')[1]
+        if product_type.startswith('MSI'):
+            return EsaSafeType.COMPACT_TYPE
+        if product_type in ['OPER', 'USER']:
+            return EsaSafeType.OLD_TYPE
+        raise ValueError('Unrecognized product type of product id {}'.format(self.product_id))
 
-        if self.data_source is DataSource.SENTINEL2_L2A:
-            raise ValueError('L2A for old ESA format is not supported.')  # TODO: check!
-        return EsaSafeType.OLD_SAFE_TYPE
+    def get_baseline(self):
+        """ Determines the baseline number (i.e. version) of ESA .SAFE product
 
-    def _get_processing_baseline_id(self):
-        """Tries to find and return processing baseline number which indicates in which version of SAFE format has to be
-        created. If no info about that has already been loaded into class it returns None.
+        :return: baseline number
+        :rtype: str
+        :raises: ValueError
+        """
+        if self.safe_type is EsaSafeType.COMPACT_TYPE:
+            baseline = self.product_id.split('_')[3].lstrip('N')
+            if len(baseline) != 4:
+                raise ValueError('Unable to recognize baseline number from the product id {}'.format(self.product_id))
+            return '{}.{}'.format(baseline[:2], baseline[2:])
+        return self._read_baseline_from_info()
 
-        :return: Processing ID
-        :rtype: str or None
+    def _read_baseline_from_info(self):
+        """Tries to find and return baseline number from either tileInfo or productInfo file.
+
+        :return: Baseline ID
+        :rtype: str
+        :raises: ValueError
         """
         if hasattr(self, 'tile_info'):
             return self.tile_info['datastrip']['id'][-5:]
         if hasattr(self, 'product_info'):
             return self.product_info['datastrips'][0]['id'][-5:]
-        return None
+        raise ValueError('No info file has been obtained yet.')
 
     @staticmethod
     def url_to_tile(url):
@@ -204,8 +212,7 @@ class AwsService(ABC):
 
     @staticmethod
     def add_file_extension(filename, data_format=None):
-        """
-        Joins filename and corresponding file extension if it has one.
+        """Joins filename and corresponding file extension if it has one.
 
         :param filename: Name of the file without extension
         :type filename: str
@@ -218,7 +225,25 @@ class AwsService(ABC):
             return filename
         if data_format is None:
             data_format = AwsConstants.AWS_FILES[filename]
-        return '{}.{}'.format(filename, data_format.value)
+        return '{}.{}'.format(filename.split('/')[-1].replace('*', ''), data_format.value)
+
+    def has_reports(self):
+        """Products created with baseline 2.06 and greater (and some products with baseline 2.05) should have quality
+        report files
+
+        :return: True if the product has report xml files and False otherwise
+        :rtype: bool
+        """
+        return self.baseline > '02.05' or (self.baseline == '02.05' and self.date >= '2017-10-12')  # Not sure
+
+    def is_early_compact_l2a(self):
+        """Check if product is early version of compact L2A product
+
+        :return: True if product is early version of compact L2A product and False otherwise
+        :rtype: bool
+        """
+        return self.data_source is DataSource.SENTINEL2_L2A and self.safe_type is EsaSafeType.COMPACT_TYPE and \
+            self.baseline <= '02.06'
 
 
 class AwsProduct(AwsService):
@@ -242,7 +267,6 @@ class AwsProduct(AwsService):
         self.tile_list = self.parse_tile_list(tile_list)
 
         self.data_source = self.get_data_source()
-        # self.baseline = self.get_baseline()
         self.safe_type = self.get_safe_type()
         self.base_url = self.get_base_url()
 
@@ -250,10 +274,7 @@ class AwsProduct(AwsService):
         self.product_url = self.get_product_url()
         self.product_info = get_json(self.get_url(AwsConstants.PRODUCT_INFO))
 
-        if self.safe_type is EsaSafeType.UNKNOWN:
-            self.safe_type = self.get_safe_type()
-            if self.safe_type is EsaSafeType.UNKNOWN:
-                raise ValueError('SAFE structure of product {} is not recognized'.format(self.product_id))
+        self.baseline = self.get_baseline()
 
         super(AwsProduct, self).__init__(**kwargs)
 
@@ -321,7 +342,7 @@ class AwsProduct(AwsService):
         :return: Sensing date
         :rtype: str
         """
-        if self.safe_type == EsaSafeType.OLD_SAFE_TYPE:
+        if self.safe_type == EsaSafeType.OLD_TYPE:
             name = self.product_id.split('_')[-2]
             date = [name[1:5], name[5:7], name[7:9]]
         else:
@@ -418,6 +439,7 @@ class AwsTile(AwsService):
 
         self.product_id = self.get_product_id()
         self.safe_type = self.get_safe_type()
+        self.baseline = self.get_baseline()
 
         super(AwsTile, self).__init__(**kwargs)
 
@@ -553,13 +575,13 @@ class AwsTile(AwsService):
         band = band.split('/')[-1]
         return self.get_qi_url('MSK_{}_{}.gml'.format(qi_type, band))
 
-    def get_preview_url(self):
+    def get_preview_url(self, data_type='L1C'):
         """Returns url location of full resolution L1C preview
         :return:
         """
-        if self.data_source is DataSource.SENTINEL2_L1C:
-            return '{}/preview.jp2'.format(self.tile_url)
-        return '{}/qi/L1C_PVI.jp2'.format(self.tile_url)
+        if self.data_source is DataSource.SENTINEL2_L1C or self.safe_type is EsaSafeType.OLD_TYPE:
+            return self.get_url(AwsConstants.PREVIEW_JP2)
+        return self.get_qi_url('{}_PVI.jp2'.format(data_type))
 
     def get_filepath(self, filename):
         """
@@ -581,6 +603,14 @@ class AwsTile(AwsService):
         :rtype: str
         """
         return self.tile_info['productName']
+
+    def _band_exists(self, band_name):
+        if self.data_source is DataSource.SENTINEL2_L1C:
+            return True
+        resolution, band = band_name.split('/')
+        if self.safe_type is EsaSafeType.COMPACT_TYPE:
+            return not (self.baseline >= '02.07' and band.endswith(AwsConstants.VIS))
+        return band != AwsConstants.TCI and not (band == AwsConstants.SCL and resolution == AwsConstants.R60m)
 
     @staticmethod
     def tile_id_to_tile(tile_id):

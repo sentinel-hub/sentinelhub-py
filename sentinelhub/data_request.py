@@ -564,11 +564,11 @@ class AwsProductRequest(AwsRequest):
 
     def create_request(self):
         if self.safe_format:
-            self.aws_service = SafeProduct(self.product_id, tile_list=self.tile_list,
-                                           bands=self.bands, metafiles=self.metafiles)
+            self.aws_service = SafeProduct(self.product_id, tile_list=self.tile_list, bands=self.bands,
+                                           metafiles=self.metafiles)
         else:
-            self.aws_service = AwsProduct(self.product_id, tile_list=self.tile_list,
-                                          bands=self.bands, metafiles=self.metafiles)
+            self.aws_service = AwsProduct(self.product_id, tile_list=self.tile_list, bands=self.bands,
+                                          metafiles=self.metafiles)
 
         self.download_list, self.folder_list = self.aws_service.get_requests()
 
@@ -612,11 +612,11 @@ class AwsTileRequest(AwsRequest):
 
     def create_request(self):
         if self.safe_format:
-            self.aws_service = SafeTile(self.tile, self.time, self.aws_index,
-                                        bands=self.bands, metafiles=self.metafiles, data_source=self.data_source)
+            self.aws_service = SafeTile(self.tile, self.time, self.aws_index, bands=self.bands,
+                                        metafiles=self.metafiles, data_source=self.data_source)
         else:
-            self.aws_service = AwsTile(self.tile, self.time, self.aws_index,
-                                       bands=self.bands, metafiles=self.metafiles, data_source=self.data_source)
+            self.aws_service = AwsTile(self.tile, self.time, self.aws_index, bands=self.bands,
+                                       metafiles=self.metafiles, data_source=self.data_source)
 
         self.download_list, self.folder_list = self.aws_service.get_requests()
 

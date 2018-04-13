@@ -4,6 +4,7 @@ from tests_all import TestSentinelHub
 import os.path
 from sentinelhub.io_utils import read_data, write_data
 from sentinelhub.data_request import AwsTileRequest, AwsProductRequest
+from sentinelhub.constants import DataSource, AwsConstants
 
 
 class TestSafeFormat(TestSentinelHub):
@@ -48,32 +49,58 @@ class TestSafeFormat(TestSentinelHub):
 
             return True, "The SAFE structures match!"
 
-        """
-        cls.SafeTestCase('L2A_2.06',
-                                           AwsProductRequest('S2B_MSIL2A_20180216T102059_N0206_R065_T35VLL_20180216T122'
-                                                             '659', safe_format=True, data_folder=cls.INPUT_FOLDER)),
-        """
-
     @classmethod
     def setUpClass(cls):
 
         cls.test_cases = [cls.SafeTestCase('L1C_02.01',
-                                           AwsProductRequest('S2A_OPER_PRD_MSIL1C_PDMC_20151219T140443_R135_V20151219T0'
-                                                             '80616_20151219T080616', safe_format=True,
+                                           AwsProductRequest('S2A_OPER_PRD_MSIL1C_PDMC_20151218T020842_R115_V20151217T2'
+                                                             '24602_20151217T224602', bands=AwsConstants.S2_L1C_BANDS,
+                                                             metafiles=AwsConstants.S2_L1C_METAFILES,
+                                                             tile_list=['T59HNA'], safe_format=True,
+                                                             data_folder=cls.INPUT_FOLDER)),
+                          cls.SafeTestCase('L1C_02.01_tile',
+                                           AwsTileRequest(tile='29KQB', time='2016-04-12', aws_index=None,
+                                                          data_source=DataSource.SENTINEL2_L1C, safe_format=True,
+                                                          data_folder=cls.INPUT_FOLDER)),
+                          cls.SafeTestCase('L1C_02.02',
+                                           AwsProductRequest('S2A_OPER_PRD_MSIL1C_PDMC_20160606T232310_R121_V20160526T0'
+                                                             '84351_20160526T084351.SAFE', tile_list=['34HCF'],
+                                                             safe_format=True, data_folder=cls.INPUT_FOLDER)),
+                          cls.SafeTestCase('L1C_02.04_old',
+                                           AwsProductRequest('S2A_OPER_PRD_MSIL1C_PDMC_20160910T174323_R071_V20160701T2'
+                                                             '04642_20160701T204643', safe_format=True,
                                                              data_folder=cls.INPUT_FOLDER)),
                           cls.SafeTestCase('L1C_02.04',
                                            AwsProductRequest('S2A_MSIL1C_20170413T104021_N0204_R008_T31SCA_20170413T104'
                                                              '021', safe_format=True, data_folder=cls.INPUT_FOLDER)),
                           cls.SafeTestCase('L1C_02.05',
-                                           AwsProductRequest('S2A_MSIL1C_20171002T194231_N0205_R042_T09UWS_20171002T194'
-                                                             '234.SAFE', safe_format=True,
+                                           AwsProductRequest('S2A_MSIL1C_20171012T112111_N0205_R037_T29SQC_20171012T112'
+                                                             '713', safe_format=True, data_folder=cls.INPUT_FOLDER)),
+                          cls.SafeTestCase('L1C_02.06',
+                                           AwsProductRequest('S2A_MSIL1C_20180331T212521_N0206_R043_T07WFR_20180401T005'
+                                                             '612', safe_format=True, data_folder=cls.INPUT_FOLDER))]
+        """
+        cls.test_cases.extend([
+                          cls.SafeTestCase('L2A_02.01',
+                                           AwsProductRequest('S2A_USER_PRD_MSIL2A_PDMC_20160310T041843_R138_V20160308T1'
+                                                             '31142_20160308T131142', safe_format=True,
                                                              data_folder=cls.INPUT_FOLDER)),
-                          ]
-
+                          cls.SafeTestCase('L2A_02.05', # L2A_02.04 is the same
+                                           AwsProductRequest('S2A_MSIL2A_20170827T105651_N0205_R094_T31WFN_20170827T105'
+                                                             '652', safe_format=True, data_folder=cls.INPUT_FOLDER)),
+                          cls.SafeTestCase('L2A_02.06',
+                                           AwsProductRequest('S2B_MSIL2A_20180216T102059_N0206_R065_T35VLL_20180216T122'
+                                                             '659', safe_format=True, data_folder=cls.INPUT_FOLDER)),
+                          cls.SafeTestCase('L2A_02.07',
+                                           AwsProductRequest('S2A_MSIL2A_20180402T151801_N0207_R068_T33XWJ_20180402T202'
+                                                             '222', safe_format=True, data_folder=cls.INPUT_FOLDER))])
+        """
+        """
         # Uncomment the following only when creating new test cases
         for test_case in cls.test_cases:
             test_case.save_truth()
             test_case.request.save_data()
+        """
 
     def test_safe_struct(self):
         for test_case in self.test_cases:
@@ -83,49 +110,6 @@ class TestSafeFormat(TestSentinelHub):
                 is_equal, message = self.SafeTestCase.compare_safe_struct(true_safe, req_safe)
                 self.assertTrue(is_equal, message)
 
-
-"""
-class TestAwsSafeTile(TestSentinelHub):
-    @classmethod
-    def setUpClass(cls):
-        cls.request = AwsTileRequest(data_folder=cls.OUTPUT_FOLDER, tile='10UEV', bands=['B01', 'B09', 'B10'],
-                                     metafiles='metadata,tileInfo', time='2016-01-09', safe_format=True)
-        cls.request.save_data(redownload=True)
-        cls.filename_list = cls.request.get_filename_list()
-
-    def test_return_type(self):
-        self.assertTrue(isinstance(self.filename_list, list), "Expected a list")
-        self.assertEqual(len(self.filename_list), 4, "Expected a list of length 4")
-
-
-class TestAwsSafeProduct(TestSentinelHub):
-    @classmethod
-    def setUpClass(cls):
-        cls.request = AwsProductRequest(data_folder=cls.OUTPUT_FOLDER, bands='B01', safe_format=True,
-                                        product_id='S2A_OPER_PRD_MSIL1C_PDMC_20160121T043931_R069_V20160103T171947_'
-                                                   '20160103T171947')
-        cls.data = cls.request.get_data(redownload=True)
-
-    def test_return_type(self):
-        self.assertTrue(isinstance(self.data, list), "Expected a list")
-        self.assertEqual(len(self.data), 125, "Expected a list of length 125")
-
-
-class TestPartialAwsSafeProduct(TestSentinelHub):
-    @classmethod
-    def setUpClass(cls):
-        bands = 'B12'
-        metafiles = 'manifest,preview/B02, datastrip/*/metadata '
-        tile = 'T1WCV'
-        cls.request = AwsProductRequest(data_folder=cls.OUTPUT_FOLDER, bands=bands,
-                                        metafiles=metafiles, safe_format=True, tile_list=[tile],
-                                        product_id='S2A_MSIL1C_20171010T003621_N0205_R002_T01WCV_20171010T003615')
-        cls.data = cls.request.get_data(save_data=True, redownload=True)
-
-    def test_return_type(self):
-        self.assertTrue(isinstance(self.data, list), "Expected a list")
-        self.assertEqual(len(self.data), 3, "Expected a list of length 3")
-"""
 
 if __name__ == '__main__':
     unittest.main()
