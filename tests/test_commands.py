@@ -34,6 +34,9 @@ class TestCommands(TestSentinelHub):
     def test_return_type(self):
         self.assertTrue(self.status == 0, "Commands failed")
 
+# sentinelhub.aws --product S2A_MSIL2A_20180402T151801_N0207_R068_T33XWJ_20180402T202222
+# sentinelhub.aws --tile T33XWJ 2018-04-02 --l2a
+
 
 if __name__ == '__main__':
     unittest.main()

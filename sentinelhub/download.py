@@ -388,8 +388,11 @@ def decode_image(data, image_type):
         image = cv2.imdecode(img_array, cv2.IMREAD_UNCHANGED)
 
         if image_type is MimeType.JP2:
-            bit_depth = get_jp2_bit_depth(BytesIO(data))
-            image = _fix_jp2_image(image, bit_depth)
+            try:
+                bit_depth = get_jp2_bit_depth(BytesIO(data))
+                image = _fix_jp2_image(image, bit_depth)
+            except ValueError:
+                pass
 
     if image is None:
         raise ImageDecodingError('Unable to decode image')

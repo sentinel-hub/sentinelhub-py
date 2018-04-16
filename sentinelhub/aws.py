@@ -6,7 +6,7 @@ from abc import ABC, abstractmethod
 import logging
 import os.path
 
-from .download import DownloadRequest, get_json
+from .download import DownloadRequest, get_json, AwsDownloadFailedException
 from .opensearch import get_tile_info, get_tile_info_id
 from .time_utils import parse_time
 from .config import SHConfig
@@ -211,21 +211,27 @@ class AwsService(ABC):
             self.folder_list.append(folder)
 
     @staticmethod
-    def add_file_extension(filename, data_format=None):
+    def add_file_extension(filename, data_format=None, remove_path=False):
         """Joins filename and corresponding file extension if it has one.
 
         :param filename: Name of the file without extension
         :type filename: str
         :param data_format: format of file, if None it will be set automatically
         :type data_format: constants.MimeType or None
+        :param remove_path: True if the path in filename string should be removed
+        :type remove_path: bool
         :return: Name of the file with extension
         :rtype: str
         """
-        if AwsConstants.AWS_FILES[filename] is MimeType.RAW:
-            return filename
         if data_format is None:
             data_format = AwsConstants.AWS_FILES[filename]
-        return '{}.{}'.format(filename.split('/')[-1].replace('*', ''), data_format.value)
+        if remove_path:
+            filename = filename.split('/')[-1]
+        if filename.startswith('datastrip'):
+            filename = filename.replace('*', '0')
+        if data_format is MimeType.RAW:
+            return filename
+        return '{}.{}'.format(filename.replace('*', ''), data_format.value)
 
     def has_reports(self):
         """Products created with baseline 2.06 and greater (and some products with baseline 2.05) should have quality
@@ -394,8 +400,7 @@ class AwsProduct(AwsService):
         :return: filename with path on disk
         :rtype: str
         """
-        return os.path.join(self.parent_folder, self.product_id,
-                            self.add_file_extension(filename)).replace(':', '.')
+        return os.path.join(self.parent_folder, self.product_id, self.add_file_extension(filename)).replace(':', '.')
 
 
 class AwsTile(AwsService):
@@ -483,7 +488,7 @@ class AwsTile(AwsService):
         :rtype: (list(download.DownloadRequest), list(str))
         """
         self.download_list = []
-        for data_name in self.bands + self.metafiles:  # TODO: Band resolution for L2A
+        for data_name in [band for band in self.bands if self._band_exists(band)] + self.metafiles:
             if data_name in AwsConstants.TILE_FILES:
                 url = self.get_url(data_name)
                 filename = self.get_filepath(data_name)
@@ -503,10 +508,31 @@ class AwsTile(AwsService):
         """
         if self.aws_index is not None:
             return self.aws_index
-        tile_info = get_tile_info(self.tile_name, self.datetime)  # TODO
-        if tile_info is not None:
-            return int(tile_info['properties']['s3Path'].split('/')[-1])
-        raise ValueError('Cannot find aws_index for specified tile and time')
+        tile_info_list = get_tile_info(self.tile_name, self.datetime, all_tiles=True)
+        if len(tile_info_list) == 0:
+            raise ValueError('Cannot find aws_index for specified tile and time')
+
+        if self.data_source is DataSource.SENTINEL2_L2A:
+            for tile_info in sorted(tile_info_list, key=lambda info: self._parse_aws_index(info)):
+                try:
+                    self.aws_index = self._parse_aws_index(tile_info)
+                    self.get_tile_info()
+                    return self.aws_index
+                except AwsDownloadFailedException:
+                    pass
+
+        return self._parse_aws_index(tile_info_list[0])
+
+    @staticmethod
+    def _parse_aws_index(tile_info):
+        """Parses AWS index from tile info
+
+        :param tile_info: dictionary with information about tile
+        :type tile_info: dict
+        :return: Index of tile on AWS
+        :rtype: int
+        """
+        return int(tile_info['properties']['s3Path'].split('/')[-1])
 
     def tile_is_valid(self):
         return self.tile_info is not None \
@@ -535,7 +561,7 @@ class AwsTile(AwsService):
         :return: url of file location
         :rtype: str
         """
-        if self.tile_url is None or filename == AwsConstants.TILE_INFO:
+        if not hasattr(self, 'tile_url') or filename == AwsConstants.TILE_INFO:
             self.tile_url = self.get_tile_url()
         return '{}/{}'.format(self.tile_url, self.add_file_extension(filename))
 

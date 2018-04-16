@@ -194,7 +194,7 @@ class SafeTile(AwsTile):
         # Old products also have DEM and MSI in aux folder
 
         if self.is_early_compact_l2a():
-            safe[main_folder][AwsConstants.AUX_DATA][self.add_file_extension(AwsConstants.GIPP.split('/')[-1])] =\
+            safe[main_folder][AwsConstants.AUX_DATA][self.add_file_extension(AwsConstants.GIPP, remove_path=True)] =\
                 self.get_url(AwsConstants.GIPP)
 
         safe[main_folder][AwsConstants.IMG_DATA] = {}
@@ -223,7 +223,7 @@ class SafeTile(AwsTile):
         if self.has_reports():
             for metafile in [AwsConstants.FORMAT_CORRECTNESS, AwsConstants.GENERAL_QUALITY,
                              AwsConstants.GEOMETRIC_QUALITY, AwsConstants.SENSOR_QUALITY]:
-                metafile_name = self.add_file_extension(metafile)
+                metafile_name = self.add_file_extension(metafile, remove_path=True)
                 safe[main_folder][AwsConstants.QI_DATA][metafile_name] = self.get_qi_url(metafile_name)
 
         if self.data_source is DataSource.SENTINEL2_L2A:

@@ -555,12 +555,11 @@ class AwsConstants:
                   **{'qi/{}_{}'.format(mask, res.lstrip('R')): MimeType.JP2 for mask, res in it.product(CLASS_MASKS,
                                                                                                         [R20m, R60m])}}
 
-    PRODUCT_FILES = {**PRODUCT_FILES,
-                     **{filename.split('/')[-1]: data_format for filename, data_format in PRODUCT_FILES.items()}}
-    TILE_FILES = {**TILE_FILES,
-                  **{filename.split('/')[-1]: data_format for filename, data_format in TILE_FILES.items()}}
     # All files joined together
-    AWS_FILES = {**PRODUCT_FILES, **TILE_FILES}
+    AWS_FILES = {**PRODUCT_FILES,
+                 **{filename.split('/')[-1]: data_format for filename, data_format in PRODUCT_FILES.items()},
+                 **TILE_FILES,
+                 **{filename.split('/')[-1]: data_format for filename, data_format in TILE_FILES.items()}}
 
 
 class EsaSafeType(Enum):

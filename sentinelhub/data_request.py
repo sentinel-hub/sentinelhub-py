@@ -621,7 +621,7 @@ class AwsTileRequest(AwsRequest):
         self.download_list, self.folder_list = self.aws_service.get_requests()
 
 
-def get_safe_format(product_id=None, tile=None, entire_product=False, bands=None):
+def get_safe_format(product_id=None, tile=None, entire_product=False, bands=None, data_source=DataSource.SENTINEL2_L1C):
     """
     Returns .SAFE format structure in form of nested dictionaries. Either ``product_id`` or ``tile`` must be specified.
 
@@ -634,12 +634,15 @@ def get_safe_format(product_id=None, tile=None, entire_product=False, bands=None
     :type entire_product: bool
     :param bands: list of bands to download. If ``None`` all bands will be downloaded. Default is ``None``
     :type bands: list(str) or None
+    :param data_source: In case of tile request the source of satellite data has to be specified. Default is Sentinel-2
+                        L1C data.
+    :type data_source: constants.DataSource
     :return: Nested dictionaries representing .SAFE structure.
     :rtype: dict
     """
     entire_product = entire_product and product_id is None
     if tile is not None:
-        safe_tile = SafeTile(tile_name=tile[0], time=tile[1], bands=bands)
+        safe_tile = SafeTile(tile_name=tile[0], time=tile[1], bands=bands, data_source=data_source)
         if not entire_product:
             return safe_tile.get_safe_struct()
         product_id = safe_tile.get_product_id()
@@ -650,7 +653,8 @@ def get_safe_format(product_id=None, tile=None, entire_product=False, bands=None
     return safe_product.get_safe_struct()
 
 
-def download_safe_format(product_id=None, tile=None, folder='.', redownload=False, entire_product=False, bands=None):
+def download_safe_format(product_id=None, tile=None, folder='.', redownload=False, entire_product=False, bands=None,
+                         data_source=DataSource.SENTINEL2_L1C):
     """
     Downloads .SAFE format structure in form of nested dictionaries. Either ``product_id`` or ``tile`` must
     be specified.
@@ -669,13 +673,16 @@ def download_safe_format(product_id=None, tile=None, folder='.', redownload=Fals
     :type entire_product: bool
     :param bands: list of bands to download. If ``None`` all bands will be downloaded. Default is ``None``
     :type bands: list(str) or None
+    :param data_source: In case of tile request the source of satellite data has to be specified. Default is Sentinel-2
+                        L1C data.
+    :type data_source: constants.DataSource
     :return: Nested dictionaries representing .SAFE structure.
     :rtype: dict
     """
     entire_product = entire_product and product_id is None
     if tile is not None:
         safe_request = AwsTileRequest(tile=tile[0], time=tile[1], data_folder=folder, bands=bands,
-                                      safe_format=True)
+                                      safe_format=True, data_source=data_source)
         if entire_product:
             safe_tile = safe_request.get_aws_service()
             product_id = safe_tile.get_product_id()
