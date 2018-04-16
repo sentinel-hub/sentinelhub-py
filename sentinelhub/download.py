@@ -115,8 +115,10 @@ class DownloadRequest:
         self._set_file_location()
 
     def _set_file_location(self):
-        if self.data_folder is not None and self.filename is not None:
+        if self.data_folder and self.filename:
             self.file_location = os.path.join(self.data_folder, self.filename.lstrip('/'))
+        elif self.filename:
+            self.file_location = self.filename
 
     def is_downloaded(self):
         """ Checks if data for this request has already been downloaded and is saved to disk.

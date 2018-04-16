@@ -110,5 +110,7 @@ def download(url, filename, redownload):
     Example:
     sentinelhub.download http://sentinel-s2-l1c.s3.amazonaws.com/tiles/54/H/VH/2017/4/14/0/metadata.xml home/example.xml
     """
-    download_list = [DownloadRequest(url=url, data_folder='', filename=filename, save_response=True, return_data=False)]
+    data_folder, filename = filename.rsplit('/', 1)
+    download_list = [DownloadRequest(url=url, data_folder=data_folder, filename=filename, save_response=True,
+                                     return_data=False)]
     download_data(download_list, redownload=redownload)
