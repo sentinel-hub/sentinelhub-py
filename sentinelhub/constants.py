@@ -567,6 +567,6 @@ class EsaSafeType(Enum):
     """ Enum constants class for ESA .SAFE type.
 
      Types are OLD_TYPE and COMPACT_TYPE
-     """
+    """
     OLD_TYPE = 'old_type'
     COMPACT_TYPE = 'compact_type'
