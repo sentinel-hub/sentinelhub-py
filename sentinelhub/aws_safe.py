@@ -181,6 +181,7 @@ class SafeTile(AwsTile):
         :return: nested dictionaries representing .SAFE structure
         :rtype: dict
         """
+        # pylint: disable=too-many-branches
         safe = {}
         main_folder = self.get_main_folder()
         safe[main_folder] = {}

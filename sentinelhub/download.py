@@ -2,8 +2,6 @@
 Module for downloading data
 """
 
-# pylint: disable=too-many-instance-attributes
-
 import logging
 import os
 import time
