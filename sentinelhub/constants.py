@@ -150,7 +150,7 @@ class DataSource(Enum, metaclass=_DataSourceMeta):
         :return: ``True`` if source is Sentinel-1 and ``False`` otherwise
         :rtype: bool
         """
-        return data_source.value[0] is cls.Source.value.SENTINEL1
+        return data_source.value[0] is Source.SENTINEL1
 
     @classmethod
     def is_timeless(cls, data_source):
@@ -161,7 +161,7 @@ class DataSource(Enum, metaclass=_DataSourceMeta):
         :return: ``True`` if data source is time independent and ``False`` otherwise
         :rtype: bool
         """
-        return data_source.value[0] is cls.Source.value.DEM
+        return data_source.value[0] is Source.DEM
 
     @classmethod
     def is_uswest_source(cls, data_source):
@@ -172,7 +172,7 @@ class DataSource(Enum, metaclass=_DataSourceMeta):
         :return: ``True`` if data source exists at US West server and ``False`` otherwise
         :rtype: bool
         """
-        return data_source.value[0] in [Source.value.LANDSAT8, Source.value.MODIS, Source.value.DEM]
+        return data_source.value[0] in [Source.LANDSAT8, Source.MODIS, Source.DEM]
 
 
 class _Direction(Enum):
