@@ -79,7 +79,7 @@ class TestSafeFormat(TestSentinelHub):
                           cls.SafeTestCase('L1C_02.06',
                                            AwsProductRequest('S2A_MSIL1C_20180331T212521_N0206_R043_T07WFR_20180401T005'
                                                              '612', safe_format=True, data_folder=cls.INPUT_FOLDER))]
-
+        """
         cls.test_cases.extend([
                           cls.SafeTestCase('L2A_02.01',
                                            AwsProductRequest('S2A_USER_PRD_MSIL2A_PDMC_20160310T041843_R138_V20160308T1'
@@ -94,7 +94,7 @@ class TestSafeFormat(TestSentinelHub):
                           cls.SafeTestCase('L2A_02.07',
                                            AwsProductRequest('S2A_MSIL2A_20180402T151801_N0207_R068_T33XWJ_20180402T202'
                                                              '222', safe_format=True, data_folder=cls.INPUT_FOLDER))])
-
+        """
         """
         # Uncomment the following only when creating new test cases
         for test_case in cls.test_cases:
