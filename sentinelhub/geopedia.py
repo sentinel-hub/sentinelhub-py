@@ -5,7 +5,7 @@ Module for working with Geopedia OGC services
 import logging
 
 from .ogc import OgcImageService
-from .config import SGConfig
+from .config import SHConfig
 
 LOGGER = logging.getLogger(__name__)
 
@@ -18,7 +18,7 @@ class GeopediaService:
     :type base_url: str or None
     """
     def __init__(self, base_url=None):
-        self.base_url = SGConfig().gpd_base_url if base_url is None else base_url
+        self.base_url = SHConfig().gpd_base_url if base_url is None else base_url
 
 
 class GeopediaImageService(GeopediaService, OgcImageService):

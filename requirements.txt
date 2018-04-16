@@ -1,4 +1,3 @@
-pip>=9.0.1
 wheel
 requests
 click
@@ -10,3 +9,5 @@ cython
 python-dateutil
 pyproj
 utm
+shapely
+boto3

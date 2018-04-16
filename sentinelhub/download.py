@@ -2,8 +2,6 @@
 Module for downloading data
 """
 
-# pylint: disable=too-many-instance-attributes
-
 import logging
 import os
 import time
@@ -11,6 +9,7 @@ import concurrent.futures
 import requests
 import json
 import cv2
+import boto3
 import numpy as np
 import tifffile as tiff
 from io import BytesIO
@@ -18,13 +17,20 @@ from xml.etree import ElementTree
 
 from .os_utils import create_parent_folder
 from .constants import MimeType, RequestType
-from .config import SGConfig
+from .config import SHConfig
 from .io_utils import get_jp2_bit_depth, _fix_jp2_image
 
 LOGGER = logging.getLogger(__name__)
 
 
 class DownloadFailedException(Exception):
+    pass
+
+
+class AwsDownloadFailedException(DownloadFailedException):
+    """
+    This exception is raised when download fails because of a missing file in AWS
+    """
     pass
 
 
@@ -133,6 +139,14 @@ class DownloadRequest:
             return os.path.join(self.data_folder, self.filename)
         return None
 
+    def is_aws_s3(self):
+        """Checks if data has to be downloaded from AWS s3 bucket
+
+        :return: True if url describes location at AWS s3 bucket and False otherwise
+        :rtype: bool
+        """
+        return self.url.startswith('s3://')
+
 
 def download_data(request_list, redownload=False, max_threads=None):
     """ Download all requested data or read data from disk, if already downloaded and available and redownload is
@@ -190,29 +204,37 @@ def execute_download_request(request):
     if not request.will_download:
         return None
 
-    try_num = SGConfig().max_download_attempts
+    try_num = SHConfig().max_download_attempts
     response = None
     while try_num > 0:
         try:
-            response = _do_request(request)
-            response.raise_for_status()
+            if request.is_aws_s3():
+                response = _do_aws_request(request)
+                response_content = response['Body'].read()
+            else:
+                response = _do_request(request)
+                response.raise_for_status()
+                response_content = response.content
             LOGGER.debug('Successful download from %s', request.url)
             break
         except requests.RequestException as exception:
             try_num -= 1
             if try_num > 0 and (_is_temporal_problem(exception) or
                                 (isinstance(exception, requests.HTTPError) and
-                                 exception.response.status_code != requests.status_codes.codes.BAD_REQUEST)):
+                                 exception.response.status_code >= requests.status_codes.codes.INTERNAL_SERVER_ERROR)):
                 LOGGER.debug('Download attempt failed: %s\n%d attempts left, will retry in %ds', exception,
-                             try_num, SGConfig().download_sleep_time)
-                time.sleep(SGConfig().download_sleep_time)
+                             try_num, SHConfig().download_sleep_time)
+                time.sleep(SHConfig().download_sleep_time)
             else:
+                if request.url.startswith(SHConfig().aws_base_url) and isinstance(exception, requests.HTTPError)\
+                        and exception.response.status_code == requests.status_codes.codes.NOT_FOUND:
+                    raise AwsDownloadFailedException('File in location %s is missing' % request.url)
                 raise DownloadFailedException(_create_download_failed_message(exception))
 
-    _save_if_needed(request, response)
+    _save_if_needed(request, response_content)
 
     if request.return_data:
-        return decode_data(response, request.data_type)
+        return decode_data(response_content, request.data_type, entire_response=response)
     return None
 
 
@@ -221,12 +243,37 @@ def _do_request(request):
     :param request: A request
     :type request: DownloadRequest
     :return: Response of the request
+    :rtype: requests.Response
     """
     if request.request_type is RequestType.GET:
         return requests.get(request.url, headers=request.headers)
     elif request.request_type is RequestType.POST:
         return requests.post(request.url, data=json.dumps(request.post_values), headers=request.headers)
     raise ValueError('Invalid request type {}'.format(request.request_type))
+
+
+def _do_aws_request(request):
+    """ Executes download request from AWS service
+    :param request: A request
+    :type request: DownloadRequest
+    :return: Response of the request
+    :rtype: dict
+    :raises: AwsDownloadFailedException, ValueError
+    """
+    if not SHConfig().aws_access_key_id or not SHConfig().aws_secret_access_key:
+        raise ValueError('The requested data is in Requester Pays AWS bucket. In order to download the data please set '
+                         'your access key in command line:\n'
+                         '$ sentinelhub.config --aws_access_key_id <your AWS key> --aws_secret_access_key '
+                         '<your AWS secret key>')
+    aws_service, _, bucket_name, url_key = request.url.split('/', 3)
+    s3_client = boto3.client(aws_service.strip(':'), aws_access_key_id=SHConfig().aws_access_key_id,
+                             aws_secret_access_key=SHConfig().aws_secret_access_key)
+    try:
+        return s3_client.get_object(Bucket=bucket_name, Key=url_key, RequestPayer='requester')
+    except s3_client.exceptions.NoSuchKey:
+        raise AwsDownloadFailedException('File in location %s is missing' % request.url)
+    except s3_client.exceptions.NoSuchBucket:
+        raise ValueError('Aws bucket %s does not exist' % bucket_name)
 
 
 def _is_temporal_problem(exception):
@@ -262,8 +309,8 @@ def _create_download_failed_message(exception):
     elif isinstance(exception, requests.HTTPError):
         try:
             server_message = ''
-            for elem in decode_data(exception.response, MimeType.XML):
-                if 'ServiceException' in elem.tag:
+            for elem in decode_data(exception.response.content, MimeType.XML):
+                if 'ServiceException' in elem.tag or 'Message' in elem.tag:
                     server_message += elem.text.strip('\n\t ')
         except ElementTree.ParseError:
             server_message = exception.response.text
@@ -272,26 +319,29 @@ def _create_download_failed_message(exception):
     return message
 
 
-def _save_if_needed(request, response):
+def _save_if_needed(request, response_content):
     """ Save data to disk, if requested by the user
     :param request: Download request
-    :type: DownloadRequest
-    :param response: Response object from requests module
+    :type request: DownloadRequest
+    :param response_content: content of the download response
+    :type response_content: bytes
     """
     if request.save_response:
         create_parent_folder(request.file_location)
         with open(request.file_location, 'wb') as file:
-            file.write(response.content)
+            file.write(response_content)
         LOGGER.debug('Saved data from %s to %s', request.url, request.file_location)
 
 
-def decode_data(response, data_type):
+def decode_data(response_content, data_type, entire_response=None):
     """ Interprets downloaded data and returns it.
 
-    :param response: downloaded data (i.e. json, png, tiff, xml, zip, ... file)
-    :type response: requests.models.Response object
+    :param response_content: downloaded data (i.e. json, png, tiff, xml, zip, ... file)
+    :type response_content: bytes
     :param data_type: expected downloaded data type
     :type data_type: constants.MimeType
+    :param entire_response: A response obtained from execution of download request
+    :type entire_response: requests.Response or dict or None
     :return: downloaded data
     :rtype: numpy array in case of image data type, or other possible data type
     :raises: ValueError
@@ -299,18 +349,20 @@ def decode_data(response, data_type):
     LOGGER.debug('data_type=%s', data_type)
 
     if data_type is MimeType.JSON:
-        return response.json()
+        if isinstance(entire_response, requests.Response):
+            return entire_response.json()
+        return json.loads(response_content.decode('utf-8'))
     elif MimeType.is_image_format(data_type):
-        return decode_image(response.content, data_type)
-    elif data_type is MimeType.RAW or data_type is MimeType.TXT:
-        return response.content
-    elif data_type is MimeType.REQUESTS_RESPONSE:
-        return response
-    elif data_type is MimeType.ZIP:
-        return BytesIO(response.content)
-    elif data_type is MimeType.XML or data_type is MimeType.GML or \
-            data_type is MimeType.SAFE:
-        return ElementTree.fromstring(response.content)
+        return decode_image(response_content, data_type)
+    elif data_type is MimeType.XML or data_type is MimeType.GML or data_type is MimeType.SAFE:
+        return ElementTree.fromstring(response_content)
+    else:
+        return {
+            MimeType.RAW: response_content,
+            MimeType.TXT: response_content,
+            MimeType.REQUESTS_RESPONSE: entire_response,
+            MimeType.ZIP: BytesIO(response_content)
+        }[data_type]
 
     raise ValueError('Unknown response data type {}'.format(data_type))
 
@@ -334,8 +386,11 @@ def decode_image(data, image_type):
         image = cv2.imdecode(img_array, cv2.IMREAD_UNCHANGED)
 
         if image_type is MimeType.JP2:
-            bit_depth = get_jp2_bit_depth(BytesIO(data))
-            image = _fix_jp2_image(image, bit_depth)
+            try:
+                bit_depth = get_jp2_bit_depth(BytesIO(data))
+                image = _fix_jp2_image(image, bit_depth)
+            except ValueError:
+                pass
 
     if image is None:
         raise ImageDecodingError('Unable to decode image')

@@ -8,4 +8,3 @@ Module for creating .SAFE structure with data from AWS.
     :members:
 .. autoclass:: SafeTile
     :members:
-.. autofunction:: edit_name

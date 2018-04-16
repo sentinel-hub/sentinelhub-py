@@ -7,20 +7,20 @@ from sentinelhub.constants import CRS, MimeType, RequestType
 class TestCRS(TestSentinelHub):
     def test_utm(self):
         known_values = (
-            (46, 13, '32633'),
-            (0, 13, '32633'),
-            (-45, 13, '32733'),
-            (0, 13, '32633'),
-            (-0.0001, 13, '32733'),
-            (-46, 13, '32733')
+            (13, 46, '32633'),
+            (13, 0, '32633'),
+            (13, -45, '32733'),
+            (13, 0, '32633'),
+            (13, -0.0001, '32733'),
+            (13, -46, '32733')
         )
         for known_val in known_values:
-            lat, lng, epsg = known_val
+            lng, lat, epsg = known_val
             with self.subTest(msg=epsg):
-                crs = CRS.get_utm_from_wgs84(lat, lng)
+                crs = CRS.get_utm_from_wgs84(lng, lat)
                 self.assertEqual(epsg, crs.value,
-                                 msg="Expected {}, got {} for lat={},lng={}".format(epsg, crs.value, str(lat),
-                                                                                    str(lng)))
+                                 msg="Expected {}, got {} for lng={},lat={}".format(epsg, crs.value, str(lng),
+                                                                                    str(lat)))
 
     def test_ogc_string(self):
         crs_values = (

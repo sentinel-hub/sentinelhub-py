@@ -31,6 +31,8 @@ setup(
     install_requires=parse_requirements("requirements.txt"),
     extras_require={'DEV': parse_requirements("requirements-dev.txt")},
     zip_safe=False,
-    entry_points={'console_scripts': ['sentinelhub.aws=sentinelhub.commands:aws',
+    entry_points={'console_scripts': ['sentinelhub=sentinelhub.commands:main_help',
+                                      'sentinelhub.aws=sentinelhub.commands:aws',
+                                      'sentinelhub.config=sentinelhub.commands:config',
                                       'sentinelhub.download=sentinelhub.commands:download']}
 )

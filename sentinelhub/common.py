@@ -1,7 +1,7 @@
 """Module implementing classes common to all modules of the package (such as the bounding box class).
 
 Representing bounding box can be confusing. If a function expects bbox as a list of four coordinates,
-is it [lat1, lon1, lat2, lon2]? Or is it something else? And what CRS does it expect? Is the CRS a
+is it [lng1, lat1, lng2, lat2]? Or is it something else? And what CRS does it expect? Is the CRS a
 separate parameter?
 
 In this module the BBox class provides the canonical representation of a BBox that all the functions and
@@ -10,6 +10,7 @@ classes of the sg_utils package use, solving these issues.
 Available classes:
  - BBox, represent a bounding box in a given CRS
 """
+import warnings
 
 from .constants import CRS
 
@@ -31,7 +32,7 @@ class BBox:
         9) ``bbox``, where ``bbox`` is an instance of ``BBox``.
 
     Note that BBox coordinate system depends on ``crs`` parameter:
-        - In case of ``constants.CRS.WGS84`` axis x represents latitude and axis y represents longitude
+        - In case of ``constants.CRS.WGS84`` axis x represents longitude and axis y represents latitude
         - In case of ``constants.CRS.POP_WEB`` axis x represents easting and axis y represents northing
         - In case of ``constants.CRS.UTM_*`` axis x represents easting and axis y represents northing
 
@@ -46,6 +47,13 @@ class BBox:
         self.min_y = min(y_fst, y_snd)
         self.max_y = max(y_fst, y_snd)
         self.crs = CRS(crs)
+
+        if self.crs is CRS.WGS84:
+            message = 'Since sentinelhub version 2.0.0 the order of coordinates for BBox in CRS.WGS84 has been ' \
+                      'reversed from latitide-longitude to longitude-latitude. Please make sure to initialize ' \
+                      'bounding box with BBox([lng_1, lat_1, lng_2, lat_2], CRS.WGS84). The order of coordinates ' \
+                      'in other coordinate reference systems has not changed.'
+            warnings.warn(message)
 
     def __iter__(self):
         return iter(self.get_lower_left() + self.get_upper_right())

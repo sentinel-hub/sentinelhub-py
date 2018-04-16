@@ -48,7 +48,7 @@ class TestDataRequestSaving(TestSentinelHub):
             self.assertTrue(isinstance(data, list), "Expected a list")
             self.assertEqual(len(data), 1, "Expected a list of length 1")
             product_folder = os.path.join(self.OUTPUT_FOLDER, self.product_id)
-            self.assertEqual(len(get_folder_list(product_folder)), 4, "Expected to create 4 folders")
+            self.assertEqual(len(get_folder_list(product_folder)), 5, "Expected to create 5 folders")
             self.assertEqual(len(get_file_list(product_folder)), 1, "Expected to create 1 file")
         except ValueError:
             self.fail("Expected to obtain and save data")

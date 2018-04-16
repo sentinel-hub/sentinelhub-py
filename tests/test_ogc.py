@@ -41,9 +41,9 @@ class TestOgc(TestSentinelHub):
 
     @classmethod
     def setUpClass(cls):
-        wgs84_bbox = BBox(bbox=(48.0, -5.23, 48.17, -5.03), crs=CRS.WGS84)
-        wgs84_bbox_2 = BBox(bbox=(64.0, 21.3, 64.5, 22.0), crs=CRS.WGS84)
-        wgs84_bbox_3 = BBox(bbox=(-70.4, -72.0, -70.2, -71.8), crs=CRS.WGS84)
+        wgs84_bbox = BBox(bbox=(-5.23, 48.0, -5.03, 48.17), crs=CRS.WGS84)
+        wgs84_bbox_2 = BBox(bbox=(21.3, 64.0, 22.0, 64.5), crs=CRS.WGS84)
+        wgs84_bbox_3 = BBox(bbox=(-72.0, -70.4, -71.8, -70.2), crs=CRS.WGS84)
         pop_web_bbox = BBox(bbox=(1292344.0, 5195920.0, 1310615.0, 5214191.0), crs=CRS.POP_WEB)
         img_width = 100
         img_height = 100

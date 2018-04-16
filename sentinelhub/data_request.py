@@ -9,16 +9,17 @@ from abc import ABC, abstractmethod
 import datetime
 import os.path
 import logging
+import warnings
 
 from .ogc import OgcImageService
 from .geopedia import GeopediaImageService
 from .aws import AwsProduct, AwsTile
 from .aws_safe import SafeProduct, SafeTile
-from .download import download_data, ImageDecodingError
+from .download import download_data, ImageDecodingError, AwsDownloadFailedException
 from .io_utils import read_data
 from .os_utils import make_folder
-from .constants import DataSource, MimeType, CustomUrlParam, ServiceType, AwsConstants, CRS
-from .config import SGConfig
+from .constants import DataSource, MimeType, CustomUrlParam, ServiceType, CRS
+from .config import SHConfig
 
 LOGGER = logging.getLogger(__name__)
 
@@ -83,15 +84,7 @@ class DataRequest(ABC):
         :rtype: list of numpy arrays
         """
         self._preprocess_request(save_data, True)
-
-        timeout = SGConfig().download_timeout_seconds
-        data_list = []
-        for future in download_data(self.download_list, redownload=redownload, max_threads=max_threads):
-            try:
-                data_list.append(future.result(timeout=timeout))
-            except ImageDecodingError as err:
-                data_list.append(None)
-                LOGGER.debug('%s while downloading data; will try to load it from disk if it was saved', err)
+        data_list = self._execute_data_download(redownload, max_threads)
         return self._add_saved_data(data_list)
 
     def save_data(self, redownload=False, max_threads=None):
@@ -104,12 +97,35 @@ class DataRequest(ABC):
         :type max_threads: int
         """
         self._preprocess_request(True, False)
+        self._execute_data_download(redownload, max_threads, raise_all_errors=False)
 
-        try:
-            download_data(self.download_list, redownload=redownload, max_threads=max_threads)
-            LOGGER.info('The data is available in folder %s', self.data_folder)
-        except ImageDecodingError as err:
-            LOGGER.warning('Exception %s while downloading data', err)
+    def _execute_data_download(self, redownload, max_threads, raise_all_errors=True):
+        """Calls download module and executes the download process
+
+        :param redownload: data is redownloaded if ``redownload=True``. Default is ``False``
+        :type redownload: bool
+        :param max_threads: the number of workers to use when downloading, default ``max_threads=None``
+        :type max_threads: int
+        :param raise_all_errors: This applies in case of Exception during download process. If flag is set to True any
+                            exception will be propagated and raised. If False only some exceptions will be raised and
+                            for other a warning will be send to user.
+        :type raise_all_errors: bool
+        :return: List of data obtained from download
+        :rtype: list
+        """
+        data_list = []
+        for future in download_data(self.download_list, redownload=redownload, max_threads=max_threads):
+            try:
+                data_list.append(future.result(timeout=SHConfig().download_timeout_seconds))
+            except ImageDecodingError as err:
+                data_list.append(None)
+                LOGGER.debug('%s while downloading data; will try to load it from disk if it was saved', err)
+            except AwsDownloadFailedException as aws_exception:
+                if raise_all_errors:
+                    raise aws_exception
+                warnings.warn(str(aws_exception))
+                data_list.append(None)
+        return data_list
 
     def _preprocess_request(self, save_data, return_data):
         """
@@ -257,9 +273,8 @@ class OgcRequest(DataRequest):
     def get_tiles(self):
         """Returns iterator over info about all satellite tiles used for the OgcRequest
 
-        :return: Iterator of dictionaries containing info about all satellite tiles used in the request. Iterator of
-                 dictionaries containing info about all satellite tiles used in the request. In case of DataSource.DEM
-                 it returns None.
+        :return: Iterator of dictionaries containing info about all satellite tiles used in the request. In case of
+                 DataSource.DEM it returns None.
         :rtype: Iterator[dict] or None
         """
         return self.wfs_iterator
@@ -301,7 +316,7 @@ class WmsRequest(OgcRequest):
                         in some cases 32-bit TIFF is required, i.e. if requesting unprocessed raw bands.
                         Default is ``constants.MimeType.PNG``.
     :type image_format: constants.MimeType
-    :param instance_id: user's instance id. If ``None`` the instance id is taken from the ``config.json``
+    :param instance_id: User's Sentinel Hub instance id. If ``None`` the instance id is taken from the ``config.json``
                         configuration file.
     :type instance_id: str
     :param custom_url_params: dictionary of CustomUrlParameters and their values supported by Sentinel Hub's WMS and WCS
@@ -487,8 +502,8 @@ class AwsRequest(DataRequest):
     AWS database is available at:
     http://sentinel-s2-l1c.s3-website.eu-central-1.amazonaws.com/
 
-    :param bands: list of Sentinel-2 bands for request
-    :type bands: list(str)
+    :param bands: List of Sentinel-2 bands for request. If `None` all bands will be obtained
+    :type bands: list(str) or None
     :param metafiles: list of additional metafiles available on AWS
                       (e.g. ``['metadata', 'tileInfo', 'preview/B01', 'TCI']``)
     :type metafiles: list(str)
@@ -498,7 +513,7 @@ class AwsRequest(DataRequest):
     :param data_folder: location of the directory where the fetched data will be saved.
     :type data_folder: str
     """
-    def __init__(self, *, bands=AwsConstants.BANDS, metafiles=None, safe_format=False, **kwargs):
+    def __init__(self, *, bands=None, metafiles=None, safe_format=False, **kwargs):
         self.bands = bands
         self.metafiles = metafiles
         self.safe_format = safe_format
@@ -530,8 +545,8 @@ class AwsProductRequest(AwsRequest):
     :param tile_list: list of tiles inside the product to be downloaded. If parameter is set to ``None`` all
                       tiles inside the product will be downloaded.
     :type tile_list: list(str) or None
-    :param bands: list of Sentinel-2 bands for request
-    :type bands: list(str)
+    :param bands: List of Sentinel-2 bands for request. If `None` all bands will be obtained
+    :type bands: list(str) or None
     :param metafiles: list of additional metafiles available on AWS
                       (e.g. ``['metadata', 'tileInfo', 'preview/B01', 'TCI']``)
     :type metafiles: list(str)
@@ -549,11 +564,11 @@ class AwsProductRequest(AwsRequest):
 
     def create_request(self):
         if self.safe_format:
-            self.aws_service = SafeProduct(self.product_id, tile_list=self.tile_list,
-                                           bands=self.bands, metafiles=self.metafiles)
+            self.aws_service = SafeProduct(self.product_id, tile_list=self.tile_list, bands=self.bands,
+                                           metafiles=self.metafiles)
         else:
-            self.aws_service = AwsProduct(self.product_id, tile_list=self.tile_list,
-                                          bands=self.bands, metafiles=self.metafiles)
+            self.aws_service = AwsProduct(self.product_id, tile_list=self.tile_list, bands=self.bands,
+                                          metafiles=self.metafiles)
 
         self.download_list, self.folder_list = self.aws_service.get_requests()
 
@@ -573,8 +588,11 @@ class AwsTileRequest(AwsRequest):
                       will try to find the index automatically. If there will be multiple choices it will choose the
                       lowest index and inform the user.
     :type aws_index: int or None
-    :param bands: list of Sentinel-2 bands for request
-    :type bands: list(str)
+    :param data_source: Source of requested AWS data. Supported sources are Sentinel-2 L1C and Sentinel-2 L2A, default
+                        is Sentinel-2 L1C data.
+    :type data_source: constants.DataSource
+    :param bands: List of Sentinel-2 bands for request. If `None` all bands will be obtained
+    :type bands: list(str) or None
     :param metafiles: list of additional metafiles available on AWS
                       (e.g. ``['metadata', 'tileInfo', 'preview/B01', 'TCI']``)
     :type metafiles: list(str)
@@ -584,25 +602,26 @@ class AwsTileRequest(AwsRequest):
     :param data_folder: location of the directory where the fetched data will be saved.
     :type data_folder: str
     """
-    def __init__(self, *, tile=None, time=None, aws_index=None, **kwargs):
+    def __init__(self, *, tile=None, time=None, aws_index=None, data_source=DataSource.SENTINEL2_L1C, **kwargs):
         self.tile = tile
         self.time = time
         self.aws_index = aws_index
+        self.data_source = data_source
 
         super(AwsTileRequest, self).__init__(**kwargs)
 
     def create_request(self):
         if self.safe_format:
-            self.aws_service = SafeTile(self.tile, self.time, self.aws_index,
-                                        bands=self.bands, metafiles=self.metafiles)
+            self.aws_service = SafeTile(self.tile, self.time, self.aws_index, bands=self.bands,
+                                        metafiles=self.metafiles, data_source=self.data_source)
         else:
-            self.aws_service = AwsTile(self.tile, self.time, self.aws_index,
-                                       bands=self.bands, metafiles=self.metafiles)
+            self.aws_service = AwsTile(self.tile, self.time, self.aws_index, bands=self.bands,
+                                       metafiles=self.metafiles, data_source=self.data_source)
 
         self.download_list, self.folder_list = self.aws_service.get_requests()
 
 
-def get_safe_format(product_id=None, tile=None, entire_product=False, bands=None):
+def get_safe_format(product_id=None, tile=None, entire_product=False, bands=None, data_source=DataSource.SENTINEL2_L1C):
     """
     Returns .SAFE format structure in form of nested dictionaries. Either ``product_id`` or ``tile`` must be specified.
 
@@ -615,13 +634,15 @@ def get_safe_format(product_id=None, tile=None, entire_product=False, bands=None
     :type entire_product: bool
     :param bands: list of bands to download. If ``None`` all bands will be downloaded. Default is ``None``
     :type bands: list(str) or None
+    :param data_source: In case of tile request the source of satellite data has to be specified. Default is Sentinel-2
+                        L1C data.
+    :type data_source: constants.DataSource
     :return: Nested dictionaries representing .SAFE structure.
     :rtype: dict
     """
-    bands = AwsConstants.BANDS if bands is None else bands
     entire_product = entire_product and product_id is None
     if tile is not None:
-        safe_tile = SafeTile(tile_name=tile[0], time=tile[1], bands=bands)
+        safe_tile = SafeTile(tile_name=tile[0], time=tile[1], bands=bands, data_source=data_source)
         if not entire_product:
             return safe_tile.get_safe_struct()
         product_id = safe_tile.get_product_id()
@@ -632,7 +653,8 @@ def get_safe_format(product_id=None, tile=None, entire_product=False, bands=None
     return safe_product.get_safe_struct()
 
 
-def download_safe_format(product_id=None, tile=None, folder='.', redownload=False, entire_product=False, bands=None):
+def download_safe_format(product_id=None, tile=None, folder='.', redownload=False, entire_product=False, bands=None,
+                         data_source=DataSource.SENTINEL2_L1C):
     """
     Downloads .SAFE format structure in form of nested dictionaries. Either ``product_id`` or ``tile`` must
     be specified.
@@ -651,14 +673,16 @@ def download_safe_format(product_id=None, tile=None, folder='.', redownload=Fals
     :type entire_product: bool
     :param bands: list of bands to download. If ``None`` all bands will be downloaded. Default is ``None``
     :type bands: list(str) or None
+    :param data_source: In case of tile request the source of satellite data has to be specified. Default is Sentinel-2
+                        L1C data.
+    :type data_source: constants.DataSource
     :return: Nested dictionaries representing .SAFE structure.
     :rtype: dict
     """
-    bands = AwsConstants.BANDS if bands is None else bands
     entire_product = entire_product and product_id is None
     if tile is not None:
         safe_request = AwsTileRequest(tile=tile[0], time=tile[1], data_folder=folder, bands=bands,
-                                      safe_format=True)
+                                      safe_format=True, data_source=data_source)
         if entire_product:
             safe_tile = safe_request.get_aws_service()
             product_id = safe_tile.get_product_id()

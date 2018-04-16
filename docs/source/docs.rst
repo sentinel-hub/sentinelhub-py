@@ -1,5 +1,6 @@
-sentinelhub
-===========
+***************
+Package content
+***************
 
 Content of the **sentinelhub** package.
 
@@ -7,17 +8,18 @@ Modules
 ~~~~~~~
 
 .. toctree::
-   aws
-   aws_safe
-   common
-   config
-   constants
-   data_request
-   download
-   geo_utils
-   geopedia
-   io_utils
-   ogc
-   opensearch
-   os_utils
-   time_utils
+    areas
+    aws
+    aws_safe
+    common
+    config
+    constants
+    data_request
+    download
+    geo_utils
+    geopedia
+    io_utils
+    ogc
+    opensearch
+    os_utils
+    time_utils

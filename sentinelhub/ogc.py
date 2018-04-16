@@ -4,14 +4,15 @@ Module for working with Sentinel Hub OGC services
 
 import logging
 import datetime
-import base64
 
+from base64 import b64encode
 from urllib.parse import urlencode
+from shapely.geometry import shape as geo_shape
 
 from .time_utils import get_current_date, parse_time
 from .download import DownloadRequest, get_json
 from .constants import ServiceType, DataSource, MimeType, CRS, OgcConstants, CustomUrlParam
-from .config import SGConfig
+from .config import SHConfig
 from .geo_utils import get_image_dimension
 
 LOGGER = logging.getLogger(__name__)
@@ -28,8 +29,9 @@ class OgcService:
     :type instance_id: str or None
     """
     def __init__(self, base_url=None, instance_id=None):
-        self.base_url = SGConfig().ogc_base_url if base_url is None else base_url
-        self.instance_id = SGConfig().instance_id if instance_id is None else instance_id
+        self.base_url = SHConfig().ogc_base_url if not base_url else base_url
+        self.instance_id = SHConfig().instance_id if not instance_id else instance_id
+
         if not self.instance_id:
             raise ValueError('Instance ID is not set. '
                              'Set it either in request initialisation or in configuration file.')
@@ -58,7 +60,7 @@ class OgcService:
         :rtype: tuple of start and end date
         """
         if time is None or time is OgcConstants.LATEST:
-            date_interval = (SGConfig().default_start_date, get_current_date())
+            date_interval = (SHConfig().default_start_date, get_current_date())
         else:
             if isinstance(time, str):
                 date_interval = (parse_time(time), parse_time(time))
@@ -174,7 +176,8 @@ class OgcImageService(OgcService):
             url = 'https://services-uswest2.sentinel-hub.com/ogc/{}'.format(request.service_type.value)
 
         params = {'SERVICE': request.service_type.value,
-                  'BBOX': str(request.bbox),
+                  'BBOX': request.bbox.__str__(reverse=True) if request.bbox.get_crs() is CRS.WGS84 else str(
+                      request.bbox),
                   'FORMAT': MimeType.get_string(request.image_format),
                   'CRS': CRS.ogc_string(request.bbox.get_crs())}
 
@@ -211,7 +214,7 @@ class OgcImageService(OgcService):
 
             if CustomUrlParam.EVALSCRIPT.value in params:
                 evalscript = params[CustomUrlParam.EVALSCRIPT.value]
-                params[CustomUrlParam.EVALSCRIPT.value] = base64.b64encode(evalscript.encode()).decode()
+                params[CustomUrlParam.EVALSCRIPT.value] = b64encode(evalscript.encode()).decode()
 
         authority = self.instance_id if hasattr(self, 'instance_id') else request.theme
         return '{}/{}?{}'.format(url, authority, urlencode(params))
@@ -241,7 +244,6 @@ class OgcImageService(OgcService):
         :return: filename for this request and date
         :rtype: str
         """
-        bbox_str = str(request.bbox).replace(',', '_')
         suffix = str(request.image_format.value)
         fmt = ''
         if request.image_format is MimeType.TIFF_d32f:
@@ -251,7 +253,7 @@ class OgcImageService(OgcService):
         filename = '_'.join([str(request.service_type.value),
                              request.layer,
                              str(request.bbox.get_crs()).replace(':', ''),
-                             bbox_str,
+                             str(request.bbox).replace(',', '_'),
                              '' if date is None else date.strftime("%Y-%m-%dT%H-%M-%S"),
                              '{}X{}'.format(size_x, size_y)])
 
@@ -336,10 +338,11 @@ class WebFeatureService(OgcService):
 
     The class is an iterator over info data of all available satellite tiles for requested parameters. It collects data
     from Sentinel Hub service only during the first iteration. During next iterations it returns already obtained data.
+    The data is in the order returned by Sentinel Hub WFS service.
 
     :param bbox: Bounding box of the requested image. Coordinates must be in the specified coordinate reference system.
     :type bbox: common.BBox
-    :param time_interval: interval of start and end date of the form YYYY-MM-DDThh:mm:ss or YYYY-MM-DD
+    :param time_interval: interval with start and end date of the form YYYY-MM-DDThh:mm:ss or YYYY-MM-DD
     :type time_interval: (str, str)
     :param data_source: Source of requested satellite data. Default is Sentinel-2 L1C data.
     :type data_source: constants.DataSource
@@ -402,12 +405,12 @@ class WebFeatureService(OgcService):
         params = {'SERVICE': ServiceType.WFS.value,
                   'REQUEST': 'GetFeature',
                   'TYPENAMES': DataSource.get_wfs_typename(self.data_source),
-                  'BBOX': str(self.bbox),
+                  'BBOX': self.bbox.__str__(reverse=True) if self.bbox.get_crs() is CRS.WGS84 else str(self.bbox),
                   'OUTPUTFORMAT': MimeType.get_string(MimeType.JSON),
                   'SRSNAME': CRS.ogc_string(self.bbox.get_crs()),
                   'TIME': '{}/{}'.format(self.time_interval[0], self.time_interval[1]),
                   'MAXCC': 100.0 * self.maxcc,
-                  'MAXFEATURES': SGConfig().max_wfs_records_per_query,
+                  'MAXFEATURES': SHConfig().max_wfs_records_per_query,
                   'FEATURE_OFFSET': self.feature_offset}
 
         url = main_url + urlencode(params)
@@ -419,17 +422,25 @@ class WebFeatureService(OgcService):
             if not is_sentinel1 or self._sentinel1_product_check(tile_info['properties']['id'], self.data_source):
                 self.tile_list.append(tile_info)
 
-        if len(response["features"]) < SGConfig().max_wfs_records_per_query:
+        if len(response["features"]) < SHConfig().max_wfs_records_per_query:
             self.feature_offset = None
         else:
-            self.feature_offset += SGConfig().max_wfs_records_per_query
+            self.feature_offset += SHConfig().max_wfs_records_per_query
 
     def get_dates(self):
-        """ Returns dates from tile info data
+        """ Returns a list of acquisition times from tile info data
 
-        :return: List of acquisition dates for each tile.
+        :return: List of acquisition times in the order returned by WFS service.
         :rtype: list(datetime.datetime)
         """
         return [datetime.datetime.strptime('{}T{}'.format(tile_info['properties']['date'],
                                                           tile_info['properties']['time'].split('.')[0]),
                                            '%Y-%m-%dT%H:%M:%S') for tile_info in self]
+
+    def get_geometries(self):
+        """ Returns a list of geometries from tile info data
+
+        :return: List of multipolygon geometries in the order returned by WFS service.
+        :rtype: list(shapely.geometry.MultiPolygon)
+        """
+        return [geo_shape(tile_info['geometry']) for tile_info in self]

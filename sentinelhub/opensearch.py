@@ -7,11 +7,10 @@ import logging
 import datetime
 from urllib.parse import urlencode
 
-from .common import BBox
 from .constants import CRS
-from .config import SGConfig
+from .config import SHConfig
 from .download import get_json
-from .geo_utils import to_wgs84
+from .geo_utils import transform_bbox
 
 
 LOGGER = logging.getLogger(__name__)
@@ -41,7 +40,7 @@ def get_tile_info_id(tile_id):
     return result_list[0]
 
 
-def get_tile_info(tile, time, aws_index=None):
+def get_tile_info(tile, time, aws_index=None, all_tiles=False):
     """ Get basic information about image tile
 
     :param tile: tile name (e.g. ``'T10UEV'``)
@@ -50,28 +49,30 @@ def get_tile_info(tile, time, aws_index=None):
     :type time: str
     :param aws_index: index of tile on AWS
     :type aws_index: int or None
+    :param all_tiles: If True it will return list of all tiles otherwise only the first one
+    :type all_tiles: bool
     :return: dictionary with info provided by Opensearch REST service or None if such tile does not exist on AWS.
     :rtype: dict or None
     """
     end_date, start_date = _extract_range_from_time(time)
 
-    first_candidate, nr_candidates = None, 0
+    candidates = []
     for tile_info in search_iter(start_date=start_date, end_date=end_date):
         path_props = tile_info['properties']['s3Path'].split('/')
         this_tile = ''.join(path_props[1:4])
         this_aws_index = int(path_props[-1])
         if this_tile == tile.lstrip('T0') and (aws_index is None or aws_index == this_aws_index):
-            if first_candidate is None:
-                first_candidate = tile_info
-            nr_candidates += 1
+            candidates.append(tile_info)
 
-    if not first_candidate:
+    if not candidates:
         raise TileMissingException
 
-    if nr_candidates > 1:
-        LOGGER.info('Obtained %d results for tile=%s, time=%s. Returning the first one', nr_candidates, tile,
+    if len(candidates) > 1:
+        LOGGER.info('Obtained %d results for tile=%s, time=%s. Returning the first one', len(candidates), tile,
                     time)
-    return first_candidate
+    if all_tiles:
+        return candidates
+    return candidates[0]
 
 
 def _extract_range_from_time(time):
@@ -101,18 +102,7 @@ def get_area_info(bbox, date_interval, maxcc=None):
     :return: list of dictionaries containing info provided by Opensearch REST service
     :rtype: list(dict)
     """
-
-    crs = bbox.get_crs()
-    if crs is not CRS.WGS84:
-        x_mn, y_mn = bbox.get_lower_left()
-        x_mx, y_mx = bbox.get_upper_right()
-        lat1, lng1 = to_wgs84(x_mn, y_mn, crs)
-        lat2, lng2 = to_wgs84(x_mx, y_mx, crs)
-        wgs84_bbox = BBox([lat1, lng1, lat2, lng2], crs=CRS.WGS84)
-    else:
-        wgs84_bbox = bbox
-
-    result_list = search_iter(bbox=wgs84_bbox, start_date=date_interval[0], end_date=date_interval[1])
+    result_list = search_iter(bbox=bbox, start_date=date_interval[0], end_date=date_interval[1])
     if maxcc:
         return reduce_by_maxcc(result_list, maxcc)
     return result_list
@@ -159,7 +149,7 @@ def search_iter(text_query=None, tile_id=None, bbox=None, start_date=None, end_d
     :type text_query: str
     :param tile_id: original identification string provided by ESA
     :type tile_id: str
-    :param bbox: bounding box of requested area in WGS84 CRS
+    :param bbox: bounding box of requested area
     :type bbox: common.BBox
     :param start_date: beginning of time range in ISO8601 format
     :type start_date: str
@@ -170,28 +160,27 @@ def search_iter(text_query=None, tile_id=None, bbox=None, start_date=None, end_d
     :return: dictionaries containing info provided by Opensearch REST service
     :rtype: Iterator[dict]
     """
-
     if bbox and bbox.get_crs() is not CRS.WGS84:
-        raise ValueError('opensearch works only with crs=WGS84')
+        bbox = transform_bbox(bbox, CRS.WGS84)
 
     url_params = _prepare_url_params(bbox, cloud_cover, end_date, start_date, text_query, tile_id)
-    url_params['maxRecords'] = SGConfig().max_opensearch_records_per_query
+    url_params['maxRecords'] = SHConfig().max_opensearch_records_per_query
 
     start_index = 1
 
     while True:
         url_params['index'] = start_index
 
-        url = '{}search.json?{}'.format(SGConfig().opensearch_url, urlencode(url_params))
+        url = '{}search.json?{}'.format(SHConfig().opensearch_url, urlencode(url_params))
         LOGGER.debug("URL=%s", url)
 
         response = get_json(url)
         for tile_info in response["features"]:
             yield tile_info
 
-        if len(response["features"]) < SGConfig().max_opensearch_records_per_query:
+        if len(response["features"]) < SHConfig().max_opensearch_records_per_query:
             break
-        start_index += SGConfig().max_opensearch_records_per_query
+        start_index += SHConfig().max_opensearch_records_per_query
 
 
 def _prepare_url_params(bbox, cloud_cover, end_date, start_date, text_query, tile_id):
@@ -218,7 +207,7 @@ def _prepare_url_params(bbox, cloud_cover, end_date, start_date, text_query, til
     url_params = _add_param(url_params, end_date, 'completionDate')
     url_params = _add_param(url_params, cloud_cover, 'cloudCover')
     if bbox:
-        url_params = _add_param(url_params, bbox.__str__(reverse=True), 'box')
+        url_params = _add_param(url_params, str(bbox), 'box')
     return url_params
 
 
