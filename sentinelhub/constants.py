@@ -94,7 +94,7 @@ class OrbitDirection(Enum):
     BOTH = 'both'
 
 
-class DataSource(Enum, metaclass=_DataSourceMeta):
+class DataSource(Enum):
     """ Enum constant class for types of satellite data
 
     Supported types are SENTINEL2_L1C, SENTINEL2_L2A, LANDSAT8, SENTINEL1_IW, SENTINEL1_EW, SENTINEL1_EW_SH, DEM, MODIS
