@@ -9,7 +9,7 @@ import mimetypes
 import utm
 import os.path
 from pyproj import Proj
-from enum import Enum, EnumMeta
+from enum import Enum
 
 
 mimetypes.add_type('application/json', '.json')
@@ -36,16 +36,6 @@ class ServiceType(Enum):
     WCS = 'wcs'
     WFS = 'wfs'
     AWS = 'aws'
-
-
-class _DataSourceMeta(EnumMeta):
-    """ EnumMeta class for `DataSource` Enum class
-    """
-    def __iter__(cls):
-        return (member for name, member in cls._member_map_.items() if isinstance(member.value, tuple))
-
-    def __len__(cls):
-        return len(list(cls.__iter__()))
 
 
 class Source(Enum):
