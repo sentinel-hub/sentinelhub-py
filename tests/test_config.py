@@ -20,7 +20,6 @@ class TestSHConfig(TestSentinelHub):
 
             ogc_base_url = config['ogc_base_url']
             aws_base_url = config['aws_base_url']
-            aws_website_url = config['aws_website_url']
             default_start_date = config['default_start_date']
             max_download_attempts = config['max_download_attempts']
             download_sleep_time = config['download_sleep_time']
@@ -33,8 +32,6 @@ class TestSHConfig(TestSentinelHub):
                          msg="Expected {}, got {}".format(ogc_base_url, SHConfig().ogc_base_url))
         self.assertEqual(SHConfig().aws_base_url, aws_base_url,
                          msg="Expected {}, got {}".format(aws_base_url, SHConfig().aws_base_url))
-        self.assertEqual(SHConfig().aws_website_url, aws_website_url,
-                         msg="Expected {}, got {}".format(aws_website_url, SHConfig().aws_website_url))
         self.assertEqual(SHConfig().instance_id, instance_id,
                          msg="Expected {}, got {}".format(instance_id, SHConfig().instance_id))
         self.assertEqual(SHConfig().default_start_date, default_start_date,

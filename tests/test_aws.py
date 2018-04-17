@@ -23,14 +23,14 @@ class TestAwsProduct(TestSentinelHub):
     @classmethod
     def setUpClass(cls):
         cls.request = AwsProductRequest(data_folder=cls.OUTPUT_FOLDER, bands='B10',
-                                        metafiles='metadata,tileInfo,productInfo',
+                                        metafiles='metadata,tileInfo,productInfo, datastrip/*/metadata',
                                         product_id='S2A_OPER_PRD_MSIL1C_PDMC_20160121T043931_R069_V20160103T171947_'
                                                    '20160103T171947')
         cls.data = cls.request.get_data(save_data=True, redownload=True)
 
     def test_return_type(self):
         self.assertTrue(isinstance(self.data, list), "Expected a list")
-        self.assertEqual(len(self.data), 50, "Expected a list of length 50")
+        self.assertEqual(len(self.data), 51, "Expected a list of length 50")
 
 
 class TestPartialAwsProduct(TestSentinelHub):
@@ -48,6 +48,20 @@ class TestPartialAwsProduct(TestSentinelHub):
         self.assertTrue(isinstance(self.data, list), "Expected a list")
         self.assertEqual(len(self.data), 3, "Expected a list of length 3")
 
+
+"""
+class TestL2AProduct(TestSentinelHub):
+    @classmethod
+    def setUpClass(cls):
+        cls.request = AwsProductRequest(data_folder=cls.OUTPUT_FOLDER,
+                                        metafiles='metadata,tileInfo,productInfo, datastrip/*/metadata',
+                                        product_id='S2A_MSIL2A_20180402T151801_N0207_R068_T33XWJ_20180402T202222')
+        cls.data = cls.request.get_data(save_data=True, redownload=True)
+
+    def test_return_type(self):
+        self.assertTrue(isinstance(self.data, list), "Expected a list")
+        self.assertEqual(len(self.data), 41, "Expected a list of length 41")
+"""
 
 if __name__ == '__main__':
     unittest.main()

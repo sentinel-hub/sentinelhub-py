@@ -40,7 +40,7 @@ def get_tile_info_id(tile_id):
     return result_list[0]
 
 
-def get_tile_info(tile, time, aws_index=None):
+def get_tile_info(tile, time, aws_index=None, all_tiles=False):
     """ Get basic information about image tile
 
     :param tile: tile name (e.g. ``'T10UEV'``)
@@ -49,28 +49,30 @@ def get_tile_info(tile, time, aws_index=None):
     :type time: str
     :param aws_index: index of tile on AWS
     :type aws_index: int or None
+    :param all_tiles: If True it will return list of all tiles otherwise only the first one
+    :type all_tiles: bool
     :return: dictionary with info provided by Opensearch REST service or None if such tile does not exist on AWS.
     :rtype: dict or None
     """
     end_date, start_date = _extract_range_from_time(time)
 
-    first_candidate, nr_candidates = None, 0
+    candidates = []
     for tile_info in search_iter(start_date=start_date, end_date=end_date):
         path_props = tile_info['properties']['s3Path'].split('/')
         this_tile = ''.join(path_props[1:4])
         this_aws_index = int(path_props[-1])
         if this_tile == tile.lstrip('T0') and (aws_index is None or aws_index == this_aws_index):
-            if first_candidate is None:
-                first_candidate = tile_info
-            nr_candidates += 1
+            candidates.append(tile_info)
 
-    if not first_candidate:
+    if not candidates:
         raise TileMissingException
 
-    if nr_candidates > 1:
-        LOGGER.info('Obtained %d results for tile=%s, time=%s. Returning the first one', nr_candidates, tile,
+    if len(candidates) > 1:
+        LOGGER.info('Obtained %d results for tile=%s, time=%s. Returning the first one', len(candidates), tile,
                     time)
-    return first_candidate
+    if all_tiles:
+        return candidates
+    return candidates[0]
 
 
 def _extract_range_from_time(time):

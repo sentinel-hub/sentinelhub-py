@@ -346,9 +346,9 @@ def _fix_jp2_image(image, bit_depth):
     :return: corrected image
     :rtype: numpy array
     """
-    if bit_depth == 8:
+    if bit_depth in [8, 16]:
         return image
     if bit_depth == 15:
         return image >> 1
-    raise ValueError('Bit depth {} of jp2 image is currently not supported.'
+    raise ValueError('Bit depth {} of jp2 image is currently not supported. '
                      'Please raise an issue on package Github page'.format(bit_depth))
