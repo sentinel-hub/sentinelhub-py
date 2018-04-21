@@ -82,6 +82,10 @@ folder, or viewed in the [docs](http://sentinelhub-py.readthedocs.io/):
  * AWS data download ([link](http://sentinelhub-py.readthedocs.io/en/latest/examples/aws_request.html))
  * AWS data download from command line in .SAFE format ([link](http://sentinelhub-py.readthedocs.io/en/latest/aws_cli.html))
 
+# Blog posts
+
+ * [Upgrading the sentinelhub Python package](https://medium.com/sentinel-hub/upgrading-the-sentinelhub-python-package-2665f9c10df)
+
 # License
 
 See [LICENSE](LICENSE.md).
