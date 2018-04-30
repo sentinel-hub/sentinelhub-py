@@ -85,6 +85,7 @@ folder, or viewed in the [docs](http://sentinelhub-py.readthedocs.io/):
 # Blog posts
 
  * [Upgrading the sentinelhub Python package](https://medium.com/sentinel-hub/upgrading-the-sentinelhub-python-package-2665f9c10df)
+ * [Release of sentinelhub Python Package 2.0](https://medium.com/sentinel-hub/release-of-sentinelhub-python-package-2-0-a3d47709f8fd)
 
 # License
 
