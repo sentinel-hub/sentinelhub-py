@@ -67,7 +67,7 @@ def aws(product, tile, folder, redownload, info, entire, bands, l2a):
 
 
 def config_options(func):
-    for param in SHConfig().get_params():
+    for param in SHConfig().get_params()[-1::-1]:
         func = click.option('--{}'.format(param), param,
                             help='Set new values to configuration parameter "{}"'.format(param))(func)
     return func
