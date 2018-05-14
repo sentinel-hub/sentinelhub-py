@@ -30,7 +30,7 @@ class TestAwsProduct(TestSentinelHub):
 
     def test_return_type(self):
         self.assertTrue(isinstance(self.data, list), "Expected a list")
-        self.assertEqual(len(self.data), 51, "Expected a list of length 50")
+        self.assertEqual(len(self.data), 51, "Expected a list of length 51")
 
 
 class TestPartialAwsProduct(TestSentinelHub):

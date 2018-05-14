@@ -98,6 +98,8 @@ class AwsService(ABC):
 
     def get_base_url(self):
         if self.data_source is DataSource.SENTINEL2_L1C:
+            if SHConfig().use_s3_l1c_bucket:
+                return 's3://{}/'.format(SHConfig().aws_s3_l1c_bucket)
             return SHConfig().aws_base_url
         return 's3://{}/'.format(SHConfig().aws_s3_l2a_bucket)
 

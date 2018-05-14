@@ -51,6 +51,7 @@ class SHConfig:
                                   'aws_s3_l2a_bucket', 'opensearch_url', 'max_wfs_records_per_query',
                                   'max_opensearch_records_per_query', 'default_start_date', 'max_download_attempts',
                                   'download_sleep_time', 'download_timeout_seconds']
+            self.instance_id = ''
             self.load_configuration()
 
         def _check_configuration(self, config):
