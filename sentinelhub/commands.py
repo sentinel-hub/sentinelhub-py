@@ -91,7 +91,10 @@ def config(show, **params):
             try:
                 value = int(value)
             except ValueError:
-                pass
+                if value.lower() == 'true':
+                    value = True
+                elif value.lower() == 'false':
+                    value = False
             setattr(sh_config, param, value)
     sh_config.save()
 
