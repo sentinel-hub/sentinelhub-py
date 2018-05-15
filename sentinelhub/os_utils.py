@@ -4,6 +4,7 @@ Module for managing files and folders
 
 import os
 import errno
+from sys import platform
 
 
 def get_content_list(folder='.'):
@@ -100,3 +101,12 @@ def size(pathname):
     if os.path.isfile(pathname):
         return os.path.getsize(pathname)
     return sum([size('{}/{}'.format(pathname, name)) for name in get_content_list(pathname)])
+
+
+def sys_is_windows():
+    """Check if user is running the code on Windows machine
+
+    :return: True if OS is Windows and False otherwise
+    :rtype: bool
+    """
+    return platform.lower().startswith('win')

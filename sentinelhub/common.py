@@ -10,7 +10,6 @@ classes of the sg_utils package use, solving these issues.
 Available classes:
  - BBox, represent a bounding box in a given CRS
 """
-import warnings
 
 from .constants import CRS
 

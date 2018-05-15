@@ -11,3 +11,4 @@ Wrapper functions to list, create, rename, and remove files and directories.
 .. autofunction:: make_folder
 .. autofunction:: rename
 .. autofunction:: size
+.. autofunction:: sys_is_windows

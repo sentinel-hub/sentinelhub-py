@@ -10,12 +10,13 @@ import requests
 import json
 import cv2
 import boto3
+import warnings
 import numpy as np
 import tifffile as tiff
 from io import BytesIO
 from xml.etree import ElementTree
 
-from .os_utils import create_parent_folder
+from .os_utils import create_parent_folder, sys_is_windows
 from .constants import MimeType, RequestType
 from .config import SHConfig
 from .io_utils import get_jp2_bit_depth, _fix_jp2_image
@@ -138,7 +139,11 @@ class DownloadRequest:
         :rtype: str
         """
         if self.data_folder:
-            return os.path.join(self.data_folder, self.filename)
+            file_path = os.path.join(self.data_folder, self.filename)
+            if len(file_path) > 255 and sys_is_windows():
+                warnings.warn('File path {} is longer than 255 character which might cause an error while saving on'
+                              'disk'.format(file_path))
+            return file_path
         return None
 
     def is_aws_s3(self):
