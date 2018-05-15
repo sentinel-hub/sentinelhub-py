@@ -1,6 +1,6 @@
-==========================================
-How to download AWS data from command line
-==========================================
+===================================================
+Downloading satellite data at AWS from command line
+===================================================
 
 These examples show how to download Sentinel-2 data from Sentinel-2 on AWS to ESA SAFE format.
 
