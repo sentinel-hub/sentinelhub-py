@@ -81,6 +81,15 @@ class AreaSplitter(ABC):
             return [transform_bbox(bbox, crs) for bbox in self.bbox_list]
         return self.bbox_list
 
+    def get_geometry_list(self):
+        """For each bounding box an intersection with the shape of entire given area is calculated. CRS of the returned
+        shapes is the same as CRS of the given area.
+
+        :return: List of polygons or multipolygons corresponding to the order of bounding boxes
+        :rtype: list(shapely.geometry.multipolygon.MultiPolygon or shapely.geometry.polygon.Polygon)
+        """
+        return [self._intersection_area(bbox) for bbox in self.bbox_list]
+
     def get_info_list(self):
         """Returns a list of dictionaries containing information about bounding boxes obtained in split. The order in
         the list matches the order of the list of bounding boxes.
@@ -149,10 +158,11 @@ class AreaSplitter(ABC):
         return Polygon(projected_bbox.get_polygon())
 
     def _reduce_sizes(self):
-        """Reduces sizes
+        """Reduces sizes of bounding boxes
         """
         for i, bbox in enumerate(self.bbox_list):
-            self.bbox_list[i] = BBox(self._intersection_area(bbox).bounds, self.crs)
+            bbox_crs = bbox.get_crs()
+            self.bbox_list[i] = transform_bbox(BBox(self._intersection_area(bbox).bounds, self.crs), bbox_crs)
 
 
 class BBoxSplitter(AreaSplitter):
@@ -381,6 +391,9 @@ class TileSplitter(AreaSplitter):
 
                     self.bbox_list.append(bbox)
                     self.info_list.append(info)
+
+        if self.reduce_bbox_sizes:
+            self._reduce_sizes()
 
     def get_tile_dict(self):
         """Returns the dictionary of satellite tiles intersecting the area geometry. For each tile they contain info
