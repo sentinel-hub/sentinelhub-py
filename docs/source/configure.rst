@@ -21,10 +21,20 @@ different one in the code.
 Amazon S3 Capabilities
 **********************
 
-The ``aws_access_key_id`` and ``aws_secret_access_key`` will also be empty. In case you would like package to access
-Sentinel-2 L2A data from `Amazon S3`_ service you can set these values using your AWS access key::
+The ``aws_access_key_id`` and ``aws_secret_access_key`` will be empty. In case you would like package to access
+Sentinel-2 L2A data with `Amazon S3`_ service you can set these values using your AWS access key::
 
 $ sentinelhub.config --aws_access_key_id <your access key> --aws_secret_access_key <your secret access key>
+
+Sentinel-2 L1C data is by default being downloaded with free of charge http service. However soon this option will not
+be available anymore. Therefore it is also possible to download L1C data with S3 service by first setting
+``use_s3_l1c_bucket`` parameter to ``true``::
+
+$ sentinelhub.config --use_s3_l1c_bucket true
+
+**Note:** Satellite data at S3 is contained in Requester Pays buckets. Therefore Amazon will charge download of such data
+according to `Amazon S3 Pricing`_.
+
 
 Other
 *****
@@ -36,3 +46,4 @@ $ sentinelhub.config --help
 
 .. _`Sentinel Hub services`: https://www.sentinel-hub.com/develop/documentation/api/ogc_api/
 .. _`Amazon S3`: https://aws.amazon.com/s3/
+.. _`Amazon S3 Pricing`: https://aws.amazon.com/s3/pricing/?p=ps

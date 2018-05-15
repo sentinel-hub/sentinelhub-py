@@ -444,3 +444,23 @@ class WebFeatureService(OgcService):
         :rtype: list(shapely.geometry.MultiPolygon)
         """
         return [geo_shape(tile_info['geometry']) for tile_info in self]
+
+    def get_tiles(self):
+        """ Returns list of tiles with tile name, date and AWS index
+
+        :return: List of tiles in form of (tile_name, date, aws_index)
+        :rtype: list((str, str, int))
+        """
+        return [self._parse_tile_url(tile_info['properties']['path']) for tile_info in self]
+
+    @staticmethod
+    def _parse_tile_url(tile_url):
+        """ Extracts tile name, data and AWS index from tile URL
+
+        :param tile_url: Location of tile at AWS
+        :type: tile_url: str
+        :return: Tuple in a form (tile_name, date, aws_index)
+        :rtype: (str, str, int)
+        """
+        props = tile_url.rsplit('/', 7)
+        return ''.join(props[1:4]), '-'.join(props[4:7]), int(props[7])
