@@ -244,12 +244,6 @@ class OgcImageService(OgcService):
         :return: filename for this request and date
         :rtype: str
         """
-        suffix = str(request.image_format.value)
-        fmt = ''
-        if request.image_format is MimeType.TIFF_d32f:
-            suffix = str(MimeType.TIFF.value)
-            fmt = str(request.image_format.value).replace(';', '_')
-
         filename = '_'.join([str(request.service_type.value),
                              request.layer,
                              str(request.bbox.get_crs()).replace(':', ''),
@@ -262,12 +256,18 @@ class OgcImageService(OgcService):
         if hasattr(request, 'custom_url_params') and request.custom_url_params is not None:
             for param, value in sorted(request.custom_url_params.items(),
                                        key=lambda parameter_item: parameter_item[0].value):
-                filename = '_'.join([filename, param.value, str(value).replace('/', '_')])
+                filename = '_'.join([filename, param.value, str(value)])
 
-        if fmt:
-            filename = '_'.join([filename, fmt])
-        filename = '.'.join([filename, suffix])
-        return filename
+        for char in [' ', '/', '\\', '|', ';', ':', '\n', '\t']:
+            filename = filename.replace(char, '')
+
+        suffix = str(request.image_format.value)
+        if request.image_format is MimeType.TIFF_d32f:
+            suffix = str(MimeType.TIFF.value)
+            filename = '_'.join([filename, str(request.image_format.value).replace(';', '_')])
+
+        filename = '.'.join([filename[:254 - len(suffix)], suffix])
+        return filename   # Even in UNIX systems filename must have at most 255 bytes
 
     def get_dates(self, request):
         """ Get available Sentinel-2 acquisitions at least time_difference apart
