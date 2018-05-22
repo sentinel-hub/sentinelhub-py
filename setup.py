@@ -19,6 +19,7 @@ def get_version():
 
 setup(
     name='sentinelhub',
+    python_requires='>=3.5',
     version=get_version(),
     description='Sentinel Hub Utilities',
     url='https://github.com/sentinel-hub/sentinelhub-py',
