@@ -47,8 +47,8 @@ class TestOgc(TestSentinelHub):
         pop_web_bbox = BBox(bbox=(1292344.0, 5195920.0, 1310615.0, 5214191.0), crs=CRS.POP_WEB)
         img_width = 100
         img_height = 100
-        resx='53m'
-        resy='78m'
+        resx = '53m'
+        resy = '78m'
         expected_date = datetime.datetime.strptime('2017-10-07T11:20:58', '%Y-%m-%dT%H:%M:%S')
 
         cls.test_cases = [
@@ -91,9 +91,9 @@ class TestOgc(TestSentinelHub):
                                        time=('2017-10-01', '2017-10-02'),
                                        custom_url_params={CustomUrlParam.SHOWLOGO: True,
                                                           CustomUrlParam.EVALSCRIPTURL:
-                                                          'https://raw.githubusercontent.com/sentinel-hub/'
-                                                          'customScripts/master/sentinel-2/false_color_infrared/'
-                                                          'script.js'}),
+                                                              'https://raw.githubusercontent.com/sentinel-hub/'
+                                                              'customScripts/master/sentinel-2/false_color_infrared/'
+                                                              'script.js'}),
                             result_len=1, img_min=41, img_max=255, img_mean=230.568, img_median=255, tile_num=3),
             cls.OgcTestCase('customUrlEvalscript',
                             WcsRequest(data_folder=cls.OUTPUT_FOLDER, image_format=MimeType.PNG, layer='TRUE_COLOR',
@@ -113,17 +113,17 @@ class TestOgc(TestSentinelHub):
             # DataSource tests:
             cls.OgcTestCase('S2 L1C Test',
                             WmsRequest(data_source=DataSource.SENTINEL2_L1C, data_folder=cls.OUTPUT_FOLDER,
-                                       image_format=MimeType.TIFF_d32f, layer='BANDS-S2-L1C',
+                                       image_format=MimeType.TIFF_d8, layer='BANDS-S2-L1C',
                                        width=img_width, height=img_height, bbox=wgs84_bbox,
                                        instance_id=cls.INSTANCE_ID, time=('2017-10-01', '2017-10-02')),
-                            result_len=1, img_min=0.00089, img_max=0.6284, img_mean=0.2373, img_median=0.2477,
+                            result_len=1, img_min=38, img_max=152, img_mean=84.6465, img_median=84.0,
                             tile_num=2),
             cls.OgcTestCase('S2 L2A Test',
                             WmsRequest(data_source=DataSource.SENTINEL2_L2A, data_folder=cls.OUTPUT_FOLDER,
-                                       image_format=MimeType.TIFF_d32f, layer='BANDS-S2-L2A',
+                                       image_format=MimeType.TIFF, layer='BANDS-S2-L2A',
                                        width=img_width, height=img_height, bbox=wgs84_bbox,
                                        instance_id=cls.INSTANCE_ID, time=('2017-10-01', '2017-10-02')),
-                            result_len=1, img_min=0.0, img_max=1.6720, img_mean=0.34747, img_median=0.32640,
+                            result_len=1, img_min=0.0, img_max=65535, img_mean=22743.5164, img_median=21390.0,
                             tile_num=2),
             cls.OgcTestCase('L8 Test',
                             WmsRequest(data_source=DataSource.LANDSAT8, data_folder=cls.OUTPUT_FOLDER,
@@ -163,12 +163,12 @@ class TestOgc(TestSentinelHub):
             cls.OgcTestCase('S1 EW SH Test',
                             WmsRequest(data_source=DataSource.SENTINEL1_EW_SH,
                                        data_folder=cls.OUTPUT_FOLDER,
-                                       image_format=MimeType.TIFF_d32f, layer='BANDS-S1-EW-SH',
+                                       image_format=MimeType.TIFF_d16, layer='BANDS-S1-EW-SH',
                                        width=img_width, height=img_height, bbox=wgs84_bbox_3,
                                        custom_url_params={CustomUrlParam.SHOWLOGO: True},
                                        instance_id=cls.INSTANCE_ID, time=('2018-2-6', '2018-2-8'),
                                        time_difference=datetime.timedelta(hours=1)),
-                            result_len=1, img_min=0.006987, img_max=0.83078, img_mean=0.06599, img_median=0.0140,
+                            result_len=1, img_min=465, img_max=59287, img_mean=5323.0523, img_median=943.0,
                             tile_num=1)
         ]
 

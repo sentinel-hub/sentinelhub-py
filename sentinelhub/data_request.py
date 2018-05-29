@@ -222,7 +222,7 @@ class OgcRequest(DataRequest):
         self.time = time
         self.data_source = data_source
         self.maxcc = maxcc
-        self.image_format = image_format
+        self.image_format = MimeType(image_format)
         self.instance_id = instance_id
         self.service_type = service_type
         self.size_x = size_x
@@ -433,7 +433,7 @@ class GeopediaRequest(DataRequest):
         self.layer = layer
         self.theme = theme
         self.bbox = bbox
-        self.image_format = image_format
+        self.image_format = MimeType(image_format)
         self.service_type = service_type
         self.size_x = size_x
         self.size_y = size_y

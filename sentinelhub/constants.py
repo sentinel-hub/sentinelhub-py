@@ -341,11 +341,13 @@ class CustomUrlParam(Enum):
 class MimeType(Enum):
     """ Enum class to represent supported image file formats
 
-    Supported file formats are TIFF, TIFF 32-bit float, PNG, JPEG, JPEG2000, JSON, CSV, ZIP, HDF5, XML, GML, RAW
-
+    Supported file formats are TIFF 8-bit, TIFF 16-bit, TIFF 32-bit float, PNG, JPEG, JPEG2000, JSON, CSV, ZIP, HDF5,
+    XML, GML, RAW
     """
-    TIFF_d32f = 'tiff;depth32f'
     TIFF = 'tiff'
+    TIFF_d8 = 'tiff;depth=8'
+    TIFF_d16 = 'tiff;depth=16'  # This is the same as TIFF
+    TIFF_d32f = 'tiff;depth=32f'
     PNG = 'png'
     JPG = 'jpg'
     JP2 = 'jp2'
@@ -393,7 +395,8 @@ class MimeType(Enum):
         :return: ``True`` if file is in image format, ``False`` otherwise
         :rtype: bool
         """
-        return value in frozenset([MimeType.TIFF, MimeType.TIFF_d32f, MimeType.PNG, MimeType.JP2, MimeType.JPG])
+        return value in frozenset([MimeType.TIFF, MimeType.TIFF_d8, MimeType.TIFF_d16, MimeType.TIFF_d32f, MimeType.PNG,
+                                   MimeType.JP2, MimeType.JPG])
 
     @classmethod
     def has_value(cls, value):
@@ -415,11 +418,11 @@ class MimeType(Enum):
         :return: String describing the file format
         :rtype: str
         """
-        if fmt is MimeType.TIFF_d32f:
-            return 'image/tiff;depth=32f'
+        if fmt in [MimeType.TIFF_d8, MimeType.TIFF_d16, MimeType.TIFF_d32f]:
+            return 'image/{}'.format(fmt.value)
         elif fmt is MimeType.JP2:
             return 'image/jpeg2000'
-        elif fmt is MimeType.RAW or fmt is MimeType.REQUESTS_RESPONSE:
+        elif fmt in [MimeType.RAW, MimeType.REQUESTS_RESPONSE]:
             return fmt.value
         return mimetypes.types_map['.' + fmt.value]
 
