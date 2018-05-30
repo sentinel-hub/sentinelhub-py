@@ -643,7 +643,8 @@ class AwsTile(AwsService):
     @staticmethod
     def tile_id_to_tile(tile_id):
         """
-        :param tile_id: original ESA tile ID
+        :param tile_id: original tile identification string provided by ESA (e.g.
+                        'S2A_OPER_MSI_L1C_TL_SGS__20160109T230542_A002870_T10UEV_N02.01')
         :type: str
         :return: tile name, sensing date and AWS index
         :rtype: (str, str, int)

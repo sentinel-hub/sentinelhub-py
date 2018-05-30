@@ -23,7 +23,8 @@ class TileMissingException(Exception):
 def get_tile_info_id(tile_id):
     """ Get basic information about image tile
 
-    :param tile_id: original tile identification string provided by ESA
+    :param tile_id: original tile identification string provided by ESA (e.g.
+                    'S2A_OPER_MSI_L1C_TL_SGS__20160109T230542_A002870_T10UEV_N02.01')
     :type tile_id: str
     :return: dictionary with info provided by Opensearch REST service or ``None`` if such tile does not exist on AWS.
     :rtype: dict or None
@@ -147,7 +148,8 @@ def search_iter(text_query=None, tile_id=None, bbox=None, start_date=None, end_d
 
     :param text_query: arbitrary text query
     :type text_query: str
-    :param tile_id: original identification string provided by ESA
+    :param tile_id: original tile identification string provided by ESA (e.g.
+                    'S2A_OPER_MSI_L1C_TL_SGS__20160109T230542_A002870_T10UEV_N02.01')
     :type tile_id: str
     :param bbox: bounding box of requested area
     :type bbox: common.BBox
@@ -196,7 +198,8 @@ def _prepare_url_params(bbox, cloud_cover, end_date, start_date, text_query, til
     :type end_date: str
     :param text_query: arbitrary text query
     :type text_query: str
-    :param tile_id: original identification string provided by ESA
+    :param tile_id: original tile identification string provided by ESA (e.g.
+                    'S2A_OPER_MSI_L1C_TL_SGS__20160109T230542_A002870_T10UEV_N02.01')
     :type tile_id: str
     :return: dictionary with parameters as properties when arguments not None
     :rtype: dict
