@@ -26,13 +26,13 @@ $ python setup.py build
 $ python setup.py install
 ```
 
-The package is backward compatible with the previous version.
+Once installed or updated the package can be configured according to [instructions in documentation](http://sentinelhub-py.readthedocs.io/en/latest/configure.html).
 
 # Content
 
 ### OGC web service
 
-Some of the major features introduced in version 1.0 are linked to one's [Sentinel Hub account](https://services.sentinel-hub.com/oauth/subscription):
+Some of the major features are linked to one's [Sentinel Hub account](https://services.sentinel-hub.com/oauth/subscription):
  * support for Web Map Service (WMS) and Web Coverage Service (WCS) requests using your Sentinel Hub account;
  * support for standard and custom multi-spectra layers, such as unprocessed
  bands, true color imagery, or NDVI;
@@ -41,7 +41,7 @@ Some of the major features introduced in version 1.0 are linked to one's [Sentin
  * support for different Coordinate Reference Systems;
  * support to read and write downloaded data to disk in the most common
  image and data formats;
- * support for various data sources (new in version 1.1.0):
+ * support for various data sources:
    * Sentinel-2 L1C,
    * Sentinel-2 L2A,
    * Sentinel-1,

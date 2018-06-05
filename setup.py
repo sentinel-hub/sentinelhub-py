@@ -1,3 +1,4 @@
+import io
 import os
 from setuptools import setup, find_packages
 
@@ -17,11 +18,17 @@ def get_version():
     return version
 
 
+def get_long_description():
+    return io.open('README.md', encoding="utf-8").read()
+
+
 setup(
     name='sentinelhub',
     python_requires='>=3.5',
     version=get_version(),
     description='Sentinel Hub Utilities',
+    long_description=get_long_description(),
+    long_description_content_type="text/markdown",
     url='https://github.com/sentinel-hub/sentinelhub-py',
     author='Sinergise ltd.',
     author_email='info@sentinel-hub.com',
