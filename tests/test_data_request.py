@@ -13,7 +13,7 @@ class TestDataRequest(TestSentinelHub):
 
         bbox = BBox((8.655, 111.7, 8.688, 111.6), crs=CRS.WGS84)
         data_request = WcsRequest(data_folder=self.OUTPUT_FOLDER, bbox=bbox,
-                                  layer='ALL_BANDS', instance_id=self.INSTANCE_ID)
+                                  layer='BANDS-S2-L1C', instance_id=self.INSTANCE_ID)
 
         self.assertEqual(self.OUTPUT_FOLDER, data_request.data_folder,
                          msg="Expected {}, got {}".format(self.OUTPUT_FOLDER, data_request.data_folder))
