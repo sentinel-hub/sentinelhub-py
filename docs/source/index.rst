@@ -10,7 +10,7 @@ Documentation for Python utility packages developed by the
 EO research team at `Sinergise <http://www.sinergise.com/>`_.
 
 This code allows one to reproduce some of the functionalities of the 
-EO service `Sentinel-Hub <http://www.sentinel-hub.com/>`_. 
+EO service `Sentinel Hub <http://www.sentinel-hub.com/>`_.
 The code is available on `GitHub <https://github.com/sentinel-hub/sentinelhub-py/>`_.
 
 .. toctree::
