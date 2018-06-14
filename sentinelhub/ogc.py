@@ -34,7 +34,8 @@ class OgcService:
 
         if not self.instance_id:
             raise ValueError('Instance ID is not set. '
-                             'Set it either in request initialisation or in configuration file.')
+                             'Set it either in request initialization or in configuration file. '
+                             'Check http://sentinelhub-py.readthedocs.io/en/latest/configure.html for more info.')
 
     @staticmethod
     def _parse_time_interval(time):

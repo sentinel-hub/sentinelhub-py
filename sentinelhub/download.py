@@ -217,7 +217,7 @@ def execute_download_request(request):
     """
     if request.save_response and request.data_folder is None:
         raise ValueError('Data folder is not specified. '
-                         'Please give a data folder name in the initialisation of your request.')
+                         'Please give a data folder name in the initialization of your request.')
 
     if not request.will_download:
         return None

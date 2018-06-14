@@ -12,7 +12,7 @@ from collections import OrderedDict
 class SHConfig:
     """ This is a singleton implementation of the sentinelhub configuration class.
 
-    The class reads during its first initialisation the configurable settings from
+    The class reads during its first initialization the configurable settings from
     ``./config.json`` file:
 
         - `instance_id`: Users' instance id. User can set it to his/hers instance id in ``config.json`` instead
