@@ -84,8 +84,50 @@ class DownloadRequest:
         self.data_type = MimeType(data_type)
 
         self.will_download = True
-        self.file_location = None
-        self._set_file_location()
+        self.file_path = None
+        self._set_file_path()
+
+    def set_filename(self, filename):
+        """
+        Set filename attribute
+
+        :param filename: Name of the file where .
+        :return: str
+        """
+        self.filename = filename
+        self._set_file_path()
+
+    def set_data_folder(self, data_folder):
+        """
+        Set data_folder attribute
+
+        :param data_folder: folder name where the fetched data will be (or already is) saved.
+        :return: str
+        """
+        self.data_folder = data_folder
+        self._set_file_path()
+
+    def _set_file_path(self):
+        if self.data_folder and self.filename:
+            self.file_path = os.path.join(self.data_folder, self.filename.lstrip('/'))
+        elif self.filename:
+            self.file_path = self.filename
+        else:
+            self.file_path = None
+        if self.file_path and len(self.file_path) > 255 and sys_is_windows():
+            warnings.warn('File path {} is longer than 255 character which might cause an error while saving on '
+                          'disk'.format(self.file_path))
+        elif self.file_path and len(self.filename) > 255:
+            warnings.warn('Filename {} is longer than 255 character which might cause an error while saving on '
+                          'disk'.format(self.filename))
+
+    def get_file_path(self):
+        """ Returns the full filename.
+
+        :return: full filename (data folder + filename)
+        :rtype: str
+        """
+        return self.file_path
 
     def set_save_response(self, save_response):
         """
@@ -105,46 +147,15 @@ class DownloadRequest:
         """
         self.return_data = return_data
 
-    def set_data_folder(self, data_folder):
-        """
-        Set data_folder attribute
-
-        :param data_folder: folder name where the fetched data will be (or already is) saved.
-        :return: str
-        """
-        self.data_folder = data_folder
-        self._set_file_location()
-
-    def _set_file_location(self):
-        if self.data_folder and self.filename:
-            self.file_location = os.path.join(self.data_folder, self.filename.lstrip('/'))
-        elif self.filename:
-            self.file_location = self.filename
-
     def is_downloaded(self):
         """ Checks if data for this request has already been downloaded and is saved to disk.
 
         :return: returns ``True`` if data for this request has already been downloaded and is saved to disk.
         :rtype: bool
         """
-        if self.data_folder is None:
+        if self.file_path is None:
             return False
-        self._set_file_location()
-        return os.path.exists(self.file_location)
-
-    def get_filename(self):
-        """ Returns the full filename.
-
-        :return: full filename (data folder + filename)
-        :rtype: str
-        """
-        if self.data_folder:
-            file_path = os.path.join(self.data_folder, self.filename)
-            if len(file_path) > 255 and sys_is_windows():
-                warnings.warn('File path {} is longer than 255 character which might cause an error while saving on'
-                              'disk'.format(file_path))
-            return file_path
-        return None
+        return os.path.exists(self.file_path)
 
     def is_aws_s3(self):
         """Checks if data has to be downloaded from AWS s3 bucket
@@ -334,10 +345,11 @@ def _save_if_needed(request, response_content):
     :type response_content: bytes
     """
     if request.save_response:
-        create_parent_folder(request.file_location)
-        with open(request.file_location, 'wb') as file:
+        file_path = request.get_file_path()
+        create_parent_folder(file_path)
+        with open(file_path, 'wb') as file:
             file.write(response_content)
-        LOGGER.debug('Saved data from %s to %s', request.url, request.file_location)
+        LOGGER.debug('Saved data from %s to %s', request.url, file_path)
 
 
 def decode_data(response_content, data_type, entire_response=None):

@@ -216,11 +216,11 @@ class DataRequest(ABC):
             [self.download_list[index] for index in data_filter]
         for i, request in enumerate(filtered_download_list):
             if request.return_data and data_list[i] is None:
-                if os.path.exists(request.file_location):
-                    data_list[i] = read_data(request.file_location)
+                if os.path.exists(request.get_file_path()):
+                    data_list[i] = read_data(request.get_file_path())
                 elif raise_download_errors:
                     raise DownloadFailedException('Failed to download data from {}.\n No previously downloaded data '
-                                                  'exists in file {}.'.format(request.url, request.file_location))
+                                                  'exists in file {}.'.format(request.url, request.get_file_path()))
         return data_list
 
 
