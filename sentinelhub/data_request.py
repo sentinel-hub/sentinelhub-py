@@ -4,12 +4,12 @@ Main module for obtaining data.
 
 # pylint: disable=too-many-instance-attributes
 
-from abc import ABC, abstractmethod
-
 import datetime
 import os.path
 import logging
 import warnings
+from abc import ABC, abstractmethod
+from copy import deepcopy
 
 from .ogc import OgcImageService
 from .geopedia import GeopediaImageService
@@ -66,7 +66,7 @@ class DataRequest(ABC):
     def is_valid_request(self):
         return isinstance(self.download_list, list)
 
-    def get_data(self, save_data=False, redownload=False, max_threads=None):
+    def get_data(self, *, save_data=False, data_filter=None, redownload=False, max_threads=None):
         """
         Get requested data either by downloading it or by reading it from the disk (if it
         was previously downloaded and saved).
@@ -76,6 +76,9 @@ class DataRequest(ABC):
         :param redownload: if ``True``, download again the requested data even though it's already saved to disk.
                             Default is ``False``, do not download if data is already available on disk.
         :type redownload: bool
+        :param data_filter: Used to specify which items will be returned by the method and in which order. E.g. with
+            ``data_filter=[1, 3, -1]`` the method will return only 1st, 3rd and last item. Default filter is ``None``.
+        :type data_filter: list(int) or None
         :param max_threads: number of threads to use when downloading data; default is ``max_threads=None`` which uses
                             ``5*N`` workers where ``N`` is the number of processors on the system
         :type max_threads: int
@@ -84,24 +87,31 @@ class DataRequest(ABC):
         :rtype: list of numpy arrays
         """
         self._preprocess_request(save_data, True)
-        data_list = self._execute_data_download(redownload, max_threads)
-        return self._add_saved_data(data_list)
+        data_list = self._execute_data_download(data_filter, redownload, max_threads)
+        return self._add_saved_data(data_list, data_filter)
 
-    def save_data(self, redownload=False, max_threads=None):
+    def save_data(self, *, data_filter=None, redownload=False, max_threads=None):
         """
         Saves data to disk. If ``redownload=True`` then the data is redownloaded using ``max_threads`` workers.
 
+        :param data_filter: Used to specify which items will be returned by the method and in which order. E.g. with
+            `data_filter=[1, 3, -1]` the method will return only 1st, 3rd and last item. Default filter is ``None``.
+        :type data_filter: list(int) or None
         :param redownload: data is redownloaded if ``redownload=True``. Default is ``False``
         :type redownload: bool
-        :param max_threads: the number of workers to use when downloading, default ``max_threads=None``
+        :param max_threads: number of threads to use when downloading data; default is ``max_threads=None`` which uses
+                            ``5*N`` workers where ``N`` is the number of processors on the system
         :type max_threads: int
         """
         self._preprocess_request(True, False)
-        self._execute_data_download(redownload, max_threads, raise_all_errors=False)
+        self._execute_data_download(data_filter, redownload, max_threads, raise_all_errors=False)
 
-    def _execute_data_download(self, redownload, max_threads, raise_all_errors=True):
+    def _execute_data_download(self, data_filter, redownload, max_threads, raise_all_errors=True):
         """Calls download module and executes the download process
 
+        :param data_filter: Used to specify which items will be returned by the method and in which order. E.g. with
+            `data_filter=[1, 3, -1]` the method will return only 1st, 3rd and last item. Default filter is ``None``.
+        :type data_filter: list(int) or None
         :param redownload: data is redownloaded if ``redownload=True``. Default is ``False``
         :type redownload: bool
         :param max_threads: the number of workers to use when downloading, default ``max_threads=None``
@@ -113,8 +123,22 @@ class DataRequest(ABC):
         :return: List of data obtained from download
         :rtype: list
         """
+        is_repeating_filter = False
+        if data_filter is None:
+            filtered_download_list = self.download_list
+        elif isinstance(data_filter, (list, tuple)):
+            try:
+                filtered_download_list = [self.download_list[index] for index in data_filter]
+            except IndexError:
+                raise IndexError('Indices of data_filter are out of range')
+
+            filtered_download_list, mapping_list = self._filter_repeating_items(filtered_download_list)
+            is_repeating_filter = len(filtered_download_list) < len(mapping_list)
+        else:
+            raise ValueError('data_filter parameter must be a list of indices')
+
         data_list = []
-        for future in download_data(self.download_list, redownload=redownload, max_threads=max_threads):
+        for future in download_data(filtered_download_list, redownload=redownload, max_threads=max_threads):
             try:
                 data_list.append(future.result(timeout=SHConfig().download_timeout_seconds))
             except ImageDecodingError as err:
@@ -125,7 +149,32 @@ class DataRequest(ABC):
                     raise aws_exception
                 warnings.warn(str(aws_exception))
                 data_list.append(None)
+
+        if is_repeating_filter:
+            data_list = [deepcopy(data_list[index]) for index in mapping_list]
+
         return data_list
+
+    @staticmethod
+    def _filter_repeating_items(download_list):
+        """ Because of data_filter some requests in download list might be the same. In order not to download them again
+        this method will reduce the list of requests. It will also return a mapping list which can be used to
+        reconstruct the previous list of download requests.
+
+        :param download_list: List of download requests
+        :type download_list: list(sentinelhub.DownloadRequest)
+        :return: reduced download list with unique requests and mapping list
+        :rtype: (list(sentinelhub.DownloadRequest), list(int))
+        """
+        unique_requests_map = {}
+        mapping_list = []
+        unique_download_list = []
+        for download_request in download_list:
+            if download_request not in unique_requests_map:
+                unique_requests_map[download_request] = len(unique_download_list)
+                unique_download_list.append(download_request)
+            mapping_list.append(unique_requests_map[download_request])
+        return unique_download_list, mapping_list
 
     def _preprocess_request(self, save_data, return_data):
         """
@@ -152,11 +201,13 @@ class DataRequest(ABC):
             for folder in self.folder_list:
                 make_folder(os.path.join(self.data_folder, folder))
 
-    def _add_saved_data(self, data_list):
+    def _add_saved_data(self, data_list, data_filter):
         """
         Adds already saved data that was not redownloaded to the requested data list.
         """
-        for i, request in enumerate(self.download_list):
+        filtered_download_list = self.download_list if data_filter is None else \
+            [self.download_list[index] for index in data_filter]
+        for i, request in enumerate(filtered_download_list):
             if request.return_data and data_list[i] is None:
                 if os.path.exists(request.file_location):
                     data_list[i] = read_data(request.file_location)

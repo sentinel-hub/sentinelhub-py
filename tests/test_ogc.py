@@ -17,7 +17,7 @@ class TestOgc(TestSentinelHub):
         Container for each test case of sentinelhub OGC functionalities
         """
         def __init__(self, name, request, result_len, img_min=None, img_max=None, img_mean=None, img_median=None,
-                     tile_num=None, url_check=None, date_check=None, save_data=False):
+                     tile_num=None, url_check=None, date_check=None, save_data=False, data_filter=None):
             self.name = name
             self.request = request
             self.result_len = result_len
@@ -29,15 +29,16 @@ class TestOgc(TestSentinelHub):
             self.url_check = url_check
             self.date_check = date_check
             self.save_data = save_data
+            self.data_filter = data_filter
 
             self.data = None
 
         def collect_data(self):
             if self.save_data:
-                self.request.save_data(redownload=True)
-                self.data = self.request.get_data(save_data=True)
+                self.request.save_data(redownload=True, data_filter=self.data_filter)
+                self.data = self.request.get_data(save_data=True, data_filter=self.data_filter)
             else:
-                self.data = self.request.get_data(redownload=True)
+                self.data = self.request.get_data(redownload=True, data_filter=self.data_filter)
 
     @classmethod
     def setUpClass(cls):
@@ -55,18 +56,17 @@ class TestOgc(TestSentinelHub):
             cls.OgcTestCase('generalWmsTest',
                             OgcRequest(data_folder=cls.OUTPUT_FOLDER, image_format=MimeType.TIFF_d32f, bbox=wgs84_bbox,
                                        layer='ALL_BANDS', maxcc=0.5, size_x=img_width, size_y=img_height,
-                                       time=('2017-10-01', '2018-01-01'), instance_id=cls.INSTANCE_ID,
+                                       time=('2017-01-01', '2018-01-01'), instance_id=cls.INSTANCE_ID,
                                        service_type=ServiceType.WMS, time_difference=datetime.timedelta(days=10)),
-                            result_len=3, img_min=0.0, img_max=0.4544, img_mean=0.1038, img_median=0.0945, tile_num=7,
-                            date_check=expected_date, save_data=True),
+                            result_len=14, img_min=0.0, img_max=1.5964, img_mean=0.1810, img_median=0.1140, tile_num=29,
+                            save_data=True, data_filter=[0, -2, 0]),
             cls.OgcTestCase('generalWcsTest',
                             OgcRequest(data_folder=cls.OUTPUT_FOLDER, image_format=MimeType.TIFF_d32f, bbox=wgs84_bbox,
                                        layer='ALL_BANDS', maxcc=0.6, size_x=resx, size_y=resy,
                                        time=('2017-10-01', '2018-01-01'), instance_id=cls.INSTANCE_ID,
                                        service_type=ServiceType.WCS, time_difference=datetime.timedelta(days=5)),
                             result_len=5, img_min=0.0002, img_max=0.5266, img_mean=0.1038, img_median=0.0948,
-                            tile_num=9, date_check=expected_date, save_data=True),
-
+                            tile_num=9, date_check=expected_date, save_data=True, data_filter=[0, -1]),
             # CustomUrlParam tests:
             cls.OgcTestCase('customUrlAtmcorQualitySampling',
                             WmsRequest(data_folder=cls.OUTPUT_FOLDER, image_format=MimeType.PNG, layer='TRUE_COLOR',
@@ -77,7 +77,8 @@ class TestOgc(TestSentinelHub):
                                                           CustomUrlParam.QUALITY: 100,
                                                           CustomUrlParam.DOWNSAMPLING: 'BICUBIC',
                                                           CustomUrlParam.UPSAMPLING: 'BICUBIC'}),
-                            result_len=1, img_min=11, img_max=255, img_mean=193.796, img_median=206, tile_num=2),
+                            result_len=1, img_min=11, img_max=255, img_mean=193.796, img_median=206, tile_num=2,
+                            data_filter=[0, -1]),
             cls.OgcTestCase('customUrlPreview',
                             WmsRequest(data_folder=cls.OUTPUT_FOLDER, image_format=MimeType.PNG, layer='TRUE_COLOR',
                                        height=img_height, bbox=wgs84_bbox, instance_id=cls.INSTANCE_ID,
@@ -179,9 +180,9 @@ class TestOgc(TestSentinelHub):
         for test_case in self.test_cases:
             with self.subTest(msg='Test case {}'.format(test_case.name)):
                 self.assertTrue(isinstance(test_case.data, list), "Expected a list")
-                self.assertEqual(len(test_case.data), test_case.result_len,
-                                 "Expected a list of length {}, got length {}".format(test_case.result_len,
-                                                                                      len(test_case.data)))
+                result_len = test_case.result_len if test_case.data_filter is None else len(test_case.data_filter)
+                self.assertEqual(len(test_case.data), result_len,
+                                 "Expected a list of length {}, got length {}".format(result_len, len(test_case.data)))
 
     def test_wfs(self):
         for test_case in self.test_cases:
@@ -208,6 +209,17 @@ class TestOgc(TestSentinelHub):
                                      msg="Expected {} dates, got {}".format(test_case.result_len, len(dates)))
                     self.assertEqual(test_case.date_check, dates[0],
                                      msg="Expected date {}, got {}".format(test_case.date_check, dates[0]))
+
+    def test_filter(self):
+        for test_case in self.test_cases:
+            if test_case.data_filter is not None:
+                with self.subTest(msg='Test case {}'.format(test_case.name)):
+                    if (test_case.data_filter[0] - test_case.data_filter[-1]) % test_case.result_len == 0:
+                        self.assertTrue(np.array_equal(test_case.data[0], test_case.data[-1]),
+                                        msg="Expected first and last output to be equal, got different")
+                    else:
+                        self.assertFalse(np.array_equal(test_case.data[0], test_case.data[-1]),
+                                         msg="Expected first and last output to be different, got the same")
 
     def test_stats(self):
         for test_case in self.test_cases:
