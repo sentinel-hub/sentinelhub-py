@@ -78,7 +78,7 @@ class DataRequest(ABC):
                             Default is ``False``, do not download if data is already available on disk.
         :type redownload: bool
         :param data_filter: Used to specify which items will be returned by the method and in which order. E.g. with
-            ``data_filter=[1, 3, -1]`` the method will return only 1st, 3rd and last item. Default filter is ``None``.
+            ``data_filter=[0, 2, -1]`` the method will return only 1st, 3rd and last item. Default filter is ``None``.
         :type data_filter: list(int) or None
         :param max_threads: number of threads to use when downloading data; default is ``max_threads=None`` which uses
                             ``5*N`` workers where ``N`` is the number of processors on the system
@@ -100,7 +100,7 @@ class DataRequest(ABC):
         Saves data to disk. If ``redownload=True`` then the data is redownloaded using ``max_threads`` workers.
 
         :param data_filter: Used to specify which items will be returned by the method and in which order. E.g. with
-            `data_filter=[1, 3, -1]` the method will return only 1st, 3rd and last item. Default filter is ``None``.
+            `data_filter=[0, 2, -1]` the method will return only 1st, 3rd and last item. Default filter is ``None``.
         :type data_filter: list(int) or None
         :param redownload: data is redownloaded if ``redownload=True``. Default is ``False``
         :type redownload: bool
@@ -118,7 +118,7 @@ class DataRequest(ABC):
         """Calls download module and executes the download process
 
         :param data_filter: Used to specify which items will be returned by the method and in which order. E.g. with
-            `data_filter=[1, 3, -1]` the method will return only 1st, 3rd and last item. Default filter is ``None``.
+            `data_filter=[0, 2, -1]` the method will return only 1st, 3rd and last item. Default filter is ``None``.
         :type data_filter: list(int) or None
         :param redownload: data is redownloaded if ``redownload=True``. Default is ``False``
         :type redownload: bool
