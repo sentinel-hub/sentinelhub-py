@@ -15,7 +15,7 @@ from .ogc import OgcImageService
 from .geopedia import GeopediaImageService
 from .aws import AwsProduct, AwsTile
 from .aws_safe import SafeProduct, SafeTile
-from .download import download_data, ImageDecodingError, AwsDownloadFailedException
+from .download import download_data, ImageDecodingError, DownloadFailedException
 from .io_utils import read_data
 from .os_utils import make_folder
 from .constants import DataSource, MimeType, CustomUrlParam, ServiceType, CRS
@@ -66,7 +66,8 @@ class DataRequest(ABC):
     def is_valid_request(self):
         return isinstance(self.download_list, list)
 
-    def get_data(self, *, save_data=False, data_filter=None, redownload=False, max_threads=None):
+    def get_data(self, *, save_data=False, data_filter=None, redownload=False, max_threads=None,
+                 raise_download_errors=True):
         """
         Get requested data either by downloading it or by reading it from the disk (if it
         was previously downloaded and saved).
@@ -82,15 +83,19 @@ class DataRequest(ABC):
         :param max_threads: number of threads to use when downloading data; default is ``max_threads=None`` which uses
                             ``5*N`` workers where ``N`` is the number of processors on the system
         :type max_threads: int
+        :param raise_download_errors: If ``True`` any error in download process should be raised as
+            ``DownloadFailedException``. If ``False`` failed downloads will only raise warnings and the method will
+            return list with ``None`` values in places where the results of failed download requests should be.
+        :type raise_download_errors: bool
         :return: requested images as numpy arrays, where each array corresponds to a single acquisition and has
                     shape ``[height, width, channels]``.
         :rtype: list of numpy arrays
         """
         self._preprocess_request(save_data, True)
-        data_list = self._execute_data_download(data_filter, redownload, max_threads)
-        return self._add_saved_data(data_list, data_filter)
+        data_list = self._execute_data_download(data_filter, redownload, max_threads, raise_download_errors)
+        return self._add_saved_data(data_list, data_filter, raise_download_errors)
 
-    def save_data(self, *, data_filter=None, redownload=False, max_threads=None):
+    def save_data(self, *, data_filter=None, redownload=False, max_threads=None, raise_download_errors=False):
         """
         Saves data to disk. If ``redownload=True`` then the data is redownloaded using ``max_threads`` workers.
 
@@ -102,11 +107,14 @@ class DataRequest(ABC):
         :param max_threads: number of threads to use when downloading data; default is ``max_threads=None`` which uses
                             ``5*N`` workers where ``N`` is the number of processors on the system
         :type max_threads: int
+        :param raise_download_errors: If ``True`` any error in download process should be raised as
+            ``DownloadFailedException``. If ``False`` failed downloads will only raise warnings.
+        :type raise_download_errors: bool
         """
         self._preprocess_request(True, False)
-        self._execute_data_download(data_filter, redownload, max_threads, raise_all_errors=False)
+        self._execute_data_download(data_filter, redownload, max_threads, raise_download_errors)
 
-    def _execute_data_download(self, data_filter, redownload, max_threads, raise_all_errors=True):
+    def _execute_data_download(self, data_filter, redownload, max_threads, raise_download_errors):
         """Calls download module and executes the download process
 
         :param data_filter: Used to specify which items will be returned by the method and in which order. E.g. with
@@ -116,10 +124,9 @@ class DataRequest(ABC):
         :type redownload: bool
         :param max_threads: the number of workers to use when downloading, default ``max_threads=None``
         :type max_threads: int
-        :param raise_all_errors: This applies in case of Exception during download process. If flag is set to True any
-                            exception will be propagated and raised. If False only some exceptions will be raised and
-                            for other a warning will be send to user.
-        :type raise_all_errors: bool
+        :param raise_download_errors: If ``True`` any error in download process should be raised as
+            ``DownloadFailedException``. If ``False`` failed downloads will only raise warnings.
+        :type raise_download_errors: bool
         :return: List of data obtained from download
         :rtype: list
         """
@@ -144,10 +151,10 @@ class DataRequest(ABC):
             except ImageDecodingError as err:
                 data_list.append(None)
                 LOGGER.debug('%s while downloading data; will try to load it from disk if it was saved', err)
-            except AwsDownloadFailedException as aws_exception:
-                if raise_all_errors:
-                    raise aws_exception
-                warnings.warn(str(aws_exception))
+            except DownloadFailedException as download_exception:
+                if raise_download_errors:
+                    raise download_exception
+                warnings.warn(str(download_exception))
                 data_list.append(None)
 
         if is_repeating_filter:
@@ -201,7 +208,7 @@ class DataRequest(ABC):
             for folder in self.folder_list:
                 make_folder(os.path.join(self.data_folder, folder))
 
-    def _add_saved_data(self, data_list, data_filter):
+    def _add_saved_data(self, data_list, data_filter, raise_download_errors):
         """
         Adds already saved data that was not redownloaded to the requested data list.
         """
@@ -211,9 +218,9 @@ class DataRequest(ABC):
             if request.return_data and data_list[i] is None:
                 if os.path.exists(request.file_location):
                     data_list[i] = read_data(request.file_location)
-                else:
-                    raise ValueError('Failed to download data from {}.\n No previously downloaded data exists in '
-                                     'file {}.'.format(request.url, request.file_location))
+                elif raise_download_errors:
+                    raise DownloadFailedException('Failed to download data from {}.\n No previously downloaded data '
+                                                  'exists in file {}.'.format(request.url, request.file_location))
         return data_list
 
 
