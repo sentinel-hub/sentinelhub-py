@@ -301,9 +301,10 @@ class CustomUrlParam(Enum):
     """ Enum class to represent supported custom url parameters of OGC services
 
     Supported parameters are `ShowLogo`, `AtmFilter`, `EvalScript`, `EvalScriptUrl`, `Preview`, `Quality`, `Upsampling`,
-    `Downsampling` and `Transparent`.
+    `Downsampling`, `Transparent`, `BgColor` and `Geometry`.
 
-    See http://sentinel-hub.com/develop/documentation/api/custom-url-parameters for more information.
+    See http://sentinel-hub.com/develop/documentation/api/custom-url-parameters and
+    https://www.sentinel-hub.com/develop/documentation/api/ogc_api/wms-parameters for more information.
     """
     SHOWLOGO = 'ShowLogo'
     ATMFILTER = 'AtmFilter'
@@ -314,6 +315,8 @@ class CustomUrlParam(Enum):
     UPSAMPLING = 'Upsampling'
     DOWNSAMPLING = 'Downsampling'
     TRANSPARENT = 'Transparent'
+    BGCOLOR = 'BgColor'
+    GEOMETRY = 'Geometry'
 
     @classmethod
     def has_value(cls, value):

@@ -46,6 +46,8 @@ class TestOgc(TestSentinelHub):
         wgs84_bbox_2 = BBox(bbox=(21.3, 64.0, 22.0, 64.5), crs=CRS.WGS84)
         wgs84_bbox_3 = BBox(bbox=(-72.0, -70.4, -71.8, -70.2), crs=CRS.WGS84)
         pop_web_bbox = BBox(bbox=(1292344.0, 5195920.0, 1310615.0, 5214191.0), crs=CRS.POP_WEB)
+        geometry_wkt = 'POLYGON((1292344.0 5205055.5, 1301479.5 5195920.0, 1310615.0 5205055.5, ' \
+                       '1301479.5 5214191.0, 1292344.0 5205055.5))'
         img_width = 100
         img_height = 100
         resx = '53m'
@@ -96,20 +98,22 @@ class TestOgc(TestSentinelHub):
                                                               'customScripts/master/sentinel-2/false_color_infrared/'
                                                               'script.js'}),
                             result_len=1, img_min=41, img_max=255, img_mean=230.568, img_median=255, tile_num=3),
-            cls.OgcTestCase('customUrlEvalscript',
+            cls.OgcTestCase('customUrlEvalscript,Transparent',
                             WcsRequest(data_folder=cls.OUTPUT_FOLDER, image_format=MimeType.PNG, layer='TRUE_COLOR',
                                        resx=resx, resy=resy, bbox=wgs84_bbox, instance_id=cls.INSTANCE_ID,
                                        time=('2017-10-01', '2017-10-02'),
                                        custom_url_params={CustomUrlParam.SHOWLOGO: True,
+                                                          CustomUrlParam.TRANSPARENT: True,
                                                           CustomUrlParam.EVALSCRIPT: 'return [B10,B8A, B03 ]'}),
-                            result_len=1, img_min=0, img_max=235, img_mean=48.539, img_median=55, tile_num=2),
-            cls.OgcTestCase('TransparentFalseLogo',
+                            result_len=1, img_min=0, img_max=255, img_mean=100.1543, img_median=68.0, tile_num=2),
+            cls.OgcTestCase('FalseLogo,BgColor,Geometry',
                             WmsRequest(data_folder=cls.OUTPUT_FOLDER, image_format=MimeType.PNG, layer='TRUE_COLOR',
                                        width=img_width, height=img_height, bbox=pop_web_bbox,
                                        instance_id=cls.INSTANCE_ID, time=('2017-10-01', '2017-10-02'),
                                        custom_url_params={CustomUrlParam.SHOWLOGO: False,
-                                                          CustomUrlParam.TRANSPARENT: True}),
-                            result_len=1, img_min=48, img_max=255, img_mean=230.9804, img_median=242.0, tile_num=3),
+                                                          CustomUrlParam.BGCOLOR: "F4F86A",
+                                                          CustomUrlParam.GEOMETRY: geometry_wkt}),
+                            result_len=1, img_min=63, img_max=255, img_mean=213.3590, img_median=242.0, tile_num=3),
 
             # DataSource tests:
             cls.OgcTestCase('S2 L1C Test',

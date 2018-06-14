@@ -2,7 +2,7 @@
 This module lists all externally useful classes and functions
 """
 
-from .data_request import WmsRequest, WcsRequest, AwsTileRequest, AwsProductRequest, GeopediaWmsRequest,\
+from .data_request import WmsRequest, WcsRequest, AwsTileRequest, AwsProductRequest, GeopediaWmsRequest, \
     get_safe_format, download_safe_format
 
 from .aws import AwsProduct, AwsTile
@@ -16,7 +16,9 @@ from .common import BBox
 from .constants import DataSource, CustomUrlParam, CRS, MimeType, OgcConstants, AwsConstants, ServiceType
 from .config import SHConfig
 
-from .download import DownloadRequest, download_data, get_json, get_xml
+from .download import DownloadRequest, download_data, get_json, get_xml, DownloadFailedException, \
+    AwsDownloadFailedException
+
 from .opensearch import get_tile_info_id, get_tile_info, get_area_dates, get_area_info
 
 from .io_utils import read_data, write_data
@@ -26,4 +28,4 @@ from .geo_utils import bbox_to_resolution, get_image_dimension, to_utm_bbox, get
 from .time_utils import next_date, prev_date, get_current_date
 
 
-__version__ = "2.0.3"
+__version__ = "2.1.0"
