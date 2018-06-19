@@ -5,7 +5,7 @@ is it [lng1, lat1, lng2, lat2]? Or is it something else? And what CRS does it ex
 separate parameter?
 
 In this module the BBox class provides the canonical representation of a BBox that all the functions and
-classes of the sg_utils package use, solving these issues.
+classes of the sentinelhub package use, solving these issues.
 
 Available classes:
  - BBox, represent a bounding box in a given CRS
