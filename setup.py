@@ -42,5 +42,21 @@ setup(
     entry_points={'console_scripts': ['sentinelhub=sentinelhub.commands:main_help',
                                       'sentinelhub.aws=sentinelhub.commands:aws',
                                       'sentinelhub.config=sentinelhub.commands:config',
-                                      'sentinelhub.download=sentinelhub.commands:download']}
+                                      'sentinelhub.download=sentinelhub.commands:download']},
+    classifiers=[
+        'Development Status :: 5 - Production/Stable',
+        'Intended Audience :: Developers',
+        'Intended Audience :: Education',
+        'Intended Audience :: Science/Research',
+        'License :: OSI Approved :: MIT License',
+        'Operating System :: MacOS',
+        'Operating System :: Microsoft :: Windows',
+        'Operating System :: Unix',
+        'Programming Language :: Python',
+        'Programming Language :: Python :: 3',
+        'Programming Language :: Python :: 3.5',
+        'Programming Language :: Python :: 3.6',
+        'Topic :: Scientific/Engineering',
+        'Topic :: Software Development'
+    ]
 )
