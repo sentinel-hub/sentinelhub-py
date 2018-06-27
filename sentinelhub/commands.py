@@ -99,7 +99,8 @@ def config(show, **params):
             if getattr(sh_config, param) != value:
                 setattr(sh_config, param, value)
                 updated_params[param] = value
-    sh_config.save()
+    if updated_params:
+        sh_config.save()
 
     for param in SHConfig().get_params():
         if param in updated_params:
