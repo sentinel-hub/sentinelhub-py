@@ -45,12 +45,26 @@ class SHConfig:
         """
         Private class.
         """
+        CONFIG_PARAMS = OrderedDict([
+            ('instance_id', str),
+            ('aws_access_key_id', str),
+            ('aws_secret_access_key', str),
+            ('ogc_base_url', str),
+            ('gpd_base_url', str),
+            ('aws_base_url', str),
+            ('aws_s3_l1c_bucket', str),
+            ('use_s3_l1c_bucket', bool),
+            ('aws_s3_l2a_bucket', str),
+            ('opensearch_url', str),
+            ('max_wfs_records_per_query', int),
+            ('max_opensearch_records_per_query', int),
+            ('default_start_date', str),
+            ('max_download_attempts', int),
+            ('download_sleep_time', int),
+            ('download_timeout_seconds', int)
+        ])
+
         def __init__(self):
-            self.config_params = ['instance_id', 'aws_access_key_id', 'aws_secret_access_key', 'ogc_base_url',
-                                  'gpd_base_url', 'aws_base_url', 'aws_s3_l1c_bucket', 'use_s3_l1c_bucket',
-                                  'aws_s3_l2a_bucket', 'opensearch_url', 'max_wfs_records_per_query',
-                                  'max_opensearch_records_per_query', 'default_start_date', 'max_download_attempts',
-                                  'download_sleep_time', 'download_timeout_seconds']
             self.instance_id = ''
             self.load_configuration()
 
@@ -62,9 +76,12 @@ class SHConfig:
             :type config: dict
             """
 
-            for key in self.config_params:
-                if key not in config:
-                    raise ValueError('Configuration file does not contain %s key.' % key)
+            for param in self.CONFIG_PARAMS:
+                if param not in config:
+                    raise ValueError("Configuration file does not contain '%s' parameter." % param)
+            for param, param_type in self.CONFIG_PARAMS.items():
+                if not isinstance(config[param], param_type):
+                    raise ValueError("Value of parameter '{}' must be of type {}".format(param, param_type.__name__))
             if config['max_wfs_records_per_query'] > 100:
                 raise ValueError("Value of config parameter 'max_wfs_records_per_query' must be at most 100")
             if config['max_opensearch_records_per_query'] > 500:
@@ -94,7 +111,7 @@ class SHConfig:
                 self._check_configuration(config)
 
                 for prop in config:
-                    if prop in self.config_params:
+                    if prop in self.CONFIG_PARAMS:
                         setattr(self, prop, config[prop])
 
                 if not self.instance_id:
@@ -106,7 +123,7 @@ class SHConfig:
             :return: Ordered dictionary
             :rtype: collections.OrderedDict
             """
-            config = OrderedDict((prop, getattr(self, prop)) for prop in self.config_params)
+            config = OrderedDict((prop, getattr(self, prop)) for prop in self.CONFIG_PARAMS)
             if config['instance_id'] is None:
                 config['instance_id'] = ''
             return config
@@ -132,7 +149,7 @@ class SHConfig:
         return getattr(self._instance, name)
 
     def __dir__(self):
-        return sorted(list(dir(super(SHConfig, self))) + self._instance.config_params)
+        return sorted(list(dir(super(SHConfig, self))) + list(self._instance.CONFIG_PARAMS))
 
     def __str__(self):
         return json.dumps(self._instance.get_config(), indent=2)
@@ -146,7 +163,7 @@ class SHConfig:
             ``my_config.instance_id = '<new instance id>'`` \n
             ``my_config.save()``
         """
-        for prop in self._instance.config_params:
+        for prop in self._instance.CONFIG_PARAMS:
             setattr(self._instance, prop, getattr(self, prop))
         self._instance.save_configuration()
 
@@ -156,7 +173,7 @@ class SHConfig:
         :return: List of parameter names
         :rtype: list(str)
         """
-        return self._instance.config_params
+        return list(self._instance.CONFIG_PARAMS)
 
     def get_config_location(self):
         """ Returns location of configuration file on disk

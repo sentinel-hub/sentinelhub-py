@@ -103,7 +103,10 @@ def config(show, **params):
 
     for param in SHConfig().get_params():
         if param in updated_params:
-            click.echo('The value of parameter "{}" was updated to "{}"'.format(param, updated_params[param]))
+            value = updated_params[param]
+            if isinstance(value, str):
+                value = "'{}'".format(value)
+            click.echo("The value of parameter '{}' was updated to {}".format(param, value))
 
     if show:
         click.echo(str(sh_config))
