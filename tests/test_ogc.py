@@ -176,6 +176,18 @@ class TestOgc(TestSentinelHub):
                             result_len=1, img_min=465, img_max=59287, img_mean=5323.0523, img_median=943.0,
                             tile_num=1)
         ]
+        """
+        cls.test_cases.extend([
+            cls.OgcTestCase('EOCloud S1 IW Test',
+                            WmsRequest(data_source=DataSource.SENTINEL1_IW, data_folder=cls.OUTPUT_FOLDER,
+                                       image_format=MimeType.TIFF_d32f, layer='BANDS_S1_IW',
+                                       width=img_width, height=img_height, bbox=wgs84_bbox,
+                                       instance_id=cls.INSTANCE_ID, time=('2017-10-01', '2017-10-02'),
+                                       time_difference=datetime.timedelta(hours=1)),
+                            result_len=1, img_min=0.0, img_max=0.49706, img_mean=0.04082, img_median=0.00607,
+                            tile_num=2),
+        ])
+        """
 
         for test_case in cls.test_cases:
             test_case.collect_data()
