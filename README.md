@@ -1,4 +1,4 @@
-[![License](https://img.shields.io/pypi/l/sentinelhub.svg)](https://pypi.org/project/sentinelhub/)
+[![](https://img.shields.io/pypi/l/sentinelhub.svg)](https://github.com/sentinel-hub/sentinelhub-py/blob/master/LICENSE.md)
 [![Package version](https://badge.fury.io/py/sentinelhub.svg)](https://pypi.org/project/sentinelhub/)
 [![Build status](https://travis-ci.org/sentinel-hub/sentinelhub-py.svg?branch=master)](https://travis-ci.org/sentinel-hub/sentinelhub-py)
 [![Docs status](https://readthedocs.org/projects/sentinelhub-py/badge/?version=latest)](http://sentinelhub-py.readthedocs.io/en/latest/)
