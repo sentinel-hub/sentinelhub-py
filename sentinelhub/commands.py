@@ -74,7 +74,7 @@ def config_options(func):
 
 
 @click.command()
-@click.option('--show', is_flag=True, default=False, help='Show current configurations')
+@click.option('--show', is_flag=True, default=False, help='Show current configuration')
 @config_options
 def config(show, **params):
     """Inspect and configure parameters in your local sentinelhub configuration file
@@ -86,6 +86,7 @@ def config(show, **params):
       sentinelhub.config --max_download_attempts 5 --download_sleep_time 20 --download_timeout_seconds 120
     """
     sh_config = SHConfig()
+    updated_params = {}
     for param, value in params.items():
         if value is not None:
             try:
@@ -95,11 +96,18 @@ def config(show, **params):
                     value = True
                 elif value.lower() == 'false':
                     value = False
-            setattr(sh_config, param, value)
+            if getattr(sh_config, param) != value:
+                setattr(sh_config, param, value)
+                updated_params[param] = value
     sh_config.save()
+
+    for param in SHConfig().get_params():
+        if param in updated_params:
+            click.echo('The value of parameter "{}" was updated to "{}"'.format(param, updated_params[param]))
 
     if show:
         click.echo(str(sh_config))
+        click.echo('Configuration file location: {}'.format(sh_config.get_config_location()))
 
 
 @click.command()

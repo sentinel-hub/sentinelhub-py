@@ -71,7 +71,7 @@ class SHConfig:
                 raise ValueError("Value of config parameter 'max_opensearch_records_per_query' must be at most 500")
 
         @staticmethod
-        def _get_config_file():
+        def get_config_file():
             """Checks if configuration file exists and returns its file path
 
             :return: location of configuration file
@@ -89,7 +89,7 @@ class SHConfig:
             """
             Method reads and loads the configuration file.
             """
-            with open(self._get_config_file(), 'r') as cfg_file:
+            with open(self.get_config_file(), 'r') as cfg_file:
                 config = json.load(cfg_file)
                 self._check_configuration(config)
 
@@ -119,7 +119,7 @@ class SHConfig:
 
             self._check_configuration(config)
 
-            with open(self._get_config_file(), 'w') as cfg_file:
+            with open(self.get_config_file(), 'w') as cfg_file:
                 json.dump(config, cfg_file, indent=2)
 
     _instance = None
@@ -157,3 +157,11 @@ class SHConfig:
         :rtype: list(str)
         """
         return self._instance.config_params
+
+    def get_config_location(self):
+        """ Returns location of configuration file on disk
+
+        :return: File path of config.json file
+        :rtype: str
+        """
+        return self._instance.get_config_file()
