@@ -102,3 +102,6 @@ ENV/
 
 # Test output folder
 /TestOutputs
+
+# IDE config
+.idea/
