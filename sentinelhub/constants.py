@@ -8,8 +8,11 @@ import itertools as it
 import mimetypes
 import utm
 import os.path
+
 from pyproj import Proj
 from enum import Enum, EnumMeta
+
+from .config import SHConfig
 
 
 mimetypes.add_type('application/json', '.json')
@@ -62,22 +65,31 @@ class DataSource(Enum, metaclass=_DataSourceMeta):
         LANDSAT8 = 'Landsat 8'
         MODIS = 'MODIS'
         DEM = 'Mapzen DEM'
+        LANDSAT5 = 'Landsat 5'
+        LANDSAT7 = 'Landsat 7'
+        SENTINEL3 = 'Sentinel-3'
+        SENTINEL5P = 'Sentinel-5P'
+        ENVISAT_MERIS = 'Envisat Meris'
 
     class ProcessingLevel(Enum):
         """
         Types of processing level
         """
+        L2 = 'L2'
         L1C = 'L1C'
         L2A = 'L2A'
+        L3B = 'L3B'
+        L1TP = 'L1TP'
         GRD = 'GRD'
         MCD43A4 = 'MCD43A4'
 
     class Acquisition(Enum):
         """
-        Types of Sentinel-1 acquisition
+        Types of satellite acquisition
         """
         IW = 'IW'
         EW = 'EW'
+        OLCI = 'OLCI'
 
     class Polarisation(Enum):
         """
@@ -113,7 +125,15 @@ class DataSource(Enum, metaclass=_DataSourceMeta):
                        OrbitDirection.BOTH)
     DEM = (Source.DEM, )
     MODIS = (Source.MODIS, ProcessingLevel.MCD43A4)
-    LANDSAT8 = (Source.LANDSAT8, ProcessingLevel.GRD)
+    LANDSAT8 = (Source.LANDSAT8, ProcessingLevel.L1TP)
+    # eocloud sources:
+    LANDSAT5 = (Source.LANDSAT5, ProcessingLevel.GRD)
+    LANDSAT7 = (Source.LANDSAT7, ProcessingLevel.GRD)
+    SENTINEL3 = (Source.SENTINEL3, ProcessingLevel.L2, Acquisition.OLCI)
+    SENTINEL5P = (Source.SENTINEL5P, ProcessingLevel.L2)
+    ENVISAT_MERIS = (Source.ENVISAT_MERIS, )
+    SENTINEL2_L3B = (Source.SENTINEL2, ProcessingLevel.L3B)
+    LANDSAT8_L2A = (Source.LANDSAT8, ProcessingLevel.L2A)
 
     @classmethod
     def get_wfs_typename(cls, data_source):
@@ -124,15 +144,24 @@ class DataSource(Enum, metaclass=_DataSourceMeta):
         :return: Product identifier for WFS
         :rtype: str
         """
+        is_eocloud = SHConfig().is_eocloud_ogc_url()
         return {
             cls.SENTINEL2_L1C: 'S2.TILE',
-            cls.SENTINEL2_L2A: 'DSS2',
-            cls.SENTINEL1_IW: 'DSS3',
-            cls.SENTINEL1_EW: 'DSS3',
-            cls.SENTINEL1_EW_SH: 'DSS3',
+            cls.SENTINEL2_L2A: 'SEN4CAP_S2L2A.TILE' if is_eocloud else 'DSS2',
+            cls.SENTINEL1_IW: 'S1.TILE' if is_eocloud else 'DSS3',
+            cls.SENTINEL1_EW: 'S1_EW.TILE' if is_eocloud else 'DSS3',
+            cls.SENTINEL1_EW_SH: 'S1_EW_SH.TILE' if is_eocloud else 'DSS3',
             cls.DEM: 'DSS4',
             cls.MODIS: 'DSS5',
-            cls.LANDSAT8: 'DSS6'
+            cls.LANDSAT8: 'L8.TILE' if is_eocloud else 'DSS6',
+            # eocloud sources only:
+            cls.LANDSAT5: 'L5.TILE',
+            cls.LANDSAT7: 'L7.TILE',
+            cls.SENTINEL3: 'S3.TILE',
+            cls.SENTINEL5P: 'S5p_L2.TILE',
+            cls.ENVISAT_MERIS: 'ENV.TILE',
+            cls.SENTINEL2_L3B: 'SEN4CAP_S2L3B.TILE',
+            cls.LANDSAT8_L2A: 'SEN4CAP_L8L2A.TILE'
         }[data_source]
 
     @classmethod
@@ -166,7 +195,22 @@ class DataSource(Enum, metaclass=_DataSourceMeta):
         :return: ``True`` if data source exists at US West server and ``False`` otherwise
         :rtype: bool
         """
-        return data_source.value[0] in [cls.Source.value.LANDSAT8, cls.Source.value.MODIS, cls.Source.value.DEM]
+        return not SHConfig().is_eocloud_ogc_url() and \
+            data_source.value[0] in [cls.Source.value.LANDSAT8, cls.Source.value.MODIS, cls.Source.value.DEM]
+
+    @classmethod
+    def get_available_sources(cls):
+        """ Returns which data sources are available for configured Sentinel Hub OGC URL
+
+        :return: List of available data sources
+        :rtype: list(sentinelhub.DataSource)
+        """
+        if SHConfig().is_eocloud_ogc_url():
+            return [cls.SENTINEL2_L1C, cls.SENTINEL2_L2A, cls.SENTINEL2_L3B, cls.SENTINEL1_IW, cls.SENTINEL1_EW,
+                    cls.SENTINEL1_EW_SH, cls.SENTINEL3, cls.SENTINEL5P, cls.LANDSAT5, cls.LANDSAT7, cls.LANDSAT8,
+                    cls.LANDSAT8_L2A, cls.ENVISAT_MERIS]
+        return [cls.SENTINEL2_L1C, cls.SENTINEL2_L2A, cls.SENTINEL1_IW, cls.SENTINEL1_EW, cls.SENTINEL1_EW_SH, cls.DEM,
+                cls.MODIS, cls.LANDSAT8]
 
 
 class _Direction(Enum):

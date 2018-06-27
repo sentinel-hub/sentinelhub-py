@@ -6,8 +6,6 @@ import os.path
 import json
 from collections import OrderedDict
 
-# pylint: disable=E0203
-
 
 class SHConfig:
     """ This is a singleton implementation of the sentinelhub configuration class.
@@ -182,3 +180,11 @@ class SHConfig:
         :rtype: str
         """
         return self._instance.get_config_file()
+
+    def is_eocloud_ogc_url(self):
+        """ Checks if base OGC URL is set to eocloud URL
+
+        :return: True if 'eocloud' string is in base OGC URL else False
+        :rtype: bool
+        """
+        return 'eocloud' in self.ogc_base_url

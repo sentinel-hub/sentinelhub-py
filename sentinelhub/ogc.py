@@ -176,6 +176,10 @@ class OgcImageService(OgcService):
         if hasattr(request, 'data_source') and DataSource.is_uswest_source(request.data_source):
             url = 'https://services-uswest2.sentinel-hub.com/ogc/{}'.format(request.service_type.value)
 
+        if hasattr(request, 'data_source') and request.data_source not in DataSource.get_available_sources():
+            raise ValueError("{} is not available for service at ogc_base_url={}".format(request.data_source,
+                                                                                         SHConfig().ogc_base_url))
+
         params = {'SERVICE': request.service_type.value,
                   'BBOX': request.bbox.__str__(reverse=True) if request.bbox.get_crs() is CRS.WGS84 else str(
                       request.bbox),
