@@ -285,6 +285,7 @@ def _do_aws_request(request):
     else:
         key_args = {}
     aws_service, _, bucket_name, url_key = request.url.split('/', 3)
+
     s3_client = boto3.client(aws_service.strip(':'), **key_args)
     try:
         return s3_client.get_object(Bucket=bucket_name, Key=url_key, RequestPayer='requester')

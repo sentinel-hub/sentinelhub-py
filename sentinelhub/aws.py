@@ -36,6 +36,9 @@ class AwsService(ABC):
         self.download_list = []
         self.folder_list = []
 
+        self.base_url = self.get_base_url()
+        self.base_http_url = self.get_base_url(force_http=True)
+
     @abstractmethod
     def get_requests(self):
         raise NotImplementedError
@@ -96,9 +99,16 @@ class AwsService(ABC):
             raise ValueError('metadata files {} must be a subset of {}'.format(metafile_list, all_metafiles))
         return metafile_list
 
-    def get_base_url(self):
+    def get_base_url(self, force_http=False):
+        """ Creates base URL path
+
+        :param force_http: True if HTTP base URL for Sentinel-2 L1C should be used and False otherwise
+        :type force_http: str
+        :return: base url string
+        :rtype: str
+        """
         if self.data_source is DataSource.SENTINEL2_L1C:
-            if SHConfig().use_s3_l1c_bucket:
+            if SHConfig().use_s3_l1c_bucket and not force_http:
                 return 's3://{}/'.format(SHConfig().aws_s3_l1c_bucket)
             return SHConfig().aws_base_url
         return 's3://{}/'.format(SHConfig().aws_s3_l2a_bucket)
@@ -276,15 +286,14 @@ class AwsProduct(AwsService):
 
         self.data_source = self.get_data_source()
         self.safe_type = self.get_safe_type()
-        self.base_url = self.get_base_url()
+
+        super(AwsProduct, self).__init__(**kwargs)
 
         self.date = self.get_date()
         self.product_url = self.get_product_url()
         self.product_info = get_json(self.get_url(AwsConstants.PRODUCT_INFO))
 
         self.baseline = self.get_baseline()
-
-        super(AwsProduct, self).__init__(**kwargs)
 
     @staticmethod
     def parse_tile_list(tile_input):
@@ -369,18 +378,24 @@ class AwsProduct(AwsService):
         :return: url of file location
         :rtype: str
         """
-        if self.product_url is None:
-            self.product_url = self.get_product_url()
-        return '{}/{}'.format(self.product_url, self.add_file_extension(filename, data_format))
+        product_url = self.product_url
+        force_http = self.data_source is DataSource.SENTINEL2_L1C and \
+            filename in [AwsConstants.PRODUCT_INFO, AwsConstants.METADATA]
+        if product_url is None or force_http:
+            product_url = self.get_product_url(force_http=force_http)
+        return '{}/{}'.format(product_url, self.add_file_extension(filename, data_format))
 
-    def get_product_url(self):
+    def get_product_url(self, force_http=False):
         """
         Creates base url of product location on AWS.
 
+        :param force_http: True if HTTP base URL should be used and False otherwise
+        :type force_http: str
         :return: url of product location
         :rtype: str
         """
-        return '{}products/{}/{}'.format(self.base_url, self.date.replace('-', '/'), self.product_id)
+        base_url = self.base_http_url if force_http else self.base_url
+        return '{}products/{}/{}'.format(base_url, self.date.replace('-', '/'), self.product_id)
 
     def get_tile_url(self, tile_info):
         """
@@ -436,7 +451,8 @@ class AwsTile(AwsService):
         self.aws_index = aws_index
         self.data_source = data_source
 
-        self.base_url = self.get_base_url()
+        super(AwsTile, self).__init__(**kwargs)
+        self.tile_url = None
 
         self.aws_index = self.get_aws_index()
         self.tile_url = self.get_tile_url()
@@ -447,8 +463,6 @@ class AwsTile(AwsService):
         self.product_id = self.get_product_id()
         self.safe_type = self.get_safe_type()
         self.baseline = self.get_baseline()
-
-        super(AwsTile, self).__init__(**kwargs)
 
     @staticmethod
     def parse_tile_name(name):
@@ -547,12 +561,7 @@ class AwsTile(AwsService):
         :return: dictionary with tile information
         :rtype: dict
         """
-        url = self.get_url(AwsConstants.TILE_INFO)
-        try:
-            return get_json(url)
-        except Exception as err:
-            LOGGER.error('Download from url %s failed with %s', url, err)
-            raise
+        return get_json(self.get_url(AwsConstants.TILE_INFO))
 
     def get_url(self, filename):
         """
@@ -563,18 +572,24 @@ class AwsTile(AwsService):
         :return: url of file location
         :rtype: str
         """
-        if not hasattr(self, 'tile_url') or filename == AwsConstants.TILE_INFO:
-            self.tile_url = self.get_tile_url()
-        return '{}/{}'.format(self.tile_url, self.add_file_extension(filename))
+        tile_url = self.tile_url
+        force_http = self.data_source is DataSource.SENTINEL2_L1C and \
+            filename in [AwsConstants.TILE_INFO, AwsConstants.PRODUCT_INFO, AwsConstants.METADATA]
+        if tile_url is None or force_http:
+            tile_url = self.get_tile_url(force_http=force_http)
+        return '{}/{}'.format(tile_url, self.add_file_extension(filename))
 
-    def get_tile_url(self):
+    def get_tile_url(self, force_http=False):
         """
         Creates base url of tile location on AWS.
 
+        :param force_http: True if HTTP base URL should be used and False otherwise
+        :type force_http: str
         :return: url of tile location
         :rtype: str
         """
-        url = '{}tiles/{}/{}/{}/'.format(self.base_url, self.tile_name[0:2].lstrip('0'), self.tile_name[2],
+        base_url = self.base_http_url if force_http else self.base_url
+        url = '{}tiles/{}/{}/{}/'.format(base_url, self.tile_name[0:2].lstrip('0'), self.tile_name[2],
                                          self.tile_name[3:5])
         date_params = self.date.split('-')
         for param in date_params:
