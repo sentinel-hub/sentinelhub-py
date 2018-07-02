@@ -112,9 +112,6 @@ class SHConfig:
                     if prop in self.CONFIG_PARAMS:
                         setattr(self, prop, config[prop])
 
-                if not self.instance_id:
-                    self.instance_id = None
-
         def get_config(self):
             """Returns ordered dictionary with configuration parameters
 
