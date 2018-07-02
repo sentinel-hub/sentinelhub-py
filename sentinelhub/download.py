@@ -15,6 +15,7 @@ import numpy as np
 import tifffile as tiff
 from io import BytesIO
 from xml.etree import ElementTree
+from botocore.exceptions import NoCredentialsError
 
 from .os_utils import create_parent_folder, sys_is_windows
 from .constants import MimeType, RequestType
@@ -287,6 +288,12 @@ def _do_aws_request(request):
     s3_client = boto3.client(aws_service.strip(':'), **key_args)
     try:
         return s3_client.get_object(Bucket=bucket_name, Key=url_key, RequestPayer='requester')
+    except NoCredentialsError:
+        raise ValueError('The requested data is in Requester Pays AWS bucket. In order to download the data please set '
+                         'your access key either in AWS credentials file or in sentinelhub config.json file using '
+                         'command line:\n'
+                         '$ sentinelhub.config --aws_access_key_id <your AWS key> --aws_secret_access_key '
+                         '<your AWS secret key>')
     except s3_client.exceptions.NoSuchKey:
         raise AwsDownloadFailedException('File in location %s is missing' % request.url)
     except s3_client.exceptions.NoSuchBucket:

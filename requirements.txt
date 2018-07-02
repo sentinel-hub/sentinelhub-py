@@ -11,3 +11,4 @@ pyproj
 utm
 shapely
 boto3
+botocore
