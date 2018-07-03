@@ -3,7 +3,7 @@ requests
 click
 numpy
 matplotlib
-opencv-python==3.4.0.14
+opencv-python-headless==3.4.0.14
 tifffile
 cython
 python-dateutil
