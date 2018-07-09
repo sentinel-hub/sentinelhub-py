@@ -47,6 +47,9 @@ class DataRequest(ABC):
     def get_download_list(self):
         """
         Returns a list of download requests for requested data.
+
+        :return: List of data to be downloaded
+        :rtype: list(sentinelhub.DownloadRequest)
         """
         return self.download_list
 
@@ -54,12 +57,18 @@ class DataRequest(ABC):
         """
         Returns a list of file names where the requested data will be saved or read from, if it
         was already downloaded and saved.
+
+        :return: List of filenames where downloaded data will be saved.
+        :rtype: list(str)
         """
         return [request.filename for request in self.download_list]
 
     def get_url_list(self):
         """
         Returns a list of urls for requested data.
+
+        :return: List of URLs from where data will be downloaded.
+        :rtype: list(str)
         """
         return [request.url for request in self.download_list]
 
