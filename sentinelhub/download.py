@@ -414,6 +414,7 @@ def decode_image(data, image_type):
         image = tiff.imread(BytesIO(data))
     else:
         image = np.asarray(Image.open(BytesIO(data)))
+        image.setflags(write=1)
 
         if image_type is MimeType.JP2:
             try:
