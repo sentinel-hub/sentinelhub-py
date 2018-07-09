@@ -6,15 +6,18 @@ import json
 import os
 import struct
 import logging
-import cv2
 import numpy as np
 import tifffile as tiff
+
+from PIL import Image
 from xml.etree import ElementTree
+from warnings import simplefilter
 
 from .os_utils import create_parent_folder
 from .constants import MimeType
 
 
+simplefilter('ignore', Image.DecompressionBombWarning)
 LOGGER = logging.getLogger(__name__)
 
 CSV_DELIMITER = ';'
@@ -73,9 +76,9 @@ def read_jp2_image(filename):
     :type filename: str
     :return: data stored in JPEG2000 file
     """
-    # Reading with glymur library:
+    # Other option:
     # return glymur.Jp2k(filename)[:]
-    image = cv2.imread(filename, cv2.IMREAD_UNCHANGED)
+    image = read_image(filename)
 
     with open(filename, 'rb') as file:
         bit_depth = get_jp2_bit_depth(file)
@@ -90,7 +93,8 @@ def read_image(filename):
     :type filename: str
     :return: data stored in JPG file
     """
-    return cv2.imread(filename, cv2.IMREAD_UNCHANGED)
+    # cv2.imread(filename, cv2.IMREAD_UNCHANGED)
+    return np.asarray(Image.open(filename))
 
 
 def read_text(filename):
@@ -178,7 +182,7 @@ def write_data(filename, data, data_format=None, compress=False, add=False):
 
     try:
         return {
-            MimeType.JP2: write_jp2_image,
+            MimeType.JP2: write_image,
             MimeType.PNG: write_image,
             MimeType.JPG: write_image,
             MimeType.TXT: write_text,
@@ -215,9 +219,10 @@ def write_jp2_image(filename, image):
     :type image: numpy array
     :return: jp2k object
     """
-    # Writing with glymur library:
+    # Other options:
     # return glymur.Jp2k(filename, data=image)
-    return cv2.imwrite(filename, image)
+    # cv2.imwrite(filename, image)
+    return write_image(filename, image)
 
 
 def write_image(filename, image):
@@ -231,7 +236,7 @@ def write_image(filename, image):
     data_format = get_data_format(filename)
     if data_format is MimeType.JPG:
         LOGGER.warning('Warning: jpeg is a lossy format therefore saved data will be modified.')
-    cv2.imwrite(filename, image)
+    Image.fromarray(image).save(filename)
 
 
 def write_text(filename, data, add=False):

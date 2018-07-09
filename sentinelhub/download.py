@@ -8,20 +8,24 @@ import time
 import concurrent.futures
 import requests
 import json
-import cv2
 import boto3
 import warnings
 import numpy as np
 import tifffile as tiff
+
 from io import BytesIO
+from PIL import Image
 from xml.etree import ElementTree
 from botocore.exceptions import NoCredentialsError
+from warnings import simplefilter
 
 from .os_utils import create_parent_folder, sys_is_windows
 from .constants import MimeType, RequestType
 from .config import SHConfig
 from .io_utils import get_jp2_bit_depth, _fix_jp2_image
 
+
+simplefilter('ignore', Image.DecompressionBombWarning)
 LOGGER = logging.getLogger(__name__)
 
 
@@ -383,14 +387,15 @@ def decode_data(response_content, data_type, entire_response=None):
     elif data_type is MimeType.XML or data_type is MimeType.GML or data_type is MimeType.SAFE:
         return ElementTree.fromstring(response_content)
     else:
-        return {
-            MimeType.RAW: response_content,
-            MimeType.TXT: response_content,
-            MimeType.REQUESTS_RESPONSE: entire_response,
-            MimeType.ZIP: BytesIO(response_content)
-        }[data_type]
-
-    raise ValueError('Unknown response data type {}'.format(data_type))
+        try:
+            return {
+                MimeType.RAW: response_content,
+                MimeType.TXT: response_content,
+                MimeType.REQUESTS_RESPONSE: entire_response,
+                MimeType.ZIP: BytesIO(response_content)
+            }[data_type]
+        except KeyError:
+            raise ValueError('Unknown response data type {}'.format(data_type))
 
 
 def decode_image(data, image_type):
@@ -408,8 +413,7 @@ def decode_image(data, image_type):
     if image_type is MimeType.TIFF or image_type is MimeType.TIFF_d32f:
         image = tiff.imread(BytesIO(data))
     else:
-        img_array = np.asarray(bytearray(data))
-        image = cv2.imdecode(img_array, cv2.IMREAD_UNCHANGED)
+        image = np.asarray(Image.open(BytesIO(data)))
 
         if image_type is MimeType.JP2:
             try:
