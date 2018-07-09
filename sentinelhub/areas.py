@@ -281,6 +281,7 @@ class OsmSplitter(AreaSplitter):
 
     def get_world_bbox(self):
         """Creates a bounding box of the entire world in EPSG: 3857
+
         :return: Bounding box of entire world
         :rtype: sentinelhub.common.BBox
         """
