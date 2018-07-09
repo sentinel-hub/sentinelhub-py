@@ -78,7 +78,7 @@ For more information on the package and to access the documentation, visit [read
 # Examples
 
 Jupyter notebooks on how to use the modules to execute OGC requests, or
-download raw data from AWS in .SAFE format can be found in the [examples](examples/)
+download raw data from AWS in .SAFE format can be found in the [examples](https://github.com/sentinel-hub/sentinelhub-py/tree/master/examples/)
 folder, or viewed in the [docs](http://sentinelhub-py.readthedocs.io/):
  * Using OGC web services ([link](http://sentinelhub-py.readthedocs.io/en/latest/examples/ogc_request.html))
  * Using utilities for large geographical areas ([link](http://sentinelhub-py.readthedocs.io/en/latest/examples/large_area_utilities.html))
@@ -90,6 +90,12 @@ folder, or viewed in the [docs](http://sentinelhub-py.readthedocs.io/):
  * [Upgrading the sentinelhub Python package](https://medium.com/sentinel-hub/upgrading-the-sentinelhub-python-package-2665f9c10df)
  * [Release of sentinelhub Python Package 2.0](https://medium.com/sentinel-hub/release-of-sentinelhub-python-package-2-0-a3d47709f8fd)
 
+# Questions and Issues
+
+Feel free to ask questions about the package and its use cases at [Sentinel Hub forum](https://forum.sentinel-hub.com/) or raise an issue on [GitHub](https://github.com/sentinel-hub/sentinelhub-py/issues).
+
+You are welcome to send your feedback to the package authors, Sentinel Hub research team, through any of [Sentinel Hub communication channel](https://sentinel-hub.com/develop/communication-channels).
+
 # License
 
-See [LICENSE](LICENSE.md).
+See [LICENSE](https://github.com/sentinel-hub/sentinelhub-py/blob/master/LICENSE.md).
