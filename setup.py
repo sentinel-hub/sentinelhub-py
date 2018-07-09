@@ -24,7 +24,7 @@ def get_long_description():
 
 setup(
     name='sentinelhub',
-    python_requires='>=3.5,<3.7',
+    python_requires='>=3.5',
     version=get_version(),
     description='Sentinel Hub Utilities',
     long_description=get_long_description(),
@@ -56,6 +56,7 @@ setup(
         'Programming Language :: Python :: 3',
         'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
+        'Programming Language :: Python :: Implementation :: PyPy',
         'Topic :: Scientific/Engineering',
         'Topic :: Software Development'
     ]
