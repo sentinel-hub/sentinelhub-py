@@ -2,10 +2,8 @@ wheel
 requests
 click
 numpy
-matplotlib
 tifffile
 pillow
-cython
 python-dateutil
 pyproj
 utm
