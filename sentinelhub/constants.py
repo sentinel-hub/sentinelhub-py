@@ -433,17 +433,30 @@ class MimeType(Enum):
         except KeyError:
             raise ValueError('Data format .{} is not supported'.format(fmt_ext))
 
-    @staticmethod
-    def is_image_format(value):
+    def is_image_format(self):
         """ Checks whether file format is an image format
 
-        :param value: File format
-        :type value: str
+        Example: `MimeType.PNG.is_image_format()` or `MimeType.is_image_format(MimeType.PNG)`
+
+        :param self: File format
+        :type self: MimeType
         :return: ``True`` if file is in image format, ``False`` otherwise
         :rtype: bool
         """
-        return value in frozenset([MimeType.TIFF, MimeType.TIFF_d8, MimeType.TIFF_d16, MimeType.TIFF_d32f, MimeType.PNG,
-                                   MimeType.JP2, MimeType.JPG])
+        return self in frozenset([MimeType.TIFF, MimeType.TIFF_d8, MimeType.TIFF_d16, MimeType.TIFF_d32f, MimeType.PNG,
+                                  MimeType.JP2, MimeType.JPG])
+
+    def is_tiff_format(self):
+        """ Checks whether file format is a TIFF image format
+
+        Example: `MimeType.TIFF.is_tiff_format()` or `MimeType.is_tiff_format(MimeType.TIFF)`
+
+        :param self: File format
+        :type self: MimeType
+        :return: ``True`` if file is in image format, ``False`` otherwise
+        :rtype: bool
+        """
+        return self in frozenset([MimeType.TIFF, MimeType.TIFF_d8, MimeType.TIFF_d16, MimeType.TIFF_d32f])
 
     @classmethod
     def has_value(cls, value):

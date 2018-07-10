@@ -267,7 +267,7 @@ class OgcImageService(OgcService):
             filename = filename.replace(char, '')
 
         suffix = str(request.image_format.value)
-        if request.image_format is MimeType.TIFF_d32f:
+        if request.image_format.is_tiff_format() and request.image_format is not MimeType.TIFF:
             suffix = str(MimeType.TIFF.value)
             filename = '_'.join([filename, str(request.image_format.value).replace(';', '_')])
 

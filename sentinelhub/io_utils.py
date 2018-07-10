@@ -33,21 +33,22 @@ def read_data(filename, data_format=None):
     :param filename: filename to read data from
     :type filename: str
     :param data_format: format of filename. Default is ``None``
-    :type data_format: str
+    :type data_format: MimeType
     :return: data read from filename
     :raises: exception if filename does not exist
     """
     if not os.path.exists(filename):
         raise ValueError('Filename {} does not exist'.format(filename))
 
-    if data_format is None:
+    if not isinstance(data_format, MimeType):
         data_format = get_data_format(filename)
+
+    if data_format.is_tiff_format():
+        return read_tiff_image(filename)
+    if data_format.is_image_format():
+        return read_image(filename)
     try:
         return {
-            MimeType.TIFF: read_tiff_image,
-            MimeType.JP2: read_jp2_image,
-            MimeType.PNG: read_image,
-            MimeType.JPG: read_image,
             MimeType.TXT: read_text,
             MimeType.CSV: read_csv,
             MimeType.JSON: read_json,
@@ -166,7 +167,7 @@ def write_data(filename, data, data_format=None, compress=False, add=False):
     :param data: image data to write to file
     :type data: numpy array
     :param data_format: format of output file. Default is ``None``
-    :type data_format: str
+    :type data_format: MimeType
     :param compress: whether to compress data or not. Default is ``False``
     :type compress: bool
     :param add: whether to append to existing text file or not. Default is ``False``
@@ -174,20 +175,19 @@ def write_data(filename, data, data_format=None, compress=False, add=False):
     :raises: exception if numpy format is not supported or file cannot be written
     """
     create_parent_folder(filename)
-    if data_format is None:
+
+    if not isinstance(data_format, MimeType):
         data_format = get_data_format(filename)
 
-    if data_format is MimeType.TIFF or data_format is MimeType.TIFF_d32f:
+    if data_format.is_tiff_format():
         return write_tiff_image(filename, data, compress)
+    if data_format.is_image_format():
+        return write_image(filename, data)
     if data_format is MimeType.TXT:
         return write_text(filename, data, add=add)
 
     try:
         return {
-            MimeType.JP2: write_image,
-            MimeType.PNG: write_image,
-            MimeType.JPG: write_image,
-            MimeType.TXT: write_text,
             MimeType.CSV: write_csv,
             MimeType.JSON: write_json,
             MimeType.XML: write_xml,
@@ -238,7 +238,7 @@ def write_image(filename, image):
     data_format = get_data_format(filename)
     if data_format is MimeType.JPG:
         LOGGER.warning('Warning: jpeg is a lossy format therefore saved data will be modified.')
-    Image.fromarray(image).save(filename)
+    return Image.fromarray(image).save(filename)
 
 
 def write_text(filename, data, add=False):

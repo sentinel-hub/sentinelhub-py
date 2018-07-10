@@ -410,15 +410,17 @@ def decode_image(data, image_type):
     :rtype: numpy array
     :raises: ImageDecodingError
     """
-    if image_type is MimeType.TIFF or image_type is MimeType.TIFF_d32f:
-        image = tiff.imread(BytesIO(data))
+    bytes_data = BytesIO(data)
+    if image_type.is_tiff_format():
+        print('read as tiff')
+        image = tiff.imread(bytes_data)
     else:
-        image = np.asarray(Image.open(BytesIO(data)))
+        image = np.asarray(Image.open(bytes_data))
         image.setflags(write=1)
 
         if image_type is MimeType.JP2:
             try:
-                bit_depth = get_jp2_bit_depth(BytesIO(data))
+                bit_depth = get_jp2_bit_depth(bytes_data)
                 image = _fix_jp2_image(image, bit_depth)
             except ValueError:
                 pass
