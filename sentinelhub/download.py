@@ -412,7 +412,6 @@ def decode_image(data, image_type):
     """
     bytes_data = BytesIO(data)
     if image_type.is_tiff_format():
-        print('read as tiff')
         image = tiff.imread(bytes_data)
     else:
         image = np.asarray(Image.open(bytes_data))

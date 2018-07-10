@@ -121,7 +121,7 @@ class TestOgc(TestSentinelHub):
                                        image_format=MimeType.TIFF_d8, layer='BANDS-S2-L1C',
                                        width=img_width, height=img_height, bbox=wgs84_bbox,
                                        instance_id=cls.INSTANCE_ID, time=('2017-10-01', '2017-10-02')),
-                            result_len=1, img_min=38, img_max=152, img_mean=84.6465, img_median=84.0,
+                            result_len=1, img_min=0, img_max=160, img_mean=59.9996, img_median=63.0,
                             tile_num=2),
             cls.OgcTestCase('S2 L2A Test',
                             WmsRequest(data_source=DataSource.SENTINEL2_L2A, data_folder=cls.OUTPUT_FOLDER,
