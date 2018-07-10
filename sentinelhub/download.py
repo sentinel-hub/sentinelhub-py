@@ -17,7 +17,6 @@ from io import BytesIO
 from PIL import Image
 from xml.etree import ElementTree
 from botocore.exceptions import NoCredentialsError
-from warnings import simplefilter
 
 from .os_utils import create_parent_folder, sys_is_windows
 from .constants import MimeType, RequestType
@@ -25,7 +24,7 @@ from .config import SHConfig
 from .io_utils import get_jp2_bit_depth, _fix_jp2_image
 
 
-simplefilter('ignore', Image.DecompressionBombWarning)
+warnings.simplefilter('ignore', Image.DecompressionBombWarning)
 LOGGER = logging.getLogger(__name__)
 
 
