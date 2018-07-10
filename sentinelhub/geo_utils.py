@@ -2,8 +2,6 @@
 Module for manipulation of geographical information.
 """
 
-# pylint: disable=unused-argument
-
 import logging
 import pyproj
 

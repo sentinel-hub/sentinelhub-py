@@ -2,8 +2,6 @@
 Module with enum constants and utm utils
 """
 
-# pylint: disable=invalid-name
-
 import itertools as it
 import mimetypes
 import utm
@@ -56,6 +54,9 @@ class DataSource(Enum, metaclass=_DataSourceMeta):
 
     Supported types are SENTINEL2_L1C, SENTINEL2_L2A, LANDSAT8, SENTINEL1_IW, SENTINEL1_EW, SENTINEL1_EW_SH, DEM, MODIS
     """
+    # pylint: disable=invalid-name
+    # pylint: disable=unsubscriptable-object
+
     class Source(Enum):
         """
         Types of satellite sources
@@ -164,39 +165,43 @@ class DataSource(Enum, metaclass=_DataSourceMeta):
             cls.LANDSAT8_L2A: 'SEN4CAP_L8L2A.TILE'
         }[data_source]
 
-    @classmethod
-    def is_sentinel1(cls, data_source):
+    def is_sentinel1(self):
         """Checks if source is Sentinel-1
 
-        :param data_source: One of the supported data sources
-        :type: DataSource
+        Example: ``DataSource.SENTINEL1_IW.is_sentinel1()`` or ``DataSource.is_sentinel1(DataSource.SENTINEL1_IW)``
+
+        :param self: One of the supported data sources
+        :type self: DataSource
         :return: ``True`` if source is Sentinel-1 and ``False`` otherwise
         :rtype: bool
         """
-        return data_source.value[0] is cls.Source.value.SENTINEL1
+        return self.value[0] is DataSource.Source.value.SENTINEL1
 
-    @classmethod
-    def is_timeless(cls, data_source):
+    def is_timeless(self):
         """Checks if data source is time independent
 
-        :param data_source: One of the supported data sources
-        :type: DataSource
+        Example: ``DataSource.DEM.is_timeless()`` or ``DataSource.is_timeless(DataSource.DEM)``
+
+        :param self: One of the supported data sources
+        :type self: DataSource
         :return: ``True`` if data source is time independent and ``False`` otherwise
         :rtype: bool
         """
-        return data_source.value[0] is cls.Source.value.DEM
+        return self.value[0] is DataSource.Source.value.DEM
 
-    @classmethod
-    def is_uswest_source(cls, data_source):
+    def is_uswest_source(self):
         """Checks if data source via Sentinel Hub services is available at US West server
 
-        :param data_source: One of the supported data sources
-        :type: DataSource
+        Example: ``DataSource.LANDSAT8.is_uswest_source()`` or ``DataSource.is_uswest_source(DataSource.LANDSAT8)``
+
+        :param self: One of the supported data sources
+        :type self: DataSource
         :return: ``True`` if data source exists at US West server and ``False`` otherwise
         :rtype: bool
         """
-        return not SHConfig().is_eocloud_ogc_url() and \
-            data_source.value[0] in [cls.Source.value.LANDSAT8, cls.Source.value.MODIS, cls.Source.value.DEM]
+        return not SHConfig().is_eocloud_ogc_url() and self.value[0] in [DataSource.Source.value.LANDSAT8,
+                                                                         DataSource.Source.value.MODIS,
+                                                                         DataSource.Source.value.DEM]
 
     @classmethod
     def get_available_sources(cls):
@@ -436,7 +441,7 @@ class MimeType(Enum):
     def is_image_format(self):
         """ Checks whether file format is an image format
 
-        Example: `MimeType.PNG.is_image_format()` or `MimeType.is_image_format(MimeType.PNG)`
+        Example: ``MimeType.PNG.is_image_format()`` or ``MimeType.is_image_format(MimeType.PNG)``
 
         :param self: File format
         :type self: MimeType
@@ -449,7 +454,7 @@ class MimeType(Enum):
     def is_tiff_format(self):
         """ Checks whether file format is a TIFF image format
 
-        Example: `MimeType.TIFF.is_tiff_format()` or `MimeType.is_tiff_format(MimeType.TIFF)`
+        Example: ``MimeType.TIFF.is_tiff_format()`` or ``MimeType.is_tiff_format(MimeType.TIFF)``
 
         :param self: File format
         :type self: MimeType

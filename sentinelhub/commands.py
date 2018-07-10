@@ -1,11 +1,13 @@
+"""
+Module that implements command line interface for the package
+"""
+
 import click
 
 from .data_request import get_safe_format, download_safe_format
 from .download import download_data, DownloadRequest
 from .config import SHConfig
 from .constants import DataSource
-
-# pylint: disable=unused-argument
 
 
 @click.command()

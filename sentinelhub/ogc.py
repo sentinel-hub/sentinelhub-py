@@ -173,7 +173,7 @@ class OgcImageService(OgcService):
         """
         url = self.base_url + request.service_type.value
         # These 2 lines are temporal and will be removed after the use of uswest url wont be required anymore:
-        if hasattr(request, 'data_source') and DataSource.is_uswest_source(request.data_source):
+        if hasattr(request, 'data_source') and request.data_source.is_uswest_source():
             url = 'https://services-uswest2.sentinel-hub.com/ogc/{}'.format(request.service_type.value)
 
         if hasattr(request, 'data_source') and request.data_source not in DataSource.get_available_sources():
@@ -422,7 +422,7 @@ class WebFeatureService(OgcService):
         LOGGER.debug("URL=%s", url)
         response = get_json(url)
 
-        is_sentinel1 = DataSource.is_sentinel1(self.data_source)
+        is_sentinel1 = self.data_source.is_sentinel1()
         for tile_info in response["features"]:
             if not is_sentinel1 or self._sentinel1_product_check(tile_info['properties']['id'], self.data_source):
                 self.tile_list.append(tile_info)
