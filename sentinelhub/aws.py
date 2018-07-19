@@ -84,7 +84,7 @@ class AwsService(ABC):
         if metafile_input is None:
             if self.__class__.__name__ == 'SafeProduct':
                 return all_metafiles
-            elif self.__class__.__name__ == 'SafeTile':
+            if self.__class__.__name__ == 'SafeTile':
                 return [metafile for metafile in all_metafiles if metafile in AwsConstants.TILE_FILES]
             return []
         if isinstance(metafile_input, str):

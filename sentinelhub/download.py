@@ -269,7 +269,7 @@ def _do_request(request):
     """
     if request.request_type is RequestType.GET:
         return requests.get(request.url, headers=request.headers)
-    elif request.request_type is RequestType.POST:
+    if request.request_type is RequestType.POST:
         return requests.post(request.url, data=json.dumps(request.post_values), headers=request.headers)
     raise ValueError('Invalid request type {}'.format(request.request_type))
 
@@ -381,20 +381,20 @@ def decode_data(response_content, data_type, entire_response=None):
         if isinstance(entire_response, requests.Response):
             return entire_response.json()
         return json.loads(response_content.decode('utf-8'))
-    elif MimeType.is_image_format(data_type):
+    if MimeType.is_image_format(data_type):
         return decode_image(response_content, data_type)
-    elif data_type is MimeType.XML or data_type is MimeType.GML or data_type is MimeType.SAFE:
+    if data_type is MimeType.XML or data_type is MimeType.GML or data_type is MimeType.SAFE:
         return ElementTree.fromstring(response_content)
-    else:
-        try:
-            return {
-                MimeType.RAW: response_content,
-                MimeType.TXT: response_content,
-                MimeType.REQUESTS_RESPONSE: entire_response,
-                MimeType.ZIP: BytesIO(response_content)
-            }[data_type]
-        except KeyError:
-            raise ValueError('Unknown response data type {}'.format(data_type))
+
+    try:
+        return {
+            MimeType.RAW: response_content,
+            MimeType.TXT: response_content,
+            MimeType.REQUESTS_RESPONSE: entire_response,
+            MimeType.ZIP: BytesIO(response_content)
+        }[data_type]
+    except KeyError:
+        raise ValueError('Unknown response data type {}'.format(data_type))
 
 
 def decode_image(data, image_type):

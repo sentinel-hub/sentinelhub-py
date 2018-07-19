@@ -123,9 +123,9 @@ def get_area_dates(bbox, date_interval, maxcc=None):
     """
 
     area_info = get_area_info(bbox, date_interval, maxcc=maxcc)
-    return sorted(set(
-        [datetime.datetime.strptime(tile_info['properties']['startDate'].strip('Z'), '%Y-%m-%dT%H:%M:%S') for tile_info
-         in area_info]))
+    return sorted({datetime.datetime.strptime(tile_info['properties']['startDate'].strip('Z'),
+                                              '%Y-%m-%dT%H:%M:%S')
+                   for tile_info in area_info})
 
 
 def reduce_by_maxcc(result_list, maxcc):

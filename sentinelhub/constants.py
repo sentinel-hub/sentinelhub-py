@@ -485,9 +485,9 @@ class MimeType(Enum):
         """
         if fmt in [MimeType.TIFF_d8, MimeType.TIFF_d16, MimeType.TIFF_d32f]:
             return 'image/{}'.format(fmt.value)
-        elif fmt is MimeType.JP2:
+        if fmt is MimeType.JP2:
             return 'image/jpeg2000'
-        elif fmt in [MimeType.RAW, MimeType.REQUESTS_RESPONSE]:
+        if fmt in [MimeType.RAW, MimeType.REQUESTS_RESPONSE]:
             return fmt.value
         return mimetypes.types_map['.' + fmt.value]
 
