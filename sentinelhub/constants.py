@@ -491,6 +491,13 @@ class MimeType(Enum):
             return fmt.value
         return mimetypes.types_map['.' + fmt.value]
 
+    @staticmethod
+    def from_string(mime_type_str):
+        if mime_type_str == 'jpeg':
+            return MimeType.JPG
+
+        return MimeType(mime_type_str)
+
 
 class RequestType(Enum):
     """ Enum constant class for GET/POST request type """

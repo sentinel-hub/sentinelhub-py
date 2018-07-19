@@ -1,9 +1,9 @@
 {
-  "instance_id": "",
+  "instance_id": "01d6544b-5db4-4dd1-8573-77c4d026401a",
   "aws_access_key_id": "",
   "aws_secret_access_key": "",
   "ogc_base_url": "https://services.sentinel-hub.com/ogc/",
-  "gpd_base_url": "http://service.geopedia.world/",
+  "gpd_base_url": "http://localhost:8888/",
   "aws_base_url": "http://sentinel-s2-l1c.s3.amazonaws.com/",
   "aws_s3_l1c_bucket": "sentinel-s2-l1c",
   "use_s3_l1c_bucket": false,

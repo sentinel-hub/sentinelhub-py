@@ -1,9 +1,10 @@
 import unittest
 import numpy as np
 
-from tests_all import TestSentinelHub
+from .tests_all import TestSentinelHub
 
-from sentinelhub.data_request import GeopediaWmsRequest
+from sentinelhub.data_request import GeopediaWmsRequest, GeopediaImageRequest
+from sentinelhub.geopedia import GeopediaFeatureIterator, GeopediaImageService
 from sentinelhub.constants import CRS, MimeType
 from sentinelhub.common import BBox
 
@@ -44,6 +45,58 @@ class TestOgc(TestSentinelHub):
         self.assertAlmostEqual(media_exp, median_val, delta=delta,
                                msg="Expected median {}, got {}".format(media_exp, median_val))
 
+
+class TestImageService(TestSentinelHub):
+
+    @classmethod
+    def setUpClass(cls):
+        cls.bbox = BBox(bbox=[(1618936.259080, 5789913.800031),
+                              (1622796.329008, 5787085.629985)],
+                        crs=CRS.POP_WEB)
+
+    def test_present_image_format(self):
+        gpd_request = GeopediaImageRequest('393', self.bbox, 'Photo',
+                                           image_format=MimeType.JPG)
+        gpd_service = GeopediaImageService()
+        download_list = gpd_service.get_request(gpd_request)
+
+        self.assertTrue(len(download_list) > 0)
+
+    def test_absent_image_format(self):
+        gpd_request = GeopediaImageRequest('393', self.bbox, 'Photo',
+                                           image_format=MimeType.PNG)
+        gpd_service = GeopediaImageService()
+        download_list = gpd_service.get_request(gpd_request)
+
+        self.assertEqual(0, len(download_list))
+
+class TestFeatureIterator(TestSentinelHub):
+
+    @classmethod
+    def setUpClass(cls):
+        cls.bbox = BBox(bbox=[(1618936.259080, 5789913.800031),
+                              (1622796.329008, 5787085.629985)],
+                        crs=CRS.POP_WEB)
+
+    def test_return_type(self):
+        gpd_iter = GeopediaFeatureIterator('393', bbox=self.bbox)
+        data = list(gpd_iter)
+
+        self.assertTrue(isinstance(data, list), "Expected a list")
+
+    def test_item_count(self):
+        gpd_iter = GeopediaFeatureIterator('393', bbox=self.bbox)
+        data = list(gpd_iter)
+        expected_data_len = 1
+
+        self.assertEqual(len(data), expected_data_len)
+
+    def test_without_bbox(self):
+        gpd_iter = GeopediaFeatureIterator('393')
+        data = list(gpd_iter)
+        expected_data_len = 147
+
+        self.assertEqual(len(data), expected_data_len)
 
 if __name__ == '__main__':
     unittest.main()

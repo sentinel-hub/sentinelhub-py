@@ -2,7 +2,8 @@
 This module lists all externally useful classes and functions
 """
 
-from .data_request import WmsRequest, WcsRequest, AwsTileRequest, AwsProductRequest, GeopediaWmsRequest, \
+from .data_request import WmsRequest, WcsRequest, AwsTileRequest, AwsProductRequest, \
+    GeopediaWmsRequest, GeopediaImageRequest, \
     get_safe_format, download_safe_format
 
 from .aws import AwsProduct, AwsTile
@@ -11,6 +12,7 @@ from .aws_safe import SafeProduct, SafeTile
 from .areas import BBoxSplitter, OsmSplitter, TileSplitter
 
 from .ogc import WebFeatureService
+from .geopedia import GeopediaFeatureIterator
 
 from .common import BBox
 from .constants import DataSource, CustomUrlParam, CRS, MimeType, OgcConstants, AwsConstants, ServiceType

@@ -12,7 +12,7 @@ from abc import ABC, abstractmethod
 from copy import deepcopy
 
 from .ogc import OgcImageService
-from .geopedia import GeopediaImageService
+from .geopedia import GeopediaWmsService, GeopediaImageService
 from .aws import AwsProduct, AwsTile
 from .aws_safe import SafeProduct, SafeTile
 from .download import download_data, ImageDecodingError, DownloadFailedException
@@ -495,11 +495,11 @@ class GeopediaRequest(DataRequest):
     :param data_folder: location of the directory where the fetched data will be saved.
     :type data_folder: str
     """
-    def __init__(self, layer, bbox, theme, *, service_type=None, size_x=None, size_y=None, custom_url_params=None,
+    def __init__(self, layer, bbox, *, theme=None, service_type=None, size_x=None, size_y=None, custom_url_params=None,
                  image_format=MimeType.PNG, **kwargs):
         self.layer = layer
-        self.theme = theme
         self.bbox = bbox
+        self.theme = theme
         self.image_format = MimeType(image_format)
         self.service_type = service_type
         self.size_x = size_x
@@ -530,7 +530,7 @@ class GeopediaRequest(DataRequest):
         Create a list of DownloadRequests for all Sentinel-2 acquisitions within request's time interval and
         acceptable cloud coverage.
         """
-        gpd_service = GeopediaImageService()
+        gpd_service = GeopediaWmsService()
         self.download_list = gpd_service.get_request(self)
 
 
@@ -559,6 +559,48 @@ class GeopediaWmsRequest(GeopediaRequest):
     """
     def __init__(self, *, width=None, height=None, **kwargs):
         super(GeopediaWmsRequest, self).__init__(service_type=ServiceType.WMS, size_x=width, size_y=height, **kwargs)
+
+    def create_request(self):
+        gpd_service = GeopediaWmsService()
+        self.download_list = gpd_service.get_request(self)
+
+
+class GeopediaImageRequest(GeopediaRequest):
+    """Request to access data in a Geopedia vector layer.
+
+    :param bbox: Bounding box of the requested image. Its coordinates must be
+                 in the CRS.POP_WEB (EPSG:3857) coordinate system.
+    :type bbox: common.BBox
+    :type layer: str
+    :param prop: Property with images.
+    :type prop: str
+    :param image_format: Format of the returned image. Default is
+                         ``constants.MimeType.PNG``.
+    :type image_format: constants.MimeType
+    """
+    def __init__(self, layer, bbox, prop, **kwargs):
+        self.prop = prop
+
+        super().__init__(layer, bbox, **kwargs)
+
+    def create_request(self):
+        """Set a list of download requests
+
+        Set a list of DownloadRequests for all images that are under the
+        given property of the Geopedia's Vector layer.
+        """
+        gpd_service = GeopediaImageService()
+        self.download_list = gpd_service.get_request(self)
+        self.gpd_iterator = gpd_service.get_gpd_iterator()
+
+    def get_items(self):
+        """Returns iterator over info about data used for this request
+
+        :return: Iterator of dictionaries containing info about data used in
+                 this request.
+        :rtype: Iterator[dict] or None
+        """
+        return self.gpd_iterator
 
 
 class AwsRequest(DataRequest):
