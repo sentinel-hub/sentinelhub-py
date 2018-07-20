@@ -42,6 +42,9 @@ class ServiceType(Enum):
 class _DataSourceMeta(EnumMeta):
     """ EnumMeta class for `DataSource` Enum class
     """
+    # pylint: disable=no-value-for-parameter
+    # https://stackoverflow.com/questions/47615318
+
     def __iter__(cls):
         return (member for name, member in cls._member_map_.items() if isinstance(member.value, tuple))
 
