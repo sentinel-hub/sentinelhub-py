@@ -143,11 +143,11 @@ class BBox:
         """
         if isinstance(bbox, (list, tuple)):
             return BBox._tuple_from_list_or_tuple(bbox)
-        elif isinstance(bbox, str):
+        if isinstance(bbox, str):
             return BBox._tuple_from_str(bbox)
-        elif isinstance(bbox, dict):
+        if isinstance(bbox, dict):
             return BBox._tuple_from_dict(bbox)
-        elif isinstance(bbox, BBox):
+        if isinstance(bbox, BBox):
             return BBox._tuple_from_bbox(bbox)
         raise TypeError('Invalid bbox representation')
 
@@ -161,7 +161,7 @@ class BBox:
         """
         if len(bbox) == 4:
             return tuple(map(float, bbox))
-        elif len(bbox) == 2 and all([isinstance(point, (list, tuple)) for point in bbox]):
+        if len(bbox) == 2 and all([isinstance(point, (list, tuple)) for point in bbox]):
             return BBox._tuple_from_list_or_tuple(bbox[0] + bbox[1])
         raise TypeError('Expected a valid list or tuple representation of a bbox')
 
