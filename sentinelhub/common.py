@@ -132,6 +132,16 @@ class BBox:
             return "{},{},{},{}".format(self.min_y, self.min_x, self.max_y, self.max_x)
         return "{},{},{},{}".format(self.min_x, self.min_y, self.max_x, self.max_y)
 
+    def __eq__(self, other):
+        """ Method for comparing two bounding boxes
+
+        :param other: Another bounding box object
+        :type other: BBox
+        :return: `True` if bounding boxes have the same coordinates and the same CRS and `False otherwise
+        :rtype: bool
+        """
+        return list(self) == list(other) and self.crs == other.crs
+
     @staticmethod
     def _to_tuple(bbox):
         """ Converts the input bbox representation (see the constructor docstring for a list of valid representations)
