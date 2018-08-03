@@ -1,7 +1,7 @@
 import unittest
 import numpy as np
 
-from .tests_all import TestSentinelHub
+from tests_all import TestSentinelHub
 
 from sentinelhub.data_request import GeopediaWmsRequest, GeopediaImageRequest
 from sentinelhub.geopedia import GeopediaFeatureIterator, GeopediaImageService
