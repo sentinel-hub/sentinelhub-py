@@ -92,8 +92,7 @@ class SHConfig:
             :return: location of configuration file
             :rtype: str
             """
-            package_dir = os.path.dirname(__file__)
-            config_file = os.path.join(package_dir, 'config.json')
+            config_file = os.path.join(os.path.dirname(__file__), 'config.json')
 
             if not os.path.isfile(config_file):
                 raise IOError('Configuration file does not exist: %s' % os.path.abspath(config_file))
