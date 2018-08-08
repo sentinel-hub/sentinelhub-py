@@ -4,10 +4,12 @@ from setuptools import setup, find_packages
 
 
 def parse_requirements(file):
-    return sorted(set(
-        line.partition('#')[0].strip()
-        for line in open(os.path.join(os.path.dirname(__file__), file))
-    ) - set(''))
+    required_packages = []
+    with open(os.path.join(os.path.dirname(__file__), file)) as req_file:
+        for line in req_file:
+            if '/' not in line:
+                required_packages.append(line.strip())
+    return required_packages
 
 
 def get_version():
@@ -52,11 +54,31 @@ def update_package_config():
         pass
 
 
+def install_additional_requirements(file):
+    """ Because setuptools do not support installing from GitHub if the same version of the package is available at PyPI
+    """
+    try:
+        try:
+            from pip import _internal as pip
+        except ImportError:  # in case pip version is <10.0
+            import pip
+
+        with open(os.path.join(os.path.dirname(__file__), file)) as req_file:
+            for line in req_file:
+                if '/' in line:
+                    pip.main(['install', line])
+
+    except BaseException:
+        pass
+
+
 update_package_config()
+
+REQUIREMENTS_FILE = "requirements.txt"
 
 setup(
     name='sentinelhub',
-    python_requires='>=3.5,<3.7',
+    python_requires='>=3.5',
     version=get_version(),
     description='Sentinel Hub Utilities',
     long_description=get_long_description(),
@@ -68,7 +90,7 @@ setup(
     packages=find_packages(),
     package_data={'sentinelhub': ['sentinelhub/config.json']},
     include_package_data=True,
-    install_requires=parse_requirements("requirements.txt"),
+    install_requires=parse_requirements(REQUIREMENTS_FILE),
     extras_require={'DEV': parse_requirements("requirements-dev.txt")},
     zip_safe=False,
     entry_points={'console_scripts': ['sentinelhub=sentinelhub.commands:main_help',
@@ -88,9 +110,11 @@ setup(
         'Programming Language :: Python :: 3',
         'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
+        'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: Implementation :: PyPy',
         'Topic :: Scientific/Engineering',
         'Topic :: Software Development'
     ]
 )
 
+install_additional_requirements(REQUIREMENTS_FILE)
