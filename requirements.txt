@@ -2,6 +2,7 @@ wheel
 requests
 click
 numpy
+cython
 tifffile
 pillow
 python-dateutil
