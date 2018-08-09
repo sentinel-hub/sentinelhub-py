@@ -157,9 +157,13 @@ class SHConfig:
             ``my_config.instance_id = '<new instance id>'`` \n
             ``my_config.save()``
         """
+        is_changed = False
         for prop in self._instance.CONFIG_PARAMS:
-            setattr(self._instance, prop, getattr(self, prop))
-        self._instance.save_configuration()
+            if getattr(self, prop) != getattr(self._instance, prop):
+                is_changed = True
+                setattr(self._instance, prop, getattr(self, prop))
+        if is_changed:
+            self._instance.save_configuration()
 
     def get_params(self):
         """Returns a list of parameter names

@@ -69,8 +69,10 @@ class DownloadRequest:
     :type return_data: bool
     :param data_type: expected file format of downloaded data. Default is ``constants.MimeType.RAW``
     :type data_type: constants.MimeType
-
     """
+
+    GLOBAL_AWS_CLIENT = None
+
     def __init__(self, *, url=None, data_folder=None, filename=None, headers=None, request_type=RequestType.GET,
                  post_values=None, save_response=True, return_data=True, data_type=MimeType.RAW, **properties):
 
@@ -248,8 +250,9 @@ def execute_download_request(request):
                              try_num, SHConfig().download_sleep_time)
                 time.sleep(SHConfig().download_sleep_time)
             else:
-                if request.url.startswith(SHConfig().aws_base_url) and isinstance(exception, requests.HTTPError)\
-                        and exception.response.status_code == requests.status_codes.codes.NOT_FOUND:
+                if request.url.startswith(SHConfig().aws_metadata_base_url) and \
+                        isinstance(exception, requests.HTTPError) and \
+                        exception.response.status_code == requests.status_codes.codes.NOT_FOUND:
                     raise AwsDownloadFailedException('File in location %s is missing' % request.url)
                 raise DownloadFailedException(_create_download_failed_message(exception))
 
@@ -289,7 +292,14 @@ def _do_aws_request(request):
         key_args = {}
     aws_service, _, bucket_name, url_key = request.url.split('/', 3)
 
-    s3_client = boto3.client(aws_service.strip(':'), **key_args)
+    try:
+        s3_client = boto3.Session().client(aws_service.strip(':'), **key_args)
+        request.GLOBAL_AWS_CLIENT = s3_client
+    except KeyError:  # Sometimes creation of client fails and we use the global client if it exists
+        if request.GLOBAL_AWS_CLIENT is None:
+            raise ValueError('Failed to create a client for download from AWS')
+        s3_client = request.GLOBAL_AWS_CLIENT
+
     try:
         return s3_client.get_object(Bucket=bucket_name, Key=url_key, RequestPayer='requester')
     except NoCredentialsError:
