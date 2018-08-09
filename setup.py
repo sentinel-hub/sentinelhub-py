@@ -63,11 +63,15 @@ def install_additional_requirements(file):
         except ImportError:  # in case pip version is <10.0
             import pip
 
+        from sys import version_info
+
+        if version_info[:2] >= (3, 7):
+            pip.main(['install', 'cython'])
+
         with open(os.path.join(os.path.dirname(__file__), file)) as req_file:
             for line in req_file:
                 if '/' in line:
                     pip.main(['install', line])
-
     except BaseException:
         pass
 
