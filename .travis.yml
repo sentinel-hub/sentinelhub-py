@@ -14,8 +14,8 @@ before_install:
 - sudo apt-get -qq update
 - sudo apt-get install -y libopenjp2-7
 install:
-- pip install -r requirements-dev.txt
 - pip install .
+- pip install -r requirements-dev.txt
 script:
 - pylint sentinelhub/*.py
 - radon cc sentinelhub/*.py -a -nb

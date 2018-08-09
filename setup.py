@@ -58,15 +58,22 @@ def install_additional_requirements(file):
     """ Because setuptools do not support installing from GitHub if the same version of the package is available at PyPI
     """
     try:
-        from pip import _internal as pip
-    except ImportError:  # in case pip version is <10.0
-        import pip
+        try:
+            from pip import _internal as pip
+        except ImportError:  # in case pip version is <10.0
+            import pip
 
-    with open(os.path.join(os.path.dirname(__file__), file)) as req_file:
-        for line in req_file:
-            if '/' in line:
-                pip.main(['install', line])
+        from sys import version_info
 
+        if version_info[:2] >= (3, 7):
+            pip.main(['install', 'cython'])
+
+        with open(os.path.join(os.path.dirname(__file__), file)) as req_file:
+            for line in req_file:
+                if '/' in line:
+                    pip.main(['install', line])
+    except BaseException:
+        pass
 
 
 update_package_config()
