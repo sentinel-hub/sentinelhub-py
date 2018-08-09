@@ -139,6 +139,9 @@ class SHConfig:
     def __getattr__(self, name):
         return getattr(self._instance, name)
 
+    def __getitem__(self, name):
+        return getattr(self._instance, name)
+
     def __dir__(self):
         return sorted(list(dir(super(SHConfig, self))) + list(self._instance.CONFIG_PARAMS))
 
