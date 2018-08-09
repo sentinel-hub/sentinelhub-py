@@ -3,8 +3,3 @@ pytest-cov
 pylint
 twine
 radon
-sphinx
-sphinx_rtd_theme
-nbsphinx
-matplotlib
-jupyter
