@@ -3,9 +3,7 @@ import numpy as np
 
 from tests_all import TestSentinelHub
 
-from sentinelhub.data_request import GeopediaWmsRequest
-from sentinelhub.constants import CRS, MimeType
-from sentinelhub.common import BBox
+from sentinelhub import GeopediaWmsRequest, CRS, MimeType, BBox
 
 
 class TestOgc(TestSentinelHub):

@@ -4,10 +4,9 @@ import numpy as np
 
 from tests_all import TestSentinelHub
 
+from sentinelhub import WmsRequest, WcsRequest, CRS, MimeType, CustomUrlParam, ServiceType, DataSource, BBox
+from sentinelhub.data_request import OgcRequest
 from sentinelhub.ogc import OgcImageService
-from sentinelhub.data_request import WmsRequest, WcsRequest, OgcRequest
-from sentinelhub.constants import CRS, MimeType, CustomUrlParam, ServiceType, DataSource
-from sentinelhub.common import BBox
 
 
 class TestOgc(TestSentinelHub):

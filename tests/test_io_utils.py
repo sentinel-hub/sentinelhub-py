@@ -3,7 +3,7 @@ import os.path
 import numpy as np
 from tests_all import TestSentinelHub
 
-from sentinelhub.io_utils import read_data, write_data
+from sentinelhub import read_data, write_data
 
 
 class TestIO(TestSentinelHub):

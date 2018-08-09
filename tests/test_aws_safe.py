@@ -1,10 +1,9 @@
 import unittest
+import os.path
+
 from tests_all import TestSentinelHub
 
-import os.path
-from sentinelhub.io_utils import read_data, write_data
-from sentinelhub.data_request import AwsTileRequest, AwsProductRequest
-from sentinelhub.constants import DataSource, AwsConstants
+from sentinelhub import AwsTileRequest, AwsProductRequest, read_data, write_data, DataSource, AwsConstants
 
 
 class TestSafeFormat(TestSentinelHub):

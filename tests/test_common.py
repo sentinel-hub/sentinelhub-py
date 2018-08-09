@@ -1,8 +1,7 @@
 import unittest
 from tests_all import TestSentinelHub
 
-from sentinelhub.common import BBox
-from sentinelhub.constants import CRS
+from sentinelhub import BBox, CRS
 
 
 class TestBBox(TestSentinelHub):

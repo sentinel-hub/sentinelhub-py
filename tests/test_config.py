@@ -3,7 +3,7 @@ import json
 import os.path
 from tests_all import TestSentinelHub
 
-from sentinelhub.config import SHConfig
+from sentinelhub import SHConfig
 
 
 class TestSHConfig(TestSentinelHub):

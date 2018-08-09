@@ -4,9 +4,7 @@ from shapely.geometry import shape
 
 from tests_all import TestSentinelHub
 
-from sentinelhub.areas import BBoxSplitter, OsmSplitter, TileSplitter
-from sentinelhub.io_utils import read_data
-from sentinelhub.constants import CRS, DataSource
+from sentinelhub import BBoxSplitter, OsmSplitter, TileSplitter, read_data, CRS, DataSource
 
 
 class TestOgc(TestSentinelHub):

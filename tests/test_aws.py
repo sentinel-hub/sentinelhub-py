@@ -2,7 +2,7 @@ import unittest
 import numpy as np
 from tests_all import TestSentinelHub
 
-from sentinelhub.data_request import AwsTileRequest, AwsProductRequest
+from sentinelhub import AwsTileRequest, AwsProductRequest
 
 
 class TestAwsTile(TestSentinelHub):
@@ -49,7 +49,6 @@ class TestPartialAwsProduct(TestSentinelHub):
         self.assertEqual(len(self.data), 3, "Expected a list of length 3")
 
 
-"""
 class TestL2AProduct(TestSentinelHub):
     @classmethod
     def setUpClass(cls):
@@ -61,7 +60,7 @@ class TestL2AProduct(TestSentinelHub):
     def test_return_type(self):
         self.assertTrue(isinstance(self.data, list), "Expected a list")
         self.assertEqual(len(self.data), 41, "Expected a list of length 41")
-"""
+
 
 if __name__ == '__main__':
     unittest.main()

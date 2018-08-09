@@ -2,10 +2,7 @@ import unittest
 import os.path
 from tests_all import TestSentinelHub
 
-from sentinelhub.data_request import WcsRequest, AwsProductRequest
-from sentinelhub.common import BBox
-from sentinelhub.constants import CRS
-from sentinelhub.os_utils import get_file_list, get_folder_list
+from sentinelhub import WcsRequest, AwsProductRequest, BBox, CRS, get_file_list, get_folder_list
 
 
 class TestDataRequest(TestSentinelHub):
