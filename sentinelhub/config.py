@@ -19,10 +19,8 @@ class SHConfig:
         - `aws_secret_access_key`: Secret access key for AWS Requester Pays buckets.
         - `ogc_base_url`: Base url for Sentinel Hub's services (should not be changed by the user).
         - `gpd_base_url`: Base url for Geopedia's services (should not be changed by the user).
-        - `aws_base_url`: Base url for Sentinel-2 data on AWS (should not be changed by the user).
+        - `aws_metadata_base_url`: Base url for publicly available metadata files
         - `aws_s3_l1c_bucket`: Name of Sentinel-2 L1C bucket at AWS s3 service.
-        - `use_s3_l1c_bucket`: If `true` L1C data will be downloaded from s3 bucket, if `false` it will be downloaded
-          from free of charge http source.
         - `aws_s3_l2a_bucket`: Name of Sentinel-2 L2A bucket at AWS s3 service.
         - `opensearch_url`: Base url for Sentinelhub Opensearch service.
         - `max_wfs_records_per_query`: Maximum number of records returned for each WFS query.
@@ -49,9 +47,8 @@ class SHConfig:
             ('aws_secret_access_key', str),
             ('ogc_base_url', str),
             ('gpd_base_url', str),
-            ('aws_base_url', str),
+            ('aws_metadata_base_url', str),
             ('aws_s3_l1c_bucket', str),
-            ('use_s3_l1c_bucket', bool),
             ('aws_s3_l2a_bucket', str),
             ('opensearch_url', str),
             ('max_wfs_records_per_query', int),
