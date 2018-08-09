@@ -1,6 +1,9 @@
 language: python
 notifications:
   email: false
+branches:
+  only:
+  - master
 python:
 - "3.5"
 - "3.6"
@@ -19,5 +22,5 @@ install:
 script:
 - pylint sentinelhub/*.py
 - radon cc sentinelhub/*.py -a -nb
-- 'if [ "$TRAVIS_PULL_REQUEST" != "false" ]; then pytest --cov ./tests/ --ignore tests/test_ogc.py --ignore tests/test_data_request.py --ignore tests/test_areas.py ; fi'
+- 'if [ "$TRAVIS_PULL_REQUEST" != "false" ]; then pytest --cov ./tests/ --ignore tests/test_ogc.py --ignore tests/test_data_request.py --ignore tests/test_areas.py --ignore tests/test_aws.py; fi'
 - 'if [ "$TRAVIS_PULL_REQUEST" = "false" ]; then pytest --cov ./tests/; fi'
