@@ -78,14 +78,12 @@ class TestSafeFormat(TestSentinelHub):
                                                              '713', safe_format=True, data_folder=cls.INPUT_FOLDER)),
                           cls.SafeTestCase('L1C_02.06',
                                            AwsProductRequest('S2A_MSIL1C_20180331T212521_N0206_R043_T07WFR_20180401T005'
-                                                             '612', safe_format=True, data_folder=cls.INPUT_FOLDER))]
-        """
-        cls.test_cases.extend([
+                                                             '612', safe_format=True, data_folder=cls.INPUT_FOLDER)),
                           cls.SafeTestCase('L2A_02.01',
                                            AwsProductRequest('S2A_USER_PRD_MSIL2A_PDMC_20160310T041843_R138_V20160308T1'
                                                              '31142_20160308T131142', safe_format=True,
                                                              data_folder=cls.INPUT_FOLDER)),
-                          cls.SafeTestCase('L2A_02.05', # L2A_02.04 is the same
+                          cls.SafeTestCase('L2A_02.05',  # L2A_02.04 is the same
                                            AwsProductRequest('S2A_MSIL2A_20170827T105651_N0205_R094_T31WFN_20170827T105'
                                                              '652', safe_format=True, data_folder=cls.INPUT_FOLDER)),
                           cls.SafeTestCase('L2A_02.06',
@@ -93,14 +91,12 @@ class TestSafeFormat(TestSentinelHub):
                                                              '659', safe_format=True, data_folder=cls.INPUT_FOLDER)),
                           cls.SafeTestCase('L2A_02.07',
                                            AwsProductRequest('S2A_MSIL2A_20180402T151801_N0207_R068_T33XWJ_20180402T202'
-                                                             '222', safe_format=True, data_folder=cls.INPUT_FOLDER))])
-        """
-        """
+                                                             '222', safe_format=True, data_folder=cls.INPUT_FOLDER))]
+
         # Uncomment the following only when creating new test cases
-        for test_case in cls.test_cases:
-            test_case.save_truth()
-            test_case.request.save_data()
-        """
+        # for test_case in cls.test_cases:
+        #     test_case.save_truth()
+        #     test_case.request.save_data()
 
     def test_safe_struct(self):
         for test_case in self.test_cases:
