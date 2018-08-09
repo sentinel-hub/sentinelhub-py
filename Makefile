@@ -13,7 +13,7 @@ reset-config:
 			  --aws_secret_access_key "" \
 			  --ogc_base_url "https://services.sentinel-hub.com/ogc/" \
 			  --gpd_base_url "http://service.geopedia.world/" \
-			  --aws_metadata_base_url: "https://roda.sentinel-hub.com/" \
+			  --aws_metadata_base_url "https://roda.sentinel-hub.com/" \
 			  --aws_s3_l1c_bucket "sentinel-s2-l1c" \
 			  --aws_s3_l2a_bucket "sentinel-s2-l2a" \
 			  --opensearch_url "http://opensearch.sentinel-hub.com/resto/api/collections/Sentinel2/" \
