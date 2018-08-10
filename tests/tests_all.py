@@ -20,7 +20,6 @@ class TestSentinelHub(unittest.TestCase):
                         format='%(asctime)-15s %(module)s:%(lineno)d [%(levelname)s] %(funcName)s  %(message)s')
     LOGGER = logging.getLogger(__name__)
 
-    INSTANCE_ID = os.environ.get('INSTANCE_ID')
     _save_environment_variables()
 
     INPUT_FOLDER = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'TestInputs')

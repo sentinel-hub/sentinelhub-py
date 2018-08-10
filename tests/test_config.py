@@ -19,8 +19,9 @@ class TestSHConfig(TestSentinelHub):
             config = json.load(fp)
 
         for attr in config:
-            self.assertEqual(SHConfig()[attr], config[attr],
-                             "Expected value {}, got {}".format(config[attr], SHConfig()[attr]))
+            if attr not in ['instance_id', 'aws_access_key_id', 'aws_secret_access_key']:
+                self.assertEqual(SHConfig()[attr], config[attr],
+                                 "Expected value {}, got {}".format(config[attr], SHConfig()[attr]))
 
 
 if __name__ == '__main__':
