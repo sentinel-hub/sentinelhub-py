@@ -183,7 +183,7 @@ class BBoxSplitter(AreaSplitter):
     :type reduce_bbox_sizes: bool
     """
     def __init__(self, shape_list, crs, split_shape, **kwargs):
-        super(BBoxSplitter, self).__init__(shape_list, crs, **kwargs)
+        super().__init__(shape_list, crs, **kwargs)
 
         self.split_shape = self._parse_split_shape(split_shape)
 
@@ -246,7 +246,7 @@ class OsmSplitter(AreaSplitter):
     POP_WEB_MAX = transform_point((180, 0), CRS.WGS84, CRS.POP_WEB)[0]
 
     def __init__(self, shape_list, crs, zoom_level, **kwargs):
-        super(OsmSplitter, self).__init__(shape_list, crs, **kwargs)
+        super().__init__(shape_list, crs, **kwargs)
 
         self.zoom_level = zoom_level
 
@@ -341,7 +341,7 @@ class TileSplitter(AreaSplitter):
     """
     def __init__(self, shape_list, crs, time_interval, tile_split_shape=1, data_source=DataSource.SENTINEL2_L1C,
                  instance_id=None, **kwargs):
-        super(TileSplitter, self).__init__(shape_list, crs, **kwargs)
+        super().__init__(shape_list, crs, **kwargs)
 
         if data_source is DataSource.DEM:
             raise ValueError('This splitter does not support splitting area by DEM tiles. Please specify some other '

@@ -143,7 +143,7 @@ class SHConfig:
         return getattr(self._instance, name)
 
     def __dir__(self):
-        return sorted(list(dir(super(SHConfig, self))) + list(self._instance.CONFIG_PARAMS))
+        return sorted(list(dir(super())) + list(self._instance.CONFIG_PARAMS))
 
     def __str__(self):
         return json.dumps(self._instance.get_config(), indent=2)

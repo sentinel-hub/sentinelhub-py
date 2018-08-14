@@ -30,7 +30,7 @@ class GeopediaImageService(GeopediaService, OgcImageService):
     :type base_url: str or None
     """
     def __init__(self, **kwargs):
-        super(GeopediaImageService, self).__init__(**kwargs)
+        super().__init__(**kwargs)
 
     def get_dates(self, request):
         """ Geopedia does not support date queries

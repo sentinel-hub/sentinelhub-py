@@ -303,7 +303,7 @@ class AwsProduct(AwsService):
         self.data_source = self.get_data_source()
         self.safe_type = self.get_safe_type()
 
-        super(AwsProduct, self).__init__(**kwargs)
+        super().__init__(**kwargs)
 
         self.date = self.get_date()
         self.product_url = self.get_product_url()
@@ -466,7 +466,7 @@ class AwsTile(AwsService):
         self.aws_index = aws_index
         self.data_source = data_source
 
-        super(AwsTile, self).__init__(**kwargs)
+        super().__init__(**kwargs)
         self.tile_url = None
 
         self.aws_index = self.get_aws_index()

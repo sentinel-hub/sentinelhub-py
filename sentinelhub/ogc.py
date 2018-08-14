@@ -136,7 +136,7 @@ class OgcImageService(OgcService):
     :type instance_id: str or None
     """
     def __init__(self, **kwargs):
-        super(OgcImageService, self).__init__(**kwargs)
+        super().__init__(**kwargs)
 
         self.wfs_iterator = None
 
@@ -361,7 +361,7 @@ class WebFeatureService(OgcService):
     :type instance_id: str or None
     """
     def __init__(self, bbox, time_interval, *, data_source=DataSource.SENTINEL2_L1C, maxcc=1.0, **kwargs):
-        super(WebFeatureService, self).__init__(**kwargs)
+        super().__init__(**kwargs)
 
         self.bbox = bbox
         self.time_interval = self._parse_time_interval(time_interval)
