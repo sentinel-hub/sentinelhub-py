@@ -678,8 +678,8 @@ class AwsTile(AwsService):
         :return: tile name, sensing date and AWS index
         :rtype: (str, str, int)
         """
-        if tile_id.split('_')[0] not in ['S2A', 'L1C']:
-            raise ValueError('Transformation from tile_id to tile works currently only for Sentinel-2 L1C products')
+        if tile_id.split('_')[0] not in ['S2A', 'S2B', 'L1C']:
+            raise ValueError('Transformation from tile ID to tile works currently only for Sentinel-2 L1C products')
 
         tile_info = get_tile_info_id(tile_id)
         return AwsService.url_to_tile(tile_info['properties']['s3Path'])
