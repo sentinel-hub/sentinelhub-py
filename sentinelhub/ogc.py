@@ -4,10 +4,12 @@ Module for working with Sentinel Hub OGC services
 
 import logging
 import datetime
+import shapely.geometry
+import shapely.wkt
+import shapely.ops
 
 from base64 import b64encode
 from urllib.parse import urlencode
-from shapely.geometry import shape as geo_shape
 
 from .time_utils import get_current_date, parse_time
 from .download import DownloadRequest, get_json
@@ -184,7 +186,8 @@ class OgcImageService(OgcService):
                   'BBOX': request.bbox.__str__(reverse=True) if request.bbox.get_crs() is CRS.WGS84 else str(
                       request.bbox),
                   'FORMAT': MimeType.get_string(request.image_format),
-                  'CRS': CRS.ogc_string(request.bbox.get_crs())}
+                  'CRS': CRS.ogc_string(request.bbox.get_crs()),
+                  'VERSION': '1.3.0'}
 
         if request.service_type is ServiceType.WMS:
             params = {**params,
@@ -220,6 +223,12 @@ class OgcImageService(OgcService):
             if CustomUrlParam.EVALSCRIPT.value in params:
                 evalscript = params[CustomUrlParam.EVALSCRIPT.value]
                 params[CustomUrlParam.EVALSCRIPT.value] = b64encode(evalscript.encode()).decode()
+
+            if CustomUrlParam.GEOMETRY.value in params and request.bbox.get_crs() is CRS.WGS84:
+                geometry = shapely.wkt.loads(params[CustomUrlParam.GEOMETRY.value])
+                geometry = shapely.ops.transform(lambda x, y: (y, x), geometry)
+
+                params[CustomUrlParam.GEOMETRY.value] = geometry.wkt
 
         authority = self.instance_id if hasattr(self, 'instance_id') else request.theme
         return '{}/{}?{}'.format(url, authority, urlencode(params))
@@ -448,7 +457,7 @@ class WebFeatureService(OgcService):
         :return: List of multipolygon geometries in the order returned by WFS service.
         :rtype: list(shapely.geometry.MultiPolygon)
         """
-        return [geo_shape(tile_info['geometry']) for tile_info in self]
+        return [shapely.geometry.shape(tile_info['geometry']) for tile_info in self]
 
     def get_tiles(self):
         """ Returns list of tiles with tile name, date and AWS index

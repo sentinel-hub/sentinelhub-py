@@ -25,7 +25,6 @@ class TestSentinelHub(unittest.TestCase):
     INPUT_FOLDER = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'TestInputs')
     OUTPUT_FOLDER = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'TestOutputs')
 
-
     @classmethod
     def tearDownClass(cls):
         shutil.rmtree(cls.OUTPUT_FOLDER, ignore_errors=True)

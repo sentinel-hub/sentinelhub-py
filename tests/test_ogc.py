@@ -45,8 +45,9 @@ class TestOgc(TestSentinelHub):
         wgs84_bbox_2 = BBox(bbox=(21.3, 64.0, 22.0, 64.5), crs=CRS.WGS84)
         wgs84_bbox_3 = BBox(bbox=(-72.0, -70.4, -71.8, -70.2), crs=CRS.WGS84)
         pop_web_bbox = BBox(bbox=(1292344.0, 5195920.0, 1310615.0, 5214191.0), crs=CRS.POP_WEB)
-        geometry_wkt = 'POLYGON((1292344.0 5205055.5, 1301479.5 5195920.0, 1310615.0 5205055.5, ' \
-                       '1301479.5 5214191.0, 1292344.0 5205055.5))'
+        geometry_wkt_pop_web = 'POLYGON((1292344.0 5205055.5, 1301479.5 5195920.0, 1310615.0 5205055.5, ' \
+                               '1301479.5 5214191.0, 1292344.0 5205055.5))'
+        geometry_wkt_wgs84 = 'POLYGON((-5.13 48, -5.23 48.09, -5.13 48.17, -5.03 48.08, -5.13 48))'
         img_width = 100
         img_height = 100
         resx = '53m'
@@ -97,23 +98,23 @@ class TestOgc(TestSentinelHub):
                                                               'customScripts/master/sentinel-2/false_color_infrared/'
                                                               'script.js'}),
                             result_len=1, img_min=41, img_max=255, img_mean=230.568, img_median=255, tile_num=3),
-            cls.OgcTestCase('customUrlEvalscript,Transparent',
+            cls.OgcTestCase('customUrlEvalscript,Transparent,Geometry',
                             WcsRequest(data_folder=cls.OUTPUT_FOLDER, image_format=MimeType.PNG,
                                        layer='TRUE-COLOR-S2-L1C', resx=resx, resy=resy, bbox=wgs84_bbox,
                                        time=('2017-10-01', '2017-10-02'),
                                        custom_url_params={CustomUrlParam.SHOWLOGO: True,
                                                           CustomUrlParam.TRANSPARENT: True,
-                                                          CustomUrlParam.EVALSCRIPT: 'return [B10,B8A, B03 ]'}),
-                            result_len=1, img_min=0, img_max=255, img_mean=100.1543, img_median=68.0, tile_num=2),
+                                                          CustomUrlParam.EVALSCRIPT: 'return [B10,B8A, B03 ]',
+                                                          CustomUrlParam.GEOMETRY: geometry_wkt_wgs84}),
+                            result_len=1, img_min=0, img_max=255, img_mean=53.71428, img_median=1.0, tile_num=2),
             cls.OgcTestCase('FalseLogo,BgColor,Geometry',
                             WmsRequest(data_folder=cls.OUTPUT_FOLDER, image_format=MimeType.PNG,
                                        layer='TRUE-COLOR-S2-L1C', width=img_width, height=img_height, bbox=pop_web_bbox,
                                        time=('2017-10-01', '2017-10-02'),
                                        custom_url_params={CustomUrlParam.SHOWLOGO: False,
                                                           CustomUrlParam.BGCOLOR: "F4F86A",
-                                                          CustomUrlParam.GEOMETRY: geometry_wkt}),
+                                                          CustomUrlParam.GEOMETRY: geometry_wkt_pop_web}),
                             result_len=1, img_min=63, img_max=255, img_mean=213.3590, img_median=242.0, tile_num=3),
-
             # DataSource tests:
             cls.OgcTestCase('S2 L1C Test',
                             WmsRequest(data_source=DataSource.SENTINEL2_L1C, data_folder=cls.OUTPUT_FOLDER,
@@ -172,6 +173,7 @@ class TestOgc(TestSentinelHub):
                             tile_num=1)
         ]
         """
+        # Test case for eocloud data source
         cls.test_cases.extend([
             cls.OgcTestCase('EOCloud S1 IW Test',
                             WmsRequest(data_source=DataSource.SENTINEL1_IW, data_folder=cls.OUTPUT_FOLDER,
