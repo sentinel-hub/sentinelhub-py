@@ -45,6 +45,8 @@ def read_data(filename, data_format=None):
 
     if data_format.is_tiff_format():
         return read_tiff_image(filename)
+    if data_format is MimeType.JP2:
+        return read_jp2_image(filename)
     if data_format.is_image_format():
         return read_image(filename)
     try:
