@@ -108,18 +108,21 @@ def is_valid_time(time):
         return False
 
 
-def parse_time(time_str):
+def parse_time(time_input):
     """ Parse input time/date string as ISO 8601 string
 
-    :param time_str: time/date string to parse
-    :type time_str: str
+    :param time_input: time/date to parse
+    :type time_input: str or datetime.date or datetime.datetime
     :return: parsed string in ISO 8601 format
     :rtype: str
     """
-    if len(time_str) < 8:
+    if isinstance(time_input, datetime.date):
+        return time_input.isoformat()  # datetime.date only returns date, datetime.datetime also returns time
+
+    if len(time_input) < 8:
         raise ValueError('Invalid time string {}.\n'
-                         'Please specify time in formats YYYY-MM-DD or YYYY-MM-DDTHH:MM:SS'.format(time_str))
-    time = dateutil.parser.parse(time_str)
-    if len(time_str) <= 10:
+                         'Please specify time in formats YYYY-MM-DD or YYYY-MM-DDTHH:MM:SS'.format(time_input))
+    time = dateutil.parser.parse(time_input)
+    if len(time_input) <= 10:
         return time.date().isoformat()
     return time.isoformat()

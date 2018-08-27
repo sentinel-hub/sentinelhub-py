@@ -65,9 +65,9 @@ class OgcService:
         if time is None or time is OgcConstants.LATEST:
             date_interval = (SHConfig().default_start_date, get_current_date())
         else:
-            if isinstance(time, str):
+            if isinstance(time, (str, datetime.date)):
                 date_interval = (parse_time(time), parse_time(time))
-            elif isinstance(time, list) or isinstance(time, tuple) and len(time) == 2:
+            elif isinstance(time, (tuple, list)) and len(time) == 2:
                 date_interval = (parse_time(time[0]), parse_time(time[1]))
             else:
                 raise TabError('time must be a string or tuple of 2 strings or list of 2 strings')
@@ -89,7 +89,7 @@ class OgcService:
         :param dates: a list of datetime objects
         :param time_difference: a ``datetime.timedelta`` representing the time difference threshold
         :return: an ordered list of datetimes `d1<=d2<=...<=dn` such that `d[i+1]-di > time_difference`
-        :rtype: list[datetime.datetime]
+        :rtype: list(datetime.datetime)
         """
 
         LOGGER.debug("dates=%s", dates)

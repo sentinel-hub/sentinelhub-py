@@ -254,7 +254,8 @@ class OgcRequest(DataRequest):
                 scenes between the specified dates conforming to the cloud coverage criteria. Most recent acquisition
                 being first in the list. For the latest acquisition use ``latest``.
                 Examples: ``latest``, ``'2016-01-01'``, or ``('2016-01-01', ' 2016-01-31')``
-    :type time: str, or tuple of str
+    :type time: str or (str, str) or datetime.date or (datetime.date, datetime.date) or datetime.datetime or
+        (datetime.datetime, datetime.datetime)
     :param layer: the preconfigured layer (image) to be returned as comma separated layer names. Required.
     :type layer: str
     :param maxcc: maximum accepted cloud coverage of an image. Float between 0.0 and 1.0. Default is ``1.0``.
@@ -374,7 +375,8 @@ class WmsRequest(OgcRequest):
                 scenes between the specified dates conforming to the cloud coverage criteria. Most recent acquisition
                 being first in the list. For the latest acquisition use ``latest``.
                 Examples: ``latest``, ``'2016-01-01'``, or ``('2016-01-01', ' 2016-01-31')``
-    :type time: str, or tuple of str
+    :type time: str or (str, str) or datetime.date or (datetime.date, datetime.date) or datetime.datetime or
+        (datetime.datetime, datetime.datetime)
     :param layer: the preconfigured layer (image) to be returned as comma separated layer names. Required.
     :type layer: str
     :param maxcc: maximum accepted cloud coverage of an image. Float between 0.0 and 1.0. Default is ``1.0``.
@@ -437,7 +439,8 @@ class WcsRequest(OgcRequest):
                 scenes between the specified dates conforming to the cloud coverage criteria. Most recent acquisition
                 being first in the list. For the latest acquisition use ``latest``.
                 Examples: ``latest``, ``'2016-01-01'``, or ``('2016-01-01', ' 2016-01-31')``
-    :type time: str, or tuple of str
+    :type time: str or (str, str) or datetime.date or (datetime.date, datetime.date) or datetime.datetime or
+        (datetime.datetime, datetime.datetime)
     :param layer: the preconfigured layer (image) to be returned as comma separated layer names. Required.
     :type layer: str
     :param maxcc: maximum accepted cloud coverage of an image. Float between 0.0 and 1.0. Default is ``1.0``.
