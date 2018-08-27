@@ -28,7 +28,7 @@ doc_title = 'sentinelhub Documentation'
 # built documents.
 #
 # The release is read from __init__ file and version is shortened release string.
-for line in open(os.path.join(os.path.dirname(__file__), '../../sentinelhub/__init__.py')):
+for line in open(os.path.join(os.path.dirname(__file__), '../../sentinelhub/_version.py')):
     if line.find("__version__") >= 0:
         release = line.split("=")[1].strip()
         release = release.strip('"').strip("'")

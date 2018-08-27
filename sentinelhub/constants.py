@@ -5,12 +5,12 @@ Module with enum constants and utm utils
 import itertools as it
 import mimetypes
 import utm
-import os.path
 
 from pyproj import Proj
 from enum import Enum, EnumMeta
 
 from .config import SHConfig
+from ._version import __version__
 
 
 mimetypes.add_type('application/json', '.json')
@@ -21,11 +21,7 @@ class PackageProps:
 
     @staticmethod
     def get_version():
-        for line in open(os.path.join(os.path.dirname(__file__), '__init__.py')):
-            if line.find("__version__") >= 0:
-                version = line.split("=")[1].strip()
-                version = version.strip('"').strip("'")
-        return version
+        return __version__
 
 
 class ServiceType(Enum):

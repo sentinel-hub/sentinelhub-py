@@ -13,7 +13,7 @@ def parse_requirements(file):
 
 
 def get_version():
-    for line in open(os.path.join(os.path.dirname(__file__), 'sentinelhub', '__init__.py')):
+    for line in open(os.path.join(os.path.dirname(__file__), 'sentinelhub', '_version.py')):
         if line.find("__version__") >= 0:
             version = line.split("=")[1].strip()
             version = version.strip('"').strip("'")
