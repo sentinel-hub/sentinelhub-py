@@ -1,6 +1,8 @@
 import unittest
 from tests_all import TestSentinelHub
 
+import shapely.geometry
+
 from sentinelhub import BBox, CRS
 
 
@@ -113,6 +115,14 @@ class TestBBox(TestSentinelHub):
         self.assertNotEqual(bbox1, bbox4, "Bounding boxes {} and {} should not be the same".format(repr(bbox1),
                                                                                                    repr(bbox4)))
 
+    def test_geometry(self):
+        bbox = BBox([46.07, 13.23, 46.24, 13.57], CRS.WGS84)
+
+        self.assertTrue(isinstance(bbox.get_geojson(), dict),
+                        "Expected dictionary, got type {}".format(type(bbox.get_geometry())))
+        self.assertTrue(isinstance(bbox.get_geometry(), shapely.geometry.polygon.Polygon),
+                        "Expected type {}, got type {}".format(shapely.geometry.polygon.Polygon,
+                                                               type(bbox.get_geometry())))
 
 
 if __name__ == '__main__':

@@ -11,6 +11,8 @@ Available classes:
  - BBox, represent a bounding box in a given CRS
 """
 
+import shapely.geometry
+
 from .constants import CRS
 
 
@@ -100,6 +102,26 @@ class BBox:
             for i, point in enumerate(polygon):
                 polygon[i] = point[::-1]
         return polygon
+
+    def get_geojson(self):
+        """ Returns polygon geometry in GeoJSON format
+
+        :return: A dictionary in GeoJSON format
+        :rtype: dict
+        """
+        return {'type': 'Polygon',
+                'crs': {'type': 'name',
+                        'properties': {'name': 'urn:ogc:def:crs:EPSG::{}'.format(self.get_crs().value)}},
+                'coordinates': [self.get_polygon()]
+                }
+
+    def get_geometry(self):
+        """ Returns polygon geometry in shapely format
+
+        :return: A polygon in shapely format
+        :rtype: shapely.geometry.polygon.Polygon
+        """
+        return shapely.geometry.shape(self.get_geojson())
 
     def get_partition(self, num_x=1, num_y=1):
         """ Partitions bounding box into smaller bounding boxes of the same size.
