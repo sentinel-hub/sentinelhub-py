@@ -121,7 +121,7 @@ class BBox:
         :return: A polygon in shapely format
         :rtype: shapely.geometry.polygon.Polygon
         """
-        return shapely.geometry.shape(self.get_geojson())
+        return shapely.geometry.Polygon(self.get_polygon())
 
     def get_partition(self, num_x=1, num_y=1):
         """ Partitions bounding box into smaller bounding boxes of the same size.
