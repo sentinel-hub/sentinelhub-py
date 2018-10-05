@@ -254,7 +254,7 @@ def execute_download_request(request):
                         isinstance(exception, requests.HTTPError) and \
                         exception.response.status_code == requests.status_codes.codes.NOT_FOUND:
                     raise AwsDownloadFailedException('File in location %s is missing' % request.url)
-                raise DownloadFailedException(_create_download_failed_message(exception))
+                raise DownloadFailedException(_create_download_failed_message(exception, request.url))
 
     _save_if_needed(request, response_content)
 
@@ -328,15 +328,17 @@ def _is_temporal_problem(exception):
         return isinstance(exception, requests.ConnectionError)
 
 
-def _create_download_failed_message(exception):
+def _create_download_failed_message(exception, url):
     """ Creates message describing why download has failed
 
     :param exception: Exception raised during download
     :type exception: Exception
+    :param url: An URL from where download was attempted
+    :type url: str
     :return: Error message
     :rtype: str
     """
-    message = 'Failed to download with {}:\n{}'.format(exception.__class__.__name__, exception)
+    message = 'Failed to download from:\n{}\nwith {}:\n{}'.format(url, exception.__class__.__name__, exception)
 
     if _is_temporal_problem(exception):
         if isinstance(exception, requests.ConnectionError):
