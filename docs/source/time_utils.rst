@@ -12,3 +12,4 @@ Utility functions for processing time/date formats.
 .. autofunction:: get_current_date
 .. autofunction:: is_valid_time
 .. autofunction:: parse_time
+.. autofunction:: parse_time_interval

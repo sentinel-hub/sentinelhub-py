@@ -123,7 +123,7 @@ def utm_to_pixel(east, north, transform, truncate=True):
     :type north: float
     :param transform: georeferencing transform of the image, e.g. `(x_upper_left, res_x, 0, y_upper_left, 0, -res_y)`
     :type transform: tuple or list
-    :param truncate: Whether to truncate pixel coordinates. Default is `True`
+    :param truncate: Whether to truncate pixel coordinates. Default is ``True``
     :type truncate: bool
     :return: row and column pixel image coordinates
     :rtype: float, float or int, int
@@ -164,7 +164,7 @@ def wgs84_to_pixel(lng, lat, transform, utm_epsg=None, truncate=True):
     :type transform: tuple or list
     :param utm_epsg: UTM coordinate reference system enum constants
     :type utm_epsg: constants.CRS or None
-    :param truncate: Whether to truncate pixel coordinates. Default is `True`
+    :param truncate: Whether to truncate pixel coordinates. Default is ``True``
     :type truncate: bool
     :return: row and column pixel image coordinates
     :rtype: float, float or int, int
