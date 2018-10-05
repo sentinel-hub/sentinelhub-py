@@ -84,7 +84,7 @@ def _extract_range_from_time(time):
     :return: pair of strings of length 2
     :rtype: tuple[str]
     """
-    if len(time.split('T')) == 1:
+    if 'T' in time:
         start_date, end_date = time + 'T00:00:00', time + 'T23:59:59'
     else:
         start_date, end_date = time, time
@@ -141,13 +141,11 @@ def reduce_by_maxcc(result_list, maxcc):
     return [tile_info for tile_info in result_list if tile_info['properties']['cloudCover'] <= 100 * float(maxcc)]
 
 
-def search_iter(text_query=None, tile_id=None, bbox=None, start_date=None, end_date=None, cloud_cover=None):
-    """ Function that implements Opensearch search queries and returns results
+def search_iter(tile_id=None, bbox=None, start_date=None, end_date=None, absolute_orbit=None):
+    """ A generator function that implements OpenSearch search queries and returns results
 
     All parameters for search are optional.
 
-    :param text_query: arbitrary text query
-    :type text_query: str
     :param tile_id: original tile identification string provided by ESA (e.g.
                     'S2A_OPER_MSI_L1C_TL_SGS__20160109T230542_A002870_T10UEV_N02.01')
     :type tile_id: str
@@ -157,15 +155,15 @@ def search_iter(text_query=None, tile_id=None, bbox=None, start_date=None, end_d
     :type start_date: str
     :param end_date: end of time range in ISO8601 format
     :type end_date: str
-    :param cloud_cover: percentage of cloud coverage
-    :type cloud_cover: float in range [0, 100]
-    :return: dictionaries containing info provided by Opensearch REST service
+    :param absolute_orbit: An absolute orbit number of Sentinel-2 L1C products as defined by ESA
+    :type absolute_orbit: int
+    :return: An iterator returning dictionaries with info provided by Sentinel Hub OpenSearch REST service
     :rtype: Iterator[dict]
     """
     if bbox and bbox.get_crs() is not CRS.WGS84:
         bbox = transform_bbox(bbox, CRS.WGS84)
 
-    url_params = _prepare_url_params(bbox, cloud_cover, end_date, start_date, text_query, tile_id)
+    url_params = _prepare_url_params(tile_id, bbox, end_date, start_date, absolute_orbit)
     url_params['maxRecords'] = SHConfig().max_opensearch_records_per_query
 
     start_index = 1
@@ -185,44 +183,28 @@ def search_iter(text_query=None, tile_id=None, bbox=None, start_date=None, end_d
         start_index += SHConfig().max_opensearch_records_per_query
 
 
-def _prepare_url_params(bbox, cloud_cover, end_date, start_date, text_query, tile_id):
+def _prepare_url_params(tile_id, bbox, end_date, start_date, absolute_orbit):
     """ Constructs dict with URL params
 
+    :param tile_id: original tile identification string provided by ESA (e.g.
+                    'S2A_OPER_MSI_L1C_TL_SGS__20160109T230542_A002870_T10UEV_N02.01')
+    :type tile_id: str
     :param bbox: bounding box of requested area in WGS84 CRS
     :type bbox: common.BBox
-    :param cloud_cover: percentage of cloud coverage
-    :type cloud_cover: float in range [0, 100]
     :param start_date: beginning of time range in ISO8601 format
     :type start_date: str
     :param end_date: end of time range in ISO8601 format
     :type end_date: str
-    :param text_query: arbitrary text query
-    :type text_query: str
-    :param tile_id: original tile identification string provided by ESA (e.g.
-                    'S2A_OPER_MSI_L1C_TL_SGS__20160109T230542_A002870_T10UEV_N02.01')
-    :type tile_id: str
+    :param absolute_orbit: An absolute orbit number of Sentinel-2 L1C products as defined by ESA
+    :type absolute_orbit: int
     :return: dictionary with parameters as properties when arguments not None
     :rtype: dict
     """
-    url_params = _add_param({}, text_query, 'q')
-    url_params = _add_param(url_params, tile_id, 'identifier')
-    url_params = _add_param(url_params, start_date, 'startDate')
-    url_params = _add_param(url_params, end_date, 'completionDate')
-    url_params = _add_param(url_params, cloud_cover, 'cloudCover')
-    if bbox:
-        url_params = _add_param(url_params, str(bbox), 'box')
-    return url_params
-
-
-def _add_param(params, value, key):
-    """ If value is not None then return dict params with added (key, value) pair
-
-    :param params: dictionary of parameters
-    :type: dict
-    :param value: Value
-    :param key: Key
-    :return: if value not ``None`` then a copy of params with (key, value) added, otherwise returns params
-    """
-    if value:
-        params[key] = value
-    return params
+    url_params = {
+        'identifier': tile_id,
+        'startDate': start_date,
+        'completionDate': end_date,
+        'orbitNumber': absolute_orbit,
+        'box': bbox
+    }
+    return {key: str(value) for key, value in url_params.items() if value}
