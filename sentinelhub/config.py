@@ -136,6 +136,9 @@ class SHConfig:
         if not SHConfig._instance:
             SHConfig._instance = self._SHConfig()
 
+        for prop in self._instance.CONFIG_PARAMS:
+            setattr(self, prop, getattr(self._instance, prop))
+
     def __getattr__(self, name):
         """ This is called only if the class doesn't have the attribute itself
         """
