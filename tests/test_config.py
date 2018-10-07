@@ -23,6 +23,23 @@ class TestSHConfig(TestSentinelHub):
                 self.assertEqual(SHConfig()[attr], config[attr],
                                  "Expected value {}, got {}".format(config[attr], SHConfig()[attr]))
 
+    def test_reset(self):
+        config = SHConfig()
+
+        old_value = config.instance_id
+        new_value = 'new'
+        config.instance_id = new_value
+        self.assertEqual(config.instance_id, new_value, 'New value was not set')
+        self.assertEqual(config['instance_id'], new_value, 'New value was not set')
+        self.assertEqual(config._instance.instance_id, old_value, 'Private value has changed')
+
+        config.reset('ogc_base_url')
+        config.reset(['aws_access_key_id', 'aws_secret_access_key'])
+        self.assertEqual(config.instance_id, new_value, 'Instance ID should not reset yet')
+        config.reset()
+        self.assertEqual(config.instance_id, config._instance.CONFIG_PARAMS['instance_id'],
+                         'Instance ID should reset')
+
 
 if __name__ == '__main__':
     unittest.main()

@@ -473,22 +473,42 @@ class MimeType(Enum):
         """
         return any(value == item.value for item in cls)
 
-    @staticmethod
-    def get_string(fmt):
+    def get_string(self):
         """ Get file format as string
 
-        :param fmt: MimeType enum constant
-        :type fmt: Enum constant
         :return: String describing the file format
         :rtype: str
         """
-        if fmt in [MimeType.TIFF_d8, MimeType.TIFF_d16, MimeType.TIFF_d32f]:
-            return 'image/{}'.format(fmt.value)
-        if fmt is MimeType.JP2:
+        if self in [MimeType.TIFF_d8, MimeType.TIFF_d16, MimeType.TIFF_d32f]:
+            return 'image/{}'.format(self.value)
+        if self is MimeType.JP2:
             return 'image/jpeg2000'
-        if fmt in [MimeType.RAW, MimeType.REQUESTS_RESPONSE]:
-            return fmt.value
-        return mimetypes.types_map['.' + fmt.value]
+        if self in [MimeType.RAW, MimeType.REQUESTS_RESPONSE]:
+            return self.value
+        return mimetypes.types_map['.' + self.value]
+
+    def get_expected_max_value(self):
+        """ Returns max value of image `MimeType` format and raises an error if it is not an image format
+
+        Note: For `MimeType.TIFF_d32f` it will return ``1.0`` as that is expected maximum for an image even though it
+        could be higher.
+
+        :return: A maximum value of specified image format
+        :rtype: int or float
+        :raises: ValueError
+        """
+        try:
+            return {
+                MimeType.TIFF: 65535,
+                MimeType.TIFF_d8: 255,
+                MimeType.TIFF_d16: 65535,
+                MimeType.TIFF_d32f: 1.0,
+                MimeType.PNG: 255,
+                MimeType.JPG: 255,
+                MimeType.JP2: 10000
+            }[self]
+        except IndexError:
+            raise ValueError('Type {} is not supported by this method'.format(self))
 
 
 class RequestType(Enum):

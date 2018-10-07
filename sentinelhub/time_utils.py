@@ -5,6 +5,9 @@ Module with useful time/date functions
 import datetime
 import dateutil.parser
 
+from .constants import OgcConstants
+from .config import SHConfig
+
 
 def get_dates_in_range(start_date, end_date):
     """ Get all dates within input start and end date in ISO 8601 format
@@ -53,7 +56,7 @@ def prev_date(date):
 def iso_to_datetime(date):
     """ Convert ISO 8601 time format to datetime format
 
-    This function converts a date in ISO format, e.g. ``2017-09-14`` to a ``datetime`` instance, e.g.
+    This function converts a date in ISO format, e.g. ``2017-09-14`` to a `datetime` instance, e.g.
     ``datetime.datetime(2017,9,14,0,0)``
 
     :param date: date in ISO 8601 format
@@ -89,8 +92,7 @@ def get_current_date():
     :return: current date in ISO 8601 format
     :rtype: str
     """
-    date = datetime.datetime.now()
-    return datetime_to_iso(date)
+    return datetime_to_iso(datetime.datetime.now())
 
 
 def is_valid_time(time):
@@ -109,7 +111,7 @@ def is_valid_time(time):
 
 
 def parse_time(time_input):
-    """ Parse input time/date string as ISO 8601 string
+    """ Parse input time/date string into ISO 8601 string
 
     :param time_input: time/date to parse
     :type time_input: str or datetime.date or datetime.datetime
@@ -126,3 +128,45 @@ def parse_time(time_input):
     if len(time_input) <= 10:
         return time.date().isoformat()
     return time.isoformat()
+
+
+def parse_time_interval(time):
+    """ Parse input into an interval of two times, specifying start and end time, in ISO 8601 format, for example:
+
+    ``(2017-01-15:T00:00:00, 2017-01-16:T23:59:59)``
+
+    The input time can have the following formats, which will be parsed as:
+
+    * `YYYY-MM-DD` -> `[YYYY-MM-DD:T00:00:00, YYYY-MM-DD:T23:59:59]`
+    * `YYYY-MM-DDThh:mm:ss` -> `[YYYY-MM-DDThh:mm:ss, YYYY-MM-DDThh:mm:ss]`
+    * list or tuple of two dates in form `YYYY-MM-DD` -> `[YYYY-MM-DDT00:00:00, YYYY-MM-DDT23:59:59]`
+    * list or tuple of two dates in form `YYYY-MM-DDThh:mm:ss` -> `[YYYY-MM-DDThh:mm:ss, YYYY-MM-DDThh:mm:ss]`,
+    * `None` -> `[default_start_date from config.json, current date]`
+
+    All input times can also be specified in `datetime.datetime` format.
+
+    :param time: An input time
+    :type time: str or datetime.datetime
+    :return: interval of start and end date of the form `YYYY-MM-DDThh:mm:ss`
+    :rtype: (str, str)
+    :raises: ValueError
+    """
+    if time is None or time is OgcConstants.LATEST:
+        date_interval = (SHConfig().default_start_date, get_current_date())
+    else:
+        if isinstance(time, (str, datetime.date)):
+            date_interval = (parse_time(time), ) * 2
+        elif isinstance(time, (tuple, list)) and len(time) == 2:
+            date_interval = (parse_time(time[0]), parse_time(time[1]))
+        else:
+            raise ValueError('Time must be a string or tuple of 2 strings or list of 2 strings')
+
+    if 'T' not in date_interval[0]:
+        date_interval = (date_interval[0] + 'T00:00:00', date_interval[1])
+    if 'T' not in date_interval[1]:
+        date_interval = (date_interval[0], date_interval[1] + 'T23:59:59')
+
+    if date_interval[1] < date_interval[0]:
+        raise ValueError('Start of time interval is larger than end of time interval')
+
+    return date_interval

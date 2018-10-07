@@ -4,10 +4,9 @@ Module for manipulation of geographical information.
 
 import logging
 import pyproj
+from copy import deepcopy
 
 from .constants import CRS
-from .common import BBox
-
 
 LOGGER = logging.getLogger(__name__)
 
@@ -72,9 +71,9 @@ def to_utm_bbox(bbox):
 def get_utm_bbox(img_bbox, transform):
     """ Get UTM coordinates given a bounding box in pixels and a transform
 
-    :param img_bbox: boundaries of bounding box in pixels as [row1, col1, row2, col2]
+    :param img_bbox: boundaries of bounding box in pixels as `[row1, col1, row2, col2]`
     :type img_bbox: list
-    :param transform: georeferencing transform of the image, e.g. (x_upper_left, res_x, 0, y_upper_left, 0, -res_y)
+    :param transform: georeferencing transform of the image, e.g. `(x_upper_left, res_x, 0, y_upper_left, 0, -res_y)`
     :type transform: tuple or list
     :return: UTM coordinates as [east1, north1, east2, north2]
     :rtype: list
@@ -123,7 +122,7 @@ def utm_to_pixel(east, north, transform, truncate=True):
     :type east: float
     :param north: north coordinate of point
     :type north: float
-    :param transform: georeferencing transform of the image, e.g. (x_upper_left, res_x, 0, y_upper_left, 0, -res_y)
+    :param transform: georeferencing transform of the image, e.g. `(x_upper_left, res_x, 0, y_upper_left, 0, -res_y)`
     :type transform: tuple or list
     :param truncate: Whether to truncate pixel coordinates. Default is ``True``
     :type truncate: bool
@@ -144,7 +143,7 @@ def pixel_to_utm(row, column, transform):
     :type row: int or float
     :param column: column pixel coordinate
     :type column: int or float
-    :param transform: georeferencing transform of the image, e.g. (x_upper_left, res_x, 0, y_upper_left, 0, -res_y)
+    :param transform: georeferencing transform of the image, e.g. `(x_upper_left, res_x, 0, y_upper_left, 0, -res_y)`
     :type transform: tuple or list
     :return: east, north UTM coordinates
     :rtype: float, float
@@ -162,7 +161,7 @@ def wgs84_to_pixel(lng, lat, transform, utm_epsg=None, truncate=True):
     :type lng: float
     :param lat: latitude of point
     :type lat: float
-    :param transform: georeferencing transform of the image, e.g. (x_upper_left, res_x, 0, y_upper_left, 0, -res_y)
+    :param transform: georeferencing transform of the image, e.g. `(x_upper_left, res_x, 0, y_upper_left, 0, -res_y)`
     :type transform: tuple or list
     :param utm_epsg: UTM coordinate reference system enum constants
     :type utm_epsg: constants.CRS or None
@@ -196,7 +195,7 @@ def get_utm_crs(lng, lat, source_crs=CRS.WGS84):
 def transform_point(point, source_crs, target_crs):
     """ Maps point form src_crs to tgt_crs
 
-    :param point: a tuple (x, y)
+    :param point: a tuple `(x, y)`
     :type point: (float, float)
     :param source_crs: source CRS
     :type source_crs: constants.CRS
@@ -222,9 +221,6 @@ def transform_bbox(bbox, target_crs):
     :return: bounding box in target CRS
     :rtype: common.BBox
     """
-    source_crs = bbox.get_crs()
-    lower_left = bbox.get_lower_left()
-    upper_right = bbox.get_upper_right()
-    new_lower_left = transform_point(lower_left, source_crs, target_crs)
-    new_upper_right = transform_point(upper_right, source_crs, target_crs)
-    return BBox((new_lower_left, new_upper_right), target_crs)
+    bbox = deepcopy(bbox)
+    bbox.transform(target_crs)
+    return bbox

@@ -11,7 +11,7 @@ import shapely.ops
 from base64 import b64encode
 from urllib.parse import urlencode
 
-from .time_utils import get_current_date, parse_time
+from .time_utils import parse_time_interval
 from .download import DownloadRequest, get_json
 from .constants import ServiceType, DataSource, MimeType, CRS, OgcConstants, CustomUrlParam
 from .config import SHConfig
@@ -38,48 +38,6 @@ class OgcService:
             raise ValueError('Instance ID is not set. '
                              'Set it either in request initialization or in configuration file. '
                              'Check http://sentinelhub-py.readthedocs.io/en/latest/configure.html for more info.')
-
-    @staticmethod
-    def _parse_time_interval(time):
-        """ Parses times into common form
-
-        Parses specified time into common form - tuple of start and end dates, i.e.:
-
-        ``(2017-01-15:T00:00:00, 2017-01-16:T23:59:59)``
-
-        The parameter can have the following values/format, which will be parsed as:
-
-        * ``None`` -> `[default_start_date from config.json, current date]`
-        * `YYYY-MM-DD` -> `[YYYY-MM-DD:T00:00:00, YYYY-MM-DD:T23:59:59]`
-        * `YYYY-MM-DDThh:mm:ss` -> `[YYYY-MM-DDThh:mm:ss, YYYY-MM-DDThh:mm:ss]`
-        * list or tuple of two dates (`YYYY-MM-DD`) -> `[YYYY-MM-DDT00:00:00, YYYY-MM-DDT23:59:59]`, where the first
-          (second) element is start (end) date
-        * list or tuple of two dates (`YYYY-MM-DDThh:mm:ss`) -> `[YYYY-MM-DDThh:mm:ss, YYYY-MM-DDThh:mm:ss]`,
-          where the first (second) element is start (end) date
-
-        :param time: time window of acceptable acquisitions. See above for all acceptable argument formats.
-        :type time: ``None``, str of form `YYYY-MM-DD` or `'YYYY-MM-DDThh:mm:ss'`, list or tuple of two such strings
-        :return: interval of start and end date of the form YYYY-MM-DDThh:mm:ss
-        :rtype: tuple of start and end date
-        """
-        if time is None or time is OgcConstants.LATEST:
-            date_interval = (SHConfig().default_start_date, get_current_date())
-        else:
-            if isinstance(time, (str, datetime.date)):
-                date_interval = (parse_time(time), parse_time(time))
-            elif isinstance(time, (tuple, list)) and len(time) == 2:
-                date_interval = (parse_time(time[0]), parse_time(time[1]))
-            else:
-                raise TabError('time must be a string or tuple of 2 strings or list of 2 strings')
-            if date_interval[0] > date_interval[1]:
-                raise ValueError('First time must be smaller or equal to second time')
-
-        if len(date_interval[0].split('T')) == 1:
-            date_interval = (date_interval[0] + 'T00:00:00', date_interval[1])
-        if len(date_interval[1].split('T')) == 1:
-            date_interval = (date_interval[0], date_interval[1] + 'T23:59:59')
-
-        return date_interval
 
     @staticmethod
     def _filter_dates(dates, time_difference):
@@ -302,7 +260,7 @@ class OgcImageService(OgcService):
         if DataSource.is_timeless(request.data_source):
             return [None]
 
-        date_interval = OgcService._parse_time_interval(request.time)
+        date_interval = parse_time_interval(request.time)
 
         LOGGER.debug('date_interval=%s', date_interval)
 
@@ -373,7 +331,7 @@ class WebFeatureService(OgcService):
         super().__init__(**kwargs)
 
         self.bbox = bbox
-        self.time_interval = self._parse_time_interval(time_interval)
+        self.time_interval = parse_time_interval(time_interval)
         self.data_source = data_source
         self.maxcc = maxcc
 

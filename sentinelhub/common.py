@@ -11,7 +11,10 @@ Available classes:
  - BBox, represent a bounding box in a given CRS
 """
 
+import shapely.geometry
+
 from .constants import CRS
+from .geo_utils import transform_point
 
 
 class BBox:
@@ -82,13 +85,25 @@ class BBox:
         """
         return self.crs
 
+    def transform(self, target_crs):
+        """ Transforms BBox from current CRS to target CRS
+
+        :param target_crs: target CRS
+        :type target_crs: constants.CRS
+        :return: bounding box in target CRS
+        :rtype: common.BBox
+        """
+        self.min_x, self.min_y = transform_point(self.get_lower_left(), self.crs, target_crs)
+        self.max_x, self.max_y = transform_point(self.get_upper_right(), self.crs, target_crs)
+        self.crs = target_crs
+
     def get_polygon(self, reverse=False):
         """ Returns a list of coordinates of 5 points describing a polygon. Points are listed in clockwise order, first
         point is the same as the last.
 
         :param reverse: True if x and y coordinates should be switched and False otherwise
         :type reverse: bool
-        :return: [[x_1, y_1], ... , [x_5, y_5]]
+        :return: `[[x_1, y_1], ... , [x_5, y_5]]`
         :rtype: list(list(float))
         """
         polygon = [[self.min_x, self.min_y],
@@ -100,6 +115,26 @@ class BBox:
             for i, point in enumerate(polygon):
                 polygon[i] = point[::-1]
         return polygon
+
+    def get_geojson(self):
+        """ Returns polygon geometry in GeoJSON format
+
+        :return: A dictionary in GeoJSON format
+        :rtype: dict
+        """
+        return {'type': 'Polygon',
+                'crs': {'type': 'name',
+                        'properties': {'name': 'urn:ogc:def:crs:EPSG::{}'.format(self.get_crs().value)}},
+                'coordinates': [self.get_polygon()]
+                }
+
+    def get_geometry(self):
+        """ Returns polygon geometry in shapely format
+
+        :return: A polygon in shapely format
+        :rtype: shapely.geometry.polygon.Polygon
+        """
+        return shapely.geometry.Polygon(self.get_polygon())
 
     def get_partition(self, num_x=1, num_y=1):
         """ Partitions bounding box into smaller bounding boxes of the same size.
@@ -179,7 +214,7 @@ class BBox:
     def _tuple_from_str(bbox):
         """ Parses a string of numbers separated by any combination of commas and spaces
 
-        :param bbox: e.g. str of the form 'min_x ,min_y  max_x, max_y'
+        :param bbox: e.g. str of the form `min_x ,min_y  max_x, max_y`
         :return: tuple (min_x,min_y,max_x,max_y)
         """
         return tuple([float(s) for s in bbox.replace(',', ' ').split() if s])
@@ -199,6 +234,6 @@ class BBox:
         """ Converts a BBox instance into a tuple
 
         :param bbox: An instance of the BBox type
-        :return: tuple (min_x,min_y,max_x,max_y)
+        :return: tuple (min_x, min_y, max_x, max_y)
         """
         return bbox.get_lower_left() + bbox.get_upper_right()

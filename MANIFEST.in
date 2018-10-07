@@ -1,6 +1,6 @@
 include requirements*.txt
 
 include README.md
-include LICENSE
+include LICENSE.md
 include setup.py
 include sentinelhub/config.json
