@@ -3,8 +3,8 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Documentation for Sentinel-Hub Python packages
-**********************************************
+Documentation of Sentinel Hub Python package
+********************************************
 
 Documentation for Python utility packages developed by the 
 EO research team at `Sinergise <http://www.sinergise.com/>`_.
