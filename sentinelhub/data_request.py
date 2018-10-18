@@ -254,7 +254,8 @@ class OgcRequest(DataRequest):
                 scenes between the specified dates conforming to the cloud coverage criteria. Most recent acquisition
                 being first in the list. For the latest acquisition use ``latest``.
                 Examples: ``latest``, ``'2016-01-01'``, or ``('2016-01-01', ' 2016-01-31')``
-    :type time: str, or tuple of str
+    :type time: str or (str, str) or datetime.date or (datetime.date, datetime.date) or datetime.datetime or
+        (datetime.datetime, datetime.datetime)
     :param layer: the preconfigured layer (image) to be returned as comma separated layer names. Required.
     :type layer: str
     :param maxcc: maximum accepted cloud coverage of an image. Float between 0.0 and 1.0. Default is ``1.0``.
@@ -302,7 +303,7 @@ class OgcRequest(DataRequest):
 
         self.wfs_iterator = None
 
-        super(OgcRequest, self).__init__(**kwargs)
+        super().__init__(**kwargs)
 
     def _check_custom_url_parameters(self):
         """Checks if custom url parameters are valid parameters.
@@ -374,7 +375,8 @@ class WmsRequest(OgcRequest):
                 scenes between the specified dates conforming to the cloud coverage criteria. Most recent acquisition
                 being first in the list. For the latest acquisition use ``latest``.
                 Examples: ``latest``, ``'2016-01-01'``, or ``('2016-01-01', ' 2016-01-31')``
-    :type time: str, or tuple of str
+    :type time: str or (str, str) or datetime.date or (datetime.date, datetime.date) or datetime.datetime or
+        (datetime.datetime, datetime.datetime)
     :param layer: the preconfigured layer (image) to be returned as comma separated layer names. Required.
     :type layer: str
     :param maxcc: maximum accepted cloud coverage of an image. Float between 0.0 and 1.0. Default is ``1.0``.
@@ -405,7 +407,7 @@ class WmsRequest(OgcRequest):
     https://www.sentinel-hub.com/develop/documentation/api/ogc_api/wms-parameters
     """
     def __init__(self, *, width=None, height=None, **kwargs):
-        super(WmsRequest, self).__init__(service_type=ServiceType.WMS, size_x=width, size_y=height, **kwargs)
+        super().__init__(service_type=ServiceType.WMS, size_x=width, size_y=height, **kwargs)
 
 
 class WcsRequest(OgcRequest):
@@ -437,7 +439,8 @@ class WcsRequest(OgcRequest):
                 scenes between the specified dates conforming to the cloud coverage criteria. Most recent acquisition
                 being first in the list. For the latest acquisition use ``latest``.
                 Examples: ``latest``, ``'2016-01-01'``, or ``('2016-01-01', ' 2016-01-31')``
-    :type time: str, or tuple of str
+    :type time: str or (str, str) or datetime.date or (datetime.date, datetime.date) or datetime.datetime or
+        (datetime.datetime, datetime.datetime)
     :param layer: the preconfigured layer (image) to be returned as comma separated layer names. Required.
     :type layer: str
     :param maxcc: maximum accepted cloud coverage of an image. Float between 0.0 and 1.0. Default is ``1.0``.
@@ -465,7 +468,7 @@ class WcsRequest(OgcRequest):
     :type data_folder: str
     """
     def __init__(self, *, resx='10m', resy='10m', **kwargs):
-        super(WcsRequest, self).__init__(service_type=ServiceType.WCS, size_x=resx, size_y=resy, **kwargs)
+        super().__init__(service_type=ServiceType.WCS, size_x=resx, size_y=resy, **kwargs)
 
 
 class GeopediaRequest(DataRequest):
@@ -513,7 +516,7 @@ class GeopediaRequest(DataRequest):
         if bbox.crs is not CRS.POP_WEB:
             raise ValueError('Geopedia Request at the moment supports only CRS = {}'.format(CRS.POP_WEB))
 
-        super(GeopediaRequest, self).__init__(**kwargs)
+        super().__init__(**kwargs)
 
     def _check_custom_url_parameters(self):
         """Checks if custom url parameters are valid parameters.
@@ -558,7 +561,7 @@ class GeopediaWmsRequest(GeopediaRequest):
     :type data_folder: str
     """
     def __init__(self, *, width=None, height=None, **kwargs):
-        super(GeopediaWmsRequest, self).__init__(service_type=ServiceType.WMS, size_x=width, size_y=height, **kwargs)
+        super().__init__(service_type=ServiceType.WMS, size_x=width, size_y=height, **kwargs)
 
     def create_request(self):
         gpd_service = GeopediaWmsService()
@@ -628,7 +631,7 @@ class AwsRequest(DataRequest):
         self.safe_format = safe_format
 
         self.aws_service = None
-        super(AwsRequest, self).__init__(**kwargs)
+        super().__init__(**kwargs)
 
     @abstractmethod
     def create_request(self):
@@ -669,7 +672,7 @@ class AwsProductRequest(AwsRequest):
         self.product_id = product_id
         self.tile_list = tile_list
 
-        super(AwsProductRequest, self).__init__(**kwargs)
+        super().__init__(**kwargs)
 
     def create_request(self):
         if self.safe_format:
@@ -717,7 +720,7 @@ class AwsTileRequest(AwsRequest):
         self.aws_index = aws_index
         self.data_source = data_source
 
-        super(AwsTileRequest, self).__init__(**kwargs)
+        super().__init__(**kwargs)
 
     def create_request(self):
         if self.safe_format:

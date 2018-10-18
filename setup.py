@@ -4,14 +4,16 @@ from setuptools import setup, find_packages
 
 
 def parse_requirements(file):
-    return sorted(set(
-        line.partition('#')[0].strip()
-        for line in open(os.path.join(os.path.dirname(__file__), file))
-    ) - set(''))
+    required_packages = []
+    with open(os.path.join(os.path.dirname(__file__), file)) as req_file:
+        for line in req_file:
+            if '/' not in line:
+                required_packages.append(line.strip())
+    return required_packages
 
 
 def get_version():
-    for line in open(os.path.join(os.path.dirname(__file__), 'sentinelhub', '__init__.py')):
+    for line in open(os.path.join(os.path.dirname(__file__), 'sentinelhub', '_version.py')):
         if line.find("__version__") >= 0:
             version = line.split("=")[1].strip()
             version = version.strip('"').strip("'")
@@ -22,9 +24,65 @@ def get_long_description():
     return io.open('README.md', encoding="utf-8").read()
 
 
+def update_package_config():
+    """ Every time sentinelhub package is installed entire config.json is overwritten. However this function
+    will check if sentinelhub is already installed and try to copy those parameters from old config.json that are by
+    default set to an empty value (i.e. instance_id, aws_access_key_id and aws_secret_access_key) into new config.json
+    file.
+    """
+    try:
+        import importlib
+        import sys
+        import json
+
+        path = importlib.machinery.PathFinder().find_spec('sentinelhub', sys.path[1:]).submodule_search_locations[0]
+        old_config_filename = os.path.join(path, 'config.json')
+
+        with open(old_config_filename, 'r') as file:
+            old_config = json.load(file)
+
+        from sentinelhub.config import SHConfig
+
+        config = SHConfig()
+        for attr, value in old_config.items():
+            if hasattr(config, attr) and not getattr(config, attr):
+                setattr(config, attr, value)
+
+        config.save()
+
+    except BaseException:
+        pass
+
+
+def install_additional_requirements(file):
+    """ Because setuptools do not support installing from GitHub if the same version of the package is available at PyPI
+    """
+    try:
+        try:
+            from pip import _internal as pip
+        except ImportError:  # in case pip version is <10.0
+            import pip
+
+        from sys import version_info
+
+        if version_info[:2] >= (3, 7):
+            pip.main(['install', 'cython'])
+
+        with open(os.path.join(os.path.dirname(__file__), file)) as req_file:
+            for line in req_file:
+                if '/' in line:
+                    pip.main(['install', line])
+    except BaseException:
+        pass
+
+
+update_package_config()
+
+REQUIREMENTS_FILE = "requirements.txt"
+
 setup(
     name='sentinelhub',
-    python_requires='>=3.5,<3.7',
+    python_requires='>=3.5',
     version=get_version(),
     description='Sentinel Hub Utilities',
     long_description=get_long_description(),
@@ -36,7 +94,7 @@ setup(
     packages=find_packages(),
     package_data={'sentinelhub': ['sentinelhub/config.json']},
     include_package_data=True,
-    install_requires=parse_requirements("requirements.txt"),
+    install_requires=parse_requirements(REQUIREMENTS_FILE),
     extras_require={'DEV': parse_requirements("requirements-dev.txt")},
     zip_safe=False,
     entry_points={'console_scripts': ['sentinelhub=sentinelhub.commands:main_help',
@@ -56,8 +114,11 @@ setup(
         'Programming Language :: Python :: 3',
         'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
+        'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: Implementation :: PyPy',
         'Topic :: Scientific/Engineering',
         'Topic :: Software Development'
     ]
 )
+
+install_additional_requirements(REQUIREMENTS_FILE)

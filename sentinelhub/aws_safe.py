@@ -156,7 +156,7 @@ class SafeProduct(AwsProduct):
 class SafeTile(AwsTile):
     """ Class inherits from `aws.AwsTile`"""
     def __init__(self, *args, **kwargs):
-        super(SafeTile, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
         self.tile_id = self.get_tile_id()
 

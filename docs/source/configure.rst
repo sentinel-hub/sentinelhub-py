@@ -21,20 +21,21 @@ different one in the code.
 Amazon S3 Capabilities
 **********************
 
-The ``aws_access_key_id`` and ``aws_secret_access_key`` will be empty. In case you would like package to access
-Sentinel-2 L2A data with `Amazon S3`_ service you can set these values using your AWS access key::
+The package enables download of Sentinel-2 L1C and L2A data from `Amazon S3`_ storage buckets. The data is contained in
+Requester Pays buckets therefore `AWS credentials`_ are required in order to use these capabilities. The credentials
+can be set in package's configuration file with parameters ``aws_access_key_id`` and ``aws_secret_access_key``. This can
+be configured from command line::
 
 $ sentinelhub.config --aws_access_key_id <your access key> --aws_secret_access_key <your secret access key>
 
-Sentinel-2 L1C data is by default being downloaded with free of charge http service. However soon this option will not
-be available anymore. Therefore it is also possible to download L1C data with S3 service by first setting
-``use_s3_l1c_bucket`` parameter to ``true``::
+In case these credentials are not set the package will instead automatically try to use **locally stored AWS credentials**
+if they were configured according to `AWS configuration instructions`_. Any other configuration parameters (e.g. region)
+will also be collected the same way.
 
-$ sentinelhub.config --use_s3_l1c_bucket true
-
-**Note:** Satellite data at S3 is contained in Requester Pays buckets. Therefore Amazon will charge download of such data
-according to `Amazon S3 Pricing`_.
-
+**Important:** Because satellite data at S3 is contained in Requester Pays buckets Amazon will charge users for
+download according to `Amazon S3 Pricing`_. In this case users are charged for amount of data downloaded and the number
+of requests. The *sentinelhub* package will make at most one GET request for each file downloaded. Files *metadata.xml*,
+*tileInfo.json* and *productInfo.json* will be obtained without any charge from `Sentinel Hub public repository`_.
 
 Other
 *****
@@ -46,4 +47,7 @@ $ sentinelhub.config --help
 
 .. _`Sentinel Hub services`: https://www.sentinel-hub.com/develop/documentation/api/ogc_api/
 .. _`Amazon S3`: https://aws.amazon.com/s3/
+.. _`AWS credentials`: https://docs.aws.amazon.com/general/latest/gr/aws-security-credentials.html
+.. _`AWS configuration instructions`: https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-getting-started.html
 .. _`Amazon S3 Pricing`: https://aws.amazon.com/s3/pricing/?p=ps
+.. _`Sentinel Hub public repository`: https://roda.sentinel-hub.com/sentinel-s2-l1c/

@@ -5,12 +5,12 @@ Module with enum constants and utm utils
 import itertools as it
 import mimetypes
 import utm
-import os.path
 
 from pyproj import Proj
 from enum import Enum, EnumMeta
 
 from .config import SHConfig
+from ._version import __version__
 
 
 mimetypes.add_type('application/json', '.json')
@@ -21,11 +21,7 @@ class PackageProps:
 
     @staticmethod
     def get_version():
-        for line in open(os.path.join(os.path.dirname(__file__), '__init__.py')):
-            if line.find("__version__") >= 0:
-                version = line.split("=")[1].strip()
-                version = version.strip('"').strip("'")
-        return version
+        return __version__
 
 
 class ServiceType(Enum):
@@ -42,6 +38,9 @@ class ServiceType(Enum):
 class _DataSourceMeta(EnumMeta):
     """ EnumMeta class for `DataSource` Enum class
     """
+    # pylint: disable=no-value-for-parameter
+    # https://stackoverflow.com/questions/47615318
+
     def __iter__(cls):
         return (member for name, member in cls._member_map_.items() if isinstance(member.value, tuple))
 
@@ -474,22 +473,42 @@ class MimeType(Enum):
         """
         return any(value == item.value for item in cls)
 
-    @staticmethod
-    def get_string(fmt):
+    def get_string(self):
         """ Get file format as string
 
-        :param fmt: MimeType enum constant
-        :type fmt: Enum constant
         :return: String describing the file format
         :rtype: str
         """
-        if fmt in [MimeType.TIFF_d8, MimeType.TIFF_d16, MimeType.TIFF_d32f]:
-            return 'image/{}'.format(fmt.value)
-        elif fmt is MimeType.JP2:
+        if self in [MimeType.TIFF_d8, MimeType.TIFF_d16, MimeType.TIFF_d32f]:
+            return 'image/{}'.format(self.value)
+        if self is MimeType.JP2:
             return 'image/jpeg2000'
-        elif fmt in [MimeType.RAW, MimeType.REQUESTS_RESPONSE]:
-            return fmt.value
-        return mimetypes.types_map['.' + fmt.value]
+        if self in [MimeType.RAW, MimeType.REQUESTS_RESPONSE]:
+            return self.value
+        return mimetypes.types_map['.' + self.value]
+
+    def get_expected_max_value(self):
+        """ Returns max value of image `MimeType` format and raises an error if it is not an image format
+
+        Note: For `MimeType.TIFF_d32f` it will return ``1.0`` as that is expected maximum for an image even though it
+        could be higher.
+
+        :return: A maximum value of specified image format
+        :rtype: int or float
+        :raises: ValueError
+        """
+        try:
+            return {
+                MimeType.TIFF: 65535,
+                MimeType.TIFF_d8: 255,
+                MimeType.TIFF_d16: 65535,
+                MimeType.TIFF_d32f: 1.0,
+                MimeType.PNG: 255,
+                MimeType.JPG: 255,
+                MimeType.JP2: 10000
+            }[self]
+        except IndexError:
+            raise ValueError('Type {} is not supported by this method'.format(self))
 
     @staticmethod
     def from_string(mime_type_str):

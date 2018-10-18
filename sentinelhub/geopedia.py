@@ -34,7 +34,7 @@ class GeopediaWmsService(GeopediaService, OgcImageService):
     :type base_url: str or None
     """
     def __init__(self, **kwargs):
-        super(GeopediaWmsService, self).__init__(**kwargs)
+        super().__init__(**kwargs)
 
     def get_dates(self, request):
         """ Geopedia does not support date queries
@@ -116,7 +116,7 @@ class GeopediaImageService(GeopediaService):
 
         suffix = str(request.image_format.value)
         filename = '.'.join([filename[:254 - len(suffix)], suffix])
-        return filename # Even in UNIX systems filename must have at most 255 bytes
+        return filename  # Even in UNIX systems filename must have at most 255 bytes
 
     def get_gpd_iterator(self):
         """Returns iterator over info about data used for the
@@ -149,18 +149,15 @@ class GeopediaFeatureIterator(GeopediaService):
         if bbox is not None:
 
             if bbox.crs is not CRS.POP_WEB:
-                raise ValueError('Geopedia Request at the moment supports only CRS = {}'\
-                    .format(CRS.POP_WEB))
+                raise ValueError('Geopedia Request at the moment supports only CRS = {}'.format(CRS.POP_WEB))
 
             self.query['filterExpression'] = 'bbox({},"EPSG:3857")'.format(bbox)
 
         self.features = []
         self.index = 0
 
-        self.session_url = '{}rest/data/v1/session/create?locale=en'\
-            .format(self.base_url)
-        self.next_page_url = '{}rest/data/v2/search/tables/{}/features'\
-            .format(self.base_url, layer)
+        self.session_url = '{}rest/data/v1/session/create?locale=en'.format(self.base_url)
+        self.next_page_url = '{}rest/data/v2/search/tables/{}/features'.format(self.base_url, layer)
 
     def __iter__(self):
         self.index = 0

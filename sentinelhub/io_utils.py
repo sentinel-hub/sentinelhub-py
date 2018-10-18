@@ -45,6 +45,8 @@ def read_data(filename, data_format=None):
 
     if data_format.is_tiff_format():
         return read_tiff_image(filename)
+    if data_format is MimeType.JP2:
+        return read_jp2_image(filename)
     if data_format.is_image_format():
         return read_image(filename)
     try:
@@ -343,7 +345,7 @@ def get_jp2_bit_depth(stream):
 
 
 def _fix_jp2_image(image, bit_depth):
-    """Because opencv library incorrectly reads jpeg2000 images with 15-bit encoding this function corrects the
+    """Because Pillow library incorrectly reads JPEG 2000 images with 15-bit encoding this function corrects the
     values in image.
 
     :param image: image read by opencv library
@@ -356,6 +358,11 @@ def _fix_jp2_image(image, bit_depth):
     if bit_depth in [8, 16]:
         return image
     if bit_depth == 15:
-        return image >> 1
+        try:
+            return image >> 1
+        except TypeError:
+            raise IOError('Failed to read JPEG 2000 image correctly. Most likely reason is that Pillow did not '
+                          'install OpenJPEG library correctly. Try reinstalling Pillow from a wheel')
+
     raise ValueError('Bit depth {} of jp2 image is currently not supported. '
                      'Please raise an issue on package Github page'.format(bit_depth))

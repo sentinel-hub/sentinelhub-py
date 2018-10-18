@@ -2,18 +2,14 @@ import unittest
 import os.path
 from tests_all import TestSentinelHub
 
-from sentinelhub.data_request import WcsRequest, AwsProductRequest
-from sentinelhub.common import BBox
-from sentinelhub.constants import CRS
-from sentinelhub.os_utils import get_file_list, get_folder_list
+from sentinelhub import WcsRequest, AwsProductRequest, BBox, CRS, get_file_list, get_folder_list
 
 
 class TestDataRequest(TestSentinelHub):
     def test_init(self):
 
         bbox = BBox((8.655, 111.7, 8.688, 111.6), crs=CRS.WGS84)
-        data_request = WcsRequest(data_folder=self.OUTPUT_FOLDER, bbox=bbox,
-                                  layer='BANDS-S2-L1C', instance_id=self.INSTANCE_ID)
+        data_request = WcsRequest(data_folder=self.OUTPUT_FOLDER, bbox=bbox, layer='BANDS-S2-L1C')
 
         self.assertEqual(self.OUTPUT_FOLDER, data_request.data_folder,
                          msg="Expected {}, got {}".format(self.OUTPUT_FOLDER, data_request.data_folder))

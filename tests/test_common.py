@@ -1,8 +1,9 @@
 import unittest
 from tests_all import TestSentinelHub
 
-from sentinelhub.common import BBox
-from sentinelhub.constants import CRS
+import shapely.geometry
+
+from sentinelhub import BBox, CRS
 
 
 class TestBBox(TestSentinelHub):
@@ -102,6 +103,26 @@ class TestBBox(TestSentinelHub):
         bbox_iter = [coord for coord in bbox]
         self.assertEqual(bbox_iter, bbox_lst,
                          msg="Expected {}, got {}".format(bbox_lst, bbox_iter))
+
+    def test_bbox_eq(self):
+        bbox1 = BBox([46.07, 13.23, 46.24, 13.57], CRS.WGS84)
+        bbox2 = BBox(((46.24, 13.57), (46.07, 13.23)), 4326)
+        bbox3 = BBox([46.07, 13.23, 46.24, 13.57], CRS.POP_WEB)
+        bbox4 = BBox([46.07, 13.23, 46.24, 13.58], CRS.WGS84)
+        self.assertEqual(bbox1, bbox2, "Bounding boxes {} and {} should be the same".format(repr(bbox1), repr(bbox2)))
+        self.assertNotEqual(bbox1, bbox3, "Bounding boxes {} and {} should not be the same".format(repr(bbox1),
+                                                                                                   repr(bbox3)))
+        self.assertNotEqual(bbox1, bbox4, "Bounding boxes {} and {} should not be the same".format(repr(bbox1),
+                                                                                                   repr(bbox4)))
+
+    def test_geometry(self):
+        bbox = BBox([46.07, 13.23, 46.24, 13.57], CRS.WGS84)
+
+        self.assertTrue(isinstance(bbox.get_geojson(), dict),
+                        "Expected dictionary, got type {}".format(type(bbox.get_geometry())))
+        self.assertTrue(isinstance(bbox.get_geometry(), shapely.geometry.polygon.Polygon),
+                        "Expected type {}, got type {}".format(shapely.geometry.polygon.Polygon,
+                                                               type(bbox.get_geometry())))
 
 
 if __name__ == '__main__':

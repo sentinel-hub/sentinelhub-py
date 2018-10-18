@@ -29,5 +29,4 @@ from .geo_utils import bbox_to_resolution, get_image_dimension, to_utm_bbox, get
     utm_to_pixel, pixel_to_utm, wgs84_to_pixel, get_utm_crs, transform_point, transform_bbox
 from .time_utils import next_date, prev_date, get_current_date
 
-
-__version__ = "2.3.0"
+from ._version import __version__

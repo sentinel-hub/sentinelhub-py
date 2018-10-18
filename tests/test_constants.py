@@ -1,7 +1,8 @@
 import unittest
 from tests_all import TestSentinelHub
 
-from sentinelhub.constants import CRS, MimeType, RequestType
+from sentinelhub import CRS, MimeType
+from sentinelhub.constants import RequestType
 
 
 class TestCRS(TestSentinelHub):

@@ -4,9 +4,7 @@ from shapely.geometry import shape
 
 from tests_all import TestSentinelHub
 
-from sentinelhub.areas import BBoxSplitter, OsmSplitter, TileSplitter
-from sentinelhub.io_utils import read_data
-from sentinelhub.constants import CRS, DataSource
+from sentinelhub import BBoxSplitter, OsmSplitter, TileSplitter, read_data, CRS, DataSource
 
 
 class TestOgc(TestSentinelHub):
@@ -30,8 +28,7 @@ class TestOgc(TestSentinelHub):
                                  OsmSplitter([cls.area], CRS.WGS84, 15, reduce_bbox_sizes=True), bbox_len=24),
             cls.SplitterTestCase('TileSplitter',
                                  TileSplitter([cls.area], CRS.WGS84, ('2017-10-01', '2018-03-01'), tile_split_shape=40,
-                                              data_source=DataSource.SENTINEL2_L1C, instance_id=cls.INSTANCE_ID,
-                                              reduce_bbox_sizes=True),
+                                              data_source=DataSource.SENTINEL2_L1C, reduce_bbox_sizes=True),
                                  bbox_len=13)
         ]
 

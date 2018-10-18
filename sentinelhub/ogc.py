@@ -4,12 +4,14 @@ Module for working with Sentinel Hub OGC services
 
 import logging
 import datetime
+import shapely.geometry
+import shapely.wkt
+import shapely.ops
 
 from base64 import b64encode
 from urllib.parse import urlencode
-from shapely.geometry import shape as geo_shape
 
-from .time_utils import get_current_date, parse_time
+from .time_utils import parse_time_interval
 from .download import DownloadRequest, get_json
 from .constants import ServiceType, DataSource, MimeType, CRS, OgcConstants, CustomUrlParam
 from .config import SHConfig
@@ -38,48 +40,6 @@ class OgcService:
                              'Check http://sentinelhub-py.readthedocs.io/en/latest/configure.html for more info.')
 
     @staticmethod
-    def _parse_time_interval(time):
-        """ Parses times into common form
-
-        Parses specified time into common form - tuple of start and end dates, i.e.:
-
-        ``(2017-01-15:T00:00:00, 2017-01-16:T23:59:59)``
-
-        The parameter can have the following values/format, which will be parsed as:
-
-        * ``None`` -> `[default_start_date from config.json, current date]`
-        * `YYYY-MM-DD` -> `[YYYY-MM-DD:T00:00:00, YYYY-MM-DD:T23:59:59]`
-        * `YYYY-MM-DDThh:mm:ss` -> `[YYYY-MM-DDThh:mm:ss, YYYY-MM-DDThh:mm:ss]`
-        * list or tuple of two dates (`YYYY-MM-DD`) -> `[YYYY-MM-DDT00:00:00, YYYY-MM-DDT23:59:59]`, where the first
-          (second) element is start (end) date
-        * list or tuple of two dates (`YYYY-MM-DDThh:mm:ss`) -> `[YYYY-MM-DDThh:mm:ss, YYYY-MM-DDThh:mm:ss]`,
-          where the first (second) element is start (end) date
-
-        :param time: time window of acceptable acquisitions. See above for all acceptable argument formats.
-        :type time: ``None``, str of form `YYYY-MM-DD` or `'YYYY-MM-DDThh:mm:ss'`, list or tuple of two such strings
-        :return: interval of start and end date of the form YYYY-MM-DDThh:mm:ss
-        :rtype: tuple of start and end date
-        """
-        if time is None or time is OgcConstants.LATEST:
-            date_interval = (SHConfig().default_start_date, get_current_date())
-        else:
-            if isinstance(time, str):
-                date_interval = (parse_time(time), parse_time(time))
-            elif isinstance(time, list) or isinstance(time, tuple) and len(time) == 2:
-                date_interval = (parse_time(time[0]), parse_time(time[1]))
-            else:
-                raise TabError('time must be a string or tuple of 2 strings or list of 2 strings')
-            if date_interval[0] > date_interval[1]:
-                raise ValueError('First time must be smaller or equal to second time')
-
-        if len(date_interval[0].split('T')) == 1:
-            date_interval = (date_interval[0] + 'T00:00:00', date_interval[1])
-        if len(date_interval[1].split('T')) == 1:
-            date_interval = (date_interval[0], date_interval[1] + 'T23:59:59')
-
-        return date_interval
-
-    @staticmethod
     def _filter_dates(dates, time_difference):
         """
         Filters out dates within time_difference, preserving only the oldest date.
@@ -87,7 +47,7 @@ class OgcService:
         :param dates: a list of datetime objects
         :param time_difference: a ``datetime.timedelta`` representing the time difference threshold
         :return: an ordered list of datetimes `d1<=d2<=...<=dn` such that `d[i+1]-di > time_difference`
-        :rtype: list[datetime.datetime]
+        :rtype: list(datetime.datetime)
         """
 
         LOGGER.debug("dates=%s", dates)
@@ -136,7 +96,7 @@ class OgcImageService(OgcService):
     :type instance_id: str or None
     """
     def __init__(self, **kwargs):
-        super(OgcImageService, self).__init__(**kwargs)
+        super().__init__(**kwargs)
 
         self.wfs_iterator = None
 
@@ -184,7 +144,8 @@ class OgcImageService(OgcService):
                   'BBOX': request.bbox.__str__(reverse=True) if request.bbox.get_crs() is CRS.WGS84 else str(
                       request.bbox),
                   'FORMAT': MimeType.get_string(request.image_format),
-                  'CRS': CRS.ogc_string(request.bbox.get_crs())}
+                  'CRS': CRS.ogc_string(request.bbox.get_crs()),
+                  'VERSION': '1.3.0'}
 
         if request.service_type is ServiceType.WMS:
             params = {**params,
@@ -220,6 +181,12 @@ class OgcImageService(OgcService):
             if CustomUrlParam.EVALSCRIPT.value in params:
                 evalscript = params[CustomUrlParam.EVALSCRIPT.value]
                 params[CustomUrlParam.EVALSCRIPT.value] = b64encode(evalscript.encode()).decode()
+
+            if CustomUrlParam.GEOMETRY.value in params and request.bbox.get_crs() is CRS.WGS84:
+                geometry = shapely.wkt.loads(params[CustomUrlParam.GEOMETRY.value])
+                geometry = shapely.ops.transform(lambda x, y: (y, x), geometry)
+
+                params[CustomUrlParam.GEOMETRY.value] = geometry.wkt
 
         authority = self.instance_id if hasattr(self, 'instance_id') else request.theme
         return '{}/{}?{}'.format(url, authority, urlencode(params))
@@ -293,7 +260,7 @@ class OgcImageService(OgcService):
         if DataSource.is_timeless(request.data_source):
             return [None]
 
-        date_interval = OgcService._parse_time_interval(request.time)
+        date_interval = parse_time_interval(request.time)
 
         LOGGER.debug('date_interval=%s', date_interval)
 
@@ -361,10 +328,10 @@ class WebFeatureService(OgcService):
     :type instance_id: str or None
     """
     def __init__(self, bbox, time_interval, *, data_source=DataSource.SENTINEL2_L1C, maxcc=1.0, **kwargs):
-        super(WebFeatureService, self).__init__(**kwargs)
+        super().__init__(**kwargs)
 
         self.bbox = bbox
-        self.time_interval = self._parse_time_interval(time_interval)
+        self.time_interval = parse_time_interval(time_interval)
         self.data_source = data_source
         self.maxcc = maxcc
 
@@ -448,7 +415,7 @@ class WebFeatureService(OgcService):
         :return: List of multipolygon geometries in the order returned by WFS service.
         :rtype: list(shapely.geometry.MultiPolygon)
         """
-        return [geo_shape(tile_info['geometry']) for tile_info in self]
+        return [shapely.geometry.shape(tile_info['geometry']) for tile_info in self]
 
     def get_tiles(self):
         """ Returns list of tiles with tile name, date and AWS index

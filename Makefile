@@ -8,23 +8,7 @@ help:
 	@echo "Use 'make upload' to reset config.json and upload the package to PyPi"
 
 reset-config:
-	$(CONFIG) --instance_id "" \
-			  --aws_access_key_id "" \
-			  --aws_secret_access_key "" \
-			  --ogc_base_url "https://services.sentinel-hub.com/ogc/" \
-			  --gpd_base_url "http://service.geopedia.world/" \
-			  --aws_base_url "http://sentinel-s2-l1c.s3.amazonaws.com/" \
-			  --aws_s3_l1c_bucket "sentinel-s2-l1c" \
-			  --use_s3_l1c_bucket false \
-			  --aws_s3_l2a_bucket "sentinel-s2-l2a" \
-			  --opensearch_url "http://opensearch.sentinel-hub.com/resto/api/collections/Sentinel2/" \
-			  --max_wfs_records_per_query 100 \
-			  --max_opensearch_records_per_query 500 \
-			  --default_start_date "1985-01-01" \
-			  --max_download_attempts 4 \
-			  --download_sleep_time 5 \
-			  --download_timeout_seconds 120
-
+	$(CONFIG) --reset
 
 upload: reset-config
 	$(PYTHON) setup.py sdist

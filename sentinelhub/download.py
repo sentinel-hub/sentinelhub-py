@@ -69,8 +69,10 @@ class DownloadRequest:
     :type return_data: bool
     :param data_type: expected file format of downloaded data. Default is ``constants.MimeType.RAW``
     :type data_type: constants.MimeType
-
     """
+
+    GLOBAL_AWS_CLIENT = None
+
     def __init__(self, *, url=None, data_folder=None, filename=None, headers=None, request_type=RequestType.GET,
                  post_values=None, save_response=True, return_data=True, data_type=MimeType.RAW, **properties):
 
@@ -248,10 +250,11 @@ def execute_download_request(request):
                              try_num, SHConfig().download_sleep_time)
                 time.sleep(SHConfig().download_sleep_time)
             else:
-                if request.url.startswith(SHConfig().aws_base_url) and isinstance(exception, requests.HTTPError)\
-                        and exception.response.status_code == requests.status_codes.codes.NOT_FOUND:
+                if request.url.startswith(SHConfig().aws_metadata_base_url) and \
+                        isinstance(exception, requests.HTTPError) and \
+                        exception.response.status_code == requests.status_codes.codes.NOT_FOUND:
                     raise AwsDownloadFailedException('File in location %s is missing' % request.url)
-                raise DownloadFailedException(_create_download_failed_message(exception))
+                raise DownloadFailedException(_create_download_failed_message(exception, request.url))
 
     _save_if_needed(request, response_content)
 
@@ -269,7 +272,7 @@ def _do_request(request):
     """
     if request.request_type is RequestType.GET:
         return requests.get(request.url, headers=request.headers)
-    elif request.request_type is RequestType.POST:
+    if request.request_type is RequestType.POST:
         return requests.post(request.url, data=json.dumps(request.post_values), headers=request.headers)
     raise ValueError('Invalid request type {}'.format(request.request_type))
 
@@ -289,7 +292,14 @@ def _do_aws_request(request):
         key_args = {}
     aws_service, _, bucket_name, url_key = request.url.split('/', 3)
 
-    s3_client = boto3.client(aws_service.strip(':'), **key_args)
+    try:
+        s3_client = boto3.Session().client(aws_service.strip(':'), **key_args)
+        request.GLOBAL_AWS_CLIENT = s3_client
+    except KeyError:  # Sometimes creation of client fails and we use the global client if it exists
+        if request.GLOBAL_AWS_CLIENT is None:
+            raise ValueError('Failed to create a client for download from AWS')
+        s3_client = request.GLOBAL_AWS_CLIENT
+
     try:
         return s3_client.get_object(Bucket=bucket_name, Key=url_key, RequestPayer='requester')
     except NoCredentialsError:
@@ -318,15 +328,17 @@ def _is_temporal_problem(exception):
         return isinstance(exception, requests.ConnectionError)
 
 
-def _create_download_failed_message(exception):
+def _create_download_failed_message(exception, url):
     """ Creates message describing why download has failed
 
     :param exception: Exception raised during download
     :type exception: Exception
+    :param url: An URL from where download was attempted
+    :type url: str
     :return: Error message
     :rtype: str
     """
-    message = 'Failed to download with {}:\n{}'.format(exception.__class__.__name__, exception)
+    message = 'Failed to download from:\n{}\nwith {}:\n{}'.format(url, exception.__class__.__name__, exception)
 
     if _is_temporal_problem(exception):
         if isinstance(exception, requests.ConnectionError):
@@ -381,20 +393,20 @@ def decode_data(response_content, data_type, entire_response=None):
         if isinstance(entire_response, requests.Response):
             return entire_response.json()
         return json.loads(response_content.decode('utf-8'))
-    elif MimeType.is_image_format(data_type):
+    if MimeType.is_image_format(data_type):
         return decode_image(response_content, data_type)
-    elif data_type is MimeType.XML or data_type is MimeType.GML or data_type is MimeType.SAFE:
+    if data_type is MimeType.XML or data_type is MimeType.GML or data_type is MimeType.SAFE:
         return ElementTree.fromstring(response_content)
-    else:
-        try:
-            return {
-                MimeType.RAW: response_content,
-                MimeType.TXT: response_content,
-                MimeType.REQUESTS_RESPONSE: entire_response,
-                MimeType.ZIP: BytesIO(response_content)
-            }[data_type]
-        except KeyError:
-            raise ValueError('Unknown response data type {}'.format(data_type))
+
+    try:
+        return {
+            MimeType.RAW: response_content,
+            MimeType.TXT: response_content,
+            MimeType.REQUESTS_RESPONSE: entire_response,
+            MimeType.ZIP: BytesIO(response_content)
+        }[data_type]
+    except KeyError:
+        raise ValueError('Unknown response data type {}'.format(data_type))
 
 
 def decode_image(data, image_type):

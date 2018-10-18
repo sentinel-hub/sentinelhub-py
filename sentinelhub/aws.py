@@ -84,7 +84,7 @@ class AwsService(ABC):
         if metafile_input is None:
             if self.__class__.__name__ == 'SafeProduct':
                 return all_metafiles
-            elif self.__class__.__name__ == 'SafeTile':
+            if self.__class__.__name__ == 'SafeTile':
                 return [metafile for metafile in all_metafiles if metafile in AwsConstants.TILE_FILES]
             return []
         if isinstance(metafile_input, str):
@@ -102,16 +102,16 @@ class AwsService(ABC):
     def get_base_url(self, force_http=False):
         """ Creates base URL path
 
-        :param force_http: True if HTTP base URL for Sentinel-2 L1C should be used and False otherwise
+        :param force_http: `True` if HTTP base URL should be used and `False` otherwise
         :type force_http: str
         :return: base url string
         :rtype: str
         """
-        if self.data_source is DataSource.SENTINEL2_L1C:
-            if SHConfig().use_s3_l1c_bucket and not force_http:
-                return 's3://{}/'.format(SHConfig().aws_s3_l1c_bucket)
-            return SHConfig().aws_base_url
-        return 's3://{}/'.format(SHConfig().aws_s3_l2a_bucket)
+        base_url = SHConfig().aws_metadata_base_url.rstrip('/') if force_http else 's3:/'
+        aws_bucket = SHConfig().aws_s3_l1c_bucket if self.data_source is DataSource.SENTINEL2_L1C else \
+            SHConfig().aws_s3_l2a_bucket
+
+        return '{}/{}/'.format(base_url, aws_bucket)
 
     def get_safe_type(self):
         """Determines the type of ESA product.
@@ -180,11 +180,13 @@ class AwsService(ABC):
         """
         def aws_sort_function(download_request):
             data_name = download_request.properties['data_name']
-            url_part = download_request.url[len(self.base_url):].strip('/')
-            url_part = ''.join(url_part.split('/', 4)[:-1])
+            if 'product_name' in download_request.properties:
+                product_name = download_request.properties['product_name']
+            else:
+                product_name = self._url_to_props(download_request.url)[0]
             if data_name in self.bands:
-                return 0, url_part, self.bands.index(data_name)
-            return 1, url_part, self.metafiles.index(data_name)
+                return 0, product_name, self.bands.index(data_name)
+            return 1, product_name, self.metafiles.index(data_name)
         self.download_list.sort(key=aws_sort_function)
 
     def structure_recursion(self, struct, folder):
@@ -201,26 +203,40 @@ class AwsService(ABC):
         for name, substruct in struct.items():
             subfolder = os.path.join(folder, name)
             if not isinstance(substruct, dict):
-                if substruct.split('/')[3] == 'products':
-                    data_name = substruct.split('/', 8)[-1]
-                    if data_name.startswith('datastrip'):
-                        items = data_name.split('/', 2)
-                        data_name = '/'.join([items[0], '*', items[2]])
-                else:
-                    data_name = substruct.split('/', 11)[-1]
+                product_name, data_name = self._url_to_props(substruct)
                 if '.' in data_name:
-                    data_type = MimeType(substruct.split('.')[-1])
+                    data_type = MimeType(data_name.split('.')[-1])
                     data_name = data_name.rsplit('.', 1)[0]
                 else:
                     data_type = MimeType.RAW
                 if data_name in self.bands + self.metafiles:
                     self.download_list.append(DownloadRequest(url=substruct, filename=subfolder, data_type=data_type,
-                                                              data_name=data_name))
+                                                              data_name=data_name, product_name=product_name))
             else:
                 has_subfolder = True
                 self.structure_recursion(substruct, subfolder)
         if not has_subfolder:
             self.folder_list.append(folder)
+
+    def _url_to_props(self, url):
+        """ Converts url back to name of product/tile and name of the file
+
+        :param url: URL location of the data
+        :type url: str
+        :return: Names of product or tile and name of a file
+        :rtype: str, str
+        """
+        props = (url[len(self.base_url):] if url.startswith(self.base_url) else
+                 url[len(self.base_http_url):]).split('/')
+        if props[0] == 'products':
+            tile_props = props[:5]
+            props = props[5:]
+            if props[0] == 'datastrip':
+                props[1] = '*'
+        else:
+            tile_props = props[:8]
+            props = props[8:]
+        return '/'.join(tile_props), '/'.join(props)
 
     @staticmethod
     def add_file_extension(filename, data_format=None, remove_path=False):
@@ -287,7 +303,7 @@ class AwsProduct(AwsService):
         self.data_source = self.get_data_source()
         self.safe_type = self.get_safe_type()
 
-        super(AwsProduct, self).__init__(**kwargs)
+        super().__init__(**kwargs)
 
         self.date = self.get_date()
         self.product_url = self.get_product_url()
@@ -379,8 +395,7 @@ class AwsProduct(AwsService):
         :rtype: str
         """
         product_url = self.product_url
-        force_http = self.data_source is DataSource.SENTINEL2_L1C and \
-            filename in [AwsConstants.PRODUCT_INFO, AwsConstants.METADATA]
+        force_http = filename in [AwsConstants.PRODUCT_INFO, AwsConstants.METADATA]
         if product_url is None or force_http:
             product_url = self.get_product_url(force_http=force_http)
         return '{}/{}'.format(product_url, self.add_file_extension(filename, data_format))
@@ -451,7 +466,7 @@ class AwsTile(AwsService):
         self.aws_index = aws_index
         self.data_source = data_source
 
-        super(AwsTile, self).__init__(**kwargs)
+        super().__init__(**kwargs)
         self.tile_url = None
 
         self.aws_index = self.get_aws_index()
@@ -573,8 +588,7 @@ class AwsTile(AwsService):
         :rtype: str
         """
         tile_url = self.tile_url
-        force_http = self.data_source is DataSource.SENTINEL2_L1C and \
-            filename in [AwsConstants.TILE_INFO, AwsConstants.PRODUCT_INFO, AwsConstants.METADATA]
+        force_http = filename in [AwsConstants.TILE_INFO, AwsConstants.PRODUCT_INFO, AwsConstants.METADATA]
         if tile_url is None or force_http:
             tile_url = self.get_tile_url(force_http=force_http)
         return '{}/{}'.format(tile_url, self.add_file_extension(filename))
@@ -664,8 +678,8 @@ class AwsTile(AwsService):
         :return: tile name, sensing date and AWS index
         :rtype: (str, str, int)
         """
-        if tile_id.split('_')[0] not in ['S2A', 'L1C']:
-            raise ValueError('Transformation from tile_id to tile works currently only for Sentinel-2 L1C products')
+        if tile_id.split('_')[0] not in ['S2A', 'S2B', 'L1C']:
+            raise ValueError('Transformation from tile ID to tile works currently only for Sentinel-2 L1C products')
 
         tile_info = get_tile_info_id(tile_id)
         return AwsService.url_to_tile(tile_info['properties']['s3Path'])

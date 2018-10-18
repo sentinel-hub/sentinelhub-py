@@ -3,10 +3,8 @@ import numpy as np
 
 from tests_all import TestSentinelHub
 
-from sentinelhub.data_request import GeopediaWmsRequest, GeopediaImageRequest
-from sentinelhub.geopedia import GeopediaFeatureIterator, GeopediaImageService
-from sentinelhub.constants import CRS, MimeType
-from sentinelhub.common import BBox
+from sentinelhub import GeopediaWmsRequest, GeopediaImageRequest, GeopediaFeatureIterator, CRS, MimeType, BBox
+from sentinelhub.geopedia import GeopediaImageService
 
 
 class TestOgc(TestSentinelHub):
@@ -70,6 +68,7 @@ class TestImageService(TestSentinelHub):
 
         self.assertEqual(0, len(download_list))
 
+
 class TestFeatureIterator(TestSentinelHub):
 
     @classmethod
@@ -97,6 +96,7 @@ class TestFeatureIterator(TestSentinelHub):
         expected_data_len = 147
 
         self.assertEqual(len(data), expected_data_len)
+
 
 if __name__ == '__main__':
     unittest.main()
