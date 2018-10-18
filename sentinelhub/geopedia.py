@@ -111,12 +111,7 @@ class GeopediaImageService(GeopediaService):
 
         LOGGER.debug("filename=%s", filename)
 
-        for char in [' ', '/', '\\', '|', ';', ':', '\n', '\t']:
-            filename = filename.replace(char, '')
-
-        suffix = str(request.image_format.value)
-        filename = '.'.join([filename[:254 - len(suffix)], suffix])
-        return filename  # Even in UNIX systems filename must have at most 255 bytes
+        return OgcImageService.finalize_filename(filename, request.image_format)
 
     def get_gpd_iterator(self):
         """Returns iterator over info about data used for the

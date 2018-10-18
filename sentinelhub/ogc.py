@@ -230,16 +230,29 @@ class OgcImageService(OgcService):
                                        key=lambda parameter_item: parameter_item[0].value):
                 filename = '_'.join([filename, param.value, str(value)])
 
+        return OgcImageService.finalize_filename(filename, request.image_format)
+
+    @staticmethod
+    def finalize_filename(filename, image_format):
+        """ Replaces invalid characters in filename string, adds image extension and reduces filename length
+
+        :param filename: Incomplete filename string
+        :type filename: str
+        :param image_format: Format which will be used for filename extension
+        :type image_format: MimeType
+        :return: Final filename string
+        :rtype: str
+        """
         for char in [' ', '/', '\\', '|', ';', ':', '\n', '\t']:
             filename = filename.replace(char, '')
 
-        suffix = str(request.image_format.value)
-        if request.image_format.is_tiff_format() and request.image_format is not MimeType.TIFF:
+        suffix = str(image_format.value)
+        if image_format.is_tiff_format() and image_format is not MimeType.TIFF:
             suffix = str(MimeType.TIFF.value)
-            filename = '_'.join([filename, str(request.image_format.value).replace(';', '_')])
+            filename = '_'.join([filename, str(image_format.value).replace(';', '_')])
 
         filename = '.'.join([filename[:254 - len(suffix)], suffix])
-        return filename   # Even in UNIX systems filename must have at most 255 bytes
+        return filename  # Even in UNIX systems filename must have at most 255 bytes
 
     def get_dates(self, request):
         """ Get available Sentinel-2 acquisitions at least time_difference apart
