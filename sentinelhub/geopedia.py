@@ -22,7 +22,7 @@ class GeopediaService:
     :type base_url: str or None
     """
     def __init__(self, base_url=None):
-        self.base_url = SHConfig().gpd_base_url if base_url is None else base_url
+        self.base_url = SHConfig().geopedia_wms_url if base_url is None else base_url
 
 
 class GeopediaWmsService(GeopediaService, OgcImageService):

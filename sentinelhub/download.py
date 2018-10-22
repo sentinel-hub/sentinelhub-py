@@ -250,7 +250,7 @@ def execute_download_request(request):
                              try_num, SHConfig().download_sleep_time)
                 time.sleep(SHConfig().download_sleep_time)
             else:
-                if request.url.startswith(SHConfig().aws_metadata_base_url) and \
+                if request.url.startswith(SHConfig().aws_metadata_url) and \
                         isinstance(exception, requests.HTTPError) and \
                         exception.response.status_code == requests.status_codes.codes.NOT_FOUND:
                     raise AwsDownloadFailedException('File in location %s is missing' % request.url)

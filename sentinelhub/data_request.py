@@ -584,6 +584,8 @@ class GeopediaImageRequest(GeopediaRequest):
     def __init__(self, layer, bbox, prop, **kwargs):
         self.prop = prop
 
+        self.gpd_iterator = None
+
         super().__init__(layer, bbox, **kwargs)
 
     def create_request(self):
