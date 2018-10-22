@@ -4,10 +4,9 @@ import numpy as np
 from tests_all import TestSentinelHub
 
 from sentinelhub import GeopediaWmsRequest, GeopediaImageRequest, GeopediaFeatureIterator, CRS, MimeType, BBox
-from sentinelhub.geopedia import GeopediaImageService
 
 
-class TestOgc(TestSentinelHub):
+class TestGeopediaWms(TestSentinelHub):
 
     @classmethod
     def setUpClass(cls):
@@ -26,76 +25,66 @@ class TestOgc(TestSentinelHub):
                          "Expected a list of length {}, got length {}".format(data_len, len(self.data)))
 
     def test_stats(self):
-        delta = 1e-1 if np.issubdtype(self.data[0].dtype, np.integer) else 1e-4
-
-        min_val = np.amin(self.data[0])
-        min_exp = 0
-        self.assertAlmostEqual(min_exp, min_val, delta=delta, msg="Expected min {}, got {}".format(min_exp, min_val))
-        max_val = np.amax(self.data[0])
-        max_exp = 255
-        self.assertAlmostEqual(max_exp, max_val, delta=delta, msg="Expected max {}, got {}".format(max_exp, max_val))
-        mean_val = np.mean(self.data[0])
-        mean_exp = 150.9248
-        self.assertAlmostEqual(mean_exp, mean_val, delta=delta,
-                               msg="Expected mean {}, got {}".format(mean_exp, mean_val))
-        median_val = np.median(self.data[0])
-        media_exp = 255
-        self.assertAlmostEqual(media_exp, median_val, delta=delta,
-                               msg="Expected median {}, got {}".format(media_exp, median_val))
+        self.test_numpy_stats(np.array(self.data), exp_min=0, exp_max=255, exp_mean=150.9248, exp_median=255)
 
 
-class TestImageService(TestSentinelHub):
+class TestGeopediaImageService(TestSentinelHub):
 
     @classmethod
     def setUpClass(cls):
-        cls.bbox = BBox(bbox=[(1618936.259080, 5789913.800031),
-                              (1622796.329008, 5787085.629985)],
-                        crs=CRS.POP_WEB)
+        bbox = BBox(bbox=[(13520759, 437326), (13522689, 438602)], crs=CRS.POP_WEB)
+        cls.image_field_name = 'Masks'
 
-    def test_present_image_format(self):
-        gpd_request = GeopediaImageRequest('393', self.bbox, 'Photo',
-                                           image_format=MimeType.JPG)
-        gpd_service = GeopediaImageService()
-        download_list = gpd_service.get_request(gpd_request)
-
-        self.assertTrue(len(download_list) > 0)
-
-    def test_absent_image_format(self):
-        gpd_request = GeopediaImageRequest('393', self.bbox, 'Photo',
-                                           image_format=MimeType.PNG)
-        gpd_service = GeopediaImageService()
-        download_list = gpd_service.get_request(gpd_request)
-
-        self.assertEqual(0, len(download_list))
-
-
-class TestFeatureIterator(TestSentinelHub):
-
-    @classmethod
-    def setUpClass(cls):
-        cls.bbox = BBox(bbox=[(1618936.259080, 5789913.800031),
-                              (1622796.329008, 5787085.629985)],
-                        crs=CRS.POP_WEB)
+        cls.gpd_request = GeopediaImageRequest(layer=1749, bbox=bbox, image_field_name=cls.image_field_name,
+                                               image_format=MimeType.PNG, data_folder=cls.OUTPUT_FOLDER)
+        cls.image_list = cls.gpd_request.get_data(save_data=True)
 
     def test_return_type(self):
-        gpd_iter = GeopediaFeatureIterator('393', bbox=self.bbox)
-        data = list(gpd_iter)
+        self.assertTrue(isinstance(self.image_list, list), 'Expected a list, got {}'.format(type(self.image_list)))
 
-        self.assertTrue(isinstance(data, list), "Expected a list")
+        expected_len = 5
+        self.assertEqual(len(self.image_list), expected_len,
+                         "Expected a list of length {}, got length {}".format(expected_len, len(self.image_list)))
+
+    def test_stats(self):
+        self.test_numpy_stats(np.array(self.image_list), exp_min=0, exp_max=255, exp_mean=66.88769, exp_median=0)
+
+    def test_names(self):
+        filenames = self.gpd_request.get_filename_list()
+        image_stats = list(self.gpd_request.get_items())[0]['properties'][self.image_field_name]
+
+        for filename, image_stat in zip(filenames, image_stats):
+            self.assertEqual(filename, image_stat['niceName'].replace(' ', '_'), 'Filenames dont match')
+
+
+class TestGeopediaFeatureIterator(TestSentinelHub):
+
+    @classmethod
+    def setUpClass(cls):
+        cls.bbox = BBox(bbox=[(2947363, 4629723), (3007595, 4669471)], crs=CRS.POP_WEB)
+        cls.bbox.transform(CRS.WGS84)
 
     def test_item_count(self):
-        gpd_iter = GeopediaFeatureIterator('393', bbox=self.bbox)
+        gpd_iter = GeopediaFeatureIterator(1749, bbox=self.bbox)
         data = list(gpd_iter)
-        expected_data_len = 1
+        minimal_data_len = 21
 
-        self.assertEqual(len(data), expected_data_len)
+        self.assertTrue(len(data) >= minimal_data_len, 'Expected at least {} results, got {}'.format(minimal_data_len,
+                                                                                                     len(data)))
 
     def test_without_bbox(self):
-        gpd_iter = GeopediaFeatureIterator('393')
-        data = list(gpd_iter)
-        expected_data_len = 147
+        gpd_iter = GeopediaFeatureIterator(1749)
 
-        self.assertEqual(len(data), expected_data_len)
+        minimal_data_len = 1000
+
+        for idx, class_item in enumerate(gpd_iter):
+            self.assertTrue(isinstance(class_item, dict), 'Expected at dictionary, got {}'.format(type(class_item)))
+
+            if idx >= minimal_data_len - 1:
+                break
+
+        self.assertEqual(gpd_iter.index, minimal_data_len, 'Expected at least {} results, '
+                                                           'got {}'.format(minimal_data_len, gpd_iter.index))
 
 
 if __name__ == '__main__':
