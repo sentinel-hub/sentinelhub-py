@@ -3,6 +3,8 @@ import os
 import shutil
 import logging
 
+import numpy as np
+
 from sentinelhub import SHConfig
 
 
@@ -28,6 +30,21 @@ class TestSentinelHub(unittest.TestCase):
     @classmethod
     def tearDownClass(cls):
         shutil.rmtree(cls.OUTPUT_FOLDER, ignore_errors=True)
+
+    def test_numpy_stats(self, data=None, exp_min=None, exp_max=None, exp_mean=None, exp_median=None, test_name=''):
+        """ Validates data over basic 4 statistics
+        """
+        if data is None:
+            return
+        delta = 1e-1 if np.issubdtype(data.dtype, np.integer) else 1e-4
+
+        for exp_stat, stat_func, stat_name in [(exp_min, np.amin, 'min'), (exp_max, np.amax, 'max'),
+                                               (exp_mean, np.mean, 'mean'), (exp_median, np.median, 'median')]:
+            if exp_stat is not None:
+                stat_val = stat_func(data)
+                with self.subTest(msg='Test case {}'.format(test_name)):
+                    self.assertAlmostEqual(stat_val, exp_stat, delta=delta,
+                                           msg='Expected {} {}, got {}'.format(stat_name, exp_stat, stat_val))
 
 
 if __name__ == '__main__':
