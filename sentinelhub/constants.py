@@ -27,12 +27,13 @@ class PackageProps:
 class ServiceType(Enum):
     """ Enum constant class for type of service
 
-    Supported types are WMS, WCS, WFS, AWS
+    Supported types are WMS, WCS, WFS, AWS, IMAGE
     """
     WMS = 'wms'
     WCS = 'wcs'
     WFS = 'wfs'
     AWS = 'aws'
+    IMAGE = 'image'
 
 
 class _DataSourceMeta(EnumMeta):

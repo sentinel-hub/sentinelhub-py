@@ -233,7 +233,7 @@ class OgcImageService(OgcService):
         return OgcImageService.finalize_filename(filename, request.image_format)
 
     @staticmethod
-    def finalize_filename(filename, image_format):
+    def finalize_filename(filename, image_format=None):
         """ Replaces invalid characters in filename string, adds image extension and reduces filename length
 
         :param filename: Incomplete filename string
@@ -246,12 +246,14 @@ class OgcImageService(OgcService):
         for char in [' ', '/', '\\', '|', ';', ':', '\n', '\t']:
             filename = filename.replace(char, '')
 
-        suffix = str(image_format.value)
-        if image_format.is_tiff_format() and image_format is not MimeType.TIFF:
-            suffix = str(MimeType.TIFF.value)
-            filename = '_'.join([filename, str(image_format.value).replace(';', '_')])
+        if image_format:
+            suffix = str(image_format.value)
+            if image_format.is_tiff_format() and image_format is not MimeType.TIFF:
+                suffix = str(MimeType.TIFF.value)
+                filename = '_'.join([filename, str(image_format.value).replace(';', '_')])
 
-        filename = '.'.join([filename[:254 - len(suffix)], suffix])
+            filename = '.'.join([filename[:254 - len(suffix)], suffix])
+
         return filename  # Even in UNIX systems filename must have at most 255 bytes
 
     def get_dates(self, request):

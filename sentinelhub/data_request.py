@@ -38,10 +38,10 @@ class DataRequest(ABC):
 
         self.download_list = []
         self.folder_list = []
-        self.create_request()
+        self._create_request()
 
     @abstractmethod
-    def create_request(self):
+    def _create_request(self):
         raise NotImplementedError
 
     def get_download_list(self):
@@ -314,7 +314,7 @@ class OgcRequest(DataRequest):
             if param not in CustomUrlParam:
                 raise ValueError('Parameter %s is not a valid custom url parameter. Please check and fix.' % param)
 
-    def create_request(self):
+    def _create_request(self):
         """Set download requests
 
         Create a list of DownloadRequests for all Sentinel-2 acquisitions within request's time interval and
@@ -472,51 +472,77 @@ class WcsRequest(OgcRequest):
 
 
 class GeopediaRequest(DataRequest):
-    """ The base class for Geopedia's OGC-type requests (WMS and WCS) where all common parameters are
-    defined.
+    """ The base class for Geopedia requests where all common parameters are defined.
 
-    :param service_type: type of OGC service (WMS or WCS)
-    :type service_type: constants.ServiceType
-    :param size_x: number of pixels in x or resolution in x (i.e. ``512`` or ``10m``)
-    :type size_x: int or str
-    :param size_y: number of pixels in x or resolution in y (i.e. ``512`` or ``10m``)
-    :type size_y: int or str
-    :param bbox: Bounding box of the requested image. Coordinates must be in the specified coordinate reference system.
-    :type bbox: common.BBox
-    :param layer: the preconfigured layer (image) to be returned as comma separated layer names. Required.
+    :param layer: Geopedia layer which contains requested data
     :type layer: str
+    :param service_type: Type of the service, supported are ``ServiceType.WMS`` and ``ServiceType.IMAGE``
+    :type service_type: constants.ServiceType
+    :param bbox: Bounding box of the requested data
+    :type bbox: common.BBox
     :param theme: Geopedia's theme for which the layer is defined.
     :type theme: str
-    :param custom_url_params: dictionary of CustomUrlParameters and their values supported by Geopedia's WMS services.
-                              At the moment only the transparancy is supported (CustomUrlParam.TRANSPARENT).
-    :type custom_url_params: dictionary of CustomUrlParameter enum and its value, i.e.
-                              ``{constants.CustomUrlParam.TRANSPARENT:True}``
-    :param image_format: format of the returned image by the Sentinel Hub's WMS getMap service. Default is PNG, but
-                        in some cases 32-bit TIFF is required, i.e. if requesting unprocessed raw bands.
-                        Default is ``constants.MimeType.PNG``.
+    :param image_format: Format of the returned image by the Sentinel Hub's WMS getMap service. Default is
+        ``constants.MimeType.PNG``.
     :type image_format: constants.MimeType
-    :param data_folder: location of the directory where the fetched data will be saved.
+    :param data_folder: Location of the directory where the fetched data will be saved.
     :type data_folder: str
     """
-    def __init__(self, layer, bbox, *, theme=None, service_type=None, size_x=None, size_y=None, custom_url_params=None,
-                 image_format=MimeType.PNG, **kwargs):
+    def __init__(self, layer, service_type, *, bbox=None, theme=None, image_format=MimeType.PNG, **kwargs):
         self.layer = layer
+        self.service_type = service_type
+
         self.bbox = bbox
+        if bbox.crs is not CRS.POP_WEB:
+            raise ValueError('Geopedia Request at the moment supports only bounding boxes with coordinates in '
+                             '{}'.format(CRS.POP_WEB))
+
         self.theme = theme
         self.image_format = MimeType(image_format)
-        self.service_type = service_type
-        self.size_x = size_x
-        self.size_y = size_y
+
+        super().__init__(**kwargs)
+
+    @abstractmethod
+    def _create_request(self):
+        raise NotImplementedError
+
+
+class GeopediaWmsRequest(GeopediaRequest):
+    """ Web Map Service request class for Geopedia
+
+    Creates an instance of Geopedia's WMS (Web Map Service) GetMap request, which provides access to WMS layers in
+    Geopedia.
+
+    :param width: width (number of columns) of the returned image (array)
+    :type width: int or None
+    :param height: height (number of rows) of the returned image (array)
+    :type height: int or None
+    :param custom_url_params: dictionary of CustomUrlParameters and their values supported by Geopedia's WMS services.
+                              At the moment only the transparency is supported (CustomUrlParam.TRANSPARENT).
+    :type custom_url_params: dictionary of CustomUrlParameter enum and its value, i.e.
+                              ``{constants.CustomUrlParam.TRANSPARENT:True}``
+    :param layer: Geopedia layer which contains requested data
+    :type layer: str
+    :param bbox: Bounding box of the requested data
+    :type bbox: common.BBox
+    :param theme: Geopedia's theme for which the layer is defined.
+    :type theme: str
+    :param image_format: Format of the returned image by the Sentinel Hub's WMS getMap service. Default is
+        ``constants.MimeType.PNG``.
+    :type image_format: constants.MimeType
+    :param data_folder: Location of the directory where the fetched data will be saved.
+    :type data_folder: str
+    """
+    def __init__(self, *, width=None, height=None, custom_url_params=None, **kwargs):
+        self.size_x = width
+        self.size_y = height
 
         self.custom_url_params = custom_url_params
 
         if self.custom_url_params is not None:
             self._check_custom_url_parameters()
 
-        if bbox.crs is not CRS.POP_WEB:
-            raise ValueError('Geopedia Request at the moment supports only CRS = {}'.format(CRS.POP_WEB))
-
-        super().__init__(**kwargs)
+        super().__init__(service_type=ServiceType.WMS, **kwargs)
 
     def _check_custom_url_parameters(self):
         """Checks if custom url parameters are valid parameters.
@@ -524,10 +550,10 @@ class GeopediaRequest(DataRequest):
         Throws ValueError if the provided parameter is not a valid parameter.
         """
         for param in self.custom_url_params.keys():
-            if param not in [CustomUrlParam.TRANSPARENT]:
-                raise ValueError('Parameter %s is not a valid custom url parameter. Please check and fix.' % param)
+            if param is not CustomUrlParam.TRANSPARENT:
+                raise ValueError('Parameter {} is currently not supported.'.format(param))
 
-    def create_request(self):
+    def _create_request(self):
         """Set download requests
 
         Create a list of DownloadRequests for all Sentinel-2 acquisitions within request's time interval and
@@ -537,58 +563,36 @@ class GeopediaRequest(DataRequest):
         self.download_list = gpd_service.get_request(self)
 
 
-class GeopediaWmsRequest(GeopediaRequest):
-    """ Web Map Service request class for Geopedia
+class GeopediaImageRequest(GeopediaRequest):
+    """Request to access data in a Geopedia vector / raster layer.
 
-    Creates an instance of Geopedia's WMS (Web Map Service) GetMap request,
-    which provides access to various layers in Geopedia.
-
-    :param width: width (number of columns) of the returned image (array)
-    :type width: int or None
-    :param height: height (number of rows) of the returned image (array)
-    :type height: int or None
-    :param data_source: Source of requested satellite data. Default is Sentinel-2 L1C data.
-    :type data_source: constants.DataSource
-    :param bbox: Bounding box of the requested image. Coordinates must be in the specified coordinate reference system.
-    :type bbox: common.BBox
-    :param layer: the preconfigured layer (image) to be returned. Required.
+    :param image_field_name: Name of the field in the data table which holds images
+    :type image_field_name: str
+    :param keep_image_names: If ``True`` images will be saved with the same names as in Geopedia otherwise Geopedia
+        hashes will be used as names. If there are multiple images with the same names in the Geopedia layer this
+        parameter should be set to ``False`` to prevent images being overwritten.
+    :type keep_image_names: bool
+    :param layer: Geopedia layer which contains requested data
     :type layer: str
+    :param bbox: Bounding box of the requested data
+    :type bbox: common.BBox
     :param theme: Geopedia's theme for which the layer is defined.
     :type theme: str
-    :param image_format: format of the returned image by the Geopedia WMS getMap service. Default is PNG.
+    :param image_format: Format of the returned image by the Sentinel Hub's WMS getMap service. Default is
+        ``constants.MimeType.PNG``.
     :type image_format: constants.MimeType
-    :param data_folder: location of the directory where the fetched data will be saved.
+    :param data_folder: Location of the directory where the fetched data will be saved.
     :type data_folder: str
     """
-    def __init__(self, *, width=None, height=None, **kwargs):
-        super().__init__(service_type=ServiceType.WMS, size_x=width, size_y=height, **kwargs)
-
-    def create_request(self):
-        gpd_service = GeopediaWmsService()
-        self.download_list = gpd_service.get_request(self)
-
-
-class GeopediaImageRequest(GeopediaRequest):
-    """Request to access data in a Geopedia vector layer.
-
-    :param bbox: Bounding box of the requested image. Its coordinates must be
-                 in the CRS.POP_WEB (EPSG:3857) coordinate system.
-    :type bbox: common.BBox
-    :type layer: str
-    :param prop: Property with images.
-    :type prop: str
-    :param image_format: Format of the returned image. Default is
-                         ``constants.MimeType.PNG``.
-    :type image_format: constants.MimeType
-    """
-    def __init__(self, layer, bbox, prop, **kwargs):
-        self.prop = prop
+    def __init__(self, *, image_field_name, keep_image_names=True, **kwargs):
+        self.image_field_name = image_field_name
+        self.keep_image_names = keep_image_names
 
         self.gpd_iterator = None
 
-        super().__init__(layer, bbox, **kwargs)
+        super().__init__(service_type=ServiceType.IMAGE, **kwargs)
 
-    def create_request(self):
+    def _create_request(self):
         """Set a list of download requests
 
         Set a list of DownloadRequests for all images that are under the
@@ -636,7 +640,7 @@ class AwsRequest(DataRequest):
         super().__init__(**kwargs)
 
     @abstractmethod
-    def create_request(self):
+    def _create_request(self):
         raise NotImplementedError
 
     def get_aws_service(self):
@@ -676,7 +680,7 @@ class AwsProductRequest(AwsRequest):
 
         super().__init__(**kwargs)
 
-    def create_request(self):
+    def _create_request(self):
         if self.safe_format:
             self.aws_service = SafeProduct(self.product_id, tile_list=self.tile_list, bands=self.bands,
                                            metafiles=self.metafiles)
@@ -724,7 +728,7 @@ class AwsTileRequest(AwsRequest):
 
         super().__init__(**kwargs)
 
-    def create_request(self):
+    def _create_request(self):
         if self.safe_format:
             self.aws_service = SafeTile(self.tile, self.time, self.aws_index, bands=self.bands,
                                         metafiles=self.metafiles, data_source=self.data_source)
