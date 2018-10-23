@@ -12,7 +12,7 @@ from .aws_safe import SafeProduct, SafeTile
 from .areas import BBoxSplitter, OsmSplitter, TileSplitter
 
 from .ogc import WebFeatureService
-from .geopedia import GeopediaFeatureIterator
+from .geopedia import GeopediaFeatureIterator, GeopediaSession
 
 from .common import BBox
 from .constants import DataSource, CustomUrlParam, CRS, MimeType, OgcConstants, AwsConstants, ServiceType

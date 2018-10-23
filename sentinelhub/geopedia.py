@@ -3,6 +3,7 @@ Module for working with Geopedia OGC services
 """
 
 import logging
+import datetime
 
 from shapely.geometry import shape as geo_shape
 
@@ -24,6 +25,57 @@ class GeopediaService:
     """
     def __init__(self, base_url=None):
         self.base_url = SHConfig().geopedia_rest_url if base_url is None else base_url
+
+
+class GeopediaSession(GeopediaService):
+    """ For retrieving data from Geopedia vector and raster layers it is required to make a session. This class handles
+    starting and renewing of session. It provides session headers required by Geopedia REST requests.
+
+    The session is created globally for all instances of this class. At the moment session duration is hardcoded to 1
+    hour. After that this class will renew the session.
+    """
+    SESSION_DURATION = datetime.timedelta(hours=1)
+
+    _session_id = None
+    _session_end_timestamp = None
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
+        self.session_url = '{}data/v1/session/create?locale=en'.format(self.base_url)
+
+    def get_session_headers(self, force_new_session=False):
+        """ Returns session headers
+
+        :param force_new_session: If ``True`` it will always create a new session. Otherwise it will create a new
+            session only if no session exists or the previous session timed out.
+        :type force_new_session: bool
+        :return: A dictionary containing session headers
+        :rtype: dict
+        """
+        return {
+            'X-GPD-Session': self.get_session_id(force_new_session=force_new_session)
+        }
+
+    def get_session_id(self, force_new_session=False):
+        """ Returns a session ID
+
+        :param force_new_session: If ``True`` it will always create a new session. Otherwise it will create a new
+            session only if no session exists or the previous session timed out.
+        :type force_new_session: bool
+        :return: A session ID string
+        :rtype: str
+        """
+        if self._session_id is None or force_new_session or datetime.datetime.now() > self._session_end_timestamp:
+            self._start_new_session()
+
+        return self._session_id
+
+    def _start_new_session(self):
+        """ Updates the session id and calculates when the new session will end.
+        """
+        self._session_end_timestamp = datetime.datetime.now() + self.SESSION_DURATION
+        self._session_id = get_json(self.session_url)['sessionId']
 
 
 class GeopediaWmsService(GeopediaService, OgcImageService):
@@ -142,17 +194,16 @@ class GeopediaFeatureIterator(GeopediaService):
         self.layer = layer
 
         self.query = {}
-
         if bbox is not None:
             if bbox.crs is not CRS.POP_WEB:
                 bbox = transform_bbox(bbox, CRS.POP_WEB)
 
             self.query['filterExpression'] = 'bbox({},"EPSG:3857")'.format(bbox)
 
+        self.gpd_session = GeopediaSession()
         self.features = []
         self.index = 0
 
-        self.session_url = '{}data/v1/session/create?locale=en'.format(self.base_url)
         self.next_page_url = '{}data/v2/search/tables/{}/features'.format(self.base_url, layer)
 
     def __iter__(self):
@@ -171,28 +222,24 @@ class GeopediaFeatureIterator(GeopediaService):
         raise StopIteration
 
     def _fetch_features(self):
+        """ Retrieves a new page of features from Geopedia
+        """
         if self.next_page_url is None:
             return
 
-        response = get_json(self.next_page_url, post_values=self.query, headers=self._get_headers())
+        response = get_json(self.next_page_url, post_values=self.query, headers=self.gpd_session.get_session_headers())
 
         self.features.extend(response['features'])
         self.next_page_url = response['pagination']['next']
 
-    def _get_headers(self):
-        headers = {'X-GPD-Session': self._get_session_id()}
-
-        return headers
-
-    def _get_session_id(self):
-        session_id = get_json(self.session_url)['sessionId']
-
-        return session_id
-
     def get_geometry_iterator(self):
+        """ Iterator over Geopedia feature geometries
+        """
         for feature in self:
             yield geo_shape(feature['geometry'])
 
     def get_field_iterator(self, field):
+        """ Iterator over the specified field of Geopedia features
+        """
         for feature in self:
             yield feature['properties'].get(field, [])
