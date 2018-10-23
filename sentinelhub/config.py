@@ -17,9 +17,10 @@ class SHConfig:
           of specifying it explicitly every time he/she creates new ogc request.
         - `aws_access_key_id`: Access key for AWS Requester Pays buckets.
         - `aws_secret_access_key`: Secret access key for AWS Requester Pays buckets.
-        - `ogc_base_url`: Base url for Sentinel Hub's services (should not be changed by the user).
-        - `gpd_base_url`: Base url for Geopedia's services (should not be changed by the user).
-        - `aws_metadata_base_url`: Base url for publicly available metadata files
+        - `ogc_base_url`: Base url for Sentinel Hub's services.
+        - `geopedia_wms_url`: Base url for Geopedia WMS services.
+        - `geopedia_rest_url`: Base url for Geopedia REST services.
+        - `aws_metadata_url`: Base url for publicly available metadata files
         - `aws_s3_l1c_bucket`: Name of Sentinel-2 L1C bucket at AWS s3 service.
         - `aws_s3_l2a_bucket`: Name of Sentinel-2 L2A bucket at AWS s3 service.
         - `opensearch_url`: Base url for Sentinelhub Opensearch service.
@@ -46,8 +47,9 @@ class SHConfig:
             ('aws_access_key_id', ''),
             ('aws_secret_access_key', ''),
             ('ogc_base_url', 'https://services.sentinel-hub.com/ogc/'),
-            ('gpd_base_url', 'http://service.geopedia.world/'),
-            ('aws_metadata_base_url', 'https://roda.sentinel-hub.com/'),
+            ('geopedia_wms_url', 'http://service.geopedia.world/'),
+            ('geopedia_rest_url', 'https://www.geopedia.world/rest/'),
+            ('aws_metadata_url', 'https://roda.sentinel-hub.com/'),
             ('aws_s3_l1c_bucket', 'sentinel-s2-l1c'),
             ('aws_s3_l2a_bucket', 'sentinel-s2-l2a'),
             ('opensearch_url', 'http://opensearch.sentinel-hub.com/resto/api/collections/Sentinel2/'),

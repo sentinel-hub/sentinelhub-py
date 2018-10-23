@@ -107,7 +107,7 @@ class AwsService(ABC):
         :return: base url string
         :rtype: str
         """
-        base_url = SHConfig().aws_metadata_base_url.rstrip('/') if force_http else 's3:/'
+        base_url = SHConfig().aws_metadata_url.rstrip('/') if force_http else 's3:/'
         aws_bucket = SHConfig().aws_s3_l1c_bucket if self.data_source is DataSource.SENTINEL2_L1C else \
             SHConfig().aws_s3_l2a_bucket
 

@@ -27,12 +27,13 @@ class PackageProps:
 class ServiceType(Enum):
     """ Enum constant class for type of service
 
-    Supported types are WMS, WCS, WFS, AWS
+    Supported types are WMS, WCS, WFS, AWS, IMAGE
     """
     WMS = 'wms'
     WCS = 'wcs'
     WFS = 'wfs'
     AWS = 'aws'
+    IMAGE = 'image'
 
 
 class _DataSourceMeta(EnumMeta):
@@ -509,6 +510,13 @@ class MimeType(Enum):
             }[self]
         except IndexError:
             raise ValueError('Type {} is not supported by this method'.format(self))
+
+    @staticmethod
+    def from_string(mime_type_str):
+        if mime_type_str == 'jpeg':
+            return MimeType.JPG
+
+        return MimeType(mime_type_str)
 
 
 class RequestType(Enum):

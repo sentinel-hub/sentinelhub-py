@@ -240,28 +240,31 @@ class TestOgc(TestSentinelHub):
 
     def test_stats(self):
         for test_case in self.test_cases:
-            delta = 1e-1 if np.issubdtype(test_case.data[0].dtype, np.integer) else 1e-4
-
-            if test_case.img_min is not None:
-                min_val = np.amin(test_case.data[0])
-                with self.subTest(msg='Test case {}'.format(test_case.name)):
-                    self.assertAlmostEqual(test_case.img_min, min_val, delta=delta,
-                                           msg="Expected min {}, got {}".format(test_case.img_min, min_val))
-            if test_case.img_max is not None:
-                max_val = np.amax(test_case.data[0])
-                with self.subTest(msg='Test case {}'.format(test_case.name)):
-                    self.assertAlmostEqual(test_case.img_max, max_val, delta=delta,
-                                           msg="Expected max {}, got {}".format(test_case.img_max, max_val))
-            if test_case.img_mean is not None:
-                mean_val = np.mean(test_case.data[0])
-                with self.subTest(msg='Test case {}'.format(test_case.name)):
-                    self.assertAlmostEqual(test_case.img_mean, mean_val, delta=delta,
-                                           msg="Expected mean {}, got {}".format(test_case.img_mean, mean_val))
-            if test_case.img_median is not None:
-                median_val = np.median(test_case.data[0])
-                with self.subTest(msg='Test case {}'.format(test_case.name)):
-                    self.assertAlmostEqual(test_case.img_median, median_val, delta=delta,
-                                           msg="Expected median {}, got {}".format(test_case.img_median, median_val))
+            self.test_numpy_stats(test_case.data[0], exp_min=test_case.img_min, exp_max=test_case.img_max,
+                                  exp_mean=test_case.img_mean, exp_median=test_case.img_median,
+                                  test_name=test_case.name)
+            # delta = 1e-1 if np.issubdtype(test_case.data[0].dtype, np.integer) else 1e-4
+            #
+            # if test_case.img_min is not None:
+            #     min_val = np.amin(test_case.data[0])
+            #     with self.subTest(msg='Test case {}'.format(test_case.name)):
+            #         self.assertAlmostEqual(test_case.img_min, min_val, delta=delta,
+            #                                msg="Expected min {}, got {}".format(test_case.img_min, min_val))
+            # if test_case.img_max is not None:
+            #     max_val = np.amax(test_case.data[0])
+            #     with self.subTest(msg='Test case {}'.format(test_case.name)):
+            #         self.assertAlmostEqual(test_case.img_max, max_val, delta=delta,
+            #                                msg="Expected max {}, got {}".format(test_case.img_max, max_val))
+            # if test_case.img_mean is not None:
+            #     mean_val = np.mean(test_case.data[0])
+            #     with self.subTest(msg='Test case {}'.format(test_case.name)):
+            #         self.assertAlmostEqual(test_case.img_mean, mean_val, delta=delta,
+            #                                msg="Expected mean {}, got {}".format(test_case.img_mean, mean_val))
+            # if test_case.img_median is not None:
+            #     median_val = np.median(test_case.data[0])
+            #     with self.subTest(msg='Test case {}'.format(test_case.name)):
+            #         self.assertAlmostEqual(test_case.img_median, median_val, delta=delta,
+            #                                msg="Expected median {}, got {}".format(test_case.img_median, median_val))
 
 
 if __name__ == '__main__':
