@@ -245,10 +245,14 @@ def execute_download_request(request):
             try_num -= 1
             if try_num > 0 and (_is_temporal_problem(exception) or
                                 (isinstance(exception, requests.HTTPError) and
-                                 exception.response.status_code >= requests.status_codes.codes.INTERNAL_SERVER_ERROR)):
+                                 exception.response.status_code >= requests.status_codes.codes.INTERNAL_SERVER_ERROR) or
+                                _request_limit_reached(exception)):
                 LOGGER.debug('Download attempt failed: %s\n%d attempts left, will retry in %ds', exception,
                              try_num, SHConfig().download_sleep_time)
-                time.sleep(SHConfig().download_sleep_time)
+                sleep_time = SHConfig().download_sleep_time
+                if _request_limit_reached(exception):
+                    sleep_time = max(sleep_time, 60)
+                time.sleep(sleep_time)
             else:
                 if request.url.startswith(SHConfig().aws_metadata_url) and \
                         isinstance(exception, requests.HTTPError) and \
@@ -326,6 +330,19 @@ def _is_temporal_problem(exception):
         return isinstance(exception, (requests.ConnectionError, requests.Timeout))
     except AttributeError:  # Earlier requests versions might not have requests.Timeout
         return isinstance(exception, requests.ConnectionError)
+
+
+def _request_limit_reached(exception):
+    """ Checks if exception was raised because of too many executed requests. (This is a temporal solution and
+    will be changed in later package versions.)
+
+    :param exception: Exception raised during download
+    :type exception: Exception
+    :return: True if exception is caused because too many requests were executed at once and False otherwise
+    :rtype: bool
+    """
+    return isinstance(exception, requests.HTTPError) and \
+        exception.response.status_code == requests.status_codes.codes.TOO_MANY_REQUESTS
 
 
 def _create_download_failed_message(exception, url):
