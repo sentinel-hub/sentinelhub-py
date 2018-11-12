@@ -140,12 +140,13 @@ class OgcImageService(OgcService):
             raise ValueError("{} is not available for service at ogc_base_url={}".format(request.data_source,
                                                                                          SHConfig().ogc_base_url))
 
-        params = {'SERVICE': request.service_type.value,
-                  'BBOX': request.bbox.__str__(reverse=True) if request.bbox.get_crs() is CRS.WGS84 else str(
-                      request.bbox),
-                  'FORMAT': MimeType.get_string(request.image_format),
-                  'CRS': CRS.ogc_string(request.bbox.get_crs()),
-                  'VERSION': '1.3.0'}
+        params = {
+            'SERVICE': request.service_type.value,
+            'BBOX': request.bbox.__str__(reverse=True) if request.bbox.get_crs() is CRS.WGS84 else str(
+                  request.bbox),
+            'FORMAT': MimeType.get_string(request.image_format),
+            'CRS': CRS.ogc_string(request.bbox.get_crs()),
+        }
 
         if request.service_type is ServiceType.WMS:
             params = {**params,
@@ -153,7 +154,8 @@ class OgcImageService(OgcService):
                           'WIDTH': size_x,
                           'HEIGHT': size_y,
                           'LAYERS': request.layer,
-                          'REQUEST': 'GetMap'
+                          'REQUEST': 'GetMap',
+                          'VERSION': '1.3.0'
                       }}
         elif request.service_type is ServiceType.WCS:
             params = {**params,
@@ -161,7 +163,8 @@ class OgcImageService(OgcService):
                           'RESX': size_x,
                           'RESY': size_y,
                           'COVERAGE': request.layer,
-                          'REQUEST': 'GetCoverage'
+                          'REQUEST': 'GetCoverage',
+                          'VERSION': '1.1.2'
                       }}
 
         if date is not None:
