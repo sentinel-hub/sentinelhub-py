@@ -38,10 +38,10 @@ class DataRequest(ABC):
 
         self.download_list = []
         self.folder_list = []
-        self._create_request()
+        self.create_request()
 
     @abstractmethod
-    def _create_request(self):
+    def create_request(self):
         raise NotImplementedError
 
     def get_download_list(self):
@@ -314,7 +314,7 @@ class OgcRequest(DataRequest):
             if param not in CustomUrlParam:
                 raise ValueError('Parameter %s is not a valid custom url parameter. Please check and fix.' % param)
 
-    def _create_request(self):
+    def create_request(self):
         """Set download requests
 
         Create a list of DownloadRequests for all Sentinel-2 acquisitions within request's time interval and
@@ -503,7 +503,7 @@ class GeopediaRequest(DataRequest):
         super().__init__(**kwargs)
 
     @abstractmethod
-    def _create_request(self):
+    def create_request(self):
         raise NotImplementedError
 
 
@@ -553,7 +553,7 @@ class GeopediaWmsRequest(GeopediaRequest):
             if param is not CustomUrlParam.TRANSPARENT:
                 raise ValueError('Parameter {} is currently not supported.'.format(param))
 
-    def _create_request(self):
+    def create_request(self):
         """Set download requests
 
         Create a list of DownloadRequests for all Sentinel-2 acquisitions within request's time interval and
@@ -592,7 +592,7 @@ class GeopediaImageRequest(GeopediaRequest):
 
         super().__init__(service_type=ServiceType.IMAGE, **kwargs)
 
-    def _create_request(self):
+    def create_request(self):
         """Set a list of download requests
 
         Set a list of DownloadRequests for all images that are under the
@@ -640,7 +640,7 @@ class AwsRequest(DataRequest):
         super().__init__(**kwargs)
 
     @abstractmethod
-    def _create_request(self):
+    def create_request(self):
         raise NotImplementedError
 
     def get_aws_service(self):
@@ -680,7 +680,7 @@ class AwsProductRequest(AwsRequest):
 
         super().__init__(**kwargs)
 
-    def _create_request(self):
+    def create_request(self):
         if self.safe_format:
             self.aws_service = SafeProduct(self.product_id, tile_list=self.tile_list, bands=self.bands,
                                            metafiles=self.metafiles)
@@ -728,7 +728,7 @@ class AwsTileRequest(AwsRequest):
 
         super().__init__(**kwargs)
 
-    def _create_request(self):
+    def create_request(self):
         if self.safe_format:
             self.aws_service = SafeTile(self.tile, self.time, self.aws_index, bands=self.bands,
                                         metafiles=self.metafiles, data_source=self.data_source)
