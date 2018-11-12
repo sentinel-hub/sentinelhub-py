@@ -323,7 +323,7 @@ class _BaseCRS(Enum):
 
 # Look-up class with possible combinations of UTM zone and direction
 CRS = _BaseCRS("CRS", dict(
-    [_get_utm_name_value_pair(zone, direction) for zone, direction in it.product(range(1, 65), _Direction)] +
+    [_get_utm_name_value_pair(zone, direction) for zone, direction in it.product(range(1, 61), _Direction)] +
     [('WGS84', '4326'), ('POP_WEB', '3857')]
 ))
 
