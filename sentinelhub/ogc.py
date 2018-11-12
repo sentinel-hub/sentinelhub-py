@@ -142,8 +142,7 @@ class OgcImageService(OgcService):
 
         params = {
             'SERVICE': request.service_type.value,
-            'BBOX': request.bbox.__str__(reverse=True) if request.bbox.get_crs() is CRS.WGS84 else str(
-                  request.bbox),
+            'BBOX': request.bbox.__str__(reverse=True) if request.bbox.get_crs() is CRS.WGS84 else str(request.bbox),
             'FORMAT': MimeType.get_string(request.image_format),
             'CRS': CRS.ogc_string(request.bbox.get_crs()),
         }
