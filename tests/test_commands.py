@@ -24,7 +24,7 @@ class TestCommands(TestSentinelHub):
             'sentinelhub.aws --product {} -i'.format(old_product_id),
             'sentinelhub.aws --product {} -i'.format(l2a_product_id),
             'sentinelhub.aws --tile {} -rei --bands B01,B10'.format(l1c_tile),
-            'sentinelhub.aws --tile {} --l2a'.format(l2a_tile),
+            'sentinelhub.aws --tile {} --l2a -f {}'.format(l2a_tile, cls.OUTPUT_FOLDER),
             'sentinelhub.download {} {} -r'.format(url, os.path.join(cls.OUTPUT_FOLDER, 'example.xml')),
             'sentinelhub.config --show',
             'sentinelhub --help',
