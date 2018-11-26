@@ -11,7 +11,7 @@ import warnings
 from abc import ABC, abstractmethod
 from copy import deepcopy
 
-from .ogc import OgcImageService
+from .ogc import OgcImageService, FisService
 from .geopedia import GeopediaWmsService, GeopediaImageService
 from .aws import AwsProduct, AwsTile
 from .aws_safe import SafeProduct, SafeTile
@@ -555,7 +555,13 @@ class FisRequest(OgcRequest):
         super().__init__(bbox=bbox, service_type=ServiceType.FIS, image_format=MimeType.JSON, **kwargs)
 
     def create_request(self):
-        pass
+        """Set download requests
+
+        Create a list of DownloadRequests for all Sentinel-2 acquisitions within request's time interval and
+        acceptable cloud coverage.
+        """
+        fis_service = FisService(instance_id=self.instance_id)
+        self.download_list = fis_service.get_request(self)
 
 
 class GeopediaRequest(DataRequest):

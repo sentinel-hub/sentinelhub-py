@@ -322,6 +322,53 @@ class OgcImageService(OgcService):
         return self.wfs_iterator
 
 
+class FisService(OgcService):
+    """Sentinel Hub OGC services class for providing FIS data
+
+    Intermediate layer between FIS requests and the Sentinel Hub FIS services.
+
+    :param base_url: base url of Sentinel Hub's OGC services. If ``None``, the url specified in the configuration
+                    file is taken.
+    :type base_url: str or None
+    :param instance_id: user's instance id granting access to Sentinel Hub's OGC services. If ``None``, the instance id
+                        specified in the configuration file is taken.
+    :type instance_id: str or None
+    """
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
+    def get_request(self, request):
+        """ Get download requests
+
+        Create a list of DownloadRequests for all Sentinel-2 acquisitions within request's time interval and
+        acceptable cloud coverage.
+
+        :param request: QGC-type request with specified bounding box, time interval, and cloud coverage for specific
+                        product.
+        :type request: OgcRequest or GeopediaRequest
+        :return: list of DownloadRequests
+        """
+        return [DownloadRequest(url=self.get_url(),
+                                filename=self.get_filename(),
+                                data_type=request.image_format,
+                                headers=OgcConstants.HEADERS)
+                ]
+    def get_url(self):
+        """
+        Returns url to Sentinel Hub's OGC service for the product specified by the OgcRequest and date.
+
+        :return: url to Sentinel Hub's OGC service for this product.
+        :rtype: str
+        """
+        return "http://services.sentinel-hub.com/ogc/fis/ce55231e-6f5c-4910-84a4-2768a2c585f1?LAYER=NDVI&CRS=EPSG:3857&TIME=2016-12-22/2016-12-22&BBOX=1550369.86,5586056.25,1547498.69,5584861.92&RESOLUTION=10m"
+
+    def get_filename(self):
+
+        return "some_file.json"
+
+
+
 class WebFeatureService(OgcService):
     """Class for interaction with Sentinel Hub WFS service
 
