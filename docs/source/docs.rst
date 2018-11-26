@@ -22,4 +22,5 @@ Modules
     ogc
     opensearch
     os_utils
+    test_utils
     time_utils
