@@ -471,6 +471,93 @@ class WcsRequest(OgcRequest):
         super().__init__(service_type=ServiceType.WCS, size_x=resx, size_y=resy, **kwargs)
 
 
+class FisRequest(OgcRequest):
+    """ The Statistical info (or feature info service, abbreviated FIS) request class
+
+    The Statistical info (or feature info service, abbreviated FIS), performs elementary statistical
+    computations---such as mean, standard deviation, and histogram approximating the distribution of reflectance
+    values---on remotely sensed data for a region specified in a given spatial reference system across different
+    bands and time ranges.
+
+    A quintessential usage example would be querying the service for basic statistics and the distribution of NDVI
+    values for a polygon representing an agricultural unit over a time range.
+
+    More info available at:
+    https://www.sentinel-hub.com/develop/documentation/api/ogc_api/wcs-request
+
+    :param layer: the preconfigured layer (image) to be returned as comma separated layer names.
+                  Required.
+    :type layer: str
+    :param time: time or time range for which to return the results, in ISO8601 format
+            (year-month-date, for example: ``2016-01-01``, or year-month-dateThours:minuts:seconds format,
+            i.e. ``2016-01-01T16:31:21``). When a single time is specified the request will return
+            data for that specific date, if it exists. If a time range is specified the result is a list of all
+            scenes between the specified dates conforming to the cloud coverage criteria. Most recent acquisition
+            being first in the list. For the latest acquisition use ``latest``.
+            Examples: ``latest``, ``'2016-01-01'``, or ``('2016-01-01', ' 2016-01-31')``
+            Default: 'latest'
+            Required
+    :type time: str or (str, str) or datetime.date or (datetime.date, datetime.date) or datetime.datetime or
+                (datetime.datetime, datetime.datetime)
+    :param resolution: Specifies the spatial resolution, in meters per pixel, of the image from which the statistics
+                       are to be estimated. When using CRS=EPSG:4326 one has to add the "m" suffix to
+                       enforce resolution in meters per pixel (e.g. RESOLUTION=10m).
+                       Required
+    :type str
+    :param geometry: A WKT representation of a geometry describing the region of interest.
+                     Note that WCS 1.1.1 standard is used here, so for EPSG:4326 coordinates should be
+                     in latitude/longitude order.
+                     Required (if bbox not present)
+    :type geometry: common.Geometry
+    :param bbox: Bounding box of the requested image. Coordinates must be in the specified coordinate reference system.
+                 Required (if geometry not present)
+    :type bbox: common.BBox
+    :param style: Specified style (overrides the one specified in the layer configuration).
+                  For indices (one-component products such as NDVI, NDWI, etc.), setting STYLE=INDEX enforces
+                  raw data (other popular choices for one-component products include GRAYSCALE and COLORMAP.
+                  For multi-component products (such as TRUE_COLOR, FALSE_COLOR, etc.), setting
+                  STYLE=SENSOR enforces the raw sensor data to be used, while STYLE=REFLECTANCE enforces
+                  raw sensor data scaled to the range [0,1]. See which styles are available for various EO products.
+    :type: str
+    :param bins: The number of bins (a positive integer) in the histogram.
+                 When this parameter is absent, no histogram is computed.
+    :type: str
+    :param data_source: Source of requested satellite data. Default is Sentinel-2 L1C data.
+    :type data_source: constants.DataSource
+    :param maxcc: maximum accepted cloud coverage of an image. Float between 0.0 and 1.0. Default is ``1.0``.
+    :type maxcc: float
+    :param image_format: format of the returned image by the Sentinel Hub's WMS getMap service. Default is JSON.
+                        Default is ``constants.MimeType.JSON``.
+    :type image_format: constants.MimeType
+    :param instance_id: user's instance id. If ``None`` the instance id is taken from the ``config.json``
+                        configuration file.
+    :type instance_id: str
+    :param custom_url_params: dictionary of CustomUrlParameters and their values supported by Sentinel Hub's WMS and WCS
+                              services. All available parameters are described at
+                              http://www.sentinel-hub.com/develop/documentation/api/custom-url-parameters. Note: in
+                              case of constants.CustomUrlParam.EVALSCRIPT the dictionary value must be a string
+                              of Javascript code that is not encoded into base64.
+    :type custom_url_params: dictionary of CustomUrlParameter enum and its value, i.e.
+                              ``{constants.CustomUrlParam.ATMFILTER:'ATMCOR'}``
+    :param time_difference: The time difference below which dates are deemed equal. That is, if for the given set of OGC
+                            parameters the images are available at datestimes `d1<=d2<=...<=dn` then only those with
+                            `dk-dj>time_difference` will be considered. The default time difference is negative (`-1s`),
+                            meaning that all dates are considered by default.
+    :type time_difference: datetime.timedelta
+    :param data_folder: location of the directory where the fetched data will be saved.
+    :type data_folder: str
+    """
+    def __init__(self, bbox=None, *, resolution=10, geometry=None, style=None, bins=None, **kwargs):
+        self.resolution = resolution
+        self.geometry = geometry
+        self.style = style
+        self.bins = bins
+        super().__init__(bbox=bbox, service_type=ServiceType.FIS, image_format=MimeType.JSON, **kwargs)
+
+    def create_request(self):
+        pass
+
+
 class GeopediaRequest(DataRequest):
     """ The base class for Geopedia requests where all common parameters are defined.
 

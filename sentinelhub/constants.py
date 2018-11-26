@@ -34,6 +34,7 @@ class ServiceType(Enum):
     WFS = 'wfs'
     AWS = 'aws'
     IMAGE = 'image'
+    FIS = 'fis'
 
 
 class _DataSourceMeta(EnumMeta):
