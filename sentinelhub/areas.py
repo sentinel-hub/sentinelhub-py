@@ -285,6 +285,7 @@ class OsmSplitter(AreaSplitter):
         :return: Bounding box of entire world
         :rtype: sentinelhub.common.BBox
         """
+        # pylint: disable=invalid-unary-operand-type
         return BBox((-self.POP_WEB_MAX, -self.POP_WEB_MAX, self.POP_WEB_MAX, self.POP_WEB_MAX), crs=CRS.POP_WEB)
 
     def _recursive_split(self, bbox, zoom_level, column, row):
