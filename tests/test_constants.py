@@ -1,7 +1,6 @@
 import unittest
-from tests_all import TestSentinelHub
 
-from sentinelhub import CRS, MimeType
+from sentinelhub import CRS, MimeType, TestSentinelHub
 from sentinelhub.constants import RequestType
 
 
@@ -96,7 +95,7 @@ class TestRequestType(TestSentinelHub):
         try:
             RequestType('POST')
             RequestType('GET')
-        except:
+        except BaseException:
             self.fail("Couldn't instantiate enum")
 
 

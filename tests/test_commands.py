@@ -1,7 +1,8 @@
 import unittest
 import subprocess
 import os
-from tests_all import TestSentinelHub
+
+from sentinelhub import TestSentinelHub
 
 
 class TestCommands(TestSentinelHub):

@@ -1,9 +1,8 @@
 import unittest
 import numpy as np
 
-from tests_all import TestSentinelHub
-
-from sentinelhub import GeopediaWmsRequest, GeopediaImageRequest, GeopediaFeatureIterator, CRS, MimeType, BBox
+from sentinelhub import GeopediaWmsRequest, GeopediaImageRequest, GeopediaFeatureIterator, CRS, MimeType, BBox,\
+    TestSentinelHub
 
 
 class TestGeopediaWms(TestSentinelHub):

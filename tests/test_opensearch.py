@@ -1,7 +1,6 @@
 import unittest
-from tests_all import TestSentinelHub
 
-from sentinelhub import get_tile_info, get_area_dates, BBox, CRS
+from sentinelhub import get_tile_info, get_area_dates, BBox, CRS, TestSentinelHub
 
 
 class TestOpensearch(TestSentinelHub):

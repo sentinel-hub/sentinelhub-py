@@ -1,8 +1,7 @@
 import unittest
 import numpy as np
-from tests_all import TestSentinelHub
 
-from sentinelhub import AwsTileRequest, AwsProductRequest
+from sentinelhub import AwsTileRequest, AwsProductRequest, TestSentinelHub
 
 
 class TestAwsTile(TestSentinelHub):

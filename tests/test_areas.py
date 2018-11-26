@@ -2,9 +2,7 @@ import unittest
 import os.path
 from shapely.geometry import shape
 
-from tests_all import TestSentinelHub
-
-from sentinelhub import BBoxSplitter, OsmSplitter, TileSplitter, read_data, CRS, DataSource
+from sentinelhub import BBoxSplitter, OsmSplitter, TileSplitter, read_data, CRS, DataSource, TestSentinelHub
 
 
 class TestOgc(TestSentinelHub):

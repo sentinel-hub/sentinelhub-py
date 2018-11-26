@@ -1,9 +1,8 @@
 import unittest
-from tests_all import TestSentinelHub
 
 import shapely.geometry
 
-from sentinelhub import BBox, CRS
+from sentinelhub import BBox, CRS, TestSentinelHub
 
 
 class TestBBox(TestSentinelHub):

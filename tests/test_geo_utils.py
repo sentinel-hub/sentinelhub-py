@@ -1,7 +1,6 @@
 import unittest
-from tests_all import TestSentinelHub
 
-from sentinelhub import geo_utils, CRS, BBox
+from sentinelhub import geo_utils, CRS, BBox, TestSentinelHub
 
 
 class TestGeo(TestSentinelHub):

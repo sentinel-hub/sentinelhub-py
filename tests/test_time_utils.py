@@ -1,8 +1,7 @@
 import unittest
 import datetime
-from tests_all import TestSentinelHub
 
-from sentinelhub import time_utils
+from sentinelhub import time_utils, TestSentinelHub
 
 
 class TestTime(TestSentinelHub):

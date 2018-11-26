@@ -1,23 +1,19 @@
 import unittest
 import os.path
 
-from tests_all import TestSentinelHub
-
-from sentinelhub import AwsTileRequest, AwsProductRequest, read_data, write_data, DataSource, AwsConstants
+from sentinelhub import AwsTileRequest, AwsProductRequest, read_data, write_data, DataSource, AwsConstants,\
+    TestSentinelHub, TestCaseContainer
 
 
 class TestSafeFormat(TestSentinelHub):
 
-    class SafeTestCase:
+    class SafeTestCase(TestCaseContainer):
         """
-        Container for each test case of sentinelhub OGC functionalities
+        Container for each test case of .SAFE structure testing
         """
-        def __init__(self, name, request):
-            self.name = name
-            self.request = request
 
         def get_filename(self):
-            return os.path.join(TestSentinelHub.INPUT_FOLDER, '{}.csv'.format(self.name))
+            return os.path.join(TestSafeFormat.INPUT_FOLDER, '{}.csv'.format(self.name))
 
         def get_request_data(self):
             return [(req.url, req.filename[:]) for req in self.request.get_download_list()]
