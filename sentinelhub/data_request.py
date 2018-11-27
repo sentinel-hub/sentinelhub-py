@@ -314,12 +314,22 @@ class OgcRequest(DataRequest):
             if param not in CustomUrlParam:
                 raise ValueError('Parameter %s is not a valid custom url parameter. Please check and fix.' % param)
 
-    def create_request(self):
+    def create_request(self, reset_wfs_iterator=False):
         """Set download requests
 
         Create a list of DownloadRequests for all Sentinel-2 acquisitions within request's time interval and
         acceptable cloud coverage.
+
+        :param reset_wfs_iterator: When re-running the method this flag is used to reset/keep existing ``wfs_iterator``
+            (i.e. instance of ``WebFeatureService`` class). If the iterator is not reset you don't have to repeat a
+            service call but tiles and dates will stay the same.
+        :type reset_wfs_iterator: bool
         """
+        # pylint: disable=arguments-differ
+
+        if reset_wfs_iterator:
+            self.wfs_iterator = None
+
         ogc_service = OgcImageService(instance_id=self.instance_id)
         self.download_list = ogc_service.get_request(self)
         self.wfs_iterator = ogc_service.get_wfs_iterator()
@@ -592,12 +602,22 @@ class GeopediaImageRequest(GeopediaRequest):
 
         super().__init__(service_type=ServiceType.IMAGE, **kwargs)
 
-    def create_request(self):
+    def create_request(self, reset_gpd_iterator=False):
         """Set a list of download requests
 
         Set a list of DownloadRequests for all images that are under the
         given property of the Geopedia's Vector layer.
+
+        :param reset_gpd_iterator: When re-running the method this flag is used to reset/keep existing ``gpd_iterator``
+            (i.e. instance of ``GeopediaFeatureIterator`` class). If the iterator is not reset you don't have to
+            repeat a service call but tiles and dates will stay the same.
+        :type reset_gpd_iterator: bool
         """
+        # pylint: disable=arguments-differ
+
+        if reset_gpd_iterator:
+            self.gpd_iterator = None
+
         gpd_service = GeopediaImageService()
         self.download_list = gpd_service.get_request(self)
         self.gpd_iterator = gpd_service.get_gpd_iterator()

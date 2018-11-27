@@ -9,7 +9,7 @@ class TestDataRequest(TestSentinelHub):
 
         bbox = BBox((8.655, 111.7, 8.688, 111.6), crs=CRS.WGS84)
         data_request = WcsRequest(data_folder=self.OUTPUT_FOLDER, bbox=bbox, layer='BANDS-S2-L1C')
-        data_request.create_request()  # This method is used by s2cloudless, don't rename it
+        data_request.create_request(reset_wfs_iterator=True)  # This method is used by s2cloudless, don't rename it
 
         self.assertEqual(self.OUTPUT_FOLDER, data_request.data_folder,
                          msg="Expected {}, got {}".format(self.OUTPUT_FOLDER, data_request.data_folder))
