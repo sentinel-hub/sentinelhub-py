@@ -19,6 +19,8 @@ class TestSentinelHub(unittest.TestCase):
     INPUT_FOLDER = None
     OUTPUT_FOLDER = None
 
+    INPUT_FOLDER = None
+    OUTPUT_FOLDER = None
     CLEAR_OUTPUTS = True
 
     """ Class implementing common functionalities of unit tests for working with `sentinelhub-py` package:
@@ -28,8 +30,17 @@ class TestSentinelHub(unittest.TestCase):
     - handling input and output data folders,
     - method for testing statistics of a numpy data array.
     """
-    def __new__(cls, *args, **kwargs):
-        # pylint: disable=unused-argument
+    @classmethod
+    def setUpClass(cls):
+        """ A general set up class
+
+        Use ``super().setUpClass()`` in every class which inherits ``TestSentinelHub``
+        """
+        if cls.__name__ == TestSentinelHub.__name__:
+            return
+
+        cls.INPUT_FOLDER = os.path.join(os.path.dirname(inspect.getsourcefile(cls)), 'TestInputs')
+        cls.OUTPUT_FOLDER = os.path.join(os.path.dirname(inspect.getsourcefile(cls)), 'TestOutputs')
 
         if cls.CONFIG is None:
             cls.CONFIG = cls._config_with_environment_variables()
@@ -38,12 +49,6 @@ class TestSentinelHub(unittest.TestCase):
             logging.basicConfig(level=logging.INFO,
                                 format='%(asctime)-15s %(module)s:%(lineno)d [%(levelname)s] %(funcName)s  %(message)s')
             cls.LOGGER = logging.getLogger(__name__)
-
-        cls.INPUT_FOLDER = os.path.join(os.path.dirname(inspect.getfile(cls)), 'TestInputs')
-        cls.OUTPUT_FOLDER = os.path.join(os.path.dirname(inspect.getfile(cls)), 'TestOutputs')
-
-        self = super().__new__(cls)
-        return self
 
     @staticmethod
     def _config_with_environment_variables():
@@ -59,7 +64,7 @@ class TestSentinelHub(unittest.TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        if cls.CLEAR_OUTPUTS:
+        if cls.CLEAR_OUTPUTS and cls.OUTPUT_FOLDER:
             shutil.rmtree(cls.OUTPUT_FOLDER, ignore_errors=True)
 
     def test_numpy_data(self, data=None, exp_shape=None, exp_dtype=None, exp_min=None, exp_max=None, exp_mean=None,

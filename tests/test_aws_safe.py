@@ -46,6 +46,7 @@ class TestSafeFormat(TestSentinelHub):
 
     @classmethod
     def setUpClass(cls):
+        super().setUpClass()
 
         cls.test_cases = [cls.SafeTestCase('L1C_02.01',
                                            AwsProductRequest('S2A_OPER_PRD_MSIL1C_PDMC_20151218T020842_R115_V20151217T2'

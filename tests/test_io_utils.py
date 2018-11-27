@@ -16,6 +16,7 @@ class TestIO(TestSentinelHub):
 
     @classmethod
     def setUpClass(cls):
+        super().setUpClass()
 
         cls.test_cases = [
             cls.IOTestCase('img.tif', 13577.494856),

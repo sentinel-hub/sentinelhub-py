@@ -31,6 +31,8 @@ class TestOgc(TestSentinelHub):
 
     @classmethod
     def setUpClass(cls):
+        super().setUpClass()
+
         wgs84_bbox = BBox(bbox=(-5.23, 48.0, -5.03, 48.17), crs=CRS.WGS84)
         wgs84_bbox_2 = BBox(bbox=(21.3, 64.0, 22.0, 64.5), crs=CRS.WGS84)
         wgs84_bbox_3 = BBox(bbox=(-72.0, -70.4, -71.8, -70.2), crs=CRS.WGS84)

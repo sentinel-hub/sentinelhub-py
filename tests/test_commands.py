@@ -8,6 +8,7 @@ from sentinelhub import TestSentinelHub
 class TestCommands(TestSentinelHub):
     @classmethod
     def setUpClass(cls):
+        super().setUpClass()
 
         if not os.path.exists(cls.OUTPUT_FOLDER):
             os.mkdir(cls.OUTPUT_FOLDER)

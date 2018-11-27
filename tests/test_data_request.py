@@ -22,6 +22,8 @@ class TestDataRequestSaving(TestSentinelHub):
 
     @classmethod
     def setUpClass(cls):
+        super().setUpClass()
+
         cls.product_id = 'S2A_MSIL1C_20180113T001101_N0206_R073_T55KGP_20180113T013328.SAFE'
         metafiles = 'inspire '
         cls.request_without_folder = AwsProductRequest(bands='', metafiles=metafiles, safe_format=True,
