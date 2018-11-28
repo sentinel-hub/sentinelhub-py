@@ -1,13 +1,14 @@
 import unittest
 import numpy as np
-from tests_all import TestSentinelHub
 
-from sentinelhub import AwsTileRequest, AwsProductRequest
+from sentinelhub import AwsTileRequest, AwsProductRequest, TestSentinelHub
 
 
 class TestAwsTile(TestSentinelHub):
     @classmethod
     def setUpClass(cls):
+        super().setUpClass()
+
         cls.request = AwsTileRequest(data_folder=cls.OUTPUT_FOLDER, bands='B01, B05',
                                      metafiles='metadata,tileInfo,  productInfo, qi/MSK_TECQUA_B04,  auxiliary/ECMWFT ',
                                      tile='10UEV', time='2016-01-09', aws_index=0)
@@ -22,6 +23,8 @@ class TestAwsTile(TestSentinelHub):
 class TestAwsProduct(TestSentinelHub):
     @classmethod
     def setUpClass(cls):
+        super().setUpClass()
+
         cls.request = AwsProductRequest(data_folder=cls.OUTPUT_FOLDER, bands='B10',
                                         metafiles='metadata,tileInfo,productInfo, datastrip/*/metadata',
                                         product_id='S2A_OPER_PRD_MSIL1C_PDMC_20160121T043931_R069_V20160103T171947_'
@@ -36,6 +39,8 @@ class TestAwsProduct(TestSentinelHub):
 class TestPartialAwsProduct(TestSentinelHub):
     @classmethod
     def setUpClass(cls):
+        super().setUpClass()
+
         bands = 'B12'
         metafiles = 'manifest,preview/B02'
         tile = '1WCV'
@@ -56,6 +61,8 @@ class TestPartialAwsProduct(TestSentinelHub):
 class TestL2AProduct(TestSentinelHub):
     @classmethod
     def setUpClass(cls):
+        super().setUpClass()
+
         cls.request = AwsProductRequest(data_folder=cls.OUTPUT_FOLDER,
                                         metafiles='metadata,tileInfo,productInfo, datastrip/*/metadata',
                                         product_id='S2A_MSIL2A_20180402T151801_N0207_R068_T33XWJ_20180402T202222')

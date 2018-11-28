@@ -24,7 +24,6 @@ def main_help():
     To check more about certain module command use: \n
       sentinelhub.<module name> --help
     """
-    pass
 
 
 @click.command()

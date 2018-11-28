@@ -1,9 +1,8 @@
 import unittest
 import os.path
 import numpy as np
-from tests_all import TestSentinelHub
 
-from sentinelhub import read_data, write_data
+from sentinelhub import read_data, write_data, TestSentinelHub
 
 
 class TestIO(TestSentinelHub):
@@ -17,6 +16,7 @@ class TestIO(TestSentinelHub):
 
     @classmethod
     def setUpClass(cls):
+        super().setUpClass()
 
         cls.test_cases = [
             cls.IOTestCase('img.tif', 13577.494856),

@@ -36,11 +36,12 @@ class AwsDownloadFailedException(DownloadFailedException):
     """
     This exception is raised when download fails because of a missing file in AWS
     """
-    pass
 
 
 class ImageDecodingError(Exception):
-    pass
+    """
+    This exception is raised when downloaded image is not properly decoded
+    """
 
 
 class DownloadRequest:

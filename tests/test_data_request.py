@@ -1,8 +1,7 @@
 import unittest
 import os.path
-from tests_all import TestSentinelHub
 
-from sentinelhub import WcsRequest, AwsProductRequest, BBox, CRS, get_file_list, get_folder_list
+from sentinelhub import WcsRequest, AwsProductRequest, BBox, CRS, get_file_list, get_folder_list, TestSentinelHub
 
 
 class TestDataRequest(TestSentinelHub):
@@ -10,7 +9,7 @@ class TestDataRequest(TestSentinelHub):
 
         bbox = BBox((8.655, 111.7, 8.688, 111.6), crs=CRS.WGS84)
         data_request = WcsRequest(data_folder=self.OUTPUT_FOLDER, bbox=bbox, layer='BANDS-S2-L1C')
-        data_request.create_request()  # This method is used by s2cloudless, don't rename it
+        data_request.create_request(reset_wfs_iterator=True)  # This method is used by s2cloudless, don't rename it
 
         self.assertEqual(self.OUTPUT_FOLDER, data_request.data_folder,
                          msg="Expected {}, got {}".format(self.OUTPUT_FOLDER, data_request.data_folder))
@@ -23,6 +22,8 @@ class TestDataRequestSaving(TestSentinelHub):
 
     @classmethod
     def setUpClass(cls):
+        super().setUpClass()
+
         cls.product_id = 'S2A_MSIL1C_20180113T001101_N0206_R073_T55KGP_20180113T013328.SAFE'
         metafiles = 'inspire '
         cls.request_without_folder = AwsProductRequest(bands='', metafiles=metafiles, safe_format=True,

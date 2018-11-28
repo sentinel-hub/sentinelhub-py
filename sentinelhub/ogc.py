@@ -281,8 +281,12 @@ class OgcImageService(OgcService):
 
         LOGGER.debug('date_interval=%s', date_interval)
 
-        self.wfs_iterator = WebFeatureService(request.bbox, date_interval, data_source=request.data_source,
-                                              maxcc=request.maxcc, base_url=self.base_url, instance_id=self.instance_id)
+        if request.wfs_iterator is None:
+            self.wfs_iterator = WebFeatureService(request.bbox, date_interval, data_source=request.data_source,
+                                                  maxcc=request.maxcc, base_url=self.base_url,
+                                                  instance_id=self.instance_id)
+        else:
+            self.wfs_iterator = request.wfs_iterator
 
         dates = sorted(set(self.wfs_iterator.get_dates()))
 

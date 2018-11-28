@@ -1,9 +1,8 @@
 import unittest
 import json
 import os.path
-from tests_all import TestSentinelHub
 
-from sentinelhub import SHConfig
+from sentinelhub import SHConfig, TestSentinelHub
 
 
 class TestSHConfig(TestSentinelHub):

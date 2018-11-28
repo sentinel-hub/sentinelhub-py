@@ -1,15 +1,16 @@
 import unittest
 import numpy as np
 
-from tests_all import TestSentinelHub
-
-from sentinelhub import GeopediaWmsRequest, GeopediaImageRequest, GeopediaFeatureIterator, CRS, MimeType, BBox
+from sentinelhub import GeopediaWmsRequest, GeopediaImageRequest, GeopediaFeatureIterator, CRS, MimeType, BBox,\
+    TestSentinelHub
 
 
 class TestGeopediaWms(TestSentinelHub):
 
     @classmethod
     def setUpClass(cls):
+        super().setUpClass()
+
         bbox = BBox(bbox=[(524358.0140363087, 6964349.630376049),
                           (534141.9536568124, 6974133.5699965535)], crs=CRS.POP_WEB)
 
@@ -25,13 +26,15 @@ class TestGeopediaWms(TestSentinelHub):
                          "Expected a list of length {}, got length {}".format(data_len, len(self.data)))
 
     def test_stats(self):
-        self.test_numpy_stats(np.array(self.data), exp_min=0, exp_max=255, exp_mean=150.9248, exp_median=255)
+        self.test_numpy_data(np.array(self.data), exp_min=0, exp_max=255, exp_mean=150.9248, exp_median=255)
 
 
 class TestGeopediaImageService(TestSentinelHub):
 
     @classmethod
     def setUpClass(cls):
+        super().setUpClass()
+
         bbox = BBox(bbox=[(13520759, 437326), (13522689, 438602)], crs=CRS.POP_WEB)
         cls.image_field_name = 'Masks'
 
@@ -47,7 +50,7 @@ class TestGeopediaImageService(TestSentinelHub):
                          "Expected a list of length {}, got length {}".format(expected_len, len(self.image_list)))
 
     def test_stats(self):
-        self.test_numpy_stats(np.array(self.image_list), exp_min=0, exp_max=255, exp_mean=66.88769, exp_median=0)
+        self.test_numpy_data(np.array(self.image_list), exp_min=0, exp_max=255, exp_mean=66.88769, exp_median=0)
 
     def test_names(self):
         filenames = self.gpd_request.get_filename_list()
@@ -61,6 +64,8 @@ class TestGeopediaFeatureIterator(TestSentinelHub):
 
     @classmethod
     def setUpClass(cls):
+        super().setUpClass()
+
         cls.bbox = BBox(bbox=[(2947363, 4629723), (3007595, 4669471)], crs=CRS.POP_WEB)
         cls.bbox.transform(CRS.WGS84)
 

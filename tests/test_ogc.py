@@ -2,33 +2,23 @@ import unittest
 import datetime
 import numpy as np
 
-from tests_all import TestSentinelHub
-
-from sentinelhub import WmsRequest, WcsRequest, CRS, MimeType, CustomUrlParam, ServiceType, DataSource, BBox
+from sentinelhub import WmsRequest, WcsRequest, CRS, MimeType, CustomUrlParam, ServiceType, DataSource, BBox,\
+    TestSentinelHub, TestCaseContainer
 from sentinelhub.data_request import OgcRequest
 from sentinelhub.ogc import OgcImageService
 
 
 class TestOgc(TestSentinelHub):
 
-    class OgcTestCase:
+    class OgcTestCase(TestCaseContainer):
         """
         Container for each test case of sentinelhub OGC functionalities
         """
-        def __init__(self, name, request, result_len, img_min=None, img_max=None, img_mean=None, img_median=None,
-                     tile_num=None, url_check=None, date_check=None, save_data=False, data_filter=None):
-            self.name = name
-            self.request = request
+        def __init__(self, name, request, result_len, save_data=False, **kwargs):
+            super().__init__(name, request, **kwargs)
+
             self.result_len = result_len
-            self.img_min = img_min
-            self.img_max = img_max
-            self.img_mean = img_mean
-            self.img_median = img_median
-            self.tile_num = tile_num
-            self.url_check = url_check
-            self.date_check = date_check
             self.save_data = save_data
-            self.data_filter = data_filter
 
             self.data = None
 
@@ -41,6 +31,8 @@ class TestOgc(TestSentinelHub):
 
     @classmethod
     def setUpClass(cls):
+        super().setUpClass()
+
         wgs84_bbox = BBox(bbox=(-5.23, 48.0, -5.03, 48.17), crs=CRS.WGS84)
         wgs84_bbox_2 = BBox(bbox=(21.3, 64.0, 22.0, 64.5), crs=CRS.WGS84)
         wgs84_bbox_3 = BBox(bbox=(-72.0, -70.4, -71.8, -70.2), crs=CRS.WGS84)
@@ -206,6 +198,7 @@ class TestOgc(TestSentinelHub):
             with self.subTest(msg='Test case {}'.format(test_case.name)):
                 tile_iter = test_case.request.get_tiles()
                 tile_n = len(list(tile_iter)) if tile_iter else None
+
                 self.assertEqual(tile_n, test_case.tile_num,
                                  "Expected {} tiles, got {}".format(test_case.tile_num, tile_n))
 
@@ -240,31 +233,9 @@ class TestOgc(TestSentinelHub):
 
     def test_stats(self):
         for test_case in self.test_cases:
-            self.test_numpy_stats(test_case.data[0], exp_min=test_case.img_min, exp_max=test_case.img_max,
-                                  exp_mean=test_case.img_mean, exp_median=test_case.img_median,
-                                  test_name=test_case.name)
-            # delta = 1e-1 if np.issubdtype(test_case.data[0].dtype, np.integer) else 1e-4
-            #
-            # if test_case.img_min is not None:
-            #     min_val = np.amin(test_case.data[0])
-            #     with self.subTest(msg='Test case {}'.format(test_case.name)):
-            #         self.assertAlmostEqual(test_case.img_min, min_val, delta=delta,
-            #                                msg="Expected min {}, got {}".format(test_case.img_min, min_val))
-            # if test_case.img_max is not None:
-            #     max_val = np.amax(test_case.data[0])
-            #     with self.subTest(msg='Test case {}'.format(test_case.name)):
-            #         self.assertAlmostEqual(test_case.img_max, max_val, delta=delta,
-            #                                msg="Expected max {}, got {}".format(test_case.img_max, max_val))
-            # if test_case.img_mean is not None:
-            #     mean_val = np.mean(test_case.data[0])
-            #     with self.subTest(msg='Test case {}'.format(test_case.name)):
-            #         self.assertAlmostEqual(test_case.img_mean, mean_val, delta=delta,
-            #                                msg="Expected mean {}, got {}".format(test_case.img_mean, mean_val))
-            # if test_case.img_median is not None:
-            #     median_val = np.median(test_case.data[0])
-            #     with self.subTest(msg='Test case {}'.format(test_case.name)):
-            #         self.assertAlmostEqual(test_case.img_median, median_val, delta=delta,
-            #                                msg="Expected median {}, got {}".format(test_case.img_median, median_val))
+            self.test_numpy_data(test_case.data[0], exp_min=test_case.img_min, exp_max=test_case.img_max,
+                                 exp_mean=test_case.img_mean, exp_median=test_case.img_median,
+                                 test_name=test_case.name)
 
 
 if __name__ == '__main__':

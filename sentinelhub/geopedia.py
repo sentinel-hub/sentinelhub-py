@@ -130,7 +130,12 @@ class GeopediaImageService(GeopediaService):
                 for item in self._get_items(request)]
 
     def _get_items(self, request):
-        self.gpd_iterator = GeopediaFeatureIterator(request.layer, bbox=request.bbox, base_url=self.base_url)
+        """ Collects data from Geopedia layer and returns list of features
+        """
+        if request.gpd_iterator is None:
+            self.gpd_iterator = GeopediaFeatureIterator(request.layer, bbox=request.bbox, base_url=self.base_url)
+        else:
+            self.gpd_iterator = request.gpd_iterator
 
         field_iter = self.gpd_iterator.get_field_iterator(request.image_field_name)
         items = []

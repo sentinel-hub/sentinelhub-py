@@ -2,9 +2,7 @@ import unittest
 import os.path
 from shapely.geometry import shape
 
-from tests_all import TestSentinelHub
-
-from sentinelhub import BBoxSplitter, OsmSplitter, TileSplitter, read_data, CRS, DataSource
+from sentinelhub import BBoxSplitter, OsmSplitter, TileSplitter, read_data, CRS, DataSource, TestSentinelHub
 
 
 class TestOgc(TestSentinelHub):
@@ -18,6 +16,8 @@ class TestOgc(TestSentinelHub):
 
     @classmethod
     def setUpClass(cls):
+        super().setUpClass()
+
         geojson = read_data(os.path.join(cls.INPUT_FOLDER, 'cies_islands.json'))
         cls.area = shape(geojson)
 
