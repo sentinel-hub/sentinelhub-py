@@ -349,24 +349,62 @@ class FisService(OgcService):
         :type request: OgcRequest or GeopediaRequest
         :return: list of DownloadRequests
         """
-        return [DownloadRequest(url=self.get_url(),
+        return [DownloadRequest(url=self.get_url(request),
                                 filename=self.get_filename(),
                                 data_type=request.image_format,
                                 headers=OgcConstants.HEADERS)
                 ]
-    def get_url(self):
+        # TODO: go over geometry
+
+    def get_url(self, request):
         """
         Returns url to Sentinel Hub's OGC service for the product specified by the OgcRequest and date.
-
+        :param request: OGC-type request with specified bounding box, cloud coverage for specific product.
+        :type request: OgcRequest
+        :param date: acquisition date or None
+        :type date: datetime.datetime or None
         :return: url to Sentinel Hub's OGC service for this product.
         :rtype: str
         """
-        return "http://services.sentinel-hub.com/ogc/fis/ce55231e-6f5c-4910-84a4-2768a2c585f1?LAYER=NDVI&CRS=EPSG:3857&TIME=2016-12-22/2016-12-22&BBOX=1550369.86,5586056.25,1547498.69,5584861.92&RESOLUTION=10m"
+        url = self.base_url + request.service_type.value
+
+        if hasattr(request, 'data_source') and request.data_source.is_uswest_source():
+            url = 'https://services-uswest2.sentinel-hub.com/ogc/{}'.format(request.service_type.value)
+
+        if hasattr(request, 'data_source') and request.data_source not in DataSource.get_available_sources():
+            raise ValueError("{} is not available for service at ogc_base_url={}".format(request.data_source,
+                                                                                         SHConfig().ogc_base_url))
+
+        params = {
+            'SERVICE': request.service_type.value,
+            'BBOX': request.bbox.__str__(reverse=True) if request.bbox.get_crs() is CRS.WGS84 else str(request.bbox),
+            'FORMAT': MimeType.get_string(request.image_format),
+            'CRS': CRS.ogc_string(request.bbox.get_crs()),
+            'LAYER': request.layer,
+            'RESOLUTION': request.resolution,
+            'TIME': self.get_dates(request)
+        }
+        # TODO: custom url params
+
+        authority = self.instance_id if hasattr(self, 'instance_id') else request.theme
+        url = '{}/{}?{}'.format(url, authority, urlencode(params))
+        print(url)
+        return url
 
     def get_filename(self):
-
+        # TODO: filename
         return "some_file.json"
 
+    def get_dates(self, request):
+        """ Get date in right form date/date
+
+        :param request: OGC-type request
+        :type request: FisRequest
+        :return: date or date/date
+        """
+
+        date_interval = parse_time_interval(request.time)
+        return '{}/{}'.format(date_interval[0], date_interval[1])
 
 
 class WebFeatureService(OgcService):
