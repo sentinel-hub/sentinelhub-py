@@ -353,20 +353,27 @@ class FisService(OgcService):
         :type request: OgcRequest or GeopediaRequest
         :return: list of DownloadRequests
         """
-        return [DownloadRequest(url=self.get_url(request),
+
+        if request.geometry:
+            geometry_list = [geometry for geometry in request.geometry]
+        elif request.bbox:
+            geometry_list = [bbox for bbox in request.bbox]
+        else:
+            geometry_list = None
+
+        return [DownloadRequest(url=self.get_url(request, geometry),
                                 filename=self.get_filename(),
                                 data_type=request.image_format,
                                 headers=OgcConstants.HEADERS)
-                ]
-        # TODO: go over geometry
+                for geometry in geometry_list]
 
-    def get_url(self, request):
+    def get_url(self, request, geometry):
         """
         Returns url to Sentinel Hub's OGC service for the product specified by the OgcRequest and date.
         :param request: OGC-type request with specified bounding box, cloud coverage for specific product.
         :type request: OgcRequest
-        :param date: acquisition date or None
-        :type date: datetime.datetime or None
+        :param geometry: (multi)polygon
+        :type geometry: common.Geometry
         :return: url to Sentinel Hub's OGC service for this product.
         :rtype: str
         """
@@ -381,13 +388,17 @@ class FisService(OgcService):
 
         params = {
             'SERVICE': request.service_type.value,
-            'BBOX': request.bbox.__str__(reverse=True) if request.bbox.get_crs() is CRS.WGS84 else str(request.bbox),
             'FORMAT': MimeType.get_string(request.image_format),
-            'CRS': CRS.ogc_string(request.bbox.get_crs()),
+            'CRS': CRS.ogc_string(geometry.get_crs()),
             'LAYER': request.layer,
             'RESOLUTION': request.resolution,
             'TIME': self.get_dates(request)
         }
+
+        if request.geometry:
+            params['GEOMETRY'] = geometry.to_wkt()
+        elif request.bbox:
+            params['BBOX'] = geometry.__str__(reverse=True) if geometry.get_crs() is CRS.WGS84 else str(geometry)
         # TODO: custom url params
 
         authority = self.instance_id if hasattr(self, 'instance_id') else request.theme

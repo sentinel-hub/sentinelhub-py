@@ -237,3 +237,36 @@ class BBox:
         :return: tuple (min_x, min_y, max_x, max_y)
         """
         return bbox.get_lower_left() + bbox.get_upper_right()
+
+
+class Geometry:
+    """ shapely Polygon + CRS
+
+    :param polygon: shapely Polygon or MultiPolygon
+    :type: shapely.geometry.Polyong or shapely.geometry.MultiPolygon
+    :param crs: Coordinate Reference System that bbox is in. Expect one of the constants from the ``const.CRS`` enum.
+    :type crs: constants.CRS
+    """
+    def __init__(self, polygon, crs):
+        self.polygon = polygon
+        self.crs = CRS(crs)
+
+    def get_crs(self):
+        """ Returns the coordinate reference system (CRS) of the bounding box.
+
+        :return: CRS that the (multi)polygon is given in
+        :rtype: constants.CRS
+        """
+        return self.crs
+
+    def get_polygon(self):
+        """ Returns the (multi)polygon.
+
+        :return: (multi)polygon
+        :rtype: shapely.geometry.(Multi)Polygon
+        """
+        return self.polygon
+
+    def to_wkt(self):
+
+        return self.polygon.to_wkt()
