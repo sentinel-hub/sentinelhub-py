@@ -248,3 +248,12 @@ class GeopediaFeatureIterator(GeopediaService):
         """
         for feature in self:
             yield feature['properties'].get(field, [])
+
+    def add_query(self, query=None):
+        """ Add query, e.g. f12345 = 2015
+
+        :param query: query string
+        :type query: str
+        """
+        if query:
+            self.query['filterExpression'] += ' && ' + query
