@@ -183,17 +183,22 @@ class GeopediaImageService(GeopediaService):
 
 
 class GeopediaFeatureIterator(GeopediaService):
+
+    FILTER_EXPRESSION = 'filterExpression'
+
     """Iterator for Geopedia Vector Service
 
     :type layer: str
     :param bbox: Bounding box of the requested image. Its coordinates must be
                  in the CRS.POP_WEB (EPSG:3857) coordinate system.
     :type bbox: common.BBox
+    :param query_filter: Query string used for filtering returned features.
+    :type query_filter: str
     :param base_url: Base url of Geopedia REST services. If ``None``, the url specified in the configuration
         file is taken.
     :type base_url: str or None
     """
-    def __init__(self, layer, bbox=None, **kwargs):
+    def __init__(self, layer, bbox=None, query_filter=None, **kwargs):
         super().__init__(**kwargs)
 
         self.layer = layer
@@ -203,10 +208,17 @@ class GeopediaFeatureIterator(GeopediaService):
             if bbox.crs is not CRS.POP_WEB:
                 bbox = transform_bbox(bbox, CRS.POP_WEB)
 
-            self.query['filterExpression'] = 'bbox({},"EPSG:3857")'.format(bbox)
+            self.query[self.FILTER_EXPRESSION] = 'bbox({},"EPSG:3857")'.format(bbox)
+        if query_filter is not None:
+            if self.FILTER_EXPRESSION in self.query:
+                self.query[self.FILTER_EXPRESSION] = '{} && ({})'.format(self.query[self.FILTER_EXPRESSION],
+                                                                         query_filter)
+            else:
+                self.query[self.FILTER_EXPRESSION] = query_filter
 
         self.gpd_session = GeopediaSession()
         self.features = []
+        self.layer_size = None
         self.index = 0
 
         self.next_page_url = '{}data/v2/search/tables/{}/features'.format(self.base_url, layer)
@@ -226,6 +238,11 @@ class GeopediaFeatureIterator(GeopediaService):
 
         raise StopIteration
 
+    def __len__(self):
+        """ Length of iterator is number of features which can be obtained from Geopedia with applied filters
+        """
+        return self.get_size()
+
     def _fetch_features(self):
         """ Retrieves a new page of features from Geopedia
         """
@@ -236,6 +253,7 @@ class GeopediaFeatureIterator(GeopediaService):
 
         self.features.extend(response['features'])
         self.next_page_url = response['pagination']['next']
+        self.layer_size = response['pagination']['total']
 
     def get_geometry_iterator(self):
         """ Iterator over Geopedia feature geometries
@@ -248,3 +266,14 @@ class GeopediaFeatureIterator(GeopediaService):
         """
         for feature in self:
             yield feature['properties'].get(field, [])
+
+    def get_size(self):
+        """ Provides number of features which can be obtained. It has to fetch at least one feature from
+        Geopedia services to get this information.
+
+        :return: Size of Geopedia layer with applied filters
+        :rtype: int
+        """
+        if self.layer_size is None:
+            self._fetch_features()
+        return self.layer_size

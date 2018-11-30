@@ -2,7 +2,7 @@ import unittest
 import numpy as np
 
 from sentinelhub import GeopediaWmsRequest, GeopediaImageRequest, GeopediaFeatureIterator, CRS, MimeType, BBox,\
-    TestSentinelHub
+    TestSentinelHub, TestCaseContainer
 
 
 class TestGeopediaWms(TestSentinelHub):
@@ -66,30 +66,40 @@ class TestGeopediaFeatureIterator(TestSentinelHub):
     def setUpClass(cls):
         super().setUpClass()
 
-        cls.bbox = BBox(bbox=[(2947363, 4629723), (3007595, 4669471)], crs=CRS.POP_WEB)
-        cls.bbox.transform(CRS.WGS84)
+        bbox = BBox(bbox=[(2947363, 4629723), (3007595, 4669471)], crs=CRS.POP_WEB)
+        bbox.transform(CRS.WGS84)
+        query_filter1 = 'f12458==32632'
+        query_filter2 = 'f12458==32635'
 
-    def test_item_count(self):
-        gpd_iter = GeopediaFeatureIterator(1749, bbox=self.bbox)
-        data = list(gpd_iter)
-        minimal_data_len = 21
+        cls.test_cases = [
+            TestCaseContainer('All features', GeopediaFeatureIterator(1749), min_features=100, min_size=1609),
+            TestCaseContainer('BBox filter', GeopediaFeatureIterator(1749, bbox=bbox), min_features=21),
+            TestCaseContainer('Query Filter', GeopediaFeatureIterator(1749, query_filter=query_filter1),
+                              min_features=76),
+            TestCaseContainer('Both filters - No data',
+                              GeopediaFeatureIterator(1749, bbox=bbox, query_filter=query_filter1), min_features=0),
+            TestCaseContainer('Both filters - Some data',
+                              GeopediaFeatureIterator(1749, bbox=bbox, query_filter=query_filter2), min_features=21)
+        ]
 
-        self.assertTrue(len(data) >= minimal_data_len, 'Expected at least {} results, got {}'.format(minimal_data_len,
-                                                                                                     len(data)))
+    def test_iterator(self):
+        for test_case in self.test_cases:
+            with self.subTest(msg='Test case {}'.format(test_case.name)):
 
-    def test_without_bbox(self):
-        gpd_iter = GeopediaFeatureIterator(1749)
+                gpd_iter = test_case.request
+                for idx, feature in enumerate(gpd_iter):
+                    self.assertTrue(isinstance(feature, dict), 'Expected at dictionary, got {}'.format(type(feature)))
 
-        minimal_data_len = 1000
+                    if idx >= test_case.min_features - 1:
+                        break
 
-        for idx, class_item in enumerate(gpd_iter):
-            self.assertTrue(isinstance(class_item, dict), 'Expected at dictionary, got {}'.format(type(class_item)))
+                self.assertEqual(gpd_iter.index, test_case.min_features,
+                                 'Expected at least {} features, got {}'.format(test_case.min_features, gpd_iter.index))
 
-            if idx >= minimal_data_len - 1:
-                break
-
-        self.assertEqual(gpd_iter.index, minimal_data_len, 'Expected at least {} results, '
-                                                           'got {}'.format(minimal_data_len, gpd_iter.index))
+                if test_case.min_size:
+                    self.assertTrue(test_case.min_size <= len(gpd_iter),
+                                    'There should be at least {} features available, '
+                                    'got {}'.format(test_case.min_size, gpd_iter.get_size()))
 
 
 if __name__ == '__main__':
