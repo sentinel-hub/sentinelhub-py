@@ -183,17 +183,22 @@ class GeopediaImageService(GeopediaService):
 
 
 class GeopediaFeatureIterator(GeopediaService):
+
+    FILTER_EXPRESSION = 'filterExpression'
+
     """Iterator for Geopedia Vector Service
 
     :type layer: str
     :param bbox: Bounding box of the requested image. Its coordinates must be
                  in the CRS.POP_WEB (EPSG:3857) coordinate system.
     :type bbox: common.BBox
+    :param query_filter: Query string used for filtering returned features.
+    :type query_filter: str
     :param base_url: Base url of Geopedia REST services. If ``None``, the url specified in the configuration
         file is taken.
     :type base_url: str or None
     """
-    def __init__(self, layer, bbox=None, **kwargs):
+    def __init__(self, layer, bbox=None, query_filter=None, **kwargs):
         super().__init__(**kwargs)
 
         self.layer = layer
@@ -203,7 +208,13 @@ class GeopediaFeatureIterator(GeopediaService):
             if bbox.crs is not CRS.POP_WEB:
                 bbox = transform_bbox(bbox, CRS.POP_WEB)
 
-            self.query['filterExpression'] = 'bbox({},"EPSG:3857")'.format(bbox)
+            self.query[self.FILTER_EXPRESSION] = 'bbox({},"EPSG:3857")'.format(bbox)
+        if query_filter is not None:
+            if self.FILTER_EXPRESSION in self.query:
+                self.query[self.FILTER_EXPRESSION] = '{} && ({})'.format(self.query[self.FILTER_EXPRESSION],
+                                                                         query_filter)
+            else:
+                self.query[self.FILTER_EXPRESSION] = query_filter
 
         self.gpd_session = GeopediaSession()
         self.features = []
@@ -248,12 +259,3 @@ class GeopediaFeatureIterator(GeopediaService):
         """
         for feature in self:
             yield feature['properties'].get(field, [])
-
-    def add_query(self, query=None):
-        """ Add query, e.g. f12345 = 2015
-
-        :param query: query string
-        :type query: str
-        """
-        if query:
-            self.query['filterExpression'] += ' && ' + query
