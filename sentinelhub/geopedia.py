@@ -218,6 +218,7 @@ class GeopediaFeatureIterator(GeopediaService):
 
         self.gpd_session = GeopediaSession()
         self.features = []
+        self.layer_size = None
         self.index = 0
 
         self.next_page_url = '{}data/v2/search/tables/{}/features'.format(self.base_url, layer)
@@ -237,6 +238,11 @@ class GeopediaFeatureIterator(GeopediaService):
 
         raise StopIteration
 
+    def __len__(self):
+        """ Length of iterator is number of features which can be obtained from Geopedia with applied filters
+        """
+        return self.get_size()
+
     def _fetch_features(self):
         """ Retrieves a new page of features from Geopedia
         """
@@ -247,6 +253,7 @@ class GeopediaFeatureIterator(GeopediaService):
 
         self.features.extend(response['features'])
         self.next_page_url = response['pagination']['next']
+        self.layer_size = response['pagination']['total']
 
     def get_geometry_iterator(self):
         """ Iterator over Geopedia feature geometries
@@ -259,3 +266,14 @@ class GeopediaFeatureIterator(GeopediaService):
         """
         for feature in self:
             yield feature['properties'].get(field, [])
+
+    def get_size(self):
+        """ Provides number of features which can be obtained. It has to fetch at least one feature from
+        Geopedia services to get this information.
+
+        :return: Size of Geopedia layer with applied filters
+        :rtype: int
+        """
+        if self.layer_size is None:
+            self._fetch_features()
+        return self.layer_size

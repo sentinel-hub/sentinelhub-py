@@ -72,7 +72,7 @@ class TestGeopediaFeatureIterator(TestSentinelHub):
         query_filter2 = 'f12458==32635'
 
         cls.test_cases = [
-            TestCaseContainer('All features', GeopediaFeatureIterator(1749), min_features=100),
+            TestCaseContainer('All features', GeopediaFeatureIterator(1749), min_features=100, min_size=1609),
             TestCaseContainer('BBox filter', GeopediaFeatureIterator(1749, bbox=bbox), min_features=21),
             TestCaseContainer('Query Filter', GeopediaFeatureIterator(1749, query_filter=query_filter1),
                               min_features=76),
@@ -94,7 +94,12 @@ class TestGeopediaFeatureIterator(TestSentinelHub):
                         break
 
                 self.assertEqual(gpd_iter.index, test_case.min_features,
-                                 'Expected at least {} results, got {}'.format(test_case.min_features, gpd_iter.index))
+                                 'Expected at least {} features, got {}'.format(test_case.min_features, gpd_iter.index))
+
+                if test_case.min_size:
+                    self.assertTrue(test_case.min_size <= len(gpd_iter),
+                                    'There should be at least {} features available, '
+                                    'got {}'.format(test_case.min_size, gpd_iter.get_size()))
 
 
 if __name__ == '__main__':
