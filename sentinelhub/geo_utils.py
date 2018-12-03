@@ -23,7 +23,7 @@ def bbox_to_resolution(bbox, width, height):
     :param height: height of bounding box in pixels
     :type height: int
     :return: resolution east-west at north and south, and resolution north-south in meters for given CRS
-    :rtype: float, float, float
+    :rtype: float, float
     :raises: ValueError if CRS is not supported
     """
     utm_bbox = to_utm_bbox(bbox)
