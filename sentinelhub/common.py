@@ -13,6 +13,7 @@ Available classes:
 
 import shapely.geometry
 
+from shapely.ops import transform
 from .constants import CRS
 from .geo_utils import transform_point
 
@@ -268,5 +269,8 @@ class Geometry:
         return self.polygon
 
     def to_wkt(self):
-
-        return self.polygon.to_wkt()
+        if self.crs == CRS.WGS84:
+            polygon = transform(lambda x, y: (y, x), self.polygon)
+        else:
+            polygon = self.polygon
+        return polygon.wkt

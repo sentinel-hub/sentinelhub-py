@@ -11,7 +11,8 @@ import warnings
 from abc import ABC, abstractmethod
 from copy import deepcopy
 
-from .ogc import OgcImageService, FisService
+from .ogc import OgcImageService
+from .fis import FisService
 from .geopedia import GeopediaWmsService, GeopediaImageService
 from .aws import AwsProduct, AwsTile
 from .aws_safe import SafeProduct, SafeTile
@@ -514,14 +515,11 @@ class FisRequest(OgcRequest):
                        enforce resolution in meters per pixel (e.g. RESOLUTION=10m).
                        Required
     :type str
-    :param geometry: A WKT representation of a geometry describing the region of interest.
+    :param geometry_list: A WKT representation of a geometry describing the region of interest.
                      Note that WCS 1.1.1 standard is used here, so for EPSG:4326 coordinates should be
                      in latitude/longitude order.
                      Required (if bbox not present)
-    :type geometry: common.Geometry
-    :param bbox: Bounding box of the requested image. Coordinates must be in the specified coordinate reference system.
-                 Required (if geometry not present)
-    :type bbox: common.BBox
+    :type geometry_list: list, [common.Geometry or common.Bbox]
     :param style: Specified style (overrides the one specified in the layer configuration).
                   For indices (one-component products such as NDVI, NDWI, etc.), setting STYLE=INDEX enforces
                   raw data (other popular choices for one-component products include GRAYSCALE and COLORMAP.
@@ -536,9 +534,6 @@ class FisRequest(OgcRequest):
     :type data_source: constants.DataSource
     :param maxcc: maximum accepted cloud coverage of an image. Float between 0.0 and 1.0. Default is ``1.0``.
     :type maxcc: float
-    :param image_format: format of the returned image by the Sentinel Hub's WMS getMap service. Default is JSON.
-                        Default is ``constants.MimeType.JSON``.
-    :type image_format: constants.MimeType
     :param instance_id: user's instance id. If ``None`` the instance id is taken from the ``config.json``
                         configuration file.
     :type instance_id: str
@@ -549,20 +544,15 @@ class FisRequest(OgcRequest):
                               of Javascript code that is not encoded into base64.
     :type custom_url_params: dictionary of CustomUrlParameter enum and its value, i.e.
                               ``{constants.CustomUrlParam.ATMFILTER:'ATMCOR'}``
-    :param time_difference: The time difference below which dates are deemed equal. That is, if for the given set of OGC
-                            parameters the images are available at datestimes `d1<=d2<=...<=dn` then only those with
-                            `dk-dj>time_difference` will be considered. The default time difference is negative (`-1s`),
-                            meaning that all dates are considered by default.
-    :type time_difference: datetime.timedelta
     :param data_folder: location of the directory where the fetched data will be saved.
     :type data_folder: str
     """
-    def __init__(self, bbox=None, *, resolution=10, geometry=None, style=None, bins=None, **kwargs):
+    def __init__(self, bbox=None, *, resolution=10, geometry_list=None, style=None, bins=None, **kwargs):
         self.resolution = resolution
-        self.geometry = geometry
+        self.geometry_list = geometry_list
         self.style = style
         self.bins = bins
-        super().__init__(bbox=bbox, service_type=ServiceType.FIS, image_format=MimeType.JSON, **kwargs)
+        super().__init__(bbox=bbox, service_type=ServiceType.FIS, **kwargs)
 
     def create_request(self):
         """Set download requests
@@ -570,6 +560,9 @@ class FisRequest(OgcRequest):
         Create a list of DownloadRequests for all Sentinel-2 acquisitions within request's time interval and
         acceptable cloud coverage.
         """
+
+        # pylint: disable=arguments-differ
+
         fis_service = FisService(instance_id=self.instance_id)
         self.download_list = fis_service.get_request(self)
 
