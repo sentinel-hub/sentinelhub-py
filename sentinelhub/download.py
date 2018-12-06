@@ -90,6 +90,7 @@ class DownloadRequest:
         self.request_type = RequestType(request_type)
         self.data_type = MimeType(data_type)
 
+        self.s3_client = None
         self.will_download = True
         self.file_path = None
         self._set_file_path()
@@ -299,11 +300,12 @@ def _do_aws_request(request):
 
     try:
         s3_client = boto3.Session().client(aws_service.strip(':'), **key_args)
-        request.GLOBAL_AWS_CLIENT = s3_client
+        request.s3_client = s3_client  # Storing the client prevents warning about unclosed socket
+        DownloadRequest.GLOBAL_AWS_CLIENT = s3_client
     except KeyError:  # Sometimes creation of client fails and we use the global client if it exists
-        if request.GLOBAL_AWS_CLIENT is None:
+        if DownloadRequest.GLOBAL_AWS_CLIENT is None:
             raise ValueError('Failed to create a client for download from AWS')
-        s3_client = request.GLOBAL_AWS_CLIENT
+        s3_client = DownloadRequest.GLOBAL_AWS_CLIENT
 
     try:
         return s3_client.get_object(Bucket=bucket_name, Key=url_key, RequestPayer='requester')
