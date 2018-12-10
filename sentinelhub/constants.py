@@ -170,7 +170,7 @@ class DataSource(Enum):
         :return: ``True`` if source is Sentinel-1 and ``False`` otherwise
         :rtype: bool
         """
-        return self.value[0] is _Source.value.SENTINEL1
+        return self.value[0] is _Source.SENTINEL1
 
     def is_timeless(self):
         """Checks if data source is time independent
@@ -182,7 +182,7 @@ class DataSource(Enum):
         :return: ``True`` if data source is time independent and ``False`` otherwise
         :rtype: bool
         """
-        return self.value[0] is _Source.value.DEM
+        return self.value[0] is _Source.DEM
 
     def is_uswest_source(self):
         """Checks if data source via Sentinel Hub services is available at US West server
@@ -194,9 +194,7 @@ class DataSource(Enum):
         :return: ``True`` if data source exists at US West server and ``False`` otherwise
         :rtype: bool
         """
-        return not SHConfig().is_eocloud_ogc_url() and self.value[0] in [_Source.value.LANDSAT8,
-                                                                         _Source.value.MODIS,
-                                                                         _Source.value.DEM]
+        return not SHConfig().is_eocloud_ogc_url() and self.value[0] in [_Source.LANDSAT8, _Source.MODIS, _Source.DEM]
 
     @classmethod
     def get_available_sources(cls):
