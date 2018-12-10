@@ -344,8 +344,8 @@ setattr(CRS, '__new__', _crs_parser)
 class CustomUrlParam(Enum):
     """ Enum class to represent supported custom url parameters of OGC services
 
-    Supported parameters are `ShowLogo`, `AtmFilter`, `EvalScript`, `EvalScriptUrl`, `Preview`, `Quality`, `Upsampling`,
-    `Downsampling`, `Transparent`, `BgColor` and `Geometry`.
+    Supported parameters are `SHOWLOGO`, `ATMFILTER`, `EVALSCRIPT`, `EVALSCRIPTURL`, `PREVIEW`, `QUALITY`, `UPSAMPLING`,
+    `DOWNSAMPLING`, `TRANSPARENT`, `BGCOLOR` and `GEOMETRY`.
 
     See http://sentinel-hub.com/develop/documentation/api/custom-url-parameters and
     https://www.sentinel-hub.com/develop/documentation/api/ogc_api/wms-parameters for more information.
