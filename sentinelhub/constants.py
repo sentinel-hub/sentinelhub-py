@@ -7,7 +7,7 @@ import mimetypes
 import utm
 
 from pyproj import Proj
-from enum import Enum, EnumMeta
+from enum import Enum
 
 from .config import SHConfig
 from ._version import __version__
@@ -36,105 +36,100 @@ class ServiceType(Enum):
     IMAGE = 'image'
 
 
-class _DataSourceMeta(EnumMeta):
-    """ EnumMeta class for `DataSource` Enum class
+class _Source(Enum):
     """
-    # pylint: disable=no-value-for-parameter
-    # https://stackoverflow.com/questions/47615318
+    Types of satellite sources
+    """
+    SENTINEL2 = 'Sentinel-2'
+    SENTINEL1 = 'Sentinel-1'
+    LANDSAT8 = 'Landsat 8'
+    MODIS = 'MODIS'
+    DEM = 'Mapzen DEM'
+    LANDSAT5 = 'Landsat 5'
+    LANDSAT7 = 'Landsat 7'
+    SENTINEL3 = 'Sentinel-3'
+    SENTINEL5P = 'Sentinel-5P'
+    ENVISAT_MERIS = 'Envisat Meris'
 
-    def __iter__(cls):
-        return (member for name, member in cls._member_map_.items() if isinstance(member.value, tuple))
 
-    def __len__(cls):
-        return len(list(cls.__iter__()))
-
-
-class DataSource(Enum, metaclass=_DataSourceMeta):
-    """ Enum constant class for types of satellite data
-
-    Supported types are SENTINEL2_L1C, SENTINEL2_L2A, LANDSAT8, SENTINEL1_IW, SENTINEL1_EW, SENTINEL1_EW_SH, DEM, MODIS
+class _ProcessingLevel(Enum):
+    """
+    Types of processing level
     """
     # pylint: disable=invalid-name
+    L2 = 'L2'
+    L1C = 'L1C'
+    L2A = 'L2A'
+    L3B = 'L3B'
+    L1TP = 'L1TP'
+    GRD = 'GRD'
+    MCD43A4 = 'MCD43A4'
+
+
+class _Acquisition(Enum):
+    """
+    Types of satellite acquisition
+    """
+    # pylint: disable=invalid-name
+    IW = 'IW'
+    EW = 'EW'
+    OLCI = 'OLCI'
+
+
+class _Polarisation(Enum):
+    """
+    Types of Sentinel-1 polarisation
+    """
+    # pylint: disable=invalid-name
+    DV = 'VV+VH'
+    DH = 'HH+HV'
+    SV = 'VV'
+    SH = 'HH'
+
+
+class _Resolution(Enum):
+    """
+    Types of Sentinel-1 resolution
+    """
+    MEDIUM = 'medium'
+    HIGH = 'high'
+
+
+class _OrbitDirection(Enum):
+    """
+    Types of Sentinel-1 orbit direction
+    """
+    ASCENDING = 'ascending'
+    DESCENDING = 'descending'
+    BOTH = 'both'
+
+
+class DataSource(Enum):
+    """ Enum constant class for types of satellite data
+
+    Supported types are SENTINEL2_L1C, SENTINEL2_L2A, LANDSAT8, SENTINEL1_IW, SENTINEL1_EW, SENTINEL1_EW_SH, DEM, MODIS,
+    LANDSAT5, LANDSAT7, SENTINEL3, SENTINEL5P, ENVISAT_MERIS, SENTINEL2_L3B, LANDSAT8_L2A
+    """
     # pylint: disable=unsubscriptable-object
-
-    class Source(Enum):
-        """
-        Types of satellite sources
-        """
-        SENTINEL2 = 'Sentinel-2'
-        SENTINEL1 = 'Sentinel-1'
-        LANDSAT8 = 'Landsat 8'
-        MODIS = 'MODIS'
-        DEM = 'Mapzen DEM'
-        LANDSAT5 = 'Landsat 5'
-        LANDSAT7 = 'Landsat 7'
-        SENTINEL3 = 'Sentinel-3'
-        SENTINEL5P = 'Sentinel-5P'
-        ENVISAT_MERIS = 'Envisat Meris'
-
-    class ProcessingLevel(Enum):
-        """
-        Types of processing level
-        """
-        L2 = 'L2'
-        L1C = 'L1C'
-        L2A = 'L2A'
-        L3B = 'L3B'
-        L1TP = 'L1TP'
-        GRD = 'GRD'
-        MCD43A4 = 'MCD43A4'
-
-    class Acquisition(Enum):
-        """
-        Types of satellite acquisition
-        """
-        IW = 'IW'
-        EW = 'EW'
-        OLCI = 'OLCI'
-
-    class Polarisation(Enum):
-        """
-        Types of Sentinel-1 polarisation
-        """
-        DV = 'VV+VH'
-        DH = 'HH+HV'
-        SV = 'VV'
-        SH = 'HH'
-
-    class Resolution(Enum):
-        """
-        Types of Sentinel-1 resolution
-        """
-        MEDIUM = 'medium'
-        HIGH = 'high'
-
-    class OrbitDirection(Enum):
-        """
-        Types of Sentinel-1 orbit direction
-        """
-        ASCENDING = 'ascending'
-        DESCENDING = 'descending'
-        BOTH = 'both'
-
-    SENTINEL2_L1C = (Source.SENTINEL2, ProcessingLevel.L1C)
-    SENTINEL2_L2A = (Source.SENTINEL2, ProcessingLevel.L2A)
-    SENTINEL1_IW = (Source.SENTINEL1, ProcessingLevel.GRD, Acquisition.IW, Polarisation.DV, Resolution.HIGH,
-                    OrbitDirection.BOTH)
-    SENTINEL1_EW = (Source.SENTINEL1, ProcessingLevel.GRD, Acquisition.EW, Polarisation.DH, Resolution.MEDIUM,
-                    OrbitDirection.BOTH)
-    SENTINEL1_EW_SH = (Source.SENTINEL1, ProcessingLevel.GRD, Acquisition.EW, Polarisation.SH, Resolution.MEDIUM,
-                       OrbitDirection.BOTH)
-    DEM = (Source.DEM, )
-    MODIS = (Source.MODIS, ProcessingLevel.MCD43A4)
-    LANDSAT8 = (Source.LANDSAT8, ProcessingLevel.L1TP)
+    SENTINEL2_L1C = (_Source.SENTINEL2, _ProcessingLevel.L1C)
+    SENTINEL2_L2A = (_Source.SENTINEL2, _ProcessingLevel.L2A)
+    SENTINEL1_IW = (_Source.SENTINEL1, _ProcessingLevel.GRD, _Acquisition.IW, _Polarisation.DV, _Resolution.HIGH,
+                    _OrbitDirection.BOTH)
+    SENTINEL1_EW = (_Source.SENTINEL1, _ProcessingLevel.GRD, _Acquisition.EW, _Polarisation.DH, _Resolution.MEDIUM,
+                    _OrbitDirection.BOTH)
+    SENTINEL1_EW_SH = (_Source.SENTINEL1, _ProcessingLevel.GRD, _Acquisition.EW, _Polarisation.SH, _Resolution.MEDIUM,
+                       _OrbitDirection.BOTH)
+    DEM = (_Source.DEM, )
+    MODIS = (_Source.MODIS, _ProcessingLevel.MCD43A4)
+    LANDSAT8 = (_Source.LANDSAT8, _ProcessingLevel.L1TP)
     # eocloud sources:
-    LANDSAT5 = (Source.LANDSAT5, ProcessingLevel.GRD)
-    LANDSAT7 = (Source.LANDSAT7, ProcessingLevel.GRD)
-    SENTINEL3 = (Source.SENTINEL3, ProcessingLevel.L2, Acquisition.OLCI)
-    SENTINEL5P = (Source.SENTINEL5P, ProcessingLevel.L2)
-    ENVISAT_MERIS = (Source.ENVISAT_MERIS, )
-    SENTINEL2_L3B = (Source.SENTINEL2, ProcessingLevel.L3B)
-    LANDSAT8_L2A = (Source.LANDSAT8, ProcessingLevel.L2A)
+    LANDSAT5 = (_Source.LANDSAT5, _ProcessingLevel.GRD)
+    LANDSAT7 = (_Source.LANDSAT7, _ProcessingLevel.GRD)
+    SENTINEL3 = (_Source.SENTINEL3, _ProcessingLevel.L2, _Acquisition.OLCI)
+    SENTINEL5P = (_Source.SENTINEL5P, _ProcessingLevel.L2)
+    ENVISAT_MERIS = (_Source.ENVISAT_MERIS, )
+    SENTINEL2_L3B = (_Source.SENTINEL2, _ProcessingLevel.L3B)
+    LANDSAT8_L2A = (_Source.LANDSAT8, _ProcessingLevel.L2A)
 
     @classmethod
     def get_wfs_typename(cls, data_source):
@@ -175,7 +170,7 @@ class DataSource(Enum, metaclass=_DataSourceMeta):
         :return: ``True`` if source is Sentinel-1 and ``False`` otherwise
         :rtype: bool
         """
-        return self.value[0] is DataSource.Source.value.SENTINEL1
+        return self.value[0] is _Source.value.SENTINEL1
 
     def is_timeless(self):
         """Checks if data source is time independent
@@ -187,7 +182,7 @@ class DataSource(Enum, metaclass=_DataSourceMeta):
         :return: ``True`` if data source is time independent and ``False`` otherwise
         :rtype: bool
         """
-        return self.value[0] is DataSource.Source.value.DEM
+        return self.value[0] is _Source.value.DEM
 
     def is_uswest_source(self):
         """Checks if data source via Sentinel Hub services is available at US West server
@@ -199,9 +194,9 @@ class DataSource(Enum, metaclass=_DataSourceMeta):
         :return: ``True`` if data source exists at US West server and ``False`` otherwise
         :rtype: bool
         """
-        return not SHConfig().is_eocloud_ogc_url() and self.value[0] in [DataSource.Source.value.LANDSAT8,
-                                                                         DataSource.Source.value.MODIS,
-                                                                         DataSource.Source.value.DEM]
+        return not SHConfig().is_eocloud_ogc_url() and self.value[0] in [_Source.value.LANDSAT8,
+                                                                         _Source.value.MODIS,
+                                                                         _Source.value.DEM]
 
     @classmethod
     def get_available_sources(cls):
