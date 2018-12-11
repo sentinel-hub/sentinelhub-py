@@ -20,6 +20,7 @@ Modules
     geopedia
     io_utils
     ogc
+    fis
     opensearch
     os_utils
     test_utils
