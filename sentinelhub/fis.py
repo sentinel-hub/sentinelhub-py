@@ -91,6 +91,9 @@ class FisService(OgcService):
         if hasattr(request, 'bins') and request.bins:
             params['BINS'] = request.bins
 
+        if request.histogram_type:
+            params['TYPE'] = request.histogram_type.value
+
         if hasattr(request, 'custom_url_params') and request.custom_url_params is not None:
             params = {**params,
                       **{k.value: str(v) for k, v in request.custom_url_params.items()}}

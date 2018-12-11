@@ -8,6 +8,7 @@ from sentinelhub import CRS, DataSource
 from sentinelhub import BBox, Geometry
 from sentinelhub import TestCaseContainer, CustomUrlParam
 from sentinelhub import FisRequest, TestSentinelHub
+from sentinelhub import HistogramType
 
 
 class TestFis(TestSentinelHub):
@@ -58,7 +59,7 @@ class TestFis(TestSentinelHub):
                                        geometry_list=[wgs84_bbox],
                                        time=('2017-1-1', '2017-2-1'),
                                        resolution="100m",
-                                       style="REFLECTANCE",
+                                       histogram_type=HistogramType.STREAMING,
                                        bins=5),
                             raw_result=results[0],
                             result_length=1),
@@ -66,8 +67,7 @@ class TestFis(TestSentinelHub):
                             FisRequest(layer='BANDS-S2-L1C',
                                        geometry_list=[pop_web_bbox],
                                        time='2017-1-1',
-                                       resolution="200m",
-                                       style="INDEX"),
+                                       resolution="200m"),
                             raw_result=results[1],
                             result_length=1),
             cls.FisTestCase('landsat',
@@ -76,7 +76,6 @@ class TestFis(TestSentinelHub):
                                        geometry_list=[wgs84_bbox, pop_web_bbox],
                                        time=('2017-1-1', '2017-2-1'),
                                        resolution="100m",
-                                       style="SENSOR",
                                        bins=32),
                             raw_result=results[2],
                             result_length=2),

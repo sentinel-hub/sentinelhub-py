@@ -520,13 +520,8 @@ class FisRequest(OgcRequest):
                      in latitude/longitude order.
                      Required (if bbox not present)
     :type geometry_list: list, [common.Geometry or common.Bbox]
-    :param style: Specified style (overrides the one specified in the layer configuration).
-                  For indices (one-component products such as NDVI, NDWI, etc.), setting STYLE=INDEX enforces
-                  raw data (other popular choices for one-component products include GRAYSCALE and COLORMAP.
-                  For multi-component products (such as TRUE_COLOR, FALSE_COLOR, etc.), setting
-                  STYLE=SENSOR enforces the raw sensor data to be used, while STYLE=REFLECTANCE enforces
-                  raw sensor data scaled to the range [0,1]. See which styles are available for various EO products.
-    :type: str
+    :param histogram_type: type of histogram
+    :type histogram_type: Enum HistogramType
     :param bins: The number of bins (a positive integer) in the histogram.
                  When this parameter is absent, no histogram is computed.
     :type: str
@@ -547,12 +542,12 @@ class FisRequest(OgcRequest):
     :param data_folder: location of the directory where the fetched data will be saved.
     :type data_folder: str
     """
-    def __init__(self, bbox=None, *, resolution=10, geometry_list=None, style=None, bins=None, **kwargs):
-        self.resolution = resolution
+    def __init__(self, layer, time, geometry_list=None, *, resolution="10m", histogram_type = None, bins=None, **kwargs):
         self.geometry_list = geometry_list
-        self.style = style
+        self.resolution = resolution
         self.bins = bins
-        super().__init__(bbox=bbox, service_type=ServiceType.FIS, **kwargs)
+        self.histogram_type = histogram_type
+        super().__init__(bbox=None, layer=layer, time=time, service_type=ServiceType.FIS, **kwargs)
 
     def create_request(self):
         """Set download requests

@@ -16,7 +16,9 @@ from .ogc import WebFeatureService
 from .geopedia import GeopediaFeatureIterator, GeopediaSession
 
 from .common import BBox, Geometry
-from .constants import DataSource, CustomUrlParam, CRS, MimeType, OgcConstants, AwsConstants, ServiceType
+from .constants import DataSource, CustomUrlParam, CRS, MimeType, OgcConstants, AwsConstants, ServiceType, \
+    HistogramType
+
 from .config import SHConfig
 
 from .download import DownloadRequest, download_data, get_json, get_xml, DownloadFailedException, \
