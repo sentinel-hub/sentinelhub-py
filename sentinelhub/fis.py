@@ -53,15 +53,11 @@ class FisService(OgcService):
                                 headers=OgcConstants.HEADERS)
                 for geometry in request.geometry_list]
 
-    def get_url(self, request, geometry):
-        """
-        Returns url to Sentinel Hub's OGC service for the product specified by the OgcRequest and date.
-        :param request: OGC-type request with specified bounding box, cloud coverage for specific product.
-        :type request: OgcRequest
-        :param geometry: (multi)polygon
-        :type geometry: common.Geometry
-        :return: url to Sentinel Hub's OGC service for this product.
-        :rtype: str
+    def get_base_url(self, request):
+        """ Get base URL
+
+        :param request:
+        :return:
         """
         url = self.base_url + request.service_type.value
 
@@ -71,7 +67,14 @@ class FisService(OgcService):
         if hasattr(request, 'data_source') and request.data_source not in DataSource.get_available_sources():
             raise ValueError("{} is not available for service at ogc_base_url={}".format(request.data_source,
                                                                                          SHConfig().ogc_base_url))
+        return url
 
+    def get_fis_parameters(self, request, geometry):
+        """ Get FIS specific parameters.
+        :param request:
+        :param geometry:
+        :return:
+        """
         params = {
             'SERVICE': request.service_type.value,
             'CRS': CRS.ogc_string(geometry.get_crs()),
@@ -85,14 +88,22 @@ class FisService(OgcService):
         elif isinstance(geometry, BBox):
             params['BBOX'] = geometry.__str__(reverse=True) if geometry.get_crs() is CRS.WGS84 else str(geometry)
 
-        if hasattr(request, 'maxcc'):
-            params['MAXCC'] = 100.0 * request.maxcc
-
         if hasattr(request, 'bins') and request.bins:
             params['BINS'] = request.bins
 
         if request.histogram_type:
             params['TYPE'] = request.histogram_type.value
+
+        return params
+
+    def get_common_parameters(self, request):
+        """ Get common parameters
+        :param request:
+        :return:
+        """
+        params = {}
+        if hasattr(request, 'maxcc'):
+            params['MAXCC'] = 100.0 * request.maxcc
 
         if hasattr(request, 'custom_url_params') and request.custom_url_params is not None:
             params = {**params,
@@ -108,6 +119,23 @@ class FisService(OgcService):
 
                 params[CustomUrlParam.GEOMETRY.value] = geometry.wkt
 
+        return params
+
+    def get_url(self, request, geometry):
+        """
+        Returns url to Sentinel Hub's OGC service for the product specified by the OgcRequest and date.
+        :param request: OGC-type request with specified bounding box, cloud coverage for specific product.
+        :type request: OgcRequest
+        :param geometry: (multi)polygon
+        :type geometry: common.Geometry
+        :return: url to Sentinel Hub's OGC service for this product.
+        :rtype: str
+        """
+        params = {}
+        params = {**params, **self.get_fis_parameters(request, geometry)}
+        params = {**params, **self.get_common_parameters(request)}
+
+        url = self.get_base_url(request)
         authority = self.instance_id
         url = '{}/{}?{}'.format(url, authority, urlencode(params))
         return url

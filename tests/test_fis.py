@@ -60,7 +60,7 @@ class TestFis(TestSentinelHub):
                                        geometry_list=[bbox],
                                        time='2017-1-1',
                                        resolution="50m",
-                                       maxcc=20,
+                                       maxcc=0.2,
                                        custom_url_params={
                                            CustomUrlParam.ATMFILTER: "ATMCOR",
                                            CustomUrlParam.DOWNSAMPLING: "BICUBIC",
@@ -82,13 +82,13 @@ class TestFis(TestSentinelHub):
         for test_case in cls.test_cases:
             test_case.collect_data()
 
-    # def test_return_length(self):
-    #     for test_case in self.test_cases:
-    #         with self.subTest(msg='Test case {}'.format(test_case.name)):
-    #             self.assertEqual(len(test_case.request.get_data()), test_case.result_length,
-    #                              "Expected a list of length {}, got length {}".format(
-    #                                  test_case.result_length,
-    #                                  len(test_case.request.get_data())))
+    def test_return_length(self):
+        for test_case in self.test_cases:
+            with self.subTest(msg='Test case {}'.format(test_case.name)):
+                self.assertEqual(len(test_case.request.get_data()), test_case.result_length,
+                                 "Expected a list of length {}, got length {}".format(
+                                     test_case.result_length,
+                                     len(test_case.request.get_data())))
 
     def test_raw_result(self):
         for test_case in self.test_cases:
