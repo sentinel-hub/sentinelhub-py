@@ -542,7 +542,9 @@ class FisRequest(OgcRequest):
     :param data_folder: location of the directory where the fetched data will be saved.
     :type data_folder: str
     """
-    def __init__(self, layer, time, geometry_list=None, *, resolution="10m", histogram_type = None, bins=None, **kwargs):
+    def __init__(self, layer, time, geometry_list=None, *,
+                 resolution="10m", histogram_type=None,
+                 bins=None, **kwargs):
         self.geometry_list = geometry_list
         self.resolution = resolution
         self.bins = bins

@@ -93,10 +93,9 @@ class TestFis(TestSentinelHub):
                                        time=('2017-1-1', '2017-2-1'),
                                        resolution="400m",
                                        custom_url_params={
-                                                          CustomUrlParam.ATMFILTER: "ATMCOR",
-                                                          CustomUrlParam.DOWNSAMPLING: "BICUBIC",
-                                                          CustomUrlParam.UPSAMPLING: "BICUBIC"
-                                                         }
+                                           CustomUrlParam.ATMFILTER: "ATMCOR",
+                                           CustomUrlParam.DOWNSAMPLING: "BICUBIC",
+                                           CustomUrlParam.UPSAMPLING: "BICUBIC"}
                                        ),
                             raw_result=results[4],
                             result_length=2
@@ -117,8 +116,8 @@ class TestFis(TestSentinelHub):
             with self.subTest(msg='Test case {}'.format(test_case.name)):
                 self.assertEqual(len(test_case.request.get_data()), test_case.result_length,
                                  "Expected a list of length {}, got length {}".format(
-                                                        test_case.result_length,
-                                                        len(test_case.request.get_data())))
+                                     test_case.result_length,
+                                     len(test_case.request.get_data())))
 
     def test_raw_result(self):
         for test_case in self.test_cases:
