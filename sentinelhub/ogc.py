@@ -16,6 +16,7 @@ from .download import DownloadRequest, get_json
 from .constants import ServiceType, DataSource, MimeType, CRS, OgcConstants, CustomUrlParam
 from .config import SHConfig
 from .geo_utils import get_image_dimension
+from .common import BBox, Geometry
 
 LOGGER = logging.getLogger(__name__)
 
@@ -112,23 +113,18 @@ class OgcImageService(OgcService):
         :return: list of DownloadRequests
         """
         size_x, size_y = self.get_image_dimensions(request)
-        return [DownloadRequest(url=self.get_url(request, date, size_x, size_y),
+        return [DownloadRequest(url=self.get_url(request=request, date=date,
+                                                 size_x=size_x, size_y=size_y),
                                 filename=self.get_filename(request, date, size_x, size_y),
                                 data_type=request.image_format, headers=OgcConstants.HEADERS)
                 for date in self.get_dates(request)]
 
-    def get_url(self, request, date, size_x, size_y):
-        """ Returns url to Sentinel Hub's OGC service for the product specified by the OgcRequest and date.
+    def get_base_url(self, request):
+        """ Creates base url string.
 
         :param request: OGC-type request with specified bounding box, cloud coverage for specific product.
         :type request: OgcRequest or GeopediaRequest
-        :param date: acquisition date or None
-        :type date: datetime.datetime or None
-        :param size_x: horizontal image dimension
-        :type size_x: int or str
-        :param size_y: vertical image dimension
-        :type size_y: int or str
-        :return: url to Sentinel Hub's OGC service for this product.
+        :return: base string for url to Sentinel Hub's OGC service for this product.
         :rtype: str
         """
         url = self.base_url + request.service_type.value
@@ -139,40 +135,18 @@ class OgcImageService(OgcService):
         if hasattr(request, 'data_source') and request.data_source not in DataSource.get_available_sources():
             raise ValueError("{} is not available for service at ogc_base_url={}".format(request.data_source,
                                                                                          SHConfig().ogc_base_url))
+        return url
 
-        params = {
-            'SERVICE': request.service_type.value,
-            'BBOX': request.bbox.__str__(reverse=True) if request.bbox.get_crs() is CRS.WGS84 else str(request.bbox),
-            'FORMAT': MimeType.get_string(request.image_format),
-            'CRS': CRS.ogc_string(request.bbox.get_crs()),
-        }
+    @staticmethod
+    def get_common_url_parameters(request):
+        """ Returns parameters common dictionary for WMS, WCS and FIS request.
 
-        if request.service_type is ServiceType.WMS:
-            params = {**params,
-                      **{
-                          'WIDTH': size_x,
-                          'HEIGHT': size_y,
-                          'LAYERS': request.layer,
-                          'REQUEST': 'GetMap',
-                          'VERSION': '1.3.0'
-                      }}
-        elif request.service_type is ServiceType.WCS:
-            params = {**params,
-                      **{
-                          'RESX': size_x,
-                          'RESY': size_y,
-                          'COVERAGE': request.layer,
-                          'REQUEST': 'GetCoverage',
-                          'VERSION': '1.1.2'
-                      }}
-
-        if date is not None:
-            start_date = date if request.time_difference < datetime.timedelta(
-                seconds=0) else date - request.time_difference
-            end_date = date if request.time_difference < datetime.timedelta(
-                seconds=0) else date + request.time_difference
-            params['TIME'] = '{}/{}'.format(start_date.isoformat(), end_date.isoformat())
-
+        :param request: OGC-type request with specified bounding box, cloud coverage for specific product.
+        :type request: OgcRequest or GeopediaRequest
+        :return:  dictionary with parameters
+        :rtype: dict
+        """
+        params = {}
         if hasattr(request, 'maxcc'):
             params['MAXCC'] = 100.0 * request.maxcc
 
@@ -190,6 +164,141 @@ class OgcImageService(OgcService):
 
                 params[CustomUrlParam.GEOMETRY.value] = geometry.wkt
 
+        return params
+
+    @staticmethod
+    def get_wms_wcs_url_parameters(request, date):
+        """  Returns parameters common dictionary for WMS and WCS request.
+
+        :param request: OGC-type request with specified bounding box, cloud coverage for specific product.
+        :type request: OgcRequest or GeopediaRequest
+        :param date: acquisition date or None
+        :type date: datetime.datetime or None
+        :return:  dictionary with parameters
+        :rtype: dict
+        """
+        params = {
+            'SERVICE': request.service_type.value,
+            'BBOX': request.bbox.__str__(reverse=True) if request.bbox.get_crs() is CRS.WGS84 else str(request.bbox),
+            'FORMAT': MimeType.get_string(request.image_format),
+            'CRS': CRS.ogc_string(request.bbox.get_crs()),
+        }
+
+        if date is not None:
+            start_date = date if request.time_difference < datetime.timedelta(
+                seconds=0) else date - request.time_difference
+            end_date = date if request.time_difference < datetime.timedelta(
+                seconds=0) else date + request.time_difference
+            params['TIME'] = '{}/{}'.format(start_date.isoformat(), end_date.isoformat())
+
+        return params
+
+    @staticmethod
+    def get_wms_url_parameters(request, size_x, size_y):
+        """ Returns parameters dictionary for WMS request.
+
+        :param request: OGC-type request with specified bounding box, cloud coverage for specific product.
+        :type request: OgcRequest or GeopediaRequest
+        :param size_x: horizontal image dimension
+        :type size_x: int or str
+        :param size_y: vertical image dimension
+        :type size_y: int or str
+        :return:  dictionary with parameters
+        :rtype: dict
+        """
+        params = {'WIDTH': size_x,
+                  'HEIGHT': size_y,
+                  'LAYERS': request.layer,
+                  'REQUEST': 'GetMap',
+                  'VERSION': '1.3.0'
+                  }
+
+        return params
+
+    @staticmethod
+    def get_wcs_url_parameters(request, size_x, size_y):
+        """ Returns parameters dictionary for WCS request.
+
+        :param request: OGC-type request with specified bounding box, cloud coverage for specific product.
+        :type request: OgcRequest or GeopediaRequest
+        :param size_x: horizontal image dimension
+        :type size_x: int or str
+        :param size_y: vertical image dimension
+        :type size_y: int or str
+        :return:  dictionary with parameters
+        :rtype: dict
+        """
+        params = {'RESX': size_x,
+                  'RESY': size_y,
+                  'COVERAGE': request.layer,
+                  'REQUEST': 'GetCoverage',
+                  'VERSION': '1.1.2'}
+
+        return params
+
+    @staticmethod
+    def get_fis_parameters(request, geometry):
+        """ Returns parameters dictionary for FIS request.
+
+        :param request: OGC-type request with specified bounding box, cloud coverage for specific product.
+        :type request: OgcRequest or GeopediaRequest
+        :param geometry: list of bounding boxes or geometries
+        :type geometry: list of BBox or Geometry
+        :return:  dictionary with parameters
+        :rtype: dict
+        """
+        date_interval = parse_time_interval(request.time)
+        time = '{}/{}'.format(date_interval[0], date_interval[1])
+
+        params = {
+            'SERVICE': request.service_type.value,
+            'CRS': CRS.ogc_string(geometry.get_crs()),
+            'LAYER': request.layer,
+            'RESOLUTION': request.resolution,
+            'TIME': time
+        }
+
+        if isinstance(geometry, Geometry):
+            params['GEOMETRY'] = geometry.to_wkt()
+        elif isinstance(geometry, BBox):
+            params['BBOX'] = geometry.__str__(reverse=True) if geometry.get_crs() is CRS.WGS84 else str(geometry)
+
+        if hasattr(request, 'bins') and request.bins:
+            params['BINS'] = request.bins
+
+        if request.histogram_type:
+            params['TYPE'] = request.histogram_type.value
+
+        return params
+
+    def get_url(self, request, *, date=None, size_x=None, size_y=None, geometry=None):
+        """ Returns url to Sentinel Hub's OGC service for the product specified by the OgcRequest and date.
+
+        :param request: OGC-type request with specified bounding box, cloud coverage for specific product.
+        :type request: OgcRequest or GeopediaRequest
+        :param date: acquisition date or None
+        :type date: datetime.datetime or None
+        :param size_x: horizontal image dimension
+        :type size_x: int or str
+        :param size_y: vertical image dimension
+        :type size_y: int or str
+        :type geometry: list of BBox or Geometry
+        :return:  dictionary with parameters
+        :return: url to Sentinel Hub's OGC service for this product.
+        :rtype: str
+        """
+
+        params = self.get_common_url_parameters(request)
+        if request.service_type in (ServiceType.WMS, ServiceType.WCS):
+            params = {**params, **self.get_wms_wcs_url_parameters(request, date)}
+        if request.service_type is ServiceType.WMS:
+            params = {**params, **self.get_wms_url_parameters(request, size_x, size_y)}
+        if request.service_type is ServiceType.WCS:
+            params = {**params, **self.get_wcs_url_parameters(request, size_x, size_y)}
+        if request.service_type is ServiceType.FIS:
+            params = {**params, **self.get_fis_parameters(request, geometry)}
+
+        url = self.get_base_url(request)
         authority = self.instance_id if hasattr(self, 'instance_id') else request.theme
         return '{}/{}?{}'.format(url, authority, urlencode(params))
 
