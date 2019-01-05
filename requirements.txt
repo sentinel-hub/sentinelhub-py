@@ -2,7 +2,7 @@ wheel
 requests
 click
 numpy
-tifffile<=2018.11.28
+tifffile
 pillow
 python-dateutil
 utm
