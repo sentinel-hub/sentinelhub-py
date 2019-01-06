@@ -314,9 +314,12 @@ class OgcRequest(DataRequest):
 
         Throws ValueError if the provided parameter is not a valid parameter.
         """
-        for param in self.custom_url_params.keys():
+        for param in self.custom_url_params:
             if param not in CustomUrlParam:
                 raise ValueError('Parameter %s is not a valid custom url parameter. Please check and fix.' % param)
+
+        if self.service_type is ServiceType.FIS and CustomUrlParam.GEOMETRY in self.custom_url_params:
+            raise ValueError('{} should not be a custom url parameter of a FIS request'.format(CustomUrlParam.GEOMETRY))
 
     def create_request(self, reset_wfs_iterator=False):
         """Set download requests
@@ -511,12 +514,8 @@ class FisRequest(OgcRequest):
     :type layer: str
     :param time: time or time range for which to return the results, in ISO8601 format
             (year-month-date, for example: ``2016-01-01``, or year-month-dateThours:minuts:seconds format,
-            i.e. ``2016-01-01T16:31:21``). When a single time is specified the request will return
-            data for that specific date, if it exists. If a time range is specified the result is a list of all
-            scenes between the specified dates conforming to the cloud coverage criteria. Most recent acquisition
-            being first in the list. For the latest acquisition use ``latest``.
-            Examples: ``latest``, ``'2016-01-01'``, or ``('2016-01-01', ' 2016-01-31')``
-            Default: 'latest'
+            i.e. ``2016-01-01T16:31:21``).
+            Examples: ``'2016-01-01'``, or ``('2016-01-01', ' 2016-01-31')``
     :type time: str or (str, str) or datetime.date or (datetime.date, datetime.date) or datetime.datetime or
                 (datetime.datetime, datetime.datetime)
     :param resolution: Specifies the spatial resolution, in meters per pixel, of the image from which the statistics

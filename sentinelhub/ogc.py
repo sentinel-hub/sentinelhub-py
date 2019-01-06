@@ -311,8 +311,7 @@ class OgcImageService(OgcService):
         The files are stored in the folder specified by the user when initialising OGC-type
         of request. The name of the file has the following structure:
 
-        {service_type}_{layer}_{crs}_{bbox}_{time}_{size_x}X{size_y}_{custom_url_param}_
-        {custom_url_param_val}.{image_format}
+        {service_type}_{layer}_{crs}_{bbox}_{time}_{size_x}X{size_y}_*{custom_url_params}.{image_format}
 
         In case of `TIFF_d32f` a `'_tiff_depth32f'` is added at the end of the filename (before format suffix)
         to differentiate it from 16-bit float tiff.
@@ -328,43 +327,60 @@ class OgcImageService(OgcService):
         :return: filename for this request and date
         :rtype: str
         """
-        filename = '_'.join([str(request.service_type.value),
-                             request.layer,
-                             str(request.bbox.get_crs()).replace(':', ''),
-                             str(request.bbox).replace(',', '_'),
-                             '' if date is None else date.strftime("%Y-%m-%dT%H-%M-%S"),
-                             '{}X{}'.format(size_x, size_y)])
+        filename = '_'.join([
+            str(request.service_type.value),
+            request.layer,
+            str(request.bbox.get_crs()),
+            str(request.bbox).replace(',', '_'),
+            '' if date is None else date.strftime("%Y-%m-%dT%H-%M-%S"),
+            '{}X{}'.format(size_x, size_y)
+        ])
 
-        LOGGER.debug("filename=%s", filename)
+        filename = OgcImageService.filename_add_custom_url_params(filename, request)
 
+        return OgcImageService.finalize_filename(filename, request.image_format)
+
+    @staticmethod
+    def filename_add_custom_url_params(filename, request):
+        """ Adds custom url parameters to filename string
+
+        :param filename: Initial filename
+        :type filename: str
+        :param request: OGC-type request with specified bounding box, cloud coverage for specific product.
+        :type request: OgcRequest or GeopediaRequest
+        :return: Filename with custom url parameters in the name
+        :rtype: str
+        """
         if hasattr(request, 'custom_url_params') and request.custom_url_params is not None:
             for param, value in sorted(request.custom_url_params.items(),
                                        key=lambda parameter_item: parameter_item[0].value):
                 filename = '_'.join([filename, param.value, str(value)])
 
-        return OgcImageService.finalize_filename(filename, request.image_format)
+        return filename
 
     @staticmethod
-    def finalize_filename(filename, image_format=None):
+    def finalize_filename(filename, file_format=None):
         """ Replaces invalid characters in filename string, adds image extension and reduces filename length
 
         :param filename: Incomplete filename string
         :type filename: str
-        :param image_format: Format which will be used for filename extension
-        :type image_format: MimeType
+        :param file_format: Format which will be used for filename extension
+        :type file_format: MimeType
         :return: Final filename string
         :rtype: str
         """
         for char in [' ', '/', '\\', '|', ';', ':', '\n', '\t']:
             filename = filename.replace(char, '')
 
-        if image_format:
-            suffix = str(image_format.value)
-            if image_format.is_tiff_format() and image_format is not MimeType.TIFF:
+        if file_format:
+            suffix = str(file_format.value)
+            if file_format.is_tiff_format() and file_format is not MimeType.TIFF:
                 suffix = str(MimeType.TIFF.value)
-                filename = '_'.join([filename, str(image_format.value).replace(';', '_')])
+                filename = '_'.join([filename, str(file_format.value).replace(';', '_')])
 
             filename = '.'.join([filename[:254 - len(suffix)], suffix])
+
+        LOGGER.debug("filename=%s", filename)
 
         return filename  # Even in UNIX systems filename must have at most 255 bytes
 

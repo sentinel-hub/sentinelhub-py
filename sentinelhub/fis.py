@@ -45,8 +45,8 @@ class FisService(OgcImageService):
         The files are stored in the folder specified by the user when initialising OGC-type
         of request. The name of the file has the following structure:
 
-        {service_type}_{layer}_{geometry}_{crs}_{start_time}_{end_time}_{resolution}_{custom_url_param}_
-        {custom_url_param_val}.json
+        {service_type}_{layer}_{geometry}_{crs}_{start_time}_{end_time}_{resolution}_{bins}_{histogram_type}_
+        *{custom_url_params}.json
 
         :param request: FIS request
         :param geometry: geometry object
@@ -57,30 +57,23 @@ class FisService(OgcImageService):
         # pylint: disable=arguments-differ
 
         date_interval = parse_time_interval(request.time)
-        time = '{}/{}'.format(date_interval[0], date_interval[1])
+
         if isinstance(geometry, Geometry):
             geometry_string = geometry.to_wkt()
         elif isinstance(geometry, BBox):
             geometry_string = geometry.__str__(reverse=True) if geometry.get_crs() is CRS.WGS84 else str(geometry)
-        else:
-            geometry_string = ""
 
-        filename = '_'.join([str(request.service_type.value),
-                             request.layer,
-                             geometry_string,
-                             CRS.ogc_string(geometry.get_crs()),
-                             time,
-                             request.resolution])
+        filename = '_'.join([
+            str(request.service_type.value),
+            request.layer,
+            geometry_string,
+            CRS.ogc_string(geometry.get_crs()),
+            '{}_{}'.format(date_interval[0], date_interval[1]),
+            request.resolution,
+            str(request.bins) if request.bins else '',
+            request.histogram_type.value if request.histogram_type else ''
+        ])
 
-        if hasattr(request, 'custom_url_params') and request.custom_url_params is not None:
-            for param, value in sorted(request.custom_url_params.items(),
-                                       key=lambda parameter_item: parameter_item[0].value):
-                filename = '_'.join([filename, param.value, str(value)])
+        filename = OgcImageService.filename_add_custom_url_params(filename, request)
 
-        for char in [' ', '/', '\\', '|', ';', ':', '\n', '\t', '(', ')']:
-            filename = filename.replace(char, '')
-
-        suffix = ".json"
-        filename = '.'.join([filename[:254 - len(suffix)], suffix])
-
-        return filename
+        return OgcImageService.finalize_filename(filename, MimeType.JSON)
