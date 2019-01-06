@@ -105,15 +105,6 @@ class _OrbitDirection(Enum):
     BOTH = 'both'
 
 
-class HistogramType(Enum):
-    """
-    Type of histogram (
-    """
-    EQUALFREQUENCY = 'equalfrequency'
-    EQUIDISTANT = 'equidistant'
-    STREAMING = 'streaming'
-
-
 class DataSource(Enum):
     """ Enum constant class for types of satellite data
 
@@ -391,6 +382,16 @@ class CustomUrlParam(Enum):
         :rtype: str
         """
         return param.value
+
+
+class HistogramType(Enum):
+    """ Enum class for types of histogram supported by Sentinel Hub FIS service
+
+    Supported histogram types are EQUALFREQUENCY, EQUIDISTANT and STREAMING
+    """
+    EQUALFREQUENCY = 'equalfrequency'
+    EQUIDISTANT = 'equidistant'
+    STREAMING = 'streaming'
 
 
 class MimeType(Enum):

@@ -19,7 +19,7 @@ from .aws_safe import SafeProduct, SafeTile
 from .download import download_data, ImageDecodingError, DownloadFailedException
 from .io_utils import read_data
 from .os_utils import make_folder
-from .constants import DataSource, MimeType, CustomUrlParam, ServiceType, CRS
+from .constants import DataSource, MimeType, CustomUrlParam, ServiceType, CRS, HistogramType
 from .config import SHConfig
 
 LOGGER = logging.getLogger(__name__)
@@ -238,7 +238,8 @@ class OgcRequest(DataRequest):
     """ The base class for OGC-type requests (WMS and WCS) where all common parameters are
     defined.
 
-    :param data_source: Source of requested satellite data. Default is Sentinel-2 L1C data.
+    :param data_source: Source of requested satellite data. It has to be the same as defined in Sentinel Hub
+        Configurator for the given layer. Default is Sentinel-2 L1C.
     :type data_source: constants.DataSource
     :param service_type: type of OGC service (WMS or WCS)
     :type service_type: constants.ServiceType
@@ -257,7 +258,9 @@ class OgcRequest(DataRequest):
                 Examples: ``latest``, ``'2016-01-01'``, or ``('2016-01-01', ' 2016-01-31')``
     :type time: str or (str, str) or datetime.date or (datetime.date, datetime.date) or datetime.datetime or
         (datetime.datetime, datetime.datetime)
-    :param layer: the preconfigured layer (image) to be returned as comma separated layer names. Required.
+    :param layer: An ID of a layer configured in Sentinel Hub Configurator. It has to be configured for the same
+        instance ID which will be used for this request. Also the satellite source of the layer in Configurator must
+        match the one given by `data_source` parameter
     :type layer: str
     :param maxcc: maximum accepted cloud coverage of an image. Float between 0.0 and 1.0. Default is ``1.0``.
     :type maxcc: float
@@ -375,7 +378,8 @@ class WmsRequest(OgcRequest):
     :type width: int or None
     :param height: height (number of rows) of the returned image (array)
     :type height: int or None
-    :param data_source: Source of requested satellite data. Default is Sentinel-2 L1C data.
+    :param data_source: Source of requested satellite data. It has to be the same as defined in Sentinel Hub
+        Configurator for the given layer. Default is Sentinel-2 L1C.
     :type data_source: constants.DataSource
     :param bbox: Bounding box of the requested image. Coordinates must be in the specified coordinate reference system.
     :type bbox: common.BBox
@@ -388,7 +392,9 @@ class WmsRequest(OgcRequest):
                 Examples: ``latest``, ``'2016-01-01'``, or ``('2016-01-01', ' 2016-01-31')``
     :type time: str or (str, str) or datetime.date or (datetime.date, datetime.date) or datetime.datetime or
         (datetime.datetime, datetime.datetime)
-    :param layer: the preconfigured layer (image) to be returned as comma separated layer names. Required.
+    :param layer: An ID of a layer configured in Sentinel Hub Configurator. It has to be configured for the same
+        instance ID which will be used for this request. Also the satellite source of the layer in Configurator must
+        match the one given by `data_source` parameter
     :type layer: str
     :param maxcc: maximum accepted cloud coverage of an image. Float between 0.0 and 1.0. Default is ``1.0``.
     :type maxcc: float
@@ -439,7 +445,8 @@ class WcsRequest(OgcRequest):
     :param resy: resolution in y (resolution of a row) given in meters in the format (examples ``10m``, ``20m``, ...).
                 Default is ``10m``, which is the best native resolution of some Sentinel-2 bands.
     :type resy: str
-    :param data_source: Source of requested satellite data. Default is Sentinel-2 L1C data.
+    :param data_source: Source of requested satellite data. It has to be the same as defined in Sentinel Hub
+        Configurator for the given layer. Default is Sentinel-2 L1C.
     :type data_source: constants.DataSource
     :param bbox: Bounding box of the requested image. Coordinates must be in the specified coordinate reference system.
     :type bbox: common.BBox
@@ -452,7 +459,9 @@ class WcsRequest(OgcRequest):
                 Examples: ``latest``, ``'2016-01-01'``, or ``('2016-01-01', ' 2016-01-31')``
     :type time: str or (str, str) or datetime.date or (datetime.date, datetime.date) or datetime.datetime or
         (datetime.datetime, datetime.datetime)
-    :param layer: the preconfigured layer (image) to be returned as comma separated layer names. Required.
+    :param layer: An ID of a layer configured in Sentinel Hub Configurator. It has to be configured for the same
+        instance ID which will be used for this request. Also the satellite source of the layer in Configurator must
+        match the one given by `data_source` parameter
     :type layer: str
     :param maxcc: maximum accepted cloud coverage of an image. Float between 0.0 and 1.0. Default is ``1.0``.
     :type maxcc: float
@@ -496,8 +505,9 @@ class FisRequest(OgcRequest):
     More info available at:
     https://www.sentinel-hub.com/develop/documentation/api/ogc_api/wcs-request
 
-    :param layer: the preconfigured layer (image) to be returned as comma separated layer names.
-                  Required.
+    :param layer: An ID of a layer configured in Sentinel Hub Configurator. It has to be configured for the same
+        instance ID which will be used for this request. Also the satellite source of the layer in Configurator must
+        match the one given by `data_source` parameter
     :type layer: str
     :param time: time or time range for which to return the results, in ISO8601 format
             (year-month-date, for example: ``2016-01-01``, or year-month-dateThours:minuts:seconds format,
@@ -507,25 +517,23 @@ class FisRequest(OgcRequest):
             being first in the list. For the latest acquisition use ``latest``.
             Examples: ``latest``, ``'2016-01-01'``, or ``('2016-01-01', ' 2016-01-31')``
             Default: 'latest'
-            Required
     :type time: str or (str, str) or datetime.date or (datetime.date, datetime.date) or datetime.datetime or
                 (datetime.datetime, datetime.datetime)
     :param resolution: Specifies the spatial resolution, in meters per pixel, of the image from which the statistics
                        are to be estimated. When using CRS=EPSG:4326 one has to add the "m" suffix to
                        enforce resolution in meters per pixel (e.g. RESOLUTION=10m).
-                       Required
     :type str
     :param geometry_list: A WKT representation of a geometry describing the region of interest.
                      Note that WCS 1.1.1 standard is used here, so for EPSG:4326 coordinates should be
                      in latitude/longitude order.
-                     Required (if bbox not present)
     :type geometry_list: list, [common.Geometry or common.Bbox]
     :param histogram_type: type of histogram
     :type histogram_type: Enum HistogramType
     :param bins: The number of bins (a positive integer) in the histogram.
                  When this parameter is absent, no histogram is computed.
     :type: str
-    :param data_source: Source of requested satellite data. Default is Sentinel-2 L1C data.
+    :param data_source: Source of requested satellite data. It has to be the same as defined in Sentinel Hub
+        Configurator for the given layer. Default is Sentinel-2 L1C.
     :type data_source: constants.DataSource
     :param maxcc: maximum accepted cloud coverage of an image. Float between 0.0 and 1.0. Default is ``1.0``.
     :type maxcc: float
@@ -542,13 +550,12 @@ class FisRequest(OgcRequest):
     :param data_folder: location of the directory where the fetched data will be saved.
     :type data_folder: str
     """
-    def __init__(self, layer, time, geometry_list=None, *,
-                 resolution="10m", histogram_type=None,
-                 bins=None, **kwargs):
+    def __init__(self, layer, time, geometry_list, *, resolution='10m', histogram_type=None, bins=None, **kwargs):
         self.geometry_list = geometry_list
         self.resolution = resolution
         self.bins = bins
-        self.histogram_type = histogram_type
+        self.histogram_type = HistogramType(histogram_type) if histogram_type else None
+
         super().__init__(bbox=None, layer=layer, time=time, service_type=ServiceType.FIS, **kwargs)
 
     def create_request(self):
@@ -557,7 +564,6 @@ class FisRequest(OgcRequest):
         Create a list of DownloadRequests for all Sentinel-2 acquisitions within request's time interval and
         acceptable cloud coverage.
         """
-
         # pylint: disable=arguments-differ
 
         fis_service = FisService(instance_id=self.instance_id)
