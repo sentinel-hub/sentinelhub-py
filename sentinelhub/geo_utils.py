@@ -25,7 +25,7 @@ def bbox_to_dimensions(bbox, resolution):
     utm_bbox = geo_utils.to_utm_bbox(bbox)
     east1, north1 = utm_bbox.get_lower_left()
     east2, north2 = utm_bbox.get_upper_right()
-    return int(abs(east2 - east1) / pixel_resolution), int(abs(north2 - north1) / pixel_resolution)
+    return int(abs(east2 - east1) / resolution), int(abs(north2 - north1) / resolution)
 
 def bbox_to_resolution(bbox, width, height):
     """ Calculates pixel resolution in meters for a given bbox of a given width and height.
