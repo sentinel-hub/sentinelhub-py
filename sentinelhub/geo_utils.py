@@ -12,6 +12,20 @@ LOGGER = logging.getLogger(__name__)
 
 ERR = 0.1
 
+def bbox_to_dimensions(bbox, resolution):
+    """ Calculates width and height in pixels for a given bbox of a given pixel resolution (in meters).
+    :param bbox: bounding box
+    :type bbox: common.BBox
+
+    :param resolution: resolution of desired image in meters
+    :type height: float
+    :return: width and height in pixels for given bounding box and pixel resolution
+    :rtype: int, int
+    """
+    utm_bbox = geo_utils.to_utm_bbox(bbox)
+    east1, north1 = utm_bbox.get_lower_left()
+    east2, north2 = utm_bbox.get_upper_right()
+    return int(abs(east2 - east1) / pixel_resolution), int(abs(north2 - north1) / pixel_resolution)
 
 def bbox_to_resolution(bbox, width, height):
     """ Calculates pixel resolution in meters for a given bbox of a given width and height.
