@@ -73,7 +73,7 @@ setup(
     install_requires=parse_requirements('requirements.txt'),
     extras_require={
         'DEV': parse_requirements('requirements-dev.txt'),
-        'DOC': parse_requirements('requirements-doc.txt')
+        'DOCS': parse_requirements('requirements-docs.txt')
     },
     zip_safe=False,
     entry_points={'console_scripts': ['sentinelhub=sentinelhub.commands:main_help',
