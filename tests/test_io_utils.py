@@ -38,6 +38,7 @@ class TestIO(TestSentinelHub):
                                  'Expected shape {}, got {}'.format(test_case.shape, img.shape))
                 self.assertAlmostEqual(np.mean(img), test_case.mean, delta=1e-4,
                                        msg='Expected mean {}, got {}'.format(test_case.mean, np.mean(img)))
+                self.assertTrue(img.flags['WRITEABLE'], msg='Obtained numpy array is not writeable')
 
                 new_file_path = os.path.join(self.OUTPUT_FOLDER, test_case.filename)
                 write_data(new_file_path, img)

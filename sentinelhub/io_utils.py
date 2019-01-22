@@ -96,10 +96,7 @@ def read_image(filename):
     :type filename: str
     :return: data stored in JPG file
     """
-    # cv2.imread(filename, cv2.IMREAD_UNCHANGED)
-    image = np.asarray(Image.open(filename))
-    image.setflags(write=1)
-    return image
+    return np.array(Image.open(filename))
 
 
 def read_text(filename):
