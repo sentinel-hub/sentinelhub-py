@@ -149,8 +149,8 @@ class TestOgc(TestSentinelHub):
                                        width=img_width, height=img_height, bbox=wgs84_bbox,
                                        time=('2017-10-01', '2017-10-02'),
                                        time_difference=datetime.timedelta(hours=1)),
-                            result_len=1, img_min=0.0, img_max=MimeType.TIFF_d32f.get_expected_max_value(),
-                            img_mean=0.104584, img_median=0.06160, tile_num=2),
+                            result_len=1, img_min=0.0013400, img_max=MimeType.TIFF_d32f.get_expected_max_value(),
+                            img_mean=0.1135815, img_median=0.0623000, tile_num=2),
             cls.OgcTestCase('S1 EW Test',
                             WmsRequest(data_source=DataSource.SENTINEL1_EW, data_folder=cls.OUTPUT_FOLDER,
                                        image_format=MimeType.TIFF_d32f, layer='BANDS-S1-EW',
@@ -165,7 +165,7 @@ class TestOgc(TestSentinelHub):
                                        width=img_width, height=img_height, bbox=wgs84_bbox_3,
                                        custom_url_params={CustomUrlParam.SHOWLOGO: True}, time=('2018-2-6', '2018-2-8'),
                                        time_difference=datetime.timedelta(hours=1)),
-                            result_len=1, img_min=465, img_max=59287, img_mean=5323.0523, img_median=943.0,
+                            result_len=1, img_min=465, img_max=59287, img_mean=5321.6756, img_median=943.0,
                             tile_num=1)
         ]
         """

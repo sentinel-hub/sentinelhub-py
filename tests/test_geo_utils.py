@@ -36,6 +36,19 @@ class TestGeo(TestSentinelHub):
         self.assertAlmostEqual(resy, expected_resy, delta=1E-2,
                                msg='Expected resy {}, got {}'.format(str(expected_resy), str(resy)))
 
+    def test_bbox_to_dimensions(self):
+        bbox = BBox(((111.644, 8.655), (111.7, 8.688)), CRS.WGS84)
+
+        dimensions = geo_utils.bbox_to_dimensions(bbox, 10)
+        expected_dimensions = 615, 366
+        self.assertEqual(dimensions, expected_dimensions,
+                         msg='Expected dimensions {}, got {}'.format(expected_dimensions, dimensions))
+
+        dimensions = geo_utils.bbox_to_dimensions(bbox, (20, 50))
+        expected_dimensions = 308, 73
+        self.assertEqual(dimensions, expected_dimensions,
+                         msg='Expected dimensions {}, got {}'.format(expected_dimensions, dimensions))
+
     def test_get_image_dimensions(self):
         bbox = BBox(((111.644, 8.655), (111.7, 8.688)), CRS.WGS84)
         width = geo_utils.get_image_dimension(bbox, height=715)

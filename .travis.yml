@@ -1,23 +1,35 @@
+dist: xenial
+sudo: required
 language: python
+
 notifications:
   email: false
+
 python:
 - "3.5"
 - "3.6"
-matrix:
-  include:
-    - python: 3.7
-      dist: xenial
-      sudo: true
+- "3.7"
+# - &pypy3 pypy3.5-6.0
+
 before_install:
 - sudo add-apt-repository -y ppa:jonathonf/backports
 - sudo apt-get -qq update
 - sudo apt-get install -y libopenjp2-7
+
 install:
-- pip install .
-- pip install -r requirements-dev.txt
+- pip install .[DEV] --upgrade
+
 script:
 - pylint sentinelhub/*.py
 - radon cc sentinelhub/*.py -a -nb
-- 'if [ "$TRAVIS_PULL_REQUEST" != "false" ]; then pytest --cov ./tests/ --ignore tests/test_ogc.py --ignore tests/test_data_request.py --ignore tests/test_areas.py --ignore tests/test_aws.py; fi'
-- 'if [ "$TRAVIS_PULL_REQUEST" = "false" ]; then pytest --cov ./tests/; fi'
+- >
+  if [[ ("$TRAVIS_PULL_REQUEST" = "true") || ("$TRAVIS_PYTHON_VERSION" != "3.7") ]] ;
+  then pytest --cov ./tests/
+  --ignore tests/test_ogc.py
+  --ignore tests/test_data_request.py
+  --ignore tests/test_areas.py
+  --ignore tests/test_aws.py
+  --ignore tests/test_aws_safe.py
+  --ignore tests/test_commands.py ;
+  else pytest --cov ./tests/ ;
+  fi
