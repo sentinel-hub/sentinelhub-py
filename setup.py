@@ -54,31 +54,7 @@ def update_package_config():
         pass
 
 
-def install_additional_requirements(file):
-    """ Because setuptools do not support installing from GitHub if the same version of the package is available at PyPI
-    """
-    try:
-        try:
-            from pip import _internal as pip
-        except ImportError:  # in case pip version is <10.0
-            import pip
-
-        from sys import version_info
-
-        if version_info[:2] >= (3, 7):
-            pip.main(['install', 'cython'])
-
-        with open(os.path.join(os.path.dirname(__file__), file)) as req_file:
-            for line in req_file:
-                if '/' in line:
-                    pip.main(['install', line])
-    except BaseException:
-        pass
-
-
 update_package_config()
-
-REQUIREMENTS_FILE = "requirements.txt"
 
 setup(
     name='sentinelhub',
@@ -94,8 +70,11 @@ setup(
     packages=find_packages(),
     package_data={'sentinelhub': ['sentinelhub/config.json']},
     include_package_data=True,
-    install_requires=parse_requirements(REQUIREMENTS_FILE),
-    extras_require={'DEV': parse_requirements("requirements-dev.txt")},
+    install_requires=parse_requirements('requirements.txt'),
+    extras_require={
+        'DEV': parse_requirements('requirements-dev.txt'),
+        'DOC': parse_requirements('requirements-doc.txt')
+    },
     zip_safe=False,
     entry_points={'console_scripts': ['sentinelhub=sentinelhub.commands:main_help',
                                       'sentinelhub.aws=sentinelhub.commands:aws',
@@ -120,5 +99,3 @@ setup(
         'Topic :: Software Development'
     ]
 )
-
-install_additional_requirements(REQUIREMENTS_FILE)

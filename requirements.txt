@@ -2,13 +2,11 @@ wheel
 requests
 click
 numpy
-tifffile<=2018.11.28
+tifffile
 pillow
 python-dateutil
 utm
 shapely
 boto3
 botocore
-pyproj; python_version < '3.7'
-cython; python_version >= '3.7'
-git+https://github.com/jswhit/pyproj.git@master#egg=pyproj; python_version >= '3.7'
+pyproj
