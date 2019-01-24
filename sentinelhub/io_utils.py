@@ -6,18 +6,18 @@ import json
 import os
 import struct
 import logging
+import warnings
+from xml.etree import ElementTree
+
 import numpy as np
 import tifffile as tiff
-
 from PIL import Image
-from xml.etree import ElementTree
-from warnings import simplefilter
 
-from .os_utils import create_parent_folder
 from .constants import MimeType
+from .os_utils import create_parent_folder
 
 
-simplefilter('ignore', Image.DecompressionBombWarning)
+warnings.simplefilter('ignore', Image.DecompressionBombWarning)
 LOGGER = logging.getLogger(__name__)
 
 CSV_DELIMITER = ';'
@@ -86,7 +86,7 @@ def read_jp2_image(filename):
     with open(filename, 'rb') as file:
         bit_depth = get_jp2_bit_depth(file)
 
-    return _fix_jp2_image(image, bit_depth)
+    return fix_jp2_image(image, bit_depth)
 
 
 def read_image(filename):
@@ -341,7 +341,7 @@ def get_jp2_bit_depth(stream):
             return (params[3] & 0x7f) + 1
 
 
-def _fix_jp2_image(image, bit_depth):
+def fix_jp2_image(image, bit_depth):
     """Because Pillow library incorrectly reads JPEG 2000 images with 15-bit encoding this function corrects the
     values in image.
 

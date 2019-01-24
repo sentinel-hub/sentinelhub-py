@@ -2,14 +2,12 @@
 Main module for obtaining data.
 """
 
-# pylint: disable=too-many-instance-attributes
-
 import datetime
 import os.path
 import logging
 import warnings
+import copy
 from abc import ABC, abstractmethod
-from copy import deepcopy
 
 from .ogc import OgcImageService
 from .geopedia import GeopediaWmsService, GeopediaImageService
@@ -42,6 +40,8 @@ class DataRequest(ABC):
 
     @abstractmethod
     def create_request(self):
+        """ An abstract method for logic of creating download requests
+        """
         raise NotImplementedError
 
     def get_download_list(self):
@@ -73,6 +73,11 @@ class DataRequest(ABC):
         return [request.url for request in self.download_list]
 
     def is_valid_request(self):
+        """ Checks if initialized class instance successfully prepared a list of items to download
+
+        :return: `True` if request is valid and `False` otherwise
+        :rtype: bool
+        """
         return isinstance(self.download_list, list)
 
     def get_data(self, *, save_data=False, data_filter=None, redownload=False, max_threads=None,
@@ -167,7 +172,7 @@ class DataRequest(ABC):
                 data_list.append(None)
 
         if is_repeating_filter:
-            data_list = [deepcopy(data_list[index]) for index in mapping_list]
+            data_list = [copy.deepcopy(data_list[index]) for index in mapping_list]
 
         return data_list
 
@@ -325,8 +330,6 @@ class OgcRequest(DataRequest):
             service call but tiles and dates will stay the same.
         :type reset_wfs_iterator: bool
         """
-        # pylint: disable=arguments-differ
-
         if reset_wfs_iterator:
             self.wfs_iterator = None
 
@@ -613,8 +616,6 @@ class GeopediaImageRequest(GeopediaRequest):
             repeat a service call but tiles and dates will stay the same.
         :type reset_gpd_iterator: bool
         """
-        # pylint: disable=arguments-differ
-
         if reset_gpd_iterator:
             self.gpd_iterator = None
 

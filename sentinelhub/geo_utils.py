@@ -3,8 +3,9 @@ Module for manipulation of geographical information.
 """
 
 import logging
+import copy
+
 import pyproj
-from copy import deepcopy
 
 from .constants import CRS
 
@@ -242,6 +243,6 @@ def transform_bbox(bbox, target_crs):
     :return: bounding box in target CRS
     :rtype: common.BBox
     """
-    bbox = deepcopy(bbox)
+    bbox = copy.deepcopy(bbox)
     bbox.transform(target_crs)
     return bbox

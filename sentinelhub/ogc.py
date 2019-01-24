@@ -4,18 +4,18 @@ Module for working with Sentinel Hub OGC services
 
 import logging
 import datetime
+from base64 import b64encode
+from urllib.parse import urlencode
+
 import shapely.geometry
 import shapely.wkt
 import shapely.ops
 
-from base64 import b64encode
-from urllib.parse import urlencode
-
-from .time_utils import parse_time_interval
-from .download import DownloadRequest, get_json
 from .constants import ServiceType, DataSource, MimeType, CRS, OgcConstants, CustomUrlParam
 from .config import SHConfig
 from .geo_utils import get_image_dimension
+from .download import DownloadRequest, get_json
+from .time_utils import parse_time_interval
 
 LOGGER = logging.getLogger(__name__)
 
