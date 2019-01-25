@@ -143,7 +143,8 @@ def parse_time_interval(time):
     * list or tuple of two dates in form `YYYY-MM-DDThh:mm:ss` -> `[YYYY-MM-DDThh:mm:ss, YYYY-MM-DDThh:mm:ss]`,
     * `None` -> `[default_start_date from config.json, current date]`
 
-    All input times can also be specified in `datetime.datetime` format.
+    All input times can also be specified as `datetime` objects. Instances of `datetime.date` will be treated as
+    `YYYY-MM-DD` and instance of `datetime.datetime` will be treated as `YYYY-MM-DDThh:mm:ss`.
 
     :param time: An input time
     :type time: str or datetime.datetime
