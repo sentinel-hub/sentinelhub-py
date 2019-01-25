@@ -143,7 +143,8 @@ def parse_time_interval(time):
     * list or tuple of two dates in form `YYYY-MM-DDThh:mm:ss` -> `[YYYY-MM-DDThh:mm:ss, YYYY-MM-DDThh:mm:ss]`,
     * `None` -> `[default_start_date from config.json, current date]`
 
-    All input times can also be specified in `datetime.datetime` format.
+    All input times can also be specified as `datetime` objects. Instances of `datetime.date` will be treated as
+    `YYYY-MM-DD` and instance of `datetime.datetime` will be treated as `YYYY-MM-DDThh:mm:ss`.
 
     :param time: An input time
     :type time: str or datetime.datetime
@@ -159,7 +160,7 @@ def parse_time_interval(time):
         elif isinstance(time, (tuple, list)) and len(time) == 2:
             date_interval = (parse_time(time[0]), parse_time(time[1]))
         else:
-            raise ValueError('Time must be a string or tuple of 2 strings or list of 2 strings')
+            raise ValueError('Time must be a string/datetime object or tuple/list of 2 strings/datetime objects')
 
     if 'T' not in date_interval[0]:
         date_interval = (date_interval[0] + 'T00:00:00', date_interval[1])

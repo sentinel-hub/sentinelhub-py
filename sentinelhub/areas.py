@@ -4,8 +4,8 @@ Module for working with large geographical areas
 import itertools
 from abc import ABC, abstractmethod
 
+import shapely.ops
 from shapely.geometry import Polygon, MultiPolygon
-from shapely.ops import cascaded_union
 
 from .common import BBox
 from .constants import CRS, DataSource
@@ -60,7 +60,7 @@ class AreaSplitter(ABC):
         :return: A multipolygon which is a union of shapes in given list
         :rtype: shapely.geometry.multipolygon.MultiPolygon
         """
-        return cascaded_union(shape_list)
+        return shapely.ops.cascaded_union(shape_list)
 
     @abstractmethod
     def _make_split(self):
@@ -285,7 +285,6 @@ class OsmSplitter(AreaSplitter):
         :return: Bounding box of entire world
         :rtype: sentinelhub.common.BBox
         """
-        # pylint: disable=invalid-unary-operand-type
         return BBox((-self.POP_WEB_MAX, -self.POP_WEB_MAX, self.POP_WEB_MAX, self.POP_WEB_MAX), crs=CRS.POP_WEB)
 
     def _recursive_split(self, bbox, zoom_level, column, row):

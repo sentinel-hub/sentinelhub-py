@@ -2,14 +2,12 @@
 Main module for obtaining data.
 """
 
-# pylint: disable=too-many-instance-attributes
-
 import datetime
 import os.path
 import logging
 import warnings
+import copy
 from abc import ABC, abstractmethod
-from copy import deepcopy
 
 from .ogc import OgcImageService
 from .fis import FisService
@@ -43,6 +41,8 @@ class DataRequest(ABC):
 
     @abstractmethod
     def create_request(self):
+        """ An abstract method for logic of creating download requests
+        """
         raise NotImplementedError
 
     def get_download_list(self):
@@ -74,6 +74,11 @@ class DataRequest(ABC):
         return [request.url for request in self.download_list]
 
     def is_valid_request(self):
+        """ Checks if initialized class instance successfully prepared a list of items to download
+
+        :return: `True` if request is valid and `False` otherwise
+        :rtype: bool
+        """
         return isinstance(self.download_list, list)
 
     def get_data(self, *, save_data=False, data_filter=None, redownload=False, max_threads=None,
@@ -90,8 +95,8 @@ class DataRequest(ABC):
         :param data_filter: Used to specify which items will be returned by the method and in which order. E.g. with
             ``data_filter=[0, 2, -1]`` the method will return only 1st, 3rd and last item. Default filter is ``None``.
         :type data_filter: list(int) or None
-        :param max_threads: number of threads to use when downloading data; default is ``max_threads=None`` which uses
-                            ``5*N`` workers where ``N`` is the number of processors on the system
+        :param max_threads: number of threads to use when downloading data; default is ``max_threads=None`` which
+            by default uses the number of processors on the system
         :type max_threads: int
         :param raise_download_errors: If ``True`` any error in download process should be raised as
             ``DownloadFailedException``. If ``False`` failed downloads will only raise warnings and the method will
@@ -114,8 +119,8 @@ class DataRequest(ABC):
         :type data_filter: list(int) or None
         :param redownload: data is redownloaded if ``redownload=True``. Default is ``False``
         :type redownload: bool
-        :param max_threads: number of threads to use when downloading data; default is ``max_threads=None`` which uses
-                            ``5*N`` workers where ``N`` is the number of processors on the system
+        :param max_threads: number of threads to use when downloading data; default is ``max_threads=None`` which
+            by default uses the number of processors on the system
         :type max_threads: int
         :param raise_download_errors: If ``True`` any error in download process should be raised as
             ``DownloadFailedException``. If ``False`` failed downloads will only raise warnings.
@@ -168,7 +173,7 @@ class DataRequest(ABC):
                 data_list.append(None)
 
         if is_repeating_filter:
-            data_list = [deepcopy(data_list[index]) for index in mapping_list]
+            data_list = [copy.deepcopy(data_list[index]) for index in mapping_list]
 
         return data_list
 
@@ -332,8 +337,6 @@ class OgcRequest(DataRequest):
             service call but tiles and dates will stay the same.
         :type reset_wfs_iterator: bool
         """
-        # pylint: disable=arguments-differ
-
         if reset_wfs_iterator:
             self.wfs_iterator = None
 
@@ -701,8 +704,6 @@ class GeopediaImageRequest(GeopediaRequest):
             repeat a service call but tiles and dates will stay the same.
         :type reset_gpd_iterator: bool
         """
-        # pylint: disable=arguments-differ
-
         if reset_gpd_iterator:
             self.gpd_iterator = None
 

@@ -2,7 +2,7 @@
 [![Supported Python versions](https://img.shields.io/pypi/pyversions/sentinelhub.svg?style=flat-square)](https://pypi.org/project/sentinelhub/)
 [![Build status](https://travis-ci.org/sentinel-hub/sentinelhub-py.svg?branch=master)](https://travis-ci.org/sentinel-hub/sentinelhub-py)
 [![Docs status](https://readthedocs.org/projects/sentinelhub-py/badge/?version=latest)](http://sentinelhub-py.readthedocs.io/en/latest/)
-[![Overall downloads](http://pepy.tech/badge/sentinelhub)](http://pepy.tech/project/sentinelhub)
+[![Overall downloads](https://pepy.tech/badge/sentinelhub)](https://pepy.tech/project/sentinelhub)
 [![Last month downloads](https://pepy.tech/badge/sentinelhub/month)](https://pepy.tech/project/sentinelhub)
 [![](https://img.shields.io/pypi/l/sentinelhub.svg)](https://github.com/sentinel-hub/sentinelhub-py/blob/master/LICENSE.md)
 
@@ -30,6 +30,9 @@ To install the package manually, clone the repository and
 $ python setup.py build
 $ python setup.py install
 ```
+
+Before installing `sentinelhub-py` on **Windows** it is recommended to install package `shapely` from
+[Unofficial Windows wheels repository](https://www.lfd.uci.edu/~gohlke/pythonlibs/)
 
 Once installed or updated the package can be configured according to [instructions in documentation](http://sentinelhub-py.readthedocs.io/en/latest/configure.html).
 

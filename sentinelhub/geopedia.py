@@ -183,9 +183,6 @@ class GeopediaImageService(GeopediaService):
 
 
 class GeopediaFeatureIterator(GeopediaService):
-
-    FILTER_EXPRESSION = 'filterExpression'
-
     """Iterator for Geopedia Vector Service
 
     :type layer: str
@@ -198,6 +195,8 @@ class GeopediaFeatureIterator(GeopediaService):
         file is taken.
     :type base_url: str or None
     """
+    FILTER_EXPRESSION = 'filterExpression'
+
     def __init__(self, layer, bbox=None, query_filter=None, **kwargs):
         super().__init__(**kwargs)
 

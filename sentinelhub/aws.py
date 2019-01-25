@@ -2,15 +2,15 @@
 Module for obtaining data from Amazon Web Service
 """
 
-from abc import ABC, abstractmethod
 import logging
 import os.path
+from abc import ABC, abstractmethod
 
+from .config import SHConfig
+from .constants import AwsConstants, EsaSafeType, MimeType, DataSource
 from .download import DownloadRequest, get_json, AwsDownloadFailedException
 from .opensearch import get_tile_info, get_tile_info_id
 from .time_utils import parse_time
-from .config import SHConfig
-from .constants import AwsConstants, EsaSafeType, MimeType, DataSource
 
 
 LOGGER = logging.getLogger(__name__)
@@ -41,6 +41,8 @@ class AwsService(ABC):
 
     @abstractmethod
     def get_requests(self):
+        """ Abstract class for joining together download requests
+        """
         raise NotImplementedError
 
     def _parse_bands(self, band_input):
@@ -566,8 +568,13 @@ class AwsTile(AwsService):
         return int(tile_info['properties']['s3Path'].split('/')[-1])
 
     def tile_is_valid(self):
+        """ Checks if tile has tile info and valid timestamp
+
+        :return: `True` if tile is valid and `False` otherwise
+        :rtype: bool
+        """
         return self.tile_info is not None \
-               and (self.datetime == self.date or self.datetime == self.parse_datetime(self.tile_info['timestamp']))
+            and (self.datetime == self.date or self.datetime == self.parse_datetime(self.tile_info['timestamp']))
 
     def get_tile_info(self):
         """

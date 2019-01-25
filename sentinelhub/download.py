@@ -5,23 +5,23 @@ Module for downloading data
 import logging
 import os
 import time
-import concurrent.futures
-import requests
-import json
-import boto3
 import warnings
+import json
+import concurrent.futures
+from io import BytesIO
+from xml.etree import ElementTree
+
+import requests
+import boto3
 import numpy as np
 import tifffile as tiff
-
-from io import BytesIO
 from PIL import Image
-from xml.etree import ElementTree
 from botocore.exceptions import NoCredentialsError
 
-from .os_utils import create_parent_folder, sys_is_windows
 from .constants import MimeType, RequestType
 from .config import SHConfig
-from .io_utils import get_jp2_bit_depth, _fix_jp2_image
+from .io_utils import get_jp2_bit_depth, fix_jp2_image
+from .os_utils import create_parent_folder, sys_is_windows
 
 
 warnings.simplefilter('ignore', Image.DecompressionBombWarning)
@@ -29,7 +29,8 @@ LOGGER = logging.getLogger(__name__)
 
 
 class DownloadFailedException(Exception):
-    pass
+    """ General exception which is raised whenever download fails
+    """
 
 
 class AwsDownloadFailedException(DownloadFailedException):
@@ -183,8 +184,8 @@ def download_data(request_list, redownload=False, max_threads=None):
     :param redownload: if ``True``, download again the data, although it was already downloaded and is available
                         on the disk. Default is ``False``.
     :type redownload: bool
-    :param max_threads: number of threads to use. Default is ``max_threads=None`` (``5*N`` where ``N`` = nr. of cores on
-                        the system)
+    :param max_threads: number of threads to use when downloading data; default is ``max_threads=None`` which
+            by default uses the number of processors on the system
     :type max_threads: int
     :return: list of Futures holding downloaded data, where each element in the list corresponds to an element
                 in the download request list.
@@ -450,7 +451,7 @@ def decode_image(data, image_type):
         if image_type is MimeType.JP2:
             try:
                 bit_depth = get_jp2_bit_depth(bytes_data)
-                image = _fix_jp2_image(image, bit_depth)
+                image = fix_jp2_image(image, bit_depth)
             except ValueError:
                 pass
 

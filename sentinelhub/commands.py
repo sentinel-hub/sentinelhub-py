@@ -4,10 +4,10 @@ Module that implements command line interface for the package
 
 import click
 
-from .data_request import get_safe_format, download_safe_format
-from .download import download_data, DownloadRequest
 from .config import SHConfig
 from .constants import DataSource
+from .data_request import get_safe_format, download_safe_format
+from .download import download_data, DownloadRequest
 
 
 @click.command()
@@ -67,7 +67,9 @@ def aws(product, tile, folder, redownload, info, entire, bands, l2a):
             download_safe_format(product_id=product, folder=folder, redownload=redownload, bands=band_list)
 
 
-def config_options(func):
+def _config_options(func):
+    """ A helper function which joins click.option functions of each parameter from config.json
+    """
     for param in SHConfig().get_params()[-1::-1]:
         func = click.option('--{}'.format(param), param,
                             help='Set new values to configuration parameter "{}"'.format(param))(func)
@@ -77,7 +79,7 @@ def config_options(func):
 @click.command()
 @click.option('--show', is_flag=True, default=False, help='Show current configuration')
 @click.option('--reset', is_flag=True, default=False, help='Reset configuration to initial state')
-@config_options
+@_config_options
 def config(show, reset, **params):
     """Inspect and configure parameters in your local sentinelhub configuration file
 

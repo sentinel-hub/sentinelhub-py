@@ -18,7 +18,8 @@ LOGGER = logging.getLogger(__name__)
 
 
 class TileMissingException(Exception):
-    pass
+    """ This exception is raised when requested tile is missing at Sentinel Hub Opensearch service
+    """
 
 
 def get_tile_info_id(tile_id):
