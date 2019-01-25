@@ -160,7 +160,7 @@ def parse_time_interval(time):
         elif isinstance(time, (tuple, list)) and len(time) == 2:
             date_interval = (parse_time(time[0]), parse_time(time[1]))
         else:
-            raise ValueError('Time must be a string or tuple of 2 strings or list of 2 strings')
+            raise ValueError('Time must be a string/datetime object or tuple/list of 2 strings/datetime objects')
 
     if 'T' not in date_interval[0]:
         date_interval = (date_interval[0] + 'T00:00:00', date_interval[1])
