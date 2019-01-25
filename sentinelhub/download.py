@@ -184,8 +184,8 @@ def download_data(request_list, redownload=False, max_threads=None):
     :param redownload: if ``True``, download again the data, although it was already downloaded and is available
                         on the disk. Default is ``False``.
     :type redownload: bool
-    :param max_threads: number of threads to use. Default is ``max_threads=None`` (``5*N`` where ``N`` = nr. of cores on
-                        the system)
+    :param max_threads: number of threads to use when downloading data; default is ``max_threads=None`` which
+            by default uses the number of processors on the system
     :type max_threads: int
     :return: list of Futures holding downloaded data, where each element in the list corresponds to an element
                 in the download request list.
