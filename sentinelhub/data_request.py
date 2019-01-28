@@ -352,9 +352,9 @@ class OgcRequest(DataRequest):
         If a time range is specified the result is a list of all scenes between the specified dates conforming to
         the cloud coverage criteria. Most recent acquisition being first in the list.
 
-        :return: list of all available Sentinel-2 acquisitions within request's time interval and
+        :return: list of all available Sentinel-2 acquisition times within request's time interval and
                 acceptable cloud coverage.
-        :rtype: list of strings of form `YYYY:MM:DDThh:mm:ss` representing Sentinel-2 image acquisition time
+        :rtype: list(datetime.datetime) or [None]
         """
         return OgcImageService(instance_id=self.instance_id).get_dates(self)
 
@@ -521,19 +521,19 @@ class FisRequest(OgcRequest):
             Examples: ``'2016-01-01'``, or ``('2016-01-01', ' 2016-01-31')``
     :type time: str or (str, str) or datetime.date or (datetime.date, datetime.date) or datetime.datetime or
                 (datetime.datetime, datetime.datetime)
-    :param resolution: Specifies the spatial resolution, in meters per pixel, of the image from which the statistics
-                       are to be estimated. When using CRS=EPSG:4326 one has to add the "m" suffix to
-                       enforce resolution in meters per pixel (e.g. RESOLUTION=10m).
-    :type str
     :param geometry_list: A WKT representation of a geometry describing the region of interest.
                      Note that WCS 1.1.1 standard is used here, so for EPSG:4326 coordinates should be
                      in latitude/longitude order.
     :type geometry_list: list, [common.Geometry or common.Bbox]
-    :param histogram_type: type of histogram
-    :type histogram_type: Enum HistogramType
-    :param bins: The number of bins (a positive integer) in the histogram.
-                 When this parameter is absent, no histogram is computed.
+    :param resolution: Specifies the spatial resolution, in meters per pixel, of the image from which the statistics
+                       are to be estimated. When using CRS=EPSG:4326 one has to add the "m" suffix to
+                       enforce resolution in meters per pixel (e.g. RESOLUTION=10m).
+    :type str
+    :param bins: The number of bins (a positive integer) in the histogram. If this parameter is absent no histogram
+        is computed.
     :type: str
+    :param histogram_type: type of histogram
+    :type histogram_type: HistogramType
     :param data_source: Source of requested satellite data. It has to be the same as defined in Sentinel Hub
         Configurator for the given layer. Default is Sentinel-2 L1C.
     :type data_source: constants.DataSource
@@ -552,7 +552,7 @@ class FisRequest(OgcRequest):
     :param data_folder: location of the directory where the fetched data will be saved.
     :type data_folder: str
     """
-    def __init__(self, layer, time, geometry_list, *, resolution='10m', histogram_type=None, bins=None, **kwargs):
+    def __init__(self, layer, time, geometry_list, *, resolution='10m', bins=None, histogram_type=None, **kwargs):
         self.geometry_list = geometry_list
         self.resolution = resolution
         self.bins = bins
@@ -566,10 +566,18 @@ class FisRequest(OgcRequest):
         Create a list of DownloadRequests for all Sentinel-2 acquisitions within request's time interval and
         acceptable cloud coverage.
         """
-        # pylint: disable=arguments-differ
-
         fis_service = FisService(instance_id=self.instance_id)
         self.download_list = fis_service.get_request(self)
+
+    def get_dates(self):
+        """ This method is not supported for FIS request
+        """
+        raise NotImplementedError
+
+    def get_tiles(self):
+        """ This method is not supported for FIS request
+        """
+        raise NotImplementedError
 
 
 class GeopediaRequest(DataRequest):

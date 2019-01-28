@@ -54,8 +54,6 @@ class FisService(OgcImageService):
         :return: filename for this request
         :rtype: str
         """
-        # pylint: disable=arguments-differ
-
         date_interval = parse_time_interval(request.time)
 
         if isinstance(geometry, Geometry):
