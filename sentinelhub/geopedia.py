@@ -196,7 +196,7 @@ class GeopediaImageService(GeopediaService):
             filename = OgcImageService.finalize_filename(item['niceName'].replace(' ', '_'))
         else:
             filename = OgcImageService.finalize_filename(
-                '_'.join([str(request.layer), item['objectPath'].rsplit('/', 1)[-1]]),
+                '_'.join([str(GeopediaService._parse_layer(request.layer)), item['objectPath'].rsplit('/', 1)[-1]]),
                 request.image_format
             )
 
