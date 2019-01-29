@@ -4,10 +4,10 @@ Module with enum constants and utm utils
 
 import itertools as it
 import mimetypes
-import utm
-
-from pyproj import Proj
 from enum import Enum
+
+import utm
+from pyproj import Proj
 
 from .config import SHConfig
 from ._version import __version__
@@ -21,6 +21,11 @@ class PackageProps:
 
     @staticmethod
     def get_version():
+        """ Returns package version
+
+        :return: package version
+        :rtype: str
+        """
         return __version__
 
 
@@ -111,7 +116,6 @@ class DataSource(Enum):
     Supported types are SENTINEL2_L1C, SENTINEL2_L2A, LANDSAT8, SENTINEL1_IW, SENTINEL1_EW, SENTINEL1_EW_SH, DEM, MODIS,
     LANDSAT5, LANDSAT7, SENTINEL3, SENTINEL5P, ENVISAT_MERIS, SENTINEL2_L3B, LANDSAT8_L2A
     """
-    # pylint: disable=unsubscriptable-object
     SENTINEL2_L1C = (_Source.SENTINEL2, _ProcessingLevel.L1C)
     SENTINEL2_L2A = (_Source.SENTINEL2, _ProcessingLevel.L2A)
     SENTINEL1_IW = (_Source.SENTINEL1, _ProcessingLevel.GRD, _Acquisition.IW, _Polarisation.DV, _Resolution.HIGH,
@@ -384,6 +388,16 @@ class CustomUrlParam(Enum):
         return param.value
 
 
+class HistogramType(Enum):
+    """ Enum class for types of histogram supported by Sentinel Hub FIS service
+
+    Supported histogram types are EQUALFREQUENCY, EQUIDISTANT and STREAMING
+    """
+    EQUALFREQUENCY = 'equalfrequency'
+    EQUIDISTANT = 'equidistant'
+    STREAMING = 'streaming'
+
+
 class MimeType(Enum):
     """ Enum class to represent supported image file formats
 
@@ -507,6 +521,13 @@ class MimeType(Enum):
 
     @staticmethod
     def from_string(mime_type_str):
+        """ Parses mime type from a file extension string
+
+        :param mime_type_str: A file extension string
+        :type mime_type_str: str
+        :return: A mime type enum
+        :rtype: MimeType
+        """
         if mime_type_str == 'jpeg':
             return MimeType.JPG
 

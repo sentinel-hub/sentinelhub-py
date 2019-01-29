@@ -244,7 +244,7 @@ class Geometry:
     """ shapely Polygon + CRS
 
     :param polygon: shapely Polygon or MultiPolygon
-    :type: shapely.geometry.Polyong or shapely.geometry.MultiPolygon
+    :type: shapely.geometry.Polygon or shapely.geometry.MultiPolygon
     :param crs: Coordinate Reference System that bbox is in. Expect one of the constants from the ``const.CRS`` enum.
     :type crs: constants.CRS
     """
@@ -269,6 +269,11 @@ class Geometry:
         return self.polygon
 
     def to_wkt(self):
+        """ Transforms geometry object into `Well-known text` format
+
+        :return: string in WKT format
+        :rtype: str
+        """
         if self.crs == CRS.WGS84:
             polygon = transform(lambda x, y: (y, x), self.polygon)
         else:

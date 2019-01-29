@@ -102,6 +102,7 @@ class TestTime(TestSentinelHub):
                 self.assertEqual(parsed_time, exp_time, 'Expected {}, got {}'.format(exp_time, parsed_time))
 
     def test_parse_time_interval(self):
+        current_time = datetime.datetime.now()
         test_pairs = [
             ('2015.4.12', ('2015-04-12T00:00:00', '2015-04-12T23:59:59')),
             ('2015-4-12T5:4:3', ('2015-04-12T05:04:03', '2015-04-12T05:04:03')),
@@ -110,6 +111,8 @@ class TestTime(TestSentinelHub):
             (datetime.date(year=2015, month=2, day=3), ('2015-02-03T00:00:00', '2015-02-03T23:59:59')),
             ((datetime.date(year=2015, month=2, day=3), datetime.date(year=2015, month=2, day=15)),
              ('2015-02-03T00:00:00', '2015-02-15T23:59:59')),
+            ((datetime.datetime(year=2005, month=12, day=16, hour=23, minute=2, second=15), current_time),
+             ('2005-12-16T23:02:15', current_time.isoformat()))
         ]
 
         for idx, (input_time, exp_interval) in enumerate(test_pairs):

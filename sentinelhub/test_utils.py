@@ -6,13 +6,21 @@ import unittest
 import os
 import shutil
 import logging
-import numpy as np
 import inspect
+
+import numpy as np
 
 from .config import SHConfig
 
 
 class TestSentinelHub(unittest.TestCase):
+    """ Class implementing common functionalities of unit tests for working with `sentinelhub-py` package:
+
+    - reading configuration parameters from environmental variables and saving them to `config.json`,
+    - setting logger,
+    - handling input and output data folders,
+    - method for testing statistics of a numpy data array.
+    """
 
     CONFIG = None
     LOGGER = None
@@ -23,13 +31,6 @@ class TestSentinelHub(unittest.TestCase):
     OUTPUT_FOLDER = None
     CLEAR_OUTPUTS = True
 
-    """ Class implementing common functionalities of unit tests for working with `sentinelhub-py` package:
-
-    - reading configuration parameters from environmental variables and saving them to `config.json`,
-    - setting logger,
-    - handling input and output data folders,
-    - method for testing statistics of a numpy data array.
-    """
     @classmethod
     def setUpClass(cls):
         """ A general set up class

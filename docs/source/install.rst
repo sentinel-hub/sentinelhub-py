@@ -15,5 +15,9 @@ or manually::
 $ python setup.py build
 $ python setup.py install
 
+Before installing ``sentinelhub-py`` on **Windows** it is recommended to install package ``shapely`` from
+Unofficial Windows wheels repository (link_).
+
 
 .. _Github: https://github.com/sentinel-hub/sentinelhub-py
+.. _link: https://www.lfd.uci.edu/~gohlke/pythonlibs/

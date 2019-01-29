@@ -4,9 +4,9 @@ Module for creating .SAFE structure with data from AWS
 
 import warnings
 
-from .download import get_xml
-from .constants import AwsConstants, EsaSafeType, MimeType, DataSource
 from .aws import AwsProduct, AwsTile
+from .constants import AwsConstants, EsaSafeType, MimeType, DataSource
+from .download import get_xml
 
 
 class SafeProduct(AwsProduct):

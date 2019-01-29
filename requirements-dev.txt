@@ -1,5 +1,5 @@
-pytest>=3.0.0
+pytest>=4.0.0
 pytest-cov
-pylint
+pylint>=2.2.0
 twine
 radon

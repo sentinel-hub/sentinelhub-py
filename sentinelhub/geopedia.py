@@ -26,6 +26,28 @@ class GeopediaService:
     def __init__(self, base_url=None):
         self.base_url = SHConfig().geopedia_rest_url if base_url is None else base_url
 
+    @staticmethod
+    def _parse_layer(layer, return_wms_name=False):
+        """ Helper function for parsing Geopedia layer name. If WMS name is required and wrong form is given it will
+        return a string with 'ttl' at the beginning. (WMS name can also start with something else, e.g. only 't'
+        instead 'ttl', therefore anything else is also allowed.) Otherwise it will parse it into a number.
+        """
+        if not isinstance(layer, (int, str)):
+            raise ValueError("Parameter 'layer' should be an integer or a string, but {} found".format(type(layer)))
+
+        if return_wms_name:
+            if isinstance(layer, int) or layer.isdigit():
+                return 'ttl{}'.format(layer)
+            return layer
+
+        if isinstance(layer, str):
+            stripped_layer = layer.lstrip('tl')
+            if not stripped_layer.isdigit():
+                raise ValueError("Parameter 'layer' has unsupported value {}, expected an integer".format(layer))
+            layer = stripped_layer
+
+        return int(layer)
+
 
 class GeopediaSession(GeopediaService):
     """ For retrieving data from Geopedia vector and raster layers it is required to make a session. This class handles
@@ -89,6 +111,16 @@ class GeopediaWmsService(GeopediaService, OgcImageService):
     def __init__(self, base_url=None):
         super().__init__(base_url=SHConfig().geopedia_wms_url if base_url is None else base_url)
 
+    def get_request(self, request):
+        """Get a list of DownloadRequests for all data that are under the given field in the table of a Geopedia layer.
+
+        :return: list of items which have to be downloaded
+        :rtype: list(DownloadRequest)
+        """
+        request.layer = self._parse_layer(request.layer, return_wms_name=True)
+
+        return super().get_request(request)
+
     def get_dates(self, request):
         """ Geopedia does not support date queries
 
@@ -118,11 +150,10 @@ class GeopediaImageService(GeopediaService):
         self.gpd_iterator = None
 
     def get_request(self, request):
-        """Get download requests
+        """Get a list of DownloadRequests for all data that are under the given field in the table of a Geopedia layer.
 
-        Get a list of DownloadRequests for all data that are under the given field of the Geopedia Vector layer.
-
-        :return: list of DownloadRequests
+        :return: list of items which have to be downloaded
+        :rtype: list(DownloadRequest)
         """
         return [DownloadRequest(url=self._get_url(item),
                                 filename=self._get_filename(request, item),
@@ -165,7 +196,7 @@ class GeopediaImageService(GeopediaService):
             filename = OgcImageService.finalize_filename(item['niceName'].replace(' ', '_'))
         else:
             filename = OgcImageService.finalize_filename(
-                '_'.join([str(request.layer), item['objectPath'].rsplit('/', 1)[-1]]),
+                '_'.join([str(GeopediaService._parse_layer(request.layer)), item['objectPath'].rsplit('/', 1)[-1]]),
                 request.image_format
             )
 
@@ -183,11 +214,9 @@ class GeopediaImageService(GeopediaService):
 
 
 class GeopediaFeatureIterator(GeopediaService):
-
-    FILTER_EXPRESSION = 'filterExpression'
-
     """Iterator for Geopedia Vector Service
 
+    :param layer: Geopedia layer which contains requested data
     :type layer: str
     :param bbox: Bounding box of the requested image. Its coordinates must be
                  in the CRS.POP_WEB (EPSG:3857) coordinate system.
@@ -198,10 +227,12 @@ class GeopediaFeatureIterator(GeopediaService):
         file is taken.
     :type base_url: str or None
     """
+    FILTER_EXPRESSION = 'filterExpression'
+
     def __init__(self, layer, bbox=None, query_filter=None, **kwargs):
         super().__init__(**kwargs)
 
-        self.layer = layer
+        self.layer = self._parse_layer(layer)
 
         self.query = {}
         if bbox is not None:
@@ -221,7 +252,7 @@ class GeopediaFeatureIterator(GeopediaService):
         self.layer_size = None
         self.index = 0
 
-        self.next_page_url = '{}data/v2/search/tables/{}/features'.format(self.base_url, layer)
+        self.next_page_url = '{}data/v2/search/tables/{}/features'.format(self.base_url, self.layer)
 
     def __iter__(self):
         self.index = 0

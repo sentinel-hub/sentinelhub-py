@@ -4,18 +4,19 @@ Module for working with Sentinel Hub OGC services
 
 import logging
 import datetime
+from base64 import b64encode
+from urllib.parse import urlencode
+
 import shapely.geometry
 import shapely.wkt
 import shapely.ops
 
-from base64 import b64encode
-from urllib.parse import urlencode
-
-from .time_utils import parse_time_interval
-from .download import DownloadRequest, get_json
 from .constants import ServiceType, DataSource, MimeType, CRS, OgcConstants, CustomUrlParam
 from .config import SHConfig
 from .geo_utils import get_image_dimension
+from .common import BBox, Geometry
+from .download import DownloadRequest, get_json
+from .time_utils import parse_time_interval
 
 LOGGER = logging.getLogger(__name__)
 
@@ -112,12 +113,12 @@ class OgcImageService(OgcService):
         :return: list of DownloadRequests
         """
         size_x, size_y = self.get_image_dimensions(request)
-        return [DownloadRequest(url=self.get_url(request, date, size_x, size_y),
+        return [DownloadRequest(url=self.get_url(request=request, date=date, size_x=size_x, size_y=size_y),
                                 filename=self.get_filename(request, date, size_x, size_y),
                                 data_type=request.image_format, headers=OgcConstants.HEADERS)
                 for date in self.get_dates(request)]
 
-    def get_url(self, request, date, size_x, size_y):
+    def get_url(self, request, *, date=None, size_x=None, size_y=None, geometry=None):
         """ Returns url to Sentinel Hub's OGC service for the product specified by the OgcRequest and date.
 
         :param request: OGC-type request with specified bounding box, cloud coverage for specific product.
@@ -128,7 +129,32 @@ class OgcImageService(OgcService):
         :type size_x: int or str
         :param size_y: vertical image dimension
         :type size_y: int or str
+        :type geometry: list of BBox or Geometry
+        :return:  dictionary with parameters
         :return: url to Sentinel Hub's OGC service for this product.
+        :rtype: str
+        """
+        url = self.get_base_url(request)
+        authority = self.instance_id if hasattr(self, 'instance_id') else request.theme
+
+        params = self._get_common_url_parameters(request)
+        if request.service_type in (ServiceType.WMS, ServiceType.WCS):
+            params = {**params, **self._get_wms_wcs_url_parameters(request, date)}
+        if request.service_type is ServiceType.WMS:
+            params = {**params, **self._get_wms_url_parameters(request, size_x, size_y)}
+        elif request.service_type is ServiceType.WCS:
+            params = {**params, **self._get_wcs_url_parameters(request, size_x, size_y)}
+        elif request.service_type is ServiceType.FIS:
+            params = {**params, **self._get_fis_parameters(request, geometry)}
+
+        return '{}/{}?{}'.format(url, authority, urlencode(params))
+
+    def get_base_url(self, request):
+        """ Creates base url string.
+
+        :param request: OGC-type request with specified bounding box, cloud coverage for specific product.
+        :type request: OgcRequest or GeopediaRequest
+        :return: base string for url to Sentinel Hub's OGC service for this product.
         :rtype: str
         """
         url = self.base_url + request.service_type.value
@@ -139,39 +165,20 @@ class OgcImageService(OgcService):
         if hasattr(request, 'data_source') and request.data_source not in DataSource.get_available_sources():
             raise ValueError("{} is not available for service at ogc_base_url={}".format(request.data_source,
                                                                                          SHConfig().ogc_base_url))
+        return url
 
+    @staticmethod
+    def _get_common_url_parameters(request):
+        """ Returns parameters common dictionary for WMS, WCS and FIS request.
+
+        :param request: OGC-type request with specified bounding box, cloud coverage for specific product.
+        :type request: OgcRequest or GeopediaRequest
+        :return:  dictionary with parameters
+        :rtype: dict
+        """
         params = {
-            'SERVICE': request.service_type.value,
-            'BBOX': request.bbox.__str__(reverse=True) if request.bbox.get_crs() is CRS.WGS84 else str(request.bbox),
-            'FORMAT': MimeType.get_string(request.image_format),
-            'CRS': CRS.ogc_string(request.bbox.get_crs()),
+            'SERVICE': request.service_type.value
         }
-
-        if request.service_type is ServiceType.WMS:
-            params = {**params,
-                      **{
-                          'WIDTH': size_x,
-                          'HEIGHT': size_y,
-                          'LAYERS': request.layer,
-                          'REQUEST': 'GetMap',
-                          'VERSION': '1.3.0'
-                      }}
-        elif request.service_type is ServiceType.WCS:
-            params = {**params,
-                      **{
-                          'RESX': size_x,
-                          'RESY': size_y,
-                          'COVERAGE': request.layer,
-                          'REQUEST': 'GetCoverage',
-                          'VERSION': '1.1.2'
-                      }}
-
-        if date is not None:
-            start_date = date if request.time_difference < datetime.timedelta(
-                seconds=0) else date - request.time_difference
-            end_date = date if request.time_difference < datetime.timedelta(
-                seconds=0) else date + request.time_difference
-            params['TIME'] = '{}/{}'.format(start_date.isoformat(), end_date.isoformat())
 
         if hasattr(request, 'maxcc'):
             params['MAXCC'] = 100.0 * request.maxcc
@@ -190,8 +197,111 @@ class OgcImageService(OgcService):
 
                 params[CustomUrlParam.GEOMETRY.value] = geometry.wkt
 
-        authority = self.instance_id if hasattr(self, 'instance_id') else request.theme
-        return '{}/{}?{}'.format(url, authority, urlencode(params))
+        return params
+
+    @staticmethod
+    def _get_wms_wcs_url_parameters(request, date):
+        """  Returns parameters common dictionary for WMS and WCS request.
+
+        :param request: OGC-type request with specified bounding box, cloud coverage for specific product.
+        :type request: OgcRequest or GeopediaRequest
+        :param date: acquisition date or None
+        :type date: datetime.datetime or None
+        :return:  dictionary with parameters
+        :rtype: dict
+        """
+        params = {
+            'BBOX': request.bbox.__str__(reverse=True) if request.bbox.get_crs() is CRS.WGS84 else str(request.bbox),
+            'FORMAT': MimeType.get_string(request.image_format),
+            'CRS': CRS.ogc_string(request.bbox.get_crs()),
+        }
+
+        if date is not None:
+            start_date = date if request.time_difference < datetime.timedelta(
+                seconds=0) else date - request.time_difference
+            end_date = date if request.time_difference < datetime.timedelta(
+                seconds=0) else date + request.time_difference
+            params['TIME'] = '{}/{}'.format(start_date.isoformat(), end_date.isoformat())
+
+        return params
+
+    @staticmethod
+    def _get_wms_url_parameters(request, size_x, size_y):
+        """ Returns parameters dictionary for WMS request.
+
+        :param request: OGC-type request with specified bounding box, cloud coverage for specific product.
+        :type request: OgcRequest or GeopediaRequest
+        :param size_x: horizontal image dimension
+        :type size_x: int or str
+        :param size_y: vertical image dimension
+        :type size_y: int or str
+        :return:  dictionary with parameters
+        :rtype: dict
+        """
+        return {
+            'WIDTH': size_x,
+            'HEIGHT': size_y,
+            'LAYERS': request.layer,
+            'REQUEST': 'GetMap',
+            'VERSION': '1.3.0'
+        }
+
+    @staticmethod
+    def _get_wcs_url_parameters(request, size_x, size_y):
+        """ Returns parameters dictionary for WCS request.
+
+        :param request: OGC-type request with specified bounding box, cloud coverage for specific product.
+        :type request: OgcRequest or GeopediaRequest
+        :param size_x: horizontal image dimension
+        :type size_x: int or str
+        :param size_y: vertical image dimension
+        :type size_y: int or str
+        :return:  dictionary with parameters
+        :rtype: dict
+        """
+        return {
+            'RESX': size_x,
+            'RESY': size_y,
+            'COVERAGE': request.layer,
+            'REQUEST': 'GetCoverage',
+            'VERSION': '1.1.2'
+        }
+
+    @staticmethod
+    def _get_fis_parameters(request, geometry):
+        """ Returns parameters dictionary for FIS request.
+
+        :param request: OGC-type request with specified bounding box, cloud coverage for specific product.
+        :type request: OgcRequest or GeopediaRequest
+        :param geometry: list of bounding boxes or geometries
+        :type geometry: list of BBox or Geometry
+        :return:  dictionary with parameters
+        :rtype: dict
+        """
+        date_interval = parse_time_interval(request.time)
+
+        params = {
+            'CRS': CRS.ogc_string(geometry.get_crs()),
+            'LAYER': request.layer,
+            'RESOLUTION': request.resolution,
+            'TIME': '{}/{}'.format(date_interval[0], date_interval[1])
+        }
+
+        if isinstance(geometry, Geometry):
+            params['GEOMETRY'] = geometry.to_wkt()
+        elif isinstance(geometry, BBox):
+            params['BBOX'] = geometry.__str__(reverse=True) if geometry.get_crs() is CRS.WGS84 else str(geometry)
+        else:
+            raise ValueError('Each geometry must be an instance of sentinelhub.{} or sentinelhub.{} but {} '
+                             'found'.format(BBox.__name__, Geometry.__name__, geometry))
+
+        if request.bins:
+            params['BINS'] = request.bins
+
+        if request.histogram_type:
+            params['TYPE'] = request.histogram_type.value
+
+        return params
 
     @staticmethod
     def get_filename(request, date, size_x, size_y):
@@ -201,8 +311,7 @@ class OgcImageService(OgcService):
         The files are stored in the folder specified by the user when initialising OGC-type
         of request. The name of the file has the following structure:
 
-        {service_type}_{layer}_{crs}_{bbox}_{time}_{size_x}X{size_y}_{custom_url_param}_
-        {custom_url_param_val}.{image_format}
+        {service_type}_{layer}_{crs}_{bbox}_{time}_{size_x}X{size_y}_*{custom_url_params}.{image_format}
 
         In case of `TIFF_d32f` a `'_tiff_depth32f'` is added at the end of the filename (before format suffix)
         to differentiate it from 16-bit float tiff.
@@ -218,43 +327,60 @@ class OgcImageService(OgcService):
         :return: filename for this request and date
         :rtype: str
         """
-        filename = '_'.join([str(request.service_type.value),
-                             request.layer,
-                             str(request.bbox.get_crs()).replace(':', ''),
-                             str(request.bbox).replace(',', '_'),
-                             '' if date is None else date.strftime("%Y-%m-%dT%H-%M-%S"),
-                             '{}X{}'.format(size_x, size_y)])
+        filename = '_'.join([
+            str(request.service_type.value),
+            request.layer,
+            str(request.bbox.get_crs()),
+            str(request.bbox).replace(',', '_'),
+            '' if date is None else date.strftime("%Y-%m-%dT%H-%M-%S"),
+            '{}X{}'.format(size_x, size_y)
+        ])
 
-        LOGGER.debug("filename=%s", filename)
+        filename = OgcImageService.filename_add_custom_url_params(filename, request)
 
+        return OgcImageService.finalize_filename(filename, request.image_format)
+
+    @staticmethod
+    def filename_add_custom_url_params(filename, request):
+        """ Adds custom url parameters to filename string
+
+        :param filename: Initial filename
+        :type filename: str
+        :param request: OGC-type request with specified bounding box, cloud coverage for specific product.
+        :type request: OgcRequest or GeopediaRequest
+        :return: Filename with custom url parameters in the name
+        :rtype: str
+        """
         if hasattr(request, 'custom_url_params') and request.custom_url_params is not None:
             for param, value in sorted(request.custom_url_params.items(),
                                        key=lambda parameter_item: parameter_item[0].value):
                 filename = '_'.join([filename, param.value, str(value)])
 
-        return OgcImageService.finalize_filename(filename, request.image_format)
+        return filename
 
     @staticmethod
-    def finalize_filename(filename, image_format=None):
+    def finalize_filename(filename, file_format=None):
         """ Replaces invalid characters in filename string, adds image extension and reduces filename length
 
         :param filename: Incomplete filename string
         :type filename: str
-        :param image_format: Format which will be used for filename extension
-        :type image_format: MimeType
+        :param file_format: Format which will be used for filename extension
+        :type file_format: MimeType
         :return: Final filename string
         :rtype: str
         """
         for char in [' ', '/', '\\', '|', ';', ':', '\n', '\t']:
             filename = filename.replace(char, '')
 
-        if image_format:
-            suffix = str(image_format.value)
-            if image_format.is_tiff_format() and image_format is not MimeType.TIFF:
+        if file_format:
+            suffix = str(file_format.value)
+            if file_format.is_tiff_format() and file_format is not MimeType.TIFF:
                 suffix = str(MimeType.TIFF.value)
-                filename = '_'.join([filename, str(image_format.value).replace(';', '_')])
+                filename = '_'.join([filename, str(file_format.value).replace(';', '_')])
 
             filename = '.'.join([filename[:254 - len(suffix)], suffix])
+
+        LOGGER.debug("filename=%s", filename)
 
         return filename  # Even in UNIX systems filename must have at most 255 bytes
 
