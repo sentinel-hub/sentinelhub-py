@@ -14,7 +14,7 @@ import shapely.ops
 from .constants import ServiceType, DataSource, MimeType, CRS, OgcConstants, CustomUrlParam
 from .config import SHConfig
 from .geo_utils import get_image_dimension
-from .common import BBox, Geometry
+from .geometry import BBox, Geometry
 from .download import DownloadRequest, get_json
 from .time_utils import parse_time_interval
 
@@ -460,7 +460,7 @@ class WebFeatureService(OgcService):
     The data is in the order returned by Sentinel Hub WFS service.
 
     :param bbox: Bounding box of the requested image. Coordinates must be in the specified coordinate reference system.
-    :type bbox: common.BBox
+    :type bbox: geometry.BBox
     :param time_interval: interval with start and end date of the form YYYY-MM-DDThh:mm:ss or YYYY-MM-DD
     :type time_interval: (str, str)
     :param data_source: Source of requested satellite data. Default is Sentinel-2 L1C data.

@@ -220,7 +220,7 @@ class GeopediaFeatureIterator(GeopediaService):
     :type layer: str
     :param bbox: Bounding box of the requested image. Its coordinates must be
                  in the CRS.POP_WEB (EPSG:3857) coordinate system.
-    :type bbox: common.BBox
+    :type bbox: BBox
     :param query_filter: Query string used for filtering returned features.
     :type query_filter: str
     :param base_url: Base url of Geopedia REST services. If ``None``, the url specified in the configuration

@@ -19,7 +19,7 @@ def bbox_to_dimensions(bbox, resolution):
     rounded to nearest integers
 
     :param bbox: bounding box
-    :type bbox: common.BBox
+    :type bbox: geometry.BBox
     :param resolution: Resolution of desired image in meters. It can be a single number or a tuple of two numbers -
     resolution in horizontal and resolution in vertical direction.
     :type resolution: float or (float, float)
@@ -39,7 +39,7 @@ def bbox_to_resolution(bbox, width, height):
     """ Calculates pixel resolution in meters for a given bbox of a given width and height.
 
     :param bbox: bounding box
-    :type bbox: common.BBox
+    :type bbox: geometry.BBox
     :param width: width of bounding box in pixels
     :type width: int
     :param height: height of bounding box in pixels
@@ -59,7 +59,7 @@ def get_image_dimension(bbox, width=None, height=None):
     fit the bounding box dimensions
 
     :param bbox: bounding box
-    :type bbox: common.BBox
+    :type bbox: geometry.BBox
     :param width: image width or None if height is unknown
     :type width: int or None
     :param height: image height or None if height is unknown
@@ -79,9 +79,9 @@ def to_utm_bbox(bbox):
     """ Transform bbox into UTM CRS
 
     :param bbox: bounding box
-    :type bbox: common.BBox
+    :type bbox: geometry.BBox
     :return: bounding box in UTM CRS
-    :rtype: common.BBox
+    :rtype: geometry.BBox
     """
     if CRS.is_utm(bbox.get_crs()):
         return bbox
@@ -237,11 +237,11 @@ def transform_bbox(bbox, target_crs):
     """ Maps bbox from current crs to target_crs
 
     :param bbox: bounding box
-    :type bbox: common.BBox
+    :type bbox: geometry.BBox
     :param target_crs: target CRS
     :type target_crs: constants.CRS
     :return: bounding box in target CRS
-    :rtype: common.BBox
+    :rtype: geometry.BBox
     """
     bbox = copy.deepcopy(bbox)
     bbox.transform(target_crs)

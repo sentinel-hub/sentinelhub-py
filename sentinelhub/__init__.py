@@ -13,7 +13,7 @@ from .areas import BBoxSplitter, OsmSplitter, TileSplitter
 from .ogc import WebFeatureService
 from .geopedia import GeopediaFeatureIterator, GeopediaSession
 
-from .common import BBox, Geometry
+from .geometry import BBox, Geometry
 from .constants import DataSource, CustomUrlParam, CRS, MimeType, OgcConstants, AwsConstants, ServiceType, \
     HistogramType
 

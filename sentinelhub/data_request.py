@@ -253,7 +253,7 @@ class OgcRequest(DataRequest):
     :param size_y: number of pixels in x or resolution in y (i.e. ``512`` or ``10m``)
     :type size_y: int or str
     :param bbox: Bounding box of the requested image. Coordinates must be in the specified coordinate reference system.
-    :type bbox: common.BBox
+    :type bbox: geometry.BBox
     :param time: time or time range for which to return the results, in ISO8601 format
                 (year-month-date, for example: ``2016-01-01``, or year-month-dateThours:minuts:seconds format,
                 i.e. ``2016-01-01T16:31:21``). When a single time is specified the request will return
@@ -388,7 +388,7 @@ class WmsRequest(OgcRequest):
         Configurator for the given layer. Default is Sentinel-2 L1C.
     :type data_source: constants.DataSource
     :param bbox: Bounding box of the requested image. Coordinates must be in the specified coordinate reference system.
-    :type bbox: common.BBox
+    :type bbox: geometry.BBox
     :param time: time or time range for which to return the results, in ISO8601 format
                 (year-month-date, for example: ``2016-01-01``, or year-month-dateThours:minuts:seconds format,
                 i.e. ``2016-01-01T16:31:21``). When a single time is specified the request will return
@@ -455,7 +455,7 @@ class WcsRequest(OgcRequest):
         Configurator for the given layer. Default is Sentinel-2 L1C.
     :type data_source: constants.DataSource
     :param bbox: Bounding box of the requested image. Coordinates must be in the specified coordinate reference system.
-    :type bbox: common.BBox
+    :type bbox: geometry.BBox
     :param time: time or time range for which to return the results, in ISO8601 format
                 (year-month-date, for example: ``2016-01-01``, or year-month-dateThours:minuts:seconds format,
                 i.e. ``2016-01-01T16:31:21``). When a single time is specified the request will return
@@ -524,7 +524,7 @@ class FisRequest(OgcRequest):
     :param geometry_list: A WKT representation of a geometry describing the region of interest.
                      Note that WCS 1.1.1 standard is used here, so for EPSG:4326 coordinates should be
                      in latitude/longitude order.
-    :type geometry_list: list, [common.Geometry or common.Bbox]
+    :type geometry_list: list, [geometry.Geometry or geometry.Bbox]
     :param resolution: Specifies the spatial resolution, in meters per pixel, of the image from which the statistics
                        are to be estimated. When using CRS=EPSG:4326 one has to add the "m" suffix to
                        enforce resolution in meters per pixel (e.g. RESOLUTION=10m).
@@ -588,7 +588,7 @@ class GeopediaRequest(DataRequest):
     :param service_type: Type of the service, supported are ``ServiceType.WMS`` and ``ServiceType.IMAGE``
     :type service_type: constants.ServiceType
     :param bbox: Bounding box of the requested data
-    :type bbox: common.BBox
+    :type bbox: geometry.BBox
     :param theme: Geopedia's theme endpoint string for which the layer is defined. Only required by WMS service.
     :type theme: str
     :param image_format: Format of the returned image by the Sentinel Hub's WMS getMap service. Default is
@@ -627,7 +627,7 @@ class GeopediaWmsRequest(GeopediaRequest):
     :param theme: Geopedia's theme endpoint string for which the layer is defined.
     :type theme: str
     :param bbox: Bounding box of the requested data
-    :type bbox: common.BBox
+    :type bbox: geometry.BBox
     :param width: width (number of columns) of the returned image (array)
     :type width: int or None
     :param height: height (number of rows) of the returned image (array)
@@ -684,7 +684,7 @@ class GeopediaImageRequest(GeopediaRequest):
     :param layer: Geopedia layer which contains requested data
     :type layer: str
     :param bbox: Bounding box of the requested data
-    :type bbox: common.BBox
+    :type bbox: geometry.BBox
     :param image_format: Format of the returned image by the Sentinel Hub's WMS getMap service. Default is
         ``constants.MimeType.PNG``.
     :type image_format: constants.MimeType

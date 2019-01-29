@@ -11,16 +11,16 @@ Modules
     areas
     aws
     aws_safe
-    common
     config
     constants
     data_request
     download
+    fis
     geo_utils
+    geometry
     geopedia
     io_utils
     ogc
-    fis
     opensearch
     os_utils
     test_utils

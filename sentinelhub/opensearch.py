@@ -81,7 +81,7 @@ def get_area_info(bbox, date_interval, maxcc=None):
     """ Get information about all images from specified area and time range
 
     :param bbox: bounding box of requested area
-    :type bbox: common.BBox
+    :type bbox: geometry.BBox
     :param date_interval: a pair of time strings in ISO8601 format
     :type date_interval: tuple(str)
     :param maxcc: filter images by maximum percentage of cloud coverage
@@ -99,7 +99,7 @@ def get_area_dates(bbox, date_interval, maxcc=None):
     """ Get list of times of existing images from specified area and time range
 
     :param bbox: bounding box of requested area
-    :type bbox: common.BBox
+    :type bbox: geometry.BBox
     :param date_interval: a pair of time strings in ISO8601 format
     :type date_interval: tuple(str)
     :param maxcc: filter images by maximum percentage of cloud coverage
@@ -136,7 +136,7 @@ def search_iter(tile_id=None, bbox=None, start_date=None, end_date=None, absolut
                     'S2A_OPER_MSI_L1C_TL_SGS__20160109T230542_A002870_T10UEV_N02.01')
     :type tile_id: str
     :param bbox: bounding box of requested area
-    :type bbox: common.BBox
+    :type bbox: geometry.BBox
     :param start_date: beginning of time range in ISO8601 format
     :type start_date: str
     :param end_date: end of time range in ISO8601 format
@@ -176,7 +176,7 @@ def _prepare_url_params(tile_id, bbox, end_date, start_date, absolute_orbit):
                     'S2A_OPER_MSI_L1C_TL_SGS__20160109T230542_A002870_T10UEV_N02.01')
     :type tile_id: str
     :param bbox: bounding box of requested area in WGS84 CRS
-    :type bbox: common.BBox
+    :type bbox: geometry.BBox
     :param start_date: beginning of time range in ISO8601 format
     :type start_date: str
     :param end_date: end of time range in ISO8601 format

@@ -7,7 +7,7 @@ from abc import ABC, abstractmethod
 import shapely.ops
 from shapely.geometry import Polygon, MultiPolygon
 
-from .common import BBox
+from .geometry import BBox
 from .constants import CRS, DataSource
 from .geo_utils import transform_point, transform_bbox
 from .ogc import WebFeatureService
@@ -75,7 +75,7 @@ class AreaSplitter(ABC):
                     be the default CRS of the splitter.
         :type crs: sentinelhub.constants.CRS or None
         :return: List of bounding boxes
-        :rtype: list(sentinelhub.common.BBox)
+        :rtype: list(sentinelhub.geometry.BBox)
         """
         if crs:
             return [transform_bbox(bbox, crs) for bbox in self.bbox_list]
@@ -95,7 +95,7 @@ class AreaSplitter(ABC):
         the list matches the order of the list of bounding boxes.
 
         :return: List of dictionaries
-        :rtype: list(sentinelhub.common.BBox)
+        :rtype: list(sentinelhub.geometry.BBox)
         """
         return self.info_list
 
@@ -114,7 +114,7 @@ class AreaSplitter(ABC):
                     be the default CRS of the splitter.
         :type crs: sentinelhub.constants.CRS or None
         :return: A bounding box of the area defined by the `shape_list`
-        :rtype: sentinelhub.common.BBox
+        :rtype: sentinelhub.geometry.BBox
         """
         bbox_list = [BBox(shape.bounds, crs=self.crs) for shape in self.shape_list]
         area_minx = min([bbox.get_lower_left()[0] for bbox in bbox_list])
@@ -130,7 +130,7 @@ class AreaSplitter(ABC):
         """Checks if the bounding box intersects the entire area
 
         :param bbox: A bounding box
-        :type bbox: sentinelhub.common.BBox)
+        :type bbox: sentinelhub.geometry.BBox)
         :return: True if bbox intersects the entire area else False
         :rtype: bool
         """
@@ -140,7 +140,7 @@ class AreaSplitter(ABC):
         """Calculates the intersection of a given bounding box and the entire area
 
         :param bbox: A bounding box
-        :type bbox: sentinelhub.common.BBox)
+        :type bbox: sentinelhub.geometry.BBox)
         :return: A shape of intersection
         :rtype: shapely.geometry.multipolygon.MultiPolygon or shapely.geometry.polygon.Polygon
         """
@@ -150,7 +150,7 @@ class AreaSplitter(ABC):
         """Transforms bounding box into a polygon object in the area CRS.
 
         :param bbox: A bounding box
-        :type bbox: sentinelhub.common.BBox)
+        :type bbox: sentinelhub.geometry.BBox)
         :return: A polygon
         :rtype: shapely.geometry.polygon.Polygon
         """
@@ -283,7 +283,7 @@ class OsmSplitter(AreaSplitter):
         """Creates a bounding box of the entire world in EPSG: 3857
 
         :return: Bounding box of entire world
-        :rtype: sentinelhub.common.BBox
+        :rtype: sentinelhub.geometry.BBox
         """
         return BBox((-self.POP_WEB_MAX, -self.POP_WEB_MAX, self.POP_WEB_MAX, self.POP_WEB_MAX), crs=CRS.POP_WEB)
 
@@ -291,7 +291,7 @@ class OsmSplitter(AreaSplitter):
         """Method that recursively creates bounding boxes of OSM grid that intersect the area.
 
         :param bbox: Bounding box
-        :type bbox: sentinelhub.common.BBox
+        :type bbox: sentinelhub.geometry.BBox
         :param zoom_level: OSM zoom level
         :type zoom_level: int
         :param column: Column in the OSM grid
