@@ -4,6 +4,7 @@ geo_utils
 Module for manipulation of geographical information.
 
 .. module:: sentinelhub.geo_utils
+.. autofunction:: bbox_to_dimensions
 .. autofunction:: bbox_to_resolution
 .. autofunction:: get_image_dimension
 .. autofunction:: to_utm_bbox
