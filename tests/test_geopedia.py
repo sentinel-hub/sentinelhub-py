@@ -14,7 +14,7 @@ class TestGeopediaWms(TestSentinelHub):
         bbox = BBox(bbox=[(524358.0140363087, 6964349.630376049),
                           (534141.9536568124, 6974133.5699965535)], crs=CRS.POP_WEB)
 
-        gpd_request = GeopediaWmsRequest(layer='ttl1917', theme='ml_aws', bbox=bbox, width=50, height=50,
+        gpd_request = GeopediaWmsRequest(layer=1917, theme='ml_aws', bbox=bbox, width=50, height=50,
                                          image_format=MimeType.PNG)
 
         cls.data = gpd_request.get_data()
@@ -73,8 +73,8 @@ class TestGeopediaFeatureIterator(TestSentinelHub):
 
         cls.test_cases = [
             TestCaseContainer('All features', GeopediaFeatureIterator(1749), min_features=100, min_size=1609),
-            TestCaseContainer('BBox filter', GeopediaFeatureIterator(1749, bbox=bbox), min_features=21),
-            TestCaseContainer('Query Filter', GeopediaFeatureIterator(1749, query_filter=query_filter1),
+            TestCaseContainer('BBox filter', GeopediaFeatureIterator('1749', bbox=bbox), min_features=21),
+            TestCaseContainer('Query Filter', GeopediaFeatureIterator('ttl1749', query_filter=query_filter1),
                               min_features=76),
             TestCaseContainer('Both filters - No data',
                               GeopediaFeatureIterator(1749, bbox=bbox, query_filter=query_filter1), min_features=0),

@@ -589,7 +589,7 @@ class GeopediaRequest(DataRequest):
     :type service_type: constants.ServiceType
     :param bbox: Bounding box of the requested data
     :type bbox: common.BBox
-    :param theme: Geopedia's theme for which the layer is defined.
+    :param theme: Geopedia's theme endpoint string for which the layer is defined. Only required by WMS service.
     :type theme: str
     :param image_format: Format of the returned image by the Sentinel Hub's WMS getMap service. Default is
         ``constants.MimeType.PNG``.
@@ -622,6 +622,12 @@ class GeopediaWmsRequest(GeopediaRequest):
     Creates an instance of Geopedia's WMS (Web Map Service) GetMap request, which provides access to WMS layers in
     Geopedia.
 
+    :param layer: Geopedia layer which contains requested data
+    :type layer: str
+    :param theme: Geopedia's theme endpoint string for which the layer is defined.
+    :type theme: str
+    :param bbox: Bounding box of the requested data
+    :type bbox: common.BBox
     :param width: width (number of columns) of the returned image (array)
     :type width: int or None
     :param height: height (number of rows) of the returned image (array)
@@ -630,19 +636,13 @@ class GeopediaWmsRequest(GeopediaRequest):
                               At the moment only the transparency is supported (CustomUrlParam.TRANSPARENT).
     :type custom_url_params: dictionary of CustomUrlParameter enum and its value, i.e.
                               ``{constants.CustomUrlParam.TRANSPARENT:True}``
-    :param layer: Geopedia layer which contains requested data
-    :type layer: str
-    :param bbox: Bounding box of the requested data
-    :type bbox: common.BBox
-    :param theme: Geopedia's theme for which the layer is defined.
-    :type theme: str
     :param image_format: Format of the returned image by the Sentinel Hub's WMS getMap service. Default is
         ``constants.MimeType.PNG``.
     :type image_format: constants.MimeType
     :param data_folder: Location of the directory where the fetched data will be saved.
     :type data_folder: str
     """
-    def __init__(self, *, width=None, height=None, custom_url_params=None, **kwargs):
+    def __init__(self, layer, theme, bbox, *, width=None, height=None, custom_url_params=None, **kwargs):
         self.size_x = width
         self.size_y = height
 
@@ -651,7 +651,7 @@ class GeopediaWmsRequest(GeopediaRequest):
         if self.custom_url_params is not None:
             self._check_custom_url_parameters()
 
-        super().__init__(service_type=ServiceType.WMS, **kwargs)
+        super().__init__(layer=layer, theme=theme, bbox=bbox, service_type=ServiceType.WMS, **kwargs)
 
     def _check_custom_url_parameters(self):
         """Checks if custom url parameters are valid parameters.
@@ -685,8 +685,6 @@ class GeopediaImageRequest(GeopediaRequest):
     :type layer: str
     :param bbox: Bounding box of the requested data
     :type bbox: common.BBox
-    :param theme: Geopedia's theme for which the layer is defined.
-    :type theme: str
     :param image_format: Format of the returned image by the Sentinel Hub's WMS getMap service. Default is
         ``constants.MimeType.PNG``.
     :type image_format: constants.MimeType
