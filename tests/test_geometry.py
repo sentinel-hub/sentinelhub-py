@@ -184,6 +184,10 @@ class TestGeometry(TestSentinelHub):
 
         self.assertEqual(self.geometry2.wkt, self.wkt_string, 'New WKT string doesnt match the original')
 
+    def test_bbox(self):
+        for geometry in [self.geometry1, self.geometry2]:
+            self.assertEqual(geometry.bbox, BBox(geometry.geometry, geometry.crs), 'Failed bbox property')
+
 
 if __name__ == '__main__':
     unittest.main()

@@ -423,6 +423,15 @@ class Geometry(_BaseGeometry):
         """
         return self._geometry
 
+    @property
+    def bbox(self):
+        """ Returns BBox object representing bounding box around the geometry
+
+        :return: A bounding box, with same CRS
+        :rtype: BBox
+        """
+        return BBox(self.geometry, self.crs)
+
     @staticmethod
     def _parse_geometry(geometry):
         """ Parses given geometry into shapely object
