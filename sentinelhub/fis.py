@@ -8,7 +8,7 @@ from .time_utils import parse_time_interval
 from .download import DownloadRequest
 from .constants import MimeType, CRS, OgcConstants
 from .ogc import OgcImageService
-from .geometry import BBox, Geometry
+from .geometry import Geometry
 
 LOGGER = logging.getLogger(__name__)
 
