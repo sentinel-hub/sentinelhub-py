@@ -38,24 +38,25 @@ class TestFis(TestSentinelHub):
             results = [ast.literal_eval(line.strip()) for line in file]
 
         bbox = BBox([14.00, 45.00, 14.03, 45.03], crs=CRS.WGS84)
-        geometry = Geometry(Polygon([(465888.877326859, 5079639.436138632),
-                                     (465885.3413983975, 5079641.524618266),
-                                     (465882.9542217017, 5079647.166043535),
-                                     (465888.8780175466, 5079668.703676634),
-                                     (465888.877326859, 5079639.436138632)]),
-                            CRS(32633))
+        geometry1 = Geometry(Polygon([(465888.877326859, 5079639.436138632),
+                                      (465885.3413983975, 5079641.524618266),
+                                      (465882.9542217017, 5079647.166043535),
+                                      (465888.8780175466, 5079668.703676634),
+                                      (465888.877326859, 5079639.436138632)]),
+                             CRS(32633))
+        geometry2 = Geometry('POLYGON((-5.13 48, -5.23 48.09, -5.13 48.17, -5.03 48.08, -5.13 48))', CRS.WGS84)
 
         cls.test_cases = [
             cls.FisTestCase('geometry',
                             FisRequest(layer='TRUE-COLOR-S2-L1C',
-                                       geometry_list=[geometry],
+                                       geometry_list=[geometry1],
                                        time=('2017-1-1', '2017-2-1'),
                                        resolution="50m",
                                        histogram_type=HistogramType.STREAMING,
                                        bins=5),
                             raw_result=results[0],
                             result_length=1),
-            cls.FisTestCase('bobx',
+            cls.FisTestCase('bbox',
                             FisRequest(layer='BANDS-S2-L1C',
                                        geometry_list=[bbox],
                                        time='2017-1-1',
@@ -71,12 +72,19 @@ class TestFis(TestSentinelHub):
             cls.FisTestCase('list',
                             FisRequest(data_source=DataSource.LANDSAT8,
                                        layer='BANDS-L8',
-                                       geometry_list=[bbox, geometry],
+                                       geometry_list=[bbox, geometry1],
                                        time=('2017-1-1', '2017-1-10'),
                                        resolution="100m",
-                                       bins=32),
-                            raw_result=results[2],
-                            result_length=2)
+                                       bins=32, data_folder=cls.OUTPUT_FOLDER),
+                            raw_result=results[2], result_length=2,
+                            save_data=True),
+            cls.FisTestCase('Polygon in WGS84',
+                            FisRequest(layer='TRUE-COLOR-S2-L1C',
+                                       geometry_list=[geometry2],
+                                       time=('2017-10-1', '2017-10-2'),
+                                       resolution="60m",
+                                       bins=11, histogram_type=HistogramType.EQUALFREQUENCY),
+                            raw_result=results[3], result_length=1),
         ]
 
         for test_case in cls.test_cases:

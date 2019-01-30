@@ -191,9 +191,18 @@ class OgcImageService(OgcService):
                 evalscript = params[CustomUrlParam.EVALSCRIPT.value]
                 params[CustomUrlParam.EVALSCRIPT.value] = b64encode(evalscript.encode()).decode()
 
-            if CustomUrlParam.GEOMETRY.value in params and request.bbox.crs is CRS.WGS84:
-                geometry = shapely.wkt.loads(params[CustomUrlParam.GEOMETRY.value])
-                geometry = shapely.ops.transform(lambda x, y: (y, x), geometry)
+            if CustomUrlParam.GEOMETRY.value in params:
+                geometry = params[CustomUrlParam.GEOMETRY.value]
+                crs = request.bbox.crs
+
+                if isinstance(geometry, Geometry):
+                    if geometry.crs is not crs:
+                        raise ValueError('Geometry object in custom_url_params should have the same CRS as given BBox')
+                else:
+                    geometry = Geometry(geometry, crs)
+
+                if geometry.crs is CRS.WGS84:
+                    geometry = geometry.reverse()
 
                 params[CustomUrlParam.GEOMETRY.value] = geometry.wkt
 
@@ -211,7 +220,7 @@ class OgcImageService(OgcService):
         :rtype: dict
         """
         params = {
-            'BBOX': request.bbox.__str__(reverse=True) if request.bbox.crs is CRS.WGS84 else str(request.bbox),
+            'BBOX': str(request.bbox.reverse()) if request.bbox.crs is CRS.WGS84 else str(request.bbox),
             'FORMAT': MimeType.get_string(request.image_format),
             'CRS': CRS.ogc_string(request.bbox.crs),
         }
@@ -287,13 +296,15 @@ class OgcImageService(OgcService):
             'TIME': '{}/{}'.format(date_interval[0], date_interval[1])
         }
 
-        if isinstance(geometry, Geometry):
-            params['GEOMETRY'] = geometry.wkt
-        elif isinstance(geometry, BBox):
-            params['BBOX'] = geometry.__str__(reverse=True) if geometry.crs is CRS.WGS84 else str(geometry)
-        else:
+        if not isinstance(geometry, (BBox, Geometry)):
             raise ValueError('Each geometry must be an instance of sentinelhub.{} or sentinelhub.{} but {} '
                              'found'.format(BBox.__name__, Geometry.__name__, geometry))
+        if geometry.crs is CRS.WGS84:
+            geometry = geometry.reverse()
+        if isinstance(geometry, Geometry):
+            params['GEOMETRY'] = geometry.wkt
+        else:
+            params['BBOX'] = str(geometry)
 
         if request.bins:
             params['BINS'] = request.bins
@@ -524,7 +535,7 @@ class WebFeatureService(OgcService):
         params = {'SERVICE': ServiceType.WFS.value,
                   'REQUEST': 'GetFeature',
                   'TYPENAMES': DataSource.get_wfs_typename(self.data_source),
-                  'BBOX': self.bbox.__str__(reverse=True) if self.bbox.crs is CRS.WGS84 else str(self.bbox),
+                  'BBOX': str(self.bbox.reverse()) if self.bbox.crs is CRS.WGS84 else str(self.bbox),
                   'OUTPUTFORMAT': MimeType.get_string(MimeType.JSON),
                   'SRSNAME': CRS.ogc_string(self.bbox.crs),
                   'TIME': '{}/{}'.format(self.time_interval[0], self.time_interval[1]),

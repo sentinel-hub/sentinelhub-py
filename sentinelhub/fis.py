@@ -49,17 +49,14 @@ class FisService(OgcImageService):
         *{custom_url_params}.json
 
         :param request: FIS request
+        :type request: FisRequest
         :param geometry: geometry object
         :type: BBox or Geometry
         :return: filename for this request
         :rtype: str
         """
         date_interval = parse_time_interval(request.time)
-
-        if isinstance(geometry, Geometry):
-            geometry_string = geometry.wkt
-        elif isinstance(geometry, BBox):
-            geometry_string = geometry.__str__(reverse=True) if geometry.crs is CRS.WGS84 else str(geometry)
+        geometry_string = geometry.wkt if isinstance(geometry, Geometry) else str(geometry)
 
         filename = '_'.join([
             str(request.service_type.value),
