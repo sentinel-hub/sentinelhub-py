@@ -87,6 +87,15 @@ class TestBBox(TestSentinelHub):
         self.assertEqual(bbox.get_lower_left(), (46.07, 13.23))
         self.assertEqual(bbox.get_crs(), CRS.WGS84)
 
+    def test_bbox_from_shapely(self):
+        bbox_list = [
+            BBox(shapely.geometry.LineString([(0, 0), (1, 1)]), CRS.WGS84),
+            BBox(shapely.geometry.LinearRing([(1, 0), (1, 1), (0, 0)]), CRS.WGS84),
+            BBox(shapely.geometry.Polygon([(1, 0), (1, 1), (0, 0)]), CRS.WGS84)
+        ]
+        for bbox in bbox_list:
+            self.assertEqual(bbox, BBox((0, 0, 1, 1), CRS.WGS84))
+
     def test_bbox_to_str(self):
         x1, y1, x2, y2 = 45.0, 12.0, 47.0, 14.0
         crs = CRS.WGS84
