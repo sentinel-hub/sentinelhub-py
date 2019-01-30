@@ -37,13 +37,13 @@ class TestFis(TestSentinelHub):
         with open(os.path.join(cls.INPUT_FOLDER, "test_fis_results.txt"), 'r') as file:
             results = [ast.literal_eval(line.strip()) for line in file]
 
-        bbox = BBox(bbox=[14.00, 45.00, 14.03, 45.03], crs=CRS.WGS84)
-        geometry = Geometry(polygon=Polygon([(465888.877326859, 5079639.436138632),
-                                             (465885.3413983975, 5079641.524618266),
-                                             (465882.9542217017, 5079647.166043535),
-                                             (465888.8780175466, 5079668.703676634),
-                                             (465888.877326859, 5079639.436138632)]),
-                            crs=CRS(32633))
+        bbox = BBox([14.00, 45.00, 14.03, 45.03], crs=CRS.WGS84)
+        geometry = Geometry(Polygon([(465888.877326859, 5079639.436138632),
+                                     (465885.3413983975, 5079641.524618266),
+                                     (465882.9542217017, 5079647.166043535),
+                                     (465888.8780175466, 5079668.703676634),
+                                     (465888.877326859, 5079639.436138632)]),
+                            CRS(32633))
 
         cls.test_cases = [
             cls.FisTestCase('geometry',

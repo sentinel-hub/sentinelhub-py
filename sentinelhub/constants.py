@@ -257,7 +257,7 @@ def _get_utm_name_value_pair(zone, direction=_Direction.NORTH):
 class _BaseCRS(Enum):
     """ Coordinate Reference System enumerate class """
     def __str__(self):
-        return self.ogc_string(self)
+        return self.ogc_string()
 
     @staticmethod
     def get_utm_from_wgs84(lng, lat):
@@ -274,16 +274,15 @@ class _BaseCRS(Enum):
         direction = 'N' if lat >= 0 else 'S'
         return CRS['UTM_{}{}'.format(str(zone), direction)]
 
-    @staticmethod
-    def ogc_string(crs):
+    def ogc_string(self):
         """ Returns a string of the form authority:id representing the CRS.
 
-        :param crs: An enum constant representing a coordinate reference system.
-        :type crs: Enum constant
+        :param self: An enum constant representing a coordinate reference system.
+        :type self: Enum constant
         :return: A string representation of the CRS.
         :rtype: str
         """
-        return 'EPSG:' + CRS(crs).value
+        return 'EPSG:{}'.format(CRS(self).value)
 
     @staticmethod
     def is_utm(crs):
@@ -296,16 +295,15 @@ class _BaseCRS(Enum):
         """
         return crs.name.startswith('UTM')
 
-    @classmethod
-    def projection(cls, crs):
+    def projection(self):
         """ Returns a projection in form of pyproj class
 
-        :param crs: An enum constant representing a coordinate reference system.
-        :type crs: Enum constant
+        :param self: An enum constant representing a coordinate reference system.
+        :type self: Enum constant
         :return: pyproj projection class
         :rtype: pyproj.Proj
         """
-        return Proj(init=cls.ogc_string(crs))
+        return Proj(init=_BaseCRS.ogc_string(self), preserve_units=True)
 
     @classmethod
     def has_value(cls, value):

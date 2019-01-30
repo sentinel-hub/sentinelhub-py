@@ -1,8 +1,9 @@
 import unittest
+import copy
 
 import shapely.geometry
 
-from sentinelhub import BBox, CRS, TestSentinelHub
+from sentinelhub import BBox, Geometry, CRS, TestSentinelHub
 
 
 class TestBBox(TestSentinelHub):
@@ -92,9 +93,7 @@ class TestBBox(TestSentinelHub):
         expect_str = "{},{},{},{}".format(x1, y1, x2, y2)
         bbox = BBox(((x1, y1), (x2, y2)), crs)
         self.assertEqual(str(bbox), expect_str,
-                         msg="String representations not matching: expected {}, got {}".format(
-                             expect_str, str(bbox)
-                         ))
+                         msg="String representations not matching: expected {}, got {}".format(expect_str, str(bbox)))
 
     def test_bbox_iter(self):
         bbox_lst = [46.07, 13.23, 46.24, 13.57]
@@ -119,9 +118,62 @@ class TestBBox(TestSentinelHub):
 
         self.assertTrue(isinstance(bbox.get_geojson(), dict),
                         "Expected dictionary, got type {}".format(type(bbox.get_geometry())))
-        self.assertTrue(isinstance(bbox.get_geometry(), shapely.geometry.polygon.Polygon),
-                        "Expected type {}, got type {}".format(shapely.geometry.polygon.Polygon,
+        self.assertTrue(isinstance(bbox.get_geometry(), shapely.geometry.Polygon),
+                        "Expected type {}, got type {}".format(shapely.geometry.Polygon,
                                                                type(bbox.get_geometry())))
+
+
+class TestGeometry(TestSentinelHub):
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+
+        polygon = shapely.geometry.Polygon([(465888.8773268595, 5079639.43613863),
+                                            (465885.3413983975, 5079641.52461826),
+                                            (465882.9542217017, 5079647.16604353),
+                                            (465888.8780175466, 5079668.70367663),
+                                            (465888.877326859, 5079639.436138632)])
+        cls.wkt_string = 'MULTIPOLYGON (((40 40, 20 45, 45 30, 40 40)), ((20 35, 10 30, 10 10, 30 5, 45 20, 20 35), ' \
+                         '(30 20, 20 15, 20 25, 30 20)))'
+        cls.geometry1 = Geometry(polygon, CRS(32633))
+        cls.geometry2 = Geometry(cls.wkt_string, CRS.WGS84)
+        cls.bbox = BBox(bbox=[14.00, 45.00, 14.03, 45.03], crs=CRS.WGS84)
+
+        cls.geometry_list = [cls.geometry1, cls.geometry2, cls.bbox]
+
+    def test_repr(self):
+        for geometry in self.geometry_list:
+            self.assertTrue(isinstance(geometry.__repr__(), str), 'Expected string representation')
+
+    def test_eq(self):
+        for geometry in self.geometry_list:
+            self.assertEqual(geometry, copy.deepcopy(geometry), 'Deep copied object should be the same as original')
+
+    def test_reverse(self):
+        for geometry in self.geometry_list:
+            reversed_geometry = geometry.reverse()
+            self.assertNotEqual(geometry, reversed_geometry, 'Reversed geometry should be different')
+            self.assertEqual(geometry, reversed_geometry.reverse(), 'Twice reversed geometry should equal the original')
+
+    def test_transform(self):
+        for geometry in self.geometry_list:
+            new_geometry = geometry.transform(CRS.POP_WEB)
+            self.assertNotEqual(geometry, new_geometry, 'Transformed geometry should be different')
+            self.assertEqual(geometry.crs, new_geometry.transform(geometry.crs).crs,
+                             'Crs of twice transformed geometry should equal')
+
+    def test_geojson(self):
+        for geometry in [self.geometry1, self.geometry2]:
+            self.assertEqual(geometry, Geometry(geometry.geojson, geometry.crs),
+                             'Transforming geometry to geojson and back should preserve it')
+
+    def test_wkt(self):
+        for geometry in [self.geometry1, self.geometry2]:
+            self.assertEqual(geometry, Geometry(geometry.wkt, geometry.crs),
+                             'Transforming geometry to geojson and back should preserve it')
+
+        self.assertEqual(self.geometry2.wkt, self.wkt_string, 'New WKT string doesnt match the original')
 
 
 if __name__ == '__main__':

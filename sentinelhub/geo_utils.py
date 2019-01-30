@@ -3,7 +3,7 @@ Module for manipulation of geographical information.
 """
 
 import logging
-import copy
+import warnings
 
 import pyproj
 
@@ -243,6 +243,6 @@ def transform_bbox(bbox, target_crs):
     :return: bounding box in target CRS
     :rtype: geometry.BBox
     """
-    bbox = copy.deepcopy(bbox)
-    bbox.transform(target_crs)
-    return bbox
+    warnings.warn("This function is deprecated, use BBox.transform method instead", DeprecationWarning, stacklevel=2)
+
+    return bbox.transform(target_crs)

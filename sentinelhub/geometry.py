@@ -1,28 +1,75 @@
-"""Module implementing classes common to all modules of the package (such as the bounding box class).
-
-Representing bounding box can be confusing. If a function expects bbox as a list of four coordinates,
-is it [lng1, lat1, lng2, lat2]? Or is it something else? And what CRS does it expect? Is the CRS a
-separate parameter?
-
-In this module the BBox class provides the canonical representation of a BBox that all the functions and
-classes of the sentinelhub package use, solving these issues.
-
-Available classes:
- - BBox, represent a bounding box in a given CRS
+"""
+Module implementing geometry classes
 """
 
-import shapely.geometry
+import functools
 
-from shapely.ops import transform
+import pyproj
+import shapely.ops
+import shapely.geometry
+import shapely.wkt
+
 from .constants import CRS
 from .geo_utils import transform_point
 
 
-class BBox:
+class _BaseGeometry:
+    """ Base geometry class
+
+    :param crs: Coordinate reference system of the geometry
+    :type crs: constants.CRS
+    """
+    def __init__(self, crs):
+        self._crs = CRS(crs)
+
+    @property
+    def crs(self):
+        """ Returns the coordinate reference system (CRS)
+
+        :return: Coordinate reference system Enum
+        :rtype: constants.CRS
+        """
+        return self._crs
+
+    def get_crs(self):
+        """ Returns the coordinate reference system (CRS)
+
+        :return: Coordinate reference system Enum
+        :rtype: constants.CRS
+        """
+        return self.crs
+
+    def get_geometry(self):
+        """ Returns shapely geometry
+
+        :return: A polygon or multipolygon
+        :rtype: shapely.geometry.Polygon or shapely.geometry.MultiPolygon
+        """
+        return self.geometry
+
+    def get_geojson(self):
+        """ Returns representation in a GeoJSON format. Use json.dump for writing it to file.
+
+        :return: A dictionary in GeoJSON format
+        :rtype: dict
+        """
+        return self.geojson
+
+    @property
+    def wkt(self):
+        """ Transforms geometry object into `Well-known text` format
+
+        :return: string in WKT format
+        :rtype: str
+        """
+        return self.geometry.wkt
+
+
+class BBox(_BaseGeometry):
     """ Class representing a bounding box in a given CRS.
 
     Throughout the sentinelhub package this class serves as the canonical representation of a bounding
-    box. It can instantiate itself from multiple representations:
+    box. It can initialize itself from multiple representations:
 
         1) ``((min_x,min_y),(max_x,max_y))``,
         2) ``(min_x,min_y,max_x,max_y)``,
@@ -39,8 +86,8 @@ class BBox:
         - In case of ``constants.CRS.POP_WEB`` axis x represents easting and axis y represents northing
         - In case of ``constants.CRS.UTM_*`` axis x represents easting and axis y represents northing
 
-    :param bbox: a bbox in a number of representations.
-    :param crs: Coordinate Reference System that bbox is in. Expect one of the constants from the ``const.CRS`` enum.
+    :param bbox: A bbox in any valid representation
+    :param crs: Coordinate reference system of the bounding box
     :type crs: constants.CRS
     """
     def __init__(self, bbox, crs):
@@ -49,117 +96,23 @@ class BBox:
         self.max_x = max(x_fst, x_snd)
         self.min_y = min(y_fst, y_snd)
         self.max_y = max(y_fst, y_snd)
-        self.crs = CRS(crs)
+
+        super().__init__(crs)
 
     def __iter__(self):
-        return iter(self.get_lower_left() + self.get_upper_right())
-
-    def get_lower_left(self):
-        """ Returns the lower left vertex of the bounding box
-
-        :return: min_x, min_y
-        :rtype: (float, float)
+        """ This method enables iteration over coordinates of bounding box
         """
-        return self.min_x, self.min_y
-
-    def get_upper_right(self):
-        """ Returns the upper right vertex of the bounding box
-
-        :return: max_x, max_y
-        :rtype: (float, float)
-        """
-        return self.max_x, self.max_y
-
-    def get_middle(self):
-        """ Returns the middle point of the bounding box
-
-        :return: middle point
-        :rtype: (float, float)
-        """
-        return (self.min_x + self.max_x) / 2, (self.min_y + self.max_y) / 2
-
-    def get_crs(self):
-        """ Returns the coordinate reference system (CRS) of the bounding box.
-
-        :return: CRS that the BBox is given in
-        :rtype: constants.CRS
-        """
-        return self.crs
-
-    def transform(self, target_crs):
-        """ Transforms BBox from current CRS to target CRS
-
-        :param target_crs: target CRS
-        :type target_crs: constants.CRS
-        :return: bounding box in target CRS
-        :rtype: BBox
-        """
-        self.min_x, self.min_y = transform_point(self.get_lower_left(), self.crs, target_crs)
-        self.max_x, self.max_y = transform_point(self.get_upper_right(), self.crs, target_crs)
-        self.crs = target_crs
-
-    def get_polygon(self, reverse=False):
-        """ Returns a list of coordinates of 5 points describing a polygon. Points are listed in clockwise order, first
-        point is the same as the last.
-
-        :param reverse: True if x and y coordinates should be switched and False otherwise
-        :type reverse: bool
-        :return: `[[x_1, y_1], ... , [x_5, y_5]]`
-        :rtype: list(list(float))
-        """
-        polygon = [[self.min_x, self.min_y],
-                   [self.min_x, self.max_y],
-                   [self.max_x, self.max_y],
-                   [self.max_x, self.min_y],
-                   [self.min_x, self.min_y]]
-        if reverse:
-            for i, point in enumerate(polygon):
-                polygon[i] = point[::-1]
-        return polygon
-
-    def get_geojson(self):
-        """ Returns polygon geometry in GeoJSON format
-
-        :return: A dictionary in GeoJSON format
-        :rtype: dict
-        """
-        return {'type': 'Polygon',
-                'crs': {'type': 'name',
-                        'properties': {'name': 'urn:ogc:def:crs:EPSG::{}'.format(self.get_crs().value)}},
-                'coordinates': [self.get_polygon()]
-                }
-
-    def get_geometry(self):
-        """ Returns polygon geometry in shapely format
-
-        :return: A polygon in shapely format
-        :rtype: shapely.geometry.polygon.Polygon
-        """
-        return shapely.geometry.Polygon(self.get_polygon())
-
-    def get_partition(self, num_x=1, num_y=1):
-        """ Partitions bounding box into smaller bounding boxes of the same size.
-
-        :param num_x: Number of parts BBox will be horizontally divided into.
-        :type num_x: int
-        :param num_y: Number of parts BBox will be vertically divided into.
-        :type num_y: int or None
-        :return: Two-dimensional list of smaller bounding boxes. Their location is
-        :rtype: list(list(BBox))
-        """
-        size_x, size_y = (self.max_x - self.min_x) / num_x, (self.max_y - self.min_y) / num_y
-        return [[BBox([self.min_x + i * size_x, self.min_y + j * size_y,
-                       self.min_x + (i + 1) * size_x, self.min_y + (j + 1) * size_y],
-                      crs=self.crs) for j in range(num_y)] for i in range(num_x)]
+        return iter(self.lower_left + self.upper_right)
 
     def __repr__(self):
-        return "{}((({}, {}), ({}, {})), crs={})".format(self.__class__.__name__, self.min_x, self.min_y, self.max_x,
-                                                         self.max_y, self.crs)
+        """ Class representation
+        """
+        return "{}((({}, {}), ({}, {})), crs={})".format(self.__class__.__name__, *self, self.crs)
 
     def __str__(self, reverse=False):
-        """ Transforms bounding box into string of coordinates
+        """ Transforms bounding box into a string of coordinates
 
-        :param reverse: True if x and y coordinates should be switched and False otherwise
+        :param reverse: `True` if x and y coordinates should be switched and `False` otherwise
         :type reverse: bool
         :return: String of coordinates
         :rtype: str
@@ -178,10 +131,164 @@ class BBox:
         """
         return list(self) == list(other) and self.crs == other.crs
 
+    @property
+    def lower_left(self):
+        """ Returns the lower left vertex of the bounding box
+
+        :return: min_x, min_y
+        :rtype: (float, float)
+        """
+        return self.min_x, self.min_y
+
+    def get_lower_left(self):
+        """ Returns the lower left vertex of the bounding box
+
+        :return: min_x, min_y
+        :rtype: (float, float)
+        """
+        return self.lower_left
+
+    @property
+    def upper_right(self):
+        """ Returns the upper right vertex of the bounding box
+
+        :return: max_x, max_y
+        :rtype: (float, float)
+        """
+        return self.max_x, self.max_y
+
+    def get_upper_right(self):
+        """ Returns the upper right vertex of the bounding box
+
+        :return: max_x, max_y
+        :rtype: (float, float)
+        """
+        return self.upper_right
+
+    @property
+    def middle(self):
+        """ Returns the middle point of the bounding box
+
+        :return: middle point
+        :rtype: (float, float)
+        """
+        return (self.min_x + self.max_x) / 2, (self.min_y + self.max_y) / 2
+
+    def get_middle(self):
+        """ Returns the middle point of the bounding box
+
+        :return: middle point
+        :rtype: (float, float)
+        """
+        return self.middle
+
+    def reverse(self):
+        """ Returns a new BBox object where x and y coordinates are switched
+
+        :return: New BBox object with switched coordinates
+        :rtype: BBox
+        """
+        return BBox((self.min_y, self.min_x, self.max_y, self.max_x), crs=self.crs)
+
+    def transform(self, crs):
+        """ Transforms BBox from current CRS to target CRS
+
+        :param crs: target CRS
+        :type crs: constants.CRS
+        :return: Bounding box in target CRS
+        :rtype: BBox
+        """
+        new_crs = CRS(crs)
+        return BBox((transform_point(self.lower_left, self.crs, new_crs),
+                     transform_point(self.upper_right, self.crs, new_crs)), crs=new_crs)
+
+    def get_polygon(self, reverse=False):
+        """ Returns a tuple of coordinates of 5 points describing a polygon. Points are listed in clockwise order, first
+        point is the same as the last.
+
+        :param reverse: `True` if x and y coordinates should be switched and `False` otherwise
+        :type reverse: bool
+        :return: `((x_1, y_1), ... , (x_5, y_5))`
+        :rtype: tuple(tuple(float))
+        """
+        bbox = self.reverse() if reverse else self
+        polygon = ((bbox.min_x, bbox.min_y),
+                   (bbox.min_x, bbox.max_y),
+                   (bbox.max_x, bbox.max_y),
+                   (bbox.max_x, bbox.min_y),
+                   (bbox.min_x, bbox.min_y))
+        return polygon
+
+    @property
+    def geometry(self):
+        """ Returns polygon geometry in shapely format
+
+        :return: A polygon in shapely format
+        :rtype: shapely.geometry.polygon.Polygon
+        """
+        return shapely.geometry.Polygon(self.get_polygon())
+
+    @property
+    def geojson(self):
+        """ Returns representation in a GeoJSON format. Use json.dump for writing it to file.
+
+        :return: A dictionary in GeoJSON format
+        :rtype: dict
+        """
+        return {
+            'type': 'Polygon',
+            'crs': {
+                'type': 'name',
+                'properties': {'name': 'urn:ogc:def:crs:EPSG::{}'.format(self.crs.value)}
+            },
+            'coordinates': (self.get_polygon(),)
+        }
+
+    def get_partition(self, num_x=1, num_y=1):
+        """ Partitions bounding box into smaller bounding boxes of the same size.
+
+        :param num_x: Number of parts BBox will be horizontally divided into.
+        :type num_x: int
+        :param num_y: Number of parts BBox will be vertically divided into.
+        :type num_y: int or None
+        :return: Two-dimensional list of smaller bounding boxes. Their location is
+        :rtype: list(list(BBox))
+        """
+        size_x, size_y = (self.max_x - self.min_x) / num_x, (self.max_y - self.min_y) / num_y
+        return [[BBox([self.min_x + i * size_x, self.min_y + j * size_y,
+                       self.min_x + (i + 1) * size_x, self.min_y + (j + 1) * size_y],
+                      crs=self.crs) for j in range(num_y)] for i in range(num_x)]
+
+    def get_transform_vector(self, resx, resy):
+        """ Given resolution it returns a transformation vector
+
+        :param resx: Resolution in x direction
+        :type resx: float or int
+        :param resy: Resolution in y direction
+        :type resy: float or int
+        :return: A tuple with 6 numbers representing transformation vector
+        :rtype: tuple(float)
+        """
+        return self.x_min, self._parse_resolution(resx), 0, self.y_max, 0, -self._parse_resolution(resy)
+
+    @staticmethod
+    def _parse_resolution(res):
+        """ Helper method for parsing given resolution. It will also try to parse a string into float
+
+        :return: A float value of resolution
+        :rtype: float
+        """
+        if isinstance(res, str):
+            return float(res.strip('m'))
+        if isinstance(res, (int, float)):
+            return float(res)
+
+        raise TypeError('Resolution should be a float, got resolution of type {}'.format(type(res)))
+
     @staticmethod
     def _to_tuple(bbox):
         """ Converts the input bbox representation (see the constructor docstring for a list of valid representations)
-            into a flat tuple
+        into a flat tuple
 
         :param bbox: A bbox in one of 7 forms listed in the class description.
         :return: A flat tuple of size
@@ -195,6 +302,8 @@ class BBox:
             return BBox._tuple_from_dict(bbox)
         if isinstance(bbox, BBox):
             return BBox._tuple_from_bbox(bbox)
+        if isinstance(bbox, shapely.geometry.base.BaseGeometry):
+            return bbox.bounds
         raise TypeError('Invalid bbox representation')
 
     @staticmethod
@@ -237,45 +346,109 @@ class BBox:
         :param bbox: An instance of the BBox type
         :return: tuple (min_x, min_y, max_x, max_y)
         """
-        return bbox.get_lower_left() + bbox.get_upper_right()
+        return bbox.lower_left + bbox.upper_right
 
 
-class Geometry:
-    """ shapely Polygon + CRS
+class Geometry(_BaseGeometry):
+    """ A class that combines shapely geometry with coordinate reference system. It currently supports polygons and
+    multipolygons.
 
-    :param polygon: shapely Polygon or MultiPolygon
-    :type: shapely.geometry.Polygon or shapely.geometry.MultiPolygon
-    :param crs: Coordinate Reference System that bbox is in. Expect one of the constants from the ``const.CRS`` enum.
+    It can be initialize with any of the following geometry representations:
+    - `shapely.geometry.Polygon` or `shapely.geometry.MultiPolygon`
+    - A GeoJSON dictionary with (multi)polygon coordinates
+    - A WKT string with (multi)polygon coordinates
+
+    :param geometry: A polygon or multipolygon in any valid representation
+    :type geometry: shapely.geometry.Polygon or shapely.geometry.MultiPolygon or dict or str
+    :param crs: Coordinate reference system of the geometry
     :type crs: constants.CRS
     """
-    def __init__(self, polygon, crs):
-        self.polygon = polygon
-        self.crs = CRS(crs)
+    def __init__(self, geometry, crs):
+        self._geometry = self._parse_geometry(geometry)
 
-    def get_crs(self):
-        """ Returns the coordinate reference system (CRS) of the bounding box.
+        super().__init__(crs)
 
-        :return: CRS that the (multi)polygon is given in
-        :rtype: constants.CRS
+    def __repr__(self):
+        """ Method for class representation
         """
-        return self.crs
+        return "{}({}, crs={})".format(self.__class__.__name__, self.wkt, self.crs)
 
-    def get_polygon(self):
-        """ Returns the (multi)polygon.
+    def __eq__(self, other):
+        """ Method for comparing two Geometry classes
 
-        :return: (multi)polygon
-        :rtype: shapely.geometry.(Multi)Polygon
+        :param other: Another Geometry object
+        :type other: Geometry
+        :return: `True` if geometry objects have the same geometry and CRS and `False` otherwise
+        :rtype: bool
         """
-        return self.polygon
+        return self.geometry == other.geometry and self.crs == other.crs
 
-    def to_wkt(self):
-        """ Transforms geometry object into `Well-known text` format
+    def reverse(self):
+        """ Returns a new Geometry object where x and y coordinates are switched
 
-        :return: string in WKT format
-        :rtype: str
+        :return: New Geometry object with switched coordinates
+        :rtype: Geometry
         """
-        if self.crs == CRS.WGS84:
-            polygon = transform(lambda x, y: (y, x), self.polygon)
-        else:
-            polygon = self.polygon
-        return polygon.wkt
+        return Geometry(shapely.ops.transform(lambda x, y: (y, x), self.geometry), crs=self.crs)
+
+    def transform(self, crs):
+        """ Transforms Geometry from current CRS to target CRS
+
+        :param crs: target CRS
+        :type crs: constants.CRS
+        :return: Geometry in target CRS
+        :rtype: Geometry
+        """
+        new_crs = CRS(crs)
+
+        geometry = self.geometry
+        if new_crs is not self.crs:
+            project = functools.partial(pyproj.transform, self.crs.projection(), new_crs.projection())
+            geometry = shapely.ops.transform(project, geometry)
+
+        return Geometry(geometry, crs=new_crs)
+
+    @property
+    def geometry(self):
+        """ Returns shapely object representing geometry in this class
+
+        :return: A polygon or a multipolygon in shapely format
+        :rtype: shapely.geometry.Polygon or shapely.geometry.MultiPolygon
+        """
+        return self._geometry
+
+    @property
+    def geojson(self):
+        """ Returns representation in a GeoJSON format. Use json.dump for writing it to file.
+
+        :return: A dictionary in GeoJSON format
+        :rtype: dict
+        """
+        return {
+            'crs': {
+                'type': 'name',
+                'properties': {'name': 'urn:ogc:def:crs:EPSG::{}'.format(self.crs.value)}
+            },
+            **shapely.geometry.mapping(self.geometry)
+        }
+
+    @staticmethod
+    def _parse_geometry(geometry):
+        """ Parses given geometry into shapely object
+
+        :param geometry:
+        :return: Shapely polygon or multipolygon
+        :rtype: shapely.geometry.Polygon or shapely.geometry.MultiPolygon
+        :raises TypeError
+        """
+        if isinstance(geometry, str):
+            geometry = shapely.wkt.loads(geometry)
+        elif isinstance(geometry, dict):
+            geometry = shapely.geometry.shape(geometry)
+        elif not isinstance(geometry, shapely.geometry.base.BaseGeometry):
+            raise TypeError('Unsupported geometry representation')
+
+        if not isinstance(geometry, (shapely.geometry.Polygon, shapely.geometry.MultiPolygon)):
+            raise ValueError('Supported geometry types are polygon and multipolygon, got {}'.format(type(geometry)))
+
+        return geometry
