@@ -117,7 +117,7 @@ class TestBBox(TestSentinelHub):
         bbox = BBox([46.07, 13.23, 46.24, 13.57], CRS.WGS84)
 
         self.assertTrue(isinstance(bbox.get_geojson(), dict),
-                        "Expected dictionary, got type {}".format(type(bbox.get_geometry())))
+                        "Expected dictionary, got type {}".format(type(bbox.geometry)))
         self.assertTrue(isinstance(bbox.get_geometry(), shapely.geometry.Polygon),
                         "Expected type {}, got type {}".format(shapely.geometry.Polygon,
                                                                type(bbox.get_geometry())))

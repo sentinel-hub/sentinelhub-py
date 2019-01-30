@@ -27,8 +27,8 @@ def bbox_to_dimensions(bbox, resolution):
     :rtype: int, int
     """
     utm_bbox = to_utm_bbox(bbox)
-    east1, north1 = utm_bbox.get_lower_left()
-    east2, north2 = utm_bbox.get_upper_right()
+    east1, north1 = utm_bbox.lower_left
+    east2, north2 = utm_bbox.upper_right
 
     resx, resy = resolution if isinstance(resolution, tuple) else (resolution, resolution)
 
@@ -49,8 +49,8 @@ def bbox_to_resolution(bbox, width, height):
     :raises: ValueError if CRS is not supported
     """
     utm_bbox = to_utm_bbox(bbox)
-    east1, north1 = utm_bbox.get_lower_left()
-    east2, north2 = utm_bbox.get_upper_right()
+    east1, north1 = utm_bbox.lower_left
+    east2, north2 = utm_bbox.upper_right
     return abs(east2 - east1) / width, abs(north2 - north1) / height
 
 
@@ -68,8 +68,8 @@ def get_image_dimension(bbox, width=None, height=None):
     :rtype: int
     """
     utm_bbox = to_utm_bbox(bbox)
-    east1, north1 = utm_bbox.get_lower_left()
-    east2, north2 = utm_bbox.get_upper_right()
+    east1, north1 = utm_bbox.lower_left
+    east2, north2 = utm_bbox.upper_right
     if isinstance(width, int):
         return round(width * abs(north2 - north1) / abs(east2 - east1))
     return round(height * abs(east2 - east1) / abs(north2 - north1))
@@ -83,11 +83,11 @@ def to_utm_bbox(bbox):
     :return: bounding box in UTM CRS
     :rtype: geometry.BBox
     """
-    if CRS.is_utm(bbox.get_crs()):
+    if CRS.is_utm(bbox.crs):
         return bbox
-    lng, lat = bbox.get_middle()
-    utm_crs = get_utm_crs(lng, lat, source_crs=bbox.get_crs())
-    return transform_bbox(bbox, utm_crs)
+    lng, lat = bbox.middle
+    utm_crs = get_utm_crs(lng, lat, source_crs=bbox.crs)
+    return bbox.transform(utm_crs)
 
 
 def get_utm_bbox(img_bbox, transform):

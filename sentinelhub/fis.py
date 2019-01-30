@@ -57,15 +57,15 @@ class FisService(OgcImageService):
         date_interval = parse_time_interval(request.time)
 
         if isinstance(geometry, Geometry):
-            geometry_string = geometry.to_wkt()
+            geometry_string = geometry.wkt
         elif isinstance(geometry, BBox):
-            geometry_string = geometry.__str__(reverse=True) if geometry.get_crs() is CRS.WGS84 else str(geometry)
+            geometry_string = geometry.__str__(reverse=True) if geometry.crs is CRS.WGS84 else str(geometry)
 
         filename = '_'.join([
             str(request.service_type.value),
             request.layer,
             geometry_string,
-            CRS.ogc_string(geometry.get_crs()),
+            CRS.ogc_string(geometry.crs),
             '{}_{}'.format(date_interval[0], date_interval[1]),
             request.resolution,
             str(request.bins) if request.bins else '',

@@ -11,7 +11,6 @@ from .ogc import OgcImageService, MimeType
 from .config import SHConfig
 from .download import DownloadRequest, get_json
 from .constants import CRS
-from .geo_utils import transform_bbox
 
 LOGGER = logging.getLogger(__name__)
 
@@ -237,7 +236,7 @@ class GeopediaFeatureIterator(GeopediaService):
         self.query = {}
         if bbox is not None:
             if bbox.crs is not CRS.POP_WEB:
-                bbox = transform_bbox(bbox, CRS.POP_WEB)
+                bbox = bbox.transform(CRS.POP_WEB)
 
             self.query[self.FILTER_EXPRESSION] = 'bbox({},"EPSG:3857")'.format(bbox)
         if query_filter is not None:

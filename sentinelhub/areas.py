@@ -9,7 +9,7 @@ from shapely.geometry import Polygon, MultiPolygon
 
 from .geometry import BBox
 from .constants import CRS, DataSource
-from .geo_utils import transform_point, transform_bbox
+from .geo_utils import transform_point
 from .ogc import WebFeatureService
 
 
@@ -78,7 +78,7 @@ class AreaSplitter(ABC):
         :rtype: list(sentinelhub.geometry.BBox)
         """
         if crs:
-            return [transform_bbox(bbox, crs) for bbox in self.bbox_list]
+            return [bbox.transform(crs) for bbox in self.bbox_list]
         return self.bbox_list
 
     def get_geometry_list(self):
@@ -117,14 +117,14 @@ class AreaSplitter(ABC):
         :rtype: sentinelhub.geometry.BBox
         """
         bbox_list = [BBox(shape.bounds, crs=self.crs) for shape in self.shape_list]
-        area_minx = min([bbox.get_lower_left()[0] for bbox in bbox_list])
-        area_miny = min([bbox.get_lower_left()[1] for bbox in bbox_list])
-        area_maxx = max([bbox.get_upper_right()[0] for bbox in bbox_list])
-        area_maxy = max([bbox.get_upper_right()[1] for bbox in bbox_list])
+        area_minx = min([bbox.lower_left[0] for bbox in bbox_list])
+        area_miny = min([bbox.lower_left[1] for bbox in bbox_list])
+        area_maxx = max([bbox.upper_right[0] for bbox in bbox_list])
+        area_maxy = max([bbox.upper_right[1] for bbox in bbox_list])
         bbox = BBox([area_minx, area_miny, area_maxx, area_maxy], crs=self.crs)
         if crs is None:
             return bbox
-        return transform_bbox(bbox, crs)
+        return bbox.transform(crs)
 
     def _intersects_area(self, bbox):
         """Checks if the bounding box intersects the entire area
@@ -154,15 +154,15 @@ class AreaSplitter(ABC):
         :return: A polygon
         :rtype: shapely.geometry.polygon.Polygon
         """
-        projected_bbox = transform_bbox(bbox, self.crs)
+        projected_bbox = bbox.transform(self.crs)
         return Polygon(projected_bbox.get_polygon())
 
     def _reduce_sizes(self):
         """Reduces sizes of bounding boxes
         """
         for i, bbox in enumerate(self.bbox_list):
-            bbox_crs = bbox.get_crs()
-            self.bbox_list[i] = transform_bbox(BBox(self._intersection_area(bbox).bounds, self.crs), bbox_crs)
+            bbox_crs = bbox.crs
+            self.bbox_list[i] = BBox(self._intersection_area(bbox).bounds, self.crs).transform(bbox_crs)
 
 
 class BBoxSplitter(AreaSplitter):
@@ -263,7 +263,7 @@ class OsmSplitter(AreaSplitter):
         self._recursive_split(self.get_world_bbox(), 0, 0, 0)
 
         for i, bbox in enumerate(self.bbox_list):
-            self.bbox_list[i] = transform_bbox(bbox, self.crs)
+            self.bbox_list[i] = bbox.transform(self.crs)
 
         if self.reduce_bbox_sizes:
             self._reduce_sizes()
@@ -383,7 +383,7 @@ class TileSplitter(AreaSplitter):
 
         for tile_name, tile_info in self.tile_dict.items():
             tile_bbox = tile_info['bbox']
-            bbox_splitter = BBoxSplitter([Polygon(tile_bbox.get_polygon())], tile_bbox.get_crs(),
+            bbox_splitter = BBoxSplitter([Polygon(tile_bbox.get_polygon())], tile_bbox.crs,
                                          split_shape=self.tile_split_shape, reduce_bbox_sizes=self.reduce_bbox_sizes)
 
             for bbox, info in zip(bbox_splitter.get_bbox_list(), bbox_splitter.get_info_list()):

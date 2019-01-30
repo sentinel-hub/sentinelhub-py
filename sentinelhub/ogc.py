@@ -191,7 +191,7 @@ class OgcImageService(OgcService):
                 evalscript = params[CustomUrlParam.EVALSCRIPT.value]
                 params[CustomUrlParam.EVALSCRIPT.value] = b64encode(evalscript.encode()).decode()
 
-            if CustomUrlParam.GEOMETRY.value in params and request.bbox.get_crs() is CRS.WGS84:
+            if CustomUrlParam.GEOMETRY.value in params and request.bbox.crs is CRS.WGS84:
                 geometry = shapely.wkt.loads(params[CustomUrlParam.GEOMETRY.value])
                 geometry = shapely.ops.transform(lambda x, y: (y, x), geometry)
 
@@ -211,9 +211,9 @@ class OgcImageService(OgcService):
         :rtype: dict
         """
         params = {
-            'BBOX': request.bbox.__str__(reverse=True) if request.bbox.get_crs() is CRS.WGS84 else str(request.bbox),
+            'BBOX': request.bbox.__str__(reverse=True) if request.bbox.crs is CRS.WGS84 else str(request.bbox),
             'FORMAT': MimeType.get_string(request.image_format),
-            'CRS': CRS.ogc_string(request.bbox.get_crs()),
+            'CRS': CRS.ogc_string(request.bbox.crs),
         }
 
         if date is not None:
@@ -281,16 +281,16 @@ class OgcImageService(OgcService):
         date_interval = parse_time_interval(request.time)
 
         params = {
-            'CRS': CRS.ogc_string(geometry.get_crs()),
+            'CRS': CRS.ogc_string(geometry.crs),
             'LAYER': request.layer,
             'RESOLUTION': request.resolution,
             'TIME': '{}/{}'.format(date_interval[0], date_interval[1])
         }
 
         if isinstance(geometry, Geometry):
-            params['GEOMETRY'] = geometry.to_wkt()
+            params['GEOMETRY'] = geometry.wkt
         elif isinstance(geometry, BBox):
-            params['BBOX'] = geometry.__str__(reverse=True) if geometry.get_crs() is CRS.WGS84 else str(geometry)
+            params['BBOX'] = geometry.__str__(reverse=True) if geometry.crs is CRS.WGS84 else str(geometry)
         else:
             raise ValueError('Each geometry must be an instance of sentinelhub.{} or sentinelhub.{} but {} '
                              'found'.format(BBox.__name__, Geometry.__name__, geometry))
@@ -330,7 +330,7 @@ class OgcImageService(OgcService):
         filename = '_'.join([
             str(request.service_type.value),
             request.layer,
-            str(request.bbox.get_crs()),
+            str(request.bbox.crs),
             str(request.bbox).replace(',', '_'),
             '' if date is None else date.strftime("%Y-%m-%dT%H-%M-%S"),
             '{}X{}'.format(size_x, size_y)
@@ -524,9 +524,9 @@ class WebFeatureService(OgcService):
         params = {'SERVICE': ServiceType.WFS.value,
                   'REQUEST': 'GetFeature',
                   'TYPENAMES': DataSource.get_wfs_typename(self.data_source),
-                  'BBOX': self.bbox.__str__(reverse=True) if self.bbox.get_crs() is CRS.WGS84 else str(self.bbox),
+                  'BBOX': self.bbox.__str__(reverse=True) if self.bbox.crs is CRS.WGS84 else str(self.bbox),
                   'OUTPUTFORMAT': MimeType.get_string(MimeType.JSON),
-                  'SRSNAME': CRS.ogc_string(self.bbox.get_crs()),
+                  'SRSNAME': CRS.ogc_string(self.bbox.crs),
                   'TIME': '{}/{}'.format(self.time_interval[0], self.time_interval[1]),
                   'MAXCC': 100.0 * self.maxcc,
                   'MAXFEATURES': SHConfig().max_wfs_records_per_query,

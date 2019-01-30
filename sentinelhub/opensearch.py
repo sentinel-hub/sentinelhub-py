@@ -10,7 +10,6 @@ from urllib.parse import urlencode
 from .constants import CRS
 from .config import SHConfig
 from .download import get_json
-from .geo_utils import transform_bbox
 from .time_utils import parse_time_interval
 
 
@@ -146,8 +145,8 @@ def search_iter(tile_id=None, bbox=None, start_date=None, end_date=None, absolut
     :return: An iterator returning dictionaries with info provided by Sentinel Hub OpenSearch REST service
     :rtype: Iterator[dict]
     """
-    if bbox and bbox.get_crs() is not CRS.WGS84:
-        bbox = transform_bbox(bbox, CRS.WGS84)
+    if bbox and bbox.crs is not CRS.WGS84:
+        bbox = bbox.transform(CRS.WGS84)
 
     url_params = _prepare_url_params(tile_id, bbox, end_date, start_date, absolute_orbit)
     url_params['maxRecords'] = SHConfig().max_opensearch_records_per_query

@@ -67,7 +67,7 @@ class TestGeopediaFeatureIterator(TestSentinelHub):
         super().setUpClass()
 
         bbox = BBox(bbox=[(2947363, 4629723), (3007595, 4669471)], crs=CRS.POP_WEB)
-        bbox.transform(CRS.WGS84)
+        bbox = bbox.transform(CRS.WGS84)
         query_filter1 = 'f12458==32632'
         query_filter2 = 'f12458==32635'
 
