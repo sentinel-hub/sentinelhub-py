@@ -26,7 +26,7 @@ class FisService(OgcImageService):
         acceptable cloud coverage.
 
 
-        :param request: QGC-type request with specified bounding box, time interval, and cloud coverage for specific
+        :param request: OGC-type request with specified bounding box, time interval, and cloud coverage for specific
                         product.
         :type request: OgcRequest or GeopediaRequest
         :return: list of DownloadRequests
