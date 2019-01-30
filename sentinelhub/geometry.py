@@ -47,6 +47,18 @@ class _BaseGeometry:
         """
         return self.geometry
 
+    @property
+    def geojson(self):
+        """ Returns representation in a GeoJSON format. Use json.dump for writing it to file.
+
+        :return: A dictionary in GeoJSON format
+        :rtype: dict
+        """
+        return {
+            **self._crs_to_geojson(),
+            **shapely.geometry.mapping(self.geometry)
+        }
+
     def get_geojson(self):
         """ Returns representation in a GeoJSON format. Use json.dump for writing it to file.
 
@@ -54,6 +66,16 @@ class _BaseGeometry:
         :rtype: dict
         """
         return self.geojson
+
+    def _crs_to_geojson(self):
+        """ Helper method which generates part of GeoJSON format related to CRS
+        """
+        return {
+            'crs': {
+                'type': 'name',
+                'properties': {'name': 'urn:ogc:def:crs:EPSG::{}'.format(self.crs.value)}
+            }
+        }
 
     @property
     def wkt(self):
@@ -228,22 +250,6 @@ class BBox(_BaseGeometry):
         """
         return shapely.geometry.Polygon(self.get_polygon())
 
-    @property
-    def geojson(self):
-        """ Returns representation in a GeoJSON format. Use json.dump for writing it to file.
-
-        :return: A dictionary in GeoJSON format
-        :rtype: dict
-        """
-        return {
-            'type': 'Polygon',
-            'crs': {
-                'type': 'name',
-                'properties': {'name': 'urn:ogc:def:crs:EPSG::{}'.format(self.crs.value)}
-            },
-            'coordinates': (self.get_polygon(),)
-        }
-
     def get_partition(self, num_x=1, num_y=1):
         """ Partitions bounding box into smaller bounding boxes of the same size.
 
@@ -416,21 +422,6 @@ class Geometry(_BaseGeometry):
         :rtype: shapely.geometry.Polygon or shapely.geometry.MultiPolygon
         """
         return self._geometry
-
-    @property
-    def geojson(self):
-        """ Returns representation in a GeoJSON format. Use json.dump for writing it to file.
-
-        :return: A dictionary in GeoJSON format
-        :rtype: dict
-        """
-        return {
-            'crs': {
-                'type': 'name',
-                'properties': {'name': 'urn:ogc:def:crs:EPSG::{}'.format(self.crs.value)}
-            },
-            **shapely.geometry.mapping(self.geometry)
-        }
 
     @staticmethod
     def _parse_geometry(geometry):
