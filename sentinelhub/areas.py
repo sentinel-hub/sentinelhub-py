@@ -7,7 +7,7 @@ from abc import ABC, abstractmethod
 import shapely.ops
 from shapely.geometry import Polygon, MultiPolygon
 
-from .geometry import BBox, BBoxCollection
+from .geometry import BBox, BBoxCollection, BaseGeometry
 from .constants import CRS, DataSource
 from .geo_utils import transform_point
 from .ogc import WebFeatureService
@@ -26,10 +26,10 @@ class AreaSplitter(ABC):
     :type reduce_bbox_sizes: bool
     """
     def __init__(self, shape_list, crs, reduce_bbox_sizes=False):
-        self._check_shape_list(shape_list)
+        self.crs = CRS(crs)
+        self._parse_shape_list(shape_list, self.crs)
         self.shape_list = shape_list
         self.area_shape = self._join_shape_list(shape_list)
-        self.crs = crs
         self.reduce_bbox_sizes = reduce_bbox_sizes
 
         self.area_bbox = self.get_area_bbox()
@@ -37,8 +37,8 @@ class AreaSplitter(ABC):
         self.info_list = None
 
     @staticmethod
-    def _check_shape_list(shape_list):
-        """ Checks if the given list of shapes is in correct format
+    def _parse_shape_list(shape_list, crs):
+        """ Checks if the given list of shapes is in correct format and parses geometry objects
 
         :param shape_list: The parameter `shape_list` from class initialization
         :type shape_list: list(shapely.geometry.multipolygon.MultiPolygon or shapely.geometry.polygon.Polygon)
@@ -46,10 +46,17 @@ class AreaSplitter(ABC):
         """
         if not isinstance(shape_list, list):
             raise ValueError('Splitter must be initialized with a list of shapes')
-        for shape in shape_list:
-            if not isinstance(shape, (Polygon, MultiPolygon)):
-                raise ValueError('The list of shapes must contain shapes of type {} or {}'.format(type(Polygon),
-                                                                                                  type(MultiPolygon)))
+
+        return [AreaSplitter._parse_shape(shape, crs) for shape in shape_list]
+
+    @staticmethod
+    def _parse_shape(shape, crs):
+        if isinstance(shape, (Polygon, MultiPolygon)):
+            return shape
+        if isinstance(shape, BaseGeometry):
+            return shape.transform(crs).geometry
+        raise ValueError('The list of shapes must contain shapes of types {}, {} or subtype of '
+                         '{}'.format(type(Polygon), type(MultiPolygon), type(BaseGeometry)))
 
     @staticmethod
     def _join_shape_list(shape_list):
