@@ -22,6 +22,13 @@ class _BaseGeometry:
     def __init__(self, crs):
         self._crs = CRS(crs)
 
+    def __getattr__(self, item):
+        """ Using shapely's svg geometry visualization for Jupyter notebooks
+        """
+        if item == '_repr_svg_':
+            return getattr(self.geometry, item)
+        return super().__getattr__(item)
+
     @property
     def crs(self):
         """ Returns the coordinate reference system (CRS)
