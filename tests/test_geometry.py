@@ -3,7 +3,7 @@ import copy
 
 import shapely.geometry
 
-from sentinelhub import BBox, Geometry, CRS, TestSentinelHub
+from sentinelhub import BBox, Geometry, BBoxCollection, CRS, TestSentinelHub
 
 
 class TestBBox(TestSentinelHub):
@@ -148,12 +148,13 @@ class TestGeometry(TestSentinelHub):
         cls.geometry1 = Geometry(polygon, CRS(32633))
         cls.geometry2 = Geometry(cls.wkt_string, CRS.WGS84)
         cls.bbox = BBox(bbox=[14.00, 45.00, 14.03, 45.03], crs=CRS.WGS84)
+        cls.bbox_collection = BBoxCollection([cls.bbox, BBox('46,13,47,20', CRS.WGS84)])
 
-        cls.geometry_list = [cls.geometry1, cls.geometry2, cls.bbox]
+        cls.geometry_list = [cls.geometry1, cls.geometry2, cls.bbox, cls.bbox_collection]
 
     def test_repr(self):
         for geometry in self.geometry_list:
-            self.assertTrue(isinstance(geometry.__repr__(), str), 'Expected string representation')
+            self.assertTrue(isinstance(repr(geometry), str), 'Expected string representation')
 
     def test_eq(self):
         for geometry in self.geometry_list:
@@ -185,7 +186,7 @@ class TestGeometry(TestSentinelHub):
         self.assertEqual(self.geometry2.wkt, self.wkt_string, 'New WKT string doesnt match the original')
 
     def test_bbox(self):
-        for geometry in [self.geometry1, self.geometry2]:
+        for geometry in [self.geometry1, self.geometry2, self.bbox_collection]:
             self.assertEqual(geometry.bbox, BBox(geometry.geometry, geometry.crs), 'Failed bbox property')
 
 

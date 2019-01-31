@@ -136,7 +136,7 @@ class BBox(_BaseGeometry):
     def __repr__(self):
         """ Class representation
         """
-        return "{}((({}, {}), ({}, {})), crs={})".format(self.__class__.__name__, *self, self.crs)
+        return '{}((({}, {}), ({}, {})), crs={})'.format(self.__class__.__name__, *self, self.crs)
 
     def __str__(self, reverse=False):
         """ Transforms bounding box into a string of coordinates
@@ -147,8 +147,8 @@ class BBox(_BaseGeometry):
         :rtype: str
         """
         if reverse:
-            return "{},{},{},{}".format(self.min_y, self.min_x, self.max_y, self.max_x)
-        return "{},{},{},{}".format(self.min_x, self.min_y, self.max_x, self.max_y)
+            return '{},{},{},{}'.format(self.min_y, self.min_x, self.max_y, self.max_x)
+        return '{},{},{},{}'.format(self.min_x, self.min_y, self.max_x, self.max_y)
 
     def __eq__(self, other):
         """ Method for comparing two bounding boxes
@@ -384,7 +384,7 @@ class Geometry(_BaseGeometry):
     def __repr__(self):
         """ Method for class representation
         """
-        return "{}({}, crs={})".format(self.__class__.__name__, self.wkt, self.crs)
+        return '{}({}, crs={})'.format(self.__class__.__name__, self.wkt, self.crs)
 
     def __eq__(self, other):
         """ Method for comparing two Geometry classes
@@ -459,3 +459,103 @@ class Geometry(_BaseGeometry):
             raise ValueError('Supported geometry types are polygon and multipolygon, got {}'.format(type(geometry)))
 
         return geometry
+
+
+class BBoxCollection(_BaseGeometry):
+    """ A collection of bounding boxes
+
+    :param bbox_list: A list of BBox objects which have to be in the same CRS
+    :type bbox_list: list(BBox)
+    """
+    def __init__(self, bbox_list):
+        self._bbox_list, crs = self._parse_bbox_list(bbox_list)
+        self._geometry = self._get_geometry()
+
+        super().__init__(crs)
+
+    def __repr__(self):
+        """ Method for class representation
+        """
+        return '{}({})'.format(self.__class__.__name__, ', '.join([repr(bbox) for bbox in self.bbox_list]))
+
+    def __eq__(self, other):
+        """ Method for comparing two BBoxCollection classes
+        """
+        return self.crs == other.crs and len(self.bbox_list) == len(other.bbox_list) and \
+            all(bbox == other_bbox for bbox, other_bbox in zip(self, other))
+
+    def __iter__(self):
+        """ This method enables iteration over bounding boxes in collection
+        """
+        return iter(self.bbox_list)
+
+    @property
+    def bbox_list(self):
+        """ Returns the list of bounding boxes from collection
+
+        :return: The list of bounding boxes
+        :rtype: list(BBox)
+        """
+        return self._bbox_list
+
+    @property
+    def geometry(self):
+        """ Returns shapely object representing geometry
+
+        :return: A multipolygon of bounding boxes
+        :rtype: shapely.geometry.MultiPolygon
+        """
+        return self._geometry
+
+    @property
+    def bbox(self):
+        """ Returns BBox object representing bounding box around the geometry
+
+        :return: A bounding box, with same CRS
+        :rtype: BBox
+        """
+        return BBox(self.geometry, self.crs)
+
+    def reverse(self):
+        """ Returns a new BBoxCollection object where all x and y coordinates are switched
+
+        :return: New Geometry object with switched coordinates
+        :rtype: BBoxCollection
+        """
+        return BBoxCollection([bbox.reverse() for bbox in self.bbox_list])
+
+    def transform(self, crs):
+        """ Transforms BBoxCollection from current CRS to target CRS
+
+        :param crs: target CRS
+        :type crs: constants.CRS
+        :return: BBoxCollection in target CRS
+        :rtype: BBoxCollection
+        """
+        return BBoxCollection([bbox.transform(crs) for bbox in self.bbox_list])
+
+    def _get_geometry(self):
+        """ Creates a multipolygon of bounding box polygons
+        """
+        return shapely.geometry.MultiPolygon([bbox.geometry for bbox in self.bbox_list])
+
+    @staticmethod
+    def _parse_bbox_list(bbox_list):
+        """ Helper method for parsing a list of bounding boxes
+        """
+        if isinstance(bbox_list, BBoxCollection):
+            return bbox_list.bbox_list, bbox_list.crs
+
+        if not isinstance(bbox_list, list) or not bbox_list:
+            raise ValueError('Expected non-empty list of BBox objects')
+
+        for bbox in bbox_list:
+            if not isinstance(bbox, BBox):
+                raise ValueError('Elements in the list should be of type {}, got {}'.format(BBox.__name__, type(bbox)))
+
+        crs = bbox_list[0].crs
+        for bbox in bbox_list:
+            if bbox.crs is not crs:
+                raise ValueError('All bounding boxes should have the same CRS')
+
+        return bbox_list, crs
