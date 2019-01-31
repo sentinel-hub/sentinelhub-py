@@ -4,7 +4,7 @@ geometry
 Module implementing geometry classes.
 
 .. module:: sentinelhub.geometry
-.. autoclass:: _BaseGeometry
+.. autoclass:: BaseGeometry
     :members:
 .. autoclass:: BBox
     :members:

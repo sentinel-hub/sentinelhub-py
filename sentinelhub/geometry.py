@@ -3,6 +3,7 @@ Module implementing geometry classes
 """
 
 import functools
+from abc import ABC, abstractmethod
 
 import pyproj
 import shapely.ops
@@ -13,7 +14,7 @@ from .constants import CRS
 from .geo_utils import transform_point
 
 
-class _BaseGeometry:
+class BaseGeometry(ABC):
     """ Base geometry class
 
     :param crs: Coordinate reference system of the geometry
@@ -45,6 +46,13 @@ class _BaseGeometry:
         :rtype: constants.CRS
         """
         return self.crs
+
+    @property
+    @abstractmethod
+    def geometry(self):
+        """ An abstract property - ever subclass must implement geometry property
+        """
+        raise NotImplementedError
 
     def get_geometry(self):
         """ Returns shapely geometry
@@ -94,7 +102,7 @@ class _BaseGeometry:
         return self.geometry.wkt
 
 
-class BBox(_BaseGeometry):
+class BBox(BaseGeometry):
     """ Class representing a bounding box in a given CRS.
 
     Throughout the sentinelhub package this class serves as the canonical representation of a bounding
@@ -362,7 +370,7 @@ class BBox(_BaseGeometry):
         return bbox.lower_left + bbox.upper_right
 
 
-class Geometry(_BaseGeometry):
+class Geometry(BaseGeometry):
     """ A class that combines shapely geometry with coordinate reference system. It currently supports polygons and
     multipolygons.
 
@@ -461,7 +469,7 @@ class Geometry(_BaseGeometry):
         return geometry
 
 
-class BBoxCollection(_BaseGeometry):
+class BBoxCollection(BaseGeometry):
     """ A collection of bounding boxes
 
     :param bbox_list: A list of BBox objects which have to be in the same CRS
