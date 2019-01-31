@@ -239,6 +239,22 @@ class BBox(BaseGeometry):
         return BBox((transform_point(self.lower_left, self.crs, new_crs),
                      transform_point(self.upper_right, self.crs, new_crs)), crs=new_crs)
 
+    def buffer(self, buffer):
+        """ Changes both BBox dimensions (width and height) by a percentage of size of each dimension. If number is
+        negative, the size will decrease. Returns a new instance of BBox object.
+
+        :param buffer: A percentage
+        :type buffer: float
+        :return: A new bounding box of buffered size
+        :rtype: BBox
+        """
+        if buffer < -1:
+            raise ValueError('Cannot reduce the bounding box to nothing, buffer must be >= -1.0')
+        ratio = 1 + buffer
+        mid_x, mid_y = self.middle
+        return BBox((mid_x - (mid_x - self.min_x) * ratio, mid_y - (mid_y - self.min_y) * ratio,
+                     mid_x + (self.max_x - mid_x) * ratio, mid_y + (self.max_y - mid_y) * ratio), self.crs)
+
     def get_polygon(self, reverse=False):
         """ Returns a tuple of coordinates of 5 points describing a polygon. Points are listed in clockwise order, first
         point is the same as the last.

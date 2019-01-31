@@ -131,6 +131,12 @@ class TestBBox(TestSentinelHub):
                         "Expected type {}, got type {}".format(shapely.geometry.Polygon,
                                                                type(bbox.get_geometry())))
 
+    def test_buffer(self):
+        bbox = BBox([46.07, 13.23, 46.24, 13.57], CRS.WGS84)
+
+        self.assertEqual(bbox, bbox.buffer(0), "Buffer 1 should not change bounding box")
+        self.assertEqual(bbox, bbox.buffer(1).buffer(-0.5), "Twice buffered bounding box should return to original")
+
 
 class TestGeometry(TestSentinelHub):
 
