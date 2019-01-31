@@ -7,7 +7,7 @@ from abc import ABC, abstractmethod
 import shapely.ops
 from shapely.geometry import Polygon, MultiPolygon
 
-from .geometry import BBox
+from .geometry import BBox, BBoxCollection
 from .constants import CRS, DataSource
 from .geo_utils import transform_point
 from .ogc import WebFeatureService
@@ -20,7 +20,7 @@ class AreaSplitter(ABC):
     :param shape_list: A list of geometrical shapes describing the area of interest
     :type shape_list: list(shapely.geometry.multipolygon.MultiPolygon or shapely.geometry.polygon.Polygon)
     :param crs: Coordinate reference system of the shapes in `shape_list`
-    :type crs: sentinelhub.constants.CRS
+    :type crs: CRS
     :param reduce_bbox_sizes: If True it will reduce the sizes of bounding boxes so that they will tightly fit the given
            geometry in `shape_list`.
     :type reduce_bbox_sizes: bool
@@ -130,7 +130,7 @@ class AreaSplitter(ABC):
         """Checks if the bounding box intersects the entire area
 
         :param bbox: A bounding box
-        :type bbox: sentinelhub.geometry.BBox)
+        :type bbox: sentinelhub.geometry.BBox
         :return: True if bbox intersects the entire area else False
         :rtype: bool
         """
@@ -140,7 +140,7 @@ class AreaSplitter(ABC):
         """Calculates the intersection of a given bounding box and the entire area
 
         :param bbox: A bounding box
-        :type bbox: sentinelhub.geometry.BBox)
+        :type bbox: sentinelhub.geometry.BBox
         :return: A shape of intersection
         :rtype: shapely.geometry.multipolygon.MultiPolygon or shapely.geometry.polygon.Polygon
         """
@@ -150,12 +150,12 @@ class AreaSplitter(ABC):
         """Transforms bounding box into a polygon object in the area CRS.
 
         :param bbox: A bounding box
-        :type bbox: sentinelhub.geometry.BBox)
+        :type bbox: sentinelhub.geometry.BBox
         :return: A polygon
         :rtype: shapely.geometry.polygon.Polygon
         """
         projected_bbox = bbox.transform(self.crs)
-        return Polygon(projected_bbox.get_polygon())
+        return projected_bbox.geometry
 
     def _reduce_sizes(self):
         """Reduces sizes of bounding boxes
@@ -208,7 +208,7 @@ class BBoxSplitter(AreaSplitter):
         raise ValueError("Split shape must be an int or a tuple of 2 integers.")
 
     def _make_split(self):
-        """This method makes the split
+        """ This method makes the split
         """
         columns, rows = self.split_shape
         bbox_partition = self.area_bbox.get_partition(columns, rows)
@@ -313,7 +313,7 @@ class OsmSplitter(AreaSplitter):
 
 
 class TileSplitter(AreaSplitter):
-    """A tool that splits the given area into smaller parts. Given the area, time interval and data source it collects
+    """ A tool that splits the given area into smaller parts. Given the area, time interval and data source it collects
     info from Sentinel Hub WFS service about all satellite tiles intersecting the area. For each of them it calculates
     bounding box and if specified it splits these bounding boxes into smaller bounding boxes. Then it filters out the
     ones that do not intersect the area. If specified by user it can also reduce the sizes of the remaining bounding
@@ -357,7 +357,7 @@ class TileSplitter(AreaSplitter):
         self._make_split()
 
     def _make_split(self):
-        """This method makes the split
+        """ This method makes the split
         """
         self.tile_dict = {}
 
@@ -383,7 +383,7 @@ class TileSplitter(AreaSplitter):
 
         for tile_name, tile_info in self.tile_dict.items():
             tile_bbox = tile_info['bbox']
-            bbox_splitter = BBoxSplitter([Polygon(tile_bbox.get_polygon())], tile_bbox.crs,
+            bbox_splitter = BBoxSplitter([tile_bbox.geometry], tile_bbox.crs,
                                          split_shape=self.tile_split_shape, reduce_bbox_sizes=self.reduce_bbox_sizes)
 
             for bbox, info in zip(bbox_splitter.get_bbox_list(), bbox_splitter.get_info_list()):
@@ -404,3 +404,65 @@ class TileSplitter(AreaSplitter):
         :rtype: dict
         """
         return self.tile_dict
+
+
+class CustomGridSplitter(AreaSplitter):
+    """ Splitting class which can split according to given custom collection of bounding boxes
+
+    :param shape_list: A list of geometrical shapes describing the area of interest
+    :type shape_list: list(shapely.geometry.multipolygon.MultiPolygon or shapely.geometry.polygon.Polygon)
+    :param crs: Coordinate reference system of the shapes in `shape_list`
+    :type crs: CRS
+    :param bbox_grid: A collection of bounding boxes defining a grid of splitting. All of them have to be in the same
+        CRS.
+    :type bbox_grid: list(BBox) or BBoxCollection
+    :param bbox_split_shape: Parameter that describes the shape in which each of the bounding boxes in the given grid
+        will be split. It can be a tuple of the form `(n, m)` which means the tile bounding boxes will be
+        split into `n` columns and `m` rows. It can also be a single integer `n` which is the same as `(n, n)`.
+    :type bbox_split_shape: int or (int, int)
+    :param reduce_bbox_sizes: If True it will reduce the sizes of bounding boxes so that they will tightly fit the given
+           geometry in `shape_list`.
+    :type reduce_bbox_sizes: bool
+    """
+    def __init__(self, shape_list, crs, bbox_grid, bbox_split_shape=1, **kwargs):
+        super().__init__(shape_list, crs, **kwargs)
+
+        self.bbox_grid = self._parse_bbox_grid(bbox_grid)
+        self.bbox_split_shape = bbox_split_shape
+
+        self._make_split()
+
+    @staticmethod
+    def _parse_bbox_grid(bbox_grid):
+        """ Helper method for parsing bounding box grid. It will try to parse it into `BBoxCollection`
+        """
+        if isinstance(bbox_grid, BBoxCollection):
+            return bbox_grid
+
+        if isinstance(bbox_grid, list):
+            return BBoxCollection(bbox_grid)
+
+        raise ValueError("Parameter 'bbox_grid' should be an instance of {}".format(BBoxCollection.__name__))
+
+    def _make_split(self):
+        """ This method makes the split
+        """
+        self.bbox_list = []
+        self.info_list = []
+
+        for grid_idx, grid_bbox in enumerate(self.bbox_grid):
+            if self._intersects_area(grid_bbox):
+
+                bbox_splitter = BBoxSplitter([grid_bbox.geometry], grid_bbox.crs,
+                                             split_shape=self.bbox_split_shape,
+                                             reduce_bbox_sizes=self.reduce_bbox_sizes)
+
+                for bbox, info in zip(bbox_splitter.get_bbox_list(), bbox_splitter.get_info_list()):
+                    if self._intersects_area(bbox):
+                        info['grid_index'] = grid_idx
+
+                        self.bbox_list.append(bbox)
+                        self.info_list.append(info)
+
+        if self.reduce_bbox_sizes:
+            self._reduce_sizes()

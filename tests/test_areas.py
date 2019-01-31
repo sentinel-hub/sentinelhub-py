@@ -1,8 +1,11 @@
 import unittest
 import os.path
-from shapely.geometry import shape
+import itertools
 
-from sentinelhub import BBoxSplitter, OsmSplitter, TileSplitter, read_data, CRS, DataSource, TestSentinelHub
+import shapely.geometry
+
+from sentinelhub import BBoxSplitter, OsmSplitter, TileSplitter, CustomGridSplitter, BBox, read_data, CRS, \
+    DataSource, TestSentinelHub
 
 
 class TestOgc(TestSentinelHub):
@@ -19,7 +22,10 @@ class TestOgc(TestSentinelHub):
         super().setUpClass()
 
         geojson = read_data(os.path.join(cls.INPUT_FOLDER, 'cies_islands.json'))
-        cls.area = shape(geojson)
+        cls.area = shapely.geometry.shape(geojson)
+
+        bbox_grid = [BBox((x / 10, y / 100, (x + 1) / 10, (y + 1) / 100), CRS.WGS84)
+                     for x, y in itertools.product(range(-90, -87), range(4200, 4250))]
 
         cls.test_cases = [
             cls.SplitterTestCase('BBoxSplitter',
@@ -29,22 +35,30 @@ class TestOgc(TestSentinelHub):
             cls.SplitterTestCase('TileSplitter',
                                  TileSplitter([cls.area], CRS.WGS84, ('2017-10-01', '2018-03-01'), tile_split_shape=40,
                                               data_source=DataSource.SENTINEL2_L1C, reduce_bbox_sizes=True),
-                                 bbox_len=13)
+                                 bbox_len=13),
+            cls.SplitterTestCase('CustomGridSplitter',
+                                 CustomGridSplitter([cls.area], CRS.WGS84, bbox_grid, bbox_split_shape=(3, 4),
+                                                    reduce_bbox_sizes=False),
+                                 bbox_len=41)
         ]
 
     def test_return_type(self):
         for test_case in self.test_cases:
             with self.subTest(msg='Test case {}'.format(test_case.name)):
-                bbox_list = test_case.splitter.get_bbox_list()
-                info_list = test_case.splitter.get_info_list()
-                self.assertTrue(isinstance(bbox_list, list), "Expected a list")
-                self.assertTrue(isinstance(info_list, list), "Expected a list")
-                self.assertEqual(len(bbox_list), test_case.bbox_len,
-                                 "Expected a list of length {}, got length {}".format(test_case.bbox_len,
-                                                                                      len(bbox_list)))
-                self.assertEqual(len(info_list), test_case.bbox_len,
-                                 "Expected a list of length {}, got length {}".format(test_case.bbox_len,
-                                                                                      len(info_list)))
+                return_lists = [
+                    (test_case.splitter.get_bbox_list(), BBox),
+                    (test_case.splitter.get_info_list(), dict),
+                    (test_case.splitter.get_geometry_list(), (shapely.geometry.Polygon, shapely.geometry.MultiPolygon))
+                ]
+
+                for return_list, item_type in return_lists:
+                    self.assertTrue(isinstance(return_list, list), "Expected a list")
+                    self.assertEqual(len(return_list), test_case.bbox_len,
+                                     "Expected a list of length {}, got length {}".format(test_case.bbox_len,
+                                                                                          len(return_list)))
+                    for return_item in return_list:
+                        self.assertTrue(isinstance(return_item, item_type),
+                                        "Expected items of type {}, got {}".format(item_type, type(return_item)))
 
 
 if __name__ == '__main__':

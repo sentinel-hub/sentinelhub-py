@@ -12,3 +12,5 @@ Module for working with large geographical areas.
     :members:
 .. autoclass:: TileSplitter
     :members:
+.. autoclass:: CustomGridSplitter
+    :members:
