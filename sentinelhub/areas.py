@@ -80,13 +80,15 @@ class AreaSplitter(ABC):
 
         :param crs: Coordinate reference system in which the bounding boxes should be returned. If None the CRS will
                     be the default CRS of the splitter.
-        :type crs: sentinelhub.constants.CRS or None
+        :type crs: CRS or None
         :return: List of bounding boxes
-        :rtype: list(sentinelhub.geometry.BBox)
+        :rtype: list(BBox)
         """
+        bbox_list = self._reduce_sizes(self.bbox_list) if self.reduce_bbox_sizes else self.bbox_list
+
         if crs:
-            return [bbox.transform(crs) for bbox in self.bbox_list]
-        return self.bbox_list
+            return [bbox.transform(crs) for bbox in bbox_list]
+        return bbox_list
 
     def get_geometry_list(self):
         """For each bounding box an intersection with the shape of entire given area is calculated. CRS of the returned
@@ -102,7 +104,7 @@ class AreaSplitter(ABC):
         the list matches the order of the list of bounding boxes.
 
         :return: List of dictionaries
-        :rtype: list(sentinelhub.geometry.BBox)
+        :rtype: list(BBox)
         """
         return self.info_list
 
@@ -119,9 +121,9 @@ class AreaSplitter(ABC):
 
         :param crs: Coordinate reference system in which the bounding box should be returned. If None the CRS will
                     be the default CRS of the splitter.
-        :type crs: sentinelhub.constants.CRS or None
+        :type crs: CRS or None
         :return: A bounding box of the area defined by the `shape_list`
-        :rtype: sentinelhub.geometry.BBox
+        :rtype: BBox
         """
         bbox_list = [BBox(shape.bounds, crs=self.crs) for shape in self.shape_list]
         area_minx = min([bbox.lower_left[0] for bbox in bbox_list])
@@ -137,7 +139,7 @@ class AreaSplitter(ABC):
         """Checks if the bounding box intersects the entire area
 
         :param bbox: A bounding box
-        :type bbox: sentinelhub.geometry.BBox
+        :type bbox: BBox
         :return: True if bbox intersects the entire area else False
         :rtype: bool
         """
@@ -147,7 +149,7 @@ class AreaSplitter(ABC):
         """Calculates the intersection of a given bounding box and the entire area
 
         :param bbox: A bounding box
-        :type bbox: sentinelhub.geometry.BBox
+        :type bbox: BBox
         :return: A shape of intersection
         :rtype: shapely.geometry.multipolygon.MultiPolygon or shapely.geometry.polygon.Polygon
         """
@@ -157,19 +159,17 @@ class AreaSplitter(ABC):
         """Transforms bounding box into a polygon object in the area CRS.
 
         :param bbox: A bounding box
-        :type bbox: sentinelhub.geometry.BBox
+        :type bbox: BBox
         :return: A polygon
         :rtype: shapely.geometry.polygon.Polygon
         """
         projected_bbox = bbox.transform(self.crs)
         return projected_bbox.geometry
 
-    def _reduce_sizes(self):
+    def _reduce_sizes(self, bbox_list):
         """Reduces sizes of bounding boxes
         """
-        for i, bbox in enumerate(self.bbox_list):
-            bbox_crs = bbox.crs
-            self.bbox_list[i] = BBox(self._intersection_area(bbox).bounds, self.crs).transform(bbox_crs)
+        return [BBox(self._intersection_area(bbox).bounds, self.crs).transform(bbox.crs) for bbox in bbox_list]
 
 
 class BBoxSplitter(AreaSplitter):
@@ -180,7 +180,7 @@ class BBoxSplitter(AreaSplitter):
     :param shape_list: A list of geometrical shapes describing the area of interest
     :type shape_list: list(shapely.geometry.multipolygon.MultiPolygon or shapely.geometry.polygon.Polygon)
     :param crs: Coordinate reference system of the shapes in `shape_list`
-    :type crs: sentinelhub.constants.CRS
+    :type crs: CRS
     :param split_shape: Parameter that describes the shape in which the area bounding box will be split. It can be a
                         tuple of the form `(n, m)` which means the area bounding box will be split into `n` columns and
                         `m` rows. It can also be a single integer `n` which is the same as `(n, n)`.
@@ -231,9 +231,6 @@ class BBoxSplitter(AreaSplitter):
                         'index_y': j}
                 self.info_list.append(info)
 
-        if self.reduce_bbox_sizes:
-            self._reduce_sizes()
-
 
 class OsmSplitter(AreaSplitter):
     """A tool that splits the given area into smaller parts. For the splitting it uses Open Street Map (OSM) grid on the
@@ -243,7 +240,7 @@ class OsmSplitter(AreaSplitter):
     :param shape_list: A list of geometrical shapes describing the area of interest
     :type shape_list: list(shapely.geometry.multipolygon.MultiPolygon or shapely.geometry.polygon.Polygon)
     :param crs: Coordinate reference system of the shapes in `shape_list`
-    :type crs: sentinelhub.constants.CRS
+    :type crs: CRS
     :param zoom_level: A zoom level defined by OSM. Level 0 is entire world, level 1 splits the world into 4 parts, etc.
     :type zoom_level: int
     :param reduce_bbox_sizes: If True it will reduce the sizes of bounding boxes so that they will tightly fit the given
@@ -272,9 +269,6 @@ class OsmSplitter(AreaSplitter):
         for i, bbox in enumerate(self.bbox_list):
             self.bbox_list[i] = bbox.transform(self.crs)
 
-        if self.reduce_bbox_sizes:
-            self._reduce_sizes()
-
     def _check_area_bbox(self):
         """The method checks if the area bounding box is completely inside the OSM grid. That means that its latitudes
         must be contained in the interval (-85.0511, 85.0511)
@@ -290,7 +284,7 @@ class OsmSplitter(AreaSplitter):
         """Creates a bounding box of the entire world in EPSG: 3857
 
         :return: Bounding box of entire world
-        :rtype: sentinelhub.geometry.BBox
+        :rtype: BBox
         """
         return BBox((-self.POP_WEB_MAX, -self.POP_WEB_MAX, self.POP_WEB_MAX, self.POP_WEB_MAX), crs=CRS.POP_WEB)
 
@@ -298,7 +292,7 @@ class OsmSplitter(AreaSplitter):
         """Method that recursively creates bounding boxes of OSM grid that intersect the area.
 
         :param bbox: Bounding box
-        :type bbox: sentinelhub.geometry.BBox
+        :type bbox: BBox
         :param zoom_level: OSM zoom level
         :type zoom_level: int
         :param column: Column in the OSM grid
@@ -329,7 +323,7 @@ class TileSplitter(AreaSplitter):
     :param shape_list: A list of geometrical shapes describing the area of interest
     :type shape_list: list(shapely.geometry.multipolygon.MultiPolygon or shapely.geometry.polygon.Polygon)
     :param crs: Coordinate reference system of the shapes in `shape_list`
-    :type crs: sentinelhub.constants.CRS
+    :type crs: CRS
     :param time_interval: Interval with start and end date of the form YYYY-MM-DDThh:mm:ss or YYYY-MM-DD
     :type time_interval: (str, str)
     :param tile_split_shape: Parameter that describes the shape in which the satellite tile bounding boxes will be
@@ -391,7 +385,7 @@ class TileSplitter(AreaSplitter):
         for tile_name, tile_info in self.tile_dict.items():
             tile_bbox = tile_info['bbox']
             bbox_splitter = BBoxSplitter([tile_bbox.geometry], tile_bbox.crs,
-                                         split_shape=self.tile_split_shape, reduce_bbox_sizes=self.reduce_bbox_sizes)
+                                         split_shape=self.tile_split_shape)
 
             for bbox, info in zip(bbox_splitter.get_bbox_list(), bbox_splitter.get_info_list()):
                 if self._intersects_area(bbox):
@@ -399,9 +393,6 @@ class TileSplitter(AreaSplitter):
 
                     self.bbox_list.append(bbox)
                     self.info_list.append(info)
-
-        if self.reduce_bbox_sizes:
-            self._reduce_sizes()
 
     def get_tile_dict(self):
         """Returns the dictionary of satellite tiles intersecting the area geometry. For each tile they contain info
@@ -461,8 +452,7 @@ class CustomGridSplitter(AreaSplitter):
             if self._intersects_area(grid_bbox):
 
                 bbox_splitter = BBoxSplitter([grid_bbox.geometry], grid_bbox.crs,
-                                             split_shape=self.bbox_split_shape,
-                                             reduce_bbox_sizes=self.reduce_bbox_sizes)
+                                             split_shape=self.bbox_split_shape)
 
                 for bbox, info in zip(bbox_splitter.get_bbox_list(), bbox_splitter.get_info_list()):
                     if self._intersects_area(bbox):
@@ -470,6 +460,3 @@ class CustomGridSplitter(AreaSplitter):
 
                         self.bbox_list.append(bbox)
                         self.info_list.append(info)
-
-        if self.reduce_bbox_sizes:
-            self._reduce_sizes()
