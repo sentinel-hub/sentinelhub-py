@@ -46,7 +46,7 @@ class TestOgc(TestSentinelHub):
         for test_case in self.test_cases:
             with self.subTest(msg='Test case {}'.format(test_case.name)):
                 return_lists = [
-                    (test_case.splitter.get_bbox_list(), BBox),
+                    (test_case.splitter.get_bbox_list(buffer=0.2), BBox),
                     (test_case.splitter.get_info_list(), dict),
                     (test_case.splitter.get_geometry_list(), (shapely.geometry.Polygon, shapely.geometry.MultiPolygon))
                 ]

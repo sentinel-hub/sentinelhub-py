@@ -243,7 +243,7 @@ class BBox(BaseGeometry):
         """ Changes both BBox dimensions (width and height) by a percentage of size of each dimension. If number is
         negative, the size will decrease. Returns a new instance of BBox object.
 
-        :param buffer: A percentage
+        :param buffer: A percentage of BBox size change
         :type buffer: float
         :return: A new bounding box of buffered size
         :rtype: BBox

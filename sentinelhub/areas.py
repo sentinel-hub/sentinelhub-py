@@ -75,16 +75,28 @@ class AreaSplitter(ABC):
         """
         raise NotImplementedError
 
-    def get_bbox_list(self, crs=None):
+    def get_bbox_list(self, crs=None, buffer=None, reduce_bbox_sizes=None):
         """Returns a list of bounding boxes that are the result of the split
 
         :param crs: Coordinate reference system in which the bounding boxes should be returned. If None the CRS will
                     be the default CRS of the splitter.
         :type crs: CRS or None
+        :param buffer: A percentage of each BBox size increase. This will cause neighbouring bounding boxes to overlap.
+        :type buffer: float or None
+        :param reduce_bbox_sizes: If `True` it will reduce the sizes of bounding boxes so that they will tightly
+            fit the given geometry in `shape_list`. This overrides the same parameter from constructor
+        :type reduce_bbox_sizes: bool
         :return: List of bounding boxes
         :rtype: list(BBox)
         """
-        bbox_list = self._reduce_sizes(self.bbox_list) if self.reduce_bbox_sizes else self.bbox_list
+        bbox_list = self.bbox_list
+        if buffer:
+            bbox_list = [bbox.buffer(buffer) for bbox in bbox_list]
+
+        if reduce_bbox_sizes is None:
+            reduce_bbox_sizes = self.reduce_bbox_sizes
+        if reduce_bbox_sizes:
+            bbox_list = self._reduce_sizes(bbox_list)
 
         if crs:
             return [bbox.transform(crs) for bbox in bbox_list]
