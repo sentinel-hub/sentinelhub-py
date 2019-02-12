@@ -211,7 +211,8 @@ class GeopediaImageService(GeopediaService):
         """ Collects data from Geopedia layer and returns list of features
         """
         if request.gpd_iterator is None:
-            self.gpd_iterator = GeopediaFeatureIterator(request.layer, bbox=request.bbox, base_url=self.base_url)
+            self.gpd_iterator = GeopediaFeatureIterator(request.layer, bbox=request.bbox, base_url=self.base_url,
+                                                        gpd_session=request.gpd_session)
         else:
             self.gpd_iterator = request.gpd_iterator
 
@@ -270,13 +271,17 @@ class GeopediaFeatureIterator(GeopediaService):
     :type bbox: BBox
     :param query_filter: Query string used for filtering returned features.
     :type query_filter: str
+    :param gpd_session: Optional parameter for specifying a custom Geopedia session, which can also contain login
+        credentials. This can be used for accessing private Geopedia layers. By default it is set to `None` and a basic
+        Geopedia session without credentials will be created.
+    :type gpd_session: GeopediaSession or None
     :param base_url: Base url of Geopedia REST services. If ``None``, the url specified in the configuration
         file is taken.
     :type base_url: str or None
     """
     FILTER_EXPRESSION = 'filterExpression'
 
-    def __init__(self, layer, bbox=None, query_filter=None, **kwargs):
+    def __init__(self, layer, bbox=None, query_filter=None, gpd_session=None, **kwargs):
         super().__init__(**kwargs)
 
         self.layer = self._parse_layer(layer)
@@ -294,7 +299,7 @@ class GeopediaFeatureIterator(GeopediaService):
             else:
                 self.query[self.FILTER_EXPRESSION] = query_filter
 
-        self.gpd_session = GeopediaSession(is_global=True)
+        self.gpd_session = gpd_session if gpd_session else GeopediaSession(is_global=True)
         self.features = []
         self.layer_size = None
         self.index = 0

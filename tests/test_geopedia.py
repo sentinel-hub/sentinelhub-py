@@ -67,7 +67,8 @@ class TestGeopediaImageService(TestSentinelHub):
         cls.image_field_name = 'Masks'
 
         cls.gpd_request = GeopediaImageRequest(layer=1749, bbox=bbox, image_field_name=cls.image_field_name,
-                                               image_format=MimeType.PNG, data_folder=cls.OUTPUT_FOLDER)
+                                               image_format=MimeType.PNG, data_folder=cls.OUTPUT_FOLDER,
+                                               gpd_session=GeopediaSession(is_global=True))
         cls.image_list = cls.gpd_request.get_data(save_data=True)
 
     def test_return_type(self):
@@ -100,7 +101,8 @@ class TestGeopediaFeatureIterator(TestSentinelHub):
         query_filter2 = 'f12458==32635'
 
         cls.test_cases = [
-            TestCaseContainer('All features', GeopediaFeatureIterator(1749), min_features=100, min_size=1609),
+            TestCaseContainer('All features', GeopediaFeatureIterator(1749, gpd_session=GeopediaSession()),
+                              min_features=100, min_size=1609),
             TestCaseContainer('BBox filter', GeopediaFeatureIterator('1749', bbox=bbox), min_features=21),
             TestCaseContainer('Query Filter', GeopediaFeatureIterator('ttl1749', query_filter=query_filter1),
                               min_features=76),
