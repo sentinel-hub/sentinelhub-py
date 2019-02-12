@@ -1,8 +1,36 @@
 import unittest
+import datetime
+
 import numpy as np
 
-from sentinelhub import GeopediaWmsRequest, GeopediaImageRequest, GeopediaFeatureIterator, CRS, MimeType, BBox,\
-    TestSentinelHub, TestCaseContainer
+from sentinelhub import GeopediaSession, GeopediaWmsRequest, GeopediaImageRequest, GeopediaFeatureIterator, \
+    CRS, MimeType, BBox, TestSentinelHub, TestCaseContainer
+
+
+class TestGeopediaSession(TestSentinelHub):
+    # When config.json could store Geopedia credentials add some login tests
+
+    def test_global_session(self):
+        session1 = GeopediaSession(is_global=True)
+        session2 = GeopediaSession(is_global=True)
+        session3 = GeopediaSession(is_global=False)
+
+        self.assertEqual(session1.session_id, session2.session_id, 'Global sessions should have the same session ID')
+        self.assertNotEqual(session1.session_id, session3.session_id,
+                            'Global and local sessions should not have the same session ID')
+
+    def test_session_update(self):
+        session = GeopediaSession()
+        initial_session_id = session.session_id
+
+        self.assertNotEqual(session.get_session_id(start_new=True), initial_session_id, 'Session should be updated')
+
+    def test_session_timeout(self):
+        session = GeopediaSession()
+        session.SESSION_DURATION = datetime.timedelta(seconds=-1)
+        initial_session_id = session.session_id
+
+        self.assertNotEqual(session.session_id, initial_session_id, 'Session should timeout and be updated')
 
 
 class TestGeopediaWms(TestSentinelHub):

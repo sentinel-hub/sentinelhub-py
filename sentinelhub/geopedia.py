@@ -4,6 +4,7 @@ Module for working with Geopedia OGC services
 
 import logging
 import datetime
+import hashlib
 
 from shapely.geometry import shape as geo_shape
 
@@ -50,53 +51,100 @@ class GeopediaService:
 
 class GeopediaSession(GeopediaService):
     """ For retrieving data from Geopedia vector and raster layers it is required to make a session. This class handles
-    starting and renewing of session. It provides session headers required by Geopedia REST requests.
+    starting and renewing of session and login (optional). It provides session headers required by Geopedia REST
+    requests. Session duration is hardcoded to 1 hour with class attribute SESSION_DURATION. After that this
+    class will automatically renew the session and login.
 
-    The session is created globally for all instances of this class. At the moment session duration is hardcoded to 1
-    hour. After that this class will renew the session.
+    :param username: Optional parameter in case of login with Geopedia credentials
+    :type username: str or None
+    :param password: Optional parameter in case of login with Geopedia credentials
+    :type password: str or None
+    :param password_md5: Password can optionally also be provided as already encoded md5 hexadecimal string
+    :type password_md5: str or None
+    :param is_global: If `True` this session will be shared among all instances of this class, otherwise it will be
+        used only with the single instance. Deafult is `False`.
+    :type is_global: bool
+    :param base_url: Base url of Geopedia REST services. If `None`, the url specified in the configuration
+        file is taken.
+    :type base_url: str or None
     """
     SESSION_DURATION = datetime.timedelta(hours=1)
 
-    _session_id = None
-    _session_end_timestamp = None
+    _global_session_id = None
+    _global_session_end = None
 
-    def __init__(self, **kwargs):
+    def __init__(self, username=None, password=None, password_md5=None, is_global=False, **kwargs):
         super().__init__(**kwargs)
 
-        self.session_url = '{}data/v1/session/create?locale=en'.format(self.base_url)
+        self.username = username
+        self.password = password_md5 if password is None else hashlib.md5(password.encode()).hexdigest()
+        self.is_global = is_global
 
-    def get_session_headers(self, force_new_session=False):
-        """ Returns session headers
+        self._session_id = None
+        self._session_end = None
 
-        :param force_new_session: If ``True`` it will always create a new session. Otherwise it will create a new
-            session only if no session exists or the previous session timed out.
-        :type force_new_session: bool
-        :return: A dictionary containing session headers
-        :rtype: dict
-        """
-        return {
-            'X-GPD-Session': self.get_session_id(force_new_session=force_new_session)
-        }
+    @property
+    def session_id(self):
+        """ A public property of this class which provides a Geopedia session ID
 
-    def get_session_id(self, force_new_session=False):
-        """ Returns a session ID
-
-        :param force_new_session: If ``True`` it will always create a new session. Otherwise it will create a new
-            session only if no session exists or the previous session timed out.
-        :type force_new_session: bool
         :return: A session ID string
         :rtype: str
         """
-        if self._session_id is None or force_new_session or datetime.datetime.now() > self._session_end_timestamp:
+        return self.get_session_id(start_new=False)
+
+    def get_session_id(self, start_new=False):
+        """ Returns a session ID
+
+        :param start_new: If `True` it will always create a new session. Otherwise it will create a new
+            session only if no session exists or the previous session timed out.
+        :type start_new: bool
+        :return: A session ID string
+        :rtype: str
+        """
+        if self.is_global:
+            self._session_id = self._global_session_id
+            self._session_end = self._global_session_end
+
+        if self._session_id is None or start_new or datetime.datetime.now() > self._session_end:
             self._start_new_session()
 
         return self._session_id
 
     def _start_new_session(self):
-        """ Updates the session id and calculates when the new session will end.
+        """ Updates the session id and calculates when the new session will end. If username and password are provided
+        it will also make login.
         """
-        self._session_end_timestamp = datetime.datetime.now() + self.SESSION_DURATION
-        self._session_id = get_json(self.session_url)['sessionId']
+        self._session_end = datetime.datetime.now() + self.SESSION_DURATION
+
+        session_url = '{}data/v1/session/create?locale=en'.format(self.base_url)
+        self._session_id = get_json(session_url)['sessionId']
+
+        if self.username and self.password:
+            self._make_login()
+
+        if self.is_global:
+            GeopediaSession._global_session_id = self._session_id
+            GeopediaSession._global_session_end = self._session_end
+
+    def _make_login(self):
+        """ Private method that makes login
+        """
+        login_url = '{}data/v1/session/login?user={}&pass={}&sid={}'.format(self.base_url, self.username,
+                                                                            self.password, self._session_id)
+        self._session_id = get_json(login_url)['sessionId']
+
+    def get_session_headers(self, start_new=False):
+        """ Returns session headers
+
+        :param start_new: If `True` it will always create a new session. Otherwise it will create a new
+            session only if no session exists or the previous session timed out.
+        :type start_new: bool
+        :return: A dictionary containing session headers
+        :rtype: dict
+        """
+        return {
+            'X-GPD-Session': self.get_session_id(start_new=start_new)
+        }
 
 
 class GeopediaWmsService(GeopediaService, OgcImageService):
@@ -246,7 +294,7 @@ class GeopediaFeatureIterator(GeopediaService):
             else:
                 self.query[self.FILTER_EXPRESSION] = query_filter
 
-        self.gpd_session = GeopediaSession()
+        self.gpd_session = GeopediaSession(is_global=True)
         self.features = []
         self.layer_size = None
         self.index = 0
