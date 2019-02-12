@@ -62,7 +62,7 @@ class GeopediaSession(GeopediaService):
     :param password_md5: Password can optionally also be provided as already encoded md5 hexadecimal string
     :type password_md5: str or None
     :param is_global: If `True` this session will be shared among all instances of this class, otherwise it will be
-        used only with the single instance. Deafult is `False`.
+        used only with the single instance. Default is `False`.
     :type is_global: bool
     :param base_url: Base url of Geopedia REST services. If `None`, the url specified in the configuration
         file is taken.
