@@ -70,8 +70,8 @@ class GeopediaSession(GeopediaService):
     """
     SESSION_DURATION = datetime.timedelta(hours=1)
 
-    _global_session_id = None
-    _global_session_end = None
+    _global_session_info = None
+    _global_session_start = None
 
     def __init__(self, username=None, password=None, password_md5=None, is_global=False, **kwargs):
         super().__init__(**kwargs)
@@ -80,8 +80,19 @@ class GeopediaSession(GeopediaService):
         self.password = password_md5 if password is None else hashlib.md5(password.encode()).hexdigest()
         self.is_global = is_global
 
-        self._session_id = None
-        self._session_end = None
+        self._session_info = None
+        self._session_start = None
+
+        self._provide_session()
+
+    @property
+    def session_info(self):
+        """ All information that Geopedia provides about the current session
+
+        :return: A dictionary with session info
+        :rtype: dict
+        """
+        return self._provide_session()
 
     @property
     def session_id(self):
@@ -90,61 +101,87 @@ class GeopediaSession(GeopediaService):
         :return: A session ID string
         :rtype: str
         """
-        return self.get_session_id(start_new=False)
+        return self._provide_session()['sessionId']
 
-    def get_session_id(self, start_new=False):
+    @property
+    def session_headers(self):
+        """ Headers which have to be used when accessing any data from Geopedia with this session
+
+        :return: A dictionary containing session headers
+        :rtype: dict
+        """
+        return {
+            self._provide_session()['sessionHeaderName']: self.session_id
+        }
+
+    @property
+    def user_info(self):
+        """ Information that this session has about user
+
+        :return: A dictionary with user info
+        :rtype: dict
+        """
+        return self._provide_session()['user']
+
+    @property
+    def user_id(self):
+        """ Geopedia user ID. If no login was done during session this will return `'NO_USER'`.
+
+        :return: User ID string
+        :rtype: str
+        """
+        return self.user_info['id']
+
+    def restart(self):
+        """ Method that restarts Geopedia Session
+
+        :return: It returns the object itself, with new session
+        :rtype: GeopediaSession
+        """
+        self._provide_session(start_new=True)
+        return self
+
+    def _provide_session(self, start_new=False):
         """ Returns a session ID
 
         :param start_new: If `True` it will always create a new session. Otherwise it will create a new
             session only if no session exists or the previous session timed out.
         :type start_new: bool
-        :return: A session ID string
-        :rtype: str
+        :return: Current session info
+        :rtype: dict
         """
         if self.is_global:
-            self._session_id = self._global_session_id
-            self._session_end = self._global_session_end
+            self._session_info = self._global_session_info
+            self._session_start = self._global_session_start
 
-        if self._session_id is None or start_new or datetime.datetime.now() > self._session_end:
+        if self._session_info is None or start_new or \
+                datetime.datetime.now() > self._session_start + self.SESSION_DURATION:
             self._start_new_session()
 
-        return self._session_id
+        return self._session_info
 
     def _start_new_session(self):
-        """ Updates the session id and calculates when the new session will end. If username and password are provided
+        """ Starts a new session and calculates when the new session will end. If username and password are provided
         it will also make login.
         """
-        self._session_end = datetime.datetime.now() + self.SESSION_DURATION
+        self._session_start = datetime.datetime.now()
 
         session_url = '{}data/v1/session/create?locale=en'.format(self.base_url)
-        self._session_id = get_json(session_url)['sessionId']
+        self._session_info = get_json(session_url)
 
         if self.username and self.password:
             self._make_login()
 
         if self.is_global:
-            GeopediaSession._global_session_id = self._session_id
-            GeopediaSession._global_session_end = self._session_end
+            GeopediaSession._global_session_info = self._session_info
+            GeopediaSession._global_session_start = self._session_start
 
     def _make_login(self):
         """ Private method that makes login
         """
-        login_url = '{}data/v1/session/login?user={}&pass={}&sid={}'.format(self.base_url, self.username,
-                                                                            self.password, self._session_id)
-        self._session_id = get_json(login_url)['sessionId']
-
-    def get_session_headers(self, start_new=False):
-        """ Returns session headers
-
-        :param start_new: If `True` it will always create a new session. Otherwise it will create a new
-            session only if no session exists or the previous session timed out.
-        :type start_new: bool
-        :return: A dictionary containing session headers
-        :rtype: dict
-        """
-        return {
-            'X-GPD-Session': self.get_session_id(start_new=start_new)
-        }
+        login_url = '{}data/v1/session/login?user={}&pass={}&sid={}'.format(self.base_url, self.username, self.password,
+                                                                            self._session_info['sessionId'])
+        self._session_info = get_json(login_url)
 
 
 class GeopediaWmsService(GeopediaService, OgcImageService):
@@ -332,7 +369,7 @@ class GeopediaFeatureIterator(GeopediaService):
         if self.next_page_url is None:
             return
 
-        response = get_json(self.next_page_url, post_values=self.query, headers=self.gpd_session.get_session_headers())
+        response = get_json(self.next_page_url, post_values=self.query, headers=self.gpd_session.session_headers)
 
         self.features.extend(response['features'])
         self.next_page_url = response['pagination']['next']
