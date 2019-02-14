@@ -69,6 +69,7 @@ class GeopediaSession(GeopediaService):
     :type base_url: str or None
     """
     SESSION_DURATION = datetime.timedelta(hours=1)
+    UNAUTHENTICATED_USER_ID = 'NO_USER'
 
     _global_session_info = None
     _global_session_start = None
@@ -101,7 +102,7 @@ class GeopediaSession(GeopediaService):
         :return: A session ID string
         :rtype: str
         """
-        return self._provide_session()['sessionId']
+        return self._parse_session_id(self._provide_session())
 
     @property
     def session_headers(self):
@@ -110,8 +111,9 @@ class GeopediaSession(GeopediaService):
         :return: A dictionary containing session headers
         :rtype: dict
         """
+        session_info = self._provide_session()
         return {
-            self._provide_session()['sessionHeaderName']: self.session_id
+            session_info['sessionHeaderName']: self._parse_session_id(session_info)
         }
 
     @property
@@ -130,7 +132,7 @@ class GeopediaSession(GeopediaService):
         :return: User ID string
         :rtype: str
         """
-        return self.user_info['id']
+        return self._parse_user_id(self._provide_session())
 
     def restart(self):
         """ Method that restarts Geopedia Session
@@ -166,10 +168,11 @@ class GeopediaSession(GeopediaService):
         """
         self._session_start = datetime.datetime.now()
 
-        session_url = '{}data/v1/session/create?locale=en'.format(self.base_url)
+        session_id = self._parse_session_id(self._session_info) if self._session_info else ''
+        session_url = '{}data/v1/session/create?locale=en&sid={}'.format(self.base_url, session_id)
         self._session_info = get_json(session_url)
 
-        if self.username and self.password:
+        if self.username and self.password and self._parse_user_id(self._session_info) == self.UNAUTHENTICATED_USER_ID:
             self._make_login()
 
         if self.is_global:
@@ -180,8 +183,20 @@ class GeopediaSession(GeopediaService):
         """ Private method that makes login
         """
         login_url = '{}data/v1/session/login?user={}&pass={}&sid={}'.format(self.base_url, self.username, self.password,
-                                                                            self._session_info['sessionId'])
+                                                                            self._parse_session_id(self._session_info))
         self._session_info = get_json(login_url)
+
+    @staticmethod
+    def _parse_session_id(session_info):
+        """ Method for parsing session ID from session info
+        """
+        return session_info['sessionId']
+
+    @staticmethod
+    def _parse_user_id(session_info):
+        """ Method for parsing user ID from session info
+        """
+        return session_info['user']['id']
 
 
 class GeopediaWmsService(GeopediaService, OgcImageService):

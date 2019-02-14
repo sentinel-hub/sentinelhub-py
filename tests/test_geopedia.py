@@ -23,7 +23,7 @@ class TestGeopediaSession(TestSentinelHub):
         session = GeopediaSession()
         initial_session_id = session.session_id
 
-        self.assertNotEqual(session.restart().session_id, initial_session_id, 'Session should be updated')
+        self.assertEqual(session.restart().session_id, initial_session_id, 'Session should be updated')
 
         self.assertEqual(session.user_id, 'NO_USER', "Session user ID should be 'NO_USER'")
 
@@ -32,7 +32,7 @@ class TestGeopediaSession(TestSentinelHub):
         session.SESSION_DURATION = datetime.timedelta(seconds=-1)
         initial_session_id = session.session_id
 
-        self.assertNotEqual(session.session_id, initial_session_id, 'Session should timeout and be updated')
+        self.assertEqual(session.session_id, initial_session_id, 'Session should timeout and be updated')
 
 
 class TestGeopediaWms(TestSentinelHub):
