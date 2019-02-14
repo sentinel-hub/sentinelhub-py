@@ -1,8 +1,46 @@
 import unittest
+import datetime
+
 import numpy as np
 
-from sentinelhub import GeopediaWmsRequest, GeopediaImageRequest, GeopediaFeatureIterator, CRS, MimeType, BBox,\
-    TestSentinelHub, TestCaseContainer
+from sentinelhub import GeopediaSession, GeopediaWmsRequest, GeopediaImageRequest, GeopediaFeatureIterator, \
+    CRS, MimeType, BBox, TestSentinelHub, TestCaseContainer
+
+
+class TestGeopediaSession(TestSentinelHub):
+    # When config.json could store Geopedia credentials add some login tests
+
+    def test_global_session(self):
+        session1 = GeopediaSession(is_global=True)
+        session2 = GeopediaSession(is_global=True)
+        session3 = GeopediaSession(is_global=False)
+
+        self.assertEqual(session1.session_id, session2.session_id, 'Global sessions should have the same session ID')
+        self.assertNotEqual(session1.session_id, session3.session_id,
+                            'Global and local sessions should not have the same session ID')
+
+    def test_session_update(self):
+        session = GeopediaSession()
+        initial_session_id = session.session_id
+
+        self.assertEqual(session.restart().session_id, initial_session_id, 'Session should be updated')
+
+        self.assertEqual(session.user_id, 'NO_USER', "Session user ID should be 'NO_USER'")
+
+    def test_session_timeout(self):
+        session = GeopediaSession()
+        session.SESSION_DURATION = datetime.timedelta(seconds=-1)
+        initial_session_id = session.session_id
+
+        self.assertEqual(session.session_id, initial_session_id, 'Session should timeout and be updated')
+
+    def test_false_initialization(self):
+        with self.assertRaises(ValueError):
+            GeopediaSession(username='some_user')
+        with self.assertRaises(ValueError):
+            GeopediaSession(password='some_password')
+        with self.assertRaises(ValueError):
+            GeopediaSession(username='some_user', password='some_password', password_md5='md5_encoded')
 
 
 class TestGeopediaWms(TestSentinelHub):
@@ -39,7 +77,8 @@ class TestGeopediaImageService(TestSentinelHub):
         cls.image_field_name = 'Masks'
 
         cls.gpd_request = GeopediaImageRequest(layer=1749, bbox=bbox, image_field_name=cls.image_field_name,
-                                               image_format=MimeType.PNG, data_folder=cls.OUTPUT_FOLDER)
+                                               image_format=MimeType.PNG, data_folder=cls.OUTPUT_FOLDER,
+                                               gpd_session=GeopediaSession(is_global=True))
         cls.image_list = cls.gpd_request.get_data(save_data=True)
 
     def test_return_type(self):
@@ -72,7 +111,8 @@ class TestGeopediaFeatureIterator(TestSentinelHub):
         query_filter2 = 'f12458==32635'
 
         cls.test_cases = [
-            TestCaseContainer('All features', GeopediaFeatureIterator(1749), min_features=100, min_size=1609),
+            TestCaseContainer('All features', GeopediaFeatureIterator(1749, gpd_session=GeopediaSession()),
+                              min_features=100, min_size=1609),
             TestCaseContainer('BBox filter', GeopediaFeatureIterator('1749', bbox=bbox), min_features=21),
             TestCaseContainer('Query Filter', GeopediaFeatureIterator('ttl1749', query_filter=query_filter1),
                               min_features=76),

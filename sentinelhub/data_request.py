@@ -688,12 +688,17 @@ class GeopediaImageRequest(GeopediaRequest):
     :param image_format: Format of the returned image by the Sentinel Hub's WMS getMap service. Default is
         ``constants.MimeType.PNG``.
     :type image_format: constants.MimeType
+    :param gpd_session: Optional parameter for specifying a custom Geopedia session, which can also contain login
+        credentials. This can be used for accessing private Geopedia layers. By default it is set to `None` and a basic
+        Geopedia session without credentials will be created.
+    :type gpd_session: GeopediaSession or None
     :param data_folder: Location of the directory where the fetched data will be saved.
     :type data_folder: str
     """
-    def __init__(self, *, image_field_name, keep_image_names=True, **kwargs):
+    def __init__(self, *, image_field_name, keep_image_names=True, gpd_session=None, **kwargs):
         self.image_field_name = image_field_name
         self.keep_image_names = keep_image_names
+        self.gpd_session = gpd_session
 
         self.gpd_iterator = None
 
