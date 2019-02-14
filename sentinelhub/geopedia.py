@@ -91,7 +91,7 @@ class GeopediaSession(GeopediaService):
         self._session_info = None
         self._session_start = None
 
-        self._provide_session()
+        self.provide_session()
 
     @property
     def session_info(self):
@@ -100,7 +100,7 @@ class GeopediaSession(GeopediaService):
         :return: A dictionary with session info
         :rtype: dict
         """
-        return self._provide_session()
+        return self.provide_session()
 
     @property
     def session_id(self):
@@ -109,7 +109,7 @@ class GeopediaSession(GeopediaService):
         :return: A session ID string
         :rtype: str
         """
-        return self._parse_session_id(self._provide_session())
+        return self._parse_session_id(self.provide_session())
 
     @property
     def session_headers(self):
@@ -118,7 +118,7 @@ class GeopediaSession(GeopediaService):
         :return: A dictionary containing session headers
         :rtype: dict
         """
-        session_info = self._provide_session()
+        session_info = self.provide_session()
         return {
             session_info['sessionHeaderName']: self._parse_session_id(session_info)
         }
@@ -130,7 +130,7 @@ class GeopediaSession(GeopediaService):
         :return: A dictionary with user info
         :rtype: dict
         """
-        return self._provide_session()['user']
+        return self.provide_session()['user']
 
     @property
     def user_id(self):
@@ -139,7 +139,7 @@ class GeopediaSession(GeopediaService):
         :return: User ID string
         :rtype: str
         """
-        return self._parse_user_id(self._provide_session())
+        return self._parse_user_id(self.provide_session())
 
     def restart(self):
         """ Method that restarts Geopedia Session
@@ -147,11 +147,11 @@ class GeopediaSession(GeopediaService):
         :return: It returns the object itself, with new session
         :rtype: GeopediaSession
         """
-        self._provide_session(start_new=True)
+        self.provide_session(start_new=True)
         return self
 
-    def _provide_session(self, start_new=False):
-        """ Returns a session ID
+    def provide_session(self, start_new=False):
+        """ Makes sure that session is still valid and provides session info
 
         :param start_new: If `True` it will always create a new session. Otherwise it will create a new
             session only if no session exists or the previous session timed out.
