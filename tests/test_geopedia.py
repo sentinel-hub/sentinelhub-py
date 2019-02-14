@@ -34,6 +34,14 @@ class TestGeopediaSession(TestSentinelHub):
 
         self.assertEqual(session.session_id, initial_session_id, 'Session should timeout and be updated')
 
+    def test_false_initialization(self):
+        with self.assertRaises(ValueError):
+            GeopediaSession(username='some_user')
+        with self.assertRaises(ValueError):
+            GeopediaSession(password='some_password')
+        with self.assertRaises(ValueError):
+            GeopediaSession(username='some_user', password='some_password', password_md5='md5_encoded')
+
 
 class TestGeopediaWms(TestSentinelHub):
 

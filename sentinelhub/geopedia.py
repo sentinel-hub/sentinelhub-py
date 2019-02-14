@@ -74,12 +74,19 @@ class GeopediaSession(GeopediaService):
     _global_session_info = None
     _global_session_start = None
 
-    def __init__(self, username=None, password=None, password_md5=None, is_global=False, **kwargs):
+    def __init__(self, *, username=None, password=None, password_md5=None, is_global=False, **kwargs):
         super().__init__(**kwargs)
+
+        if password and password_md5:
+            raise ValueError("At most one of the parameters 'password' and 'password_md5' can be specified, not both")
 
         self.username = username
         self.password = password_md5 if password is None else hashlib.md5(password.encode()).hexdigest()
         self.is_global = is_global
+
+        if bool(self.username) != bool(self.password):
+            raise ValueError('Either both username and password have to be specified or neither of them, '
+                             'only one found')
 
         self._session_info = None
         self._session_start = None
