@@ -21,16 +21,20 @@ different one in the code.
 Amazon S3 Capabilities
 **********************
 
-The package enables download of Sentinel-2 L1C and L2A data from `Amazon S3`_ storage buckets. The data is contained in
-Requester Pays buckets therefore `AWS credentials`_ are required in order to use these capabilities. The credentials
+The package enables downloading Sentinel-2 L1C and L2A data from `Amazon S3`_ storage buckets. The data is contained in
+Requester Pays buckets therefore `AWS credentials`_ are required to use these capabilities. The credentials
 can be set in package's configuration file with parameters ``aws_access_key_id`` and ``aws_secret_access_key``. This can
 be configured from command line::
 
 $ sentinelhub.config --aws_access_key_id <your access key> --aws_secret_access_key <your secret access key>
 
-In case these credentials are not set the package will instead automatically try to use **locally stored AWS credentials**
+In case the credentials are not set, the package will instead automatically try to use **locally stored AWS credentials**,
 if they were configured according to `AWS configuration instructions`_. Any other configuration parameters (e.g. region)
 will also be collected the same way.
+
+The AWS credentials also have to have correct permissions to be able to download data from S3 buckets.
+That can be configured in AWS IAM console. There are many ways how to configure sufficient permission, one of them
+is setting them to *AmazonS3ReadOnlyAccess*.
 
 **Important:** Because satellite data at S3 is contained in Requester Pays buckets Amazon will charge users for
 download according to `Amazon S3 Pricing`_. In this case users are charged for amount of data downloaded and the number
