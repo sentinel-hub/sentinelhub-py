@@ -37,7 +37,7 @@ def get_tile_info_id(tile_id):
         raise TileMissingException
 
     if len(result_list) > 1:
-        LOGGER.warning('Obtained %d results for tile_id=%d. Returning the first one', len(result_list), tile_id)
+        LOGGER.warning('Obtained %d results for tile_id=%s. Returning the first one', len(result_list), tile_id)
 
     return result_list[0]
 
