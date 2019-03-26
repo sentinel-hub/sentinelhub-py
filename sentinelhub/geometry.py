@@ -306,7 +306,7 @@ class BBox(BaseGeometry):
         :return: A tuple with 6 numbers representing transformation vector
         :rtype: tuple(float)
         """
-        return self.x_min, self._parse_resolution(resx), 0, self.y_max, 0, -self._parse_resolution(resy)
+        return self.min_x, self._parse_resolution(resx), 0, self.max_y, 0, -self._parse_resolution(resy)
 
     @staticmethod
     def _parse_resolution(res):
