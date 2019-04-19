@@ -10,6 +10,7 @@ import json
 import concurrent.futures
 from io import BytesIO
 from xml.etree import ElementTree
+from uuid import uuid4
 
 import requests
 import boto3
@@ -231,13 +232,15 @@ def execute_download_request(request):
     if not request.will_download:
         return None
 
-    try_num = SHConfig().max_download_attempts
+    if request.headers is not None:
+        request.headers['SH-Request-Id'] = str(uuid4())
+
     response = None
-    while try_num > 0:
+    try_num = 0
+    while try_num < SHConfig().max_download_attempts:
         try:
             if request.is_aws_s3():
                 response = _do_aws_request(request)
-                response_content = response['Body'].read()
             else:
                 response = _do_request(request)
                 response.raise_for_status()
@@ -245,16 +248,15 @@ def execute_download_request(request):
             LOGGER.debug('Successful download from %s', request.url)
             break
         except requests.RequestException as exception:
-            try_num -= 1
+            try_num += 1
             if try_num > 0 and (_is_temporal_problem(exception) or
                                 (isinstance(exception, requests.HTTPError) and
                                  exception.response.status_code >= requests.status_codes.codes.INTERNAL_SERVER_ERROR) or
-                                _request_limit_reached(exception)):
-                LOGGER.debug('Download attempt failed: %s\n%d attempts left, will retry in %ds', exception,
-                             try_num, SHConfig().download_sleep_time)
-                sleep_time = SHConfig().download_sleep_time
-                if _request_limit_reached(exception):
-                    sleep_time = max(sleep_time, 60)
+                                _request_limit_reached(exception) or
+                                isinstance(exception, requests.exceptions.ChunkedEncodingError)):
+                LOGGER.debug('Download request %s failed: %s\n%d attempts left, will retry in %ds',
+                             request.headers['SH-Request-Id'], exception, try_num, SHConfig().download_sleep_time)
+                sleep_time = max(SHConfig().download_timeout_seconds, (2 ** try_num) * SHConfig().download_sleep_time)
                 time.sleep(sleep_time)
             else:
                 if request.url.startswith(SHConfig().aws_metadata_url) and \
@@ -277,6 +279,7 @@ def _do_request(request):
     :return: Response of the request
     :rtype: requests.Response
     """
+
     if request.request_type is RequestType.GET:
         return requests.get(request.url, headers=request.headers)
     if request.request_type is RequestType.POST:
