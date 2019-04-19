@@ -494,6 +494,23 @@ class MimeType(Enum):
             return self.value
         return mimetypes.types_map['.' + self.value]
 
+    def get_sample_type(self):
+        """ Returns sampleType used in Sentinel-Hub evalscripts.
+
+        :return: sampleType
+        :rtype: str
+        :raises: ValueError
+        """
+        try:
+            return {
+                MimeType.TIFF: 'INT16',
+                MimeType.TIFF_d8: 'INT8',
+                MimeType.TIFF_d16: 'INT16',
+                MimeType.TIFF_d32f: 'FLOAT32'
+            }[self]
+        except IndexError:
+            raise ValueError('Type {} is not supported by this method'.format(self))
+
     def get_expected_max_value(self):
         """ Returns max value of image `MimeType` format and raises an error if it is not an image format
 
