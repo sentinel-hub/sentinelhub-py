@@ -2,12 +2,13 @@
 Module with enum constants and utm utils
 """
 
+import functools
 import itertools as it
 import mimetypes
 from enum import Enum
 
 import utm
-from pyproj import Proj
+import pyproj
 
 from .config import SHConfig
 from ._version import __version__
@@ -299,11 +300,27 @@ class _BaseCRS(Enum):
         """ Returns a projection in form of pyproj class
 
         :param self: An enum constant representing a coordinate reference system.
-        :type self: Enum constant
+        :type self: CRS
         :return: pyproj projection class
         :rtype: pyproj.Proj
         """
-        return Proj(init=_BaseCRS.ogc_string(self), preserve_units=True)
+        return pyproj.Proj(int(self.value), preserve_units=True)
+
+    def get_transform_function(self, other):
+        """ Returns a function for transforming geometrical objects from one CRS to another. The function will support
+        transformations between any objects that pyproj supports.
+
+        :param self: Initial CRS
+        :type self: CRS
+        :param other: Target CRS
+        :type other: CRS
+        :return: A projection function obtained from pyproj package
+        :rtype: function
+        """
+        if pyproj.__version__ >= '2':
+            return pyproj.Transformer.from_proj(self.projection(), other.projection(), skip_equivalent=True).transform
+
+        return functools.partial(pyproj.transform, self.projection(), other.projection(), skip_equivalent=True)
 
     @classmethod
     def has_value(cls, value):
