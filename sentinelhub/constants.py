@@ -279,22 +279,21 @@ class _BaseCRS(Enum):
         """ Returns a string of the form authority:id representing the CRS.
 
         :param self: An enum constant representing a coordinate reference system.
-        :type self: Enum constant
+        :type self: CRS
         :return: A string representation of the CRS.
         :rtype: str
         """
         return 'EPSG:{}'.format(CRS(self).value)
 
-    @staticmethod
-    def is_utm(crs):
+    def is_utm(self):
         """ Checks if crs is one of the 64 possible UTM coordinate reference systems.
 
-        :param crs: An enum constant representing a coordinate reference system.
-        :type crs: Enum constant
+        :param self: An enum constant representing a coordinate reference system.
+        :type self: CRS
         :return: True if crs is UTM and False otherwise
         :rtype: bool
         """
-        return crs.name.startswith('UTM')
+        return self.name.startswith('UTM')
 
     def projection(self):
         """ Returns a projection in form of pyproj class
