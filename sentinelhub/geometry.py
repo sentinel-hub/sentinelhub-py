@@ -5,7 +5,6 @@ Module implementing geometry classes
 import functools
 from abc import ABC, abstractmethod
 
-import pyproj
 import shapely.ops
 import shapely.geometry
 import shapely.wkt
@@ -440,8 +439,8 @@ class Geometry(BaseGeometry):
 
         geometry = self.geometry
         if new_crs is not self.crs:
-            project = functools.partial(pyproj.transform, self.crs.projection(), new_crs.projection())
-            geometry = shapely.ops.transform(project, geometry)
+            transform_function = self.crs.get_transform_function(new_crs)
+            geometry = shapely.ops.transform(transform_function, geometry)
 
         return Geometry(geometry, crs=new_crs)
 

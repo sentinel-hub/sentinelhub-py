@@ -4,6 +4,7 @@ from sentinelhub import geo_utils, CRS, BBox, TestSentinelHub
 
 
 class TestGeo(TestSentinelHub):
+
     def test_wgs84_to_utm33N(self):
         x, y = geo_utils.wgs84_to_utm(15.525078, 44.1440478, CRS.UTM_33N)
         expected_x = 541995.694062
@@ -62,7 +63,7 @@ class TestGeo(TestSentinelHub):
         bbox = BBox(((111.644, 8.655), (111.7, 8.688)), CRS.WGS84)
         new_bbox = geo_utils.transform_bbox(bbox, CRS.POP_WEB)
         expected_bbox = BBox((12428153.23, 967155.41, 12434387.12, 970871.43), CRS.POP_WEB)
-        
+
         for coord, expected_coord in zip(new_bbox, expected_bbox):
             self.assertAlmostEqual(coord, expected_coord, delta=1E-2,
                                    msg='Expected coord {}, got {}'.format(expected_coord, coord))

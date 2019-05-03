@@ -5,8 +5,6 @@ Module for manipulation of geographical information.
 import logging
 import warnings
 
-import pyproj
-
 from .constants import CRS
 
 LOGGER = logging.getLogger(__name__)
@@ -229,8 +227,7 @@ def transform_point(point, source_crs, target_crs):
     if source_crs == target_crs:
         return point
     old_x, old_y = point
-    new_x, new_y = pyproj.transform(CRS.projection(source_crs), CRS.projection(target_crs), old_x, old_y)
-    return new_x, new_y
+    return CRS.get_transform_function(source_crs, target_crs)(old_x, old_y)
 
 
 def transform_bbox(bbox, target_crs):

@@ -295,19 +295,23 @@ class _BaseCRS(Enum):
         """
         return self.name.startswith('UTM')
 
+    @functools.lru_cache(maxsize=5)
     def projection(self):
-        """ Returns a projection in form of pyproj class
+        """ Returns a projection in form of pyproj class. For better time performance it will cache results of
+        5 most recently used CRS classes.
 
         :param self: An enum constant representing a coordinate reference system.
         :type self: CRS
         :return: pyproj projection class
         :rtype: pyproj.Proj
         """
-        return pyproj.Proj(int(self.value), preserve_units=True)
+        return pyproj.Proj(init=self.ogc_string(), preserve_units=True)
 
+    @functools.lru_cache(maxsize=10)
     def get_transform_function(self, other):
         """ Returns a function for transforming geometrical objects from one CRS to another. The function will support
         transformations between any objects that pyproj supports.
+        For better time performance this method will cache results of 10 most recently used pairs of CRS classes.
 
         :param self: Initial CRS
         :type self: CRS
@@ -319,7 +323,7 @@ class _BaseCRS(Enum):
         if pyproj.__version__ >= '2':
             return pyproj.Transformer.from_proj(self.projection(), other.projection(), skip_equivalent=True).transform
 
-        return functools.partial(pyproj.transform, self.projection(), other.projection(), skip_equivalent=True)
+        return functools.partial(pyproj.transform, self.projection(), other.projection())
 
     @classmethod
     def has_value(cls, value):
