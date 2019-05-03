@@ -5,7 +5,7 @@ Module with enum constants and utm utils
 import functools
 import itertools as it
 import mimetypes
-from enum import Enum
+from enum import Enum, EnumMeta
 
 import utm
 import pyproj
@@ -217,63 +217,68 @@ class DataSource(Enum):
                 cls.MODIS, cls.LANDSAT8]
 
 
-class _Direction(Enum):
-    """ Enum constant class to encode NORTH/SOUTH direction """
-    NORTH = 'N'
-    SOUTH = 'S'
-
-
-def _get_utm_code(zone, direction):
-    """ Get UTM code given a zone and direction
-
-    Direction is encoded as NORTH=6, SOUTH=7, while zone is the UTM zone number zero-padded.
-    For instance, the code 32604 is returned for zone number 4, north direction.
-
-    :param zone: UTM zone number
-    :type zone: int
-    :param direction: Direction enum type
-    :type direction: Enum
-    :return: UTM code
-    :rtype: str
+class CRSMeta(EnumMeta):
+    """ Meta-class used for building CRS Enum class
     """
-    dir_dict = {_Direction.NORTH: '6', _Direction.SOUTH: '7'}
-    return '{}{}{}'.format('32', dir_dict[direction], str(zone).zfill(2))
+    def __new__(mcs, cls, bases, classdict):
+        """ This is executed at the beginning of runtime when CRS class is created
+        """
+        for direction, direction_value in [('N', '6'), ('S', '7')]:
+            for zone in range(1, 61):
+                classdict['UTM_{}{}'.format(zone, direction)] = '32{}{}'.format(direction_value, str(zone).zfill(2))
 
+        return super().__new__(mcs, cls, bases, classdict)
 
-def _get_utm_name_value_pair(zone, direction=_Direction.NORTH):
-    """ Get name and code for UTM coordinates
-
-    :param zone: UTM zone number
-    :type zone: int
-    :param direction: Direction enum type
-    :type direction: Enum, optional (default=NORTH)
-    :return: Name and code of UTM coordinates
-    :rtype: str, str
-    """
-    name = 'UTM_{}{}'.format(zone, direction.value)
-    epsg = _get_utm_code(zone, direction)
-    return name, epsg
-
-
-class _BaseCRS(Enum):
-    """ Coordinate Reference System enumerate class """
-    def __str__(self):
-        return self.ogc_string()
+    def __call__(cls, value, *args, **kwargs):
+        """ This is executed whenever CRS('something') is called
+        """
+        return super().__call__(CRSMeta._parse_crs(value), *args, **kwargs)
 
     @staticmethod
-    def get_utm_from_wgs84(lng, lat):
-        """ Convert from WGS84 to UTM coordinate system
-
-        :param lng: Longitude
-        :type lng: float
-        :param lat: Latitude
-        :type lat: float
-        :return: UTM coordinates
-        :rtype: tuple
+    def _parse_crs(value):
+        """ Method for parsing different inputs representing the same CRS enum. Example:
         """
-        _, _, zone, _ = utm.from_latlon(lat, lng)
-        direction = 'N' if lat >= 0 else 'S'
-        return CRS['UTM_{}{}'.format(str(zone), direction)]
+        if isinstance(value, int):
+            return str(value)
+        if isinstance(value, str):
+            return value.strip('epsgEPSG: ')
+        return value
+
+
+class CRS(Enum, metaclass=CRSMeta):
+    """ Coordinate Reference System enumerate class
+
+    Available CRS constants are WGS84, POP_WEB (i.e. Popular Web Mercator) and constants in form UTM_<zone><direction>,
+    where zone is an integer from [1, 60] and direction is either N or S (i.e. northern or southern hemisphere)
+    """
+    WGS84 = '4326'
+    POP_WEB = '3857'
+    #: UTM enum members are defined in CRSMeta.__new__
+
+    def __str__(self):
+        """ Method for casting CRS enum into string
+        """
+        return self.ogc_string()
+
+    @classmethod
+    def has_value(cls, value):
+        """ Tests whether CRS contains a constant defined with string `value`.
+
+        :param value: The string representation of the enum constant.
+        :type value: str
+        :return: ``True`` if there exists a constant with string value `value`, ``False`` otherwise
+        :rtype: bool
+        """
+        return any(value == item.value for item in cls)
+
+    @property
+    def epsg(self):
+        """ EPSG code property
+
+        :return: EPSG code of given CRS
+        :rtype: int
+        """
+        return int(self.value)
 
     def ogc_string(self):
         """ Returns a string of the form authority:id representing the CRS.
@@ -325,41 +330,20 @@ class _BaseCRS(Enum):
 
         return functools.partial(pyproj.transform, self.projection(), other.projection())
 
-    @classmethod
-    def has_value(cls, value):
-        """ Tests whether CRS contains a constant defined with string ``value``.
+    @staticmethod
+    def get_utm_from_wgs84(lng, lat):
+        """ Convert from WGS84 to UTM coordinate system
 
-        :param value: The string representation of the enum constant.
-        :type value: str
-        :return: ``True`` if there exists a constant with string value ``value``, ``False`` otherwise
-        :rtype: bool
+        :param lng: Longitude
+        :type lng: float
+        :param lat: Latitude
+        :type lat: float
+        :return: UTM coordinates
+        :rtype: tuple
         """
-        return any(value == item.value for item in cls)
-
-
-# Look-up class with possible combinations of UTM zone and direction
-CRS = _BaseCRS("CRS", dict(
-    [_get_utm_name_value_pair(zone, direction) for zone, direction in it.product(range(1, 61), _Direction)] +
-    [('WGS84', '4326'), ('POP_WEB', '3857')]
-))
-
-
-def _crs_parser(cls, value):
-    """ Parses user input for class CRS
-
-    :param cls: class object
-    :param value: user input for CRS
-    :type value: str, int or CRS
-    """
-    parsed_value = value
-    if isinstance(parsed_value, int):
-        parsed_value = str(parsed_value)
-    if isinstance(parsed_value, str):
-        parsed_value = parsed_value.strip('epsgEPSG: ')
-    return super(_BaseCRS, cls).__new__(cls, parsed_value)
-
-
-setattr(CRS, '__new__', _crs_parser)
+        _, _, zone, _ = utm.from_latlon(lat, lng)
+        direction = 'N' if lat >= 0 else 'S'
+        return CRS['UTM_{}{}'.format(str(zone), direction)]
 
 
 class CustomUrlParam(Enum):
