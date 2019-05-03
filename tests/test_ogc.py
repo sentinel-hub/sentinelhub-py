@@ -100,7 +100,7 @@ class TestOgc(TestSentinelHub):
                                                           CustomUrlParam.TRANSPARENT: True,
                                                           CustomUrlParam.EVALSCRIPT: 'return [B10,B8A, B03 ]',
                                                           CustomUrlParam.GEOMETRY: geometry_wkt_wgs84}),
-                            result_len=1, img_min=0, img_max=255, img_mean=53.9071, img_median=1.0, tile_num=2),
+                            result_len=1, img_min=0, img_max=255, img_mean=54.3482, img_median=1.0, tile_num=2),
             cls.OgcTestCase('FalseLogo,BgColor,Geometry',
                             WmsRequest(data_folder=cls.OUTPUT_FOLDER, image_format=MimeType.PNG,
                                        layer='TRUE-COLOR-S2-L1C', width=img_width, height=img_height, bbox=pop_web_bbox,

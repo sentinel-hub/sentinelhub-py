@@ -2,7 +2,6 @@
 Module implementing geometry classes
 """
 
-import functools
 from abc import ABC, abstractmethod
 
 import shapely.ops
