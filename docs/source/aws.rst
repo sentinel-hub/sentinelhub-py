@@ -1,12 +1,6 @@
 aws
 ===
 
-Module for obtaining data from Amazon Web Service.
-
-.. module:: sentinelhub.aws
-.. autoclass:: AwsService
+.. automodule:: sentinelhub.aws
     :members:
-.. autoclass:: AwsProduct
-    :members:
-.. autoclass:: AwsTile
-    :members:
+    :show-inheritance:

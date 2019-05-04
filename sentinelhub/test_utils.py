@@ -1,5 +1,5 @@
 """
-Implements utilities for writing unit tests on satellite data
+Utility tools for writing unit tests for packages which rely on `sentinelhub-py`
 """
 
 import unittest

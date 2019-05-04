@@ -1,5 +1,5 @@
 """
-Module for working with Sentinel Hub OGC services
+Module for working with Sentinel Hub FIS service
 """
 
 import logging
@@ -18,7 +18,6 @@ class FisService(OgcImageService):
 
     Intermediate layer between FIS requests and the Sentinel Hub FIS services.
     """
-
     def get_request(self, request):
         """ Get download requests
 
@@ -42,7 +41,7 @@ class FisService(OgcImageService):
         of request. The name of the file has the following structure:
 
         {service_type}_{layer}_{geometry}_{crs}_{start_time}_{end_time}_{resolution}_{bins}_{histogram_type}_
-        \*{custom_url_params}.json
+        \\*{custom_url_params}.json
 
         :param request: FIS request
         :type request: FisRequest

@@ -1,5 +1,5 @@
 """
-Main module for obtaining data.
+Main module for collecting data
 """
 
 import datetime
@@ -83,8 +83,7 @@ class DataRequest(ABC):
 
     def get_data(self, *, save_data=False, data_filter=None, redownload=False, max_threads=None,
                  raise_download_errors=True):
-        """
-        Get requested data either by downloading it or by reading it from the disk (if it
+        """ Get requested data either by downloading it or by reading it from the disk (if it
         was previously downloaded and saved).
 
         :param save_data: flag to turn on/off saving of data to disk. Default is `False`.
@@ -111,8 +110,7 @@ class DataRequest(ABC):
         return self._add_saved_data(data_list, data_filter, raise_download_errors)
 
     def save_data(self, *, data_filter=None, redownload=False, max_threads=None, raise_download_errors=False):
-        """
-        Saves data to disk. If ``redownload=True`` then the data is redownloaded using ``max_threads`` workers.
+        """ Saves data to disk. If ``redownload=True`` then the data is redownloaded using ``max_threads`` workers.
 
         :param data_filter: Used to specify which items will be returned by the method and in which order. E.g. with
             `data_filter=[0, 2, -1]` the method will return only 1st, 3rd and last item. Default filter is `None`.
@@ -130,7 +128,7 @@ class DataRequest(ABC):
         self._execute_data_download(data_filter, redownload, max_threads, raise_download_errors)
 
     def _execute_data_download(self, data_filter, redownload, max_threads, raise_download_errors):
-        """Calls download module and executes the download process
+        """ Calls download module and executes the download process
 
         :param data_filter: Used to specify which items will be returned by the method and in which order. E.g. with
             `data_filter=[0, 2, -1]` the method will return only 1st, 3rd and last item. Default filter is `None`.
@@ -199,8 +197,7 @@ class DataRequest(ABC):
         return unique_download_list, mapping_list
 
     def _preprocess_request(self, save_data, return_data):
-        """
-        Prepares requests for download and creates empty folders
+        """ Prepares requests for download and creates empty folders
 
         :param save_data: Tells whether to save data or not
         :type save_data: bool
@@ -224,8 +221,7 @@ class DataRequest(ABC):
                 make_folder(os.path.join(self.data_folder, folder))
 
     def _add_saved_data(self, data_list, data_filter, raise_download_errors):
-        """
-        Adds already saved data that was not redownloaded to the requested data list.
+        """ Adds already saved data that was not redownloaded to the requested data list.
         """
         filtered_download_list = self.download_list if data_filter is None else \
             [self.download_list[index] for index in data_filter]
@@ -315,7 +311,7 @@ class OgcRequest(DataRequest):
         super().__init__(**kwargs)
 
     def _check_custom_url_parameters(self):
-        """Checks if custom url parameters are valid parameters.
+        """ Checks if custom url parameters are valid parameters.
 
         Throws ValueError if the provided parameter is not a valid parameter.
         """
@@ -327,7 +323,7 @@ class OgcRequest(DataRequest):
             raise ValueError('{} should not be a custom url parameter of a FIS request'.format(CustomUrlParam.GEOMETRY))
 
     def create_request(self, reset_wfs_iterator=False):
-        """Set download requests
+        """ Set download requests
 
         Create a list of DownloadRequests for all Sentinel-2 acquisitions within request's time interval and
         acceptable cloud coverage.
@@ -345,7 +341,7 @@ class OgcRequest(DataRequest):
         self.wfs_iterator = ogc_service.get_wfs_iterator()
 
     def get_dates(self):
-        """Get list of dates
+        """ Get list of dates
 
         List of all available Sentinel-2 acquisitions for given bbox with max cloud coverage and the specified
         time interval. When a single time is specified the request will return that specific date, if it exists.
@@ -359,7 +355,7 @@ class OgcRequest(DataRequest):
         return OgcImageService(instance_id=self.instance_id).get_dates(self)
 
     def get_tiles(self):
-        """Returns iterator over info about all satellite tiles used for the OgcRequest
+        """ Returns iterator over info about all satellite tiles used for the OgcRequest
 
         :return: Iterator of dictionaries containing info about all satellite tiles used in the request. In case of
                  DataSource.DEM it returns None.
@@ -652,7 +648,7 @@ class GeopediaWmsRequest(GeopediaRequest):
         super().__init__(layer=layer, theme=theme, bbox=bbox, service_type=ServiceType.WMS, **kwargs)
 
     def _check_custom_url_parameters(self):
-        """Checks if custom url parameters are valid parameters.
+        """ Checks if custom url parameters are valid parameters.
 
         Throws ValueError if the provided parameter is not a valid parameter.
         """
@@ -661,7 +657,7 @@ class GeopediaWmsRequest(GeopediaRequest):
                 raise ValueError('Parameter {} is currently not supported.'.format(param))
 
     def create_request(self):
-        """Set download requests
+        """ Set download requests
 
         Create a list of DownloadRequests for all Sentinel-2 acquisitions within request's time interval and
         acceptable cloud coverage.
@@ -671,7 +667,7 @@ class GeopediaWmsRequest(GeopediaRequest):
 
 
 class GeopediaImageRequest(GeopediaRequest):
-    """Request to access data in a Geopedia vector / raster layer.
+    """ Request to access data in a Geopedia vector / raster layer.
 
     :param image_field_name: Name of the field in the data table which holds images
     :type image_field_name: str
@@ -703,7 +699,7 @@ class GeopediaImageRequest(GeopediaRequest):
         super().__init__(service_type=ServiceType.IMAGE, **kwargs)
 
     def create_request(self, reset_gpd_iterator=False):
-        """Set a list of download requests
+        """ Set a list of download requests
 
         Set a list of DownloadRequests for all images that are under the
         given property of the Geopedia's Vector layer.
@@ -721,7 +717,7 @@ class GeopediaImageRequest(GeopediaRequest):
         self.gpd_iterator = gpd_service.get_gpd_iterator()
 
     def get_items(self):
-        """Returns iterator over info about data used for this request
+        """ Returns iterator over info about data used for this request
 
         :return: Iterator of dictionaries containing info about data used in
                  this request.
@@ -858,8 +854,8 @@ class AwsTileRequest(AwsRequest):
 
 
 def get_safe_format(product_id=None, tile=None, entire_product=False, bands=None, data_source=DataSource.SENTINEL2_L1C):
-    """
-    Returns .SAFE format structure in form of nested dictionaries. Either ``product_id`` or ``tile`` must be specified.
+    """ Returns .SAFE format structure in form of nested dictionaries. Either ``product_id`` or ``tile`` must be
+    specified.
 
     :param product_id: original ESA product identification string. Default is `None`
     :type product_id: str
@@ -891,8 +887,7 @@ def get_safe_format(product_id=None, tile=None, entire_product=False, bands=None
 
 def download_safe_format(product_id=None, tile=None, folder='.', redownload=False, entire_product=False, bands=None,
                          data_source=DataSource.SENTINEL2_L1C):
-    """
-    Downloads .SAFE format structure in form of nested dictionaries. Either ``product_id`` or ``tile`` must
+    """ Downloads .SAFE format structure in form of nested dictionaries. Either ``product_id`` or ``tile`` must
     be specified.
 
     :param product_id: original ESA product identification string. Default is `None`

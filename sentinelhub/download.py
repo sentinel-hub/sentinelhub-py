@@ -34,14 +34,12 @@ class DownloadFailedException(Exception):
 
 
 class AwsDownloadFailedException(DownloadFailedException):
-    """
-    This exception is raised when download fails because of a missing file in AWS
+    """ This exception is raised when download fails because of a missing file in AWS
     """
 
 
 class ImageDecodingError(Exception):
-    """
-    This exception is raised when downloaded image is not properly decoded
+    """ This exception is raised when downloaded image is not properly decoded
     """
 
 
@@ -97,8 +95,7 @@ class DownloadRequest:
         self._set_file_path()
 
     def set_filename(self, filename):
-        """
-        Set filename attribute
+        """ Set filename attribute
 
         :param filename: Name of the file where .
         :return: str
@@ -107,8 +104,7 @@ class DownloadRequest:
         self._set_file_path()
 
     def set_data_folder(self, data_folder):
-        """
-        Set data_folder attribute
+        """ Set data_folder attribute
 
         :param data_folder: folder name where the fetched data will be (or already is) saved.
         :return: str
@@ -139,8 +135,7 @@ class DownloadRequest:
         return self.file_path
 
     def set_save_response(self, save_response):
-        """
-        Set save_response attribute
+        """ Set save_response attribute
 
         :param save_response: flag to turn on/off saving data downloaded by this request to disk. Default is `True`.
         :return: bool
@@ -148,8 +143,7 @@ class DownloadRequest:
         self.save_response = save_response
 
     def set_return_data(self, return_data):
-        """
-        Set return_data attribute
+        """ Set return_data attribute
 
         :param return_data: flag to return or not data downloaded by this request to disk. Default is `True`.
         :return: bool
@@ -167,7 +161,7 @@ class DownloadRequest:
         return os.path.exists(self.file_path)
 
     def is_aws_s3(self):
-        """Checks if data has to be downloaded from AWS s3 bucket
+        """ Checks if data has to be downloaded from AWS s3 bucket
 
         :return: `True` if url describes location at AWS s3 bucket and `False` otherwise
         :rtype: bool
@@ -200,8 +194,7 @@ def download_data(request_list, redownload=False, max_threads=None):
 
 
 def _check_if_must_download(request_list, redownload):
-    """
-    Updates request.will_download attribute of each request in request_list.
+    """ Updates request.will_download attribute of each request in request_list.
 
     **Note:** the function mutates the elements of the list!
 
@@ -382,6 +375,7 @@ def _create_download_failed_message(exception, url):
 
 def _save_if_needed(request, response_content):
     """ Save data to disk, if requested by the user
+
     :param request: Download request
     :type request: DownloadRequest
     :param response_content: content of the download response
@@ -432,7 +426,7 @@ def decode_data(response_content, data_type, entire_response=None):
 
 def decode_image(data, image_type):
     """ Decodes the image provided in various formats, i.e. png, 16-bit float tiff, 32-bit float tiff, jp2
-        and returns it as an numpy array
+    and returns it as an numpy array
 
     :param data: image in its original format
     :type data: any of possible image types

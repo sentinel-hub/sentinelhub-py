@@ -1,6 +1,7 @@
 """
-Module for local reading and writing of data
+Utility functions to read/write image data from/to file
 """
+
 import csv
 import json
 import os
@@ -320,7 +321,7 @@ def get_data_format(filename):
 
 
 def get_jp2_bit_depth(stream):
-    """Reads bit encoding depth of jpeg2000 file in binary stream format
+    """ Reads bit encoding depth of jpeg2000 file in binary stream format
 
     :param stream: binary stream format
     :type stream: Binary I/O (e.g. io.BytesIO, io.BufferedReader, ...)
@@ -342,7 +343,7 @@ def get_jp2_bit_depth(stream):
 
 
 def fix_jp2_image(image, bit_depth):
-    """Because Pillow library incorrectly reads JPEG 2000 images with 15-bit encoding this function corrects the
+    """ Because Pillow library incorrectly reads JPEG 2000 images with 15-bit encoding this function corrects the
     values in image.
 
     :param image: image read by opencv library

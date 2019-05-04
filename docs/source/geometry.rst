@@ -1,14 +1,6 @@
 geometry
 ========
 
-Module implementing geometry classes.
-
-.. module:: sentinelhub.geometry
-.. autoclass:: BaseGeometry
+.. automodule:: sentinelhub.geometry
     :members:
-.. autoclass:: BBox
-    :members:
-.. autoclass:: Geometry
-    :members:
-.. autoclass:: BBoxCollection
-    :members:
+    :show-inheritance:

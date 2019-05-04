@@ -104,7 +104,7 @@ def size(pathname):
 
 
 def sys_is_windows():
-    """Check if user is running the code on Windows machine
+    """ Check if user is running the code on Windows machine
 
     :return: `True` if OS is Windows and `False` otherwise
     :rtype: bool

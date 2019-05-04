@@ -1,5 +1,6 @@
 """
 Module for communication with http://opensearch.sentinel-hub.com/resto/api
+
 For more search parameters check: http://opensearch.sentinel-hub.com/resto/api/collections/Sentinel2/describe.xml
 """
 

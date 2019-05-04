@@ -1,10 +1,6 @@
 test_utils
 ==========
 
-Utility tools for writing unit tests for packages which rely on `sentinelhub-py`.
-
-.. module:: sentinelhub.test_utils
-.. autoclass:: TestSentinelHub
+.. automodule:: sentinelhub.test_utils
     :members:
-.. autoclass:: TestCaseContainer
-    :members:
+    :show-inheritance:

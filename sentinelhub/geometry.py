@@ -14,11 +14,12 @@ from .geo_utils import transform_point
 
 class BaseGeometry(ABC):
     """ Base geometry class
-
-    :param crs: Coordinate reference system of the geometry
-    :type crs: constants.CRS
     """
     def __init__(self, crs):
+        """
+        :param crs: Coordinate reference system of the geometry
+        :type crs: constants.CRS
+        """
         self._crs = CRS(crs)
 
     def __getattr__(self, item):
@@ -120,12 +121,13 @@ class BBox(BaseGeometry):
         - In case of ``constants.CRS.WGS84`` axis x represents longitude and axis y represents latitude
         - In case of ``constants.CRS.POP_WEB`` axis x represents easting and axis y represents northing
         - In case of ``constants.CRS.UTM_*`` axis x represents easting and axis y represents northing
-
-    :param bbox: A bbox in any valid representation
-    :param crs: Coordinate reference system of the bounding box
-    :type crs: constants.CRS
     """
     def __init__(self, bbox, crs):
+        """
+        :param bbox: A bbox in any valid representation
+        :param crs: Coordinate reference system of the bounding box
+        :type crs: constants.CRS
+        """
         x_fst, y_fst, x_snd, y_snd = BBox._to_tuple(bbox)
         self.min_x = min(x_fst, x_snd)
         self.max_x = max(x_fst, x_snd)
@@ -392,13 +394,14 @@ class Geometry(BaseGeometry):
     - `shapely.geometry.Polygon` or `shapely.geometry.MultiPolygon`
     - A GeoJSON dictionary with (multi)polygon coordinates
     - A WKT string with (multi)polygon coordinates
-
-    :param geometry: A polygon or multipolygon in any valid representation
-    :type geometry: shapely.geometry.Polygon or shapely.geometry.MultiPolygon or dict or str
-    :param crs: Coordinate reference system of the geometry
-    :type crs: constants.CRS
     """
     def __init__(self, geometry, crs):
+        """
+        :param geometry: A polygon or multipolygon in any valid representation
+        :type geometry: shapely.geometry.Polygon or shapely.geometry.MultiPolygon or dict or str
+        :param crs: Coordinate reference system of the geometry
+        :type crs: constants.CRS
+        """
         self._geometry = self._parse_geometry(geometry)
 
         super().__init__(crs)
@@ -485,11 +488,12 @@ class Geometry(BaseGeometry):
 
 class BBoxCollection(BaseGeometry):
     """ A collection of bounding boxes
-
-    :param bbox_list: A list of BBox objects which have to be in the same CRS
-    :type bbox_list: list(BBox)
     """
     def __init__(self, bbox_list):
+        """
+        :param bbox_list: A list of BBox objects which have to be in the same CRS
+        :type bbox_list: list(BBox)
+        """
         self._bbox_list, crs = self._parse_bbox_list(bbox_list)
         self._geometry = self._get_geometry()
 

@@ -1,16 +1,6 @@
 geopedia
 ========
 
-Module for working with Geopedia
-
-.. module:: sentinelhub.geopedia
-.. autoclass:: GeopediaService
+.. automodule:: sentinelhub.geopedia
     :members:
-.. autoclass:: GeopediaSession
-    :members:
-.. autoclass:: GeopediaWmsService
-    :members:
-.. autoclass:: GeopediaImageService
-    :members:
-.. autoclass:: GeopediaFeatureIterator
-    :members:
+    :show-inheritance:

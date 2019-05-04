@@ -152,7 +152,7 @@ class SHConfig:
         return json.dumps(self.get_config_dict(), indent=2)
 
     def save(self):
-        """Method that saves configuration parameter changes from instance of SHConfig class to global config class and
+        """ Method that saves configuration parameter changes from instance of SHConfig class to global config class and
         to `config.json` file.
 
         :Example:
@@ -198,7 +198,7 @@ class SHConfig:
         setattr(self, param, self._instance.CONFIG_PARAMS[param])
 
     def get_params(self):
-        """Returns a list of parameter names
+        """ Returns a list of parameter names
 
         :return: List of parameter names
         :rtype: list(str)
