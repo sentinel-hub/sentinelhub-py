@@ -75,6 +75,9 @@ class TestSafeFormat(TestSentinelHub):
                           cls.SafeTestCase('L1C_02.06',
                                            AwsProductRequest('S2A_MSIL1C_20180331T212521_N0206_R043_T07WFR_20180401T005'
                                                              '612', safe_format=True, data_folder=cls.INPUT_FOLDER)),
+                          cls.SafeTestCase('L1C_02.07',
+                                           AwsProductRequest('S2A_MSIL1C_20181119T031011_N0207_R075_T50TLK_20181119T061'
+                                                             '056', safe_format=True, data_folder=cls.INPUT_FOLDER)),
                           cls.SafeTestCase('L2A_02.01',
                                            AwsProductRequest('S2A_USER_PRD_MSIL2A_PDMC_20160310T041843_R138_V20160308T1'
                                                              '31142_20160308T131142', safe_format=True,
