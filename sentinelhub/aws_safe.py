@@ -10,10 +10,11 @@ from .download import get_xml
 
 
 class SafeProduct(AwsProduct):
-    """ Class inherits from `aws.AwsProduct`"""
+    """ Class implementing transformation of satellite products from AWS into .SAFE structure
+    """
+
     def get_requests(self):
-        """
-        Creates product structure and returns list of files for download
+        """ Creates product structure and returns list of files for download
 
         :return: list of download requests
         :rtype: list(download.DownloadRequest)
@@ -26,8 +27,7 @@ class SafeProduct(AwsProduct):
         return self.download_list, self.folder_list
 
     def get_safe_struct(self):
-        """
-        Describes a structure inside tile folder of ESA product .SAFE structure
+        """ Describes a structure inside tile folder of ESA product .SAFE structure
 
         :return: nested dictionaries representing .SAFE structure
         :rtype: dict
@@ -89,7 +89,7 @@ class SafeProduct(AwsProduct):
 
     def get_datastrip_list(self):
         """
-        :return: list of datastrips folder names and urls from productInfo.json file
+        :return: list of datastrips folder names and urls from `productInfo.json` file
         :rtype: list((str, str))
         """
         datastrips = self.product_info['datastrips']
@@ -110,7 +110,7 @@ class SafeProduct(AwsProduct):
     def get_datastrip_metadata_name(self, datastrip_folder):
         """
         :param datastrip_folder: name of datastrip folder
-        :type: str
+        :type datastrip_folder: str
         :return: name of datastrip metadata file
         :rtype: str
         """
@@ -154,15 +154,17 @@ class SafeProduct(AwsProduct):
 
 
 class SafeTile(AwsTile):
-    """ Class inherits from `aws.AwsTile`"""
+    """ Class implementing transformation of satellite tiles from AWS into .SAFE structure
+    """
     def __init__(self, *args, **kwargs):
+        """ Initialization parameters are inherited from parent class
+        """
         super().__init__(*args, **kwargs)
 
         self.tile_id = self.get_tile_id()
 
     def get_requests(self):
-        """
-        Creates tile structure and returns list of files for download.
+        """ Creates tile structure and returns list of files for download.
 
         :return: list of download requests for
         :rtype: list(download.DownloadRequest)
@@ -175,8 +177,7 @@ class SafeTile(AwsTile):
         return self.download_list, self.folder_list
 
     def get_safe_struct(self):
-        """
-        Describes a structure inside tile folder of ESA product .SAFE structure.
+        """ Describes a structure inside tile folder of ESA product .SAFE structure.
 
         :return: nested dictionaries representing .SAFE structure
         :rtype: dict
@@ -248,7 +249,7 @@ class SafeTile(AwsTile):
         return safe
 
     def get_tile_id(self):
-        """Creates ESA tile ID
+        """ Creates ESA tile ID
 
         :return: ESA tile ID
         :rtype: str
@@ -348,7 +349,7 @@ class SafeTile(AwsTile):
         return '{}.{}'.format(name, data_format.value)
 
     def get_preview_name(self):
-        """Returns .SAFE name of full resolution L1C preview
+        """ Returns .SAFE name of full resolution L1C preview
         :return: name of preview file
         :rtype: str
         """
@@ -360,8 +361,7 @@ class SafeTile(AwsTile):
 
 
 def _edit_name(name, code, add_code=None, delete_end=False):
-    """
-    Helping function for creating file names in .SAFE format
+    """ Helping function for creating file names in .SAFE format
 
     :param name: initial string
     :type name: str

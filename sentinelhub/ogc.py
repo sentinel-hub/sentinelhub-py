@@ -24,10 +24,10 @@ LOGGER = logging.getLogger(__name__)
 class OgcService:
     """ The base class for Sentinel Hub OGC services
 
-    :param base_url: base url of Sentinel Hub's OGC services. If ``None``, the url specified in the configuration
+    :param base_url: base url of Sentinel Hub's OGC services. If `None`, the url specified in the configuration
                     file is taken.
     :type base_url: str or None
-    :param instance_id: user's instance id granting access to Sentinel Hub's OGC services. If ``None``, the instance id
+    :param instance_id: user's instance id granting access to Sentinel Hub's OGC services. If `None`, the instance id
                         specified in the configuration file is taken.
     :type instance_id: str or None
     """
@@ -72,7 +72,7 @@ class OgcService:
         :type product_id: str
         :param data_source: One of the supported Sentinel-1 data sources
         :type data_source: constants.DataSource
-        :return: True if data_source contains product_id and False otherwise
+        :return: `True` if data_source contains product_id and `False` otherwise
         :rtype: bool
         """
         props = product_id.split('_')
@@ -89,10 +89,10 @@ class OgcImageService(OgcService):
     Intermediate layer between QGC-type requests (WmsRequest and WcsRequest) and the Sentinel Hub OGC (WMS and WCS)
     services.
 
-    :param base_url: base url of Sentinel Hub's OGC services. If ``None``, the url specified in the configuration
+    :param base_url: base url of Sentinel Hub's OGC services. If `None`, the url specified in the configuration
                     file is taken.
     :type base_url: str or None
-    :param instance_id: user's instance id granting access to Sentinel Hub's OGC services. If ``None``, the instance id
+    :param instance_id: user's instance id granting access to Sentinel Hub's OGC services. If `None`, the instance id
                         specified in the configuration file is taken.
     :type instance_id: str or None
     """
@@ -478,10 +478,10 @@ class WebFeatureService(OgcService):
     :type data_source: constants.DataSource
     :param maxcc: Maximum accepted cloud coverage of an image. Float between 0.0 and 1.0. Default is 1.0.
     :type maxcc: float
-    :param base_url: base url of Sentinel Hub's OGC services. If ``None``, the url specified in the configuration
+    :param base_url: base url of Sentinel Hub's OGC services. If `None`, the url specified in the configuration
                     file is taken.
     :type base_url: str or None
-    :param instance_id: user's instance id granting access to Sentinel Hub's OGC services. If ``None``, the instance id
+    :param instance_id: user's instance id granting access to Sentinel Hub's OGC services. If `None`, the instance id
                         specified in the configuration file is taken.
     :type instance_id: str or None
     """
@@ -588,7 +588,7 @@ class WebFeatureService(OgcService):
         """ Extracts tile name, data and AWS index from tile URL
 
         :param tile_url: Location of tile at AWS
-        :type: tile_url: str
+        :type tile_url: str
         :return: Tuple in a form (tile_name, date, aws_index)
         :rtype: (str, str, int)
         """

@@ -14,7 +14,7 @@ LOGGER = logging.getLogger(__name__)
 
 
 class FisService(OgcImageService):
-    """Sentinel Hub OGC services class for providing FIS data
+    """ Sentinel Hub OGC services class for providing FIS data
 
     Intermediate layer between FIS requests and the Sentinel Hub FIS services.
     """
@@ -25,13 +25,11 @@ class FisService(OgcImageService):
         Create a list of DownloadRequests for all Sentinel-2 acquisitions within request's time interval and
         acceptable cloud coverage.
 
-
         :param request: OGC-type request with specified bounding box, time interval, and cloud coverage for specific
-                        product.
+            product.
         :type request: OgcRequest or GeopediaRequest
         :return: list of DownloadRequests
         """
-
         return [DownloadRequest(url=self.get_url(request=request, geometry=geometry),
                                 filename=self.get_filename(request, geometry),
                                 data_type=MimeType.JSON, headers=OgcConstants.HEADERS)
@@ -39,19 +37,17 @@ class FisService(OgcImageService):
 
     @staticmethod
     def get_filename(request, geometry):
-        """ Returns filename
-
-        Returns the filename's location on disk where data is or is going to be stored.
+        """ Returns the filename location on disk where data is or is going to be stored.
         The files are stored in the folder specified by the user when initialising OGC-type
         of request. The name of the file has the following structure:
 
         {service_type}_{layer}_{geometry}_{crs}_{start_time}_{end_time}_{resolution}_{bins}_{histogram_type}_
-        *{custom_url_params}.json
+        \*{custom_url_params}.json
 
         :param request: FIS request
         :type request: FisRequest
         :param geometry: geometry object
-        :type: BBox or Geometry
+        :type geometry: BBox or Geometry
         :return: filename for this request
         :rtype: str
         """

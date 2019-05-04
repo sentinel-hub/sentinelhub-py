@@ -19,7 +19,7 @@ LOGGER = logging.getLogger(__name__)
 class GeopediaService:
     """ The class for Geopedia OGC services
 
-    :param base_url: Base url of Geopedia REST services. If ``None``, the url specified in the configuration
+    :param base_url: Base url of Geopedia REST services. If `None`, the url specified in the configuration
                     file is taken.
     :type base_url: str or None
     """
@@ -210,7 +210,7 @@ class GeopediaWmsService(GeopediaService, OgcImageService):
     """Geopedia OGC services class for providing image data. Most of the methods are inherited from
     `sentinelhub.ogc.OgcImageService` class.
 
-    :param base_url: Base url of Geopedia WMS services. If ``None``, the url specified in the configuration
+    :param base_url: Base url of Geopedia WMS services. If `None`, the url specified in the configuration
                     file is taken.
     :type base_url: str or None
     """
@@ -246,7 +246,7 @@ class GeopediaWmsService(GeopediaService, OgcImageService):
 class GeopediaImageService(GeopediaService):
     """Service class that provides images from a Geopedia vector layer.
 
-    :param base_url: Base url of Geopedia REST services. If ``None``, the url
+    :param base_url: Base url of Geopedia REST services. If `None`, the url
                      specified in the configuration file is taken.
     :type base_url: str or None
     """
@@ -334,7 +334,7 @@ class GeopediaFeatureIterator(GeopediaService):
         credentials. This can be used for accessing private Geopedia layers. By default it is set to `None` and a basic
         Geopedia session without credentials will be created.
     :type gpd_session: GeopediaSession or None
-    :param base_url: Base url of Geopedia REST services. If ``None``, the url specified in the configuration
+    :param base_url: Base url of Geopedia REST services. If `None`, the url specified in the configuration
         file is taken.
     :type base_url: str or None
     """

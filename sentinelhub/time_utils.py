@@ -76,7 +76,7 @@ def datetime_to_iso(date, only_date=True):
 
     :param date: datetime instance to convert
     :type date: datetime
-    :param only_date: whether to return date only or also time information. Default is ``True``
+    :param only_date: whether to return date only or also time information. Default is `True`
     :type only_date: bool
     :return: date in ISO 8601 format
     :rtype: str
@@ -100,7 +100,7 @@ def is_valid_time(time):
 
     :param time: a string containing a time/date stamp
     :type time: str
-    :return: ``True`` is string is a valid time/date stamp, ``False`` otherwise
+    :return: `True` is string is a valid time/date stamp, `False` otherwise
     :rtype: bool
     """
     try:

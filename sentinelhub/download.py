@@ -53,21 +53,21 @@ class DownloadRequest:
     saved data and other necessary flags needed when the data is downloaded and
     interpreted.
 
-    :param url: url to Sentinel Hub's services or other sources from where the data is downloaded. Default is ``None``
+    :param url: url to Sentinel Hub's services or other sources from where the data is downloaded. Default is `None`
     :type url: str
-    :param data_folder: folder name where the fetched data will be (or already is) saved. Default is ``None``
+    :param data_folder: folder name where the fetched data will be (or already is) saved. Default is `None`
     :type data_folder: str
-    :param filename: filename of the file where the fetched data will be (or already is) saved. Default is ``None``
+    :param filename: filename of the file where the fetched data will be (or already is) saved. Default is `None`
     :type filename: str
-    :param headers: add HTTP headers to request. Default is ``None``
+    :param headers: add HTTP headers to request. Default is `None`
     :type headers: dict
     :param request_type: type of request, either GET or POST. Default is ``constants.RequestType.GET``
     :type request_type: constants.RequestType
-    :param post_values: form encoded data to send in POST request. Default is ``None``
+    :param post_values: form encoded data to send in POST request. Default is `None`
     :type post_values: dict
-    :param save_response: flag to turn on/off saving data downloaded by this request to disk. Default is ``True``.
+    :param save_response: flag to turn on/off saving data downloaded by this request to disk. Default is `True`.
     :type save_response: bool
-    :param return_data: flag to return or not data downloaded by this request to disk. Default is ``True``.
+    :param return_data: flag to return or not data downloaded by this request to disk. Default is `True`.
     :type return_data: bool
     :param data_type: expected file format of downloaded data. Default is ``constants.MimeType.RAW``
     :type data_type: constants.MimeType
@@ -142,7 +142,7 @@ class DownloadRequest:
         """
         Set save_response attribute
 
-        :param save_response: flag to turn on/off saving data downloaded by this request to disk. Default is ``True``.
+        :param save_response: flag to turn on/off saving data downloaded by this request to disk. Default is `True`.
         :return: bool
         """
         self.save_response = save_response
@@ -151,7 +151,7 @@ class DownloadRequest:
         """
         Set return_data attribute
 
-        :param return_data: flag to return or not data downloaded by this request to disk. Default is ``True``.
+        :param return_data: flag to return or not data downloaded by this request to disk. Default is `True`.
         :return: bool
         """
         self.return_data = return_data
@@ -159,7 +159,7 @@ class DownloadRequest:
     def is_downloaded(self):
         """ Checks if data for this request has already been downloaded and is saved to disk.
 
-        :return: returns ``True`` if data for this request has already been downloaded and is saved to disk.
+        :return: returns `True` if data for this request has already been downloaded and is saved to disk.
         :rtype: bool
         """
         if self.file_path is None:
@@ -169,7 +169,7 @@ class DownloadRequest:
     def is_aws_s3(self):
         """Checks if data has to be downloaded from AWS s3 bucket
 
-        :return: True if url describes location at AWS s3 bucket and False otherwise
+        :return: `True` if url describes location at AWS s3 bucket and `False` otherwise
         :rtype: bool
         """
         return self.url.startswith('s3://')
@@ -181,8 +181,8 @@ def download_data(request_list, redownload=False, max_threads=None):
 
     :param request_list: list of DownloadRequests
     :type request_list: list of DownloadRequests
-    :param redownload: if ``True``, download again the data, although it was already downloaded and is available
-                        on the disk. Default is ``False``.
+    :param redownload: if `True`, download again the data, although it was already downloaded and is available
+                        on the disk. Default is `False`.
     :type redownload: bool
     :param max_threads: number of threads to use when downloading data; default is ``max_threads=None`` which
             by default uses the number of processors on the system
@@ -206,9 +206,9 @@ def _check_if_must_download(request_list, redownload):
     **Note:** the function mutates the elements of the list!
 
     :param request_list: a list of ``DownloadRequest`` instances
-    :type: list[DownloadRequest]
+    :type request_list: list[DownloadRequest]
     :param redownload: tells whether to download the data again or not
-    :type: bool
+    :type redownload: bool
     """
     for request in request_list:
         request.will_download = (request.save_response or request.return_data) \
@@ -327,7 +327,7 @@ def _is_temporal_problem(exception):
 
     :param exception: Exception raised during download
     :type exception: Exception
-    :return: True if exception is temporal and False otherwise
+    :return: `True` if exception is temporal and `False` otherwise
     :rtype: bool
     """
     try:
@@ -342,7 +342,7 @@ def _request_limit_reached(exception):
 
     :param exception: Exception raised during download
     :type exception: Exception
-    :return: True if exception is caused because too many requests were executed at once and False otherwise
+    :return: `True` if exception is caused because too many requests were executed at once and `False` otherwise
     :rtype: bool
     """
     return isinstance(exception, requests.HTTPError) and \
@@ -465,9 +465,9 @@ def get_json(url, post_values=None, headers=None):
 
     :param url: url to Sentinel Hub's services or other sources from where the data is downloaded
     :type url: str
-    :param post_values: form encoded data to send in POST request. Default is ``None``
+    :param post_values: form encoded data to send in POST request. Default is `None`
     :type post_values: dict
-    :param headers: add HTTP headers to request. Default is ``None``
+    :param headers: add HTTP headers to request. Default is `None`
     :type headers: dict
     :return: request response as JSON instance
     :rtype: JSON instance or None

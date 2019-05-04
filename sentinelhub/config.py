@@ -1,5 +1,5 @@
 """
-Module that collects configuration data from config.json
+Module for managing configuration data from `config.json`
 """
 
 import os
@@ -39,8 +39,7 @@ class SHConfig:
 
     """
     class _SHConfig:
-        """
-        Private class.
+        """ Internal class holding configuration parameters
         """
         CONFIG_PARAMS = OrderedDict([
             ('instance_id', ''),
@@ -66,8 +65,7 @@ class SHConfig:
             self.load_configuration()
 
         def _check_configuration(self, config):
-            """
-            Checks if configuration file contains all keys.
+            """ Checks if configuration file contains all keys.
 
             :param config: configuration dictionary read from ``config.json``
             :type config: dict
@@ -86,7 +84,7 @@ class SHConfig:
 
         @staticmethod
         def get_config_file():
-            """Checks if configuration file exists and returns its file path
+            """ Checks if configuration file exists and returns its file path
 
             :return: location of configuration file
             :rtype: str
@@ -99,8 +97,7 @@ class SHConfig:
             return config_file
 
         def load_configuration(self):
-            """
-            Method reads and loads the configuration file.
+            """ Method reads and loads the configuration file.
             """
             with open(self.get_config_file(), 'r') as cfg_file:
                 config = json.load(cfg_file)
@@ -111,7 +108,7 @@ class SHConfig:
                         setattr(self, prop, config[prop])
 
         def get_config(self):
-            """Returns ordered dictionary with configuration parameters
+            """ Returns ordered dictionary with configuration parameters
 
             :return: Ordered dictionary
             :rtype: collections.OrderedDict
@@ -122,8 +119,7 @@ class SHConfig:
             return config
 
         def save_configuration(self):
-            """
-            Method saves changed parameter values to the configuration file.
+            """ Method saves changed parameter values to the configuration file.
             """
             config = self.get_config()
 
@@ -159,7 +155,7 @@ class SHConfig:
         """Method that saves configuration parameter changes from instance of SHConfig class to global config class and
         to `config.json` file.
 
-        Example of use case
+        :Example:
             ``my_config = SHConfig()`` \n
             ``my_config.instance_id = '<new instance id>'`` \n
             ``my_config.save()``
@@ -173,12 +169,11 @@ class SHConfig:
             self._instance.save_configuration()
 
     def reset(self, params=...):
-        """
-        Resets configuration class to initial values. Use SHConfig.save() method in order to save this change.
+        """ Resets configuration class to initial values. Use `SHConfig.save()` method in order to save this change.
 
         :param params: Parameters which will be reset. Parameters can be specified with a list of names, e.g.
-        ``['instance_id', 'aws_access_key_id', 'aws_secret_access_key']``, or as a single name, e.g.
-        ``'ogc_base_url'``. By default all parameters will be reset and default value is ``Ellipsis``.
+            ``['instance_id', 'aws_access_key_id', 'aws_secret_access_key']``, or as a single name, e.g.
+            ``'ogc_base_url'``. By default all parameters will be reset and default value is ``Ellipsis``.
         :type params: Ellipsis or list(str) or str
         """
         if params is ...:
@@ -229,7 +224,7 @@ class SHConfig:
     def is_eocloud_ogc_url(self):
         """ Checks if base OGC URL is set to eocloud URL
 
-        :return: ``True`` if 'eocloud' string is in base OGC URL else ``False``
+        :return: `True` if 'eocloud' string is in base OGC URL else `False`
         :rtype: bool
         """
         return 'eocloud' in self.ogc_base_url

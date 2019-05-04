@@ -18,17 +18,18 @@ LOGGER = logging.getLogger(__name__)
 
 class AwsService(ABC):
     """ Amazon Web Service (AWS) base class
-
-    :param parent_folder: Folder where the fetched data will be saved.
-    :type parent_folder: str
-    :param bands: List of Sentinel-2 bands for request. If parameter is set to ``None`` all bands will be used.
-    :type bands: list(str) or None
-    :param metafiles: List of additional metafiles available on AWS
-                      (e.g. ``['metadata', 'tileInfo', 'preview/B01', 'TCI']``).
-                      If parameter is set to ``None`` the list will be set automatically.
-    :type metafiles: list(str) or None
     """
     def __init__(self, parent_folder='', bands=None, metafiles=None):
+        """
+        :param parent_folder: Folder where the fetched data will be saved.
+        :type parent_folder: str
+        :param bands: List of Sentinel-2 bands for request. If parameter is set to `None` all bands will be used.
+        :type bands: list(str) or None
+        :param metafiles: List of additional metafiles available on AWS
+                          (e.g. ``['metadata', 'tileInfo', 'preview/B01', 'TCI']``).
+                          If parameter is set to `None` the list will be set automatically.
+        :type metafiles: list(str) or None
+        """
         self.parent_folder = parent_folder
         self.bands = self._parse_bands(bands)
         self.metafiles = self._parse_metafiles(metafiles)
@@ -246,9 +247,9 @@ class AwsService(ABC):
 
         :param filename: Name of the file without extension
         :type filename: str
-        :param data_format: format of file, if None it will be set automatically
+        :param data_format: format of file, if `None` it will be set automatically
         :type data_format: constants.MimeType or None
-        :param remove_path: True if the path in filename string should be removed
+        :param remove_path: `True` if the path in filename string should be removed
         :type remove_path: bool
         :return: Name of the file with extension
         :rtype: str
@@ -267,7 +268,7 @@ class AwsService(ABC):
         """Products created with baseline 2.06 and greater (and some products with baseline 2.05) should have quality
         report files
 
-        :return: True if the product has report xml files and False otherwise
+        :return: `True` if the product has report xml files and `False` otherwise
         :rtype: bool
         """
         return self.baseline > '02.05' or (self.baseline == '02.05' and self.date >= '2017-10-12')  # Not sure
@@ -275,7 +276,7 @@ class AwsService(ABC):
     def is_early_compact_l2a(self):
         """Check if product is early version of compact L2A product
 
-        :return: True if product is early version of compact L2A product and False otherwise
+        :return: `True` if product is early version of compact L2A product and `False` otherwise
         :rtype: bool
         """
         return self.data_source is DataSource.SENTINEL2_L2A and self.safe_type is EsaSafeType.COMPACT_TYPE and \
@@ -291,11 +292,11 @@ class AwsProduct(AwsService):
     :type tile_list: list(str) or None
     :param parent_folder: location of the directory where the fetched data will be saved.
     :type parent_folder: str
-    :param bands: List of Sentinel-2 bands for request. If parameter is set to ``None`` all bands will be used.
+    :param bands: List of Sentinel-2 bands for request. If parameter is set to `None` all bands will be used.
     :type bands: list(str) or None
     :param metafiles: List of additional metafiles available on AWS
                       (e.g. ``['metadata', 'tileInfo', 'preview/B01', 'TCI']``).
-                      If parameter is set to ``None`` the list will be set automatically.
+                      If parameter is set to `None` the list will be set automatically.
     :type metafiles: list(str) or None
     """
     def __init__(self, product_id, tile_list=None, **kwargs):
@@ -391,7 +392,7 @@ class AwsProduct(AwsService):
 
         :param filename: name of file
         :type filename: str
-        :param data_format: format of file, if None it will be set automatically
+        :param data_format: format of file, if `None` it will be set automatically
         :type data_format: constants.MimeType or None
         :return: url of file location
         :rtype: str
@@ -406,7 +407,7 @@ class AwsProduct(AwsService):
         """
         Creates base url of product location on AWS.
 
-        :param force_http: True if HTTP base URL should be used and False otherwise
+        :param force_http: `True` if HTTP base URL should be used and `False` otherwise
         :type force_http: str
         :return: url of product location
         :rtype: str
@@ -416,9 +417,9 @@ class AwsProduct(AwsService):
 
     def get_tile_url(self, tile_info):
         """
-        Collects tile url from productInfo.json file.
+        Collects tile url from `productInfo.json` file.
 
-        :param tile_info: information about tile from productInfo.json
+        :param tile_info: information about tile from `productInfo.json`
         :type tile_info: dict
         :return: url of tile location
         :rtype: str
@@ -445,7 +446,7 @@ class AwsTile(AwsService):
     :param time: Tile sensing time in ISO8601 format
     :type time: str
     :param aws_index: There exist Sentinel-2 tiles with the same tile and time parameter. Therefore each tile on AWS
-                      also has an index which is visible in their url path. If ``aws_index`` is set to ``None`` the
+                      also has an index which is visible in their url path. If ``aws_index`` is set to `None` the
                       class will try to find the index automatically. If there will be multiple choices it will choose
                       the lowest index and inform the user.
     :type aws_index: int or None
@@ -454,11 +455,11 @@ class AwsTile(AwsService):
     :type data_source: constants.DataSource
     :param parent_folder: folder where the fetched data will be saved.
     :type parent_folder: str
-    :param bands: List of Sentinel-2 bands for request. If parameter is set to ``None`` all bands will be used.
+    :param bands: List of Sentinel-2 bands for request. If parameter is set to `None` all bands will be used.
     :type bands: list(str) or None
     :param metafiles: List of additional metafiles available on AWS
                       (e.g. ``['metadata', 'tileInfo', 'preview/B01', 'TCI']``).
-                      If parameter is set to ``None`` the list will be set automatically.
+                      If parameter is set to `None` the list will be set automatically.
     :type metafiles: list(str) or None
     """
     def __init__(self, tile_name, time, aws_index=None, data_source=DataSource.SENTINEL2_L1C, **kwargs):
@@ -604,7 +605,7 @@ class AwsTile(AwsService):
         """
         Creates base url of tile location on AWS.
 
-        :param force_http: True if HTTP base URL should be used and False otherwise
+        :param force_http: `True` if HTTP base URL should be used and `False` otherwise
         :type force_http: str
         :return: url of tile location
         :rtype: str
@@ -681,7 +682,7 @@ class AwsTile(AwsService):
         """
         :param tile_id: original tile identification string provided by ESA (e.g.
                         'S2A_OPER_MSI_L1C_TL_SGS__20160109T230542_A002870_T10UEV_N02.01')
-        :type: str
+        :type tile_id: str
         :return: tile name, sensing date and AWS index
         :rtype: (str, str, int)
         """

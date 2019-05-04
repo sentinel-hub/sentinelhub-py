@@ -87,20 +87,20 @@ class DataRequest(ABC):
         Get requested data either by downloading it or by reading it from the disk (if it
         was previously downloaded and saved).
 
-        :param save_data: flag to turn on/off saving of data to disk. Default is ``False``.
+        :param save_data: flag to turn on/off saving of data to disk. Default is `False`.
         :type save_data: bool
-        :param redownload: if ``True``, download again the requested data even though it's already saved to disk.
-                            Default is ``False``, do not download if data is already available on disk.
+        :param redownload: if `True`, download again the requested data even though it's already saved to disk.
+                            Default is `False`, do not download if data is already available on disk.
         :type redownload: bool
         :param data_filter: Used to specify which items will be returned by the method and in which order. E.g. with
-            ``data_filter=[0, 2, -1]`` the method will return only 1st, 3rd and last item. Default filter is ``None``.
+            ``data_filter=[0, 2, -1]`` the method will return only 1st, 3rd and last item. Default filter is `None`.
         :type data_filter: list(int) or None
         :param max_threads: number of threads to use when downloading data; default is ``max_threads=None`` which
             by default uses the number of processors on the system
         :type max_threads: int
-        :param raise_download_errors: If ``True`` any error in download process should be raised as
-            ``DownloadFailedException``. If ``False`` failed downloads will only raise warnings and the method will
-            return list with ``None`` values in places where the results of failed download requests should be.
+        :param raise_download_errors: If `True` any error in download process should be raised as
+            ``DownloadFailedException``. If `False` failed downloads will only raise warnings and the method will
+            return list with `None` values in places where the results of failed download requests should be.
         :type raise_download_errors: bool
         :return: requested images as numpy arrays, where each array corresponds to a single acquisition and has
                     shape ``[height, width, channels]``.
@@ -115,15 +115,15 @@ class DataRequest(ABC):
         Saves data to disk. If ``redownload=True`` then the data is redownloaded using ``max_threads`` workers.
 
         :param data_filter: Used to specify which items will be returned by the method and in which order. E.g. with
-            `data_filter=[0, 2, -1]` the method will return only 1st, 3rd and last item. Default filter is ``None``.
+            `data_filter=[0, 2, -1]` the method will return only 1st, 3rd and last item. Default filter is `None`.
         :type data_filter: list(int) or None
-        :param redownload: data is redownloaded if ``redownload=True``. Default is ``False``
+        :param redownload: data is redownloaded if ``redownload=True``. Default is `False`
         :type redownload: bool
         :param max_threads: number of threads to use when downloading data; default is ``max_threads=None`` which
             by default uses the number of processors on the system
         :type max_threads: int
-        :param raise_download_errors: If ``True`` any error in download process should be raised as
-            ``DownloadFailedException``. If ``False`` failed downloads will only raise warnings.
+        :param raise_download_errors: If `True` any error in download process should be raised as
+            ``DownloadFailedException``. If `False` failed downloads will only raise warnings.
         :type raise_download_errors: bool
         """
         self._preprocess_request(True, False)
@@ -133,14 +133,14 @@ class DataRequest(ABC):
         """Calls download module and executes the download process
 
         :param data_filter: Used to specify which items will be returned by the method and in which order. E.g. with
-            `data_filter=[0, 2, -1]` the method will return only 1st, 3rd and last item. Default filter is ``None``.
+            `data_filter=[0, 2, -1]` the method will return only 1st, 3rd and last item. Default filter is `None`.
         :type data_filter: list(int) or None
-        :param redownload: data is redownloaded if ``redownload=True``. Default is ``False``
+        :param redownload: data is redownloaded if ``redownload=True``. Default is `False`
         :type redownload: bool
         :param max_threads: the number of workers to use when downloading, default ``max_threads=None``
         :type max_threads: int
-        :param raise_download_errors: If ``True`` any error in download process should be raised as
-            ``DownloadFailedException``. If ``False`` failed downloads will only raise warnings.
+        :param raise_download_errors: If `True` any error in download process should be raised as
+            ``DownloadFailedException``. If `False` failed downloads will only raise warnings.
         :type raise_download_errors: bool
         :return: List of data obtained from download
         :rtype: list
@@ -203,9 +203,9 @@ class DataRequest(ABC):
         Prepares requests for download and creates empty folders
 
         :param save_data: Tells whether to save data or not
-        :type: bool
+        :type save_data: bool
         :param return_data: Tells whether to return data or not
-        :type: bool
+        :type return_data: bool
         """
         if not self.is_valid_request():
             raise ValueError('Cannot obtain data because request is invalid')
@@ -273,7 +273,7 @@ class OgcRequest(DataRequest):
                         in some cases 32-bit TIFF is required, i.e. if requesting unprocessed raw bands.
                         Default is ``constants.MimeType.PNG``.
     :type image_format: constants.MimeType
-    :param instance_id: user's instance id. If ``None`` the instance id is taken from the ``config.json``
+    :param instance_id: user's instance id. If `None` the instance id is taken from the ``config.json``
                         configuration file.
     :type instance_id: str
     :param custom_url_params: dictionary of CustomUrlParameters and their values supported by Sentinel Hub's WMS and WCS
@@ -408,7 +408,7 @@ class WmsRequest(OgcRequest):
                         in some cases 32-bit TIFF is required, i.e. if requesting unprocessed raw bands.
                         Default is ``constants.MimeType.PNG``.
     :type image_format: constants.MimeType
-    :param instance_id: User's Sentinel Hub instance id. If ``None`` the instance id is taken from the ``config.json``
+    :param instance_id: User's Sentinel Hub instance id. If `None` the instance id is taken from the ``config.json``
                         configuration file.
     :type instance_id: str
     :param custom_url_params: dictionary of CustomUrlParameters and their values supported by Sentinel Hub's WMS and WCS
@@ -475,7 +475,7 @@ class WcsRequest(OgcRequest):
                         in some cases 32-bit TIFF is required, i.e. if requesting unprocessed raw bands.
                         Default is ``constants.MimeType.PNG``.
     :type image_format: constants.MimeType
-    :param instance_id: user's instance id. If ``None`` the instance id is taken from the ``config.json``
+    :param instance_id: user's instance id. If `None` the instance id is taken from the ``config.json``
                         configuration file.
     :type instance_id: str
     :param custom_url_params: dictionary of CustomUrlParameters and their values supported by Sentinel Hub's WMS and WCS
@@ -483,7 +483,7 @@ class WcsRequest(OgcRequest):
                               http://www.sentinel-hub.com/develop/documentation/api/custom-url-parameters. Note: in
                               case of constants.CustomUrlParam.EVALSCRIPT the dictionary value must be a string
                               of Javascript code that is not encoded into base64.
-    :type custom_url_params: dictionary of CustomUrlParameter enum and its value, i.e.
+    :type custom_url_params: Dictionary of CustomUrlParameter enum and its value, i.e.
                               ``{constants.CustomUrlParam.ATMFILTER:'ATMCOR'}``
     :param time_difference: The time difference below which dates are deemed equal. That is, if for the given set of OGC
                             parameters the images are available at datestimes `d1<=d2<=...<=dn` then only those with
@@ -516,22 +516,20 @@ class FisRequest(OgcRequest):
         match the one given by `data_source` parameter
     :type layer: str
     :param time: time or time range for which to return the results, in ISO8601 format
-            (year-month-date, for example: ``2016-01-01``, or year-month-dateThours:minuts:seconds format,
-            i.e. ``2016-01-01T16:31:21``).
-            Examples: ``'2016-01-01'``, or ``('2016-01-01', ' 2016-01-31')``
+        (year-month-date, for example: ``2016-01-01``, or year-month-dateThours:minuts:seconds format,
+        i.e. ``2016-01-01T16:31:21``). Examples: ``'2016-01-01'``, or ``('2016-01-01', ' 2016-01-31')``
     :type time: str or (str, str) or datetime.date or (datetime.date, datetime.date) or datetime.datetime or
-                (datetime.datetime, datetime.datetime)
+        (datetime.datetime, datetime.datetime)
     :param geometry_list: A WKT representation of a geometry describing the region of interest.
-                     Note that WCS 1.1.1 standard is used here, so for EPSG:4326 coordinates should be
-                     in latitude/longitude order.
+        Note that WCS 1.1.1 standard is used here, so for EPSG:4326 coordinates should be in latitude/longitude order.
     :type geometry_list: list, [geometry.Geometry or geometry.Bbox]
     :param resolution: Specifies the spatial resolution, in meters per pixel, of the image from which the statistics
-                       are to be estimated. When using CRS=EPSG:4326 one has to add the "m" suffix to
-                       enforce resolution in meters per pixel (e.g. RESOLUTION=10m).
-    :type str
+        are to be estimated. When using CRS=EPSG:4326 one has to add the "m" suffix to
+        enforce resolution in meters per pixel (e.g. RESOLUTION=10m).
+    :type resolution: str
     :param bins: The number of bins (a positive integer) in the histogram. If this parameter is absent no histogram
         is computed.
-    :type: str
+    :type bins: str
     :param histogram_type: type of histogram
     :type histogram_type: HistogramType
     :param data_source: Source of requested satellite data. It has to be the same as defined in Sentinel Hub
@@ -539,16 +537,16 @@ class FisRequest(OgcRequest):
     :type data_source: constants.DataSource
     :param maxcc: maximum accepted cloud coverage of an image. Float between 0.0 and 1.0. Default is ``1.0``.
     :type maxcc: float
-    :param instance_id: user's instance id. If ``None`` the instance id is taken from the ``config.json``
-                        configuration file.
+    :param instance_id: user's instance id. If `None` the instance id is taken from the ``config.json``
+        configuration file.
     :type instance_id: str
-    :param custom_url_params: dictionary of CustomUrlParameters and their values supported by Sentinel Hub's WMS and WCS
-                              services. All available parameters are described at
-                              http://www.sentinel-hub.com/develop/documentation/api/custom-url-parameters. Note: in
-                              case of constants.CustomUrlParam.EVALSCRIPT the dictionary value must be a string
-                              of Javascript code that is not encoded into base64.
+    :param custom_url_params: Dictionary of CustomUrlParameters and their values supported by Sentinel Hub's WMS and WCS
+        services. All available parameters are described at
+        http://www.sentinel-hub.com/develop/documentation/api/custom-url-parameters. Note: in
+        case of constants.CustomUrlParam.EVALSCRIPT the dictionary value must be a string
+        of Javascript code that is not encoded into base64.
     :type custom_url_params: dictionary of CustomUrlParameter enum and its value, i.e.
-                              ``{constants.CustomUrlParam.ATMFILTER:'ATMCOR'}``
+        ``{constants.CustomUrlParam.ATMFILTER:'ATMCOR'}``
     :param data_folder: location of the directory where the fetched data will be saved.
     :type data_folder: str
     """
@@ -561,7 +559,7 @@ class FisRequest(OgcRequest):
         super().__init__(bbox=None, layer=layer, time=time, service_type=ServiceType.FIS, **kwargs)
 
     def create_request(self):
-        """Set download requests
+        """ Set download requests
 
         Create a list of DownloadRequests for all Sentinel-2 acquisitions within request's time interval and
         acceptable cloud coverage.
@@ -677,9 +675,9 @@ class GeopediaImageRequest(GeopediaRequest):
 
     :param image_field_name: Name of the field in the data table which holds images
     :type image_field_name: str
-    :param keep_image_names: If ``True`` images will be saved with the same names as in Geopedia otherwise Geopedia
+    :param keep_image_names: If `True` images will be saved with the same names as in Geopedia otherwise Geopedia
         hashes will be used as names. If there are multiple images with the same names in the Geopedia layer this
-        parameter should be set to ``False`` to prevent images being overwritten.
+        parameter should be set to `False` to prevent images being overwritten.
     :type keep_image_names: bool
     :param layer: Geopedia layer which contains requested data
     :type layer: str
@@ -745,8 +743,8 @@ class AwsRequest(DataRequest):
     :param metafiles: list of additional metafiles available on AWS
                       (e.g. ``['metadata', 'tileInfo', 'preview/B01', 'TCI']``)
     :type metafiles: list(str)
-    :param safe_format: flag that determines the structure of saved data. If ``True`` it will be saved in .SAFE format
-                        defined by ESA. If ``False`` it will be saved in the same structure as the stucture at AWS.
+    :param safe_format: flag that determines the structure of saved data. If `True` it will be saved in .SAFE format
+                        defined by ESA. If `False` it will be saved in the same structure as the stucture at AWS.
     :type safe_format: bool
     :param data_folder: location of the directory where the fetched data will be saved.
     :type data_folder: str
@@ -780,7 +778,7 @@ class AwsProductRequest(AwsRequest):
     :param product_id: original ESA product identification string
                        (e.g. ``'S2A_MSIL1C_20170414T003551_N0204_R016_T54HVH_20170414T003551'``)
     :type product_id: str
-    :param tile_list: list of tiles inside the product to be downloaded. If parameter is set to ``None`` all
+    :param tile_list: list of tiles inside the product to be downloaded. If parameter is set to `None` all
                       tiles inside the product will be downloaded.
     :type tile_list: list(str) or None
     :param bands: List of Sentinel-2 bands for request. If `None` all bands will be obtained
@@ -788,8 +786,8 @@ class AwsProductRequest(AwsRequest):
     :param metafiles: list of additional metafiles available on AWS
                       (e.g. ``['metadata', 'tileInfo', 'preview/B01', 'TCI']``)
     :type metafiles: list(str)
-    :param safe_format: flag that determines the structure of saved data. If ``True`` it will be saved in .SAFE format
-                        defined by ESA. If ``False`` it will be saved in the same structure as the stucture at AWS.
+    :param safe_format: flag that determines the structure of saved data. If `True` it will be saved in .SAFE format
+                        defined by ESA. If `False` it will be saved in the same structure as the stucture at AWS.
     :type safe_format: bool
     :param data_folder: location of the directory where the fetched data will be saved.
     :type data_folder: str
@@ -822,7 +820,7 @@ class AwsTileRequest(AwsRequest):
     :param time: tile sensing time in ISO8601 format
     :type time: str
     :param aws_index: there exist Sentinel-2 tiles with the same tile and time parameter. Therefore each tile on AWS
-                      also has an index which is visible in their url path. If aws_index is set to ``None`` the class
+                      also has an index which is visible in their url path. If aws_index is set to `None` the class
                       will try to find the index automatically. If there will be multiple choices it will choose the
                       lowest index and inform the user.
     :type aws_index: int or None
@@ -834,8 +832,8 @@ class AwsTileRequest(AwsRequest):
     :param metafiles: list of additional metafiles available on AWS
                       (e.g. ``['metadata', 'tileInfo', 'preview/B01', 'TCI']``)
     :type metafiles: list(str)
-    :param safe_format: flag that determines the structure of saved data. If ``True`` it will be saved in .SAFE format
-                        defined by ESA. If ``False`` it will be saved in the same structure as the stucture at AWS.
+    :param safe_format: flag that determines the structure of saved data. If `True` it will be saved in .SAFE format
+                        defined by ESA. If `False` it will be saved in the same structure as the stucture at AWS.
     :type safe_format: bool
     :param data_folder: location of the directory where the fetched data will be saved.
     :type data_folder: str
@@ -863,14 +861,14 @@ def get_safe_format(product_id=None, tile=None, entire_product=False, bands=None
     """
     Returns .SAFE format structure in form of nested dictionaries. Either ``product_id`` or ``tile`` must be specified.
 
-    :param product_id: original ESA product identification string. Default is ``None``
+    :param product_id: original ESA product identification string. Default is `None`
     :type product_id: str
-    :param tile: tuple containing tile name and sensing time/date. Default is ``None``
+    :param tile: tuple containing tile name and sensing time/date. Default is `None`
     :type tile: (str, str)
     :param entire_product: in case tile is specified this flag determines if it will be place inside a .SAFE structure
-                           of the product. Default is ``False``
+                           of the product. Default is `False`
     :type entire_product: bool
-    :param bands: list of bands to download. If ``None`` all bands will be downloaded. Default is ``None``
+    :param bands: list of bands to download. If `None` all bands will be downloaded. Default is `None`
     :type bands: list(str) or None
     :param data_source: In case of tile request the source of satellite data has to be specified. Default is Sentinel-2
                         L1C data.
@@ -897,19 +895,19 @@ def download_safe_format(product_id=None, tile=None, folder='.', redownload=Fals
     Downloads .SAFE format structure in form of nested dictionaries. Either ``product_id`` or ``tile`` must
     be specified.
 
-    :param product_id: original ESA product identification string. Default is ``None``
+    :param product_id: original ESA product identification string. Default is `None`
     :type product_id: str
-    :param tile: tuple containing tile name and sensing time/date. Default is ``None``
+    :param tile: tuple containing tile name and sensing time/date. Default is `None`
     :type tile: (str, str)
     :param folder: location of the directory where the fetched data will be saved. Default is ``'.'``
     :type folder: str
-    :param redownload: if ``True``, download again the requested data even though it's already saved to disk. If
-                       ``False``, do not download if data is already available on disk. Default is ``False``
+    :param redownload: if `True`, download again the requested data even though it's already saved to disk. If
+                       `False`, do not download if data is already available on disk. Default is `False`
     :type redownload: bool
     :param entire_product: in case tile is specified this flag determines if it will be place inside a .SAFE structure
-                           of the product. Default is ``False``
+                           of the product. Default is `False`
     :type entire_product: bool
-    :param bands: list of bands to download. If ``None`` all bands will be downloaded. Default is ``None``
+    :param bands: list of bands to download. If `None` all bands will be downloaded. Default is `None`
     :type bands: list(str) or None
     :param data_source: In case of tile request the source of satellite data has to be specified. Default is Sentinel-2
                         L1C data.

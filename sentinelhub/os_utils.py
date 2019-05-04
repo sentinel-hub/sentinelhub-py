@@ -78,7 +78,7 @@ def rename(old_path, new_path, edit_folders=True):
 
     :param old_path: name of file or folder to rename
     :param new_path: name of new file or folder
-    :param edit_folders: flag to allow recursive renaming of folders. Default is ``True``
+    :param edit_folders: flag to allow recursive renaming of folders. Default is `True`
     :type old_path: str
     :type new_path: str
     :type edit_folders: bool
@@ -106,7 +106,7 @@ def size(pathname):
 def sys_is_windows():
     """Check if user is running the code on Windows machine
 
-    :return: True if OS is Windows and False otherwise
+    :return: `True` if OS is Windows and `False` otherwise
     :rtype: bool
     """
     return platform.lower().startswith('win')
