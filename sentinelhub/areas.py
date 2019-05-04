@@ -23,7 +23,7 @@ class AreaSplitter(ABC):
     :param crs: Coordinate reference system of the shapes in `shape_list`
     :type crs: CRS
     :param reduce_bbox_sizes: If `True` it will reduce the sizes of bounding boxes so that they will tightly fit the
-    given geometry in `shape_list`.
+        given geometry in `shape_list`.
     :type reduce_bbox_sizes: bool
     """
     def __init__(self, shape_list, crs, reduce_bbox_sizes=False):
@@ -82,7 +82,7 @@ class AreaSplitter(ABC):
         """ Returns a list of bounding boxes that are the result of the split
 
         :param crs: Coordinate reference system in which the bounding boxes should be returned. If `None` the CRS will
-                    be the default CRS of the splitter.
+            be the default CRS of the splitter.
         :type crs: CRS or None
         :param buffer: A percentage of each BBox size increase. This will cause neighbouring bounding boxes to overlap.
         :type buffer: float or None
@@ -135,7 +135,7 @@ class AreaSplitter(ABC):
         """ Returns a bounding box of the entire area
 
         :param crs: Coordinate reference system in which the bounding box should be returned. If `None` the CRS will
-                    be the default CRS of the splitter.
+            be the default CRS of the splitter.
         :type crs: CRS or None
         :return: A bounding box of the area defined by the `shape_list`
         :rtype: BBox
