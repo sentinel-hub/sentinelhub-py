@@ -22,12 +22,12 @@ class BaseGeometry(ABC):
         """
         self._crs = CRS(crs)
 
-    def __getattr__(self, item):
+    def __getattr__(self, attr):
         """ Using shapely's svg geometry visualization for Jupyter notebooks
         """
-        if item == '_repr_svg_':
-            return getattr(self.geometry, item)
-        return super().__getattr__(item)
+        if attr == '_repr_svg_':
+            return getattr(self.geometry, attr)
+        return super().__getattribute__(attr)
 
     @property
     def crs(self):
