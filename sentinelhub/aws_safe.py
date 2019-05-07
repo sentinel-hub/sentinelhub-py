@@ -259,13 +259,14 @@ class SafeTile(AwsTile):
         tile_id_tag = 'TILE_ID_2A' if self.data_source is DataSource.SENTINEL2_L2A and self.baseline <= '02.06' else\
             'TILE_ID'
         tile_id = tree[0].find(tile_id_tag).text
-        if self.safe_type is not EsaSafeType.OLD_TYPE:
-            info = tile_id.split('_')
-            if self.data_source is DataSource.SENTINEL2_L1C and self.baseline >= '02.07':
-                tile_id = '_'.join([info[3], info[-2], info[-3], self.get_datastrip_time()])
-            else:
-                tile_id = '_'.join([info[3], info[-2], info[-3], self.get_sensing_time()])
-        return tile_id
+        if self.safe_type is EsaSafeType.OLD_TYPE:
+            return tile_id
+
+        info = tile_id.split('_')
+        tile_id_time = self.get_datastrip_time() if self.data_source is DataSource.SENTINEL2_L1C and \
+            self.baseline >= '02.07' else self.get_sensing_time()
+
+        return '_'.join([info[3], info[-2], info[-3], tile_id_time])
 
     def get_sensing_time(self):
         """
@@ -279,9 +280,9 @@ class SafeTile(AwsTile):
         :return: Exact datastrip time
         :rtype: str
         """
-
         # S2A_OPER_MSI_L1C_DS_EPAE_20181119T061056_S20181119T031012_N02.07 -> 20181119T031012
-        return self.tile_info['datastrip']['id'].split('_')[7][1:]
+        # S2A_OPER_MSI_L1C_DS_EPA__20190225T132350_S20190129T144524_N02.07 -> 20190129T144524
+        return self.tile_info['datastrip']['id'].replace('__', '_').split('_')[7].lstrip('S')
 
     def get_datatake_time(self):
         """
