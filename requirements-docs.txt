@@ -2,4 +2,4 @@ sphinx
 sphinx_rtd_theme
 nbsphinx
 matplotlib
-jupyter
+ipython

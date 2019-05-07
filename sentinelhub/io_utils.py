@@ -1,6 +1,7 @@
 """
-Module for local reading and writing of data
+Utility functions to read/write image data from/to file
 """
+
 import csv
 import json
 import os
@@ -32,7 +33,7 @@ def read_data(filename, data_format=None):
 
     :param filename: filename to read data from
     :type filename: str
-    :param data_format: format of filename. Default is ``None``
+    :param data_format: format of filename. Default is `None`
     :type data_format: MimeType
     :return: data read from filename
     :raises: exception if filename does not exist
@@ -165,11 +166,11 @@ def write_data(filename, data, data_format=None, compress=False, add=False):
     :type filename: str
     :param data: image data to write to file
     :type data: numpy array
-    :param data_format: format of output file. Default is ``None``
+    :param data_format: format of output file. Default is `None`
     :type data_format: MimeType
-    :param compress: whether to compress data or not. Default is ``False``
+    :param compress: whether to compress data or not. Default is `False`
     :type compress: bool
-    :param add: whether to append to existing text file or not. Default is ``False``
+    :param add: whether to append to existing text file or not. Default is `False`
     :type add: bool
     :raises: exception if numpy format is not supported or file cannot be written
     """
@@ -203,7 +204,7 @@ def write_tiff_image(filename, image, compress=False):
     :type filename: str
     :param image: image data to write to file
     :type image: numpy array
-    :param compress: whether to compress data. If ``True``, lzma compression is used. Default is ``False``
+    :param compress: whether to compress data. If `True`, lzma compression is used. Default is `False`
     :type compress: bool
     """
     if compress:
@@ -247,7 +248,7 @@ def write_text(filename, data, add=False):
     :type filename: str
     :param data: image data to write to text file
     :type data: numpy array
-    :param add: whether to append to existing file or not. Default is ``False``
+    :param add: whether to append to existing file or not. Default is `False`
     :type add: bool
     """
     write_type = 'a' if add else 'w'
@@ -320,7 +321,7 @@ def get_data_format(filename):
 
 
 def get_jp2_bit_depth(stream):
-    """Reads bit encoding depth of jpeg2000 file in binary stream format
+    """ Reads bit encoding depth of jpeg2000 file in binary stream format
 
     :param stream: binary stream format
     :type stream: Binary I/O (e.g. io.BytesIO, io.BufferedReader, ...)
@@ -342,7 +343,7 @@ def get_jp2_bit_depth(stream):
 
 
 def fix_jp2_image(image, bit_depth):
-    """Because Pillow library incorrectly reads JPEG 2000 images with 15-bit encoding this function corrects the
+    """ Because Pillow library incorrectly reads JPEG 2000 images with 15-bit encoding this function corrects the
     values in image.
 
     :param image: image read by opencv library

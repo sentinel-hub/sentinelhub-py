@@ -1,5 +1,5 @@
 """
-Module with enum constants and utm utils
+Module defining constants and enumerate types used in the package
 """
 
 import functools
@@ -142,7 +142,7 @@ class DataSource(Enum):
         """ Maps data source to string identifier for WFS
 
         :param data_source: One of the supported data sources
-        :type: DataSource
+        :type data_source: DataSource
         :return: Product identifier for WFS
         :rtype: str
         """
@@ -173,7 +173,7 @@ class DataSource(Enum):
 
         :param self: One of the supported data sources
         :type self: DataSource
-        :return: ``True`` if source is Sentinel-1 and ``False`` otherwise
+        :return: `True` if source is Sentinel-1 and `False` otherwise
         :rtype: bool
         """
         return self.value[0] is _Source.SENTINEL1
@@ -185,7 +185,7 @@ class DataSource(Enum):
 
         :param self: One of the supported data sources
         :type self: DataSource
-        :return: ``True`` if data source is time independent and ``False`` otherwise
+        :return: `True` if data source is time independent and `False` otherwise
         :rtype: bool
         """
         return self.value[0] is _Source.DEM
@@ -197,7 +197,7 @@ class DataSource(Enum):
 
         :param self: One of the supported data sources
         :type self: DataSource
-        :return: ``True`` if data source exists at US West server and ``False`` otherwise
+        :return: `True` if data source exists at US West server and `False` otherwise
         :rtype: bool
         """
         return not SHConfig().is_eocloud_ogc_url() and self.value[0] in [_Source.LANDSAT8, _Source.MODIS, _Source.DEM]
@@ -218,7 +218,7 @@ class DataSource(Enum):
 
 
 class CRSMeta(EnumMeta):
-    """ Meta-class used for building CRS Enum class
+    """ Metaclass used for building CRS Enum class
     """
     def __new__(mcs, cls, bases, classdict):
         """ This is executed at the beginning of runtime when CRS class is created
@@ -266,7 +266,7 @@ class CRS(Enum, metaclass=CRSMeta):
 
         :param value: The string representation of the enum constant.
         :type value: str
-        :return: ``True`` if there exists a constant with string value `value`, ``False`` otherwise
+        :return: `True` if there exists a constant with string value `value`, `False` otherwise
         :rtype: bool
         """
         return any(value == item.value for item in cls)
@@ -295,7 +295,7 @@ class CRS(Enum, metaclass=CRSMeta):
 
         :param self: An enum constant representing a coordinate reference system.
         :type self: CRS
-        :return: True if crs is UTM and False otherwise
+        :return: `True` if crs is UTM and `False` otherwise
         :rtype: bool
         """
         return self.name.startswith('UTM')
@@ -455,7 +455,7 @@ class MimeType(Enum):
 
         :param self: File format
         :type self: MimeType
-        :return: ``True`` if file is in image format, ``False`` otherwise
+        :return: `True` if file is in image format, `False` otherwise
         :rtype: bool
         """
         return self in frozenset([MimeType.TIFF, MimeType.TIFF_d8, MimeType.TIFF_d16, MimeType.TIFF_d32f, MimeType.PNG,
@@ -468,7 +468,7 @@ class MimeType(Enum):
 
         :param self: File format
         :type self: MimeType
-        :return: ``True`` if file is in image format, ``False`` otherwise
+        :return: `True` if file is in image format, `False` otherwise
         :rtype: bool
         """
         return self in frozenset([MimeType.TIFF, MimeType.TIFF_d8, MimeType.TIFF_d16, MimeType.TIFF_d32f])
@@ -479,7 +479,7 @@ class MimeType(Enum):
 
         :param value: The string representation of the enum constant
         :type value: str
-        :return: ``True`` if there exists a constant with string value ``value``, ``False`` otherwise
+        :return: `True` if there exists a constant with string value ``value``, `False` otherwise
         :rtype: bool
         """
         return any(value == item.value for item in cls)

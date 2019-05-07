@@ -1,5 +1,5 @@
 """
-Module for manipulation of geographical information.
+Module for manipulation of geographical information
 """
 
 import logging
@@ -19,7 +19,7 @@ def bbox_to_dimensions(bbox, resolution):
     :param bbox: bounding box
     :type bbox: geometry.BBox
     :param resolution: Resolution of desired image in meters. It can be a single number or a tuple of two numbers -
-    resolution in horizontal and resolution in vertical direction.
+        resolution in horizontal and resolution in vertical direction.
     :type resolution: float or (float, float)
     :return: width and height in pixels for given bounding box and pixel resolution
     :rtype: int, int
@@ -58,9 +58,9 @@ def get_image_dimension(bbox, width=None, height=None):
 
     :param bbox: bounding box
     :type bbox: geometry.BBox
-    :param width: image width or None if height is unknown
+    :param width: image width or `None` if height is unknown
     :type width: int or None
-    :param height: image height or None if height is unknown
+    :param height: image height or `None` if height is unknown
     :type height: int or None
     :return: width or height rounded to integer
     :rtype: int
@@ -144,7 +144,7 @@ def utm_to_pixel(east, north, transform, truncate=True):
     :type north: float
     :param transform: georeferencing transform of the image, e.g. `(x_upper_left, res_x, 0, y_upper_left, 0, -res_y)`
     :type transform: tuple or list
-    :param truncate: Whether to truncate pixel coordinates. Default is ``True``
+    :param truncate: Whether to truncate pixel coordinates. Default is `True`
     :type truncate: bool
     :return: row and column pixel image coordinates
     :rtype: float, float or int, int
@@ -185,7 +185,7 @@ def wgs84_to_pixel(lng, lat, transform, utm_epsg=None, truncate=True):
     :type transform: tuple or list
     :param utm_epsg: UTM coordinate reference system enum constants
     :type utm_epsg: constants.CRS or None
-    :param truncate: Whether to truncate pixel coordinates. Default is ``True``
+    :param truncate: Whether to truncate pixel coordinates. Default is `True`
     :type truncate: bool
     :return: row and column pixel image coordinates
     :rtype: float, float or int, int

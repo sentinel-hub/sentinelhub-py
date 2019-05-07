@@ -1,12 +1,6 @@
 ogc
-======
+===
 
-Module for working with OGC services
-
-.. module:: sentinelhub.ogc
-.. autoclass:: OgcService
+.. automodule:: sentinelhub.ogc
     :members:
-.. autoclass:: OgcImageService
-    :members:
-.. autoclass:: WebFeatureService
-    :members:
+    :show-inheritance:

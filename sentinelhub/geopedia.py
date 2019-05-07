@@ -1,5 +1,5 @@
 """
-Module for working with Geopedia OGC services
+Module for working with Geopedia
 """
 
 import logging
@@ -18,12 +18,13 @@ LOGGER = logging.getLogger(__name__)
 
 class GeopediaService:
     """ The class for Geopedia OGC services
-
-    :param base_url: Base url of Geopedia REST services. If ``None``, the url specified in the configuration
-                    file is taken.
-    :type base_url: str or None
     """
     def __init__(self, base_url=None):
+        """
+        :param base_url: Base url of Geopedia REST services. If `None`, the url specified in the configuration
+                    file is taken.
+        :type base_url: str or None
+        """
         self.base_url = SHConfig().geopedia_rest_url if base_url is None else base_url
 
     @staticmethod
@@ -54,19 +55,6 @@ class GeopediaSession(GeopediaService):
     starting and renewing of session and login (optional). It provides session headers required by Geopedia REST
     requests. Session duration is hardcoded to 1 hour with class attribute SESSION_DURATION. After that this
     class will automatically renew the session and login.
-
-    :param username: Optional parameter in case of login with Geopedia credentials
-    :type username: str or None
-    :param password: Optional parameter in case of login with Geopedia credentials
-    :type password: str or None
-    :param password_md5: Password can optionally also be provided as already encoded md5 hexadecimal string
-    :type password_md5: str or None
-    :param is_global: If `True` this session will be shared among all instances of this class, otherwise it will be
-        used only with the single instance. Default is `False`.
-    :type is_global: bool
-    :param base_url: Base url of Geopedia REST services. If `None`, the url specified in the configuration
-        file is taken.
-    :type base_url: str or None
     """
     SESSION_DURATION = datetime.timedelta(hours=1)
     UNAUTHENTICATED_USER_ID = 'NO_USER'
@@ -75,6 +63,20 @@ class GeopediaSession(GeopediaService):
     _global_session_start = None
 
     def __init__(self, *, username=None, password=None, password_md5=None, is_global=False, **kwargs):
+        """
+        :param username: Optional parameter in case of login with Geopedia credentials
+        :type username: str or None
+        :param password: Optional parameter in case of login with Geopedia credentials
+        :type password: str or None
+        :param password_md5: Password can optionally also be provided as already encoded md5 hexadecimal string
+        :type password_md5: str or None
+        :param is_global: If `True` this session will be shared among all instances of this class, otherwise it will be
+            used only with the single instance. Default is `False`.
+        :type is_global: bool
+        :param base_url: Base url of Geopedia REST services. If `None`, the url specified in the configuration
+            file is taken.
+        :type base_url: str or None
+        """
         super().__init__(**kwargs)
 
         if password and password_md5:
@@ -207,18 +209,19 @@ class GeopediaSession(GeopediaService):
 
 
 class GeopediaWmsService(GeopediaService, OgcImageService):
-    """Geopedia OGC services class for providing image data. Most of the methods are inherited from
+    """ Geopedia OGC services class for providing image data. Most of the methods are inherited from
     `sentinelhub.ogc.OgcImageService` class.
-
-    :param base_url: Base url of Geopedia WMS services. If ``None``, the url specified in the configuration
-                    file is taken.
-    :type base_url: str or None
     """
     def __init__(self, base_url=None):
+        """
+        :param base_url: Base url of Geopedia WMS services. If `None`, the url specified in the configuration
+                    file is taken.
+        :type base_url: str or None
+        """
         super().__init__(base_url=SHConfig().geopedia_wms_url if base_url is None else base_url)
 
     def get_request(self, request):
-        """Get a list of DownloadRequests for all data that are under the given field in the table of a Geopedia layer.
+        """ Get a list of DownloadRequests for all data that are under the given field in the table of a Geopedia layer.
 
         :return: list of items which have to be downloaded
         :rtype: list(DownloadRequest)
@@ -244,19 +247,20 @@ class GeopediaWmsService(GeopediaService, OgcImageService):
 
 
 class GeopediaImageService(GeopediaService):
-    """Service class that provides images from a Geopedia vector layer.
-
-    :param base_url: Base url of Geopedia REST services. If ``None``, the url
-                     specified in the configuration file is taken.
-    :type base_url: str or None
+    """ Service class that provides images from a Geopedia vector layer.
     """
     def __init__(self, **kwargs):
+        """
+        :param base_url: Base url of Geopedia REST services. If `None`, the url
+                     specified in the configuration file is taken.
+        :type base_url: str or None
+        """
         super().__init__(**kwargs)
 
         self.gpd_iterator = None
 
     def get_request(self, request):
-        """Get a list of DownloadRequests for all data that are under the given field in the table of a Geopedia layer.
+        """ Get a list of DownloadRequests for all data that are under the given field in the table of a Geopedia layer.
 
         :return: list of items which have to be downloaded
         :rtype: list(DownloadRequest)
@@ -311,8 +315,7 @@ class GeopediaImageService(GeopediaService):
         return filename
 
     def get_gpd_iterator(self):
-        """Returns iterator over info about data used for the
-        GeopediaVectorRequest
+        """ Returns iterator over info about data used for the `GeopediaVectorRequest`
 
         :return: Iterator of dictionaries containing info about data used in the request.
         :rtype: Iterator[dict] or None
@@ -321,26 +324,27 @@ class GeopediaImageService(GeopediaService):
 
 
 class GeopediaFeatureIterator(GeopediaService):
-    """Iterator for Geopedia Vector Service
-
-    :param layer: Geopedia layer which contains requested data
-    :type layer: str
-    :param bbox: Bounding box of the requested image. Its coordinates must be
-                 in the CRS.POP_WEB (EPSG:3857) coordinate system.
-    :type bbox: BBox
-    :param query_filter: Query string used for filtering returned features.
-    :type query_filter: str
-    :param gpd_session: Optional parameter for specifying a custom Geopedia session, which can also contain login
-        credentials. This can be used for accessing private Geopedia layers. By default it is set to `None` and a basic
-        Geopedia session without credentials will be created.
-    :type gpd_session: GeopediaSession or None
-    :param base_url: Base url of Geopedia REST services. If ``None``, the url specified in the configuration
-        file is taken.
-    :type base_url: str or None
+    """ Iterator for Geopedia Vector Service
     """
     FILTER_EXPRESSION = 'filterExpression'
 
     def __init__(self, layer, bbox=None, query_filter=None, gpd_session=None, **kwargs):
+        """
+        :param layer: Geopedia layer which contains requested data
+        :type layer: str
+        :param bbox: Bounding box of the requested image. Its coordinates must be in the CRS.POP_WEB (EPSG:3857)
+            coordinate system.
+        :type bbox: BBox
+        :param query_filter: Query string used for filtering returned features.
+        :type query_filter: str
+        :param gpd_session: Optional parameter for specifying a custom Geopedia session, which can also contain login
+            credentials. This can be used for accessing private Geopedia layers. By default it is set to `None` and a
+            basic Geopedia session without credentials will be created.
+        :type gpd_session: GeopediaSession or None
+        :param base_url: Base url of Geopedia REST services. If `None`, the url specified in the configuration
+            file is taken.
+        :type base_url: str or None
+        """
         super().__init__(**kwargs)
 
         self.layer = self._parse_layer(layer)

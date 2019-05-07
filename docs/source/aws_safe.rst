@@ -1,10 +1,6 @@
 aws_safe
 ========
 
-Module for creating .SAFE structure with data from AWS.
-
-.. module:: sentinelhub.aws_safe
-.. autoclass:: SafeProduct
+.. automodule:: sentinelhub.aws_safe
     :members:
-.. autoclass:: SafeTile
-    :members:
+    :show-inheritance:

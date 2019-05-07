@@ -18,17 +18,18 @@ LOGGER = logging.getLogger(__name__)
 
 class AwsService(ABC):
     """ Amazon Web Service (AWS) base class
-
-    :param parent_folder: Folder where the fetched data will be saved.
-    :type parent_folder: str
-    :param bands: List of Sentinel-2 bands for request. If parameter is set to ``None`` all bands will be used.
-    :type bands: list(str) or None
-    :param metafiles: List of additional metafiles available on AWS
-                      (e.g. ``['metadata', 'tileInfo', 'preview/B01', 'TCI']``).
-                      If parameter is set to ``None`` the list will be set automatically.
-    :type metafiles: list(str) or None
     """
     def __init__(self, parent_folder='', bands=None, metafiles=None):
+        """
+        :param parent_folder: Folder where the fetched data will be saved.
+        :type parent_folder: str
+        :param bands: List of Sentinel-2 bands for request. If parameter is set to `None` all bands will be used.
+        :type bands: list(str) or None
+        :param metafiles: List of additional metafiles available on AWS
+                          (e.g. ``['metadata', 'tileInfo', 'preview/B01', 'TCI']``).
+                          If parameter is set to `None` the list will be set automatically.
+        :type metafiles: list(str) or None
+        """
         self.parent_folder = parent_folder
         self.bands = self._parse_bands(bands)
         self.metafiles = self._parse_metafiles(metafiles)
@@ -72,8 +73,7 @@ class AwsService(ABC):
         return band_list
 
     def _parse_metafiles(self, metafile_input):
-        """
-        Parses class input and verifies metadata file names.
+        """ Parses class input and verifies metadata file names.
 
         :param metafile_input: class input parameter `metafiles`
         :type metafile_input: str or list(str) or None
@@ -116,7 +116,7 @@ class AwsService(ABC):
         return '{}/{}/'.format(base_url, aws_bucket)
 
     def get_safe_type(self):
-        """Determines the type of ESA product.
+        """ Determines the type of ESA product.
 
         In 2016 ESA changed structure and naming of data. Therefore the class must
         distinguish between old product type and compact (new) product type.
@@ -147,7 +147,7 @@ class AwsService(ABC):
         return self._read_baseline_from_info()
 
     def _read_baseline_from_info(self):
-        """Tries to find and return baseline number from either tileInfo or productInfo file.
+        """ Tries to find and return baseline number from either tileInfo or productInfo file.
 
         :return: Baseline ID
         :rtype: str
@@ -161,8 +161,7 @@ class AwsService(ABC):
 
     @staticmethod
     def url_to_tile(url):
-        """
-        Extracts tile name, date and AWS index from tile url on AWS.
+        """ Extracts tile name, date and AWS index from tile url on AWS.
 
         :param url: class input parameter 'metafiles'
         :type url: str
@@ -175,8 +174,7 @@ class AwsService(ABC):
         return name, date, int(info[-1])
 
     def sort_download_list(self):
-        """
-        Method for sorting the list of download requests. Band images have priority before metadata files. If bands
+        """ Method for sorting the list of download requests. Band images have priority before metadata files. If bands
         images or metadata files are specified with a list they will be sorted in the same order as in the list.
         Otherwise they will be sorted alphabetically (band B8A will be between B08 and B09).
         """
@@ -192,8 +190,7 @@ class AwsService(ABC):
         self.download_list.sort(key=aws_sort_function)
 
     def structure_recursion(self, struct, folder):
-        """
-        From nested dictionaries representing .SAFE structure it recursively extracts all the files that need to be
+        """ From nested dictionaries representing .SAFE structure it recursively extracts all the files that need to be
         downloaded and stores them into class attribute `download_list`.
 
         :param struct: nested dictionaries representing a part of .SAFE structure
@@ -242,13 +239,13 @@ class AwsService(ABC):
 
     @staticmethod
     def add_file_extension(filename, data_format=None, remove_path=False):
-        """Joins filename and corresponding file extension if it has one.
+        """ Joins filename and corresponding file extension if it has one.
 
         :param filename: Name of the file without extension
         :type filename: str
-        :param data_format: format of file, if None it will be set automatically
+        :param data_format: format of file, if `None` it will be set automatically
         :type data_format: constants.MimeType or None
-        :param remove_path: True if the path in filename string should be removed
+        :param remove_path: `True` if the path in filename string should be removed
         :type remove_path: bool
         :return: Name of the file with extension
         :rtype: str
@@ -264,18 +261,18 @@ class AwsService(ABC):
         return '{}.{}'.format(filename.replace('*', ''), data_format.value)
 
     def has_reports(self):
-        """Products created with baseline 2.06 and greater (and some products with baseline 2.05) should have quality
+        """ Products created with baseline 2.06 and greater (and some products with baseline 2.05) should have quality
         report files
 
-        :return: True if the product has report xml files and False otherwise
+        :return: `True` if the product has report xml files and `False` otherwise
         :rtype: bool
         """
         return self.baseline > '02.05' or (self.baseline == '02.05' and self.date >= '2017-10-12')  # Not sure
 
     def is_early_compact_l2a(self):
-        """Check if product is early version of compact L2A product
+        """ Check if product is early version of compact L2A product
 
-        :return: True if product is early version of compact L2A product and False otherwise
+        :return: `True` if product is early version of compact L2A product and `False` otherwise
         :rtype: bool
         """
         return self.data_source is DataSource.SENTINEL2_L2A and self.safe_type is EsaSafeType.COMPACT_TYPE and \
@@ -284,21 +281,22 @@ class AwsService(ABC):
 
 class AwsProduct(AwsService):
     """ Service class for Sentinel-2 product on AWS
-
-    :param product_id: ESA ID of the product
-    :type product_id: str
-    :param tile_list: list of tile names
-    :type tile_list: list(str) or None
-    :param parent_folder: location of the directory where the fetched data will be saved.
-    :type parent_folder: str
-    :param bands: List of Sentinel-2 bands for request. If parameter is set to ``None`` all bands will be used.
-    :type bands: list(str) or None
-    :param metafiles: List of additional metafiles available on AWS
-                      (e.g. ``['metadata', 'tileInfo', 'preview/B01', 'TCI']``).
-                      If parameter is set to ``None`` the list will be set automatically.
-    :type metafiles: list(str) or None
     """
     def __init__(self, product_id, tile_list=None, **kwargs):
+        """
+        :param product_id: ESA ID of the product
+        :type product_id: str
+        :param tile_list: list of tile names
+        :type tile_list: list(str) or None
+        :param parent_folder: location of the directory where the fetched data will be saved.
+        :type parent_folder: str
+        :param bands: List of Sentinel-2 bands for request. If parameter is set to `None` all bands will be used.
+        :type bands: list(str) or None
+        :param metafiles: List of additional metafiles available on AWS
+                          (e.g. ``['metadata', 'tileInfo', 'preview/B01', 'TCI']``).
+                          If parameter is set to `None` the list will be set automatically.
+        :type metafiles: list(str) or None
+        """
         self.product_id = product_id.split('.')[0]
         self.tile_list = self.parse_tile_list(tile_list)
 
@@ -315,8 +313,7 @@ class AwsProduct(AwsService):
 
     @staticmethod
     def parse_tile_list(tile_input):
-        """
-        Parses class input and verifies band names.
+        """ Parses class input and verifies band names.
 
         :param tile_input: class input parameter `tile_list`
         :type tile_input: str or list(str)
@@ -335,8 +332,7 @@ class AwsProduct(AwsService):
         return tile_list
 
     def get_requests(self):
-        """
-        Creates product structure and returns list of files for download.
+        """ Creates product structure and returns list of files for download.
 
         :return: List of download requests and list of empty folders that need to be created
         :rtype: (list(download.DownloadRequest), list(str))
@@ -358,7 +354,7 @@ class AwsProduct(AwsService):
         return self.download_list, self.folder_list
 
     def get_data_source(self):
-        """The method determines data source from product ID.
+        """ The method determines data source from product ID.
 
         :return: Data source of the product
         :rtype: DataSource
@@ -386,12 +382,11 @@ class AwsProduct(AwsService):
         return '-'.join(date_part.lstrip('0') for date_part in date)
 
     def get_url(self, filename, data_format=None):
-        """
-        Creates url of file location on AWS.
+        """ Creates url of file location on AWS.
 
         :param filename: name of file
         :type filename: str
-        :param data_format: format of file, if None it will be set automatically
+        :param data_format: format of file, if `None` it will be set automatically
         :type data_format: constants.MimeType or None
         :return: url of file location
         :rtype: str
@@ -403,10 +398,9 @@ class AwsProduct(AwsService):
         return '{}/{}'.format(product_url, self.add_file_extension(filename, data_format))
 
     def get_product_url(self, force_http=False):
-        """
-        Creates base url of product location on AWS.
+        """ Creates base url of product location on AWS.
 
-        :param force_http: True if HTTP base URL should be used and False otherwise
+        :param force_http: `True` if HTTP base URL should be used and `False` otherwise
         :type force_http: str
         :return: url of product location
         :rtype: str
@@ -415,10 +409,9 @@ class AwsProduct(AwsService):
         return '{}products/{}/{}'.format(base_url, self.date.replace('-', '/'), self.product_id)
 
     def get_tile_url(self, tile_info):
-        """
-        Collects tile url from productInfo.json file.
+        """ Collects tile url from `productInfo.json` file.
 
-        :param tile_info: information about tile from productInfo.json
+        :param tile_info: information about tile from `productInfo.json`
         :type tile_info: dict
         :return: url of tile location
         :rtype: str
@@ -426,8 +419,7 @@ class AwsProduct(AwsService):
         return '{}/{}'.format(self.base_url, tile_info['path'])
 
     def get_filepath(self, filename):
-        """
-        Creates file path for the file.
+        """ Creates file path for the file.
 
         :param filename: name of the file
         :type filename: str
@@ -439,29 +431,30 @@ class AwsProduct(AwsService):
 
 class AwsTile(AwsService):
     """ Service class for Sentinel-2 product on AWS
-
-    :param tile: Tile name (e.g. 'T10UEV')
-    :type tile: str
-    :param time: Tile sensing time in ISO8601 format
-    :type time: str
-    :param aws_index: There exist Sentinel-2 tiles with the same tile and time parameter. Therefore each tile on AWS
-                      also has an index which is visible in their url path. If ``aws_index`` is set to ``None`` the
-                      class will try to find the index automatically. If there will be multiple choices it will choose
-                      the lowest index and inform the user.
-    :type aws_index: int or None
-    :param data_source: Source of requested AWS data. Supported sources are Sentinel-2 L1C and Sentinel-2 L2A, default
-                        is Sentinel-2 L1C data.
-    :type data_source: constants.DataSource
-    :param parent_folder: folder where the fetched data will be saved.
-    :type parent_folder: str
-    :param bands: List of Sentinel-2 bands for request. If parameter is set to ``None`` all bands will be used.
-    :type bands: list(str) or None
-    :param metafiles: List of additional metafiles available on AWS
-                      (e.g. ``['metadata', 'tileInfo', 'preview/B01', 'TCI']``).
-                      If parameter is set to ``None`` the list will be set automatically.
-    :type metafiles: list(str) or None
     """
     def __init__(self, tile_name, time, aws_index=None, data_source=DataSource.SENTINEL2_L1C, **kwargs):
+        """
+        :param tile: Tile name (e.g. 'T10UEV')
+        :type tile: str
+        :param time: Tile sensing time in ISO8601 format
+        :type time: str
+        :param aws_index: There exist Sentinel-2 tiles with the same tile and time parameter. Therefore each tile on AWS
+            also has an index which is visible in their url path. If ``aws_index`` is set to `None` the
+            class will try to find the index automatically. If there will be multiple choices it will choose
+            the lowest index and inform the user.
+        :type aws_index: int or None
+        :param data_source: Source of requested AWS data. Supported sources are Sentinel-2 L1C and Sentinel-2 L2A,
+            default is Sentinel-2 L1C data.
+        :type data_source: constants.DataSource
+        :param parent_folder: folder where the fetched data will be saved.
+        :type parent_folder: str
+        :param bands: List of Sentinel-2 bands for request. If parameter is set to `None` all bands will be used.
+        :type bands: list(str) or None
+        :param metafiles: List of additional metafiles available on AWS
+                          (e.g. ``['metadata', 'tileInfo', 'preview/B01', 'TCI']``).
+                          If parameter is set to `None` the list will be set automatically.
+        :type metafiles: list(str) or None
+        """
         self.tile_name = self.parse_tile_name(tile_name)
         self.datetime = self.parse_datetime(time)
         self.date = self.datetime.split('T')[0]
@@ -604,7 +597,7 @@ class AwsTile(AwsService):
         """
         Creates base url of tile location on AWS.
 
-        :param force_http: True if HTTP base URL should be used and False otherwise
+        :param force_http: `True` if HTTP base URL should be used and `False` otherwise
         :type force_http: str
         :return: url of tile location
         :rtype: str
@@ -681,7 +674,7 @@ class AwsTile(AwsService):
         """
         :param tile_id: original tile identification string provided by ESA (e.g.
                         'S2A_OPER_MSI_L1C_TL_SGS__20160109T230542_A002870_T10UEV_N02.01')
-        :type: str
+        :type tile_id: str
         :return: tile name, sensing date and AWS index
         :rtype: (str, str, int)
         """

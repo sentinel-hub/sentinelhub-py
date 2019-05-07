@@ -23,15 +23,16 @@ LOGGER = logging.getLogger(__name__)
 
 class OgcService:
     """ The base class for Sentinel Hub OGC services
-
-    :param base_url: base url of Sentinel Hub's OGC services. If ``None``, the url specified in the configuration
-                    file is taken.
-    :type base_url: str or None
-    :param instance_id: user's instance id granting access to Sentinel Hub's OGC services. If ``None``, the instance id
-                        specified in the configuration file is taken.
-    :type instance_id: str or None
     """
     def __init__(self, base_url=None, instance_id=None):
+        """
+        :param base_url: base url of Sentinel Hub's OGC services. If `None`, the url specified in the configuration
+                    file is taken.
+        :type base_url: str or None
+        :param instance_id: user's instance id granting access to Sentinel Hub's OGC services. If `None`, the instance
+            ID specified in the configuration file is taken.
+        :type instance_id: str or None
+        """
         self.base_url = SHConfig().ogc_base_url if not base_url else base_url
         self.instance_id = SHConfig().instance_id if not instance_id else instance_id
 
@@ -42,8 +43,7 @@ class OgcService:
 
     @staticmethod
     def _filter_dates(dates, time_difference):
-        """
-        Filters out dates within time_difference, preserving only the oldest date.
+        """ Filters out dates within time_difference, preserving only the oldest date.
 
         :param dates: a list of datetime objects
         :param time_difference: a ``datetime.timedelta`` representing the time difference threshold
@@ -66,13 +66,13 @@ class OgcService:
 
     @staticmethod
     def _sentinel1_product_check(product_id, data_source):
-        """Checks if Sentinel-1 product ID matches Sentinel-1 DataSource configuration
+        """ Checks if Sentinel-1 product ID matches Sentinel-1 DataSource configuration
 
         :param product_id: Sentinel-1 product ID
         :type product_id: str
         :param data_source: One of the supported Sentinel-1 data sources
         :type data_source: constants.DataSource
-        :return: True if data_source contains product_id and False otherwise
+        :return: `True` if data_source contains product_id and `False` otherwise
         :rtype: bool
         """
         props = product_id.split('_')
@@ -88,15 +88,16 @@ class OgcImageService(OgcService):
 
     Intermediate layer between QGC-type requests (WmsRequest and WcsRequest) and the Sentinel Hub OGC (WMS and WCS)
     services.
-
-    :param base_url: base url of Sentinel Hub's OGC services. If ``None``, the url specified in the configuration
-                    file is taken.
-    :type base_url: str or None
-    :param instance_id: user's instance id granting access to Sentinel Hub's OGC services. If ``None``, the instance id
-                        specified in the configuration file is taken.
-    :type instance_id: str or None
     """
     def __init__(self, **kwargs):
+        """
+        :param base_url: base url of Sentinel Hub's OGC services. If `None`, the url specified in the configuration
+                    file is taken.
+        :type base_url: str or None
+        :param instance_id: user's instance id granting access to Sentinel Hub's OGC services. If `None`, the instance
+            ID specified in the configuration file is taken.
+        :type instance_id: str or None
+        """
         super().__init__(**kwargs)
 
         self.wfs_iterator = None
@@ -210,7 +211,7 @@ class OgcImageService(OgcService):
 
     @staticmethod
     def _get_wms_wcs_url_parameters(request, date):
-        """  Returns parameters common dictionary for WMS and WCS request.
+        """ Returns parameters common dictionary for WMS and WCS request.
 
         :param request: OGC-type request with specified bounding box, cloud coverage for specific product.
         :type request: OgcRequest or GeopediaRequest
@@ -433,8 +434,7 @@ class OgcImageService(OgcService):
 
     @staticmethod
     def get_image_dimensions(request):
-        """
-        Verifies or calculates image dimensions.
+        """ Verifies or calculates image dimensions.
 
         :param request: OGC-type request
         :type request: WmsRequest or WcsRequest
@@ -454,7 +454,7 @@ class OgcImageService(OgcService):
         raise ValueError("Parameters 'width' and 'height' must be integers or None")
 
     def get_wfs_iterator(self):
-        """Returns iterator over info about all satellite tiles used for the request
+        """ Returns iterator over info about all satellite tiles used for the request
 
         :return: Iterator of dictionaries containing info about all satellite tiles used in the request. In case of
                  DataSource.DEM it returns None.
@@ -464,28 +464,30 @@ class OgcImageService(OgcService):
 
 
 class WebFeatureService(OgcService):
-    """Class for interaction with Sentinel Hub WFS service
+    """ Class for interaction with Sentinel Hub WFS service
 
     The class is an iterator over info data of all available satellite tiles for requested parameters. It collects data
     from Sentinel Hub service only during the first iteration. During next iterations it returns already obtained data.
     The data is in the order returned by Sentinel Hub WFS service.
-
-    :param bbox: Bounding box of the requested image. Coordinates must be in the specified coordinate reference system.
-    :type bbox: geometry.BBox
-    :param time_interval: interval with start and end date of the form YYYY-MM-DDThh:mm:ss or YYYY-MM-DD
-    :type time_interval: (str, str)
-    :param data_source: Source of requested satellite data. Default is Sentinel-2 L1C data.
-    :type data_source: constants.DataSource
-    :param maxcc: Maximum accepted cloud coverage of an image. Float between 0.0 and 1.0. Default is 1.0.
-    :type maxcc: float
-    :param base_url: base url of Sentinel Hub's OGC services. If ``None``, the url specified in the configuration
-                    file is taken.
-    :type base_url: str or None
-    :param instance_id: user's instance id granting access to Sentinel Hub's OGC services. If ``None``, the instance id
-                        specified in the configuration file is taken.
-    :type instance_id: str or None
     """
     def __init__(self, bbox, time_interval, *, data_source=DataSource.SENTINEL2_L1C, maxcc=1.0, **kwargs):
+        """
+        :param bbox: Bounding box of the requested image. Coordinates must be in the specified coordinate reference
+            system.
+        :type bbox: geometry.BBox
+        :param time_interval: interval with start and end date of the form YYYY-MM-DDThh:mm:ss or YYYY-MM-DD
+        :type time_interval: (str, str)
+        :param data_source: Source of requested satellite data. Default is Sentinel-2 L1C data.
+        :type data_source: constants.DataSource
+        :param maxcc: Maximum accepted cloud coverage of an image. Float between 0.0 and 1.0. Default is 1.0.
+        :type maxcc: float
+        :param base_url: base url of Sentinel Hub's OGC services. If `None`, the url specified in the configuration
+                        file is taken.
+        :type base_url: str or None
+        :param instance_id: user's instance id granting access to Sentinel Hub's OGC services. If `None`, the instance
+            ID specified in the configuration file is taken.
+        :type instance_id: str or None
+        """
         super().__init__(**kwargs)
 
         self.bbox = bbox
@@ -498,7 +500,7 @@ class WebFeatureService(OgcService):
         self.feature_offset = 0
 
     def __iter__(self):
-        """Iteration method
+        """ Iteration method
 
         :return: iterator of dictionaries containing info about product tiles
         :rtype: Iterator[dict]
@@ -507,7 +509,7 @@ class WebFeatureService(OgcService):
         return self
 
     def __next__(self):
-        """Next method
+        """ Next method
 
         :return: dictionary containing info about product tiles
         :rtype: dict
@@ -522,7 +524,7 @@ class WebFeatureService(OgcService):
         raise StopIteration
 
     def _fetch_features(self):
-        """Collects data from WFS service
+        """ Collects data from WFS service
 
         :return: dictionary containing info about product tiles
         :rtype: dict
@@ -588,7 +590,7 @@ class WebFeatureService(OgcService):
         """ Extracts tile name, data and AWS index from tile URL
 
         :param tile_url: Location of tile at AWS
-        :type: tile_url: str
+        :type tile_url: str
         :return: Tuple in a form (tile_name, date, aws_index)
         :rtype: (str, str, int)
         """

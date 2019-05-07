@@ -1,5 +1,6 @@
 """
 Module for communication with http://opensearch.sentinel-hub.com/resto/api
+
 For more search parameters check: http://opensearch.sentinel-hub.com/resto/api/collections/Sentinel2/describe.xml
 """
 
@@ -27,7 +28,7 @@ def get_tile_info_id(tile_id):
     :param tile_id: original tile identification string provided by ESA (e.g.
                     'S2A_OPER_MSI_L1C_TL_SGS__20160109T230542_A002870_T10UEV_N02.01')
     :type tile_id: str
-    :return: dictionary with info provided by Opensearch REST service or ``None`` if such tile does not exist on AWS.
+    :return: dictionary with info provided by Opensearch REST service or `None` if such tile does not exist on AWS.
     :rtype: dict or None
     :raises: TileMissingException if no tile with tile ID `tile_id` exists
     """
@@ -51,9 +52,9 @@ def get_tile_info(tile, time, aws_index=None, all_tiles=False):
     :type time: str or (str, str)
     :param aws_index: index of tile on AWS
     :type aws_index: int or None
-    :param all_tiles: If ``True`` it will return list of all tiles otherwise only the first one
+    :param all_tiles: If `True` it will return list of all tiles otherwise only the first one
     :type all_tiles: bool
-    :return: dictionary with info provided by Opensearch REST service or None if such tile does not exist on AWS.
+    :return: dictionary with info provided by Opensearch REST service or `None` if such tile does not exist on AWS.
     :rtype: dict or None
     """
     start_date, end_date = parse_time_interval(time)
