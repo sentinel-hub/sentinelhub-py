@@ -149,7 +149,19 @@ class SHConfig:
         return sorted(list(dir(super())) + list(self._instance.CONFIG_PARAMS))
 
     def __str__(self):
+        """ Content of SHConfig in json schema
+        """
         return json.dumps(self.get_config_dict(), indent=2)
+
+    def __repr__(self):
+        """ Representation of SHConfig parameters
+        """
+        repr_list = ['{}('.format(self.__class__.__name__)]
+
+        for key, value in self.get_config_dict().items():
+            repr_list.append('%s=%r,' % (key, value))
+
+        return '\n  '.join(repr_list).strip(',') + '\n)'
 
     def save(self):
         """ Method that saves configuration parameter changes from instance of SHConfig class to global config class and
