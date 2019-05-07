@@ -176,8 +176,11 @@ class TestGeometry(TestSentinelHub):
         for geometry in self.geometry_list:
             new_geometry = geometry.transform(CRS.POP_WEB)
             self.assertNotEqual(geometry, new_geometry, 'Transformed geometry should be different')
-            self.assertEqual(geometry.crs, new_geometry.transform(geometry.crs).crs,
-                             'Crs of twice transformed geometry should equal')
+
+            original_geometry = geometry.transform(geometry.crs)
+            self.assertEqual(geometry.crs, original_geometry.crs, 'CRS of twice transformed geometry should preserve')
+            self.assertAlmostEqual(geometry.geometry.area, original_geometry.geometry.area, delta=1e-10,
+                                   msg='Geometry area should be equal')
 
     def test_geojson(self):
         for geometry in [self.geometry1, self.geometry2]:
