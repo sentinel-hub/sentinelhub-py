@@ -33,8 +33,9 @@ def bbox_to_dimensions(bbox, resolution):
     return round(abs(east2 - east1) / resx), round(abs(north2 - north1) / resy)
 
 
-def bbox_to_resolution(bbox, width, height):
-    """ Calculates pixel resolution in meters for a given bbox of a given width and height.
+def bbox_to_resolution(bbox, width, height, meters=True):
+    """ Calculates pixel resolution for a given bbox of a given width and height. By default it returns result in
+    meters.
 
     :param bbox: bounding box
     :type bbox: geometry.BBox
@@ -42,13 +43,16 @@ def bbox_to_resolution(bbox, width, height):
     :type width: int
     :param height: height of bounding box in pixels
     :type height: int
-    :return: resolution east-west at north and south, and resolution north-south in meters for given CRS
+    :param meters: If `True` result will be given in meters, otherwise it will be given in units of current CRS
+    :type meters: bool
+    :return: resolution east-west at north and south, and resolution north-south for given CRS
     :rtype: float, float
     :raises: ValueError if CRS is not supported
     """
-    utm_bbox = to_utm_bbox(bbox)
-    east1, north1 = utm_bbox.lower_left
-    east2, north2 = utm_bbox.upper_right
+    if meters:
+        bbox = to_utm_bbox(bbox)
+    east1, north1 = bbox.lower_left
+    east2, north2 = bbox.upper_right
     return abs(east2 - east1) / width, abs(north2 - north1) / height
 
 
