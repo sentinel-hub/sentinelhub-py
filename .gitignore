@@ -105,3 +105,6 @@ ENV/
 
 # IDE config
 .idea/
+
+# A fail-safe preventing commits of user's credentials
+sentinelhub/config.json
