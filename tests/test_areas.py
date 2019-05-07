@@ -1,5 +1,5 @@
 import unittest
-import os.path
+import os
 import itertools
 
 import shapely.geometry

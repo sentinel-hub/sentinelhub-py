@@ -1,5 +1,5 @@
 import unittest
-import os.path
+import os
 import numpy as np
 
 from platform import python_implementation

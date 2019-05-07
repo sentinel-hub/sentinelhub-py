@@ -3,7 +3,7 @@ Main module for collecting data
 """
 
 import datetime
-import os.path
+import os
 import logging
 import warnings
 import copy

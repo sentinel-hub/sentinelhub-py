@@ -1,6 +1,6 @@
 import unittest
 import json
-import os.path
+import os
 
 from sentinelhub import SHConfig, TestSentinelHub
 

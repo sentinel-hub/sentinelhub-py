@@ -1,5 +1,5 @@
 import unittest
-import os.path
+import os
 
 from sentinelhub import WcsRequest, AwsProductRequest, BBox, CRS, get_file_list, get_folder_list, TestSentinelHub
 

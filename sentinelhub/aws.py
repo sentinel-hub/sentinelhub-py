@@ -3,7 +3,7 @@ Module for obtaining data from Amazon Web Service
 """
 
 import logging
-import os.path
+import os
 import warnings
 from abc import ABC, abstractmethod
 

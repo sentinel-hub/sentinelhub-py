@@ -1,5 +1,5 @@
 import unittest
-import os.path
+import os
 
 from sentinelhub import AwsTileRequest, AwsProductRequest, read_data, write_data, DataSource, AwsConstants,\
     TestSentinelHub, TestCaseContainer
