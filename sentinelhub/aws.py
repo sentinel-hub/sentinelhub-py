@@ -4,6 +4,7 @@ Module for obtaining data from Amazon Web Service
 
 import logging
 import os.path
+import warnings
 from abc import ABC, abstractmethod
 
 from .config import SHConfig
@@ -14,6 +15,11 @@ from .time_utils import parse_time
 
 
 LOGGER = logging.getLogger(__name__)
+
+MAX_SUPPORTED_BASELINES = {
+    DataSource.SENTINEL2_L1C: '02.07',
+    DataSource.SENTINEL2_L2A: '02.11'
+}
 
 
 class AwsService(ABC):
@@ -143,7 +149,15 @@ class AwsService(ABC):
             baseline = self.product_id.split('_')[3].lstrip('N')
             if len(baseline) != 4:
                 raise ValueError('Unable to recognize baseline number from the product id {}'.format(self.product_id))
-            return '{}.{}'.format(baseline[:2], baseline[2:])
+            baseline = '{}.{}'.format(baseline[:2], baseline[2:])
+
+            if baseline > MAX_SUPPORTED_BASELINES[self.data_source]:
+                warnings.warn('Products with baseline {} are not officially supported in sentinelhub-py. If you notice '
+                              'any errors in naming structure of downloaded data please report an issue at '
+                              'https://github.com/sentinel-hub/sentinelhub-py/issues. Pull requests are also very '
+                              'appreciated'.format(baseline))
+
+            return baseline
         return self._read_baseline_from_info()
 
     def _read_baseline_from_info(self):

@@ -223,8 +223,11 @@ class SafeTile(AwsTile):
                                                                                                             band)
 
         if self.has_reports():
-            for metafile in [AwsConstants.FORMAT_CORRECTNESS, AwsConstants.GENERAL_QUALITY,
-                             AwsConstants.GEOMETRIC_QUALITY, AwsConstants.SENSOR_QUALITY]:
+            for metafile in AwsConstants.QUALITY_REPORTS:
+                if metafile == AwsConstants.RADIOMETRIC_QUALITY and self.data_source is DataSource.SENTINEL2_L2A and \
+                   self.baseline <= '02.07':
+                    continue
+
                 metafile_name = self.add_file_extension(metafile, remove_path=True)
                 safe[main_folder][AwsConstants.QI_DATA][metafile_name] = self.get_qi_url(metafile_name)
 
@@ -263,8 +266,12 @@ class SafeTile(AwsTile):
             return tile_id
 
         info = tile_id.split('_')
-        tile_id_time = self.get_datastrip_time() if self.data_source is DataSource.SENTINEL2_L1C and \
-            self.baseline >= '02.07' else self.get_sensing_time()
+
+        if (self.data_source is DataSource.SENTINEL2_L1C and self.baseline >= '02.07') or \
+           (self.data_source is DataSource.SENTINEL2_L2A and self.baseline >= '02.10'):
+            tile_id_time = self.get_datastrip_time()
+        else:
+            tile_id_time = self.get_sensing_time()
 
         return '_'.join([info[3], info[-2], info[-3], tile_id_time])
 

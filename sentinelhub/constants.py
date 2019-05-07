@@ -649,8 +649,7 @@ class AwsConstants:
                                                                                              [R20m, R60m])] +\
                        ['qi/MSK_{}_{}'.format(qi, band) for qi, band in it.product(QI_LIST, S2_L1C_BANDS)] +\
                        [QI_MSK_CLOUD] +\
-                       ['qi/{}'.format(qi_report) for qi_report in [FORMAT_CORRECTNESS, GENERAL_QUALITY,
-                                                                    GEOMETRIC_QUALITY, SENSOR_QUALITY]] +\
+                       ['qi/{}'.format(qi_report) for qi_report in QUALITY_REPORTS] +\
                        [ECMWFT, AUX_ECMWFT, GIPP]
 
     # Product files with formats:
@@ -673,8 +672,7 @@ class AwsConstants:
                      ECMWFT: MimeType.RAW,
                      AUX_ECMWFT: MimeType.RAW,
                      GIPP: MimeType.XML},
-                  **{'qi/{}'.format(qi_report): MimeType.XML for qi_report in [FORMAT_CORRECTNESS, GENERAL_QUALITY,
-                                                                               GEOMETRIC_QUALITY, SENSOR_QUALITY]},
+                  **{'qi/{}'.format(qi_report): MimeType.XML for qi_report in QUALITY_REPORTS},
                   **{'{}/{}'.format(preview, band): MimeType.JP2
                      for preview, band in it.zip_longest([], S2_L1C_BANDS, fillvalue=PREVIEW)},
                   **{'qi/MSK_{}_{}'.format(qi, band): MimeType.GML for qi, band in it.product(QI_LIST, S2_L1C_BANDS)},
