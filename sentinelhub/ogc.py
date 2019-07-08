@@ -11,7 +11,7 @@ import shapely.geometry
 import shapely.wkt
 import shapely.ops
 
-from .constants import ServiceType, DataSource, MimeType, CRS, OgcConstants, CustomUrlParam
+from .constants import ServiceType, DataSource, MimeType, CRS, OgcConstants, CustomUrlParam, OrbitDirection
 from .config import SHConfig
 from .geo_utils import get_image_dimension
 from .geometry import BBox, Geometry
@@ -551,7 +551,12 @@ class WebFeatureService(OgcService):
 
         is_sentinel1 = self.data_source.is_sentinel1()
         for tile_info in response["features"]:
-            if not is_sentinel1 or self._sentinel1_product_check(tile_info['properties']['id'], self.data_source):
+            if is_sentinel1:
+                if self._sentinel1_product_check(tile_info['properties']['id'], self.data_source) and \
+                        str.upper(self.data_source.value[5].name) in [str.upper(tile_info['properties']['orbitDirection']),
+                                                                      str.upper(OrbitDirection.BOTH.value)]:
+                            self.tile_list.append(tile_info)
+            else:
                 self.tile_list.append(tile_info)
 
         if len(response["features"]) < SHConfig().max_wfs_records_per_query:
