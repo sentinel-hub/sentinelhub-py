@@ -553,9 +553,9 @@ class WebFeatureService(OgcService):
         for tile_info in response["features"]:
             if is_sentinel1:
                 if self._sentinel1_product_check(tile_info['properties']['id'], self.data_source) and \
-                        str.upper(self.data_source.value[5].name) in [str.upper(tile_info['properties']['orbitDirection']),
-                                                                      str.upper(OrbitDirection.BOTH.value)]:
-                            self.tile_list.append(tile_info)
+                        self.data_source.value[5].name.upper() in [tile_info['properties']['orbitDirection'].upper(),
+                                                                   OrbitDirection.BOTH.value.upper()]:
+                    self.tile_list.append(tile_info)
             else:
                 self.tile_list.append(tile_info)
 

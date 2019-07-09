@@ -136,8 +136,8 @@ class DataSource(Enum):
                         OrbitDirection.DESCENDING)
     SENTINEL1_EW_DES = (_Source.SENTINEL1, _ProcessingLevel.GRD, _Acquisition.EW, _Polarisation.DH, _Resolution.MEDIUM,
                         OrbitDirection.DESCENDING)
-    SENTINEL1_EW_SH_DES = (_Source.SENTINEL1, _ProcessingLevel.GRD, _Acquisition.EW, _Polarisation.SH, _Resolution.MEDIUM,
-                           OrbitDirection.DESCENDING)
+    SENTINEL1_EW_SH_DES = (_Source.SENTINEL1, _ProcessingLevel.GRD, _Acquisition.EW, _Polarisation.SH,
+                           _Resolution.MEDIUM, OrbitDirection.DESCENDING)
     DEM = (_Source.DEM, )
     MODIS = (_Source.MODIS, _ProcessingLevel.MCD43A4)
     LANDSAT8 = (_Source.LANDSAT8, _ProcessingLevel.L1TP)
@@ -230,9 +230,7 @@ class DataSource(Enum):
         """
         if SHConfig().is_eocloud_ogc_url():
             return [cls.SENTINEL2_L1C, cls.SENTINEL2_L2A, cls.SENTINEL2_L3B, cls.SENTINEL1_IW, cls.SENTINEL1_EW,
-                    cls.SENTINEL1_EW_SH, cls.SENTINEL1_IW_ASC, cls.SENTINEL1_EW_ASC,
-                    cls.SENTINEL1_EW_SH_ASC, cls.SENTINEL1_IW_DES, cls.SENTINEL1_EW_DES,
-                    cls.SENTINEL1_EW_SH_DES, cls.SENTINEL3, cls.SENTINEL5P, cls.LANDSAT5, cls.LANDSAT7, cls.LANDSAT8,
+                    cls.SENTINEL1_EW_SH, cls.SENTINEL3, cls.SENTINEL5P, cls.LANDSAT5, cls.LANDSAT7, cls.LANDSAT8,
                     cls.LANDSAT8_L2A, cls.ENVISAT_MERIS]
         return [cls.SENTINEL2_L1C, cls.SENTINEL2_L2A, cls.SENTINEL1_IW, cls.SENTINEL1_EW, cls.SENTINEL1_EW_SH,
                 cls.SENTINEL1_IW_ASC, cls.SENTINEL1_EW_ASC, cls.SENTINEL1_EW_SH_ASC, cls.SENTINEL1_IW_DES,
