@@ -3,6 +3,7 @@ Module implementing geometry classes
 """
 
 from abc import ABC, abstractmethod
+from math import ceil
 
 import shapely.ops
 import shapely.geometry
@@ -281,17 +282,27 @@ class BBox(BaseGeometry):
         """
         return shapely.geometry.Polygon(self.get_polygon())
 
-    def get_partition(self, num_x=1, num_y=1):
+    def get_partition(self, num_x=None, num_y=None, size_x=None, size_y=None):
         """ Partitions bounding box into smaller bounding boxes of the same size.
 
         :param num_x: Number of parts BBox will be horizontally divided into.
-        :type num_x: int
+        :type num_x: int or None
         :param num_y: Number of parts BBox will be vertically divided into.
         :type num_y: int or None
+        :param size_x: Physical dimension of BBox along easting coordinate
+        :type size_x: float or None
+        :param size_y: Physical dimension of BBox along northing coordinate
+        :type size_y: float or None
         :return: Two-dimensional list of smaller bounding boxes. Their location is
         :rtype: list(list(BBox))
         """
-        size_x, size_y = (self.max_x - self.min_x) / num_x, (self.max_y - self.min_y) / num_y
+        if num_x is not None and num_y is not None:
+            size_x, size_y = (self.max_x - self.min_x) / num_x, (self.max_y - self.min_y) / num_y
+        elif size_x is not None and size_y is not None:
+            num_x, num_y = ceil((self.max_x - self.min_x) / size_x), ceil((self.max_y - self.min_y) / size_y)
+        elif all(param is None for param in [num_x, num_y, size_x, size_y]):
+            raise ValueError('Either (num_x, num_y) or (size_x, size_y) must be specified')
+
         return [[BBox([self.min_x + i * size_x, self.min_y + j * size_y,
                        self.min_x + (i + 1) * size_x, self.min_y + (j + 1) * size_y],
                       crs=self.crs) for j in range(num_y)] for i in range(num_x)]
