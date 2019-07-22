@@ -57,7 +57,8 @@ class SHConfig:
             ('default_start_date', '1985-01-01'),
             ('max_download_attempts', 4),
             ('download_sleep_time', 5),
-            ('download_timeout_seconds', 120)
+            ('download_timeout_seconds', 120),
+            ('utm_grid_definition', '.utmzones.geojson')
         ])
 
         def __init__(self):
