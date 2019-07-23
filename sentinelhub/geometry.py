@@ -285,6 +285,10 @@ class BBox(BaseGeometry):
     def get_partition(self, num_x=None, num_y=None, size_x=None, size_y=None):
         """ Partitions bounding box into smaller bounding boxes of the same size.
 
+        If `num_x` and `num_y` are specified, the total number of BBoxes is know but not the size. If `size_x` and
+        `size_y` are provided, the BBox size is fixed but the number of BBoxes is not known in advance. In the latter
+        case, the generated bounding boxes might cover an area larger than the parent BBox.
+
         :param num_x: Number of parts BBox will be horizontally divided into.
         :type num_x: int or None
         :param num_y: Number of parts BBox will be vertically divided into.
@@ -296,12 +300,12 @@ class BBox(BaseGeometry):
         :return: Two-dimensional list of smaller bounding boxes. Their location is
         :rtype: list(list(BBox))
         """
-        if num_x is not None and num_y is not None:
+        if (num_x is not None and num_y is not None) and (size_x is None and size_y is None):
             size_x, size_y = (self.max_x - self.min_x) / num_x, (self.max_y - self.min_y) / num_y
-        elif size_x is not None and size_y is not None:
+        elif (size_x is not None and size_y is not None) and (num_x is None and num_y is None):
             num_x, num_y = ceil((self.max_x - self.min_x) / size_x), ceil((self.max_y - self.min_y) / size_y)
-        elif all(param is None for param in [num_x, num_y, size_x, size_y]):
-            raise ValueError('Either (num_x, num_y) or (size_x, size_y) must be specified')
+        else:
+            raise ValueError('Not supported partition. Either (num_x, num_y) or (size_x, size_y) must be specified')
 
         return [[BBox([self.min_x + i * size_x, self.min_y + j * size_y,
                        self.min_x + (i + 1) * size_x, self.min_y + (j + 1) * size_y],

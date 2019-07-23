@@ -4,14 +4,17 @@ Module for working with large geographical areas
 
 import itertools
 from abc import ABC, abstractmethod
+import json
 
+import numpy as np
 import shapely.ops
-from shapely.geometry import Polygon, MultiPolygon
+from shapely.geometry import Polygon, MultiPolygon, shape, GeometryCollection
 
-from .geometry import BBox, BBoxCollection, BaseGeometry
+from .geometry import BBox, BBoxCollection, BaseGeometry, Geometry
 from .constants import CRS, DataSource
 from .geo_utils import transform_point
 from .ogc import WebFeatureService
+from .config import SHConfig
 
 
 class AreaSplitter(ABC):
@@ -233,7 +236,7 @@ class BBoxSplitter(AreaSplitter):
         """ This method makes the split
         """
         columns, rows = self.split_shape
-        bbox_partition = self.area_bbox.get_partition(columns, rows)
+        bbox_partition = self.area_bbox.get_partition(num_x=columns, num_y=rows)
 
         self.bbox_list = []
         self.info_list = []
@@ -322,7 +325,7 @@ class OsmSplitter(AreaSplitter):
                                    'index_y': row})
             return
 
-        bbox_partition = bbox.get_partition(2, 2)
+        bbox_partition = bbox.get_partition(num_x=2, num_y=2)
         for i, j in itertools.product(range(2), range(2)):
             if self._intersects_area(bbox_partition[i][j]):
                 self._recursive_split(bbox_partition[i][j], zoom_level + 1, 2 * column + i, 2 * row + 1 - j)
@@ -475,3 +478,115 @@ class CustomGridSplitter(AreaSplitter):
 
                         self.bbox_list.append(bbox)
                         self.info_list.append(info)
+
+
+class UTMGridSplitter(AreaSplitter):
+    """ Splitter that returns bboxes of fixed size aligned to UTM grid zones
+
+    :param shape_list: A list of geometrical shapes describing the area of interest
+    :type shape_list: list(shapely.geometry.multipolygon.MultiPolygon or shapely.geometry.polygon.Polygon)
+    :param crs: Coordinate reference system of the shapes in `shape_list`
+    :type crs: CRS
+    :param bbox_size: Physical size in metres of generated bounding boxes. Could be a float or tuple of floats
+    :type bbox_size: float or (float, float)
+    """
+    def __init__(self, shape_list, crs, bbox_size):
+        super(UTMGridSplitter, self).__init__(shape_list, crs)
+
+        self.bbox_size = self._parse_bbox_size(bbox_size)
+
+        self.utm_grid = self._get_overlapping_utm_grid()
+
+        self._make_split()
+
+    @staticmethod
+    def _parse_bbox_size(bbox_size):
+        """ Parses the parameter `bbox_size`. The parameter defines the physical size of BBoxes
+
+        :param bbox_size: The parameter `bbox_size` from class initialization
+        :type bbox_size: int or float or (int, int) or (float, float)
+        :return: A tuple of ints or floats specifying physical size of bounding boxes
+        :rtype: (int, int) or (float, float)
+        :raises: ValueError
+        """
+        if isinstance(bbox_size, (int, float)):
+            return bbox_size, bbox_size
+        if isinstance(bbox_size, (tuple, list)):
+            if len(bbox_size) == 2 and all(isinstance(bbox_dim, (float, int)) for bbox_dim in bbox_size):
+                return bbox_size[0], bbox_size[1]
+            raise ValueError('Content of bbox_size {} must be 2 ints or 2 floats.'.format(bbox_size))
+        raise ValueError('BBox size must be an int or float or a tuple of 2 ints or floats.')
+
+    def _get_overlapping_utm_grid(self):
+        """ Find UTM grid zones overlapping with input area shape
+
+        :return: List of geometries and properties of UTM grid zones overlapping with input area shape
+        """
+        # file downloaded from faculty.baruch.cuny.edu/geoportal/data/esri/world/utmzone.zip
+        with open(SHConfig().utm_grid_definition) as utm_grid_file:
+            utm_grid = json.load(utm_grid_file)['features']
+
+        for utm_zone in utm_grid:
+            utm_zone['geometry']['coordinates'] = np.round(np.array(utm_zone['geometry']['coordinates']), 4).tolist()
+
+        utm_geom_list = GeometryCollection([shape(utm_zone['geometry']) for utm_zone in utm_grid])
+        utm_prop_list = [utm_zone['properties'] for utm_zone in utm_grid]
+
+        return [(utm_geom, utm_prop) for utm_geom, utm_prop in zip(utm_geom_list, utm_prop_list)
+                if utm_geom.intersects(self.area_bbox.transform(CRS.WGS84).geometry)]
+
+    @staticmethod
+    def _get_utm_from_props(utm_dict):
+        """ Return the UTM CRS corresponding to the UTM described by the properties dictionary
+
+        :param utm_dict: Dictionary reporting name of the UTM zone and MGRS grid
+        :type utm_dict: dict
+        :return: UTM coordinate reference system
+        :rtype: sentinelhub.CRS
+        """
+        return CRS(int('32{}{}'.format(6 if utm_dict['ROW_'] >= 'N' else 7, str(utm_dict['ZONE']).zfill(2))))
+
+    def _make_split(self):
+        """ Split each UTM grid into equally sized bboxes in correct UTM zone
+        """
+        size_x, size_y = self.bbox_size
+        self.bbox_list = []
+        self.info_list = []
+
+        shape_geometry = Geometry(self.area_shape, self.crs)
+
+        index = 0
+
+        for utm_cell in self.utm_grid:
+            utm_cell_geom, utm_cell_prop = utm_cell
+            utm_crs = self._get_utm_from_props(utm_cell_prop)
+
+            bbox_utm = Geometry(utm_cell_geom, crs=CRS.WGS84).transform(utm_crs).bbox
+            bbox_partition = bbox_utm.get_partition(size_x=size_x, size_y=size_y)
+
+            intersection = Geometry(utm_cell_geom.intersection(shape_geometry.transform(CRS.WGS84).geometry),
+                                    CRS.WGS84).transform(utm_crs)
+
+            columns, rows = len(bbox_partition), len(bbox_partition[0])
+            for i, j in itertools.product(range(columns), range(rows)):
+                if bbox_partition[i][j].geometry.intersects(intersection.geometry):
+                    self.bbox_list.append(bbox_partition[i][j])
+                    self.info_list.append(dict(crs=utm_crs.name,
+                                               utm=str(utm_cell_prop['ZONE']).zfill(2)+'_'+utm_cell_prop['ROW_'],
+                                               index=index,
+                                               index_x=i,
+                                               index_y=j))
+                    index += 1
+
+    def get_bbox_list(self, buffer=None, *args):
+        """ Get list of bounding boxes.
+
+        The CRS is fixed to the computed UTM CRS. This BBox splitter does not support reducing size of output
+        bounding boxes
+
+        :param buffer: A percentage of each BBox size increase. This will cause neighbouring bounding boxes to overlap.
+        :type buffer: float or None
+        :return: List of bounding boxes
+        :rtype: list(BBox)
+        """
+        return super(UTMGridSplitter, self).get_bbox_list(buffer=buffer)
