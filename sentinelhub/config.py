@@ -31,6 +31,7 @@ class SHConfig:
         - `max_download_attempts`: Maximum number of download attempts from a single URL until an error will be raised.
         - `download_sleep_time`: Number of seconds between the failed download attempt and the next attempt.
         - `download_timeout_seconds`: Maximum number of seconds before download attempt is canceled.
+        - `utm_grid_definition`: Filename of UTM grid definition in WGS84 coordinate reference system
 
     Usage in the code:
 
