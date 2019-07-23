@@ -136,7 +136,7 @@ class TestOgc(TestSentinelHub):
                             WmsRequest(data_source=DataSource.DEM, data_folder=cls.OUTPUT_FOLDER,
                                        image_format=MimeType.TIFF_d32f, layer='DEM',
                                        width=img_width, height=img_height, bbox=wgs84_bbox),
-                            result_len=1, img_min=-108.0, img_max=-18.0, img_mean=-72.1819, img_median=-72.0),
+                            result_len=1, img_min=-108.0, img_max=-18.0, img_mean=-72.2097, img_median=-72.0),
             cls.OgcTestCase('MODIS Test',
                             WmsRequest(data_source=DataSource.MODIS, data_folder=cls.OUTPUT_FOLDER,
                                        image_format=MimeType.TIFF_d32f, layer='BANDS-MODIS',
