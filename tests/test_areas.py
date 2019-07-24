@@ -5,7 +5,7 @@ import itertools
 import shapely.geometry
 
 from sentinelhub import BBoxSplitter, OsmSplitter, TileSplitter, CustomGridSplitter, BBox, read_data, CRS, \
-    DataSource, TestSentinelHub
+    DataSource, TestSentinelHub, UTMGridSplitter
 
 
 class TestOgc(TestSentinelHub):
@@ -39,7 +39,9 @@ class TestOgc(TestSentinelHub):
             cls.SplitterTestCase('CustomGridSplitter',
                                  CustomGridSplitter([cls.area], CRS.WGS84, bbox_grid, bbox_split_shape=(3, 4),
                                                     reduce_bbox_sizes=False),
-                                 bbox_len=41)
+                                 bbox_len=41),
+            cls.SplitterTestCase('UTMGridSplitter',
+                                 UTMGridSplitter([cls.area], CRS.WGS84, bbox_size=(1000, 1000)), bbox_len=20)
         ]
 
     def test_return_type(self):
