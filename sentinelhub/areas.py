@@ -15,7 +15,6 @@ from .geometry import BBox, BBoxCollection, BaseGeometry, Geometry
 from .constants import CRS, DataSource
 from .geo_utils import transform_point
 from .ogc import WebFeatureService
-from .config import SHConfig
 
 
 class AreaSplitter(ABC):
@@ -482,7 +481,7 @@ class CustomGridSplitter(AreaSplitter):
 
 
 class UTMGridSplitter(AreaSplitter):
-    """ Splitter that returns bboxes of fixed size aligned to UTM grid zones
+    """ Splitter that returns bboxes of fixed size aligned to UTM grid tiles as defined by the MGRS
 
     :param shape_list: A list of geometrical shapes describing the area of interest
     :type shape_list: list(shapely.geometry.multipolygon.MultiPolygon or shapely.geometry.polygon.Polygon)
@@ -570,12 +569,16 @@ class UTMGridSplitter(AreaSplitter):
             bbox_utm = Geometry(utm_cell_geom, crs=CRS.WGS84).transform(utm_crs).bbox
             bbox_partition = bbox_utm.get_partition(size_x=size_x, size_y=size_y)
 
-            intersection = Geometry(utm_cell_geom.intersection(shape_geometry.transform(CRS.WGS84).geometry),
-                                    CRS.WGS84).transform(utm_crs)
+            intersections = utm_cell_geom.intersection(shape_geometry.transform(CRS.WGS84).geometry)
+            if isinstance(intersections, (Polygon, MultiPolygon)):
+                intersections = [Geometry(intersections, CRS.WGS84).transform(utm_crs)]
+            elif isinstance(intersections, GeometryCollection):
+                intersections = [Geometry(intersection, CRS.WGS84).transform(utm_crs) for intersection in intersections]
 
             columns, rows = len(bbox_partition), len(bbox_partition[0])
             for i, j in itertools.product(range(columns), range(rows)):
-                if bbox_partition[i][j].geometry.intersects(intersection.geometry):
+                if any(bbox_partition[i][j].geometry.intersects(intersection.geometry)
+                       for intersection in intersections):
                     self.bbox_list.append(bbox_partition[i][j])
                     self.info_list.append(dict(crs=utm_crs.name,
                                                utm=str(utm_cell_prop['ZONE']).zfill(2)+'_'+utm_cell_prop['ROW_'],
@@ -596,3 +599,50 @@ class UTMGridSplitter(AreaSplitter):
         :rtype: list(BBox)
         """
         return super(UTMGridSplitter, self).get_bbox_list(buffer=buffer)
+
+
+class UTMZoneSplitter(UTMGridSplitter):
+    """ Splitter that returns bounding boxes of fixed size aligned to the equator and the UTM zones.
+
+    This splitter does not consider UTM rows defined by the Military Grid Reference System, as opposed to the
+    `UTMGridSplitter`
+
+    :param shape_list: A list of geometrical shapes describing the area of interest
+    :type shape_list: list(shapely.geometry.multipolygon.MultiPolygon or shapely.geometry.polygon.Polygon)
+    :param crs: Coordinate reference system of the shapes in `shape_list`
+    :type crs: CRS
+    :param bbox_size: Physical size in metres of generated bounding boxes. Could be a float or tuple of floats
+    :type bbox_size: float or (float, float)
+    """
+    LNG_MIN, LNG_MAX, LNG_UTM = -180, 180, 6
+    LAT_MIN, LAT_MAX, LAT_EQ = -80, 84, 0
+
+    def __init__(self, shape_list, crs, bbox_size):
+        super(UTMZoneSplitter, self).__init__(shape_list, crs, bbox_size)
+
+    def _get_overlapping_utm_grid(self):
+        """ Find UTM zones overlapping with input area shape
+
+        The returned geometry corresponds to the a triangle ranging from the equator to the north/south pole
+
+        :return: List of geometries and properties of UTM zones overlapping with input area shape
+        """
+        utm_geom_list = [Polygon([(lng, lat[0]), (lng, lat[1]), (lng + self.LNG_UTM, lat[0]),
+                                  (lng + self.LNG_UTM, lat[1]), (lng, lat[0])])
+                         for lat in [(self.LAT_EQ, self.LAT_MAX), (self.LAT_MIN, self.LAT_EQ)]
+                         for lng in range(self.LNG_MIN, self.LNG_MAX, self.LNG_UTM)]
+        utm_prop_list = [dict(ZONE=zone, ROW_=direction) for direction in ['N', 'S'] for zone in range(1, 61)]
+
+        return [(utm_geom.convex_hull, utm_prop) for utm_geom, utm_prop in zip(utm_geom_list, utm_prop_list)
+                if utm_geom.intersects(self.area_bbox.transform(CRS.WGS84).geometry)]
+
+    @staticmethod
+    def _get_utm_from_props(utm_dict):
+        """ Return the UTM CRS corresponding to the UTM described by the properties dictionary
+
+        :param utm_dict: Dictionary reporting name of the UTM zone and MGRS grid
+        :type utm_dict: dict
+        :return: UTM coordinate reference system
+        :rtype: sentinelhub.CRS
+        """
+        return CRS(int('32{}{}'.format(6 if utm_dict['ROW_'] == 'N' else 7, str(utm_dict['ZONE']).zfill(2))))
