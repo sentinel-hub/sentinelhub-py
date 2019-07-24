@@ -31,7 +31,6 @@ class SHConfig:
         - `max_download_attempts`: Maximum number of download attempts from a single URL until an error will be raised.
         - `download_sleep_time`: Number of seconds between the failed download attempt and the next attempt.
         - `download_timeout_seconds`: Maximum number of seconds before download attempt is canceled.
-        - `utm_grid_definition`: Filename of UTM grid definition in WGS84 coordinate reference system
 
     Usage in the code:
 
@@ -58,8 +57,7 @@ class SHConfig:
             ('default_start_date', '1985-01-01'),
             ('max_download_attempts', 4),
             ('download_sleep_time', 5),
-            ('download_timeout_seconds', 120),
-            ('utm_grid_definition', 'sentinelhub/.utmzones.geojson')
+            ('download_timeout_seconds', 120)
         ])
 
         def __init__(self):

@@ -2,6 +2,7 @@
 Module for working with large geographical areas
 """
 
+import os
 import itertools
 from abc import ABC, abstractmethod
 import json
@@ -523,7 +524,12 @@ class UTMGridSplitter(AreaSplitter):
         :return: List of geometries and properties of UTM grid zones overlapping with input area shape
         """
         # file downloaded from faculty.baruch.cuny.edu/geoportal/data/esri/world/utmzone.zip
-        with open(SHConfig().utm_grid_definition) as utm_grid_file:
+        utm_grid_filename = os.path.join(os.path.dirname(__file__), '.utmzones.geojson')
+
+        if not os.path.isfile(utm_grid_filename):
+            raise IOError('UTM grid definition file does not exist: %s' % os.path.abspath(utm_grid_filename))
+
+        with open(utm_grid_filename) as utm_grid_file:
             utm_grid = json.load(utm_grid_file)['features']
 
         for utm_zone in utm_grid:
