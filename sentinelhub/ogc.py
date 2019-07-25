@@ -551,7 +551,11 @@ class WebFeatureService(OgcService):
 
         is_sentinel1 = self.data_source.is_sentinel1()
         for tile_info in response["features"]:
-            if not is_sentinel1 or self._sentinel1_product_check(tile_info['properties']['id'], self.data_source):
+            if is_sentinel1:
+                if self._sentinel1_product_check(tile_info['properties']['id'], self.data_source) and \
+                        self.data_source.contains_orbit_direction(tile_info['properties']['orbitDirection']):
+                    self.tile_list.append(tile_info)
+            else:
                 self.tile_list.append(tile_info)
 
         if len(response["features"]) < SHConfig().max_wfs_records_per_query:

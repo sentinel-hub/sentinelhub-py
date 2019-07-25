@@ -114,8 +114,9 @@ class _OrbitDirection(Enum):
 class DataSource(Enum):
     """ Enum constant class for types of satellite data
 
-    Supported types are SENTINEL2_L1C, SENTINEL2_L2A, LANDSAT8, SENTINEL1_IW, SENTINEL1_EW, SENTINEL1_EW_SH, DEM, MODIS,
-    LANDSAT5, LANDSAT7, SENTINEL3, SENTINEL5P, ENVISAT_MERIS, SENTINEL2_L3B, LANDSAT8_L2A
+    Supported types are SENTINEL2_L1C, SENTINEL2_L2A, LANDSAT8, SENTINEL1_IW, SENTINEL1_EW, SENTINEL1_EW_SH,
+    SENTINEL1_IW_ASC, SENTINEL1_EW_ASC, SENTINEL1_EW_SH_ASC, SENTINEL1_IW_DES, SENTINEL1_EW_DES, SENTINEL1_EW_SH_DES,
+    DEM, MODIS, LANDSAT5, LANDSAT7, SENTINEL3, SENTINEL5P, ENVISAT_MERIS, SENTINEL2_L3B, LANDSAT8_L2A
     """
     SENTINEL2_L1C = (_Source.SENTINEL2, _ProcessingLevel.L1C)
     SENTINEL2_L2A = (_Source.SENTINEL2, _ProcessingLevel.L2A)
@@ -125,6 +126,18 @@ class DataSource(Enum):
                     _OrbitDirection.BOTH)
     SENTINEL1_EW_SH = (_Source.SENTINEL1, _ProcessingLevel.GRD, _Acquisition.EW, _Polarisation.SH, _Resolution.MEDIUM,
                        _OrbitDirection.BOTH)
+    SENTINEL1_IW_ASC = (_Source.SENTINEL1, _ProcessingLevel.GRD, _Acquisition.IW, _Polarisation.DV, _Resolution.HIGH,
+                        _OrbitDirection.ASCENDING)
+    SENTINEL1_EW_ASC = (_Source.SENTINEL1, _ProcessingLevel.GRD, _Acquisition.EW, _Polarisation.DH, _Resolution.MEDIUM,
+                        _OrbitDirection.ASCENDING)
+    SENTINEL1_EW_SH_ASC = (_Source.SENTINEL1, _ProcessingLevel.GRD, _Acquisition.EW, _Polarisation.SH,
+                           _Resolution.MEDIUM, _OrbitDirection.ASCENDING)
+    SENTINEL1_IW_DES = (_Source.SENTINEL1, _ProcessingLevel.GRD, _Acquisition.IW, _Polarisation.DV, _Resolution.HIGH,
+                        _OrbitDirection.DESCENDING)
+    SENTINEL1_EW_DES = (_Source.SENTINEL1, _ProcessingLevel.GRD, _Acquisition.EW, _Polarisation.DH, _Resolution.MEDIUM,
+                        _OrbitDirection.DESCENDING)
+    SENTINEL1_EW_SH_DES = (_Source.SENTINEL1, _ProcessingLevel.GRD, _Acquisition.EW, _Polarisation.SH,
+                           _Resolution.MEDIUM, _OrbitDirection.DESCENDING)
     DEM = (_Source.DEM, )
     MODIS = (_Source.MODIS, _ProcessingLevel.MCD43A4)
     LANDSAT8 = (_Source.LANDSAT8, _ProcessingLevel.L1TP)
@@ -153,6 +166,12 @@ class DataSource(Enum):
             cls.SENTINEL1_IW: 'S1.TILE' if is_eocloud else 'DSS3',
             cls.SENTINEL1_EW: 'S1_EW.TILE' if is_eocloud else 'DSS3',
             cls.SENTINEL1_EW_SH: 'S1_EW_SH.TILE' if is_eocloud else 'DSS3',
+            cls.SENTINEL1_IW_ASC: 'S1.TILE' if is_eocloud else 'DSS3',
+            cls.SENTINEL1_EW_ASC: 'S1_EW.TILE' if is_eocloud else 'DSS3',
+            cls.SENTINEL1_EW_SH_ASC: 'S1_EW_SH.TILE' if is_eocloud else 'DSS3',
+            cls.SENTINEL1_IW_DES: 'S1.TILE' if is_eocloud else 'DSS3',
+            cls.SENTINEL1_EW_DES: 'S1_EW.TILE' if is_eocloud else 'DSS3',
+            cls.SENTINEL1_EW_SH_DES: 'S1_EW_SH.TILE' if is_eocloud else 'DSS3',
             cls.DEM: 'DSS4',
             cls.MODIS: 'DSS5',
             cls.LANDSAT8: 'L8.TILE' if is_eocloud else 'DSS6',
@@ -177,6 +196,19 @@ class DataSource(Enum):
         :rtype: bool
         """
         return self.value[0] is _Source.SENTINEL1
+
+    def contains_orbit_direction(self, orbit_direction):
+        """Checks if data source contains given orbit direction.
+        Note: Data sources with "both" orbit directions contain ascending and descending orbit directions.
+
+        :param self: One of the supported data sources
+        :type self: DataSource
+        :param orbit_direction: One of the orbit directions
+        :type orbit_direction: string
+        :return: `True` if data source contains the orbit direction
+        :return: bool
+        """
+        return self.value[5].name.upper() in [orbit_direction.upper(), _OrbitDirection.BOTH.value.upper()]
 
     def is_timeless(self):
         """Checks if data source is time independent
@@ -213,8 +245,9 @@ class DataSource(Enum):
             return [cls.SENTINEL2_L1C, cls.SENTINEL2_L2A, cls.SENTINEL2_L3B, cls.SENTINEL1_IW, cls.SENTINEL1_EW,
                     cls.SENTINEL1_EW_SH, cls.SENTINEL3, cls.SENTINEL5P, cls.LANDSAT5, cls.LANDSAT7, cls.LANDSAT8,
                     cls.LANDSAT8_L2A, cls.ENVISAT_MERIS]
-        return [cls.SENTINEL2_L1C, cls.SENTINEL2_L2A, cls.SENTINEL1_IW, cls.SENTINEL1_EW, cls.SENTINEL1_EW_SH, cls.DEM,
-                cls.MODIS, cls.LANDSAT8]
+        return [cls.SENTINEL2_L1C, cls.SENTINEL2_L2A, cls.SENTINEL1_IW, cls.SENTINEL1_EW, cls.SENTINEL1_EW_SH,
+                cls.SENTINEL1_IW_ASC, cls.SENTINEL1_EW_ASC, cls.SENTINEL1_EW_SH_ASC, cls.SENTINEL1_IW_DES,
+                cls.SENTINEL1_EW_DES, cls.SENTINEL1_EW_SH_DES, cls.DEM, cls.MODIS, cls.LANDSAT8]
 
 
 class CRSMeta(EnumMeta):
