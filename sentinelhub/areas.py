@@ -54,13 +54,13 @@ class AreaSplitter(ABC):
         return [AreaSplitter._parse_shape(shape, crs) for shape in shape_list]
 
     @staticmethod
-    def _parse_shape(shape, crs):
+    def _parse_shape(input_shape, crs):
         """ Helper method for parsing input shapes
         """
-        if isinstance(shape, (Polygon, MultiPolygon)):
-            return shape
-        if isinstance(shape, BaseGeometry):
-            return shape.transform(crs).geometry
+        if isinstance(input_shape, (Polygon, MultiPolygon)):
+            return input_shape
+        if isinstance(input_shape, BaseGeometry):
+            return input_shape.transform(crs).geometry
         raise ValueError('The list of shapes must contain shapes of types {}, {} or subtype of '
                          '{}'.format(type(Polygon), type(MultiPolygon), type(BaseGeometry)))
 
@@ -587,7 +587,7 @@ class UTMGridSplitter(AreaSplitter):
                                                index_y=j))
                     index += 1
 
-    def get_bbox_list(self, buffer=None, *args):
+    def get_bbox_list(self, buffer=None):
         """ Get list of bounding boxes.
 
         The CRS is fixed to the computed UTM CRS. This BBox splitter does not support reducing size of output
@@ -616,9 +616,6 @@ class UTMZoneSplitter(UTMGridSplitter):
     """
     LNG_MIN, LNG_MAX, LNG_UTM = -180, 180, 6
     LAT_MIN, LAT_MAX, LAT_EQ = -80, 84, 0
-
-    def __init__(self, shape_list, crs, bbox_size):
-        super(UTMZoneSplitter, self).__init__(shape_list, crs, bbox_size)
 
     def _get_overlapping_utm_grid(self):
         """ Find UTM zones overlapping with input area shape
