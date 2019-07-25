@@ -15,7 +15,7 @@ from .geopedia import GeopediaFeatureIterator, GeopediaSession
 
 from .geometry import BBox, Geometry, BBoxCollection
 from .constants import DataSource, CustomUrlParam, CRS, MimeType, OgcConstants, AwsConstants, ServiceType, \
-    HistogramType, OrbitDirection
+    HistogramType
 
 from .config import SHConfig
 
