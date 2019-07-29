@@ -629,11 +629,11 @@ class UtmZoneSplitter(BaseUtmSplitter):
 
         :return: List of geometries and properties of UTM zones overlapping with input area shape
         """
-        utm_geom_list = [Polygon([(lng, lat[0]), (lng, lat[1]), (lng + self.LNG_UTM, lat[0]),
-                                  (lng + self.LNG_UTM, lat[1]), (lng, lat[0])])
+        utm_geom_list = [Polygon([(lng, lat[0]), (lng, lat[1]), (lng + self.LNG_UTM, lat[1]),
+                                  (lng + self.LNG_UTM, lat[0]), (lng, lat[0])])
                          for lat in [(self.LAT_EQ, self.LAT_MAX), (self.LAT_MIN, self.LAT_EQ)]
                          for lng in range(self.LNG_MIN, self.LNG_MAX, self.LNG_UTM)]
         utm_prop_list = [dict(zone=zone, row='', direction=direction)
                          for direction in ['N', 'S'] for zone in range(1, 61)]
 
-        return [(utm_geom.envelope, utm_prop) for utm_geom, utm_prop in zip(utm_geom_list, utm_prop_list)]
+        return [(utm_geom, utm_prop) for utm_geom, utm_prop in zip(utm_geom_list, utm_prop_list)]
