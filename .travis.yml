@@ -17,7 +17,11 @@ before_install:
 - sudo apt-get install -y libopenjp2-7
 
 install:
-- pip install .[DEV] --upgrade
+- if [ $TRAVIS_PYTHON_VERSION == '3.7' ]; then
+    pip install -e .[DEV] --upgrade ;
+  else
+    pip install .[DEV] --upgrade ;
+  fi
 
 script:
 - if [[ $TRAVIS_PYTHON_VERSION == '3.6' ]]; then pylint sentinelhub ; fi
@@ -26,6 +30,7 @@ script:
   if [[ ($TRAVIS_PULL_REQUEST == true) || ( $TRAVIS_PYTHON_VERSION != '3.7') ]] ;
   then pytest --cov \
     --ignore tests/test_ogc.py \
+    --ignore tests/test_fis.py \
     --ignore tests/test_data_request.py \
     --ignore tests/test_aws.py \
     --ignore tests/test_aws_safe.py \
