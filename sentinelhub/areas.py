@@ -505,12 +505,12 @@ class BaseUtmSplitter(AreaSplitter):
 
         self.shape_geometry = Geometry(self.area_shape, self.crs).transform(CRS.WGS84)
 
-        self.utm_grid = self._get_utm_polys()
+        self.utm_grid = self._get_utm_polygons()
 
         self._make_split()
 
     @abstractmethod
-    def _get_utm_polys(self):
+    def _get_utm_polygons(self):
         raise NotImplementedError
 
     @staticmethod
@@ -592,12 +592,13 @@ class BaseUtmSplitter(AreaSplitter):
 
 
 class UtmGridSplitter(BaseUtmSplitter):
-    """ Splitter that returns bounding boxes of fixed size aligned to the UTM MGRS grid """
-
-    def _get_utm_polys(self):
+    """ Splitter that returns bounding boxes of fixed size aligned to the UTM MGRS grid
+    """
+    def _get_utm_polygons(self):
         """ Find UTM grid zones overlapping with input area shape
 
         :return: List of geometries and properties of UTM grid zones overlapping with input area shape
+        :rtype: list
         """
         # file downloaded from faculty.baruch.cuny.edu/geoportal/data/esri/world/utmzone.zip
         utm_grid_filename = os.path.join(os.path.dirname(__file__), '.utmzones.geojson')
@@ -622,17 +623,31 @@ class UtmZoneSplitter(BaseUtmSplitter):
     LNG_MIN, LNG_MAX, LNG_UTM = -180, 180, 6
     LAT_MIN, LAT_MAX, LAT_EQ = -80, 84, 0
 
-    def _get_utm_polys(self):
+    def _get_utm_polygons(self):
         """ Find UTM zones overlapping with input area shape
 
         The returned geometry corresponds to the a triangle ranging from the equator to the north/south pole
 
         :return: List of geometries and properties of UTM zones overlapping with input area shape
+        :rtype: list
         """
-        utm_geom_list = [Polygon([(lng, lat[0]), (lng, lat[1]), (lng + self.LNG_UTM, lat[1]),
-                                  (lng + self.LNG_UTM, lat[0]), (lng, lat[0])])
-                         for lat in [(self.LAT_EQ, self.LAT_MAX), (self.LAT_MIN, self.LAT_EQ)]
-                         for lng in range(self.LNG_MIN, self.LNG_MAX, self.LNG_UTM)]
+        utm_geom_list = []
+        for lat in [(self.LAT_EQ, self.LAT_MAX), (self.LAT_MIN, self.LAT_EQ)]:
+            for lng in range(self.LNG_MIN, self.LNG_MAX, self.LNG_UTM):
+                points = []
+                # A new point is added per each degree - this is inline with geometries used by UtmGridSplitter
+                # In the future the number of points will be calculated according to bbox_size parameter
+                for degree in range(lat[0], lat[1]):
+                    points.append((lng, degree))
+                for degree in range(lng, lng + self.LNG_UTM):
+                    points.append((degree, lat[1]))
+                for degree in range(lat[1], lat[0], -1):
+                    points.append((lng + self.LNG_UTM, degree))
+                for degree in range(lng + self.LNG_UTM, lng, -1):
+                    points.append((degree, lat[0]))
+
+                utm_geom_list.append(Polygon(points))
+
         utm_prop_list = [dict(zone=zone, row='', direction=direction)
                          for direction in ['N', 'S'] for zone in range(1, 61)]
 
