@@ -4,3 +4,4 @@ include README.md
 include LICENSE.md
 include setup.py
 include sentinelhub/config.json
+include sentinelhub/.utmzones.geojson

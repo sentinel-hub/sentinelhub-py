@@ -2,13 +2,17 @@
 Module for working with large geographical areas
 """
 
+import os
 import itertools
 from abc import ABC, abstractmethod
+import json
+import math
 
 import shapely.ops
-from shapely.geometry import Polygon, MultiPolygon
+import shapely.geometry
+from shapely.geometry import Polygon, MultiPolygon, GeometryCollection
 
-from .geometry import BBox, BBoxCollection, BaseGeometry
+from .geometry import BBox, BBoxCollection, BaseGeometry, Geometry
 from .constants import CRS, DataSource
 from .geo_utils import transform_point
 from .ogc import WebFeatureService
@@ -60,6 +64,30 @@ class AreaSplitter(ABC):
             return shape.transform(crs).geometry
         raise ValueError('The list of shapes must contain shapes of types {}, {} or subtype of '
                          '{}'.format(type(Polygon), type(MultiPolygon), type(BaseGeometry)))
+
+    @staticmethod
+    def _parse_split_parameters(split_parameter, allow_float=False):
+        """ Parses the parameters defining the splitting of the BBox
+
+        :param split_parameter: The parameters defining the split. A tuple of int for `BBoxSplitter`, a tuple of float
+            for `BaseUtmSplitter`
+        :type split_parameter: int or (int, int) or float or (float, float)
+        :param allow_float: Whether to check for floats or not
+        :type allow_float: bool
+        :return: A tuple of n
+        :rtype: (int, int)
+        :raises: ValueError
+        """
+        parameters_type = (int, float) if allow_float else int
+        if isinstance(split_parameter, parameters_type):
+            return split_parameter, split_parameter
+        if isinstance(split_parameter, (tuple, list)):
+            if len(split_parameter) == 2 and all(isinstance(param, parameters_type) for param in split_parameter):
+                return split_parameter[0], split_parameter[1]
+            raise ValueError("Split parameter {} must be 2 int{}.".format(split_parameter,
+                                                                          '/float' if allow_float else ''))
+        raise ValueError("Split parameter must be an int{0} or a tuple of 2 int{0}.".format('/float' if allow_float
+                                                                                            else ''))
 
     @staticmethod
     def _join_shape_list(shape_list):
@@ -207,33 +235,15 @@ class BBoxSplitter(AreaSplitter):
     def __init__(self, shape_list, crs, split_shape, **kwargs):
         super().__init__(shape_list, crs, **kwargs)
 
-        self.split_shape = self._parse_split_shape(split_shape)
+        self.split_shape = self._parse_split_parameters(split_shape)
 
         self._make_split()
-
-    @staticmethod
-    def _parse_split_shape(split_shape):
-        """ Parses the parameter `split_shape`
-
-        :param split_shape: The parameter `split_shape` from class initialization
-        :type split_shape: int or (int, int)
-        :return: A tuple of n
-        :rtype: (int, int)
-        :raises: ValueError
-        """
-        if isinstance(split_shape, int):
-            return split_shape, split_shape
-        if isinstance(split_shape, (tuple, list)):
-            if len(split_shape) == 2 and isinstance(split_shape[0], int) and isinstance(split_shape[1], int):
-                return split_shape[0], split_shape[1]
-            raise ValueError("Content of split_shape {} must be 2 integers.".format(split_shape))
-        raise ValueError("Split shape must be an int or a tuple of 2 integers.")
 
     def _make_split(self):
         """ This method makes the split
         """
         columns, rows = self.split_shape
-        bbox_partition = self.area_bbox.get_partition(columns, rows)
+        bbox_partition = self.area_bbox.get_partition(num_x=columns, num_y=rows)
 
         self.bbox_list = []
         self.info_list = []
@@ -322,7 +332,7 @@ class OsmSplitter(AreaSplitter):
                                    'index_y': row})
             return
 
-        bbox_partition = bbox.get_partition(2, 2)
+        bbox_partition = bbox.get_partition(num_x=2, num_y=2)
         for i, j in itertools.product(range(2), range(2)):
             if self._intersects_area(bbox_partition[i][j]):
                 self._recursive_split(bbox_partition[i][j], zoom_level + 1, 2 * column + i, 2 * row + 1 - j)
@@ -475,3 +485,170 @@ class CustomGridSplitter(AreaSplitter):
 
                         self.bbox_list.append(bbox)
                         self.info_list.append(info)
+
+
+class BaseUtmSplitter(AreaSplitter):
+    """ Base splitter that returns bboxes of fixed size aligned to UTM zones or UTM grid tiles as defined by the MGRS
+    """
+    def __init__(self, shape_list, crs, bbox_size):
+        """
+        :param shape_list: A list of geometrical shapes describing the area of interest
+        :type shape_list: list(shapely.geometry.multipolygon.MultiPolygon or shapely.geometry.polygon.Polygon)
+        :param crs: Coordinate reference system of the shapes in `shape_list`
+        :type crs: CRS
+        :param bbox_size: Physical size in metres of generated bounding boxes. Could be a float or tuple of floats
+        :type bbox_size: int or (int, int) or float or (float, float)
+        """
+        super().__init__(shape_list, crs)
+
+        self.bbox_size = self._parse_split_parameters(bbox_size, allow_float=True)
+
+        self.shape_geometry = Geometry(self.area_shape, self.crs).transform(CRS.WGS84)
+
+        self.utm_grid = self._get_utm_polygons()
+
+        self._make_split()
+
+    @abstractmethod
+    def _get_utm_polygons(self):
+        raise NotImplementedError
+
+    @staticmethod
+    def _get_utm_from_props(utm_dict):
+        """ Return the UTM CRS corresponding to the UTM described by the properties dictionary
+
+        :param utm_dict: Dictionary reporting name of the UTM zone and MGRS grid
+        :type utm_dict: dict
+        :return: UTM coordinate reference system
+        :rtype: sentinelhub.CRS
+        """
+        return CRS('32{}{}'.format(6 if utm_dict['direction'] == 'N' else 7, str(utm_dict['zone']).zfill(2)))
+
+    def _align_bbox_to_size(self, bbox):
+        """ Align input bbox coordinates to be multiples of the bbox size
+
+        :param bbox: Bounding box in UTM coordinates
+        :type bbox: sentinelhub.BBox
+        :return: BBox objects with coordinates multiples of the bbox size
+        :rtype: sentinelhub.BBox
+        """
+        size_x, size_y = self.bbox_size
+        lower_left_x, lower_left_y = bbox.lower_left
+        return BBox([(math.floor(lower_left_x / size_x) * size_x, math.floor(lower_left_y / size_y) * size_y),
+                     bbox.upper_right], crs=bbox.crs)
+
+    def _make_split(self):
+        """ Split each UTM grid into equally sized bboxes in correct UTM zone
+        """
+        size_x, size_y = self.bbox_size
+        self.bbox_list = []
+        self.info_list = []
+
+        index = 0
+
+        for utm_cell in self.utm_grid:
+            utm_cell_geom, utm_cell_prop = utm_cell
+            # the UTM MGRS grid definition contains four 0 zones at the poles (0A, 0B, 0Y, 0Z)
+            if utm_cell_prop['zone'] == 0:
+                continue
+            utm_crs = self._get_utm_from_props(utm_cell_prop)
+
+            intersection = utm_cell_geom.intersection(self.shape_geometry.geometry)
+
+            if not intersection.is_empty and isinstance(intersection, GeometryCollection):
+                intersection = MultiPolygon(geo_object for geo_object in intersection
+                                            if isinstance(geo_object, (Polygon, MultiPolygon)))
+
+            if not intersection.is_empty:
+                intersection = Geometry(intersection, CRS.WGS84).transform(utm_crs)
+
+                bbox_partition = self._align_bbox_to_size(intersection.bbox).get_partition(size_x=size_x, size_y=size_y)
+
+                columns, rows = len(bbox_partition), len(bbox_partition[0])
+                for i, j in itertools.product(range(columns), range(rows)):
+                    if bbox_partition[i][j].geometry.intersects(intersection.geometry):
+                        self.bbox_list.append(bbox_partition[i][j])
+                        self.info_list.append(dict(crs=utm_crs.name,
+                                                   utm_zone=str(utm_cell_prop['zone']).zfill(2),
+                                                   utm_row=utm_cell_prop['row'],
+                                                   direction=utm_cell_prop['direction'],
+                                                   index=index,
+                                                   index_x=i,
+                                                   index_y=j))
+                        index += 1
+
+    def get_bbox_list(self, buffer=None):
+        """ Get list of bounding boxes.
+
+        The CRS is fixed to the computed UTM CRS. This BBox splitter does not support reducing size of output
+        bounding boxes
+
+        :param buffer: A percentage of each BBox size increase. This will cause neighbouring bounding boxes to overlap.
+        :type buffer: float or None
+        :return: List of bounding boxes
+        :rtype: list(BBox)
+        """
+        return super().get_bbox_list(buffer=buffer)
+
+
+class UtmGridSplitter(BaseUtmSplitter):
+    """ Splitter that returns bounding boxes of fixed size aligned to the UTM MGRS grid
+    """
+    def _get_utm_polygons(self):
+        """ Find UTM grid zones overlapping with input area shape
+
+        :return: List of geometries and properties of UTM grid zones overlapping with input area shape
+        :rtype: list
+        """
+        # file downloaded from faculty.baruch.cuny.edu/geoportal/data/esri/world/utmzone.zip
+        utm_grid_filename = os.path.join(os.path.dirname(__file__), '.utmzones.geojson')
+
+        if not os.path.isfile(utm_grid_filename):
+            raise IOError('UTM grid definition file does not exist: %s' % os.path.abspath(utm_grid_filename))
+
+        with open(utm_grid_filename) as utm_grid_file:
+            utm_grid = json.load(utm_grid_file)['features']
+
+        utm_geom_list = [shapely.geometry.shape(utm_zone['geometry']) for utm_zone in utm_grid]
+        utm_prop_list = [dict(zone=utm_zone['properties']['ZONE'],
+                              row=utm_zone['properties']['ROW_'],
+                              direction='N' if utm_zone['properties']['ROW_'] >= 'N' else 'S') for utm_zone in utm_grid]
+
+        return [(utm_geom, utm_prop) for utm_geom, utm_prop in zip(utm_geom_list, utm_prop_list)]
+
+
+class UtmZoneSplitter(BaseUtmSplitter):
+    """ Splitter that returns bounding boxes of fixed size aligned to the equator and the UTM zones.
+    """
+    LNG_MIN, LNG_MAX, LNG_UTM = -180, 180, 6
+    LAT_MIN, LAT_MAX, LAT_EQ = -80, 84, 0
+
+    def _get_utm_polygons(self):
+        """ Find UTM zones overlapping with input area shape
+
+        The returned geometry corresponds to the a triangle ranging from the equator to the north/south pole
+
+        :return: List of geometries and properties of UTM zones overlapping with input area shape
+        :rtype: list
+        """
+        utm_geom_list = []
+        for lat in [(self.LAT_EQ, self.LAT_MAX), (self.LAT_MIN, self.LAT_EQ)]:
+            for lng in range(self.LNG_MIN, self.LNG_MAX, self.LNG_UTM):
+                points = []
+                # A new point is added per each degree - this is inline with geometries used by UtmGridSplitter
+                # In the future the number of points will be calculated according to bbox_size parameter
+                for degree in range(lat[0], lat[1]):
+                    points.append((lng, degree))
+                for degree in range(lng, lng + self.LNG_UTM):
+                    points.append((degree, lat[1]))
+                for degree in range(lat[1], lat[0], -1):
+                    points.append((lng + self.LNG_UTM, degree))
+                for degree in range(lng + self.LNG_UTM, lng, -1):
+                    points.append((degree, lat[0]))
+
+                utm_geom_list.append(Polygon(points))
+
+        utm_prop_list = [dict(zone=zone, row='', direction=direction)
+                         for direction in ['N', 'S'] for zone in range(1, 61)]
+
+        return [(utm_geom, utm_prop) for utm_geom, utm_prop in zip(utm_geom_list, utm_prop_list)]

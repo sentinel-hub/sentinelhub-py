@@ -67,7 +67,7 @@ setup(
     author_email='info@sentinel-hub.com',
     license='MIT',
     packages=find_packages(),
-    package_data={'sentinelhub': ['sentinelhub/config.json']},
+    package_data={'sentinelhub': ['sentinelhub/config.json', 'sentinelhub/.utmzones.geojson']},
     include_package_data=True,
     install_requires=parse_requirements('requirements.txt'),
     extras_require={
