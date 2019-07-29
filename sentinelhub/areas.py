@@ -6,10 +6,11 @@ import os
 import itertools
 from abc import ABC, abstractmethod
 import json
+import math
 
 import shapely.ops
 import shapely.geometry
-from shapely.geometry import Polygon, MultiPolygon
+from shapely.geometry import Polygon, MultiPolygon, GeometryCollection
 
 from .geometry import BBox, BBoxCollection, BaseGeometry, Geometry
 from .constants import CRS, DataSource
@@ -532,9 +533,9 @@ class BaseUtmSplitter(AreaSplitter):
         :rtype: sentinelhub.BBox
         """
         size_x, size_y = self.bbox_size
-        lower_left_x, lower_left_y = bbox.get_lower_left()
-        return BBox([(lower_left_x - lower_left_x % size_x, lower_left_y - lower_left_y % size_y),
-                     bbox.get_upper_right()], crs=bbox.crs)
+        lower_left_x, lower_left_y = bbox.lower_left
+        return BBox([(math.floor(lower_left_x / size_x) * size_x, math.floor(lower_left_y / size_y) * size_y),
+                     bbox.upper_right], crs=bbox.crs)
 
     def _make_split(self):
         """ Split each UTM grid into equally sized bboxes in correct UTM zone
@@ -547,18 +548,21 @@ class BaseUtmSplitter(AreaSplitter):
 
         for utm_cell in self.utm_grid:
             utm_cell_geom, utm_cell_prop = utm_cell
+            # the UTM MGRS grid definition contains four 0 zones at the poles (0A, 0B, 0Y, 0Z)
             if utm_cell_prop['zone'] == 0:
                 continue
             utm_crs = self._get_utm_from_props(utm_cell_prop)
 
             intersection = utm_cell_geom.intersection(self.shape_geometry.geometry)
 
-            if isinstance(intersection, (Polygon, MultiPolygon)):
-                bbox_utm = Geometry(utm_cell_geom, crs=CRS.WGS84).transform(utm_crs).bbox
-                bbox_utm = self._align_bbox_to_size(bbox_utm)
-                bbox_partition = bbox_utm.get_partition(size_x=size_x, size_y=size_y)
+            if not intersection.is_empty and isinstance(intersection, GeometryCollection):
+                intersection = MultiPolygon(geo_object for geo_object in intersection
+                                            if isinstance(geo_object, (Polygon, MultiPolygon)))
 
+            if not intersection.is_empty:
                 intersection = Geometry(intersection, CRS.WGS84).transform(utm_crs)
+
+                bbox_partition = self._align_bbox_to_size(intersection.bbox).get_partition(size_x=size_x, size_y=size_y)
 
                 columns, rows = len(bbox_partition), len(bbox_partition[0])
                 for i, j in itertools.product(range(columns), range(rows)):
