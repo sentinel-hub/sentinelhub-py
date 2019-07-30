@@ -343,9 +343,6 @@ class CRS(Enum, metaclass=CRSMeta):
         :return: pyproj projection class
         :rtype: pyproj.Proj
         """
-        if pyproj.__version__ >= '2':
-            pyproj.Proj(self.epsg, preserve_units=True)
-
         return pyproj.Proj(init=self.ogc_string(), preserve_units=True)
 
     @functools.lru_cache(maxsize=10)
