@@ -5,6 +5,7 @@
 [![Overall downloads](https://pepy.tech/badge/sentinelhub)](https://pepy.tech/project/sentinelhub)
 [![Last month downloads](https://pepy.tech/badge/sentinelhub/month)](https://pepy.tech/project/sentinelhub)
 [![](https://img.shields.io/pypi/l/sentinelhub.svg)](https://github.com/sentinel-hub/sentinelhub-py/blob/master/LICENSE.md)
+[![Code coverage](https://codecov.io/gh/sentinel-hub/sentinelhub-py/branch/master/graph/badge.svg)](https://codecov.io/gh/sentinel-hub/sentinelhub-py)
 
 # Description
 
