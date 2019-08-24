@@ -546,6 +546,7 @@ class WebFeatureService(OgcService):
                   'FEATURE_OFFSET': self.feature_offset}
 
         url = main_url + urlencode(params)
+
         LOGGER.debug("URL=%s", url)
         response = get_json(url)
 
@@ -569,9 +570,18 @@ class WebFeatureService(OgcService):
         :return: List of acquisition times in the order returned by WFS service.
         :rtype: list(datetime.datetime)
         """
-        return [datetime.datetime.strptime('{}T{}'.format(tile_info['properties']['date'],
-                                                          tile_info['properties']['time'].split('.')[0]),
-                                           '%Y-%m-%dT%H:%M:%S') for tile_info in self]
+        tile_dates = []
+
+        for tile_info in self:
+            if not tile_info['properties']['date']:  # could be True for custom (BYOC) data sources
+                tile_dates.append(None)
+            else:
+                tile_dates.append(datetime.datetime.strptime('{}T{}'.
+                                                             format(tile_info['properties']['date'],
+                                                                    tile_info['properties']['time'].split('.')[0]),
+                                                             '%Y-%m-%dT%H:%M:%S'))
+
+        return tile_dates
 
     def get_geometries(self):
         """ Returns a list of geometries from tile info data

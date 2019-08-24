@@ -10,3 +10,4 @@ shapely
 boto3
 botocore
 pyproj
+aenum

@@ -37,6 +37,7 @@ class TestOgc(TestSentinelHub):
         wgs84_bbox_2 = BBox(bbox=(21.3, 64.0, 22.0, 64.5), crs=CRS.WGS84)
         wgs84_bbox_3 = BBox(bbox=(-72.0, -70.4, -71.8, -70.2), crs=CRS.WGS84)
         wgs84_bbox_4 = BBox(bbox=(-72.0, -66.4, -71.8, -66.2), crs=CRS.WGS84)
+        wgs84_bbox_byoc = BBox(bbox=(13.82387, 45.85221, 13.83313, 45.85901), crs=CRS.WGS84)
         pop_web_bbox = BBox(bbox=(1292344.0, 5195920.0, 1310615.0, 5214191.0), crs=CRS.POP_WEB)
         geometry_wkt_pop_web = 'POLYGON((1292344.0 5205055.5, 1301479.5 5195920.0, 1310615.0 5205055.5, ' \
                                '1301479.5 5214191.0, 1292344.0 5205055.5))'
@@ -216,6 +217,14 @@ class TestOgc(TestSentinelHub):
                                        custom_url_params={CustomUrlParam.SHOWLOGO: True}, time=('2018-2-5', '2018-2-6'),
                                        time_difference=datetime.timedelta(hours=1)),
                             result_len=1, img_min=3971, img_max=61495, img_mean=18369.9776, img_median=15165.0,
+                            tile_num=1),
+            cls.OgcTestCase('BYOC Test',
+                            WmsRequest(data_source=DataSource('31df1de4-8bd4-43e0-8c3f-b04262d111b6'),
+                                       data_folder=cls.OUTPUT_FOLDER,
+                                       image_format=MimeType.TIFF_d16, layer='DEMO_BYOC_LAYER',
+                                       width=img_width, height=img_height, bbox=wgs84_bbox_byoc,
+                                       custom_url_params={CustomUrlParam.SHOWLOGO: False}),
+                            result_len=1, img_min=0, img_max=65535, img_mean=17158.8938, img_median=15728.0,
                             tile_num=1)
         ]
         """

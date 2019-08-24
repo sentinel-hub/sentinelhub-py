@@ -1,7 +1,7 @@
 import unittest
 
 from sentinelhub import CRS, MimeType, TestSentinelHub
-from sentinelhub.constants import RequestType
+from sentinelhub.constants import RequestType, DataSource
 
 
 class TestCRS(TestSentinelHub):
@@ -97,6 +97,20 @@ class TestRequestType(TestSentinelHub):
             RequestType('GET')
         except BaseException:
             self.fail("Couldn't instantiate enum")
+
+
+class TestDataSource(TestSentinelHub):
+    def test_adding_custom_datasource(self):
+        collectionid_datasourcename_wfsid = (
+            ('0000d273-7e89-4f00-971e-9025f89a0000', 'BYOC_0000d273-7e89-4f00-971e-9025f89a0000',
+             'DSS10-0000d273-7e89-4f00-971e-9025f89a0000'),
+        )
+        for collectionId, dataSourceName, wfsId in collectionid_datasourcename_wfsid:
+            datasourcename_tested = DataSource(collectionId).name
+            wfsid_tested = DataSource.get_wfs_typename(DataSource(collectionId))
+            self.assertEqual(dataSourceName, datasourcename_tested, msg="Expected {}, got {}".
+                             format(dataSourceName, datasourcename_tested))
+            self.assertEqual(wfsId, wfsid_tested, msg="Expected {}, got {}".format(wfsId, wfsid_tested))
 
 
 if __name__ == '__main__':

@@ -1,11 +1,12 @@
 """
 Module defining constants and enumerate types used in the package
 """
-
+import re
 import functools
 import itertools as it
 import mimetypes
 from enum import Enum, EnumMeta
+from aenum import extend_enum
 
 import utm
 import pyproj
@@ -111,7 +112,41 @@ class _OrbitDirection(Enum):
     BOTH = 'both'
 
 
-class DataSource(Enum):
+class DataSourceMeta(EnumMeta):
+    """
+    Meta class used to add custom (BYOC) datasources to DataSource enumerator.
+
+    BYOC stands for Bring Your Own Data. For more details see: https://docs.sentinel-hub.com/api/latest/#/API/byoc
+    """
+    def __call__(cls, collection_id, *args, **kwargs):
+        """
+        This is executed whenever DataSource('something') is called.
+
+        The method raises a ValueError if the 'something' does not match the format expected for collection id.
+        """
+        collection_id_pattern = '.{8}-.{4}-.{4}-.{4}-.{12}'
+        if not re.compile(collection_id_pattern).match(collection_id):
+            raise ValueError("Given collection id does not match the expected format {}".format(collection_id_pattern))
+
+        def _custom_datasource_name(collection_id):
+            """
+            Prepares a name for custom (BYOC) datasource, which is then added to DataSource enum.
+
+            :param: collection_id: Collection id of the BYOC, user's input.
+            :type: string
+            :return: Name for custom (BYOC) datasource.
+            :rtype: string
+            """
+            return 'BYOC_{}'.format(collection_id)
+
+        if cls._member_names_.__contains__(_custom_datasource_name(collection_id)):
+            return super().__call__(collection_id, *args, **kwargs)
+
+        extend_enum(cls, _custom_datasource_name(collection_id), collection_id)
+        return super().__call__(collection_id, *args, **kwargs)
+
+
+class DataSource(Enum, metaclass=DataSourceMeta):
     """ Enum constant class for types of satellite data
 
     Supported types are SENTINEL2_L1C, SENTINEL2_L2A, LANDSAT8, SENTINEL1_IW, SENTINEL1_EW, SENTINEL1_EW_SH,
@@ -141,6 +176,7 @@ class DataSource(Enum):
     DEM = (_Source.DEM, )
     MODIS = (_Source.MODIS, _ProcessingLevel.MCD43A4)
     LANDSAT8 = (_Source.LANDSAT8, _ProcessingLevel.L1TP)
+    #: custom BYOC enum members are defined in DataSourceMeta
     # eocloud sources:
     LANDSAT5 = (_Source.LANDSAT5, _ProcessingLevel.GRD)
     LANDSAT7 = (_Source.LANDSAT7, _ProcessingLevel.GRD)
@@ -160,6 +196,10 @@ class DataSource(Enum):
         :rtype: str
         """
         is_eocloud = SHConfig().is_eocloud_ogc_url()
+
+        if 'BYOC_' in str(data_source):
+            return 'DSS10-{}'.format(str(data_source.value))
+
         return {
             cls.SENTINEL2_L1C: 'S2.TILE',
             cls.SENTINEL2_L2A: 'SEN4CAP_S2L2A.TILE' if is_eocloud else 'DSS2',
@@ -198,16 +238,18 @@ class DataSource(Enum):
         return self.value[0] is _Source.SENTINEL1
 
     def contains_orbit_direction(self, orbit_direction):
-        """Checks if data source contains given orbit direction.
+        """Checks if Sentine-1 data source contains given orbit direction.
         Note: Data sources with "both" orbit directions contain ascending and descending orbit directions.
 
-        :param self: One of the supported data sources
+        :param self: One of the supported Sentinel-1 data sources
         :type self: DataSource
         :param orbit_direction: One of the orbit directions
         :type orbit_direction: string
         :return: `True` if data source contains the orbit direction
         :return: bool
         """
+        if not self.is_sentinel1():
+            raise ValueError("Orbit direction can only be checked for Sentinel-1 data source.")
         return self.value[5].name.upper() in [orbit_direction.upper(), _OrbitDirection.BOTH.value.upper()]
 
     def is_timeless(self):
@@ -245,10 +287,20 @@ class DataSource(Enum):
             return [cls.SENTINEL2_L1C, cls.SENTINEL2_L2A, cls.SENTINEL2_L3B, cls.SENTINEL1_IW, cls.SENTINEL1_EW,
                     cls.SENTINEL1_EW_SH, cls.SENTINEL3, cls.SENTINEL5P, cls.LANDSAT5, cls.LANDSAT7, cls.LANDSAT8,
                     cls.LANDSAT8_L2A, cls.ENVISAT_MERIS]
+
         return [cls.SENTINEL2_L1C, cls.SENTINEL2_L2A, cls.SENTINEL1_IW, cls.SENTINEL1_EW, cls.SENTINEL1_EW_SH,
                 cls.SENTINEL1_IW_ASC, cls.SENTINEL1_EW_ASC, cls.SENTINEL1_EW_SH_ASC, cls.SENTINEL1_IW_DES,
-                cls.SENTINEL1_EW_DES, cls.SENTINEL1_EW_SH_DES, cls.DEM, cls.MODIS, cls.LANDSAT8]
+                cls.SENTINEL1_EW_DES, cls.SENTINEL1_EW_SH_DES, cls.DEM, cls.MODIS, cls.LANDSAT8] + \
+               [custom_datasource for custom_datasource in cls if "BYOC_" in custom_datasource.name]
 
+    @classmethod
+    def get_custom_datasources(cls):
+        """Returns the list of all custom (BYOC) datasources, which have ben added to the DataSource enumerator.
+
+        :return: List of custom (BYOC) datasources
+        :rtype: list(sentinelhub.DataSource)
+        """
+        return [datasource for datasource in cls if "BYOC_" in datasource.name]
 
 class CRSMeta(EnumMeta):
     """ Metaclass used for building CRS Enum class
