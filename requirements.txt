@@ -10,4 +10,4 @@ shapely
 boto3
 botocore
 pyproj
-aenum
+aenum>=2.1.4
