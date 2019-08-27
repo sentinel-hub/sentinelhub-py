@@ -128,22 +128,22 @@ class DataSourceMeta(EnumMeta):
         if not re.compile(collection_id_pattern).match(collection_id):
             raise ValueError("Given collection id does not match the expected format {}".format(collection_id_pattern))
 
-        def _custom_datasource_name(collection_id):
-            """
-            Prepares a name for custom (BYOC) datasource, which is then added to DataSource enum.
+        if cls.custom_datasource_name(collection_id) not in cls._member_names_:
+            extend_enum(cls, cls.custom_datasource_name(collection_id), collection_id)
 
-            :param: collection_id: Collection id of the BYOC, user's input.
-            :type: string
-            :return: Name for custom (BYOC) datasource.
-            :rtype: string
-            """
-            return 'BYOC_{}'.format(collection_id)
-
-        if cls._member_names_.__contains__(_custom_datasource_name(collection_id)):
-            return super().__call__(collection_id, *args, **kwargs)
-
-        extend_enum(cls, _custom_datasource_name(collection_id), collection_id)
         return super().__call__(collection_id, *args, **kwargs)
+
+    @staticmethod
+    def custom_datasource_name(collection_id):
+        """
+        Prepares a name for custom (BYOC) datasource, which is then added to DataSource enum.
+
+        :param: collection_id: Collection id of the BYOC, user's input.
+        :type: string
+        :return: Name for custom (BYOC) datasource.
+        :rtype: string
+        """
+        return 'BYOC_{}'.format(collection_id)
 
 
 class DataSource(Enum, metaclass=DataSourceMeta):
@@ -197,8 +197,8 @@ class DataSource(Enum, metaclass=DataSourceMeta):
         """
         is_eocloud = SHConfig().is_eocloud_ogc_url()
 
-        if 'BYOC_' in str(data_source):
-            return 'DSS10-{}'.format(str(data_source.value))
+        if data_source in cls.get_custom_datasources():
+            return 'DSS10-{}'.format(data_source.value)
 
         return {
             cls.SENTINEL2_L1C: 'S2.TILE',
@@ -291,7 +291,7 @@ class DataSource(Enum, metaclass=DataSourceMeta):
         return [cls.SENTINEL2_L1C, cls.SENTINEL2_L2A, cls.SENTINEL1_IW, cls.SENTINEL1_EW, cls.SENTINEL1_EW_SH,
                 cls.SENTINEL1_IW_ASC, cls.SENTINEL1_EW_ASC, cls.SENTINEL1_EW_SH_ASC, cls.SENTINEL1_IW_DES,
                 cls.SENTINEL1_EW_DES, cls.SENTINEL1_EW_SH_DES, cls.DEM, cls.MODIS, cls.LANDSAT8] + \
-               [custom_datasource for custom_datasource in cls if "BYOC_" in custom_datasource.name]
+               [custom_datasource for custom_datasource in cls.get_custom_datasources()]
 
     @classmethod
     def get_custom_datasources(cls):
@@ -300,7 +300,8 @@ class DataSource(Enum, metaclass=DataSourceMeta):
         :return: List of custom (BYOC) datasources
         :rtype: list(sentinelhub.DataSource)
         """
-        return [datasource for datasource in cls if "BYOC_" in datasource.name]
+        return [datasource for datasource in cls if datasource.name.startswith("BYOC_")]
+
 
 class CRSMeta(EnumMeta):
     """ Metaclass used for building CRS Enum class
