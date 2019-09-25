@@ -179,7 +179,7 @@ def download_data(request_list, redownload=False, max_threads=None):
                         on the disk. Default is `False`.
     :type redownload: bool
     :param max_threads: number of threads to use when downloading data; default is ``max_threads=None`` which
-            by default uses the number of processors on the system
+            by default uses the number of processors on the system multiplied by 5.
     :type max_threads: int
     :return: list of Futures holding downloaded data, where each element in the list corresponds to an element
                 in the download request list.
