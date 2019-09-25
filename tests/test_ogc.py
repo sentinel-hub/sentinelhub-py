@@ -142,7 +142,7 @@ class TestOgc(TestSentinelHub):
                             WmsRequest(data_source=DataSource.MODIS, data_folder=cls.OUTPUT_FOLDER,
                                        image_format=MimeType.TIFF_d32f, layer='BANDS-MODIS',
                                        width=img_width, height=img_height, bbox=wgs84_bbox, time='2017-10-01'),
-                            result_len=1, img_min=0.0, img_max=3.2767, img_mean=0.136408, img_median=0.00240,
+                            result_len=1, img_min=0.0, img_max=3.2767, img_mean=0.136548, img_median=0.00240,
                             tile_num=1),
             cls.OgcTestCase('S1 IW Test',
                             WmsRequest(data_source=DataSource.SENTINEL1_IW, data_folder=cls.OUTPUT_FOLDER,
