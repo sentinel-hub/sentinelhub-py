@@ -95,7 +95,7 @@ class DataRequest(ABC):
             ``data_filter=[0, 2, -1]`` the method will return only 1st, 3rd and last item. Default filter is `None`.
         :type data_filter: list(int) or None
         :param max_threads: number of threads to use when downloading data; default is ``max_threads=None`` which
-            by default uses the number of processors on the system
+            by default uses the number of processors on the system multiplied by 5.
         :type max_threads: int
         :param raise_download_errors: If `True` any error in download process should be raised as
             ``DownloadFailedException``. If `False` failed downloads will only raise warnings and the method will
@@ -118,7 +118,7 @@ class DataRequest(ABC):
         :param redownload: data is redownloaded if ``redownload=True``. Default is `False`
         :type redownload: bool
         :param max_threads: number of threads to use when downloading data; default is ``max_threads=None`` which
-            by default uses the number of processors on the system
+            by default uses the number of processors on the system multiplied by 5.
         :type max_threads: int
         :param raise_download_errors: If `True` any error in download process should be raised as
             ``DownloadFailedException``. If `False` failed downloads will only raise warnings.

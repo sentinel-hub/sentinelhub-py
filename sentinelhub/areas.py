@@ -614,7 +614,7 @@ class UtmGridSplitter(BaseUtmSplitter):
                               row=utm_zone['properties']['ROW_'],
                               direction='N' if utm_zone['properties']['ROW_'] >= 'N' else 'S') for utm_zone in utm_grid]
 
-        return [(utm_geom, utm_prop) for utm_geom, utm_prop in zip(utm_geom_list, utm_prop_list)]
+        return list(zip(utm_geom_list, utm_prop_list))
 
 
 class UtmZoneSplitter(BaseUtmSplitter):
@@ -651,4 +651,4 @@ class UtmZoneSplitter(BaseUtmSplitter):
         utm_prop_list = [dict(zone=zone, row='', direction=direction)
                          for direction in ['N', 'S'] for zone in range(1, 61)]
 
-        return [(utm_geom, utm_prop) for utm_geom, utm_prop in zip(utm_geom_list, utm_prop_list)]
+        return list(zip(utm_geom_list, utm_prop_list))
