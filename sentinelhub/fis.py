@@ -35,6 +35,8 @@ class FisService(OgcImageService):
 
         params = self._get_common_url_parameters(request)
         post_data = {**params, **self._get_fis_parameters(request, geometry)}
+        # post data keys on SH are expected to be in lowercase:
+        post_data = {k.lower(): v for k, v in post_data.items()}
 
         url = self.get_base_url(request)
         authority = self.instance_id if hasattr(self, 'instance_id') else request.theme
