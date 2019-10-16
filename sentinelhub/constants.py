@@ -294,11 +294,11 @@ class DataSource(Enum, metaclass=DataSourceMeta):
 
         return [cls.SENTINEL2_L1C, cls.SENTINEL2_L2A, cls.SENTINEL1_IW, cls.SENTINEL1_EW, cls.SENTINEL1_EW_SH,
                 cls.SENTINEL1_IW_ASC, cls.SENTINEL1_EW_ASC, cls.SENTINEL1_EW_SH_ASC, cls.SENTINEL1_IW_DES,
-                cls.SENTINEL1_EW_DES, cls.SENTINEL1_EW_SH_DES, cls.DEM, cls.MODIS, cls.LANDSAT8] + \
-               [custom_datasource for custom_datasource in cls.get_custom_datasources()]
+                cls.SENTINEL1_EW_DES, cls.SENTINEL1_EW_SH_DES, cls.DEM, cls.MODIS, cls.LANDSAT8,
+                *cls.get_custom_sources()]
 
     @classmethod
-    def get_custom_datasources(cls):
+    def get_custom_sources(cls):
         """Returns the list of all custom (BYOC) datasources, which have ben added to the DataSource enumerator.
 
         :return: List of custom (BYOC) datasources

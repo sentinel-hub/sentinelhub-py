@@ -113,8 +113,10 @@ class TestDataSource(TestSentinelHub):
                              format(data_source_name, datasource.name))
             self.assertEqual(wfs_id, wfsid_tested, msg="Expected {}, got {}".format(wfs_id, wfsid_tested))
 
-            self.assertTrue(datasource in DataSource.get_custom_datasources(), msg='Datasource should be in the list'
-                                                                                   'of custom datasources')
+            self.assertTrue(datasource in DataSource.get_available_sources(), msg='Datasource should be in the list'
+                                                                                   'of all datasources')
+            self.assertTrue(datasource in DataSource.get_custom_sources(), msg='Datasource should be in the list'
+                                                                               'of custom datasources')
 
 
 if __name__ == '__main__':
