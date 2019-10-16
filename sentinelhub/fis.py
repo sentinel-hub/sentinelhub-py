@@ -1,12 +1,11 @@
 """
 Module for working with Sentinel Hub FIS service
 """
-
 import logging
 
 from .time_utils import parse_time_interval
 from .download import DownloadRequest
-from .constants import MimeType, CRS, OgcConstants
+from .constants import MimeType, CRS, OgcConstants, RequestType
 from .ogc import OgcImageService
 from .geometry import Geometry
 
@@ -29,10 +28,23 @@ class FisService(OgcImageService):
         :type request: OgcRequest or GeopediaRequest
         :return: list of DownloadRequests
         """
-        return [DownloadRequest(url=self.get_url(request=request, geometry=geometry),
-                                filename=self.get_filename(request, geometry),
-                                data_type=MimeType.JSON, headers=OgcConstants.HEADERS)
-                for geometry in request.geometry_list]
+
+        return [self._create_request(request=request, geometry=geometry) for geometry in request.geometry_list]
+
+    def _create_request(self, request, geometry):
+
+        url = self.get_base_url(request)
+        authority = self.instance_id if hasattr(self, 'instance_id') else request.theme
+        headers = {'Content-Type': 'application/json', **OgcConstants.HEADERS}
+
+        post_data = {**self._get_common_url_parameters(request), **self._get_fis_parameters(request, geometry)}
+        post_data = {k.lower(): v for k, v in post_data.items()}  # lowercase required on SH service
+
+        return DownloadRequest(url=url + '/' + authority,
+                               post_values=post_data,
+                               filename=self.get_filename(request, geometry),
+                               data_type=MimeType.JSON, headers=headers,
+                               request_type=RequestType.POST)
 
     @staticmethod
     def get_filename(request, geometry):
