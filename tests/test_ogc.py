@@ -218,14 +218,14 @@ class TestOgc(TestSentinelHub):
                                        time_difference=datetime.timedelta(hours=1)),
                             result_len=1, img_min=3971, img_max=61495, img_mean=18369.9776, img_median=15165.0,
                             tile_num=1),
-            cls.OgcTestCase('BYOC Test',
-                            WmsRequest(data_source=DataSource('31df1de4-8bd4-43e0-8c3f-b04262d111b6'),
-                                       data_folder=cls.OUTPUT_FOLDER,
-                                       image_format=MimeType.TIFF_d16, layer='DEMO_BYOC_LAYER',
-                                       width=img_width, height=img_height, bbox=wgs84_bbox_byoc,
-                                       custom_url_params={CustomUrlParam.SHOWLOGO: False}),
-                            result_len=1, img_min=0, img_max=65535, img_mean=17158.8938, img_median=15728.0,
-                            tile_num=1)
+            # cls.OgcTestCase('BYOC Test',
+            #                 WmsRequest(data_source=DataSource('31df1de4-8bd4-43e0-8c3f-b04262d111b6'),
+            #                            data_folder=cls.OUTPUT_FOLDER,
+            #                            image_format=MimeType.TIFF_d16, layer='DEMO_BYOC_LAYER',
+            #                            width=img_width, height=img_height, bbox=wgs84_bbox_byoc,
+            #                            custom_url_params={CustomUrlParam.SHOWLOGO: False}),
+            #                 result_len=1, img_min=0, img_max=65535, img_mean=17158.8938, img_median=15728.0,
+            #                 tile_num=1)
         ]
         """
         # Test case for eocloud data source
