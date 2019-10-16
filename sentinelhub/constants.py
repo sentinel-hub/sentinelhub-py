@@ -124,17 +124,21 @@ class DataSourceMeta(EnumMeta):
 
         The method raises a ValueError if the 'something' does not match the format expected for collection id.
         """
+        if not isinstance(collection_id, str):
+            return super().__call__(collection_id, *args, **kwargs)
+
         collection_id_pattern = '.{8}-.{4}-.{4}-.{4}-.{12}'
         if not re.compile(collection_id_pattern).match(collection_id):
             raise ValueError("Given collection id does not match the expected format {}".format(collection_id_pattern))
 
-        if cls.custom_datasource_name(collection_id) not in cls._member_names_:
-            extend_enum(cls, cls.custom_datasource_name(collection_id), collection_id)
+        datasource_name = cls._custom_datasource_name(collection_id)
+        if datasource_name not in cls._member_names_:
+            extend_enum(cls, datasource_name, collection_id)
 
         return super().__call__(collection_id, *args, **kwargs)
 
     @staticmethod
-    def custom_datasource_name(collection_id):
+    def _custom_datasource_name(collection_id):
         """
         Prepares a name for custom (BYOC) datasource, which is then added to DataSource enum.
 
@@ -197,7 +201,7 @@ class DataSource(Enum, metaclass=DataSourceMeta):
         """
         is_eocloud = SHConfig().is_eocloud_ogc_url()
 
-        if data_source in cls.get_custom_datasources():
+        if data_source.is_custom():
             return 'DSS10-{}'.format(data_source.value)
 
         return {
@@ -300,7 +304,15 @@ class DataSource(Enum, metaclass=DataSourceMeta):
         :return: List of custom (BYOC) datasources
         :rtype: list(sentinelhub.DataSource)
         """
-        return [datasource for datasource in cls if datasource.name.startswith("BYOC_")]
+        return [datasource for datasource in cls if datasource.is_custom()]
+
+    def is_custom(self):
+        """ Checks is if datasource is a custom Sentinel Hub BYOC data source
+
+        :return: True if datasource is custom and False otherwise
+        :rtype: bool
+        """
+        return self.name.startswith('BYOC_')
 
 
 class CRSMeta(EnumMeta):

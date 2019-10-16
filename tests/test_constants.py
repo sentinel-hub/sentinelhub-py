@@ -106,11 +106,15 @@ class TestDataSource(TestSentinelHub):
              'DSS10-0000d273-7e89-4f00-971e-9025f89a0000'),
         )
         for collection_id, data_source_name, wfs_id in collectionid_datasourcename_wfsid:
-            datasourcename_tested = DataSource(collection_id).name
-            wfsid_tested = DataSource.get_wfs_typename(DataSource(collection_id))
-            self.assertEqual(data_source_name, datasourcename_tested, msg="Expected {}, got {}".
-                             format(data_source_name, datasourcename_tested))
+            datasource = DataSource(collection_id)
+
+            wfsid_tested = DataSource.get_wfs_typename(datasource)
+            self.assertEqual(data_source_name, datasource.name, msg="Expected {}, got {}".
+                             format(data_source_name, datasource.name))
             self.assertEqual(wfs_id, wfsid_tested, msg="Expected {}, got {}".format(wfs_id, wfsid_tested))
+
+            self.assertTrue(datasource in DataSource.get_custom_datasources(), msg='Datasource should be in the list'
+                                                                                   'of custom datasources')
 
 
 if __name__ == '__main__':
