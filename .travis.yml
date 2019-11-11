@@ -22,6 +22,7 @@ install:
   else
     pip install .[DEV] --upgrade ;
   fi
+- pip install python-dateutil==2.8.0  # This is temporal solution to prevent clash with botocore requirements
 
 script:
 - if [[ $TRAVIS_PYTHON_VERSION == '3.6' ]]; then pylint sentinelhub ; fi
