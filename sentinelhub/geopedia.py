@@ -178,7 +178,7 @@ class GeopediaSession(GeopediaService):
         self._session_start = datetime.datetime.now()
 
         session_id = self._parse_session_id(self._session_info) if self._session_info else ''
-        session_url = '{}data/v1/session/create?locale=en&sid={}'.format(self.base_url, session_id)
+        session_url = '{}/data/v1/session/create?locale=en&sid={}'.format(self.base_url, session_id)
         self._session_info = get_json(session_url)
 
         if self.username and self.password and self._parse_user_id(self._session_info) == self.UNAUTHENTICATED_USER_ID:
@@ -191,8 +191,9 @@ class GeopediaSession(GeopediaService):
     def _make_login(self):
         """ Private method that makes login
         """
-        login_url = '{}data/v1/session/login?user={}&pass={}&sid={}'.format(self.base_url, self.username, self.password,
-                                                                            self._parse_session_id(self._session_info))
+        login_url = '{}/data/v1/session/login?user={}&pass={}&sid={}'.format(self.base_url, self.username,
+                                                                             self.password,
+                                                                             self._parse_session_id(self._session_info))
         self._session_info = get_json(login_url)
 
     @staticmethod
@@ -367,7 +368,7 @@ class GeopediaFeatureIterator(GeopediaService):
         self.layer_size = None
         self.index = 0
 
-        self.next_page_url = '{}data/v2/search/tables/{}/features'.format(self.base_url, self.layer)
+        self.next_page_url = '{}/data/v2/search/tables/{}/features'.format(self.base_url, self.layer)
 
     def __iter__(self):
         self.index = 0

@@ -15,9 +15,6 @@ from .config import SHConfig
 from ._version import __version__
 
 
-mimetypes.add_type('application/json', '.json')
-
-
 class PackageProps:
     """ Class for obtaining package properties. Currently it supports obtaining package version."""
 
@@ -189,6 +186,7 @@ class DataSource(Enum, metaclass=DataSourceMeta):
     ENVISAT_MERIS = (_Source.ENVISAT_MERIS, )
     SENTINEL2_L3B = (_Source.SENTINEL2, _ProcessingLevel.L3B)
     LANDSAT8_L2A = (_Source.LANDSAT8, _ProcessingLevel.L2A)
+    LANDSAT8_L1C = (_Source.LANDSAT8, _ProcessingLevel.L1C)
 
     @classmethod
     def get_wfs_typename(cls, data_source):
@@ -199,7 +197,7 @@ class DataSource(Enum, metaclass=DataSourceMeta):
         :return: Product identifier for WFS
         :rtype: str
         """
-        is_eocloud = SHConfig().is_eocloud_ogc_url()
+        is_eocloud = SHConfig().has_eocloud_url()
 
         if data_source.is_custom():
             return 'DSS10-{}'.format(data_source.value)
@@ -228,6 +226,41 @@ class DataSource(Enum, metaclass=DataSourceMeta):
             cls.SENTINEL2_L3B: 'SEN4CAP_S2L3B.TILE',
             cls.LANDSAT8_L2A: 'SEN4CAP_L8L2A.TILE'
         }[data_source]
+
+    def api_identifier(self):
+        """ Returns Sentinel Hub API identifier string
+
+        :return: A data source identifier string
+        :rtype: str
+        """
+        return {
+            DataSource.SENTINEL2_L1C: 'S2L1C',
+            DataSource.SENTINEL2_L2A: 'S2L2A',
+            DataSource.LANDSAT8_L1C: 'L8L1C',
+            DataSource.DEM: 'DEM',
+            DataSource.MODIS: 'MODIS'
+        }[self]
+
+    def bands(self):
+        """ Get available bands for a particular data source
+        """
+        return {
+            DataSource.SENTINEL2_L1C: [
+                "B01", "B02", "B03", "B04", "B05", "B06", "B07", "B08", "B8A", "B09", "B10", "B11", "B12"
+            ],
+            DataSource.SENTINEL2_L2A: [
+                "B01", "B02", "B03", "B04", "B05", "B06", "B07", "B08", "B8A", "B09", "B11", "B12"
+            ],
+            DataSource.LANDSAT8_L1C: [
+                "B01", "B02", "B03", "B04", "B05", "B06", "B07", "B08", "B09", "B10", "B11"
+            ],
+            DataSource.DEM: [
+                "DEM"
+            ],
+            DataSource.MODIS: [
+                "B01", "B02", "B03", "B04", "B05", "B06", "B07"
+            ]
+        }[self]
 
     def is_sentinel1(self):
         """Checks if source is Sentinel-1
@@ -278,7 +311,7 @@ class DataSource(Enum, metaclass=DataSourceMeta):
         :return: `True` if data source exists at US West server and `False` otherwise
         :rtype: bool
         """
-        return not SHConfig().is_eocloud_ogc_url() and self.value[0] in [_Source.LANDSAT8, _Source.MODIS, _Source.DEM]
+        return not SHConfig().has_eocloud_url() and self.value[0] in [_Source.LANDSAT8, _Source.MODIS, _Source.DEM]
 
     @classmethod
     def get_available_sources(cls):
@@ -287,7 +320,7 @@ class DataSource(Enum, metaclass=DataSourceMeta):
         :return: List of available data sources
         :rtype: list(sentinelhub.DataSource)
         """
-        if SHConfig().is_eocloud_ogc_url():
+        if SHConfig().has_eocloud_url():
             return [cls.SENTINEL2_L1C, cls.SENTINEL2_L2A, cls.SENTINEL2_L3B, cls.SENTINEL1_IW, cls.SENTINEL1_EW,
                     cls.SENTINEL1_EW_SH, cls.SENTINEL3, cls.SENTINEL5P, cls.LANDSAT5, cls.LANDSAT7, cls.LANDSAT8,
                     cls.LANDSAT8_L2A, cls.ENVISAT_MERIS]
@@ -387,6 +420,15 @@ class CRS(Enum, metaclass=CRSMeta):
         :rtype: str
         """
         return 'EPSG:{}'.format(CRS(self).value)
+
+    @property
+    def opengis_string(self):
+        """ Returns an URL to OGC webpage where the CRS is defined
+
+        :return: An URL with CRS definition
+        :rtype: str
+        """
+        return 'http://www.opengis.net/def/crs/EPSG/0/{}'.format(self.epsg)
 
     def is_utm(self):
         """ Checks if crs is one of the 64 possible UTM coordinate reference systems.
@@ -518,9 +560,9 @@ class MimeType(Enum):
     XML = 'xml'
     GML = 'gml'
     TXT = 'txt'
+    TAR = 'tar'
     RAW = 'raw'
     SAFE = 'safe'
-    REQUESTS_RESPONSE = 'response'  # http://docs.python-requests.org/en/master/api/#requests.Response
 
     @staticmethod
     def canonical_extension(fmt_ext):
@@ -559,6 +601,14 @@ class MimeType(Enum):
         return self in frozenset([MimeType.TIFF, MimeType.TIFF_d8, MimeType.TIFF_d16, MimeType.TIFF_d32f, MimeType.PNG,
                                   MimeType.JP2, MimeType.JPG])
 
+    def is_api_format(self):
+        """ Checks if mime type is supported by Sentinel Hub API
+
+        :return: True if API supports this format and False otherwise
+        :rtype: bool
+        """
+        return self in frozenset([MimeType.JPG, MimeType.PNG, MimeType.TIFF, MimeType.JSON])
+
     def is_tiff_format(self):
         """ Checks whether file format is a TIFF image format
 
@@ -588,11 +638,15 @@ class MimeType(Enum):
         :return: String describing the file format
         :rtype: str
         """
+        if self is MimeType.TAR:
+            return 'application/x-tar'
+        if self is MimeType.JSON:
+            return 'application/json'
         if self in [MimeType.TIFF_d8, MimeType.TIFF_d16, MimeType.TIFF_d32f]:
             return 'image/{}'.format(self.value)
         if self is MimeType.JP2:
             return 'image/jpeg2000'
-        if self in [MimeType.RAW, MimeType.REQUESTS_RESPONSE]:
+        if self is MimeType.RAW:
             return self.value
         return mimetypes.types_map['.' + self.value]
 
@@ -657,7 +711,7 @@ class RequestType(Enum):
     POST = 'POST'
 
 
-class OgcConstants:
+class SHConstants:
     """ Initialisation of constants used by OGC request.
 
         Constants are LATEST

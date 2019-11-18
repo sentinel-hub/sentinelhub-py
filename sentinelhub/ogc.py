@@ -11,7 +11,7 @@ import shapely.geometry
 import shapely.wkt
 import shapely.ops
 
-from .constants import ServiceType, DataSource, MimeType, CRS, OgcConstants, CustomUrlParam
+from .constants import ServiceType, DataSource, MimeType, CRS, SHConstants, CustomUrlParam
 from .config import SHConfig
 from .geo_utils import get_image_dimension
 from .geometry import BBox, Geometry
@@ -33,7 +33,7 @@ class OgcService:
             ID specified in the configuration file is taken.
         :type instance_id: str or None
         """
-        self.base_url = SHConfig().ogc_base_url if not base_url else base_url
+        self.base_url = SHConfig().get_sh_ogc_url() if not base_url else base_url
         self.instance_id = SHConfig().instance_id if not instance_id else instance_id
 
         if not self.instance_id:
@@ -116,7 +116,7 @@ class OgcImageService(OgcService):
         size_x, size_y = self.get_image_dimensions(request)
         return [DownloadRequest(url=self.get_url(request=request, date=date, size_x=size_x, size_y=size_y),
                                 filename=self.get_filename(request, date, size_x, size_y),
-                                data_type=request.image_format, headers=OgcConstants.HEADERS)
+                                data_type=request.image_format, headers=SHConstants.HEADERS)
                 for date in self.get_dates(request)]
 
     def get_url(self, request, *, date=None, size_x=None, size_y=None, geometry=None):
@@ -158,14 +158,15 @@ class OgcImageService(OgcService):
         :return: base string for url to Sentinel Hub's OGC service for this product.
         :rtype: str
         """
-        url = self.base_url + request.service_type.value
+        url = '{}/{}'.format(self.base_url, request.service_type.value)
         # These 2 lines are temporal and will be removed after the use of uswest url wont be required anymore:
         if hasattr(request, 'data_source') and request.data_source.is_uswest_source():
             url = 'https://services-uswest2.sentinel-hub.com/ogc/{}'.format(request.service_type.value)
 
         if hasattr(request, 'data_source') and request.data_source not in DataSource.get_available_sources():
-            raise ValueError("{} is not available for service at ogc_base_url={}".format(request.data_source,
-                                                                                         SHConfig().ogc_base_url))
+            raise ValueError("{} is not available for service at service available at {}. Try"
+                             "changing 'sh_base_url' parameter in package configuration "
+                             "file".format(request.data_source, SHConfig().get_sh_ogc_url()))
         return url
 
     @staticmethod
@@ -428,7 +429,7 @@ class OgcImageService(OgcService):
 
         dates = sorted(set(self.wfs_iterator.get_dates()))
 
-        if request.time is OgcConstants.LATEST:
+        if request.time is SHConstants.LATEST:
             dates = dates[-1:]
         return OgcService._filter_dates(dates, request.time_difference)
 
@@ -532,7 +533,7 @@ class WebFeatureService(OgcService):
         if self.feature_offset is None:
             return
 
-        main_url = '{}{}/{}?'.format(self.base_url, ServiceType.WFS.value, self.instance_id)
+        main_url = '{}/{}/{}?'.format(self.base_url, ServiceType.WFS.value, self.instance_id)
 
         params = {'SERVICE': ServiceType.WFS.value,
                   'REQUEST': 'GetFeature',

@@ -39,7 +39,7 @@ class TestCRS(TestSentinelHub):
             self.assertTrue(CRS.has_value(crs.value), msg="Expected support for CRS {}".format(crs.value))
 
 
-class TestMimeType(TestSentinelHub):
+class TestMimeType(TestSentinelHub): #TODO: improve
     def test_canonical_extension(self):
         extension_pairs = (
             ('tiff', 'tiff'),
@@ -76,8 +76,9 @@ class TestMimeType(TestSentinelHub):
             (MimeType.CSV, 'text/csv'),
             (MimeType.ZIP, 'application/zip'),
             (MimeType.HDF, 'application/x-hdf'),
-            (MimeType.XML, 'application/xml'),
-            (MimeType.TXT, 'text/plain')
+            (MimeType.XML, 'text/xml'),
+            (MimeType.TXT, 'text/plain'),
+            (MimeType.TAR, 'application/x-tar')
         )
         for img_type, img_str in type_string_pairs:
             res = MimeType.get_string(img_type)

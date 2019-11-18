@@ -5,7 +5,7 @@ import logging
 
 from .time_utils import parse_time_interval
 from .download import DownloadRequest
-from .constants import MimeType, CRS, OgcConstants, RequestType
+from .constants import MimeType, CRS, SHConstants, RequestType
 from .ogc import OgcImageService
 from .geometry import Geometry
 
@@ -35,12 +35,12 @@ class FisService(OgcImageService):
 
         url = self.get_base_url(request)
         authority = self.instance_id if hasattr(self, 'instance_id') else request.theme
-        headers = {'Content-Type': 'application/json', **OgcConstants.HEADERS}
+        headers = {'Content-Type': MimeType.JSON.get_string(), **SHConstants.HEADERS}
 
         post_data = {**self._get_common_url_parameters(request), **self._get_fis_parameters(request, geometry)}
         post_data = {k.lower(): v for k, v in post_data.items()}  # lowercase required on SH service
 
-        return DownloadRequest(url=url + '/' + authority,
+        return DownloadRequest(url='{}/{}'.format(url, authority),
                                post_values=post_data,
                                filename=self.get_filename(request, geometry),
                                data_type=MimeType.JSON, headers=headers,

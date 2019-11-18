@@ -1,7 +1,7 @@
 """
 Module implementing geometry classes
 """
-
+import warnings
 from abc import ABC, abstractmethod
 from math import ceil
 
@@ -10,6 +10,7 @@ import shapely.geometry
 import shapely.wkt
 
 from .constants import CRS
+from .exceptions import SHDeprecationWarning
 from .geo_utils import transform_point
 
 
@@ -23,12 +24,11 @@ class BaseGeometry(ABC):
         """
         self._crs = CRS(crs)
 
-    def __getattr__(self, attr):
+    def _repr_svg_(self):
         """ Using shapely's svg geometry visualization for Jupyter notebooks
         """
-        if attr == '_repr_svg_':
-            return getattr(self.geometry, attr)
-        return super().__getattribute__(attr)
+        # pylint: disable=protected-access
+        return self.geometry._repr_svg_()
 
     @property
     def crs(self):
@@ -45,6 +45,9 @@ class BaseGeometry(ABC):
         :return: Coordinate reference system Enum
         :rtype: constants.CRS
         """
+        message = 'This method will be removed in version 3.0, use property {}.crs ' \
+                  'instead'.format(self.__class__.__name__)
+        warnings.warn(message, category=SHDeprecationWarning)
         return self.crs
 
     @property
@@ -60,6 +63,9 @@ class BaseGeometry(ABC):
         :return: A polygon or multipolygon
         :rtype: shapely.geometry.Polygon or shapely.geometry.MultiPolygon
         """
+        message = 'This method will be removed in version 3.0, use property {}.geometry ' \
+                  'instead'.format(self.__class__.__name__)
+        warnings.warn(message, category=SHDeprecationWarning)
         return self.geometry
 
     @property
@@ -184,6 +190,8 @@ class BBox(BaseGeometry):
         :return: min_x, min_y
         :rtype: (float, float)
         """
+        message = 'This method will be removed in version 3.0, use property BBox.lower_left instead'
+        warnings.warn(message, category=SHDeprecationWarning)
         return self.lower_left
 
     @property
@@ -201,6 +209,8 @@ class BBox(BaseGeometry):
         :return: max_x, max_y
         :rtype: (float, float)
         """
+        message = 'This method will be removed in version 3.0, use property BBox.upper_right instead'
+        warnings.warn(message, category=SHDeprecationWarning)
         return self.upper_right
 
     @property
@@ -218,6 +228,8 @@ class BBox(BaseGeometry):
         :return: middle point
         :rtype: (float, float)
         """
+        message = 'This method will be removed in version 3.0, use property BBox.middle instead'
+        warnings.warn(message, category=SHDeprecationWarning)
         return self.middle
 
     def reverse(self):

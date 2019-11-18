@@ -6,6 +6,8 @@ import logging
 import warnings
 
 from .constants import CRS
+from .exceptions import SHDeprecationWarning
+
 
 LOGGER = logging.getLogger(__name__)
 
@@ -244,6 +246,7 @@ def transform_bbox(bbox, target_crs):
     :return: bounding box in target CRS
     :rtype: geometry.BBox
     """
-    warnings.warn("This function is deprecated, use BBox.transform method instead", DeprecationWarning, stacklevel=2)
+    message = 'This function will be removed in version 3.0, use method BBox.transform instead'
+    warnings.warn(message, category=SHDeprecationWarning)
 
     return bbox.transform(target_crs)

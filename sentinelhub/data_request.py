@@ -5,7 +5,6 @@ Main module for collecting data
 import datetime
 import os
 import logging
-import warnings
 import copy
 from abc import ABC, abstractmethod
 
@@ -14,11 +13,11 @@ from .fis import FisService
 from .geopedia import GeopediaWmsService, GeopediaImageService
 from .aws import AwsProduct, AwsTile
 from .aws_safe import SafeProduct, SafeTile
-from .download import download_data, ImageDecodingError, DownloadFailedException
+from .download import DownloadClient, AwsDownloadClient, SentinelHubDownloadClient
+from .exceptions import DownloadFailedException
 from .io_utils import read_data
 from .os_utils import make_folder
 from .constants import DataSource, MimeType, CustomUrlParam, ServiceType, CRS, HistogramType
-from .config import SHConfig
 
 LOGGER = logging.getLogger(__name__)
 
@@ -32,7 +31,8 @@ class DataRequest(ABC):
     :param data_folder: location of the directory where the fetched data will be saved.
     :type data_folder: str
     """
-    def __init__(self, *, data_folder=None):
+    def __init__(self, download_client_class, *, data_folder=None):
+        self.download_client_class = download_client_class
         self.data_folder = data_folder.rstrip('/') if data_folder else None
 
         self.download_list = []
@@ -157,18 +157,8 @@ class DataRequest(ABC):
         else:
             raise ValueError('data_filter parameter must be a list of indices')
 
-        data_list = []
-        for future in download_data(filtered_download_list, redownload=redownload, max_threads=max_threads):
-            try:
-                data_list.append(future.result(timeout=SHConfig().download_timeout_seconds))
-            except ImageDecodingError as err:
-                data_list.append(None)
-                LOGGER.debug('%s while downloading data; will try to load it from disk if it was saved', err)
-            except DownloadFailedException as download_exception:
-                if raise_download_errors:
-                    raise download_exception
-                warnings.warn(str(download_exception))
-                data_list.append(None)
+        client = self.download_client_class(redownload=redownload, raise_download_errors=raise_download_errors)
+        data_list = client.download(filtered_download_list, max_threads=max_threads)
 
         if is_repeating_filter:
             data_list = [copy.deepcopy(data_list[index]) for index in mapping_list]
@@ -212,9 +202,9 @@ class DataRequest(ABC):
                              'In order to save data please set `data_folder` to location on your disk.')
 
         for download_request in self.download_list:
-            download_request.set_save_response(save_data)
-            download_request.set_return_data(return_data)
-            download_request.set_data_folder(self.data_folder)
+            download_request.save_response = save_data
+            download_request.return_data = return_data
+            download_request.data_folder = self.data_folder
 
         if save_data:
             for folder in self.folder_list:
@@ -308,7 +298,7 @@ class OgcRequest(DataRequest):
 
         self.wfs_iterator = None
 
-        super().__init__(**kwargs)
+        super().__init__(SentinelHubDownloadClient, **kwargs)
 
     def _check_custom_url_parameters(self):
         """ Checks if custom url parameters are valid parameters.
@@ -603,7 +593,7 @@ class GeopediaRequest(DataRequest):
         self.theme = theme
         self.image_format = MimeType(image_format)
 
-        super().__init__(**kwargs)
+        super().__init__(DownloadClient, **kwargs)
 
     @abstractmethod
     def create_request(self):
@@ -751,7 +741,7 @@ class AwsRequest(DataRequest):
         self.safe_format = safe_format
 
         self.aws_service = None
-        super().__init__(**kwargs)
+        super().__init__(AwsDownloadClient, **kwargs)
 
     @abstractmethod
     def create_request(self):

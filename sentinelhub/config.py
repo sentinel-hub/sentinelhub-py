@@ -8,33 +8,33 @@ from collections import OrderedDict
 
 
 class SHConfig:
-    """ This is a singleton implementation of the sentinelhub configuration class.
+    """ A sentinelhub-py package configuration class.
 
     The class reads during its first initialization the configurable settings from
     ``./config.json`` file:
 
-        - `instance_id`: Users' instance id. User can set it to his/hers instance id in ``config.json`` instead
-          of specifying it explicitly every time he/she creates new ogc request.
-        - `aws_access_key_id`: Access key for AWS Requester Pays buckets.
-        - `aws_secret_access_key`: Secret access key for AWS Requester Pays buckets.
-        - `ogc_base_url`: Base url for Sentinel Hub's services.
+        - `instance_id`: An instance ID for Sentinel Hub service used for OGC requests.
+        - `sh_client_id`: User's OAuth client ID for Sentinel Hub service
+        - `sh_client_secret`: User's OAuth client secret for Sentinel Hub service
+        - `sh_base_url`: There exist multiple deployed instances of Sentinel Hub service, this parameter defines the
+            location of a specific service instance.
         - `geopedia_wms_url`: Base url for Geopedia WMS services.
         - `geopedia_rest_url`: Base url for Geopedia REST services.
+        - `aws_access_key_id`: Access key for AWS Requester Pays buckets.
+        - `aws_secret_access_key`: Secret access key for AWS Requester Pays buckets.
         - `aws_metadata_url`: Base url for publicly available metadata files
         - `aws_s3_l1c_bucket`: Name of Sentinel-2 L1C bucket at AWS s3 service.
         - `aws_s3_l2a_bucket`: Name of Sentinel-2 L2A bucket at AWS s3 service.
         - `opensearch_url`: Base url for Sentinelhub Opensearch service.
         - `max_wfs_records_per_query`: Maximum number of records returned for each WFS query.
         - `max_opensearch_records_per_query`: Maximum number of records returned for each Opensearch query.
-        - `default_start_date`: In case time parameter for OGC data requests is not specified this will be used for
-          start date of the interval.
         - `max_download_attempts`: Maximum number of download attempts from a single URL until an error will be raised.
         - `download_sleep_time`: Number of seconds between the failed download attempt and the next attempt.
         - `download_timeout_seconds`: Maximum number of seconds before download attempt is canceled.
 
     Usage in the code:
 
-        * ``SHConfig().ogc_base_url``
+        * ``SHConfig().sh_base_url``
         * ``SHConfig().instance_id``
 
     """
@@ -43,18 +43,19 @@ class SHConfig:
         """
         CONFIG_PARAMS = OrderedDict([
             ('instance_id', ''),
+            ('sh_client_id', ''),
+            ('sh_client_secret', ''),
+            ('sh_base_url', 'https://services.sentinel-hub.com'),
+            ('geopedia_wms_url', 'http://service.geopedia.world'),
+            ('geopedia_rest_url', 'https://www.geopedia.world/rest'),
             ('aws_access_key_id', ''),
             ('aws_secret_access_key', ''),
-            ('ogc_base_url', 'https://services.sentinel-hub.com/ogc/'),
-            ('geopedia_wms_url', 'http://service.geopedia.world/'),
-            ('geopedia_rest_url', 'https://www.geopedia.world/rest/'),
-            ('aws_metadata_url', 'https://roda.sentinel-hub.com/'),
+            ('aws_metadata_url', 'https://roda.sentinel-hub.com'),
             ('aws_s3_l1c_bucket', 'sentinel-s2-l1c'),
             ('aws_s3_l2a_bucket', 'sentinel-s2-l2a'),
-            ('opensearch_url', 'http://opensearch.sentinel-hub.com/resto/api/collections/Sentinel2/'),
+            ('opensearch_url', 'http://opensearch.sentinel-hub.com/resto/api/collections/Sentinel2'),
             ('max_wfs_records_per_query', 100),
             ('max_opensearch_records_per_query', 500),
-            ('default_start_date', '1985-01-01'),
             ('max_download_attempts', 4),
             ('download_sleep_time', 5),
             ('download_timeout_seconds', 120)
@@ -64,23 +65,29 @@ class SHConfig:
             self.instance_id = ''
             self.load_configuration()
 
-        def _check_configuration(self, config):
-            """ Checks if configuration file contains all keys.
-
-            :param config: configuration dictionary read from ``config.json``
-            :type config: dict
+        def _parse_configuration(self, config):
+            """ Checks if configuration file contains all keys and parses values
             """
             for param in self.CONFIG_PARAMS:
                 if param not in config:
                     raise ValueError("Configuration file does not contain '%s' parameter." % param)
+
             for param, default_param in self.CONFIG_PARAMS.items():
                 param_type = type(default_param)
                 if not isinstance(config[param], param_type):
                     raise ValueError("Value of parameter '{}' must be of type {}".format(param, param_type.__name__))
+
             if config['max_wfs_records_per_query'] > 100:
                 raise ValueError("Value of config parameter 'max_wfs_records_per_query' must be at most 100")
             if config['max_opensearch_records_per_query'] > 500:
                 raise ValueError("Value of config parameter 'max_opensearch_records_per_query' must be at most 500")
+
+            # The following enables that url parameters can be written with or without / at the end
+            for param, value in self.CONFIG_PARAMS.items():
+                if isinstance(value, str) and value.startswith('http'):
+                    config[param] = config[param].rstrip('/')
+
+            return config
 
         @staticmethod
         def get_config_file():
@@ -101,11 +108,12 @@ class SHConfig:
             """
             with open(self.get_config_file(), 'r') as cfg_file:
                 config = json.load(cfg_file)
-                self._check_configuration(config)
 
-                for prop in config:
-                    if prop in self.CONFIG_PARAMS:
-                        setattr(self, prop, config[prop])
+            config = self._parse_configuration(config)
+
+            for prop in config:
+                if prop in self.CONFIG_PARAMS:
+                    setattr(self, prop, config[prop])
 
         def get_config(self):
             """ Returns ordered dictionary with configuration parameters
@@ -123,7 +131,7 @@ class SHConfig:
             """
             config = self.get_config()
 
-            self._check_configuration(config)
+            self._parse_configuration(config)
 
             with open(self.get_config_file(), 'w') as cfg_file:
                 json.dump(config, cfg_file, indent=2)
@@ -185,7 +193,7 @@ class SHConfig:
 
         :param params: Parameters which will be reset. Parameters can be specified with a list of names, e.g.
             ``['instance_id', 'aws_access_key_id', 'aws_secret_access_key']``, or as a single name, e.g.
-            ``'ogc_base_url'``. By default all parameters will be reset and default value is ``Ellipsis``.
+            ``'sh_base_url'``. By default all parameters will be reset and default value is ``Ellipsis``.
         :type params: Ellipsis or list(str) or str
         """
         if params is ...:
@@ -233,10 +241,43 @@ class SHConfig:
         """
         return self._instance.get_config_file()
 
-    def is_eocloud_ogc_url(self):
-        """ Checks if base OGC URL is set to eocloud URL
+    def has_eocloud_url(self):
+        """ Checks if base Sentinel Hub URL is set to eocloud URL
 
         :return: `True` if 'eocloud' string is in base OGC URL else `False`
         :rtype: bool
         """
-        return 'eocloud' in self.ogc_base_url
+        return 'eocloud' in self.sh_base_url
+
+    def get_sh_oauth_url(self):
+        """ Provides URL for Sentinel Hub authentication endpoint
+
+        :return: An URL endpoint
+        :rtype: str
+        """
+        return '{}/oauth/token'.format(self.sh_base_url)
+
+    def get_sh_processing_api_url(self):
+        """  Provides URL for Sentinel Hub processing API endpoint
+
+        :return: An URL endpoint
+        :rtype: str
+        """
+        return '{}/api/v1/process'.format(self.sh_base_url)
+
+    def get_sh_ogc_url(self):
+        """ Provides URL for Sentinel Hub OGC endpoint
+
+        :return: An URL endpoint
+        :rtype: str
+        """
+        ogc_enpoint = 'v1' if self.has_eocloud_url() else 'ogc'
+        return '{}/{}'.format(self.sh_base_url, ogc_enpoint)
+
+    def get_sh_rate_limit_url(self):
+        """ Provides URL for Sentinel Hub rate limiting endpoint
+
+        :return: An URL endpoint
+        :rtype: str
+        """
+        return '{}/aux/ratelimit'.format(self.sh_base_url)
