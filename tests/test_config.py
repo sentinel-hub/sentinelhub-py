@@ -18,7 +18,8 @@ class TestSHConfig(TestSentinelHub):
             config = json.load(fp)
 
         for attr in config:
-            if attr not in ['instance_id', 'aws_access_key_id', 'aws_secret_access_key']:
+            if attr not in ['instance_id', 'aws_access_key_id', 'aws_secret_access_key',
+                            'sh_client_id', 'sh_client_secret']:
                 value = config[attr]
                 if isinstance(value, str):
                     value = value.rstrip('/')
