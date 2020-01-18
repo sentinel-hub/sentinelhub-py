@@ -81,13 +81,15 @@ class DataRequest(ABC):
         """
         return isinstance(self.download_list, list)
 
-    def get_data(self, *, save_data=False, data_filter=None, redownload=False, max_threads=None,
-                 raise_download_errors=True):
+    def get_data(self, *, save_data=False, decode_data=True, data_filter=None,
+                 redownload=False, max_threads=None, raise_download_errors=True):
         """ Get requested data either by downloading it or by reading it from the disk (if it
         was previously downloaded and saved).
 
         :param save_data: flag to turn on/off saving of data to disk. Default is `False`.
         :type save_data: bool
+        :param decode_data: if `True` (default), decodes data (e.g., returns image as an array of numbers); if `False`, returns binary data.
+        :type decode_data: bool
         :param redownload: if `True`, download again the requested data even though it's already saved to disk.
                             Default is `False`, do not download if data is already available on disk.
         :type redownload: bool
@@ -105,7 +107,7 @@ class DataRequest(ABC):
                     shape ``[height, width, channels]``.
         :rtype: list of numpy arrays
         """
-        self._preprocess_request(save_data, True)
+        self._preprocess_request(save_data, True, decode_data)
         data_list = self._execute_data_download(data_filter, redownload, max_threads, raise_download_errors)
         return self._add_saved_data(data_list, data_filter, raise_download_errors)
 
@@ -124,7 +126,7 @@ class DataRequest(ABC):
             ``DownloadFailedException``. If `False` failed downloads will only raise warnings.
         :type raise_download_errors: bool
         """
-        self._preprocess_request(True, False)
+        self._preprocess_request(True, False, False)
         self._execute_data_download(data_filter, redownload, max_threads, raise_download_errors)
 
     def _execute_data_download(self, data_filter, redownload, max_threads, raise_download_errors):
@@ -196,13 +198,15 @@ class DataRequest(ABC):
             mapping_list.append(unique_requests_map[download_request])
         return unique_download_list, mapping_list
 
-    def _preprocess_request(self, save_data, return_data):
+    def _preprocess_request(self, save_data, return_data, decode_data):
         """ Prepares requests for download and creates empty folders
 
         :param save_data: Tells whether to save data or not
         :type save_data: bool
         :param return_data: Tells whether to return data or not
         :type return_data: bool
+        :param decode_data: Tells whether to decode returned data (only relevant if return_data is True)
+        :type decode_data: bool
         """
         if not self.is_valid_request():
             raise ValueError('Cannot obtain data because request is invalid')
@@ -214,6 +218,8 @@ class DataRequest(ABC):
         for download_request in self.download_list:
             download_request.set_save_response(save_data)
             download_request.set_return_data(return_data)
+            if not decode_data:
+                download_request.set_data_type(MimeType.RAW)
             download_request.set_data_folder(self.data_folder)
 
         if save_data:
@@ -228,7 +234,8 @@ class DataRequest(ABC):
         for i, request in enumerate(filtered_download_list):
             if request.return_data and data_list[i] is None:
                 if os.path.exists(request.get_file_path()):
-                    data_list[i] = read_data(request.get_file_path())
+                    data_list[i] = read_data(request.get_file_path(),
+                                             data_format=request.data_type)
                 elif raise_download_errors:
                     raise DownloadFailedException('Failed to download data from {}.\n No previously downloaded data '
                                                   'exists in file {}.'.format(request.url, request.get_file_path()))

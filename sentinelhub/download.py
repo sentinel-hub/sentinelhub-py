@@ -150,6 +150,14 @@ class DownloadRequest:
         """
         self.return_data = return_data
 
+    def set_data_type(self, data_type):
+        """ Set data_type attribute
+
+        :param data_type: file format of downloaded data
+        :type data_type: constants.MimeType
+        """
+        self.data_type = MimeType(data_type)
+
     def is_downloaded(self):
         """ Checks if data for this request has already been downloaded and is saved to disk.
 

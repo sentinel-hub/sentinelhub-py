@@ -44,6 +44,9 @@ def read_data(filename, data_format=None):
     if not isinstance(data_format, MimeType):
         data_format = get_data_format(filename)
 
+    if data_format is MimeType.RAW:
+        with open(filename, 'rb') as f:
+            return f.read()
     if data_format.is_tiff_format():
         return read_tiff_image(filename)
     if data_format is MimeType.JP2:
