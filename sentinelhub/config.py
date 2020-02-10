@@ -46,7 +46,7 @@ class SHConfig:
             ('sh_client_id', ''),
             ('sh_client_secret', ''),
             ('sh_base_url', 'https://services.sentinel-hub.com'),
-            ('geopedia_wms_url', 'http://service.geopedia.world'),
+            ('geopedia_wms_url', 'https://service.geopedia.world'),
             ('geopedia_rest_url', 'https://www.geopedia.world/rest'),
             ('aws_access_key_id', ''),
             ('aws_secret_access_key', ''),

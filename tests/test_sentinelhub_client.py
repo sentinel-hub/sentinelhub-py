@@ -12,6 +12,8 @@ import sentinelhub.sentinelhub_request as shr
 class TestProcessingApi(TestSentinelHub):
     def test_single_tiff(self):
         evalscript = """
+            //VERSION=3
+            
             function setup() {
                 return {
                     input: ["B02", "B03", "B04"],
@@ -48,6 +50,8 @@ class TestProcessingApi(TestSentinelHub):
     def test_cache(self):
         cache_folder = self.OUTPUT_FOLDER
         evalscript = """
+            //VERSION=3
+            
             function setup() {
                 return {
                     input: ["B02", "B03", "B04"],
@@ -101,6 +105,8 @@ class TestProcessingApi(TestSentinelHub):
 
     def test_multipart_tar(self):
         evlascript = """
+            //VERSION=3
+        
             function setup() {
                 return {
                     input: [{
@@ -154,6 +160,8 @@ class TestProcessingApi(TestSentinelHub):
 
     def test_multipart_geometry(self):
         evalscript = """
+            //VERSION=3
+        
             function setup() {
             return {
                 input: ["B02", "B03", "B04", "dataMask"],
