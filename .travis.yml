@@ -9,7 +9,7 @@ python:
 - "3.5"
 - "3.6"
 - "3.7"
-# - &pypy3 pypy3.5-6.0
+- "3.8"
 
 before_install:
 - sudo add-apt-repository -y ppa:jonathonf/backports
@@ -22,7 +22,6 @@ install:
   else
     pip install .[DEV] --upgrade ;
   fi
-- pip install python-dateutil==2.8.0  # This is temporal solution to prevent clash with botocore requirements
 
 script:
 - if [[ $TRAVIS_PYTHON_VERSION == '3.6' ]]; then pylint sentinelhub ; fi
@@ -31,6 +30,8 @@ script:
   if [[ ($TRAVIS_PULL_REQUEST == true) || ( $TRAVIS_PYTHON_VERSION != '3.7') ]] ;
   then pytest --cov \
     --ignore tests/test_ogc.py \
+    --ignore tests/test_sentinelhub_client.py \
+    --ignore tests/test_session.py \
     --ignore tests/test_fis.py \
     --ignore tests/test_data_request.py \
     --ignore tests/test_aws.py \
