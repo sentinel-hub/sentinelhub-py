@@ -3,12 +3,16 @@ Tests for utilities that implement rate-limiting in the package
 """
 import unittest
 
-from sentinelhub import TestCaseContainer
+from sentinelhub import TestCaseContainer, SentinelHubSession
 from sentinelhub.sentinelhub_rate_limit import SentinelHubRateLimit, PolicyBucket
 
 
 class TestRateLimit(unittest.TestCase):
-    pass
+    """ A class that tests SentinelHubRateLimit class
+    """
+
+    def test_scenario_without_session(self):
+        rate_limit = SentinelHubRateLimit()
 
 
 class TestPolicyBucket(unittest.TestCase):
