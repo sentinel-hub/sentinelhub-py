@@ -300,7 +300,7 @@ class PolicyBucket:
         """ Expected time a user would have to wait for this bucket
         """
         overall_completed_cost = requests_completed * expected_cost_per_request * expected_process_num
-        expected_content = self.content + elapsed_time * self.refill_per_second - overall_completed_cost
+        expected_content = max(self.content + elapsed_time * self.refill_per_second - overall_completed_cost, 0)
 
         if self.is_fixed():
             if expected_content < expected_cost_per_request:
