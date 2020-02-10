@@ -11,6 +11,7 @@ from .exceptions import OutOfRequestsException
 
 ERR = 0.01
 
+
 class SentinelHubRateLimit:
     """ Class implementing rate limiting logic of Sentinel Hub service
 
@@ -286,7 +287,7 @@ class PolicyBucket:
         """ Calculates the cost per second for the bucket given the elapsed time and the new content.
 
         In the calculation it assumes that during the elapsed time bucket was being filled all the time - i.e. it
-        assumes the bucket has never been ful for a non-zero amount of time in the elapsed time period.
+        assumes the bucket has never been full for a non-zero amount of time in the elapsed time period.
         """
         content_difference = self.content - new_content
         if not self.is_fixed():
