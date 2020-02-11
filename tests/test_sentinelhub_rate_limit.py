@@ -5,8 +5,8 @@ import unittest
 import copy
 import time
 
-from sentinelhub import TestCaseContainer, SentinelHubSession
-from sentinelhub.sentinelhub_rate_limit import SentinelHubRateLimit, PolicyBucket
+from sentinelhub import TestCaseContainer
+from sentinelhub.sentinelhub_rate_limit import SentinelHubRateLimit, PolicyBucket, PolicyType
 
 
 class DummyService:
@@ -60,38 +60,72 @@ class DummyService:
 class TestRateLimit(unittest.TestCase):
     """ A class that tests SentinelHubRateLimit class
     """
+    @classmethod
+    def setUp(cls):
 
-    def test_scenario_without_session(self):
-        rate_limit = SentinelHubRateLimit(None)
-        policy_buckets = copy.deepcopy(rate_limit.policy_buckets)
+        cls.test_cases = [
+            TestCaseContainer('Trial policy', [
+                    PolicyBucket(PolicyType.PROCESSING_UNITS, {
+                        "capacity": 30000,
+                        "samplingPeriod": "PT744H",
+                        "nanosBetweenRefills": 89280000000
+                    }),
+                    PolicyBucket(PolicyType.PROCESSING_UNITS, {
+                        "capacity": 300,
+                        "samplingPeriod": "PT1M",
+                        "nanosBetweenRefills": 200000000,
+                    }),
+                    PolicyBucket(PolicyType.REQUESTS, {
+                        "capacity": 30000,
+                        "samplingPeriod": "PT744H",
+                        "nanosBetweenRefills": 89280000000,
+                    }),
+                    PolicyBucket(PolicyType.REQUESTS, {
+                        "capacity": 300,
+                        "samplingPeriod": "PT1M",
+                        "nanosBetweenRefills": 200000000,
+                    })
+                ], process_num=5, units_per_request=5, process_time=0.5, request_num=100)
+        ]
 
-        service = DummyService(policy_buckets, process_num=5, units_per_request=5, process_time=0.5)
+    def test_scenarios(self):
+        for test_case in self.test_cases:
+            with self.subTest(msg='Test case {}'.format(test_case.name)):
+                policy_buckets = test_case.request
 
-        request_num = 100
+                rate_limit = SentinelHubRateLimit(None)
+                rate_limit.policy_buckets = copy.deepcopy(policy_buckets)
 
-        start_time = time.monotonic()
+                service = DummyService(
+                    policy_buckets,
+                    process_num=test_case.process_num,
+                    units_per_request=test_case.units_per_request,
+                    process_time=test_case.process_time
+                )
 
-        while request_num > 0:
-            sleep_time = rate_limit.register_next()
-            print(request_num, sleep_time)
-            print(rate_limit.expected_process_num, rate_limit.expected_cost_per_request)
-            for idx, bucket in enumerate(service.policy_buckets):
-                print(idx, bucket)
+                request_num = test_case.request_num
 
-            if sleep_time > 0:
-                time.sleep(sleep_time)
-                continue
+                start_time = time.monotonic()
+                while request_num > 0:
+                    sleep_time = rate_limit.register_next()
+                    print('requests left:', request_num, 'sleep time:', sleep_time)
+                    print(rate_limit.expected_process_num, rate_limit.expected_cost_per_request)
+                    for idx, bucket in enumerate(service.policy_buckets):
+                        print(idx, bucket)
 
-            response_headers = service.make_request()
-            if SentinelHubRateLimit.VIOLATION_HEADER not in response_headers:
-                request_num -= 1
-            print(response_headers)
-            rate_limit.update(response_headers)
+                    if sleep_time > 0:
+                        time.sleep(sleep_time)
+                        continue
 
-        elapsed_time = time.monotonic() - start_time
+                    response_headers = service.make_request()
+                    if SentinelHubRateLimit.VIOLATION_HEADER not in response_headers:
+                        request_num -= 1
+                    print(response_headers)
+                    rate_limit.update(response_headers)
 
-        print(elapsed_time)
+                elapsed_time = time.monotonic() - start_time
 
+                print(elapsed_time)
 
 
 class TestPolicyBucket(unittest.TestCase):
