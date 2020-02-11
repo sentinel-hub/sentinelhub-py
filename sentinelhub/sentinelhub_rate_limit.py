@@ -198,48 +198,42 @@ class SentinelHubRateLimit:
             return
 
         remaining_requests = float(headers[self.REQUEST_COUNT_HEADER])
-        requests_per_second = max(bucket.count_cost_per_second(elapsed_time, remaining_requests) for bucket in
+        requests_per_second = min(bucket.count_cost_per_second(elapsed_time, remaining_requests) for bucket in
                                   self.policy_buckets if bucket.is_request_bucket())
 
-        self._update_expected_process_num(elapsed_time * requests_per_second, is_rate_limited=is_rate_limited)
+        self._update_expected_process_num(elapsed_time * requests_per_second)
 
         if self.UNITS_COUNT_HEADER not in headers:
             return
 
         remaining_units = float(headers[self.UNITS_COUNT_HEADER])
-        cost_per_second = max(bucket.count_cost_per_second(elapsed_time, remaining_units) for bucket in
+        cost_per_second = min(bucket.count_cost_per_second(elapsed_time, remaining_units) for bucket in
                               self.policy_buckets if not bucket.is_request_bucket())
         cost_per_request = cost_per_second / max(requests_per_second, ERR)
 
-        self._update_expected_cost_per_request(cost_per_request, is_rate_limited=is_rate_limited)
+        self._update_expected_cost_per_request(cost_per_request)
 
-    def _update_expected_process_num(self, requests_done, is_rate_limited=False):
+    def _update_expected_process_num(self, requests_done):
         """ This method updates the expected number of concurrent processes using this credentials
         """
         # Note: if self.requests_completed is small the following is likely to be inaccurate
-        max_process_num = math.ceil(requests_done / max(self.requests_completed + self.requests_in_process, 1))
-        min_process_num = math.floor(requests_done / max(self.requests_completed + self.requests_in_process, 1))
+        process_num = requests_done / max(self.requests_completed + self.requests_in_process, 1)
 
-        if is_rate_limited or self.expected_process_num < min_process_num:
+        print(process_num, self.requests_completed, self.requests_in_process, '!!!')
+        if self.expected_process_num < process_num - 1:
             self.expected_process_num += 1
 
-        if self.expected_process_num > max_process_num:
+        if self.expected_process_num > process_num + 1:
             self.expected_process_num -= 1
 
         self.expected_process_num = max(self.expected_process_num, 1)
 
-    def _update_expected_cost_per_request(self, cost_per_request, is_rate_limited=False):
+    def _update_expected_cost_per_request(self, cost_per_request):
         """ This method updates the expected cost per request
         """
         value_difference = cost_per_request - self.expected_cost_per_request
 
-        if is_rate_limited:
-            # Making sure we cannot decrease expectations if we get rate-limited
-            value_difference = max(value_difference, 1)
-        else:
-            value_difference = min(max(value_difference, -1), 1) / 2
-
-        self.expected_cost_per_request += value_difference
+        self.expected_cost_per_request += min(max(value_difference, -1), 1) / 2
         self.expected_cost_per_request = max(self.expected_cost_per_request, 1)
 
 
