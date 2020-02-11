@@ -468,10 +468,7 @@ class CRS(Enum, metaclass=CRSMeta):
         :return: A projection function obtained from pyproj package
         :rtype: function
         """
-        if pyproj.__version__ >= '2':
-            return pyproj.Transformer.from_proj(self.projection(), other.projection(), skip_equivalent=True).transform
-
-        return functools.partial(pyproj.transform, self.projection(), other.projection())
+        return pyproj.Transformer.from_proj(self.projection(), other.projection(), skip_equivalent=True).transform
 
     @staticmethod
     def get_utm_from_wgs84(lng, lat):
