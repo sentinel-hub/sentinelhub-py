@@ -450,7 +450,10 @@ class CRS(Enum, metaclass=CRSMeta):
         :return: pyproj projection class
         :rtype: pyproj.Proj
         """
-        return pyproj.Proj(init=self.ogc_string(), preserve_units=True)
+        # The following ensures lng-lat order in WGS84
+        projection_string = '+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs' if self is CRS.WGS84 else \
+            self.ogc_string()
+        return pyproj.Proj(projection_string, preserve_units=True)
 
     @functools.lru_cache(maxsize=10)
     def get_transform_function(self, other):
