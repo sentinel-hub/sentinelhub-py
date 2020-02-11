@@ -2,9 +2,59 @@
 Tests for utilities that implement rate-limiting in the package
 """
 import unittest
+import copy
+import time
 
 from sentinelhub import TestCaseContainer, SentinelHubSession
 from sentinelhub.sentinelhub_rate_limit import SentinelHubRateLimit, PolicyBucket
+
+
+class DummyService:
+
+    def __init__(self, policy_buckets, process_num, units_per_request, process_time):
+
+        self.policy_buckets = policy_buckets
+        self.process_num = process_num
+        self.units_per_request = units_per_request
+        self.process_time = process_time
+
+        self.time = time.monotonic()
+
+    def make_request(self):
+        new_time = time.monotonic()
+        time.sleep(self.process_time)
+        elapsed_time = new_time - self.time
+
+        for bucket in self.policy_buckets:
+            bucket.content = min(bucket.content + elapsed_time * bucket.refill_per_second, bucket.capacity)
+
+        self.time = new_time
+
+        new_content_list = self._get_new_bucket_content()
+        is_rate_limited = min(new_content_list) < 0
+
+        if not is_rate_limited:
+            for bucket, new_content in zip(self.policy_buckets, new_content_list):
+                bucket.content = new_content
+
+        return self._get_headers(is_rate_limited)
+
+    def _get_new_bucket_content(self):
+        costs = (self.process_num * (1 if bucket.is_request_bucket() else self.units_per_request)
+                 for bucket in self.policy_buckets)
+
+        return [bucket.content - cost for bucket, cost in zip(self.policy_buckets, costs)]
+
+    def _get_headers(self, is_rate_limited):
+        headers = {
+            SentinelHubRateLimit.REQUEST_COUNT_HEADER: min(bucket.content for bucket in self.policy_buckets
+                                                           if bucket.is_request_bucket()),
+            SentinelHubRateLimit.UNITS_COUNT_HEADER: min(bucket.content for bucket in self.policy_buckets
+                                                         if not bucket.is_request_bucket())
+        }
+        if is_rate_limited:
+            headers[SentinelHubRateLimit.VIOLATION_HEADER] = True
+        return headers
 
 
 class TestRateLimit(unittest.TestCase):
@@ -12,7 +62,36 @@ class TestRateLimit(unittest.TestCase):
     """
 
     def test_scenario_without_session(self):
-        rate_limit = SentinelHubRateLimit()
+        rate_limit = SentinelHubRateLimit(None)
+        policy_buckets = copy.deepcopy(rate_limit.policy_buckets)
+
+        service = DummyService(policy_buckets, process_num=5, units_per_request=5, process_time=0.5)
+
+        request_num = 100
+
+        start_time = time.monotonic()
+
+        while request_num > 0:
+            sleep_time = rate_limit.register_next()
+            print(request_num, sleep_time)
+            print(rate_limit.expected_process_num, rate_limit.expected_cost_per_request)
+            for idx, bucket in enumerate(service.policy_buckets):
+                print(idx, bucket)
+
+            if sleep_time > 0:
+                time.sleep(sleep_time)
+                continue
+
+            response_headers = service.make_request()
+            if SentinelHubRateLimit.VIOLATION_HEADER not in response_headers:
+                request_num -= 1
+            print(response_headers)
+            rate_limit.update(response_headers)
+
+        elapsed_time = time.monotonic() - start_time
+
+        print(elapsed_time)
+
 
 
 class TestPolicyBucket(unittest.TestCase):
