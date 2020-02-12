@@ -10,6 +10,7 @@ from threading import Lock
 
 from sentinelhub import TestCaseContainer
 from sentinelhub.sentinelhub_rate_limit import SentinelHubRateLimit, PolicyBucket, PolicyType
+from sentinelhub.sentinelhub_simple_rate_limit import SentinelSimpleRateLimit
 
 
 class DummyService:
@@ -123,8 +124,10 @@ class TestRateLimit(unittest.TestCase):
 
                 rate_limit_objects = []
                 for _ in range(process_num):
-                    rate_limit = SentinelHubRateLimit(None)
-                    rate_limit.policy_buckets = copy.deepcopy(policy_buckets)
+                    # rate_limit = SentinelHubRateLimit(None)
+                    rate_limit = SentinelSimpleRateLimit()
+
+                    # rate_limit.policy_buckets = copy.deepcopy(policy_buckets)
                     rate_limit_objects.append(rate_limit)
 
                 service = DummyService(
@@ -154,10 +157,10 @@ class TestRateLimit(unittest.TestCase):
         rate_limit_hits = 0
         while request_num > 0:
             sleep_time = rate_limit.register_next()
-            # print('index', index, 'requests left:', request_num, 'sleep time:', sleep_time)
+            print('index', index, 'requests left:', request_num, 'sleep time:', sleep_time)
             # print(rate_limit.expected_process_num, rate_limit.expected_cost_per_request)
-            # for idx, bucket in enumerate(service.policy_buckets):
-            #     print(idx, bucket)
+            for idx, bucket in enumerate(service.policy_buckets):
+                print(idx, bucket)
 
             if sleep_time > 0:
                 time.sleep(sleep_time)
@@ -168,7 +171,7 @@ class TestRateLimit(unittest.TestCase):
                 request_num -= 1
             else:
                 rate_limit_hits += 1
-            # print(response_headers)
+            print(response_headers)
             rate_limit.update(response_headers)
 
         return rate_limit_hits
