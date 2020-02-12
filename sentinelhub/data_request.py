@@ -241,7 +241,7 @@ class OgcRequest(DataRequest):
     :param bbox: Bounding box of the requested image. Coordinates must be in the specified coordinate reference system.
     :type bbox: geometry.BBox
     :param time: time or time range for which to return the results, in ISO8601 format
-                (year-month-date, for example: ``2016-01-01``, or year-month-dateThours:minuts:seconds format,
+                (year-month-date, for example: ``2016-01-01``, or year-month-dateThours:minutes:seconds format,
                 i.e. ``2016-01-01T16:31:21``). When a single time is specified the request will return
                 data for that specific date, if it exists. If a time range is specified the result is a list of all
                 scenes between the specified dates conforming to the cloud coverage criteria. Most recent acquisition
@@ -376,7 +376,7 @@ class WmsRequest(OgcRequest):
     :param bbox: Bounding box of the requested image. Coordinates must be in the specified coordinate reference system.
     :type bbox: geometry.BBox
     :param time: time or time range for which to return the results, in ISO8601 format
-                (year-month-date, for example: ``2016-01-01``, or year-month-dateThours:minuts:seconds format,
+                (year-month-date, for example: ``2016-01-01``, or year-month-dateThours:minutes:seconds format,
                 i.e. ``2016-01-01T16:31:21``). When a single time is specified the request will return
                 data for that specific date, if it exists. If a time range is specified the result is a list of all
                 scenes between the specified dates conforming to the cloud coverage criteria. Most recent acquisition
@@ -443,7 +443,7 @@ class WcsRequest(OgcRequest):
     :param bbox: Bounding box of the requested image. Coordinates must be in the specified coordinate reference system.
     :type bbox: geometry.BBox
     :param time: time or time range for which to return the results, in ISO8601 format
-                (year-month-date, for example: ``2016-01-01``, or year-month-dateThours:minuts:seconds format,
+                (year-month-date, for example: ``2016-01-01``, or year-month-dateThours:minutes:seconds format,
                 i.e. ``2016-01-01T16:31:21``). When a single time is specified the request will return
                 data for that specific date, if it exists. If a time range is specified the result is a list of all
                 scenes between the specified dates conforming to the cloud coverage criteria. Most recent acquisition
@@ -502,7 +502,7 @@ class FisRequest(OgcRequest):
         match the one given by `data_source` parameter
     :type layer: str
     :param time: time or time range for which to return the results, in ISO8601 format
-        (year-month-date, for example: ``2016-01-01``, or year-month-dateThours:minuts:seconds format,
+        (year-month-date, for example: ``2016-01-01``, or year-month-dateThours:minutes:seconds format,
         i.e. ``2016-01-01T16:31:21``). Examples: ``'2016-01-01'``, or ``('2016-01-01', ' 2016-01-31')``
     :type time: str or (str, str) or datetime.date or (datetime.date, datetime.date) or datetime.datetime or
         (datetime.datetime, datetime.datetime)
@@ -730,7 +730,7 @@ class AwsRequest(DataRequest):
                       (e.g. ``['metadata', 'tileInfo', 'preview/B01', 'TCI']``)
     :type metafiles: list(str)
     :param safe_format: flag that determines the structure of saved data. If `True` it will be saved in .SAFE format
-                        defined by ESA. If `False` it will be saved in the same structure as the stucture at AWS.
+                        defined by ESA. If `False` it will be saved in the same structure as the structure at AWS.
     :type safe_format: bool
     :param data_folder: location of the directory where the fetched data will be saved.
     :type data_folder: str
@@ -773,7 +773,7 @@ class AwsProductRequest(AwsRequest):
                       (e.g. ``['metadata', 'tileInfo', 'preview/B01', 'TCI']``)
     :type metafiles: list(str)
     :param safe_format: flag that determines the structure of saved data. If `True` it will be saved in .SAFE format
-                        defined by ESA. If `False` it will be saved in the same structure as the stucture at AWS.
+                        defined by ESA. If `False` it will be saved in the same structure as the structure at AWS.
     :type safe_format: bool
     :param data_folder: location of the directory where the fetched data will be saved.
     :type data_folder: str
@@ -819,7 +819,7 @@ class AwsTileRequest(AwsRequest):
                       (e.g. ``['metadata', 'tileInfo', 'preview/B01', 'TCI']``)
     :type metafiles: list(str)
     :param safe_format: flag that determines the structure of saved data. If `True` it will be saved in .SAFE format
-                        defined by ESA. If `False` it will be saved in the same structure as the stucture at AWS.
+                        defined by ESA. If `False` it will be saved in the same structure as the structure at AWS.
     :type safe_format: bool
     :param data_folder: location of the directory where the fetched data will be saved.
     :type data_folder: str
