@@ -112,7 +112,7 @@ class TestRateLimit(unittest.TestCase):
             TestCaseContainer('Trial policy, no hits', trial_policy_buckets, process_num=5, units_per_request=5,
                               process_time=0.5, request_num=10, max_elapsed_time=6, max_rate_limit_hits=0),
             TestCaseContainer('Trial policy, unit hits', trial_policy_buckets, process_num=5, units_per_request=5,
-                              process_time=0.5, request_num=13, max_elapsed_time=7, max_rate_limit_hits=5),
+                              process_time=0.5, request_num=14, max_elapsed_time=12, max_rate_limit_hits=10),
         ]
 
     def test_scenarios(self):
@@ -122,13 +122,7 @@ class TestRateLimit(unittest.TestCase):
                 process_num = test_case.process_num
                 request_num = test_case.request_num
 
-                rate_limit_objects = []
-                for _ in range(process_num):
-                    # rate_limit = SentinelHubRateLimit(None)
-                    rate_limit = SentinelSimpleRateLimit()
-
-                    # rate_limit.policy_buckets = copy.deepcopy(policy_buckets)
-                    rate_limit_objects.append(rate_limit)
+                rate_limit_objects = [SentinelSimpleRateLimit(num_processes=process_num) for _ in range(process_num)]
 
                 service = DummyService(
                     copy.deepcopy(policy_buckets),
@@ -157,10 +151,10 @@ class TestRateLimit(unittest.TestCase):
         rate_limit_hits = 0
         while request_num > 0:
             sleep_time = rate_limit.register_next()
-            print('index', index, 'requests left:', request_num, 'sleep time:', sleep_time)
+            # print('process_id:', index, 'requests left:', request_num, 'sleep time:', sleep_time)
             # print(rate_limit.expected_process_num, rate_limit.expected_cost_per_request)
-            for idx, bucket in enumerate(service.policy_buckets):
-                print(idx, bucket)
+            # for idx, bucket in enumerate(service.policy_buckets):
+            #     print(idx, bucket)
 
             if sleep_time > 0:
                 time.sleep(sleep_time)
@@ -171,7 +165,7 @@ class TestRateLimit(unittest.TestCase):
                 request_num -= 1
             else:
                 rate_limit_hits += 1
-            print(response_headers)
+            # print(response_headers)
             rate_limit.update(response_headers)
 
         return rate_limit_hits
