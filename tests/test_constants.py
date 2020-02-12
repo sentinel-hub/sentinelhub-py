@@ -38,6 +38,17 @@ class TestCRS(TestSentinelHub):
         for crs in CRS:
             self.assertTrue(CRS.has_value(crs.value), msg="Expected support for CRS {}".format(crs.value))
 
+    def test_custom_crs(self):
+        for incorrect_value in ['string', -1, 999, None]:
+            with self.assertRaises(ValueError):
+                CRS(incorrect_value)
+
+        for correct_value in [3035, 'EPSG:3035', 10000]:
+            CRS(CRS(correct_value))
+
+            new_enum_value = str(correct_value).lower().strip('epsg: ')
+            self.assertTrue(CRS.has_value(new_enum_value))
+
 
 class TestMimeType(TestSentinelHub): #TODO: improve
     def test_canonical_extension(self):

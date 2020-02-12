@@ -360,10 +360,16 @@ class CRSMeta(EnumMeta):
 
         return super().__new__(mcs, cls, bases, classdict)
 
-    def __call__(cls, value, *args, **kwargs):
+    def __call__(cls, crs_value, *args, **kwargs):
         """ This is executed whenever CRS('something') is called
         """
-        return super().__call__(CRSMeta._parse_crs(value), *args, **kwargs)
+        crs_value = cls._parse_crs(crs_value)
+
+        if isinstance(crs_value, str) and not cls.has_value(crs_value) and crs_value.isdigit() and len(crs_value) >= 4:
+            crs_name = 'EPSG_{}'.format(crs_value)
+            extend_enum(cls, crs_name, crs_value)
+
+        return super().__call__(crs_value, *args, **kwargs)
 
     @staticmethod
     def _parse_crs(value):
@@ -372,7 +378,7 @@ class CRSMeta(EnumMeta):
         if isinstance(value, int):
             return str(value)
         if isinstance(value, str):
-            return value.strip('epsgEPSG: ')
+            return value.lower().strip('epsg: ')
         return value
 
 
