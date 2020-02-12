@@ -199,7 +199,7 @@ class TestGeometry(TestSentinelHub):
             self.assertEqual(geometry, Geometry(geometry.wkt, geometry.crs),
                              'Transforming geometry to geojson and back should preserve it')
 
-        self.assertEqual(self.geometry2.wkt, self.wkt_string, 'New WKT string doesnt match the original')
+        self.assertEqual(self.geometry2.wkt, self.wkt_string, 'New WKT string does not match the original')
 
     def test_bbox(self):
         for geometry in [self.geometry1, self.geometry2, self.bbox_collection]:
