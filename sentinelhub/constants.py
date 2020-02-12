@@ -391,6 +391,11 @@ class CRS(Enum, metaclass=CRSMeta):
         """
         return self.ogc_string()
 
+    def __repr__(self):
+        """ Method for retrieving CRS enum representation
+        """
+        return "CRS('{}')".format(self.value)
+
     @classmethod
     def has_value(cls, value):
         """ Tests whether CRS contains a constant defined with string `value`.

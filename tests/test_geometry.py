@@ -104,6 +104,13 @@ class TestBBox(TestSentinelHub):
         self.assertEqual(str(bbox), expect_str,
                          msg="String representations not matching: expected {}, got {}".format(expect_str, str(bbox)))
 
+    def test_bbox_to_repr(self):
+        x1, y1, x2, y2 = 45.0, 12.0, 47.0, 14.0
+        bbox = BBox(((x1, y1), (x2, y2)), crs=CRS('4326'))
+        expect_repr = "BBox((({}, {}), ({}, {})), crs=CRS('4326'))".format(x1, y1, x2, y2)
+        self.assertEqual(repr(bbox), expect_repr,
+                         msg="String representations not matching: expected {}, got {}".format(expect_repr, repr(bbox)))
+
     def test_bbox_iter(self):
         bbox_lst = [46.07, 13.23, 46.24, 13.57]
         bbox = BBox(bbox_lst, CRS.WGS84)

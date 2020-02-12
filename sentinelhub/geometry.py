@@ -151,7 +151,7 @@ class BBox(BaseGeometry):
     def __repr__(self):
         """ Class representation
         """
-        return '{}((({}, {}), ({}, {})), crs={})'.format(self.__class__.__name__, *self, self.crs)
+        return '{}((({}, {}), ({}, {})), crs={})'.format(self.__class__.__name__, *self, repr(self.crs))
 
     def __str__(self, reverse=False):
         """ Transforms bounding box into a string of coordinates
