@@ -5,7 +5,7 @@ import logging
 import sys
 import warnings
 import time
-from threading import Lock
+from threading import Lock, currentThread
 
 import requests
 
@@ -56,6 +56,9 @@ class SentinelHubDownloadClient(DownloadClient):
     @retry_temporal_errors
     @fail_user_errors
     def _execute_download(self, request):
+        """ Executed download with a single thread and uses a rate limit object, which is shared between all threads
+        """
+        thread_name = currentThread().getName()
 
         while True:
             sleep_time = self._execute_with_lock(self.rate_limit.register_next)
@@ -68,9 +71,10 @@ class SentinelHubDownloadClient(DownloadClient):
                 if response.status_code != requests.status_codes.codes.TOO_MANY_REQUESTS:
                     response.raise_for_status()
 
-                    LOGGER.debug('Successful download from %s', request.url)
+                    LOGGER.debug('%s: Successful download from %s', thread_name, request.url)
                     return response.content
             else:
+                LOGGER.debug('%s: Sleeping for %0.2f', thread_name, sleep_time)
                 time.sleep(sleep_time)
 
     def _execute_with_lock(self, thread_unsafe_function, *args, **kwargs):
