@@ -108,8 +108,10 @@ class TestRateLimit(unittest.TestCase):
         ]
 
         cls.test_cases = [
-            TestCaseContainer('Trial policy', trial_policy_buckets, process_num=5, units_per_request=5,
-                              process_time=0.5, request_num=10, max_elapsed_time=6, max_rate_limit_hits=0)
+            TestCaseContainer('Trial policy, no hits', trial_policy_buckets, process_num=5, units_per_request=5,
+                              process_time=0.5, request_num=10, max_elapsed_time=6, max_rate_limit_hits=0),
+            TestCaseContainer('Trial policy, unit hits', trial_policy_buckets, process_num=5, units_per_request=5,
+                              process_time=0.5, request_num=13, max_elapsed_time=7, max_rate_limit_hits=5),
         ]
 
     def test_scenarios(self):
@@ -143,9 +145,9 @@ class TestRateLimit(unittest.TestCase):
                 elapsed_time = time.monotonic() - start_time
                 total_rate_limit_hits = sum(results)
 
-                self.assertTrue(elapsed_time <= test_case.max_elapsed_time, msg='Rate limit object is too careful')
-                self.assertTrue(total_rate_limit_hits <= test_case.max_rate_limit_hits,
-                                msg='Rate limit object hit the rate limit too many times')
+                self.assertLessEqual(elapsed_time, test_case.max_elapsed_time, msg='Rate limit object is too careful')
+                self.assertLessEqual(total_rate_limit_hits, test_case.max_rate_limit_hits,
+                                     msg='Rate limit object hit the rate limit too many times')
 
     @staticmethod
     def run_interaction(service, rate_limit, request_num, index):
