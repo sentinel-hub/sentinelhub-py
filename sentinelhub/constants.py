@@ -664,7 +664,7 @@ class MimeType(Enum):
                 MimeType.TIFF_d16: 'INT16',
                 MimeType.TIFF_d32f: 'FLOAT32'
             }[self]
-        except IndexError:
+        except KeyError:
             raise ValueError('Type {} is not supported by this method'.format(self))
 
     def get_expected_max_value(self):
@@ -687,7 +687,7 @@ class MimeType(Enum):
                 MimeType.JPG: 255,
                 MimeType.JP2: 10000
             }[self]
-        except IndexError:
+        except KeyError:
             raise ValueError('Type {} is not supported by this method'.format(self))
 
     @staticmethod

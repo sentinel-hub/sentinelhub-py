@@ -84,6 +84,18 @@ class TestMimeType(TestSentinelHub): #TODO: improve
             res = MimeType.get_string(img_type)
             self.assertEqual(img_str, res, msg="Expected {}, got {}".format(img_str, res))
 
+    def test_get_sample_type(self):
+        self.assertEqual(MimeType.TIFF_d16.get_sample_type(), 'INT16')
+
+        with self.assertRaises(ValueError):
+            MimeType.TXT.get_sample_type()
+
+    def test_get_expected_max_value(self):
+        self.assertEqual(MimeType.TIFF_d32f.get_expected_max_value(), 1.0)
+
+        with self.assertRaises(ValueError):
+            MimeType.TAR.get_expected_max_value()
+
 
 class TestRequestType(TestSentinelHub):
     def test_request_type(self):
