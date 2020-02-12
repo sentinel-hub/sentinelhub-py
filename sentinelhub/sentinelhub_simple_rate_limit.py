@@ -13,13 +13,8 @@ class SentinelSimpleRateLimit:
     VIOLATION_HEADER = 'X-RateLimit-ViolatedPolicy'
 
     def __init__(self, num_processes=1, minimum_wait_time=0.05, maximum_wait_time=60):
-        self.minimum_wait_time = minimum_wait_time
-        self.maximum_wait_time = maximum_wait_time
-
         self.wait_time = min(num_processes * minimum_wait_time, maximum_wait_time)
-
         self.next_download_time = time.monotonic()
-        self.retry_after = 0
 
     def register_next(self):
         current_time = time.monotonic()
