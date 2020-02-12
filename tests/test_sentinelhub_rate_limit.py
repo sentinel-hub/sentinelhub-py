@@ -84,30 +84,32 @@ class TestRateLimit(unittest.TestCase):
     """
     @classmethod
     def setUp(cls):
+        trial_policy_buckets = [
+            PolicyBucket(PolicyType.PROCESSING_UNITS, {
+                "capacity": 30000,
+                "samplingPeriod": "PT744H",
+                "nanosBetweenRefills": 89280000000
+            }),
+            PolicyBucket(PolicyType.PROCESSING_UNITS, {
+                "capacity": 300,
+                "samplingPeriod": "PT1M",
+                "nanosBetweenRefills": 200000000,
+            }),
+            PolicyBucket(PolicyType.REQUESTS, {
+                "capacity": 30000,
+                "samplingPeriod": "PT744H",
+                "nanosBetweenRefills": 89280000000,
+            }),
+            PolicyBucket(PolicyType.REQUESTS, {
+                "capacity": 300,
+                "samplingPeriod": "PT1M",
+                "nanosBetweenRefills": 200000000,
+            })
+        ]
 
         cls.test_cases = [
-            TestCaseContainer('Trial policy', [
-                    PolicyBucket(PolicyType.PROCESSING_UNITS, {
-                        "capacity": 30000,
-                        "samplingPeriod": "PT744H",
-                        "nanosBetweenRefills": 89280000000
-                    }),
-                    PolicyBucket(PolicyType.PROCESSING_UNITS, {
-                        "capacity": 300,
-                        "samplingPeriod": "PT1M",
-                        "nanosBetweenRefills": 200000000,
-                    }),
-                    PolicyBucket(PolicyType.REQUESTS, {
-                        "capacity": 30000,
-                        "samplingPeriod": "PT744H",
-                        "nanosBetweenRefills": 89280000000,
-                    }),
-                    PolicyBucket(PolicyType.REQUESTS, {
-                        "capacity": 300,
-                        "samplingPeriod": "PT1M",
-                        "nanosBetweenRefills": 200000000,
-                    })
-                ], process_num=5, units_per_request=5, process_time=0.5, request_num=10)
+            TestCaseContainer('Trial policy', trial_policy_buckets, process_num=5, units_per_request=5,
+                              process_time=0.5, request_num=10, max_elapsed_time=6, max_rate_limit_hits=0)
         ]
 
     def test_scenarios(self):
@@ -124,7 +126,7 @@ class TestRateLimit(unittest.TestCase):
                     rate_limit_objects.append(rate_limit)
 
                 service = DummyService(
-                    policy_buckets,
+                    copy.deepcopy(policy_buckets),
                     units_per_request=test_case.units_per_request,
                     process_time=test_case.process_time
                 )
@@ -141,18 +143,19 @@ class TestRateLimit(unittest.TestCase):
                 elapsed_time = time.monotonic() - start_time
                 total_rate_limit_hits = sum(results)
 
-                print('Elapsed time', elapsed_time)
-                print('Total rate limit hits', total_rate_limit_hits)
+                self.assertTrue(elapsed_time <= test_case.max_elapsed_time, msg='Rate limit object is too careful')
+                self.assertTrue(total_rate_limit_hits <= test_case.max_rate_limit_hits,
+                                msg='Rate limit object hit the rate limit too many times')
 
     @staticmethod
     def run_interaction(service, rate_limit, request_num, index):
         rate_limit_hits = 0
         while request_num > 0:
             sleep_time = rate_limit.register_next()
-            print('index', index, 'requests left:', request_num, 'sleep time:', sleep_time)
-            print(rate_limit.expected_process_num, rate_limit.expected_cost_per_request)
-            for idx, bucket in enumerate(service.policy_buckets):
-                print(idx, bucket)
+            # print('index', index, 'requests left:', request_num, 'sleep time:', sleep_time)
+            # print(rate_limit.expected_process_num, rate_limit.expected_cost_per_request)
+            # for idx, bucket in enumerate(service.policy_buckets):
+            #     print(idx, bucket)
 
             if sleep_time > 0:
                 time.sleep(sleep_time)
@@ -163,7 +166,7 @@ class TestRateLimit(unittest.TestCase):
                 request_num -= 1
             else:
                 rate_limit_hits += 1
-            print(response_headers)
+            # print(response_headers)
             rate_limit.update(response_headers)
 
         return rate_limit_hits

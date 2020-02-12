@@ -219,7 +219,6 @@ class SentinelHubRateLimit:
         # Note: if self.requests_completed is small the following is likely to be inaccurate
         process_num = requests_done / max(self.requests_completed + self.requests_in_process, 1)
 
-        print(process_num, self.requests_completed, self.requests_in_process, '!!!')
         if self.expected_process_num < process_num - 1:
             self.expected_process_num += 1
 
