@@ -1,5 +1,5 @@
 # Makefile for creating a new release of the package and uploading it to PyPI
-# This way is prefered to manual because it also resets config.json
+# This way is preferred to manual because it also resets config.json
 
 PYTHON = python3
 CONFIG = sentinelhub.config

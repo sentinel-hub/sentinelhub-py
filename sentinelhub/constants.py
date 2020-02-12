@@ -728,7 +728,7 @@ class SHConstants:
 class AwsConstants:
     """ Initialisation of every constant used by AWS classes
 
-    For each supported data source it contains lists of all possible bands and all posible metadata files:
+    For each supported data source it contains lists of all possible bands and all possible metadata files:
 
         - S2_L1C_BANDS and S2_L1C_METAFILES
         - S2_L2A_BANDS and S2_L2A_METAFILES
