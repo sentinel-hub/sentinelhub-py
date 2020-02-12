@@ -400,7 +400,7 @@ class CRS(Enum, metaclass=CRSMeta):
         :return: `True` if there exists a constant with string value `value`, `False` otherwise
         :rtype: bool
         """
-        return any(value == item.value for item in cls)
+        return value in cls._value2member_map_
 
     @property
     def epsg(self):
