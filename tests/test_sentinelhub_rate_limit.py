@@ -11,10 +11,9 @@ from sentinelhub.sentinelhub_rate_limit import SentinelHubRateLimit, PolicyBucke
 
 class DummyService:
 
-    def __init__(self, policy_buckets, process_num, units_per_request, process_time):
+    def __init__(self, policy_buckets, units_per_request, process_time):
 
         self.policy_buckets = policy_buckets
-        self.process_num = process_num
         self.units_per_request = units_per_request
         self.process_time = process_time
 
@@ -40,7 +39,7 @@ class DummyService:
         return self._get_headers(is_rate_limited)
 
     def _get_new_bucket_content(self):
-        costs = (self.process_num * (1 if bucket.is_request_bucket() else self.units_per_request)
+        costs = ((1 if bucket.is_request_bucket() else self.units_per_request)
                  for bucket in self.policy_buckets)
 
         return [bucket.content - cost for bucket, cost in zip(self.policy_buckets, costs)]
@@ -54,6 +53,21 @@ class DummyService:
         }
         if is_rate_limited:
             headers[SentinelHubRateLimit.VIOLATION_HEADER] = True
+
+            expected_request_wait_time = max(
+                bucket.get_expected_wait_time(0, 1, 1, 0, 0) for bucket in self.policy_buckets
+                if bucket.is_request_bucket()
+            )
+            if expected_request_wait_time > 0:
+                headers[SentinelHubRateLimit.REQUEST_RETRY_HEADER] = int(1000 * expected_request_wait_time)
+
+            expected_units_wait_time = max(
+                bucket.get_expected_wait_time(0, 1, self.units_per_request, 0, 0) for bucket in self.policy_buckets
+                if not bucket.is_request_bucket()
+            )
+            if expected_units_wait_time > 0:
+                headers[SentinelHubRateLimit.UNITS_RETRY_HEADER] = int(1000 * expected_units_wait_time)
+
         return headers
 
 
@@ -85,7 +99,7 @@ class TestRateLimit(unittest.TestCase):
                         "samplingPeriod": "PT1M",
                         "nanosBetweenRefills": 200000000,
                     })
-                ], process_num=5, units_per_request=5, process_time=0.5, request_num=100)
+                ], units_per_request=25, process_time=0.1, request_num=100)
         ]
 
     def test_scenarios(self):
@@ -98,7 +112,6 @@ class TestRateLimit(unittest.TestCase):
 
                 service = DummyService(
                     policy_buckets,
-                    process_num=test_case.process_num,
                     units_per_request=test_case.units_per_request,
                     process_time=test_case.process_time
                 )
