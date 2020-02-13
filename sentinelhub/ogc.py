@@ -13,7 +13,7 @@ from .config import SHConfig
 from .geo_utils import get_image_dimension
 from .geometry import BBox, Geometry
 from .download import DownloadRequest, get_json
-from .time_utils import parse_time_interval
+from .time_utils import parse_time_interval, filter_times
 
 LOGGER = logging.getLogger(__name__)
 
@@ -37,26 +37,6 @@ class OgcService:
             raise ValueError('Instance ID is not set. '
                              'Set it either in request initialization or in configuration file. '
                              'Check http://sentinelhub-py.readthedocs.io/en/latest/configure.html for more info.')
-
-    @staticmethod
-    def _filter_dates(dates, time_difference):
-        """ Filters out dates within time_difference, preserving only the oldest date.
-
-        :param dates: a list of datetime objects
-        :param time_difference: a ``datetime.timedelta`` representing the time difference threshold
-        :return: an ordered list of datetimes `d1<=d2<=...<=dn` such that `d[i+1]-di > time_difference`
-        :rtype: list(datetime.datetime)
-        """
-        if len(dates) <= 1:
-            return dates
-
-        sorted_dates = sorted(dates)
-
-        separate_dates = [sorted_dates[0]]
-        for curr_date in sorted_dates[1:]:
-            if curr_date - separate_dates[-1] > time_difference:
-                separate_dates.append(curr_date)
-        return separate_dates
 
     @staticmethod
     def _sentinel1_product_check(product_id, data_source):
@@ -417,11 +397,8 @@ class OgcImageService(OgcService):
         else:
             self.wfs_iterator = request.wfs_iterator
 
-        dates = sorted(set(self.wfs_iterator.get_dates()))
-
-        if request.time == SHConstants.LATEST:
-            dates = dates[-1:]
-        dates = OgcService._filter_dates(dates, request.time_difference)
+        dates = self.wfs_iterator.get_dates()
+        dates = filter_times(dates, request.time_difference)
 
         LOGGER.debug('Initializing requests for dates: %s', dates)
         return dates
