@@ -32,7 +32,7 @@ class SentinelHubDownloadClient(DownloadClient):
 
         self.session = self._configure_session(session)
 
-        self.rate_limit = SentinelHubRateLimit(self.session)
+        self.rate_limit = SentinelHubRateLimit()
         self.lock = Lock()
 
     def _configure_session(self, session):
@@ -56,7 +56,6 @@ class SentinelHubDownloadClient(DownloadClient):
     @retry_temporal_errors
     @fail_user_errors
     def _execute_download(self, request):
-
         while True:
             sleep_time = self._execute_with_lock(self.rate_limit.register_next)
 

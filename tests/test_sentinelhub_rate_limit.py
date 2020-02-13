@@ -10,7 +10,6 @@ from threading import Lock
 
 from sentinelhub import TestCaseContainer
 from sentinelhub.sentinelhub_rate_limit import SentinelHubRateLimit, PolicyBucket, PolicyType
-from sentinelhub.sentinelhub_simple_rate_limit import SentinelSimpleRateLimit
 
 
 class DummyService:
@@ -122,7 +121,7 @@ class TestRateLimit(unittest.TestCase):
                 process_num = test_case.process_num
                 request_num = test_case.request_num
 
-                rate_limit_objects = [SentinelSimpleRateLimit(num_processes=process_num) for _ in range(process_num)]
+                rate_limit_objects = [SentinelHubRateLimit(num_processes=process_num) for _ in range(process_num)]
 
                 service = DummyService(
                     copy.deepcopy(policy_buckets),
