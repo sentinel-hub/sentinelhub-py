@@ -150,7 +150,7 @@ def parse_time_interval(time):
     :rtype: (str, str)
     :raises: ValueError
     """
-    if time is SHConstants.LATEST:
+    if time == SHConstants.LATEST:
         date_interval = '1985-01-01', get_current_date()
     elif isinstance(time, (str, datetime.date)):
         parsed_time = parse_time(time)

@@ -2,8 +2,10 @@ import unittest
 import datetime
 import numpy as np
 
+from shapely.geometry import MultiPolygon
+
 from sentinelhub import WmsRequest, WcsRequest, CRS, MimeType, CustomUrlParam, ServiceType, DataSource, BBox,\
-    TestSentinelHub, TestCaseContainer
+    WebFeatureService, TestSentinelHub, TestCaseContainer
 from sentinelhub.data_request import OgcRequest
 from sentinelhub.ogc import OgcImageService
 
@@ -295,6 +297,43 @@ class TestOgc(TestSentinelHub):
             self.test_numpy_data(test_case.data[0], exp_min=test_case.img_min, exp_max=test_case.img_max,
                                  exp_mean=test_case.img_mean, exp_median=test_case.img_median,
                                  test_name=test_case.name)
+
+
+class TestWebFeatureService(TestSentinelHub):
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+
+        wgs84_bbox = BBox(bbox=(-5.23, 48.0, -5.03, 48.17), crs=CRS.WGS84)
+        time_interval = (datetime.date(year=2017, month=1, day=5), datetime.date(year=2017, month=12, day=16))
+
+        cls.test_cases = [
+            TestCaseContainer('General test',
+                              WebFeatureService(wgs84_bbox, time_interval, data_source=DataSource.SENTINEL2_L1C,
+                                                maxcc=0.1),
+                              result_len=13),
+            TestCaseContainer('Latest date only',
+                              WebFeatureService(wgs84_bbox, 'latest', data_source=DataSource.SENTINEL2_L2A),
+                              result_len=1),
+        ]
+
+    def test_results(self):
+        for test_case in self.test_cases:
+            with self.subTest(msg='Test case {}'.format(test_case.name)):
+                iterator = test_case.request
+
+                features = list(iterator)
+                dates = iterator.get_dates()
+                geometries = iterator.get_geometries()
+                tiles = iterator.get_tiles()
+
+                for result_list, expected_type in [(features, dict), (dates, datetime.datetime),
+                                                   (geometries, MultiPolygon), (tiles, tuple)]:
+                    self.assertEqual(len(result_list), test_case.result_len)
+                    for result in result_list:
+                        self.assertTrue(isinstance(result, expected_type),
+                                        msg='Expected type {}, got type {}'.format(expected_type, type(result)))
 
 
 if __name__ == '__main__':
