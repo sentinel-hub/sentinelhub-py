@@ -2,6 +2,7 @@
 Module implementing rate limiting logic for Sentinel Hub service
 """
 import time
+
 from enum import Enum
 
 
@@ -108,19 +109,18 @@ class PolicyBucket:
 
         return content_difference / elapsed_time
 
-    def get_expected_wait_time(self, elapsed_time, expected_process_num, expected_cost_per_request,
-                               requests_completed, buffer_cost=0.5):
+    def get_wait_time(self, elapsed_time, process_num, cost_per_request, requests_completed, buffer_cost=0.5):
         """ Expected time a user would have to wait for this bucket
         """
-        overall_completed_cost = requests_completed * expected_cost_per_request * expected_process_num
+        overall_completed_cost = requests_completed * cost_per_request * process_num
         expected_content = max(self.content + elapsed_time * self.refill_per_second - overall_completed_cost, 0)
 
         if self.is_fixed():
-            if expected_content < expected_cost_per_request:
+            if expected_content < cost_per_request:
                 return -1
             return 0
 
-        return max(expected_cost_per_request - expected_content + buffer_cost, 0) / self.refill_per_second
+        return max(cost_per_request - expected_content + buffer_cost, 0) / self.refill_per_second
 
     def is_request_bucket(self):
         """ Checks if bucket counts requests
