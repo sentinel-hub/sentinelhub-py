@@ -360,10 +360,16 @@ class CRSMeta(EnumMeta):
 
         return super().__new__(mcs, cls, bases, classdict)
 
-    def __call__(cls, value, *args, **kwargs):
+    def __call__(cls, crs_value, *args, **kwargs):
         """ This is executed whenever CRS('something') is called
         """
-        return super().__call__(CRSMeta._parse_crs(value), *args, **kwargs)
+        crs_value = cls._parse_crs(crs_value)
+
+        if isinstance(crs_value, str) and not cls.has_value(crs_value) and crs_value.isdigit() and len(crs_value) >= 4:
+            crs_name = 'EPSG_{}'.format(crs_value)
+            extend_enum(cls, crs_name, crs_value)
+
+        return super().__call__(crs_value, *args, **kwargs)
 
     @staticmethod
     def _parse_crs(value):
@@ -372,7 +378,7 @@ class CRSMeta(EnumMeta):
         if isinstance(value, int):
             return str(value)
         if isinstance(value, str):
-            return value.strip('epsgEPSG: ')
+            return value.lower().strip('epsg: ')
         return value
 
 
@@ -400,7 +406,7 @@ class CRS(Enum, metaclass=CRSMeta):
         :return: `True` if there exists a constant with string value `value`, `False` otherwise
         :rtype: bool
         """
-        return any(value == item.value for item in cls)
+        return value in cls._value2member_map_
 
     @property
     def epsg(self):
@@ -450,7 +456,10 @@ class CRS(Enum, metaclass=CRSMeta):
         :return: pyproj projection class
         :rtype: pyproj.Proj
         """
-        return pyproj.Proj(init=self.ogc_string(), preserve_units=True)
+        # The following ensures lng-lat order in WGS84
+        projection_string = '+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs' if self is CRS.WGS84 else \
+            self.ogc_string()
+        return pyproj.Proj(projection_string, preserve_units=True)
 
     @functools.lru_cache(maxsize=10)
     def get_transform_function(self, other):
@@ -465,10 +474,7 @@ class CRS(Enum, metaclass=CRSMeta):
         :return: A projection function obtained from pyproj package
         :rtype: function
         """
-        if pyproj.__version__ >= '2':
-            return pyproj.Transformer.from_proj(self.projection(), other.projection(), skip_equivalent=True).transform
-
-        return functools.partial(pyproj.transform, self.projection(), other.projection())
+        return pyproj.Transformer.from_proj(self.projection(), other.projection(), skip_equivalent=True).transform
 
     @staticmethod
     def get_utm_from_wgs84(lng, lat):
