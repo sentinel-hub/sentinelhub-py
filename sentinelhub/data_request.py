@@ -360,7 +360,7 @@ class WmsRequest(OgcRequest):
     Creates an instance of Sentinel Hub WMS (Web Map Service) GetMap request,
     which provides access to Sentinel-2's unprocessed bands (B01, B02, ..., B08, B8A, ..., B12)
     or processed products such as true color imagery, NDVI, etc. The only difference is that in
-    the case od WMS request the user specifies the desired image size instead of its resolution.
+    the case of WMS request the user specifies the desired image size instead of its resolution.
 
     It is required to specify at least one of `width` and `height` parameters. If only one of them is specified the
     the other one will be calculated to best fit the bounding box ratio. If both of them are specified they will be used
@@ -425,7 +425,7 @@ class WcsRequest(OgcRequest):
     Creates an instance of Sentinel Hub WCS (Web Coverage Service) GetCoverage request,
     which provides access to Sentinel-2's unprocessed bands (B01, B02, ..., B08, B8A, ..., B12)
     or processed products such as true color imagery, NDVI, etc., as the WMS service. The
-    only difference is that in the case od WCS request the user specifies the desired
+    only difference is that in the case of WCS request the user specifies the desired
     resolution of the image instead of its size.
 
     More info available at:

@@ -34,6 +34,21 @@ class TestCRS(TestSentinelHub):
                 ogc_str = CRS.ogc_string(crs)
                 self.assertEqual(epsg, ogc_str, msg="Expected {}, got {}".format(epsg, ogc_str))
 
+    def test_repr(self):
+        crs_values = (
+            (CRS.POP_WEB, "CRS('3857')"),
+            (CRS.WGS84, "CRS('4326')"),
+            (CRS.UTM_33N, "CRS('32633')"),
+            (CRS.UTM_33S, "CRS('32733')"),
+            (CRS('3857'), "CRS('3857')"),
+            (CRS('4326'), "CRS('4326')"),
+            (CRS('32633'), "CRS('32633')"),
+            (CRS('32733'), "CRS('32733')"),
+        )
+        for crs, crs_repr in crs_values:
+            with self.subTest(msg=crs_repr):
+                self.assertEqual(crs_repr, repr(crs), msg="Expected {}, got {}".format(crs_repr, repr(crs)))
+
     def test_has_value(self):
         for crs in CRS:
             self.assertTrue(CRS.has_value(crs.value), msg="Expected support for CRS {}".format(crs.value))
@@ -94,6 +109,18 @@ class TestMimeType(TestSentinelHub): #TODO: improve
         for img_type, img_str in type_string_pairs:
             res = MimeType.get_string(img_type)
             self.assertEqual(img_str, res, msg="Expected {}, got {}".format(img_str, res))
+
+    def test_get_sample_type(self):
+        self.assertEqual(MimeType.TIFF_d16.get_sample_type(), 'INT16')
+
+        with self.assertRaises(ValueError):
+            MimeType.TXT.get_sample_type()
+
+    def test_get_expected_max_value(self):
+        self.assertEqual(MimeType.TIFF_d32f.get_expected_max_value(), 1.0)
+
+        with self.assertRaises(ValueError):
+            MimeType.TAR.get_expected_max_value()
 
 
 class TestRequestType(TestSentinelHub):

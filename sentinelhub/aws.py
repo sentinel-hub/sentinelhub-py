@@ -117,11 +117,11 @@ class AwsService(ABC):
         :return: base url string
         :rtype: str
         """
-        base_url = SHConfig().aws_metadata_url if force_http else 's3:/'
+        base_url = SHConfig().aws_metadata_url if force_http else 's3://'
         aws_bucket = SHConfig().aws_s3_l1c_bucket if self.data_source is DataSource.SENTINEL2_L1C else \
             SHConfig().aws_s3_l2a_bucket
 
-        return '{}/{}'.format(base_url, aws_bucket)
+        return '{}{}{}'.format(base_url, '' if base_url.endswith('/') else '/', aws_bucket)
 
     def get_safe_type(self):
         """ Determines the type of ESA product.

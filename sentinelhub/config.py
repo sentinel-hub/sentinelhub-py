@@ -83,9 +83,9 @@ class SHConfig:
                 raise ValueError("Value of config parameter 'max_opensearch_records_per_query' must be at most 500")
 
             # The following enables that url parameters can be written with or without / at the end
-            for param, value in self.CONFIG_PARAMS.items():
+            for param, value in config.items():
                 if isinstance(value, str) and value.startswith('http'):
-                    config[param] = config[param].rstrip('/')
+                    config[param] = value.rstrip('/')
 
             return config
 
