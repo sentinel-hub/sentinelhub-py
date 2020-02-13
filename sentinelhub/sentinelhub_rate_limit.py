@@ -1,15 +1,9 @@
 """
 Module implementing rate limiting logic for Sentinel Hub service
 """
-import math
 import time
 from enum import Enum
 
-from .download.client import get_json
-from .exceptions import OutOfRequestsException
-
-
-ERR = 0.01
 
 class SentinelHubRateLimit:
     """ Class implementing rate limiting logic of Sentinel Hub service
@@ -29,218 +23,38 @@ class SentinelHubRateLimit:
     UNITS_COUNT_HEADER = 'X-ProcessingUnits-Remaining'
     VIOLATION_HEADER = 'X-RateLimit-ViolatedPolicy'
 
-    def __init__(self, session, *, status_refresh_period=60):
+    def __init__(self, num_processes=1, minimum_wait_time=0.05, maximum_wait_time=60.0):
         """
-        :param session: An instance of Sentinel Hub session object
-        :type session: sentinelhub.SentinelHubSession or None
-        :param status_refresh_period: Number of seconds between two consecutive rate limit status checks
-        :type status_refresh_period: int
+        :param num_processes: Number of parallel download processes running.
+        :type num_processes: int
+        :param minimum_wait_time: Minimum wait time between two consecutive download requests in seconds.
+        :type minimum_wait_time: float
+        :param maximum_wait_time: Maximum wait time between two consecutive download requests in seconds.
+        :type maximum_wait_time: float
         """
-        self.session = session
-        self.status_refresh_period = None if self.session is None else status_refresh_period
-
-        self.requests_completed = 0  # This counts completed requests only in a single status check period
-        self.requests_in_process = 0
-
-        # Initial expectations:
-        self.expected_process_num = 1
-        self.expected_cost_per_request = 1
-
-        self.last_status_update_time = time.monotonic() if self.session is None else None
-        self.policy_buckets = self._initialize_policy_buckets()
-
-    def _initialize_policy_buckets(self):
-        """ Collects and prepares a list of policy buckets defined for a user for which a given session has been
-        created
-        """
-        if self.session is None:
-            return self._initialize_trial_policy_buckets()
-
-        user_policies = self._fetch_user_policies()
-
-        if not user_policies['data']:
-            user_policies = self._fetch_user_policies(default_policies=True)
-
-        buckets = []
-        for policy_payload in user_policies['data']:
-
-            policy_info = policy_payload['type'] if 'type' in policy_payload else policy_payload
-            policy_type = policy_info['name']
-
-            policies = policy_payload.get('policies')  # Can either be None or an empty list
-            if not policies:
-                policies = policy_info['defaultPolicies']
-
-            for policy in policies:
-                buckets.append(PolicyBucket(policy_type, policy))
-
-        return buckets
-
-    @staticmethod
-    def _initialize_trial_policy_buckets():
-        """ Prepares default trial policy buckets
-        """
-        return [
-            PolicyBucket(PolicyType.PROCESSING_UNITS, {
-                "capacity": 30000,
-                "samplingPeriod": "PT744H",
-                "nanosBetweenRefills": 89280000000
-            }),
-            PolicyBucket(PolicyType.PROCESSING_UNITS, {
-                "capacity": 300,
-                "samplingPeriod": "PT1M",
-                "nanosBetweenRefills": 200000000,
-            }),
-            PolicyBucket(PolicyType.REQUESTS, {
-                "capacity": 30000,
-                "samplingPeriod": "PT744H",
-                "nanosBetweenRefills": 89280000000,
-            }),
-            PolicyBucket(PolicyType.REQUESTS, {
-                "capacity": 300,
-                "samplingPeriod": "PT1M",
-                "nanosBetweenRefills": 200000000,
-            })
-        ]
-
-    def _fetch_user_policies(self, default_policies=False):
-        """ Collects user rate limiting policies
-        """
-        url = '{}/contract'.format(self.session.config.get_sh_rate_limit_url())
-        if default_policies:
-            url = '{}/types'.format(url)
-
-        return get_json(url, headers=self.session.session_headers)
-
-    def _fetch_status(self):
-        """ Collects status about remaining requests and processing units
-        """
-        url = '{}/statistics/tokenCounts'.format(self.session.config.get_sh_rate_limit_url())
-
-        return get_json(url, headers=self.session.session_headers)
+        self.wait_time = min(num_processes * minimum_wait_time, maximum_wait_time)
+        self.next_download_time = time.monotonic()
 
     def register_next(self):
-        """ Determines if next download request can start or not
+        """ Determines if next download request can start or not by returning the waiting time in seconds.
         """
-        if self.status_refresh_period is not None and \
-                (self.last_status_update_time is None or
-                 self.last_status_update_time + self.status_refresh_period <= time.monotonic()):
-            self._refresh_status()
+        current_time = time.monotonic()
+        wait_time = max(self.next_download_time - current_time, 0)
 
-        elapsed_time = time.monotonic() - self.last_status_update_time
+        if wait_time == 0:
+            self.next_download_time = max(current_time + self.wait_time, self.next_download_time)
 
-        max_wait_time = 0
-        for bucket in self.policy_buckets:
-            expected_cost_per_request = 1 if bucket.is_request_bucket() else self.expected_cost_per_request
-            max_requests_completed = self.requests_completed + self.requests_in_process
-
-            expected_wait_time = bucket.get_expected_wait_time(elapsed_time,
-                                                               self.expected_process_num,
-                                                               expected_cost_per_request,
-                                                               max_requests_completed)
-            if expected_wait_time == -1:
-                raise OutOfRequestsException('Your user has run out of available number of requests')
-
-            max_wait_time = max(max_wait_time, expected_wait_time)
-
-        if max_wait_time == 0:
-            self.requests_in_process += 1
-        return max_wait_time
-
-    def _refresh_status(self):
-        """ Collects new status, updates expectations and updates buckets with the new content
-        """
-        new_status = self._fetch_status()
-
-        new_status_update_time = time.monotonic()
-        new_content_list = [new_status['data'][bucket.policy_type.value][bucket.refill_period]
-                            for bucket in self.policy_buckets]
-
-        if self.last_status_update_time is not None:
-            elapsed_time = new_status_update_time - self.last_status_update_time
-            self._update_expectations(elapsed_time, new_content_list)
-
-        for bucket, new_content in zip(self.policy_buckets, new_content_list):
-            bucket.content = new_content
-
-        self.last_status_update_time = new_status_update_time
-        self.requests_completed = 0
-
-    def _update_expectations(self, elapsed_time, new_content_list):
-        """ Updates expectation variables
-        """
-
-        cost_per_second_list = [bucket.count_cost_per_second(elapsed_time, new_content) for bucket, new_content in
-                                zip(self.policy_buckets, new_content_list)]
-
-        requests_per_second = min(cost for cost, bucket in zip(cost_per_second_list, self.policy_buckets)
-                                  if bucket.is_request_bucket())
-        cost_per_second = min(cost for cost, bucket in zip(cost_per_second_list, self.policy_buckets)
-                              if not bucket.is_request_bucket())
-
-        cost_per_request = cost_per_second / max(requests_per_second, ERR)
-
-        self._update_expected_process_num(elapsed_time * requests_per_second)
-        self._update_expected_cost_per_request(cost_per_request)
+        return wait_time
 
     def update(self, headers):
-        """ Update expectations by using information from response headers
+        """ Update the next possible download time if the service has responded with the rate limit
         """
-        elapsed_time = time.monotonic() - self.last_status_update_time
-        is_rate_limited = self.VIOLATION_HEADER in headers
 
-        self.requests_in_process -= 1
-        if not is_rate_limited:
-            self.requests_completed += 1
+        retry_after = max(int(headers.get(self.REQUEST_RETRY_HEADER, 0)), int(headers.get(self.UNITS_RETRY_HEADER, 0)))
+        retry_after = retry_after / 1000
 
-        if self.REQUEST_COUNT_HEADER not in headers:
-            return
-
-        remaining_requests = float(headers[self.REQUEST_COUNT_HEADER])
-        requests_per_second = max(bucket.count_cost_per_second(elapsed_time, remaining_requests) for bucket in
-                                  self.policy_buckets if bucket.is_request_bucket())
-
-        self._update_expected_process_num(elapsed_time * requests_per_second, is_rate_limited=is_rate_limited)
-
-        if self.UNITS_COUNT_HEADER not in headers:
-            return
-
-        remaining_units = float(headers[self.UNITS_COUNT_HEADER])
-        cost_per_second = max(bucket.count_cost_per_second(elapsed_time, remaining_units) for bucket in
-                              self.policy_buckets if not bucket.is_request_bucket())
-        cost_per_request = cost_per_second / max(requests_per_second, ERR)
-
-        self._update_expected_cost_per_request(cost_per_request, is_rate_limited=is_rate_limited)
-
-    def _update_expected_process_num(self, requests_done, is_rate_limited=False):
-        """ This method updates the expected number of concurrent processes using this credentials
-        """
-        # Note: if self.requests_completed is small the following is likely to be inaccurate
-        max_process_num = math.ceil(requests_done / max(self.requests_completed + self.requests_in_process, 1))
-        min_process_num = math.floor(requests_done / max(self.requests_completed + self.requests_in_process, 1))
-
-        if is_rate_limited or self.expected_process_num < min_process_num:
-            self.expected_process_num += 1
-
-        if self.expected_process_num > max_process_num:
-            self.expected_process_num -= 1
-
-        self.expected_process_num = max(self.expected_process_num, 1)
-
-    def _update_expected_cost_per_request(self, cost_per_request, is_rate_limited=False):
-        """ This method updates the expected cost per request
-        """
-        value_difference = cost_per_request - self.expected_cost_per_request
-
-        if is_rate_limited:
-            # Making sure we cannot decrease expectations if we get rate-limited
-            value_difference = max(value_difference, 1)
-        else:
-            value_difference = min(max(value_difference, -1), 1) / 2
-
-        self.expected_cost_per_request += value_difference
-        self.expected_cost_per_request = max(self.expected_cost_per_request, 1)
-
+        if retry_after:
+            self.next_download_time = max(time.monotonic() + retry_after, self.next_download_time)
 
 class PolicyBucket:
     """ A class representing Sentinel Hub policy bucket
@@ -286,7 +100,7 @@ class PolicyBucket:
         """ Calculates the cost per second for the bucket given the elapsed time and the new content.
 
         In the calculation it assumes that during the elapsed time bucket was being filled all the time - i.e. it
-        assumes the bucket has never been ful for a non-zero amount of time in the elapsed time period.
+        assumes the bucket has never been full for a non-zero amount of time in the elapsed time period.
         """
         content_difference = self.content - new_content
         if not self.is_fixed():
@@ -299,7 +113,7 @@ class PolicyBucket:
         """ Expected time a user would have to wait for this bucket
         """
         overall_completed_cost = requests_completed * expected_cost_per_request * expected_process_num
-        expected_content = self.content + elapsed_time * self.refill_per_second - overall_completed_cost
+        expected_content = max(self.content + elapsed_time * self.refill_per_second - overall_completed_cost, 0)
 
         if self.is_fixed():
             if expected_content < expected_cost_per_request:

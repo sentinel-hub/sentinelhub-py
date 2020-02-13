@@ -58,7 +58,8 @@ class SHConfig:
             ('max_opensearch_records_per_query', 500),
             ('max_download_attempts', 4),
             ('download_sleep_time', 5),
-            ('download_timeout_seconds', 120)
+            ('download_timeout_seconds', 120),
+            ('number_of_download_processes', 1)
         ])
 
         def __init__(self):
