@@ -13,9 +13,20 @@ from sentinelhub.sentinelhub_rate_limit import SentinelHubRateLimit, PolicyBucke
 
 
 class DummyService:
-
+    """ A class that simulates how Sentinel Hub service manages bucket policies. It is intended only for testing
+    purposes
+    """
     def __init__(self, policy_buckets, units_per_request, process_time):
-
+        """
+        :param policy_buckets: A list of policy buckets on the service
+        :type policy_buckets: list(PolicyBucket)
+        :param units_per_request: Number of processing units each request would cost. It assumes that each request will
+            cost the same amount of processing units.
+        :type units_per_request: int
+        :param process_time: A number of seconds it would take to process each request. It assumes that each request
+            will take the same amount of time.
+        :type process_time: float
+        """
         self.policy_buckets = policy_buckets
         self.units_per_request = units_per_request
         self.process_time = process_time
@@ -24,6 +35,9 @@ class DummyService:
         self.lock = Lock()
 
     def make_request(self):
+        """ Simulates a single request to the service. First it waits the processing time, then it updates the policy
+        buckets.
+        """
         new_time = time.monotonic()
         time.sleep(self.process_time)
         elapsed_time = new_time - self.time
@@ -47,12 +61,16 @@ class DummyService:
         return headers
 
     def _get_new_bucket_content(self):
+        """ Calculates the new content of buckets
+        """
         costs = ((1 if bucket.is_request_bucket() else self.units_per_request)
                  for bucket in self.policy_buckets)
 
         return [bucket.content - cost for bucket, cost in zip(self.policy_buckets, costs)]
 
     def _get_headers(self, is_rate_limited):
+        """ Creates and returns headers that Sentinel Hub service would return
+        """
         headers = {
             SentinelHubRateLimit.REQUEST_COUNT_HEADER: min(bucket.content for bucket in self.policy_buckets
                                                            if bucket.is_request_bucket()),
@@ -115,6 +133,9 @@ class TestRateLimit(unittest.TestCase):
         ]
 
     def test_scenarios(self):
+        """ For each test case it simulates a parallel interaction between a service and multiple instances of
+        rate-limiting object.
+        """
         for test_case in self.test_cases:
             with self.subTest(msg='Test case {}'.format(test_case.name)):
                 policy_buckets = test_case.request
@@ -147,6 +168,8 @@ class TestRateLimit(unittest.TestCase):
 
     @staticmethod
     def run_interaction(service, rate_limit, request_num, index):
+        """ Runs an interaction between service instance and a single instance of a rate-limiting object
+        """
         rate_limit_hits = 0
         while request_num > 0:
             sleep_time = rate_limit.register_next()
