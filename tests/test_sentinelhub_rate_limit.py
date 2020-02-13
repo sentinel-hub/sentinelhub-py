@@ -63,14 +63,14 @@ class DummyService:
             headers[SentinelHubRateLimit.VIOLATION_HEADER] = True
 
             expected_request_wait_time = max(
-                bucket.get_expected_wait_time(0, 1, 1, 0, 0) for bucket in self.policy_buckets
+                bucket.get_wait_time(0, 1, 1, 0, 0) for bucket in self.policy_buckets
                 if bucket.is_request_bucket()
             )
             if expected_request_wait_time > 0:
                 headers[SentinelHubRateLimit.REQUEST_RETRY_HEADER] = int(1000 * expected_request_wait_time)
 
             expected_units_wait_time = max(
-                bucket.get_expected_wait_time(0, 1, self.units_per_request, 0, 0) for bucket in self.policy_buckets
+                bucket.get_wait_time(0, 1, self.units_per_request, 0, 0) for bucket in self.policy_buckets
                 if not bucket.is_request_bucket()
             )
             if expected_units_wait_time > 0:
@@ -151,7 +151,6 @@ class TestRateLimit(unittest.TestCase):
         while request_num > 0:
             sleep_time = rate_limit.register_next()
             # print('process_id:', index, 'requests left:', request_num, 'sleep time:', sleep_time)
-            # print(rate_limit.expected_process_num, rate_limit.expected_cost_per_request)
             # for idx, bucket in enumerate(service.policy_buckets):
             #     print(idx, bucket)
 
@@ -230,10 +229,10 @@ class TestPolicyBucket(unittest.TestCase):
             with self.subTest(msg='Test case {}'.format(test_case.name)):
                 bucket = test_case.request
 
-                wait_time = bucket.get_expected_wait_time(
+                wait_time = bucket.get_wait_time(
                     test_case.elapsed_time,
-                    expected_process_num=2,
-                    expected_cost_per_request=10,
+                    process_num=2,
+                    cost_per_request=10,
                     requests_completed=test_case.requests_completed
                 )
 
