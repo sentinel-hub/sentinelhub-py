@@ -29,7 +29,7 @@ class SentinelSimpleRateLimit:
         """ Update expectations by using information from response headers
         """
 
-        retry_after = max(headers.get(self.REQUEST_RETRY_HEADER, 0), headers.get(self.UNITS_RETRY_HEADER, 0))
+        retry_after = max(int(headers.get(self.REQUEST_RETRY_HEADER, 0)), int(headers.get(self.UNITS_RETRY_HEADER, 0)))
         retry_after = retry_after / 1000
 
         if retry_after:
