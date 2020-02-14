@@ -16,15 +16,19 @@ from ..exceptions import DownloadFailedException, SHRuntimeWarning
 from ..io_utils import read_data, write_data
 from .handlers import fail_user_errors, retry_temporal_errors
 from .request import DownloadRequest
-from .cache import hash_request
 
 
 LOGGER = logging.getLogger(__name__)
 
 
 class DownloadClient:
-    """ The download client class which takes care of downloading the data, parallelizing the download through threads
-    and catching any exceptions.
+    """ A basic download client object
+
+    It does the following:
+      - downloads the data with multiple threads in parallel,
+      - handles any exceptions that occur during download,
+      - decodes downloaded data,
+      - reads and writes locally stored/cached data
     """
     def __init__(self, *, redownload=False, raise_download_errors=True, config=None):
         """
@@ -41,7 +45,7 @@ class DownloadClient:
         self.redownload = redownload
         self.raise_download_errors = raise_download_errors
 
-        self.config = SHConfig() if config is None else config
+        self.config = config or SHConfig()
 
     def download(self, download_requests, max_threads=None):
         """ Download one or multiple requests, provided as a request list.
@@ -87,26 +91,22 @@ class DownloadClient:
         """
         request.raise_if_invalid()
 
-        if request.save_response:
-            request.file_path = os.path.join(request.data_folder, request.file_path)
-        elif request.hash_save:
-            hashed, hashable = hash_request(request.url, request.post_values)
-            folder_path = os.path.join(request.data_folder, hashed)
-            request.file_path = os.path.join(folder_path, 'response.{}'.format(request.data_type.value))
-            request_path = os.path.join(folder_path, 'request.json')
-            LOGGER.debug('Saving hashed request to %s', request_path)
-            write_data(request_path, hashable, data_format=MimeType.TXT)
+        request_path, request_info, response_path = request.get_saving_props()
 
-        if not self.is_download_required(request):
+        if request_path and request.save_response and (self.redownload or not os.path.exists(request_path)):
+            write_data(request_path, request_info, data_format=MimeType.JSON)
+            LOGGER.debug('Saved request info to %s', request_path)
+
+        if not self._is_download_required(request, response_path):
             if request.return_data:
-                return read_data(request.file_path, data_format=request.data_type)
+                return read_data(response_path, data_format=request.data_type)
             return None
 
         response_content = self._execute_download(request)
 
-        if request.save_response or request.hash_save:
-            write_data(request.file_path, response_content, data_format=MimeType.RAW)
-            LOGGER.debug('Saved data to %s', request.file_path)
+        if request.save_response:
+            write_data(response_path, response_content, data_format=MimeType.RAW)
+            LOGGER.debug('Saved data to %s', response_path)
 
         if request.return_data:
             return decode_data(response_content, request.data_type)
@@ -130,17 +130,11 @@ class DownloadClient:
 
         return response.content
 
-    def is_download_required(self, request):
+    def _is_download_required(self, request, response_path):
         """ Checks if download should actually be done
-
-        :param request: An object with information about download and storage of data
-        :type request: DownloadRequest
-        :return: True if download should be done and False otherwise
-        :rtype: bool
         """
-        val = (request.save_response or request.return_data) and \
-              (self.redownload or request.file_path is None or not os.path.exists(request.file_path))
-        return val
+        return (request.save_response or request.return_data) and \
+               (self.redownload or response_path is None or not os.path.exists(response_path))
 
 
 def get_json(url, post_values=None, headers=None, download_client_class=DownloadClient):
