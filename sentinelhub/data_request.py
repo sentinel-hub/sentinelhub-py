@@ -94,9 +94,9 @@ class DataRequest(ABC):
         :param data_filter: Used to specify which items will be returned by the method and in which order. E.g. with
             ``data_filter=[0, 2, -1]`` the method will return only 1st, 3rd and last item. Default filter is `None`.
         :type data_filter: list(int) or None
-        :param max_threads: number of threads to use when downloading data; default is ``max_threads=None`` which
-            by default uses the number of processors on the system multiplied by 5.
-        :type max_threads: int
+        :param max_threads: Maximum number of threads to be used for download in parallel. The default is
+            `max_threads=None` which will use the number of processors on the system multiplied by 5.
+        :type max_threads: int or None
         :param raise_download_errors: If `True` any error in download process should be raised as
             ``DownloadFailedException``. If `False` failed downloads will only raise warnings and the method will
             return list with `None` values in places where the results of failed download requests should be.
@@ -117,9 +117,9 @@ class DataRequest(ABC):
         :type data_filter: list(int) or None
         :param redownload: data is redownloaded if ``redownload=True``. Default is `False`
         :type redownload: bool
-        :param max_threads: number of threads to use when downloading data; default is ``max_threads=None`` which
-            by default uses the number of processors on the system multiplied by 5.
-        :type max_threads: int
+        :param max_threads: Maximum number of threads to be used for download in parallel. The default is
+            `max_threads=None` which will use the number of processors on the system multiplied by 5.
+        :type max_threads: int or None
         :param raise_download_errors: If `True` any error in download process should be raised as
             ``DownloadFailedException``. If `False` failed downloads will only raise warnings.
         :type raise_download_errors: bool
@@ -135,8 +135,9 @@ class DataRequest(ABC):
         :type data_filter: list(int) or None
         :param redownload: data is redownloaded if ``redownload=True``. Default is `False`
         :type redownload: bool
-        :param max_threads: the number of workers to use when downloading, default ``max_threads=None``
-        :type max_threads: int
+        :param max_threads: Maximum number of threads to be used for download in parallel. The default is
+            `max_threads=None` which will use the number of processors on the system multiplied by 5.
+        :type max_threads: int or None
         :param raise_download_errors: If `True` any error in download process should be raised as
             ``DownloadFailedException``. If `False` failed downloads will only raise warnings.
         :type raise_download_errors: bool

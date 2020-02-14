@@ -52,8 +52,9 @@ class DownloadClient:
 
         :param download_requests: A list of requests or a single request to be executed.
         :type download_requests: List[DownloadRequest] or DownloadRequest
-        :param max_threads: Maximum number of threads to be used for the download.
-        :type max_threads: int
+        :param max_threads: Maximum number of threads to be used for download in parallel. The default is
+            `max_threads=None` which will use the number of processors on the system multiplied by 5.
+        :type max_threads: int or None
         :return: A list of results or a single result, depending on input parameter `requests`
         :rtype: list(object) or object
         """
@@ -118,6 +119,8 @@ class DownloadClient:
     @retry_temporal_errors
     @fail_user_errors
     def _execute_download(self, request):
+        """ A default way of executing a single download request
+        """
         response = requests.request(
             request.request_type.value,
             url=request.url,
@@ -154,6 +157,8 @@ def get_json(url, post_values=None, headers=None, download_client_class=Download
     :param headers: add HTTP headers to request. Default is `None`
     :type headers: dict
     :return: request response as JSON instance
+    :param download_client_class: A class that implements a download client
+    :type download_client_class: object
     :rtype: JSON instance or None
     :raises: RunTimeError
     """
@@ -178,6 +183,8 @@ def get_xml(url, download_client_class=DownloadClient):
     :type url: str
     :return: request response as XML instance
     :rtype: XML instance or None
+    :param download_client_class: A class that implements a download client
+    :type download_client_class: object
     :raises: RunTimeError
     """
     request = DownloadRequest(url=url, request_type=RequestType.GET, save_response=False, return_data=True,
