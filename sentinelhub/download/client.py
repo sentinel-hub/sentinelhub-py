@@ -13,7 +13,7 @@ from ..config import SHConfig
 from ..constants import RequestType, MimeType
 from ..decoding import decode_data
 from ..exceptions import DownloadFailedException, SHRuntimeWarning
-from ..io_utils import LocalIO
+from ..io_utils import read_data, write_data
 from .handlers import fail_user_errors, retry_temporal_errors
 from .request import DownloadRequest
 from .cache import hash_request
@@ -26,7 +26,7 @@ class DownloadClient:
     """ The download client class which takes care of downloading the data, parallelizing the download through threads
     and catching any exceptions.
     """
-    def __init__(self, *, redownload=False, raise_download_errors=True, io_object=None, config=None):
+    def __init__(self, *, redownload=False, raise_download_errors=True, config=None):
         """
         :param redownload: If `True` the data will always be downloaded again. By default this is set to `False` and
             the data that has already been downloaded and saved to an expected location will be read from the
@@ -35,15 +35,11 @@ class DownloadClient:
         :param raise_download_errors: If `True` any error in download process will be raised as
             `DownloadFailedException`. If `False` failed downloads will only raise warnings.
         :type raise_download_errors: bool
-        :param io_object: An instance of IO class
-        :type io_object: LocalIO
         :param config: An instance of configuration class
         :type config: SHConfig
         """
         self.redownload = redownload
         self.raise_download_errors = raise_download_errors
-
-        self.io_object = LocalIO() if io_object is None else io_object
 
         self.config = SHConfig() if config is None else config
 
@@ -55,7 +51,7 @@ class DownloadClient:
         :param max_threads: Maximum number of threads to be used for download in parallel. The default is
             `max_threads=None` which will use the number of processors on the system multiplied by 5.
         :type max_threads: int or None
-        :return: A list of results or a single result, depending on input parameter `requests`
+        :return: A list of results or a single result, depending on input parameter `download_requests`
         :rtype: list(object) or object
         """
         is_single_request = isinstance(download_requests, DownloadRequest)
@@ -99,17 +95,17 @@ class DownloadClient:
             request.file_path = os.path.join(folder_path, 'response.{}'.format(request.data_type.value))
             request_path = os.path.join(folder_path, 'request.json')
             LOGGER.debug('Saving hashed request to %s', request_path)
-            self.io_object.write(request_path, hashable, data_format=MimeType.TXT)
+            write_data(request_path, hashable, data_format=MimeType.TXT)
 
         if not self.is_download_required(request):
             if request.return_data:
-                return self.io_object.read(request.file_path, data_format=request.data_type)
+                return read_data(request.file_path, data_format=request.data_type)
             return None
 
         response_content = self._execute_download(request)
 
         if request.save_response or request.hash_save:
-            self.io_object.write(request.file_path, response_content, data_format=MimeType.RAW)
+            write_data(request.file_path, response_content, data_format=MimeType.RAW)
             LOGGER.debug('Saved data to %s', request.file_path)
 
         if request.return_data:
@@ -143,7 +139,7 @@ class DownloadClient:
         :rtype: bool
         """
         val = (request.save_response or request.return_data) and \
-              (self.redownload or request.file_path is None or not self.io_object.exists(request.file_path))
+              (self.redownload or request.file_path is None or not os.path.exists(request.file_path))
         return val
 
 
