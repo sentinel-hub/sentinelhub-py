@@ -11,37 +11,37 @@ from ..os_utils import sys_is_windows
 
 
 class DownloadRequest:
-    """ Class to manage HTTP requests
+    """ A class defining a single download request.
 
-    Container for all download requests issued by the DataRequests containing
-    url to Sentinel Hub's services or other sources to data, file names to
-    saved data and other necessary flags needed when the data is downloaded and
-    interpreted.
-    TODO
-    :param url: url to Sentinel Hub's services or other sources from where the data is downloaded. Default is `None`
-    :type url: str
-    :param data_folder: folder name where the fetched data will be (or already is) saved. Default is `None`
-    :type data_folder: str
-    :param filename: filename of the file where the fetched data will be (or already is) saved. Default is `None`
-    :type filename: str
-    :param headers: add HTTP headers to request. Default is `None`
-    :type headers: dict
-    :param request_type: type of request, either GET or POST. Default is ``constants.RequestType.GET``
-    :type request_type: constants.RequestType
-    :param post_values: form encoded data to send in POST request. Default is `None`
-    :type post_values: dict
-    :param save_response: flag to turn on/off saving data downloaded by this request to disk. Default is `True`.
-    :type save_response: bool
-    :param return_data: flag to return or not data downloaded by this request to disk. Default is `True`.
-    :type return_data: bool
-    :param data_type: expected file format of downloaded data. Default is ``constants.MimeType.RAW``
-    :type data_type: constants.MimeType
+    The class is a container with all parameters needed to execute a single download request and save or return
+    downloaded data.
     """
-
     def __init__(self, *, url=None, headers=None, request_type=RequestType.GET, post_values=None,
                  data_type=MimeType.RAW, save_response=False, data_folder=None, filename=None, return_data=True,
                  **properties):
-
+        """
+        :param url: An URL from where to download
+        :type url: str or None
+        :param headers: Headers of a HTTP request
+        :type headers: dict or None
+        :param request_type: Type of request, either GET or POST. Default is `RequestType.GET`
+        :type request_type: str or RequestType
+        :param post_values: A dictionary of values that will be sent with a POST request. Default is `None`
+        :type post_values: dict or None
+        :param data_type: An expected file format of downloaded data. Default is `MimeType.RAW`
+        :type data_type: MimeType
+        :param save_response: A flag defining if the downloaded data will be saved to disk. Default is `False`.
+        :type save_response: bool
+        :param data_folder: A folder path where the fetched data will be (or already is) saved. Default is `None`
+        :type data_folder: str
+        :param filename: A custom filename where the data will be saved. By default data will be saved in a folder
+            which name are hashed request parameters.
+        :type filename: str
+        :param return_data: A flag defining if the downloaded data will be returned as an output of download procedure.
+            Default is `True`.
+        :type return_data: bool
+        :param properties: Any additional parameters.
+        """
         self.url = url
         self.headers = headers or {}
         self.request_type = RequestType(request_type)
