@@ -81,18 +81,10 @@ class SentinelHubDownloadClient(DownloadClient):
         """ Executes a function inside a thread lock and handles potential errors
         """
         self.lock.acquire()
-        exception = None
         try:
-            result = thread_unsafe_function(*args, **kwargs)
-        except BaseException as exc:
-            traceback = sys.exc_info()[2]
-            exception = exc
-        self.lock.release()
-
-        if exception is not None:
-            raise exception.with_traceback(traceback)
-
-        return result
+            return thread_unsafe_function(*args, **kwargs)
+        finally:
+            self.lock.release()
 
     def _do_download(self, request):
         """ Runs the download
