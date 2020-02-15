@@ -37,7 +37,6 @@ from .download.sentinelhub_client import SentinelHubDownloadClient
 from .sentinelhub_session import SentinelHubSession
 
 from .sentinelhub_request import body, bounds, data, output, response
-from .download.cache import hash_request
 
 from .time_utils import parse_time_interval, filter_times
 

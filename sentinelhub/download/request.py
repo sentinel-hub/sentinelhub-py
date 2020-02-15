@@ -7,7 +7,6 @@ import os
 import warnings
 import datetime as dt
 
-from .cache import hash_request
 from ..constants import MimeType, RequestType
 from ..exceptions import SHRuntimeWarning
 from ..os_utils import sys_is_windows
