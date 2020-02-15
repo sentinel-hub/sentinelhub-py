@@ -1,8 +1,11 @@
 """
 Module implementing DownloadRequest class
 """
+import hashlib
+import json
 import os
 import warnings
+import datetime as dt
 
 from .cache import hash_request
 from ..constants import MimeType, RequestType
@@ -65,27 +68,60 @@ class DownloadRequest:
             raise ValueError('Data folder is not specified. '
                              'Please give a data folder name in the initialization of your request.')
 
-    def get_saving_props(self):
-        """ A method that calculates file paths of request payload and response
+    def get_request_params(self, include_metadata=False):
+        """ Provides parameters that define the request in form of a dictionary
 
-        :return: Returns a pair of file paths, representing path to request pa
-        :rtype: (str or None, str or None, str or None)
+        :param include_metadata: A flag defining if also metadata parameters should be included, such as headers and
+            current time
+        :type include_metadata: bool
+        :return: A dictionary of parameters
+        :rtype: dict
+        """
+        params = {
+            'url': self.url,
+            'payload': self.post_values
+        }
+        if include_metadata:
+            params = {
+                **params,
+                'headers': self.headers,
+                'timestamp': dt.datetime.now().isoformat()
+            }
+        return params
+
+    def get_hashed_name(self):
+        """ It takes request url and payload and calculates a unique hashed string from them.
+
+        :return: A hashed string
+        :rtype: str
+        """
+        params = self.get_request_params(include_metadata=False)
+        hashable = json.dumps(params)
+
+        return hashlib.md5(hashable.encode('utf-8')).hexdigest()
+
+    def get_storage_paths(self):
+        """ A method that calculates file paths where request payload and response will be saved.
+
+        :return: Returns a pair of file paths, a request payload path and a response path. Each of them can also be
+            `None` if it is not defined.
+        :rtype: (str or None, str or None)
         """
         if self.data_folder is None:
-            return None, None, None
+            return None, None
 
         if self.filename is None:
-            hashed_name, request_info = hash_request(self.url, self.post_values)
+            hashed_name = self.get_hashed_name()
             folder = os.path.join(self.data_folder, hashed_name)
 
             request_path = os.path.join(folder, 'request.json')
             response_path = os.path.join(folder, 'response.{}'.format(self.data_type.value))
 
-            return request_path, request_info, response_path
+            return request_path, response_path
 
         response_path = os.path.join(self.data_folder, self.filename)
         self._check_path(response_path)
-        return None, None, response_path
+        return None, response_path
 
     @staticmethod
     def _check_path(file_path):

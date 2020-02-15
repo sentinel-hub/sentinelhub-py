@@ -91,11 +91,7 @@ class DownloadClient:
         """
         request.raise_if_invalid()
 
-        request_path, request_info, response_path = request.get_saving_props()
-
-        if request_path and request.save_response and (self.redownload or not os.path.exists(request_path)):
-            write_data(request_path, request_info, data_format=MimeType.JSON)
-            LOGGER.debug('Saved request info to %s', request_path)
+        request_path, response_path = request.get_storage_paths()
 
         if not self._is_download_required(request, response_path):
             if request.return_data:
@@ -103,6 +99,11 @@ class DownloadClient:
             return None
 
         response_content = self._execute_download(request)
+
+        if request_path and request.save_response and (self.redownload or not os.path.exists(request_path)):
+            request_info = request.get_request_params(include_metadata=True)
+            write_data(request_path, request_info, data_format=MimeType.JSON)
+            LOGGER.debug('Saved request info to %s', request_path)
 
         if request.save_response:
             write_data(response_path, response_content, data_format=MimeType.RAW)
