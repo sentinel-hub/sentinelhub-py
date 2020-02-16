@@ -575,29 +575,39 @@ class MimeType(Enum):
     RAW = 'raw'
     SAFE = 'safe'
 
-    @staticmethod
-    def canonical_extension(fmt_ext):
-        """ Canonical extension of file format extension
+    @property
+    def extension(self):
+        """ Returns file extension of the MimeType object
 
-        Converts the format extension fmt_ext into the canonical extension for that format. For example,
-        ``canonical_extension('tif') == 'tiff'``. Here we agree that the canonical extension for format F is F.value
-
-        :param fmt_ext: A string representing an extension (e.g. ``'txt'``, ``'png'``, etc.)
-        :type fmt_ext: str
-        :return: The canonical form of the extension (e.g. if ``fmt_ext='tif'`` then we return ``'tiff'``)
+        :returns: A file extension string
         :rtype: str
         """
-        if MimeType.has_value(fmt_ext):
-            return fmt_ext
+        if self.is_tiff_format():
+            return MimeType.TIFF.value
+
+        return self.value
+
+    @staticmethod
+    def from_string(mime_type_str):
+        """ Parses mime type from a file extension string
+
+        :param mime_type_str: A file extension string
+        :type mime_type_str: str
+        :return: A mime type enum
+        :rtype: MimeType
+        """
+        if MimeType.has_value(mime_type_str):
+            return MimeType(mime_type_str)
+
         try:
             return {
-                'tif': MimeType.TIFF.value,
-                'jpeg': MimeType.JPG.value,
-                'hdf5': MimeType.HDF.value,
-                'h5': MimeType.HDF.value
-            }[fmt_ext]
+                'tif': MimeType.TIFF,
+                'jpeg': MimeType.JPG,
+                'hdf5': MimeType.HDF,
+                'h5': MimeType.HDF
+            }[mime_type_str]
         except KeyError:
-            raise ValueError('Data format .{} is not supported'.format(fmt_ext))
+            raise ValueError('Data format .{} is not supported'.format(mime_type_str))
 
     def is_image_format(self):
         """ Checks whether file format is an image format
@@ -641,7 +651,7 @@ class MimeType(Enum):
         :return: `True` if there exists a constant with string value ``value``, `False` otherwise
         :rtype: bool
         """
-        return any(value == item.value for item in cls)
+        return value in cls._value2member_map_
 
     def get_string(self):
         """ Get file format as string
@@ -700,20 +710,6 @@ class MimeType(Enum):
             }[self]
         except KeyError:
             raise ValueError('Type {} is not supported by this method'.format(self))
-
-    @staticmethod
-    def from_string(mime_type_str):
-        """ Parses mime type from a file extension string
-
-        :param mime_type_str: A file extension string
-        :type mime_type_str: str
-        :return: A mime type enum
-        :rtype: MimeType
-        """
-        if mime_type_str == 'jpeg':
-            return MimeType.JPG
-
-        return MimeType(mime_type_str)
 
 
 class RequestType(Enum):

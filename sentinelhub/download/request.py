@@ -113,7 +113,7 @@ class DownloadRequest:
         hashed_name = self.get_hashed_name()
 
         request_path = os.path.join(hashed_name, 'request.json')
-        response_path = os.path.join(hashed_name, 'response.{}'.format(self.data_type.value))
+        response_path = os.path.join(hashed_name, 'response.{}'.format(self.data_type.extension))
 
         return request_path, response_path
 
