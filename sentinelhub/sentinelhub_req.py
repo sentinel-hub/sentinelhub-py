@@ -78,13 +78,17 @@ class SentinelHubRequest(DataRequest):
             raise ValueError("'time_interval should be a tupe of of (datetime, datetime) or (str, str)")
 
         if time_interval and all(isinstance(time, str) for time in time_interval):
-            time_from, time_to = time_interval
-            if time_from > time_to:
-                raise ValueError("'time_from' should not b greater than 'time_to'")
-            date_from, date_to = datetime.fromisoformat(time_from), datetime.fromisoformat(time_to)
-            time_interval = date_from.isoformat() + 'Z', date_to.isoformat() + 'Z'
+            time_interval = datetime.fromisoformat(time_interval[0]), datetime.fromisoformat(time_interval[1])
+        elif time_interval and not all(isinstance(time, datetime) for time in time_interval):
+            raise ValueError("'time_interval should be a tupe of of (datetime, datetime) or (str, str)")
 
-        time_from, time_to = time_interval if time_interval else (None, None)
+        if time_interval:
+            date_from, date_to = time_interval
+            if date_from > date_to:
+                raise ValueError("'time_from' should not b greater than 'time_to'")
+            date_from, date_to = date_from.isoformat() + 'Z', date_to.isoformat() + 'Z'
+        else:
+            date_from, date_to = "", ""
 
         mosaic_order_params = ["mostRecent", "leastRecent", "leastCC"]
         if mosaicking_order not in mosaic_order_params:
@@ -96,10 +100,7 @@ class SentinelHubRequest(DataRequest):
         input_data_object = {
             "type": data_type,
             "dataFilter": {
-                "timeRange": {
-                    "from": "" if time_from is None else time_from,
-                    "to": "" if time_to is None else time_to
-                },
+                "timeRange": {"from": date_from, "to": date_to},
                 "maxCloudCoverage": int(maxcc * 100),
                 "mosaickingOrder": mosaicking_order,
             }
