@@ -1,5 +1,5 @@
 """
-The required empty module
+A download part of the package
 """
 
 from .request import DownloadRequest
