@@ -17,7 +17,7 @@ class SentinelHubRequest(DataRequest):
     """ Sentinel Hub API request class
     """
     def __init__(self, evalscript, input_data, responses, bbox=None, size=None, resolution=None, maxcc=1.0,
-                 mosaicking_order='mostRecent', config=None, **kwargs):
+                 mosaicking_order='mostRecent', config=None, mime_type=MimeType.TIFF, **kwargs):
 
         if size is None and resolution is None:
             raise ValueError("Either size or resolution argument should be given")
@@ -28,6 +28,11 @@ class SentinelHubRequest(DataRequest):
             raise ValueError("'evalscript' should be a string")
 
         self.config = config or SHConfig()
+
+        self.headers = {'content-type': 'application/json'} if len(responses) <= 1 else \
+                       {'content-type': 'application/json', "accept": "application/tar"}
+
+        self.mime_type = mime_type
 
         self.payload = self.body(
             request_bounds=self.bounds(crs=bbox.crs.opengis_string, bbox=list(bbox)),
@@ -53,10 +58,8 @@ class SentinelHubRequest(DataRequest):
             post_values=self.payload,
             data_folder=self.data_folder,
             hash_save=bool(self.data_folder),
-            # data_type=MimeType.TAR,
-            data_type=MimeType.TIFF,
-            # headers={"accept": "application/tar", 'content-type': 'application/json'}
-            headers={'content-type': 'application/json'}
+            data_type=self.mime_type,
+            headers=self.headers
         )
 
     @staticmethod
