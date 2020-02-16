@@ -32,7 +32,7 @@ class SentinelHubDownloadClient(DownloadClient):
 
         self.session = self._configure_session(session)
 
-        self.rate_limit = SentinelHubRateLimit(self.session)
+        self.rate_limit = SentinelHubRateLimit(num_processes=self.config.number_of_download_processes)
         self.lock = Lock()
 
     def _configure_session(self, session):
@@ -56,7 +56,7 @@ class SentinelHubDownloadClient(DownloadClient):
     @retry_temporal_errors
     @fail_user_errors
     def _execute_download(self, request):
-        """ Executed download with a single thread and uses a rate limit object, which is shared between all threads
+        """ Executes the download with a single thread and uses a rate limit object, which is shared between all threads
         """
         thread_name = currentThread().getName()
 
