@@ -9,20 +9,21 @@ from .config import SHConfig
 from .constants import MimeType, DataSource, RequestType
 from .download import DownloadRequest, SentinelHubDownloadClient
 from .data_request import DataRequest
-from .geometry import Geometry
-from .geo_utils import bbox_to_dimensions
+from .geometry import Geometry, BBox
 
 
 class SentinelHubRequest(DataRequest):
     """ Sentinel Hub API request class
     """
-    def __init__(self, evalscript, input_data, responses, bbox=None, size=None, resolution=None, maxcc=1.0,
+    def __init__(self, evalscript, input_data, responses, bounds=None, size=None, resolution=None, maxcc=1.0,
                  mosaicking_order='mostRecent', config=None, mime_type=MimeType.TIFF, **kwargs):
+        """
+        :param bounds: Bounding box or geometry object
+        :type bounds: sentinelhub.BBox or sentinelhub.Geometry
+        """
 
         if size is None and resolution is None:
             raise ValueError("Either size or resolution argument should be given")
-
-        size_x, size_y = size if size else bbox_to_dimensions(bbox, resolution)
 
         if not isinstance(evalscript, str):
             raise ValueError("'evalscript' should be a string")
@@ -35,9 +36,9 @@ class SentinelHubRequest(DataRequest):
         self.mime_type = mime_type
 
         self.payload = self.body(
-            request_bounds=self.bounds(crs=bbox.crs.opengis_string, bbox=list(bbox)),
+            request_bounds=self.bounds(bounds),
             request_data=input_data,
-            request_output=self.output(size_x=size_x, size_y=size_y, responses=responses),
+            request_output=self.output(size=size, resolution=resolution, responses=responses),
             evalscript=evalscript
         )
 
@@ -138,35 +139,39 @@ class SentinelHubRequest(DataRequest):
         }
 
     @staticmethod
-    def output(responses, size_x, size_y):
+    def output(responses, size=None, resolution=None):
         """ Generate request output
         """
-        return {
-            "width": size_x,
-            "height": size_y,
+        if size and resolution:
+            raise ValueError("Either size or resolution argument should be given, not both.")
+
+        request_output = {
             "responses": responses
         }
 
+        if size:
+            request_output['width'], request_output['height'] = size
+        if resolution:
+            request_output['resx'], request_output['resy'] = resolution
+
+        return request_output
+
     @staticmethod
-    def bounds(crs, bbox=None, geometry=None):
+    def bounds(bounds_obj):
         """ Generate request bounds
         """
-        if bbox is None and geometry is None:
-            raise ValueError("At least one of parameters 'bbox' and 'geometry' has to be given")
+        if isinstance(bounds_obj, BBox):
+            bbox, geometry = bounds_obj, None
+        elif isinstance(bounds_obj, Geometry):
+            bbox, geometry = None, bounds_obj
+        else:
+            raise ValueError('Unsupported bounds object: {}'.format(bounds_obj))
 
-        if bbox and (not isinstance(bbox, list) or len(bbox) != 4 or not all(isinstance(x, float) for x in bbox)):
-            raise ValueError("Invalid bbox argument: {}".format(bbox))
-
-        if geometry and not isinstance(geometry, Geometry):
-            raise ValueError('Geometry has to be of type sentinelhub.Geometry')
-
-        if bbox and geometry and bbox is not geometry.crs:
-            msg = 'Bounding box and geometry should have the same CRS, but {} and {} found'.format(bbox, geometry.crs)
-            raise ValueError(msg)
+        crs = bbox.crs if bbox else geometry.crs
 
         request_bounds = {
             "properties": {
-                "crs": crs
+                "crs": crs.opengis_string
             }
         }
 
