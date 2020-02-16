@@ -64,7 +64,7 @@ class SentinelHubRequest(DataRequest):
         )
 
     @staticmethod
-    def input_data(data_source=None, time_interval=None, maxcc=1.0, mosaicking_order='mostRecent'):
+    def input_data(data_source=None, time_interval=None, maxcc=1.0, mosaicking_order='mostRecent', other_args=None):
         """ Generate request data
         """
 
@@ -109,10 +109,13 @@ class SentinelHubRequest(DataRequest):
         if data_type == 'CUSTOM':
             input_data_object['dataFilter']['collectionId'] = data_source.value
 
+        if other_args:
+            input_data_object.update(other_args)
+
         return input_data_object
 
     @staticmethod
-    def body(request_bounds, request_data, evalscript, request_output=None):
+    def body(request_bounds, request_data, evalscript, request_output=None, other_args=None):
         """ Generate request body
         """
         request_body = {
@@ -126,21 +129,29 @@ class SentinelHubRequest(DataRequest):
         if request_output is not None:
             request_body['output'] = request_output
 
+        if other_args:
+            request_body.update(other_args)
+
         return request_body
 
     @staticmethod
-    def output_response(identifier, response_format):
+    def output_response(identifier, response_format, other_args=None):
         """ Generate request response
         """
-        return {
+        output_response = {
             "identifier": identifier,
             "format": {
                 'type': response_format
             }
         }
 
+        if other_args:
+            output_response.update(other_args)
+
+        return output_response
+
     @staticmethod
-    def output(responses, size=None, resolution=None):
+    def output(responses, size=None, resolution=None, other_args=None):
         """ Generate request output
         """
         if size and resolution:
@@ -155,10 +166,13 @@ class SentinelHubRequest(DataRequest):
         if resolution:
             request_output['resx'], request_output['resy'] = resolution
 
+        if other_args:
+            request_output.update(other_args)
+
         return request_output
 
     @staticmethod
-    def bounds(bounds_obj):
+    def bounds(bounds_obj, other_args=None):
         """ Generate request bounds
         """
         if isinstance(bounds_obj, BBox):
@@ -181,5 +195,8 @@ class SentinelHubRequest(DataRequest):
 
         if geometry:
             request_bounds['geometry'] = geometry.geojson
+
+        if other_args:
+            request_bounds.update(other_args)
 
         return request_bounds
