@@ -30,9 +30,6 @@ class SentinelHubRequest(DataRequest):
 
         self.config = config or SHConfig()
 
-        self.headers = {'content-type': 'application/json'} if len(responses) <= 1 else \
-                       {'content-type': 'application/json', "accept": "application/tar"}
-
         self.mime_type = mime_type
 
         self.payload = self.body(
@@ -53,6 +50,8 @@ class SentinelHubRequest(DataRequest):
     def create_request(self):
         """ Prepares a download request
         """
+        headers = {'content-type': 'application/json', "accept": self.mime_type.get_string()}
+
         self._download_request = DownloadRequest(
             request_type=RequestType.POST,
             url=self.config.get_sh_processing_api_url(),
@@ -60,7 +59,7 @@ class SentinelHubRequest(DataRequest):
             data_folder=self.data_folder,
             hash_save=bool(self.data_folder),
             data_type=self.mime_type,
-            headers=self.headers
+            headers=headers
         )
 
     @staticmethod
