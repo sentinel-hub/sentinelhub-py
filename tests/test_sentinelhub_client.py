@@ -76,7 +76,7 @@ class TestProcessingApi(TestSentinelHub):
         headers = {'content-type': 'application/json'}
         request = DownloadRequest(
             url=url, post_values=payload, headers=headers, request_type='POST', data_type=MimeType.TIFF,
-            hash_save=True, data_folder=cache_folder
+            save_response=True, data_folder=cache_folder
         )
 
         client = SentinelHubDownloadClient()
