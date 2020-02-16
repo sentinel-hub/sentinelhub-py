@@ -14,9 +14,9 @@ class TestBBox(TestSentinelHub):
     def test_bbox_from_string(self):
         bbox_str = '46.07, 13.23, 46.24, 13.57'
         bbox = BBox(bbox_str, CRS.WGS84)
-        self.assertEqual(bbox.get_lower_left(), (46.07, 13.23))
-        self.assertEqual(bbox.get_upper_right(), (46.24, 13.57))
-        self.assertEqual(bbox.get_crs(), CRS.WGS84)
+        self.assertEqual(bbox.lower_left, (46.07, 13.23))
+        self.assertEqual(bbox.upper_right, (46.24, 13.57))
+        self.assertEqual(bbox.crs, CRS.WGS84)
 
     def test_bbox_from_bad_string(self):
         with self.subTest(msg="Too few coordinates"):
@@ -34,44 +34,44 @@ class TestBBox(TestSentinelHub):
                          [46.07, 13.57, 46.24, 13.23], [46.24, 13.57, 46.07, 13.23]]:
             with self.subTest(msg="bbox={}".format(bbox_lst)):
                 bbox = BBox(bbox_lst, CRS.WGS84)
-                self.assertEqual(bbox.get_lower_left(), (46.07, 13.23))
-                self.assertEqual(bbox.get_upper_right(), (46.24, 13.57))
-                self.assertEqual(bbox.get_crs(), CRS.WGS84)
+                self.assertEqual(bbox.lower_left, (46.07, 13.23))
+                self.assertEqual(bbox.upper_right, (46.24, 13.57))
+                self.assertEqual(bbox.crs, CRS.WGS84)
 
     def test_bbox_from_nested_list(self):
         bbox_lst = [[-46.07, -13.23], [46.24, 13.57]]
         bbox = BBox(bbox_lst, CRS.WGS84)
-        self.assertEqual(bbox.get_upper_right(), (46.24, 13.57))
-        self.assertEqual(bbox.get_lower_left(), (-46.07, -13.23))
-        self.assertEqual(bbox.get_crs(), CRS.WGS84)
+        self.assertEqual(bbox.upper_right, (46.24, 13.57))
+        self.assertEqual(bbox.lower_left, (-46.07, -13.23))
+        self.assertEqual(bbox.crs, CRS.WGS84)
 
     def test_bbox_from_flat_tuple(self):
         bbox_tup = 46.07, 13.23, 46.24, 13.57
         bbox = BBox(bbox_tup, CRS.WGS84)
-        self.assertEqual(bbox.get_upper_right(), (46.24, 13.57))
-        self.assertEqual(bbox.get_lower_left(), (46.07, 13.23))
-        self.assertEqual(bbox.get_crs(), CRS.WGS84)
+        self.assertEqual(bbox.upper_right, (46.24, 13.57))
+        self.assertEqual(bbox.lower_left, (46.07, 13.23))
+        self.assertEqual(bbox.crs, CRS.WGS84)
 
     def test_bbox_from_nested_tuple(self):
         bbox_tup = (46.07, 13.23), (46.24, 13.57)
         bbox = BBox(bbox_tup, CRS.WGS84)
-        self.assertEqual(bbox.get_upper_right(), (46.24, 13.57))
-        self.assertEqual(bbox.get_lower_left(), (46.07, 13.23))
-        self.assertEqual(bbox.get_crs(), CRS.WGS84)
+        self.assertEqual(bbox.upper_right, (46.24, 13.57))
+        self.assertEqual(bbox.lower_left, (46.07, 13.23))
+        self.assertEqual(bbox.crs, CRS.WGS84)
 
     def test_bbox_from_list_tuple_combo(self):
         bbox_list = [(46.07, 13.23), (46.24, 13.57)]
         bbox = BBox(bbox_list, CRS.WGS84)
-        self.assertEqual(bbox.get_upper_right(), (46.24, 13.57))
-        self.assertEqual(bbox.get_lower_left(), (46.07, 13.23))
-        self.assertEqual(bbox.get_crs(), CRS.WGS84)
+        self.assertEqual(bbox.upper_right, (46.24, 13.57))
+        self.assertEqual(bbox.lower_left, (46.07, 13.23))
+        self.assertEqual(bbox.crs, CRS.WGS84)
 
     def test_bbox_from_dict(self):
         bbox_dict = {'min_x': 46.07, 'min_y': 13.23, 'max_x': 46.24, 'max_y': 13.57}
         bbox = BBox(bbox_dict, CRS.WGS84)
-        self.assertEqual(bbox.get_upper_right(), (46.24, 13.57))
-        self.assertEqual(bbox.get_lower_left(), (46.07, 13.23))
-        self.assertEqual(bbox.get_crs(), CRS.WGS84)
+        self.assertEqual(bbox.upper_right, (46.24, 13.57))
+        self.assertEqual(bbox.lower_left, (46.07, 13.23))
+        self.assertEqual(bbox.crs, CRS.WGS84)
 
     def test_bbox_from_bad_dict(self):
         bbox_dict = {'x1': 46.07, 'y1': 13.23, 'x2': 46.24, 'y2': 13.57}
@@ -83,9 +83,9 @@ class TestBBox(TestSentinelHub):
         bbox_fst = BBox(bbox_dict, CRS.WGS84)
         bbox = BBox(bbox_fst, CRS.WGS84)
 
-        self.assertEqual(bbox.get_upper_right(), (46.24, 13.57))
-        self.assertEqual(bbox.get_lower_left(), (46.07, 13.23))
-        self.assertEqual(bbox.get_crs(), CRS.WGS84)
+        self.assertEqual(bbox.upper_right, (46.24, 13.57))
+        self.assertEqual(bbox.lower_left, (46.07, 13.23))
+        self.assertEqual(bbox.crs, CRS.WGS84)
 
     def test_bbox_from_shapely(self):
         bbox_list = [
@@ -134,9 +134,9 @@ class TestBBox(TestSentinelHub):
 
         self.assertTrue(isinstance(bbox.get_geojson(), dict),
                         "Expected dictionary, got type {}".format(type(bbox.geometry)))
-        self.assertTrue(isinstance(bbox.get_geometry(), shapely.geometry.Polygon),
+        self.assertTrue(isinstance(bbox.geometry, shapely.geometry.Polygon),
                         "Expected type {}, got type {}".format(shapely.geometry.Polygon,
-                                                               type(bbox.get_geometry())))
+                                                               type(bbox.geometry)))
 
     def test_buffer(self):
         bbox = BBox([46.07, 13.23, 46.24, 13.57], CRS.WGS84)

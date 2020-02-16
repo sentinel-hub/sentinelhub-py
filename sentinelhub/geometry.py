@@ -1,7 +1,6 @@
 """
 Module implementing geometry classes
 """
-import warnings
 from abc import ABC, abstractmethod
 from math import ceil
 
@@ -10,7 +9,6 @@ import shapely.geometry
 import shapely.wkt
 
 from .constants import CRS
-from .exceptions import SHDeprecationWarning
 from .geo_utils import transform_point
 
 
@@ -39,34 +37,12 @@ class BaseGeometry(ABC):
         """
         return self._crs
 
-    def get_crs(self):
-        """ Returns the coordinate reference system (CRS)
-
-        :return: Coordinate reference system Enum
-        :rtype: constants.CRS
-        """
-        message = 'This method will be removed in version 3.0, use property {}.crs ' \
-                  'instead'.format(self.__class__.__name__)
-        warnings.warn(message, category=SHDeprecationWarning)
-        return self.crs
-
     @property
     @abstractmethod
     def geometry(self):
         """ An abstract property - ever subclass must implement geometry property
         """
         raise NotImplementedError
-
-    def get_geometry(self):
-        """ Returns shapely geometry
-
-        :return: A polygon or multipolygon
-        :rtype: shapely.geometry.Polygon or shapely.geometry.MultiPolygon
-        """
-        message = 'This method will be removed in version 3.0, use property {}.geometry ' \
-                  'instead'.format(self.__class__.__name__)
-        warnings.warn(message, category=SHDeprecationWarning)
-        return self.geometry
 
     @property
     def geojson(self):
@@ -184,16 +160,6 @@ class BBox(BaseGeometry):
         """
         return self.min_x, self.min_y
 
-    def get_lower_left(self):
-        """ Returns the lower left vertex of the bounding box
-
-        :return: min_x, min_y
-        :rtype: (float, float)
-        """
-        message = 'This method will be removed in version 3.0, use property BBox.lower_left instead'
-        warnings.warn(message, category=SHDeprecationWarning)
-        return self.lower_left
-
     @property
     def upper_right(self):
         """ Returns the upper right vertex of the bounding box
@@ -203,16 +169,6 @@ class BBox(BaseGeometry):
         """
         return self.max_x, self.max_y
 
-    def get_upper_right(self):
-        """ Returns the upper right vertex of the bounding box
-
-        :return: max_x, max_y
-        :rtype: (float, float)
-        """
-        message = 'This method will be removed in version 3.0, use property BBox.upper_right instead'
-        warnings.warn(message, category=SHDeprecationWarning)
-        return self.upper_right
-
     @property
     def middle(self):
         """ Returns the middle point of the bounding box
@@ -221,16 +177,6 @@ class BBox(BaseGeometry):
         :rtype: (float, float)
         """
         return (self.min_x + self.max_x) / 2, (self.min_y + self.max_y) / 2
-
-    def get_middle(self):
-        """ Returns the middle point of the bounding box
-
-        :return: middle point
-        :rtype: (float, float)
-        """
-        message = 'This method will be removed in version 3.0, use property BBox.middle instead'
-        warnings.warn(message, category=SHDeprecationWarning)
-        return self.middle
 
     def reverse(self):
         """ Returns a new BBox object where x and y coordinates are switched
