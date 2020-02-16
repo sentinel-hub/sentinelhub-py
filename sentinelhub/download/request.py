@@ -31,14 +31,14 @@ class DownloadRequest:
         :param post_values: A dictionary of values that will be sent with a POST request. Default is `None`
         :type post_values: dict or None
         :param data_type: An expected file format of downloaded data. Default is `MimeType.RAW`
-        :type data_type: MimeType
+        :type data_type: MimeType or str
         :param save_response: A flag defining if the downloaded data will be saved to disk. Default is `False`.
         :type save_response: bool
         :param data_folder: A folder path where the fetched data will be (or already is) saved. Default is `None`
-        :type data_folder: str
+        :type data_folder: str or None
         :param filename: A custom filename where the data will be saved. By default data will be saved in a folder
             which name are hashed request parameters.
-        :type filename: str
+        :type filename: str or None
         :param return_data: A flag defining if the downloaded data will be returned as an output of download procedure.
             Default is `True`.
         :type return_data: bool
