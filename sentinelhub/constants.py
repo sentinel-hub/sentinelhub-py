@@ -5,13 +5,15 @@ import re
 import functools
 import itertools as it
 import mimetypes
+import warnings
 from enum import Enum, EnumMeta
-from aenum import extend_enum
 
 import utm
 import pyproj
+from aenum import extend_enum
 
 from .config import SHConfig
+from .exceptions import SHDeprecationWarning
 from ._version import __version__
 
 
@@ -608,6 +610,14 @@ class MimeType(Enum):
             }[mime_type_str]
         except KeyError:
             raise ValueError('Data format .{} is not supported'.format(mime_type_str))
+
+    @staticmethod
+    def canonical_extension(fmt_ext):
+        """ A deprecated method, use MimeType.from_string().extension instead
+        """
+        warnings.warn('This method is deprecated and will soon be removed, use MimeType.from_string().extension '
+                      'instead', category=SHDeprecationWarning)
+        return MimeType.from_string(fmt_ext).extension
 
     def is_image_format(self):
         """ Checks whether file format is an image format
