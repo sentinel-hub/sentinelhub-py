@@ -99,6 +99,24 @@ class DownloadRequest:
 
         return hashlib.md5(hashable.encode('utf-8')).hexdigest()
 
+    def get_relative_paths(self):
+        """ A method that calculates file paths relative to `data_folder`
+
+        :return: Returns a pair of file paths, a request payload path and a response path. If request path is not
+            defined it returns `None`.
+        :rtype: (str or None, str)
+        """
+
+        if self.filename is not None:
+            return None, self.filename
+
+        hashed_name = self.get_hashed_name()
+
+        request_path = os.path.join(hashed_name, 'request.json')
+        response_path = os.path.join(hashed_name, 'response.{}'.format(self.data_type.value))
+
+        return request_path, response_path
+
     def get_storage_paths(self):
         """ A method that calculates file paths where request payload and response will be saved.
 
@@ -109,18 +127,14 @@ class DownloadRequest:
         if self.data_folder is None:
             return None, None
 
-        if self.filename is None:
-            hashed_name = self.get_hashed_name()
-            folder = os.path.join(self.data_folder, hashed_name)
+        request_path, response_path = self.get_relative_paths()
 
-            request_path = os.path.join(folder, 'request.json')
-            response_path = os.path.join(folder, 'response.{}'.format(self.data_type.value))
+        if request_path is not None:
+            request_path = os.path.join(self.data_folder, request_path)
+        response_path = os.path.join(self.data_folder, response_path)
 
-            return request_path, response_path
-
-        response_path = os.path.join(self.data_folder, self.filename)
         self._check_path(response_path)
-        return None, response_path
+        return request_path, response_path
 
     @staticmethod
     def _check_path(file_path):

@@ -13,7 +13,7 @@ from .fis import FisService
 from .geopedia import GeopediaWmsService, GeopediaImageService
 from .aws import AwsProduct, AwsTile
 from .aws_safe import SafeProduct, SafeTile
-from .download import DownloadClient, AwsDownloadClient, SentinelHubDownloadClient
+from .download import DownloadRequest, DownloadClient, AwsDownloadClient, SentinelHubDownloadClient
 from .exceptions import DownloadFailedException
 from .io_utils import read_data
 from .os_utils import make_folder
@@ -33,7 +33,7 @@ class DataRequest(ABC):
     """
     def __init__(self, download_client_class, *, data_folder=None):
         self.download_client_class = download_client_class
-        self.data_folder = data_folder.rstrip('/') if data_folder else None
+        self.data_folder = data_folder
 
         self.download_list = []
         self.folder_list = []
@@ -55,14 +55,13 @@ class DataRequest(ABC):
         return self.download_list
 
     def get_filename_list(self):
-        """
-        Returns a list of file names where the requested data will be saved or read from, if it
-        was already downloaded and saved.
+        """ Returns a list of file names (or paths relative to `data_folder`) where the requested data will be saved
+        or read from, if it has already been downloaded and saved.
 
-        :return: List of filenames where downloaded data will be saved.
+        :return: A list of filenames
         :rtype: list(str)
         """
-        return [request.filename for request in self.download_list]
+        return [request.get_relative_paths()[1] for request in self.download_list]
 
     def get_url_list(self):
         """
@@ -79,7 +78,8 @@ class DataRequest(ABC):
         :return: `True` if request is valid and `False` otherwise
         :rtype: bool
         """
-        return isinstance(self.download_list, list)
+        return isinstance(self.download_list, list) and \
+            all(isinstance(request, DownloadRequest) for request in self.download_list)
 
     def get_data(self, *, save_data=False, data_filter=None, redownload=False, max_threads=None,
                  raise_download_errors=True):
