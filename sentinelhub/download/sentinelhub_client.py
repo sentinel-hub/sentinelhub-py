@@ -2,7 +2,6 @@
 Module implementing a rate-limited multi-threaded download client for downloading from Sentinel Hub service
 """
 import logging
-import sys
 import warnings
 import time
 from threading import Lock, currentThread

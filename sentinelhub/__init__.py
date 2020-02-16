@@ -19,7 +19,7 @@ from .constants import DataSource, CustomUrlParam, CRS, MimeType, SHConstants, A
 
 from .config import SHConfig
 
-from .download import DownloadRequest, get_json, get_xml
+from .download import DownloadRequest, get_json, get_xml, DownloadClient, AwsDownloadClient, SentinelHubDownloadClient
 
 from .exceptions import DownloadFailedException, AwsDownloadFailedException
 
@@ -33,7 +33,6 @@ from .time_utils import next_date, prev_date, get_current_date
 
 from .testing_utils import TestSentinelHub, TestCaseContainer
 
-from .download.sentinelhub_client import SentinelHubDownloadClient
 from .sentinelhub_session import SentinelHubSession
 
 from .sentinelhub_request import body, bounds, data, output, response
