@@ -14,8 +14,6 @@ from .geopedia import GeopediaWmsService, GeopediaImageService
 from .aws import AwsProduct, AwsTile
 from .aws_safe import SafeProduct, SafeTile
 from .download import DownloadRequest, DownloadClient, AwsDownloadClient, SentinelHubDownloadClient
-from .exceptions import DownloadFailedException
-from .io_utils import read_data
 from .os_utils import make_folder
 from .constants import DataSource, MimeType, CustomUrlParam, ServiceType, CRS, HistogramType
 
