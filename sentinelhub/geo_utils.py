@@ -1,11 +1,10 @@
 """
 Module for manipulation of geographical information
 """
-
 import logging
-import warnings
 
 from .constants import CRS
+
 
 LOGGER = logging.getLogger(__name__)
 
@@ -232,18 +231,3 @@ def transform_point(point, source_crs, target_crs):
         return point
     old_x, old_y = point
     return CRS.get_transform_function(source_crs, target_crs)(old_x, old_y)
-
-
-def transform_bbox(bbox, target_crs):
-    """ Maps bbox from current crs to target_crs
-
-    :param bbox: bounding box
-    :type bbox: geometry.BBox
-    :param target_crs: target CRS
-    :type target_crs: constants.CRS
-    :return: bounding box in target CRS
-    :rtype: geometry.BBox
-    """
-    warnings.warn("This function is deprecated, use BBox.transform method instead", DeprecationWarning, stacklevel=2)
-
-    return bbox.transform(target_crs)

@@ -5,7 +5,6 @@ Main module for collecting data
 import datetime
 import os
 import logging
-import warnings
 import copy
 from abc import ABC, abstractmethod
 
@@ -14,11 +13,11 @@ from .fis import FisService
 from .geopedia import GeopediaWmsService, GeopediaImageService
 from .aws import AwsProduct, AwsTile
 from .aws_safe import SafeProduct, SafeTile
-from .download import download_data, ImageDecodingError, DownloadFailedException
+from .download import DownloadRequest, DownloadClient, AwsDownloadClient, SentinelHubDownloadClient
+from .exceptions import DownloadFailedException
 from .io_utils import read_data
 from .os_utils import make_folder
 from .constants import DataSource, MimeType, CustomUrlParam, ServiceType, CRS, HistogramType
-from .config import SHConfig
 
 LOGGER = logging.getLogger(__name__)
 
@@ -32,8 +31,9 @@ class DataRequest(ABC):
     :param data_folder: location of the directory where the fetched data will be saved.
     :type data_folder: str
     """
-    def __init__(self, *, data_folder=None):
-        self.data_folder = data_folder.rstrip('/') if data_folder else None
+    def __init__(self, download_client_class, *, data_folder=None):
+        self.download_client_class = download_client_class
+        self.data_folder = data_folder
 
         self.download_list = []
         self.folder_list = []
@@ -55,14 +55,13 @@ class DataRequest(ABC):
         return self.download_list
 
     def get_filename_list(self):
-        """
-        Returns a list of file names where the requested data will be saved or read from, if it
-        was already downloaded and saved.
+        """ Returns a list of file names (or paths relative to `data_folder`) where the requested data will be saved
+        or read from, if it has already been downloaded and saved.
 
-        :return: List of filenames where downloaded data will be saved.
+        :return: A list of filenames
         :rtype: list(str)
         """
-        return [request.filename for request in self.download_list]
+        return [request.get_relative_paths()[1] for request in self.download_list]
 
     def get_url_list(self):
         """
@@ -79,26 +78,28 @@ class DataRequest(ABC):
         :return: `True` if request is valid and `False` otherwise
         :rtype: bool
         """
-        return isinstance(self.download_list, list)
+        return isinstance(self.download_list, list) and \
+            all(isinstance(request, DownloadRequest) for request in self.download_list)
 
-    def get_data(self, *, save_data=False, decode_data=True, data_filter=None,
-                 redownload=False, max_threads=None, raise_download_errors=True):
+    def get_data(self, *, save_data=False, redownload=False, data_filter=None, max_threads=None,
+                 decode_data=True, raise_download_errors=True):
         """ Get requested data either by downloading it or by reading it from the disk (if it
         was previously downloaded and saved).
 
         :param save_data: flag to turn on/off saving of data to disk. Default is `False`.
         :type save_data: bool
-        :param decode_data: if `True` (default), decodes data (e.g., returns image as an array of numbers); if `False`, returns binary data.
-        :type decode_data: bool
         :param redownload: if `True`, download again the requested data even though it's already saved to disk.
                             Default is `False`, do not download if data is already available on disk.
         :type redownload: bool
         :param data_filter: Used to specify which items will be returned by the method and in which order. E.g. with
             ``data_filter=[0, 2, -1]`` the method will return only 1st, 3rd and last item. Default filter is `None`.
         :type data_filter: list(int) or None
-        :param max_threads: number of threads to use when downloading data; default is ``max_threads=None`` which
-            by default uses the number of processors on the system multiplied by 5.
-        :type max_threads: int
+        :param max_threads: Maximum number of threads to be used for download in parallel. The default is
+            `max_threads=None` which will use the number of processors on the system multiplied by 5.
+        :type max_threads: int or None
+        :param decode_data: If `True` (default) it decodes data (e.g., returns image as an array of numbers);
+            if `False` it returns binary data.
+        :type decode_data: bool
         :param raise_download_errors: If `True` any error in download process should be raised as
             ``DownloadFailedException``. If `False` failed downloads will only raise warnings and the method will
             return list with `None` values in places where the results of failed download requests should be.
@@ -107,9 +108,9 @@ class DataRequest(ABC):
                     shape ``[height, width, channels]``.
         :rtype: list of numpy arrays
         """
-        self._preprocess_request(save_data, True, decode_data)
-        data_list = self._execute_data_download(data_filter, redownload, max_threads, raise_download_errors)
-        return self._add_saved_data(data_list, data_filter, raise_download_errors)
+        self._preprocess_request(save_data, True)
+        return self._execute_data_download(data_filter, redownload, max_threads, raise_download_errors,
+                                           decode_data=decode_data)
 
     def save_data(self, *, data_filter=None, redownload=False, max_threads=None, raise_download_errors=False):
         """ Saves data to disk. If ``redownload=True`` then the data is redownloaded using ``max_threads`` workers.
@@ -119,17 +120,17 @@ class DataRequest(ABC):
         :type data_filter: list(int) or None
         :param redownload: data is redownloaded if ``redownload=True``. Default is `False`
         :type redownload: bool
-        :param max_threads: number of threads to use when downloading data; default is ``max_threads=None`` which
-            by default uses the number of processors on the system multiplied by 5.
-        :type max_threads: int
+        :param max_threads: Maximum number of threads to be used for download in parallel. The default is
+            `max_threads=None` which will use the number of processors on the system multiplied by 5.
+        :type max_threads: int or None
         :param raise_download_errors: If `True` any error in download process should be raised as
             ``DownloadFailedException``. If `False` failed downloads will only raise warnings.
         :type raise_download_errors: bool
         """
-        self._preprocess_request(True, False, False)
+        self._preprocess_request(True, False)
         self._execute_data_download(data_filter, redownload, max_threads, raise_download_errors)
 
-    def _execute_data_download(self, data_filter, redownload, max_threads, raise_download_errors):
+    def _execute_data_download(self, data_filter, redownload, max_threads, raise_download_errors, decode_data=True):
         """ Calls download module and executes the download process
 
         :param data_filter: Used to specify which items will be returned by the method and in which order. E.g. with
@@ -137,11 +138,15 @@ class DataRequest(ABC):
         :type data_filter: list(int) or None
         :param redownload: data is redownloaded if ``redownload=True``. Default is `False`
         :type redownload: bool
-        :param max_threads: the number of workers to use when downloading, default ``max_threads=None``
-        :type max_threads: int
+        :param max_threads: Maximum number of threads to be used for download in parallel. The default is
+            `max_threads=None` which will use the number of processors on the system multiplied by 5.
+        :type max_threads: int or None
         :param raise_download_errors: If `True` any error in download process should be raised as
             ``DownloadFailedException``. If `False` failed downloads will only raise warnings.
         :type raise_download_errors: bool
+        :param decode_data: If `True` (default) it decodes data (e.g., returns image as an array of numbers);
+            if `False` it returns binary data.
+        :type decode_data: bool
         :return: List of data obtained from download
         :rtype: list
         """
@@ -159,18 +164,8 @@ class DataRequest(ABC):
         else:
             raise ValueError('data_filter parameter must be a list of indices')
 
-        data_list = []
-        for future in download_data(filtered_download_list, redownload=redownload, max_threads=max_threads):
-            try:
-                data_list.append(future.result(timeout=SHConfig().download_timeout_seconds))
-            except ImageDecodingError as err:
-                data_list.append(None)
-                LOGGER.debug('%s while downloading data; will try to load it from disk if it was saved', err)
-            except DownloadFailedException as download_exception:
-                if raise_download_errors:
-                    raise download_exception
-                warnings.warn(str(download_exception))
-                data_list.append(None)
+        client = self.download_client_class(redownload=redownload, raise_download_errors=raise_download_errors)
+        data_list = client.download(filtered_download_list, max_threads=max_threads, decode_data=decode_data)
 
         if is_repeating_filter:
             data_list = [copy.deepcopy(data_list[index]) for index in mapping_list]
@@ -198,15 +193,13 @@ class DataRequest(ABC):
             mapping_list.append(unique_requests_map[download_request])
         return unique_download_list, mapping_list
 
-    def _preprocess_request(self, save_data, return_data, decode_data):
+    def _preprocess_request(self, save_data, return_data):
         """ Prepares requests for download and creates empty folders
 
         :param save_data: Tells whether to save data or not
         :type save_data: bool
         :param return_data: Tells whether to return data or not
         :type return_data: bool
-        :param decode_data: Tells whether to decode returned data (only relevant if return_data is True)
-        :type decode_data: bool
         """
         if not self.is_valid_request():
             raise ValueError('Cannot obtain data because request is invalid')
@@ -216,30 +209,13 @@ class DataRequest(ABC):
                              'In order to save data please set `data_folder` to location on your disk.')
 
         for download_request in self.download_list:
-            download_request.set_save_response(save_data)
-            download_request.set_return_data(return_data)
-            if not decode_data:
-                download_request.set_data_type(MimeType.RAW)
-            download_request.set_data_folder(self.data_folder)
+            download_request.save_response = save_data
+            download_request.return_data = return_data
+            download_request.data_folder = self.data_folder
 
         if save_data:
             for folder in self.folder_list:
                 make_folder(os.path.join(self.data_folder, folder))
-
-    def _add_saved_data(self, data_list, data_filter, raise_download_errors):
-        """ Adds already saved data that was not redownloaded to the requested data list.
-        """
-        filtered_download_list = self.download_list if data_filter is None else \
-            [self.download_list[index] for index in data_filter]
-        for i, request in enumerate(filtered_download_list):
-            if request.return_data and data_list[i] is None:
-                if os.path.exists(request.get_file_path()):
-                    data_list[i] = read_data(request.get_file_path(),
-                                             data_format=request.data_type)
-                elif raise_download_errors:
-                    raise DownloadFailedException('Failed to download data from {}.\n No previously downloaded data '
-                                                  'exists in file {}.'.format(request.url, request.get_file_path()))
-        return data_list
 
 
 class OgcRequest(DataRequest):
@@ -258,7 +234,7 @@ class OgcRequest(DataRequest):
     :param bbox: Bounding box of the requested image. Coordinates must be in the specified coordinate reference system.
     :type bbox: geometry.BBox
     :param time: time or time range for which to return the results, in ISO8601 format
-                (year-month-date, for example: ``2016-01-01``, or year-month-dateThours:minuts:seconds format,
+                (year-month-date, for example: ``2016-01-01``, or year-month-dateThours:minutes:seconds format,
                 i.e. ``2016-01-01T16:31:21``). When a single time is specified the request will return
                 data for that specific date, if it exists. If a time range is specified the result is a list of all
                 scenes between the specified dates conforming to the cloud coverage criteria. Most recent acquisition
@@ -315,7 +291,7 @@ class OgcRequest(DataRequest):
 
         self.wfs_iterator = None
 
-        super().__init__(**kwargs)
+        super().__init__(SentinelHubDownloadClient, **kwargs)
 
     def _check_custom_url_parameters(self):
         """ Checks if custom url parameters are valid parameters.
@@ -377,7 +353,7 @@ class WmsRequest(OgcRequest):
     Creates an instance of Sentinel Hub WMS (Web Map Service) GetMap request,
     which provides access to Sentinel-2's unprocessed bands (B01, B02, ..., B08, B8A, ..., B12)
     or processed products such as true color imagery, NDVI, etc. The only difference is that in
-    the case od WMS request the user specifies the desired image size instead of its resolution.
+    the case of WMS request the user specifies the desired image size instead of its resolution.
 
     It is required to specify at least one of `width` and `height` parameters. If only one of them is specified the
     the other one will be calculated to best fit the bounding box ratio. If both of them are specified they will be used
@@ -393,7 +369,7 @@ class WmsRequest(OgcRequest):
     :param bbox: Bounding box of the requested image. Coordinates must be in the specified coordinate reference system.
     :type bbox: geometry.BBox
     :param time: time or time range for which to return the results, in ISO8601 format
-                (year-month-date, for example: ``2016-01-01``, or year-month-dateThours:minuts:seconds format,
+                (year-month-date, for example: ``2016-01-01``, or year-month-dateThours:minutes:seconds format,
                 i.e. ``2016-01-01T16:31:21``). When a single time is specified the request will return
                 data for that specific date, if it exists. If a time range is specified the result is a list of all
                 scenes between the specified dates conforming to the cloud coverage criteria. Most recent acquisition
@@ -442,7 +418,7 @@ class WcsRequest(OgcRequest):
     Creates an instance of Sentinel Hub WCS (Web Coverage Service) GetCoverage request,
     which provides access to Sentinel-2's unprocessed bands (B01, B02, ..., B08, B8A, ..., B12)
     or processed products such as true color imagery, NDVI, etc., as the WMS service. The
-    only difference is that in the case od WCS request the user specifies the desired
+    only difference is that in the case of WCS request the user specifies the desired
     resolution of the image instead of its size.
 
     More info available at:
@@ -460,7 +436,7 @@ class WcsRequest(OgcRequest):
     :param bbox: Bounding box of the requested image. Coordinates must be in the specified coordinate reference system.
     :type bbox: geometry.BBox
     :param time: time or time range for which to return the results, in ISO8601 format
-                (year-month-date, for example: ``2016-01-01``, or year-month-dateThours:minuts:seconds format,
+                (year-month-date, for example: ``2016-01-01``, or year-month-dateThours:minutes:seconds format,
                 i.e. ``2016-01-01T16:31:21``). When a single time is specified the request will return
                 data for that specific date, if it exists. If a time range is specified the result is a list of all
                 scenes between the specified dates conforming to the cloud coverage criteria. Most recent acquisition
@@ -519,7 +495,7 @@ class FisRequest(OgcRequest):
         match the one given by `data_source` parameter
     :type layer: str
     :param time: time or time range for which to return the results, in ISO8601 format
-        (year-month-date, for example: ``2016-01-01``, or year-month-dateThours:minuts:seconds format,
+        (year-month-date, for example: ``2016-01-01``, or year-month-dateThours:minutes:seconds format,
         i.e. ``2016-01-01T16:31:21``). Examples: ``'2016-01-01'``, or ``('2016-01-01', ' 2016-01-31')``
     :type time: str or (str, str) or datetime.date or (datetime.date, datetime.date) or datetime.datetime or
         (datetime.datetime, datetime.datetime)
@@ -610,7 +586,7 @@ class GeopediaRequest(DataRequest):
         self.theme = theme
         self.image_format = MimeType(image_format)
 
-        super().__init__(**kwargs)
+        super().__init__(DownloadClient, **kwargs)
 
     @abstractmethod
     def create_request(self):
@@ -747,7 +723,7 @@ class AwsRequest(DataRequest):
                       (e.g. ``['metadata', 'tileInfo', 'preview/B01', 'TCI']``)
     :type metafiles: list(str)
     :param safe_format: flag that determines the structure of saved data. If `True` it will be saved in .SAFE format
-                        defined by ESA. If `False` it will be saved in the same structure as the stucture at AWS.
+                        defined by ESA. If `False` it will be saved in the same structure as the structure at AWS.
     :type safe_format: bool
     :param data_folder: location of the directory where the fetched data will be saved.
     :type data_folder: str
@@ -758,7 +734,7 @@ class AwsRequest(DataRequest):
         self.safe_format = safe_format
 
         self.aws_service = None
-        super().__init__(**kwargs)
+        super().__init__(AwsDownloadClient, **kwargs)
 
     @abstractmethod
     def create_request(self):
@@ -790,7 +766,7 @@ class AwsProductRequest(AwsRequest):
                       (e.g. ``['metadata', 'tileInfo', 'preview/B01', 'TCI']``)
     :type metafiles: list(str)
     :param safe_format: flag that determines the structure of saved data. If `True` it will be saved in .SAFE format
-                        defined by ESA. If `False` it will be saved in the same structure as the stucture at AWS.
+                        defined by ESA. If `False` it will be saved in the same structure as the structure at AWS.
     :type safe_format: bool
     :param data_folder: location of the directory where the fetched data will be saved.
     :type data_folder: str
@@ -836,7 +812,7 @@ class AwsTileRequest(AwsRequest):
                       (e.g. ``['metadata', 'tileInfo', 'preview/B01', 'TCI']``)
     :type metafiles: list(str)
     :param safe_format: flag that determines the structure of saved data. If `True` it will be saved in .SAFE format
-                        defined by ESA. If `False` it will be saved in the same structure as the stucture at AWS.
+                        defined by ESA. If `False` it will be saved in the same structure as the structure at AWS.
     :type safe_format: bool
     :param data_folder: location of the directory where the fetched data will be saved.
     :type data_folder: str

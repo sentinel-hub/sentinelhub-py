@@ -6,7 +6,8 @@ import warnings
 
 from .aws import AwsProduct, AwsTile
 from .constants import AwsConstants, EsaSafeType, MimeType, DataSource
-from .download import get_xml
+from .download.aws_client import get_aws_xml
+from .exceptions import SHRuntimeWarning
 
 
 class SafeProduct(AwsProduct):
@@ -93,7 +94,7 @@ class SafeProduct(AwsProduct):
         :rtype: list((str, str))
         """
         datastrips = self.product_info['datastrips']
-        return [(self.get_datastrip_name(datastrip['id']), self.base_url + datastrip['path'])
+        return [(self.get_datastrip_name(datastrip['id']), '{}/{}'.format(self.base_url, datastrip['path']))
                 for datastrip in datastrips]
 
     def get_datastrip_name(self, datastrip):
@@ -143,13 +144,13 @@ class SafeProduct(AwsProduct):
         :return: String in a form YYYYMMDDTHHMMSS
         :rtype: str
         """
-        tree = get_xml(self.get_url(AwsConstants.REPORT))
+        tree = get_aws_xml(self.get_url(AwsConstants.REPORT))
 
         try:
             timestamp = tree.find('check/inspection').attrib['execution']
             return timestamp.split(',')[0].replace(' ', 'T').replace(':', '').replace('-', '')
         except AttributeError:
-            warnings.warn('Could not obtain the L2A report creation time')
+            warnings.warn('Could not obtain the L2A report creation time', category=SHRuntimeWarning)
             return 'unknown'
 
 
@@ -257,7 +258,7 @@ class SafeTile(AwsTile):
         :return: ESA tile ID
         :rtype: str
         """
-        tree = get_xml(self.get_url(AwsConstants.METADATA))
+        tree = get_aws_xml(self.get_url(AwsConstants.METADATA))
 
         tile_id_tag = 'TILE_ID_2A' if self.data_source is DataSource.SENTINEL2_L2A and self.baseline <= '02.06' else\
             'TILE_ID'

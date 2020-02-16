@@ -96,7 +96,7 @@ class TestGeopediaImageService(TestSentinelHub):
         image_stats = list(self.gpd_request.get_items())[0]['properties'][self.image_field_name]
 
         for filename, image_stat in zip(filenames, image_stats):
-            self.assertEqual(filename, image_stat['niceName'].replace(' ', '_'), 'Filenames dont match')
+            self.assertEqual(filename, image_stat['niceName'], 'Filenames do not match')
 
 
 class TestGeopediaFeatureIterator(TestSentinelHub):

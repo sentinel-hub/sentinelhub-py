@@ -7,7 +7,7 @@ import click
 from .config import SHConfig
 from .constants import DataSource
 from .data_request import get_safe_format, download_safe_format
-from .download import download_data, DownloadRequest
+from .download import DownloadRequest, DownloadClient
 
 
 @click.command()
@@ -135,4 +135,4 @@ def download(url, filename, redownload):
     data_folder, filename = filename.rsplit('/', 1)
     download_list = [DownloadRequest(url=url, data_folder=data_folder, filename=filename, save_response=True,
                                      return_data=False)]
-    download_data(download_list, redownload=redownload)
+    DownloadClient(redownload=redownload).download(download_list)

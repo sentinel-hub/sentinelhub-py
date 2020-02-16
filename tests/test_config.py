@@ -18,8 +18,12 @@ class TestSHConfig(TestSentinelHub):
             config = json.load(fp)
 
         for attr in config:
-            if attr not in ['instance_id', 'aws_access_key_id', 'aws_secret_access_key']:
-                self.assertEqual(SHConfig()[attr], config[attr],
+            if attr not in ['instance_id', 'aws_access_key_id', 'aws_secret_access_key',
+                            'sh_client_id', 'sh_client_secret']:
+                value = config[attr]
+                if isinstance(value, str):
+                    value = value.rstrip('/')
+                self.assertEqual(SHConfig()[attr], value,
                                  "Expected value {}, got {}".format(config[attr], SHConfig()[attr]))
 
     def test_reset(self):
@@ -32,7 +36,7 @@ class TestSHConfig(TestSentinelHub):
         self.assertEqual(config['instance_id'], new_value, 'New value was not set')
         self.assertEqual(config._instance.instance_id, old_value, 'Private value has changed')
 
-        config.reset('ogc_base_url')
+        config.reset('sh_base_url')
         config.reset(['aws_access_key_id', 'aws_secret_access_key'])
         self.assertEqual(config.instance_id, new_value, 'Instance ID should not reset yet')
         config.reset()

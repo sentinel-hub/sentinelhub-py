@@ -9,5 +9,8 @@ utm
 shapely
 boto3
 botocore
-pyproj
+pyproj>=2.2.0
+oauthlib
+requests_oauthlib
+attrs>=18.2.0
 aenum>=2.1.4

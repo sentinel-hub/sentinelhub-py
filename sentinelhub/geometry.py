@@ -1,7 +1,6 @@
 """
 Module implementing geometry classes
 """
-
 from abc import ABC, abstractmethod
 from math import ceil
 
@@ -23,12 +22,11 @@ class BaseGeometry(ABC):
         """
         self._crs = CRS(crs)
 
-    def __getattr__(self, attr):
+    def _repr_svg_(self):
         """ Using shapely's svg geometry visualization for Jupyter notebooks
         """
-        if attr == '_repr_svg_':
-            return getattr(self.geometry, attr)
-        return super().__getattribute__(attr)
+        # pylint: disable=protected-access
+        return self.geometry._repr_svg_()
 
     @property
     def crs(self):
@@ -39,28 +37,12 @@ class BaseGeometry(ABC):
         """
         return self._crs
 
-    def get_crs(self):
-        """ Returns the coordinate reference system (CRS)
-
-        :return: Coordinate reference system Enum
-        :rtype: constants.CRS
-        """
-        return self.crs
-
     @property
     @abstractmethod
     def geometry(self):
         """ An abstract property - ever subclass must implement geometry property
         """
         raise NotImplementedError
-
-    def get_geometry(self):
-        """ Returns shapely geometry
-
-        :return: A polygon or multipolygon
-        :rtype: shapely.geometry.Polygon or shapely.geometry.MultiPolygon
-        """
-        return self.geometry
 
     @property
     def geojson(self):
@@ -145,7 +127,7 @@ class BBox(BaseGeometry):
     def __repr__(self):
         """ Class representation
         """
-        return '{}((({}, {}), ({}, {})), crs={})'.format(self.__class__.__name__, *self, self.crs)
+        return '{}((({}, {}), ({}, {})), crs={})'.format(self.__class__.__name__, *self, repr(self.crs))
 
     def __str__(self, reverse=False):
         """ Transforms bounding box into a string of coordinates
@@ -178,14 +160,6 @@ class BBox(BaseGeometry):
         """
         return self.min_x, self.min_y
 
-    def get_lower_left(self):
-        """ Returns the lower left vertex of the bounding box
-
-        :return: min_x, min_y
-        :rtype: (float, float)
-        """
-        return self.lower_left
-
     @property
     def upper_right(self):
         """ Returns the upper right vertex of the bounding box
@@ -195,14 +169,6 @@ class BBox(BaseGeometry):
         """
         return self.max_x, self.max_y
 
-    def get_upper_right(self):
-        """ Returns the upper right vertex of the bounding box
-
-        :return: max_x, max_y
-        :rtype: (float, float)
-        """
-        return self.upper_right
-
     @property
     def middle(self):
         """ Returns the middle point of the bounding box
@@ -211,14 +177,6 @@ class BBox(BaseGeometry):
         :rtype: (float, float)
         """
         return (self.min_x + self.max_x) / 2, (self.min_y + self.max_y) / 2
-
-    def get_middle(self):
-        """ Returns the middle point of the bounding box
-
-        :return: middle point
-        :rtype: (float, float)
-        """
-        return self.middle
 
     def reverse(self):
         """ Returns a new BBox object where x and y coordinates are switched

@@ -5,17 +5,16 @@ import re
 import functools
 import itertools as it
 import mimetypes
+import warnings
 from enum import Enum, EnumMeta
-from aenum import extend_enum
 
 import utm
 import pyproj
+from aenum import extend_enum
 
 from .config import SHConfig
+from .exceptions import SHDeprecationWarning
 from ._version import __version__
-
-
-mimetypes.add_type('application/json', '.json')
 
 
 class PackageProps:
@@ -189,6 +188,7 @@ class DataSource(Enum, metaclass=DataSourceMeta):
     ENVISAT_MERIS = (_Source.ENVISAT_MERIS, )
     SENTINEL2_L3B = (_Source.SENTINEL2, _ProcessingLevel.L3B)
     LANDSAT8_L2A = (_Source.LANDSAT8, _ProcessingLevel.L2A)
+    LANDSAT8_L1C = (_Source.LANDSAT8, _ProcessingLevel.L1C)
 
     @classmethod
     def get_wfs_typename(cls, data_source):
@@ -199,7 +199,7 @@ class DataSource(Enum, metaclass=DataSourceMeta):
         :return: Product identifier for WFS
         :rtype: str
         """
-        is_eocloud = SHConfig().is_eocloud_ogc_url()
+        is_eocloud = SHConfig().has_eocloud_url()
 
         if data_source.is_custom():
             return 'DSS10-{}'.format(data_source.value)
@@ -228,6 +228,41 @@ class DataSource(Enum, metaclass=DataSourceMeta):
             cls.SENTINEL2_L3B: 'SEN4CAP_S2L3B.TILE',
             cls.LANDSAT8_L2A: 'SEN4CAP_L8L2A.TILE'
         }[data_source]
+
+    def api_identifier(self):
+        """ Returns Sentinel Hub API identifier string
+
+        :return: A data source identifier string
+        :rtype: str
+        """
+        return {
+            DataSource.SENTINEL2_L1C: 'S2L1C',
+            DataSource.SENTINEL2_L2A: 'S2L2A',
+            DataSource.LANDSAT8_L1C: 'L8L1C',
+            DataSource.DEM: 'DEM',
+            DataSource.MODIS: 'MODIS'
+        }[self]
+
+    def bands(self):
+        """ Get available bands for a particular data source
+        """
+        return {
+            DataSource.SENTINEL2_L1C: [
+                "B01", "B02", "B03", "B04", "B05", "B06", "B07", "B08", "B8A", "B09", "B10", "B11", "B12"
+            ],
+            DataSource.SENTINEL2_L2A: [
+                "B01", "B02", "B03", "B04", "B05", "B06", "B07", "B08", "B8A", "B09", "B11", "B12"
+            ],
+            DataSource.LANDSAT8_L1C: [
+                "B01", "B02", "B03", "B04", "B05", "B06", "B07", "B08", "B09", "B10", "B11"
+            ],
+            DataSource.DEM: [
+                "DEM"
+            ],
+            DataSource.MODIS: [
+                "B01", "B02", "B03", "B04", "B05", "B06", "B07"
+            ]
+        }[self]
 
     def is_sentinel1(self):
         """Checks if source is Sentinel-1
@@ -278,7 +313,7 @@ class DataSource(Enum, metaclass=DataSourceMeta):
         :return: `True` if data source exists at US West server and `False` otherwise
         :rtype: bool
         """
-        return not SHConfig().is_eocloud_ogc_url() and self.value[0] in [_Source.LANDSAT8, _Source.MODIS, _Source.DEM]
+        return not SHConfig().has_eocloud_url() and self.value[0] in [_Source.LANDSAT8, _Source.MODIS, _Source.DEM]
 
     @classmethod
     def get_available_sources(cls):
@@ -287,7 +322,7 @@ class DataSource(Enum, metaclass=DataSourceMeta):
         :return: List of available data sources
         :rtype: list(sentinelhub.DataSource)
         """
-        if SHConfig().is_eocloud_ogc_url():
+        if SHConfig().has_eocloud_url():
             return [cls.SENTINEL2_L1C, cls.SENTINEL2_L2A, cls.SENTINEL2_L3B, cls.SENTINEL1_IW, cls.SENTINEL1_EW,
                     cls.SENTINEL1_EW_SH, cls.SENTINEL3, cls.SENTINEL5P, cls.LANDSAT5, cls.LANDSAT7, cls.LANDSAT8,
                     cls.LANDSAT8_L2A, cls.ENVISAT_MERIS]
@@ -327,10 +362,16 @@ class CRSMeta(EnumMeta):
 
         return super().__new__(mcs, cls, bases, classdict)
 
-    def __call__(cls, value, *args, **kwargs):
+    def __call__(cls, crs_value, *args, **kwargs):
         """ This is executed whenever CRS('something') is called
         """
-        return super().__call__(CRSMeta._parse_crs(value), *args, **kwargs)
+        crs_value = cls._parse_crs(crs_value)
+
+        if isinstance(crs_value, str) and not cls.has_value(crs_value) and crs_value.isdigit() and len(crs_value) >= 4:
+            crs_name = 'EPSG_{}'.format(crs_value)
+            extend_enum(cls, crs_name, crs_value)
+
+        return super().__call__(crs_value, *args, **kwargs)
 
     @staticmethod
     def _parse_crs(value):
@@ -339,7 +380,7 @@ class CRSMeta(EnumMeta):
         if isinstance(value, int):
             return str(value)
         if isinstance(value, str):
-            return value.strip('epsgEPSG: ')
+            return value.lower().strip('epsg: ')
         return value
 
 
@@ -358,6 +399,11 @@ class CRS(Enum, metaclass=CRSMeta):
         """
         return self.ogc_string()
 
+    def __repr__(self):
+        """ Method for retrieving CRS enum representation
+        """
+        return "CRS('{}')".format(self.value)
+
     @classmethod
     def has_value(cls, value):
         """ Tests whether CRS contains a constant defined with string `value`.
@@ -367,7 +413,7 @@ class CRS(Enum, metaclass=CRSMeta):
         :return: `True` if there exists a constant with string value `value`, `False` otherwise
         :rtype: bool
         """
-        return any(value == item.value for item in cls)
+        return value in cls._value2member_map_
 
     @property
     def epsg(self):
@@ -387,6 +433,15 @@ class CRS(Enum, metaclass=CRSMeta):
         :rtype: str
         """
         return 'EPSG:{}'.format(CRS(self).value)
+
+    @property
+    def opengis_string(self):
+        """ Returns an URL to OGC webpage where the CRS is defined
+
+        :return: An URL with CRS definition
+        :rtype: str
+        """
+        return 'http://www.opengis.net/def/crs/EPSG/0/{}'.format(self.epsg)
 
     def is_utm(self):
         """ Checks if crs is one of the 64 possible UTM coordinate reference systems.
@@ -408,7 +463,10 @@ class CRS(Enum, metaclass=CRSMeta):
         :return: pyproj projection class
         :rtype: pyproj.Proj
         """
-        return pyproj.Proj(init=self.ogc_string(), preserve_units=True)
+        # The following ensures lng-lat order in WGS84
+        projection_string = '+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs' if self is CRS.WGS84 else \
+            self.ogc_string()
+        return pyproj.Proj(projection_string, preserve_units=True)
 
     @functools.lru_cache(maxsize=10)
     def get_transform_function(self, other):
@@ -423,10 +481,7 @@ class CRS(Enum, metaclass=CRSMeta):
         :return: A projection function obtained from pyproj package
         :rtype: function
         """
-        if pyproj.__version__ >= '2':
-            return pyproj.Transformer.from_proj(self.projection(), other.projection(), skip_equivalent=True).transform
-
-        return functools.partial(pyproj.transform, self.projection(), other.projection())
+        return pyproj.Transformer.from_proj(self.projection(), other.projection(), skip_equivalent=True).transform
 
     @staticmethod
     def get_utm_from_wgs84(lng, lat):
@@ -518,33 +573,51 @@ class MimeType(Enum):
     XML = 'xml'
     GML = 'gml'
     TXT = 'txt'
+    TAR = 'tar'
     RAW = 'raw'
     SAFE = 'safe'
-    REQUESTS_RESPONSE = 'response'  # http://docs.python-requests.org/en/master/api/#requests.Response
+
+    @property
+    def extension(self):
+        """ Returns file extension of the MimeType object
+
+        :returns: A file extension string
+        :rtype: str
+        """
+        if self.is_tiff_format():
+            return MimeType.TIFF.value
+
+        return self.value
+
+    @staticmethod
+    def from_string(mime_type_str):
+        """ Parses mime type from a file extension string
+
+        :param mime_type_str: A file extension string
+        :type mime_type_str: str
+        :return: A mime type enum
+        :rtype: MimeType
+        """
+        if MimeType.has_value(mime_type_str):
+            return MimeType(mime_type_str)
+
+        try:
+            return {
+                'tif': MimeType.TIFF,
+                'jpeg': MimeType.JPG,
+                'hdf5': MimeType.HDF,
+                'h5': MimeType.HDF
+            }[mime_type_str]
+        except KeyError:
+            raise ValueError('Data format .{} is not supported'.format(mime_type_str))
 
     @staticmethod
     def canonical_extension(fmt_ext):
-        """ Canonical extension of file format extension
-
-        Converts the format extension fmt_ext into the canonical extension for that format. For example,
-        ``canonical_extension('tif') == 'tiff'``. Here we agree that the canonical extension for format F is F.value
-
-        :param fmt_ext: A string representing an extension (e.g. ``'txt'``, ``'png'``, etc.)
-        :type fmt_ext: str
-        :return: The canonical form of the extension (e.g. if ``fmt_ext='tif'`` then we return ``'tiff'``)
-        :rtype: str
+        """ A deprecated method, use MimeType.from_string().extension instead
         """
-        if MimeType.has_value(fmt_ext):
-            return fmt_ext
-        try:
-            return {
-                'tif': MimeType.TIFF.value,
-                'jpeg': MimeType.JPG.value,
-                'hdf5': MimeType.HDF.value,
-                'h5': MimeType.HDF.value
-            }[fmt_ext]
-        except KeyError:
-            raise ValueError('Data format .{} is not supported'.format(fmt_ext))
+        warnings.warn('This method is deprecated and will soon be removed, use MimeType.from_string().extension '
+                      'instead', category=SHDeprecationWarning)
+        return MimeType.from_string(fmt_ext).extension
 
     def is_image_format(self):
         """ Checks whether file format is an image format
@@ -558,6 +631,14 @@ class MimeType(Enum):
         """
         return self in frozenset([MimeType.TIFF, MimeType.TIFF_d8, MimeType.TIFF_d16, MimeType.TIFF_d32f, MimeType.PNG,
                                   MimeType.JP2, MimeType.JPG])
+
+    def is_api_format(self):
+        """ Checks if mime type is supported by Sentinel Hub API
+
+        :return: True if API supports this format and False otherwise
+        :rtype: bool
+        """
+        return self in frozenset([MimeType.JPG, MimeType.PNG, MimeType.TIFF, MimeType.JSON])
 
     def is_tiff_format(self):
         """ Checks whether file format is a TIFF image format
@@ -580,7 +661,7 @@ class MimeType(Enum):
         :return: `True` if there exists a constant with string value ``value``, `False` otherwise
         :rtype: bool
         """
-        return any(value == item.value for item in cls)
+        return value in cls._value2member_map_
 
     def get_string(self):
         """ Get file format as string
@@ -588,11 +669,15 @@ class MimeType(Enum):
         :return: String describing the file format
         :rtype: str
         """
+        if self is MimeType.TAR:
+            return 'application/x-tar'
+        if self is MimeType.JSON:
+            return 'application/json'
         if self in [MimeType.TIFF_d8, MimeType.TIFF_d16, MimeType.TIFF_d32f]:
             return 'image/{}'.format(self.value)
         if self is MimeType.JP2:
             return 'image/jpeg2000'
-        if self in [MimeType.RAW, MimeType.REQUESTS_RESPONSE]:
+        if self is MimeType.RAW:
             return self.value
         return mimetypes.types_map['.' + self.value]
 
@@ -610,7 +695,7 @@ class MimeType(Enum):
                 MimeType.TIFF_d16: 'INT16',
                 MimeType.TIFF_d32f: 'FLOAT32'
             }[self]
-        except IndexError:
+        except KeyError:
             raise ValueError('Type {} is not supported by this method'.format(self))
 
     def get_expected_max_value(self):
@@ -633,22 +718,8 @@ class MimeType(Enum):
                 MimeType.JPG: 255,
                 MimeType.JP2: 10000
             }[self]
-        except IndexError:
+        except KeyError:
             raise ValueError('Type {} is not supported by this method'.format(self))
-
-    @staticmethod
-    def from_string(mime_type_str):
-        """ Parses mime type from a file extension string
-
-        :param mime_type_str: A file extension string
-        :type mime_type_str: str
-        :return: A mime type enum
-        :rtype: MimeType
-        """
-        if mime_type_str == 'jpeg':
-            return MimeType.JPG
-
-        return MimeType(mime_type_str)
 
 
 class RequestType(Enum):
@@ -657,7 +728,7 @@ class RequestType(Enum):
     POST = 'POST'
 
 
-class OgcConstants:
+class SHConstants:
     """ Initialisation of constants used by OGC request.
 
         Constants are LATEST
@@ -669,7 +740,7 @@ class OgcConstants:
 class AwsConstants:
     """ Initialisation of every constant used by AWS classes
 
-    For each supported data source it contains lists of all possible bands and all posible metadata files:
+    For each supported data source it contains lists of all possible bands and all possible metadata files:
 
         - S2_L1C_BANDS and S2_L1C_METAFILES
         - S2_L2A_BANDS and S2_L2A_METAFILES

@@ -34,35 +34,64 @@ class TestCRS(TestSentinelHub):
                 ogc_str = CRS.ogc_string(crs)
                 self.assertEqual(epsg, ogc_str, msg="Expected {}, got {}".format(epsg, ogc_str))
 
+    def test_repr(self):
+        crs_values = (
+            (CRS.POP_WEB, "CRS('3857')"),
+            (CRS.WGS84, "CRS('4326')"),
+            (CRS.UTM_33N, "CRS('32633')"),
+            (CRS.UTM_33S, "CRS('32733')"),
+            (CRS('3857'), "CRS('3857')"),
+            (CRS('4326'), "CRS('4326')"),
+            (CRS('32633'), "CRS('32633')"),
+            (CRS('32733'), "CRS('32733')"),
+        )
+        for crs, crs_repr in crs_values:
+            with self.subTest(msg=crs_repr):
+                self.assertEqual(crs_repr, repr(crs), msg="Expected {}, got {}".format(crs_repr, repr(crs)))
+
     def test_has_value(self):
         for crs in CRS:
             self.assertTrue(CRS.has_value(crs.value), msg="Expected support for CRS {}".format(crs.value))
 
+    def test_custom_crs(self):
+        for incorrect_value in ['string', -1, 999, None]:
+            with self.assertRaises(ValueError):
+                CRS(incorrect_value)
+
+        for correct_value in [3035, 'EPSG:3035', 10000]:
+            CRS(CRS(correct_value))
+
+            new_enum_value = str(correct_value).lower().strip('epsg: ')
+            self.assertTrue(CRS.has_value(new_enum_value))
+
 
 class TestMimeType(TestSentinelHub):
-    def test_canonical_extension(self):
+
+    def test_extension_and_from_string(self):
         extension_pairs = (
-            ('tiff', 'tiff'),
-            ('tif', 'tiff'),
-            ('jpg', 'jpg'),
-            ('jpeg', 'jpg'),
-            ('png', 'png'),
-            ('jp2', 'jp2'),
-            ('txt', 'txt'),
-            ('h5', 'hdf'),
-            ('hdf', 'hdf'),
-            ('hdf5', 'hdf')
+            ('tif', MimeType.TIFF),
+            ('jpeg', MimeType.JPG),
+            ('h5', MimeType.HDF),
+            ('hdf5', MimeType.HDF)
         )
-        for ext, canon in extension_pairs:
-            res = MimeType.canonical_extension(ext)
-            self.assertEqual(canon, res, msg="Expected {}, got {}".format(canon, res))
+        for ext, mime_type in extension_pairs:
+            parsed_mime_type = MimeType.from_string(ext)
+            self.assertEqual(mime_type, parsed_mime_type)
+
+        for mime_type in MimeType:
+            if not mime_type.is_tiff_format():
+                self.assertEqual(MimeType.from_string(mime_type.extension), mime_type)
+
+        with self.assertRaises(ValueError):
+            MimeType.from_string('unknown ext')
+
+    def test_has_value(self):
+        self.assertTrue(MimeType.has_value('tiff;depth=32f'))
+        self.assertFalse(MimeType.has_value('unknown value'))
 
     def test_is_image_format(self):
-        image_format_extensions = (
-            'tif', 'tiff', 'jpg', 'jpeg', 'tif', 'tiff', 'png', 'jpg'
-        )
-        for ext in image_format_extensions:
-            mime_type = MimeType(MimeType.canonical_extension(ext))
+        for ext in ['tif', 'tiff', 'jpg', 'jpeg', 'png', 'jp2']:
+            mime_type = MimeType.from_string(ext)
             self.assertTrue(MimeType.is_image_format(mime_type),
                             msg="Expected MIME type {} to be an image format".format(mime_type.value))
 
@@ -76,12 +105,25 @@ class TestMimeType(TestSentinelHub):
             (MimeType.CSV, 'text/csv'),
             (MimeType.ZIP, 'application/zip'),
             (MimeType.HDF, 'application/x-hdf'),
-            (MimeType.XML, 'application/xml'),
-            (MimeType.TXT, 'text/plain')
+            (MimeType.XML, 'text/xml'),
+            (MimeType.TXT, 'text/plain'),
+            (MimeType.TAR, 'application/x-tar')
         )
         for img_type, img_str in type_string_pairs:
             res = MimeType.get_string(img_type)
             self.assertEqual(img_str, res, msg="Expected {}, got {}".format(img_str, res))
+
+    def test_get_sample_type(self):
+        self.assertEqual(MimeType.TIFF_d16.get_sample_type(), 'INT16')
+
+        with self.assertRaises(ValueError):
+            MimeType.TXT.get_sample_type()
+
+    def test_get_expected_max_value(self):
+        self.assertEqual(MimeType.TIFF_d32f.get_expected_max_value(), 1.0)
+
+        with self.assertRaises(ValueError):
+            MimeType.TAR.get_expected_max_value()
 
 
 class TestRequestType(TestSentinelHub):
