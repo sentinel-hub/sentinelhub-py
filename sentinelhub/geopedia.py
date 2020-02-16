@@ -305,15 +305,8 @@ class GeopediaImageService(GeopediaService):
         """ Creates a filename
         """
         if request.keep_image_names:
-            filename = OgcImageService.finalize_filename(item['niceName'].replace(' ', '_'))
-        else:
-            filename = OgcImageService.finalize_filename(
-                '_'.join([str(GeopediaService._parse_layer(request.layer)), item['objectPath'].rsplit('/', 1)[-1]]),
-                request.image_format
-            )
-
-        LOGGER.debug("filename=%s", filename)
-        return filename
+            return item['niceName']
+        return None
 
     def get_gpd_iterator(self):
         """ Returns iterator over info about data used for the `GeopediaVectorRequest`
