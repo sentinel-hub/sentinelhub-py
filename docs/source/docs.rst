@@ -14,6 +14,10 @@ Modules
     config
     constants
     data_request
+    download.aws_client
+    download.client
+    download.request
+    download.sentinelhub_client
     fis
     geo_utils
     geometry
