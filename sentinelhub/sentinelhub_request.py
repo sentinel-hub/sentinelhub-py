@@ -15,7 +15,7 @@ class SentinelHubRequest(DataRequest):
     """ Sentinel Hub API request class
     """
     def __init__(self, evalscript, input_data, responses, bbox=None, geometry=None, size=None, resolution=None,
-                 config=None, mime_type=MimeType.TIFF, **kwargs):
+                 config=None, **kwargs):
         """
         For details of certain parameters check the
         `Processing API reference <https://docs.sentinel-hub.com/api/latest/reference/#operation/process>`_.
@@ -38,8 +38,6 @@ class SentinelHubRequest(DataRequest):
         :type resolution: Tuple[float, float]
         :param config: SHConfig object containing desired sentinel-hub configuration parameters.
         :type config: sentinelhub.SHConfig
-        :param mime_type: Mime time of the response.
-        :type mime_type: str or sentinelhub.MimeType
         """
 
         if size is None and resolution is None:
@@ -50,7 +48,7 @@ class SentinelHubRequest(DataRequest):
 
         self.config = config or SHConfig()
 
-        self.mime_type = MimeType(mime_type)
+        self.mime_type = MimeType.TAR if len(responses) > 1 else MimeType(responses[0]['format']['type'].split('/')[1])
 
         self.payload = self.body(
             request_bounds=self.bounds(bbox=bbox, geometry=geometry),

@@ -49,8 +49,7 @@ class TestSentinelHubRequest(TestSentinelHub):
                 SentinelHubRequest.output_response('default', MimeType.TIFF)
             ],
             bbox=BBox(bbox=[46.16, -16.15, 46.51, -15.58], crs=CRS.WGS84),
-            size=(512, 856),
-            mime_type=MimeType.TIFF
+            size=(512, 856)
         )
 
         img = request.get_data(max_threads=3)[0]
@@ -97,8 +96,7 @@ class TestSentinelHubRequest(TestSentinelHub):
                 SentinelHubRequest.output_response('default', 'tiff')
             ],
             bbox=BBox(bbox=[46.16, -16.15, 46.51, -15.58], crs=CRS.WGS84),
-            size=(512, 856),
-            mime_type=MimeType.TIFF
+            size=(512, 856)
         )
 
         img = request.get_data(max_threads=3)[0]
@@ -147,8 +145,7 @@ class TestSentinelHubRequest(TestSentinelHub):
                 bbox=[1155360.393335921, 5285081.168940068, 1156965.063795706, 5286609.808304847],
                 crs=CRS.POP_WEB
             ),
-            resolution=(10.0, 10.0),
-            mime_type=MimeType.TIFF
+            resolution=(10.0, 10.0)
         )
 
         img = request.get_data(max_threads=3)[0]
@@ -198,8 +195,7 @@ class TestSentinelHubRequest(TestSentinelHub):
                 SentinelHubRequest.output_response('userdata', MimeType.JSON)
             ],
             bbox=BBox(bbox=[46.16, -16.15, 46.51, -15.58], crs=CRS.WGS84),
-            size=(512, 856),
-            mime_type=MimeType.TAR
+            size=(512, 856)
         )
 
         tar = request.get_data(max_threads=3)[0]
@@ -307,8 +303,7 @@ class TestSentinelHubRequest(TestSentinelHub):
             ],
             bbox=bbox,
             geometry=geo,
-            size=size,
-            mime_type=MimeType.TAR
+            size=size
         )
 
         tar = request.get_data(max_threads=3)[0]
