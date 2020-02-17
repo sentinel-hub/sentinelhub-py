@@ -35,7 +35,7 @@ from .testing_utils import TestSentinelHub, TestCaseContainer
 
 from .sentinelhub_session import SentinelHubSession
 
-from .sentinelhub_request import body, bounds, data, output, response
+from .sentinelhub_request import SentinelHubRequest
 
 from .time_utils import parse_time_interval, filter_times
 
