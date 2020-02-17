@@ -13,7 +13,7 @@ from .fis import FisService
 from .geopedia import GeopediaWmsService, GeopediaImageService
 from .aws import AwsProduct, AwsTile
 from .aws_safe import SafeProduct, SafeTile
-from .download import DownloadClient, AwsDownloadClient, SentinelHubDownloadClient
+from .download import DownloadRequest, DownloadClient, AwsDownloadClient, SentinelHubDownloadClient
 from .exceptions import DownloadFailedException
 from .io_utils import read_data
 from .os_utils import make_folder
@@ -33,7 +33,7 @@ class DataRequest(ABC):
     """
     def __init__(self, download_client_class, *, data_folder=None):
         self.download_client_class = download_client_class
-        self.data_folder = data_folder.rstrip('/') if data_folder else None
+        self.data_folder = data_folder
 
         self.download_list = []
         self.folder_list = []
@@ -55,14 +55,13 @@ class DataRequest(ABC):
         return self.download_list
 
     def get_filename_list(self):
-        """
-        Returns a list of file names where the requested data will be saved or read from, if it
-        was already downloaded and saved.
+        """ Returns a list of file names (or paths relative to `data_folder`) where the requested data will be saved
+        or read from, if it has already been downloaded and saved.
 
-        :return: List of filenames where downloaded data will be saved.
+        :return: A list of filenames
         :rtype: list(str)
         """
-        return [request.filename for request in self.download_list]
+        return [request.get_relative_paths()[1] for request in self.download_list]
 
     def get_url_list(self):
         """
@@ -79,7 +78,8 @@ class DataRequest(ABC):
         :return: `True` if request is valid and `False` otherwise
         :rtype: bool
         """
-        return isinstance(self.download_list, list)
+        return isinstance(self.download_list, list) and \
+            all(isinstance(request, DownloadRequest) for request in self.download_list)
 
     def get_data(self, *, save_data=False, data_filter=None, redownload=False, max_threads=None,
                  raise_download_errors=True):
@@ -94,9 +94,9 @@ class DataRequest(ABC):
         :param data_filter: Used to specify which items will be returned by the method and in which order. E.g. with
             ``data_filter=[0, 2, -1]`` the method will return only 1st, 3rd and last item. Default filter is `None`.
         :type data_filter: list(int) or None
-        :param max_threads: number of threads to use when downloading data; default is ``max_threads=None`` which
-            by default uses the number of processors on the system multiplied by 5.
-        :type max_threads: int
+        :param max_threads: Maximum number of threads to be used for download in parallel. The default is
+            `max_threads=None` which will use the number of processors on the system multiplied by 5.
+        :type max_threads: int or None
         :param raise_download_errors: If `True` any error in download process should be raised as
             ``DownloadFailedException``. If `False` failed downloads will only raise warnings and the method will
             return list with `None` values in places where the results of failed download requests should be.
@@ -117,9 +117,9 @@ class DataRequest(ABC):
         :type data_filter: list(int) or None
         :param redownload: data is redownloaded if ``redownload=True``. Default is `False`
         :type redownload: bool
-        :param max_threads: number of threads to use when downloading data; default is ``max_threads=None`` which
-            by default uses the number of processors on the system multiplied by 5.
-        :type max_threads: int
+        :param max_threads: Maximum number of threads to be used for download in parallel. The default is
+            `max_threads=None` which will use the number of processors on the system multiplied by 5.
+        :type max_threads: int or None
         :param raise_download_errors: If `True` any error in download process should be raised as
             ``DownloadFailedException``. If `False` failed downloads will only raise warnings.
         :type raise_download_errors: bool
@@ -135,8 +135,9 @@ class DataRequest(ABC):
         :type data_filter: list(int) or None
         :param redownload: data is redownloaded if ``redownload=True``. Default is `False`
         :type redownload: bool
-        :param max_threads: the number of workers to use when downloading, default ``max_threads=None``
-        :type max_threads: int
+        :param max_threads: Maximum number of threads to be used for download in parallel. The default is
+            `max_threads=None` which will use the number of processors on the system multiplied by 5.
+        :type max_threads: int or None
         :param raise_download_errors: If `True` any error in download process should be raised as
             ``DownloadFailedException``. If `False` failed downloads will only raise warnings.
         :type raise_download_errors: bool

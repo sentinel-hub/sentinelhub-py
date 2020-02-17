@@ -65,30 +65,33 @@ class TestCRS(TestSentinelHub):
             self.assertTrue(CRS.has_value(new_enum_value))
 
 
-class TestMimeType(TestSentinelHub): #TODO: improve
-    def test_canonical_extension(self):
+class TestMimeType(TestSentinelHub):
+
+    def test_extension_and_from_string(self):
         extension_pairs = (
-            ('tiff', 'tiff'),
-            ('tif', 'tiff'),
-            ('jpg', 'jpg'),
-            ('jpeg', 'jpg'),
-            ('png', 'png'),
-            ('jp2', 'jp2'),
-            ('txt', 'txt'),
-            ('h5', 'hdf'),
-            ('hdf', 'hdf'),
-            ('hdf5', 'hdf')
+            ('tif', MimeType.TIFF),
+            ('jpeg', MimeType.JPG),
+            ('h5', MimeType.HDF),
+            ('hdf5', MimeType.HDF)
         )
-        for ext, canon in extension_pairs:
-            res = MimeType.canonical_extension(ext)
-            self.assertEqual(canon, res, msg="Expected {}, got {}".format(canon, res))
+        for ext, mime_type in extension_pairs:
+            parsed_mime_type = MimeType.from_string(ext)
+            self.assertEqual(mime_type, parsed_mime_type)
+
+        for mime_type in MimeType:
+            if not mime_type.is_tiff_format():
+                self.assertEqual(MimeType.from_string(mime_type.extension), mime_type)
+
+        with self.assertRaises(ValueError):
+            MimeType.from_string('unknown ext')
+
+    def test_has_value(self):
+        self.assertTrue(MimeType.has_value('tiff;depth=32f'))
+        self.assertFalse(MimeType.has_value('unknown value'))
 
     def test_is_image_format(self):
-        image_format_extensions = (
-            'tif', 'tiff', 'jpg', 'jpeg', 'tif', 'tiff', 'png', 'jpg'
-        )
-        for ext in image_format_extensions:
-            mime_type = MimeType(MimeType.canonical_extension(ext))
+        for ext in ['tif', 'tiff', 'jpg', 'jpeg', 'png', 'jp2']:
+            mime_type = MimeType.from_string(ext)
             self.assertTrue(MimeType.is_image_format(mime_type),
                             msg="Expected MIME type {} to be an image format".format(mime_type.value))
 

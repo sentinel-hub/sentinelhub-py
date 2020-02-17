@@ -89,7 +89,6 @@ class OgcImageService(OgcService):
         """
         size_x, size_y = self.get_image_dimensions(request)
         return [DownloadRequest(url=self.get_url(request=request, date=date, size_x=size_x, size_y=size_y),
-                                filename=self.get_filename(request, date, size_x, size_y),
                                 data_type=request.image_format, headers=SHConstants.HEADERS)
                 for date in self.get_dates(request)]
 
@@ -289,87 +288,6 @@ class OgcImageService(OgcService):
             params['TYPE'] = request.histogram_type.value
 
         return params
-
-    @staticmethod
-    def get_filename(request, date, size_x, size_y):
-        """ Get filename location
-
-        Returns the filename's location on disk where data is or is going to be stored.
-        The files are stored in the folder specified by the user when initialising OGC-type
-        of request. The name of the file has the following structure:
-
-        {service_type}_{layer}_{crs}_{bbox}_{time}_{size_x}X{size_y}_*{custom_url_params}.{image_format}
-
-        In case of `TIFF_d32f` a `'_tiff_depth32f'` is added at the end of the filename (before format suffix)
-        to differentiate it from 16-bit float tiff.
-
-        :param request: OGC-type request with specified bounding box, cloud coverage for specific product.
-        :type request: OgcRequest or GeopediaRequest
-        :param date: acquisition date or None
-        :type date: datetime.datetime or None
-        :param size_x: horizontal image dimension
-        :type size_x: int or str
-        :param size_y: vertical image dimension
-        :type size_y: int or str
-        :return: filename for this request and date
-        :rtype: str
-        """
-        filename = '_'.join([
-            str(request.service_type.value),
-            request.layer,
-            str(request.bbox.crs),
-            str(request.bbox).replace(',', '_'),
-            '' if date is None else date.strftime("%Y-%m-%dT%H-%M-%S"),
-            '{}X{}'.format(size_x, size_y)
-        ])
-
-        filename = OgcImageService.filename_add_custom_url_params(filename, request)
-
-        return OgcImageService.finalize_filename(filename, request.image_format)
-
-    @staticmethod
-    def filename_add_custom_url_params(filename, request):
-        """ Adds custom url parameters to filename string
-
-        :param filename: Initial filename
-        :type filename: str
-        :param request: OGC-type request with specified bounding box, cloud coverage for specific product.
-        :type request: OgcRequest or GeopediaRequest
-        :return: Filename with custom url parameters in the name
-        :rtype: str
-        """
-        if hasattr(request, 'custom_url_params') and request.custom_url_params is not None:
-            for param, value in sorted(request.custom_url_params.items(),
-                                       key=lambda parameter_item: parameter_item[0].value):
-                filename = '_'.join([filename, param.value, str(value)])
-
-        return filename
-
-    @staticmethod
-    def finalize_filename(filename, file_format=None):
-        """ Replaces invalid characters in filename string, adds image extension and reduces filename length
-
-        :param filename: Incomplete filename string
-        :type filename: str
-        :param file_format: Format which will be used for filename extension
-        :type file_format: MimeType
-        :return: Final filename string
-        :rtype: str
-        """
-        for char in [' ', '/', '\\', '|', ';', ':', '\n', '\t']:
-            filename = filename.replace(char, '')
-
-        if file_format:
-            suffix = str(file_format.value)
-            if file_format.is_tiff_format() and file_format is not MimeType.TIFF:
-                suffix = str(MimeType.TIFF.value)
-                filename = '_'.join([filename, str(file_format.value).replace(';', '_')])
-
-            filename = '.'.join([filename[:254 - len(suffix)], suffix])
-
-        LOGGER.debug("filename=%s", filename)
-
-        return filename  # Even in UNIX systems filename must have at most 255 bytes
 
     def get_dates(self, request):
         """ Get available Sentinel-2 acquisitions at least time_difference apart

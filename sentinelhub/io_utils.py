@@ -24,28 +24,6 @@ LOGGER = logging.getLogger(__name__)
 CSV_DELIMITER = ';'
 
 
-class LocalIO:
-    """ The default IO class for reading and writing the data
-    """
-    @staticmethod
-    def read(filename, **kwargs):
-        """ Function implementing the reading logic
-        """
-        return read_data(filename, **kwargs)
-
-    @staticmethod
-    def write(filename, data, **kwargs):
-        """ Function implementing the writing logic
-        """
-        return write_data(filename, data, **kwargs)
-
-    @staticmethod
-    def exists(file_path):
-        """ Function that checks if a given file exists
-        """
-        return os.path.exists(file_path)
-
-
 def read_data(filename, data_format=None):
     """ Read image data from file
 

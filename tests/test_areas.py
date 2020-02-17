@@ -8,7 +8,7 @@ from sentinelhub import BBoxSplitter, OsmSplitter, TileSplitter, CustomGridSplit
     DataSource, TestSentinelHub, UtmGridSplitter, UtmZoneSplitter
 
 
-class TestOgc(TestSentinelHub):
+class TestAreaSplitters(TestSentinelHub):
 
     class SplitterTestCase:
 

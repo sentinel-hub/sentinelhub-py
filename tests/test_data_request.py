@@ -13,8 +13,15 @@ class TestDataRequest(TestSentinelHub):
 
         self.assertEqual(self.OUTPUT_FOLDER, data_request.data_folder,
                          msg="Expected {}, got {}".format(self.OUTPUT_FOLDER, data_request.data_folder))
-        self.assertTrue(isinstance(data_request.get_filename_list(), list), "Expected a list")
-        self.assertTrue(isinstance(data_request.get_url_list(), list), "Expected a list")
+
+        filename_list = data_request.get_filename_list()
+        self.assertTrue(isinstance(filename_list, list), "Expected a list")
+        self.assertTrue(all(isinstance(filename, str) for filename in filename_list))
+
+        url_list = data_request.get_url_list()
+        self.assertTrue(isinstance(url_list, list), "Expected a list")
+        self.assertTrue(all(isinstance(url, str) for url in url_list))
+
         self.assertTrue(data_request.is_valid_request(), "Request should be valid")
 
 

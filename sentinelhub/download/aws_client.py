@@ -2,6 +2,7 @@
 Module implementing download client that is adjusted to download from AWS
 """
 import logging
+import warnings
 
 import boto3
 from botocore.exceptions import NoCredentialsError
@@ -22,20 +23,21 @@ class AwsDownloadClient(DownloadClient):
 
     @fail_missing_file
     def _execute_download(self, request):
-
+        """ Executes a download procedure
+        """
         if not self.is_s3_request(request):
             return super()._execute_download(request)
 
         s3_client = self._get_s3_client()
 
-        response = self._do_download(request, s3_client)
-        response_content = response['Body'].read()
+        response_content = self._do_download(request, s3_client)
 
         LOGGER.debug('Successful download from %s', request.url)
         return response_content
 
     def _get_s3_client(self):
-
+        """ Provides a s3 client object
+        """
         key_args = {}
         if self.config.aws_access_key_id and self.config.aws_secret_access_key:
             key_args = {
@@ -43,10 +45,10 @@ class AwsDownloadClient(DownloadClient):
                 'aws_secret_access_key': self.config.aws_secret_access_key
             }
 
+        warnings.filterwarnings('ignore', category=ResourceWarning, message='unclosed.*<ssl.SSLSocket.*>')
         try:
-            # check if it would be better to just take the global one
             s3_client = boto3.Session().client('s3', **key_args)
-            AwsDownloadClient.GLOBAL_S3_CLIENT = s3_client  # Storing the client prevents warning about unclosed socket
+            AwsDownloadClient.GLOBAL_S3_CLIENT = s3_client
         except KeyError:  # Sometimes creation of client fails and we use the global client if it exists
             if AwsDownloadClient.GLOBAL_S3_CLIENT is None:
                 raise ValueError('Failed to create a client for download from AWS')
@@ -56,13 +58,13 @@ class AwsDownloadClient(DownloadClient):
 
     @staticmethod
     def _do_download(request, s3_client):
+        """ Does the download from s3
+        """
         _, _, bucket_name, url_key = request.url.split('/', 3)
 
-        # include:
-        # https://github.com/sentinel-hub/sentinelhub-py/blob/feat/aws-speedup/sentinelhub/download.py#L310
-
         try:
-            return s3_client.get_object(Bucket=bucket_name, Key=url_key, RequestPayer='requester')
+            response = s3_client.get_object(Bucket=bucket_name, Key=url_key, RequestPayer='requester')
+            return response['Body'].read()
         except NoCredentialsError:
             raise ValueError(
                 'The requested data is in Requester Pays AWS bucket. In order to download the data please set '

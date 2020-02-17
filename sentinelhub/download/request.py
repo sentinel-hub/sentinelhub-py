@@ -1,9 +1,11 @@
 """
 Module implementing DownloadRequest class
 """
-
+import hashlib
+import json
 import os
 import warnings
+import datetime as dt
 
 from ..constants import MimeType, RequestType
 from ..exceptions import SHRuntimeWarning
@@ -11,78 +13,50 @@ from ..os_utils import sys_is_windows
 
 
 class DownloadRequest:
-    """ Class to manage HTTP requests
+    """ A class defining a single download request.
 
-    Container for all download requests issued by the DataRequests containing
-    url to Sentinel Hub's services or other sources to data, file names to
-    saved data and other necessary flags needed when the data is downloaded and
-    interpreted.
-
-    :param url: url to Sentinel Hub's services or other sources from where the data is downloaded. Default is `None`
-    :type url: str
-    :param data_folder: folder name where the fetched data will be (or already is) saved. Default is `None`
-    :type data_folder: str
-    :param filename: filename of the file where the fetched data will be (or already is) saved. Default is `None`
-    :type filename: str
-    :param headers: add HTTP headers to request. Default is `None`
-    :type headers: dict
-    :param request_type: type of request, either GET or POST. Default is ``constants.RequestType.GET``
-    :type request_type: constants.RequestType
-    :param post_values: form encoded data to send in POST request. Default is `None`
-    :type post_values: dict
-    :param save_response: flag to turn on/off saving data downloaded by this request to disk. Default is `True`.
-    :type save_response: bool
-    :param return_data: flag to return or not data downloaded by this request to disk. Default is `True`.
-    :type return_data: bool
-    :param data_type: expected file format of downloaded data. Default is ``constants.MimeType.RAW``
-    :type data_type: constants.MimeType
+    The class is a container with all parameters needed to execute a single download request and save or return
+    downloaded data.
     """
-
-    def __init__(self, *, url=None, data_folder=None, filename=None, headers=None, request_type=RequestType.GET,
-                 post_values=None, save_response=False, return_data=True, data_type=MimeType.RAW,
-                 hash_save=False, **properties):
-
-        if hash_save and data_folder is None:
-            raise ValueError("When using hash_save, data_folder must also be set.")
-        if hash_save and save_response:
-            raise ValueError("Either hash_save or save_response should be set, not both.")
-
+    def __init__(self, *, url=None, headers=None, request_type=RequestType.GET, post_values=None,
+                 data_type=MimeType.RAW, save_response=False, data_folder=None, filename=None, return_data=True,
+                 **properties):
+        """
+        :param url: An URL from where to download
+        :type url: str or None
+        :param headers: Headers of a HTTP request
+        :type headers: dict or None
+        :param request_type: Type of request, either GET or POST. Default is `RequestType.GET`
+        :type request_type: str or RequestType
+        :param post_values: A dictionary of values that will be sent with a POST request. Default is `None`
+        :type post_values: dict or None
+        :param data_type: An expected file format of downloaded data. Default is `MimeType.RAW`
+        :type data_type: MimeType or str
+        :param save_response: A flag defining if the downloaded data will be saved to disk. Default is `False`.
+        :type save_response: bool
+        :param data_folder: A folder path where the fetched data will be (or already is) saved. Default is `None`
+        :type data_folder: str or None
+        :param filename: A custom filename where the data will be saved. By default data will be saved in a folder
+            which name are hashed request parameters.
+        :type filename: str or None
+        :param return_data: A flag defining if the downloaded data will be returned as an output of download procedure.
+            Default is `True`.
+        :type return_data: bool
+        :param properties: Any additional parameters.
+        """
         self.url = url
+        self.headers = headers or {}
+        self.request_type = RequestType(request_type)
+        self.post_values = post_values
+
+        self.data_type = MimeType(data_type)
+
+        self.save_response = save_response
         self.data_folder = data_folder
         self.filename = filename
-        self.headers = {} if headers is None else headers
-        self.post_values = post_values
-        self.save_response = save_response
         self.return_data = return_data
 
         self.properties = properties
-
-        self.request_type = RequestType(request_type)
-        self.data_type = MimeType(data_type)
-        self.hash_save = hash_save
-        self.request_path = None
-
-        self.file_path = self._file_path()
-
-    def _file_path(self):
-        if self.data_folder and self.filename:
-            file_path = os.path.join(self.data_folder, self.filename.lstrip('/'))
-        elif self.filename:
-            file_path = self.filename
-        else:
-            file_path = None
-
-        if file_path and len(file_path) > 255 and sys_is_windows():
-            message = 'File path {} is longer than 255 character which might cause an error while saving on ' \
-                      'disk'.format(self.file_path)
-            warnings.warn(message, category=SHRuntimeWarning)
-
-        elif file_path and len(self.filename) > 255:
-            message = 'Filename {} is longer than 255 character which might cause an error while saving on ' \
-                      'disk'.format(self.filename)
-            warnings.warn(message, category=SHRuntimeWarning)
-
-        return file_path
 
     def raise_if_invalid(self):
         """ Method that raises an error if something is wrong with request parameters
@@ -92,3 +66,87 @@ class DownloadRequest:
         if self.save_response and self.data_folder is None:
             raise ValueError('Data folder is not specified. '
                              'Please give a data folder name in the initialization of your request.')
+
+    def get_request_params(self, include_metadata=False):
+        """ Provides parameters that define the request in form of a dictionary
+
+        :param include_metadata: A flag defining if also metadata parameters should be included, such as headers and
+            current time
+        :type include_metadata: bool
+        :return: A dictionary of parameters
+        :rtype: dict
+        """
+        params = {
+            'url': self.url,
+            'payload': self.post_values
+        }
+        if include_metadata:
+            params = {
+                **params,
+                'headers': self.headers,
+                'timestamp': dt.datetime.now().isoformat()
+            }
+        return params
+
+    def get_hashed_name(self):
+        """ It takes request url and payload and calculates a unique hashed string from them.
+
+        :return: A hashed string
+        :rtype: str
+        """
+        params = self.get_request_params(include_metadata=False)
+        hashable = json.dumps(params)
+
+        return hashlib.md5(hashable.encode('utf-8')).hexdigest()
+
+    def get_relative_paths(self):
+        """ A method that calculates file paths relative to `data_folder`
+
+        :return: Returns a pair of file paths, a request payload path and a response path. If request path is not
+            defined it returns `None`.
+        :rtype: (str or None, str)
+        """
+
+        if self.filename is not None:
+            return None, self.filename
+
+        hashed_name = self.get_hashed_name()
+
+        request_path = os.path.join(hashed_name, 'request.json')
+        response_path = os.path.join(hashed_name, 'response.{}'.format(self.data_type.extension))
+
+        return request_path, response_path
+
+    def get_storage_paths(self):
+        """ A method that calculates file paths where request payload and response will be saved.
+
+        :return: Returns a pair of file paths, a request payload path and a response path. Each of them can also be
+            `None` if it is not defined.
+        :rtype: (str or None, str or None)
+        """
+        if self.data_folder is None:
+            return None, None
+
+        request_path, response_path = self.get_relative_paths()
+
+        if request_path is not None:
+            request_path = os.path.join(self.data_folder, request_path)
+        response_path = os.path.join(self.data_folder, response_path)
+
+        self._check_path(response_path)
+        return request_path, response_path
+
+    @staticmethod
+    def _check_path(file_path):
+        """ Checks file path and warns about potential problems during saving
+        """
+        message_problem = None
+        if len(file_path) > 255 and sys_is_windows():
+            message_problem = 'File path'
+        elif len(os.path.basename(file_path)) > 255:
+            message_problem = 'Filename of'
+
+        if message_problem:
+            message = '{} {} is longer than 255 character which might cause an error while saving on ' \
+                      'disk'.format(message_problem, file_path)
+            warnings.warn(message, category=SHRuntimeWarning)
