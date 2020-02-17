@@ -17,10 +17,10 @@ class SentinelHubRequest(DataRequest):
     def __init__(self, evalscript, input_data, responses, bbox=None, geometry=None, size=None, resolution=None,
                  config=None, mime_type=MimeType.TIFF, **kwargs):
         """
-        For details of certain parameters check the Processing API reference:
-        https://docs.sentinel-hub.com/api/latest/reference/#operation/process
+        For details of certain parameters check the
+        `Processing API reference <https://docs.sentinel-hub.com/api/latest/reference/#operation/process>`_.
 
-        :param evalscript: Evalscript (https://docs.sentinel-hub.com/api/latest/#/Evalscript/)
+        :param evalscript: `Evalscript <https://docs.sentinel-hub.com/api/latest/#/Evalscript/>`_.
         :type evalscript: str
         :param input_data: A list of input dictionary objects as described in the API reference. It can be generated
                            with the helper function `SentinelHubRequest.input_data`
