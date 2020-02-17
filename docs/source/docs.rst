@@ -14,7 +14,6 @@ Modules
     config
     constants
     data_request
-    download
     fis
     geo_utils
     geometry
@@ -23,5 +22,8 @@ Modules
     ogc
     opensearch
     os_utils
+    sentinelhub_rate_limit
+    sentinelhub_request
+    sentinelhub_session
     testing_utils
     time_utils
