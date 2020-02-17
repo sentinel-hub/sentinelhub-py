@@ -191,15 +191,18 @@ class DataSource(Enum, metaclass=DataSourceMeta):
     LANDSAT8_L1C = (_Source.LANDSAT8, _ProcessingLevel.L1C)
 
     @classmethod
-    def get_wfs_typename(cls, data_source):
+    def get_wfs_typename(cls, data_source, config=None):
         """ Maps data source to string identifier for WFS
 
         :param data_source: One of the supported data sources
         :type data_source: DataSource
+        :param config: A custom instance of config class to override parameters from the saved configuration.
+        :type config: SHConfig or None
         :return: Product identifier for WFS
         :rtype: str
         """
-        is_eocloud = SHConfig().has_eocloud_url()
+        config = config or SHConfig()
+        is_eocloud = config.has_eocloud_url()
 
         if data_source.is_custom():
             return 'DSS10-{}'.format(data_source.value)
@@ -303,26 +306,33 @@ class DataSource(Enum, metaclass=DataSourceMeta):
         """
         return self.value[0] is _Source.DEM
 
-    def is_uswest_source(self):
+    def is_uswest_source(self, config=None):
         """Checks if data source via Sentinel Hub services is available at US West server
 
         Example: ``DataSource.LANDSAT8.is_uswest_source()`` or ``DataSource.is_uswest_source(DataSource.LANDSAT8)``
 
         :param self: One of the supported data sources
         :type self: DataSource
+        :param config: A custom instance of config class to override parameters from the saved configuration.
+        :type config: SHConfig or None
         :return: `True` if data source exists at US West server and `False` otherwise
         :rtype: bool
         """
-        return not SHConfig().has_eocloud_url() and self.value[0] in [_Source.LANDSAT8, _Source.MODIS, _Source.DEM]
+        config = config or SHConfig()
+        return not config.has_eocloud_url() and self.value[0] in [_Source.LANDSAT8, _Source.MODIS, _Source.DEM]
 
     @classmethod
-    def get_available_sources(cls):
+    def get_available_sources(cls, config=None):
         """ Returns which data sources are available for configured Sentinel Hub OGC URL
 
+        :param config: A custom instance of config class to override parameters from the saved configuration.
+        :type config: SHConfig or None
         :return: List of available data sources
         :rtype: list(sentinelhub.DataSource)
         """
-        if SHConfig().has_eocloud_url():
+        config = config or SHConfig()
+
+        if config.has_eocloud_url():
             return [cls.SENTINEL2_L1C, cls.SENTINEL2_L2A, cls.SENTINEL2_L3B, cls.SENTINEL1_IW, cls.SENTINEL1_EW,
                     cls.SENTINEL1_EW_SH, cls.SENTINEL3, cls.SENTINEL5P, cls.LANDSAT5, cls.LANDSAT7, cls.LANDSAT8,
                     cls.LANDSAT8_L2A, cls.ENVISAT_MERIS]

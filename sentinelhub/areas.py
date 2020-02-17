@@ -12,8 +12,9 @@ import shapely.ops
 import shapely.geometry
 from shapely.geometry import Polygon, MultiPolygon, GeometryCollection
 
-from .geometry import BBox, BBoxCollection, BaseGeometry, Geometry
+from .config import SHConfig
 from .constants import CRS, DataSource
+from .geometry import BBox, BBoxCollection, BaseGeometry, Geometry
 from .geo_utils import transform_point
 from .ogc import WebFeatureService
 
@@ -358,15 +359,14 @@ class TileSplitter(AreaSplitter):
     :type split_shape: int or (int, int)
     :param data_source: Source of requested satellite data. Default is Sentinel-2 L1C data.
     :type data_source: sentinelhub.constants.DataSource
-    :param instance_id: User's Sentinel Hub instance id. If `None` the instance id is taken from the ``config.json``
-                        configuration file.
-    :type instance_id: str
+    :param config: A custom instance of config class to override parameters from the saved configuration.
+    :type config: SHConfig or None
     :param reduce_bbox_sizes: If `True` it will reduce the sizes of bounding boxes so that they will tightly fit the
         given area geometry from `shape_list`.
     :type reduce_bbox_sizes: bool
     """
     def __init__(self, shape_list, crs, time_interval, tile_split_shape=1, data_source=DataSource.SENTINEL2_L1C,
-                 instance_id=None, **kwargs):
+                 config=None, **kwargs):
         super().__init__(shape_list, crs, **kwargs)
 
         if data_source is DataSource.DEM:
@@ -376,7 +376,7 @@ class TileSplitter(AreaSplitter):
         self.time_interval = time_interval
         self.tile_split_shape = tile_split_shape
         self.data_source = data_source
-        self.instance_id = instance_id
+        self.config = config or SHConfig()
 
         self.tile_dict = None
 
@@ -388,7 +388,7 @@ class TileSplitter(AreaSplitter):
         self.tile_dict = {}
 
         wfs = WebFeatureService(self.area_bbox, self.time_interval, data_source=self.data_source,
-                                instance_id=self.instance_id)
+                                config=self.config)
         date_list = wfs.get_dates()
         geometry_list = wfs.get_geometries()
         for tile_info, (date, geometry) in zip(wfs, zip(date_list, geometry_list)):

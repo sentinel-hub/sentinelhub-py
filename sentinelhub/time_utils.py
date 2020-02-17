@@ -145,7 +145,7 @@ def parse_time_interval(time):
     `YYYY-MM-DD` and instance of `datetime.datetime` will be treated as `YYYY-MM-DDThh:mm:ss`.
 
     :param time: An input time
-    :type time: str or datetime.datetime
+    :type time: str or datetime.datetime or (str, str) or (datetime.datetime, datetime.datetime)
     :return: interval of start and end date of the form `YYYY-MM-DDThh:mm:ss`
     :rtype: (str, str)
     :raises: ValueError
