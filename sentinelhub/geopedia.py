@@ -25,7 +25,7 @@ class GeopediaService:
         :type config: SHConfig or None
         """
         self.config = config or SHConfig()
-        self._base_url = config.geopedia_rest_url
+        self._base_url = self.config.geopedia_rest_url
 
     @staticmethod
     def _parse_layer(layer, return_wms_name=False):
