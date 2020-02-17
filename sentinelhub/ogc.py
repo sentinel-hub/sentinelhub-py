@@ -29,7 +29,7 @@ class OgcService:
         self.config = config or SHConfig()
         self._base_url = self.config.get_sh_ogc_url()
 
-        if not self.config.instance_id:  #TODO
+        if not self.config.instance_id:
             raise ValueError('Instance ID is not set. '
                              'Set it either in request initialization or in configuration file. '
                              'Check http://sentinelhub-py.readthedocs.io/en/latest/configure.html for more info.')
