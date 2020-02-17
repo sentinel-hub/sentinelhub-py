@@ -11,7 +11,7 @@ import requests
 
 from ..config import SHConfig
 from ..constants import RequestType, MimeType
-from ..decoding import decode_data
+from ..decoding import decode_data as decode_data_function
 from ..exceptions import DownloadFailedException, SHRuntimeWarning
 from ..io_utils import read_data, write_data
 from .handlers import fail_user_errors, retry_temporal_errors
@@ -47,7 +47,7 @@ class DownloadClient:
 
         self.config = config or SHConfig()
 
-    def download(self, download_requests, max_threads=None):
+    def download(self, download_requests, max_threads=None, decode_data=True):
         """ Download one or multiple requests, provided as a request list.
 
         :param download_requests: A list of requests or a single request to be executed.
@@ -55,6 +55,8 @@ class DownloadClient:
         :param max_threads: Maximum number of threads to be used for download in parallel. The default is
             `max_threads=None` which will use the number of processors on the system multiplied by 5.
         :type max_threads: int or None
+        :param decode_data: If `True` it will decode data otherwise it will return it in binary format.
+        :type decode_data: bool
         :return: A list of results or a single result, depending on input parameter `download_requests`
         :rtype: list(object) or object
         """
@@ -63,7 +65,9 @@ class DownloadClient:
             download_requests = [download_requests]
 
         with concurrent.futures.ThreadPoolExecutor(max_workers=max_threads) as executor:
-            download_list = [executor.submit(self._single_download, request) for request in download_requests]
+            download_list = [
+                executor.submit(self._single_download, request, decode_data) for request in download_requests
+            ]
 
         data_list = []
         for future in download_list:
@@ -81,13 +85,8 @@ class DownloadClient:
             return data_list[0]
         return data_list
 
-    def _single_download(self, request):
+    def _single_download(self, request, decode_data):
         """ Method for downloading a single request
-
-        :param request: An object with information about download and storage of data
-        :type request: DownloadRequest
-        :return: Downloaded data
-        :rtype: object
         """
         request.raise_if_invalid()
 
@@ -95,7 +94,7 @@ class DownloadClient:
 
         if not self._is_download_required(request, response_path):
             if request.return_data:
-                return read_data(response_path, data_format=request.data_type)
+                return read_data(response_path, data_format=request.data_type if decode_data else MimeType.RAW)
             return None
 
         response_content = self._execute_download(request)
@@ -110,7 +109,9 @@ class DownloadClient:
             LOGGER.debug('Saved data to %s', response_path)
 
         if request.return_data:
-            return decode_data(response_content, request.data_type)
+            if decode_data:
+                return decode_data_function(response_content, request.data_type)
+            return response_content
         return None
 
     @retry_temporal_errors

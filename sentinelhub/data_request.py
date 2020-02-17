@@ -14,8 +14,6 @@ from .geopedia import GeopediaWmsService, GeopediaImageService
 from .aws import AwsProduct, AwsTile
 from .aws_safe import SafeProduct, SafeTile
 from .download import DownloadRequest, DownloadClient, AwsDownloadClient, SentinelHubDownloadClient
-from .exceptions import DownloadFailedException
-from .io_utils import read_data
 from .os_utils import make_folder
 from .constants import DataSource, MimeType, CustomUrlParam, ServiceType, CRS, HistogramType
 
@@ -81,8 +79,8 @@ class DataRequest(ABC):
         return isinstance(self.download_list, list) and \
             all(isinstance(request, DownloadRequest) for request in self.download_list)
 
-    def get_data(self, *, save_data=False, data_filter=None, redownload=False, max_threads=None,
-                 raise_download_errors=True):
+    def get_data(self, *, save_data=False, redownload=False, data_filter=None, max_threads=None,
+                 decode_data=True, raise_download_errors=True):
         """ Get requested data either by downloading it or by reading it from the disk (if it
         was previously downloaded and saved).
 
@@ -97,6 +95,9 @@ class DataRequest(ABC):
         :param max_threads: Maximum number of threads to be used for download in parallel. The default is
             `max_threads=None` which will use the number of processors on the system multiplied by 5.
         :type max_threads: int or None
+        :param decode_data: If `True` (default) it decodes data (e.g., returns image as an array of numbers);
+            if `False` it returns binary data.
+        :type decode_data: bool
         :param raise_download_errors: If `True` any error in download process should be raised as
             ``DownloadFailedException``. If `False` failed downloads will only raise warnings and the method will
             return list with `None` values in places where the results of failed download requests should be.
@@ -106,8 +107,8 @@ class DataRequest(ABC):
         :rtype: list of numpy arrays
         """
         self._preprocess_request(save_data, True)
-        data_list = self._execute_data_download(data_filter, redownload, max_threads, raise_download_errors)
-        return self._add_saved_data(data_list, data_filter, raise_download_errors)
+        return self._execute_data_download(data_filter, redownload, max_threads, raise_download_errors,
+                                           decode_data=decode_data)
 
     def save_data(self, *, data_filter=None, redownload=False, max_threads=None, raise_download_errors=False):
         """ Saves data to disk. If ``redownload=True`` then the data is redownloaded using ``max_threads`` workers.
@@ -127,7 +128,7 @@ class DataRequest(ABC):
         self._preprocess_request(True, False)
         self._execute_data_download(data_filter, redownload, max_threads, raise_download_errors)
 
-    def _execute_data_download(self, data_filter, redownload, max_threads, raise_download_errors):
+    def _execute_data_download(self, data_filter, redownload, max_threads, raise_download_errors, decode_data=True):
         """ Calls download module and executes the download process
 
         :param data_filter: Used to specify which items will be returned by the method and in which order. E.g. with
@@ -141,6 +142,9 @@ class DataRequest(ABC):
         :param raise_download_errors: If `True` any error in download process should be raised as
             ``DownloadFailedException``. If `False` failed downloads will only raise warnings.
         :type raise_download_errors: bool
+        :param decode_data: If `True` (default) it decodes data (e.g., returns image as an array of numbers);
+            if `False` it returns binary data.
+        :type decode_data: bool
         :return: List of data obtained from download
         :rtype: list
         """
@@ -159,7 +163,7 @@ class DataRequest(ABC):
             raise ValueError('data_filter parameter must be a list of indices')
 
         client = self.download_client_class(redownload=redownload, raise_download_errors=raise_download_errors)
-        data_list = client.download(filtered_download_list, max_threads=max_threads)
+        data_list = client.download(filtered_download_list, max_threads=max_threads, decode_data=decode_data)
 
         if is_repeating_filter:
             data_list = [copy.deepcopy(data_list[index]) for index in mapping_list]
@@ -210,20 +214,6 @@ class DataRequest(ABC):
         if save_data:
             for folder in self.folder_list:
                 make_folder(os.path.join(self.data_folder, folder))
-
-    def _add_saved_data(self, data_list, data_filter, raise_download_errors):
-        """ Adds already saved data that was not redownloaded to the requested data list.
-        """
-        filtered_download_list = self.download_list if data_filter is None else \
-            [self.download_list[index] for index in data_filter]
-        for i, request in enumerate(filtered_download_list):
-            if request.return_data and data_list[i] is None:
-                if os.path.exists(request.get_file_path()):
-                    data_list[i] = read_data(request.get_file_path())
-                elif raise_download_errors:
-                    raise DownloadFailedException('Failed to download data from {}.\n No previously downloaded data '
-                                                  'exists in file {}.'.format(request.url, request.get_file_path()))
-        return data_list
 
 
 class OgcRequest(DataRequest):
