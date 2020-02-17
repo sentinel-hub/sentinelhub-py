@@ -52,7 +52,7 @@ class SentinelHubRequest(DataRequest):
             url=self.config.get_sh_processing_api_url(),
             post_values=self.payload,
             data_folder=self.data_folder,
-            hash_save=bool(self.data_folder),
+            save_response=bool(self.data_folder),
             data_type=self.mime_type,
             headers=headers
         )]
