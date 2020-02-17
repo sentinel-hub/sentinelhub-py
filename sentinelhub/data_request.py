@@ -6,14 +6,17 @@ import datetime
 import os
 import logging
 import copy
+import warnings
 from abc import ABC, abstractmethod
 
+from .config import SHConfig
 from .ogc import OgcImageService
 from .fis import FisService
 from .geopedia import GeopediaWmsService, GeopediaImageService
 from .aws import AwsProduct, AwsTile
 from .aws_safe import SafeProduct, SafeTile
 from .download import DownloadRequest, DownloadClient, AwsDownloadClient, SentinelHubDownloadClient
+from .exceptions import SHDeprecationWarning
 from .os_utils import make_folder
 from .constants import DataSource, MimeType, CustomUrlParam, ServiceType, CRS, HistogramType
 
@@ -25,13 +28,24 @@ class DataRequest(ABC):
 
     Every data request type can write the fetched data to disk and then read it again (and hence avoid the need to
     download the same data again).
-
-    :param data_folder: location of the directory where the fetched data will be saved.
-    :type data_folder: str
     """
-    def __init__(self, download_client_class, *, data_folder=None):
+    def __init__(self, download_client_class, *, data_folder=None, config=None, instance_id=None):
+        """
+        :param download_client_class: A class implementing a download client
+        :type download_client_class: object
+        :param data_folder: location of the directory where the fetched data will be saved.
+        :type data_folder: str
+        :param config: A custom instance of config class to override parameters from the saved configuration.
+        :type config: SHConfig or None
+        """
         self.download_client_class = download_client_class
         self.data_folder = data_folder
+        self.config = config or SHConfig()
+
+        if instance_id is not None:
+            warnings.warn("Parameter 'instance_id' is deprecated and will soon removed. Use parameter 'config' instead",
+                          category=SHDeprecationWarning)
+            self.config.instance_id = instance_id
 
         self.download_list = []
         self.folder_list = []
@@ -217,67 +231,65 @@ class DataRequest(ABC):
 
 
 class OgcRequest(DataRequest):
-    """ The base class for OGC-type requests (WMS and WCS) where all common parameters are
-    defined.
-
-    :param data_source: Source of requested satellite data. It has to be the same as defined in Sentinel Hub
-        Configurator for the given layer. Default is Sentinel-2 L1C.
-    :type data_source: constants.DataSource
-    :param service_type: type of OGC service (WMS or WCS)
-    :type service_type: constants.ServiceType
-    :param size_x: number of pixels in x or resolution in x (i.e. ``512`` or ``10m``)
-    :type size_x: int or str
-    :param size_y: number of pixels in x or resolution in y (i.e. ``512`` or ``10m``)
-    :type size_y: int or str
-    :param bbox: Bounding box of the requested image. Coordinates must be in the specified coordinate reference system.
-    :type bbox: geometry.BBox
-    :param time: time or time range for which to return the results, in ISO8601 format
-                (year-month-date, for example: ``2016-01-01``, or year-month-dateThours:minutes:seconds format,
-                i.e. ``2016-01-01T16:31:21``). When a single time is specified the request will return
-                data for that specific date, if it exists. If a time range is specified the result is a list of all
-                scenes between the specified dates conforming to the cloud coverage criteria. Most recent acquisition
-                being first in the list. For the latest acquisition use ``latest``.
-                Examples: ``latest``, ``'2016-01-01'``, or ``('2016-01-01', ' 2016-01-31')``
-    :type time: str or (str, str) or datetime.date or (datetime.date, datetime.date) or datetime.datetime or
-        (datetime.datetime, datetime.datetime)
-    :param layer: An ID of a layer configured in Sentinel Hub Configurator. It has to be configured for the same
-        instance ID which will be used for this request. Also the satellite source of the layer in Configurator must
-        match the one given by `data_source` parameter
-    :type layer: str
-    :param maxcc: maximum accepted cloud coverage of an image. Float between 0.0 and 1.0. Default is ``1.0``.
-    :type maxcc: float
-    :param image_format: format of the returned image by the Sentinel Hub's WMS getMap service. Default is PNG, but
-                        in some cases 32-bit TIFF is required, i.e. if requesting unprocessed raw bands.
-                        Default is ``constants.MimeType.PNG``.
-    :type image_format: constants.MimeType
-    :param instance_id: user's instance id. If `None` the instance id is taken from the ``config.json``
-                        configuration file.
-    :type instance_id: str
-    :param custom_url_params: dictionary of CustomUrlParameters and their values supported by Sentinel Hub's WMS and WCS
-                              services. All available parameters are described at
-                              http://www.sentinel-hub.com/develop/documentation/api/custom-url-parameters. Note: in
-                              case of constants.CustomUrlParam.EVALSCRIPT the dictionary value must be a string
-                              of Javascript code that is not encoded into base64.
-    :type custom_url_params: dictionary of CustomUrlParameter enum and its value, i.e.
-                              ``{constants.CustomUrlParam.ATMFILTER:'ATMCOR'}``
-    :param time_difference: The time difference below which dates are deemed equal. That is, if for the given set of OGC
-                            parameters the images are available at datestimes `d1<=d2<=...<=dn` then only those with
-                            `dk-dj>time_difference` will be considered. The default time difference is negative (`-1s`),
-                            meaning that all dates are considered by default.
-    :type time_difference: datetime.timedelta
-    :param data_folder: location of the directory where the fetched data will be saved.
-    :type data_folder: str
+    """ The base class for OGC-type requests (WMS and WCS) where all common parameters are defined
     """
     def __init__(self, layer, bbox, *, time='latest', service_type=None, data_source=DataSource.SENTINEL2_L1C,
-                 size_x=None, size_y=None, maxcc=1.0, image_format=MimeType.PNG, instance_id=None,
-                 custom_url_params=None, time_difference=datetime.timedelta(seconds=-1), **kwargs):
+                 size_x=None, size_y=None, maxcc=1.0, image_format=MimeType.PNG, custom_url_params=None,
+                 time_difference=datetime.timedelta(seconds=-1), **kwargs):
+        """
+        :param layer: An ID of a layer configured in Sentinel Hub Configurator. It has to be configured for the same
+            instance ID which will be used for this request. Also the satellite source of the layer in Configurator must
+            match the one given by `data_source` parameter
+        :type layer: str
+        :param bbox: Bounding box of the requested image. Coordinates must be in the specified coordinate reference
+            system.
+        :type bbox: geometry.BBox
+        :param time: time or time range for which to return the results, in ISO8601 format
+            (year-month-date, for example: ``2016-01-01``, or year-month-dateThours:minutes:seconds format,
+            i.e. ``2016-01-01T16:31:21``). When a single time is specified the request will return data for that
+            specific date, if it exists. If a time range is specified the result is a list of all scenes between the
+            specified dates conforming to the cloud coverage criteria. Most recent acquisition being first in the list.
+            For the latest acquisition use ``latest``. Examples: ``latest``, ``'2016-01-01'``, or
+            ``('2016-01-01', ' 2016-01-31')``
+        :type time: str or (str, str) or datetime.date or (datetime.date, datetime.date) or datetime.datetime or
+            (datetime.datetime, datetime.datetime)
+        :param service_type: type of OGC service (WMS or WCS)
+        :type service_type: constants.ServiceType
+        :param data_source: Source of requested satellite data. It has to be the same as defined in Sentinel Hub
+            Configurator for the given layer. Default is Sentinel-2 L1C.
+        :type data_source: constants.DataSource
+        :param size_x: number of pixels in x or resolution in x (i.e. ``512`` or ``10m``)
+        :type size_x: int or str
+        :param size_y: number of pixels in x or resolution in y (i.e. ``512`` or ``10m``)
+        :type size_y: int or str
+        :param maxcc: maximum accepted cloud coverage of an image. Float between 0.0 and 1.0. Default is ``1.0``.
+        :type maxcc: float
+        :param image_format: format of the returned image by the Sentinel Hub's WMS getMap service. Default is PNG, but
+                            in some cases 32-bit TIFF is required, i.e. if requesting unprocessed raw bands.
+                            Default is ``constants.MimeType.PNG``.
+        :type image_format: constants.MimeType
+        :param custom_url_params: A dictionary of CustomUrlParameters and their values supported by Sentinel Hub's WMS
+            and WCS services. All available parameters are described at
+            http://www.sentinel-hub.com/develop/documentation/api/custom-url-parameters. Note: in case of
+            `CustomUrlParam.EVALSCRIPT` the dictionary value must be a string of Javascript code that is not
+            encoded into base64.
+        :type custom_url_params: Dict[CustomUrlParameter, object]
+        :param time_difference: The time difference below which dates are deemed equal. That is, if for the given set
+            of OGC parameters the images are available at datestimes `d1<=d2<=...<=dn` then only those with
+            `dk-dj>time_difference` will be considered. The default time difference is negative (`-1s`), meaning
+            that all dates are considered by default.
+        :type time_difference: datetime.timedelta
+        :param data_folder: location of the directory where the fetched data will be saved.
+        :type data_folder: str
+        :param config: A custom instance of config class to override parameters from the saved configuration.
+        :type config: SHConfig or None
+        """
         self.layer = layer
         self.bbox = bbox
         self.time = time
         self.data_source = data_source
         self.maxcc = maxcc
         self.image_format = MimeType(image_format)
-        self.instance_id = instance_id
         self.service_type = service_type
         self.size_x = size_x
         self.size_y = size_y
@@ -317,7 +329,7 @@ class OgcRequest(DataRequest):
         if reset_wfs_iterator:
             self.wfs_iterator = None
 
-        ogc_service = OgcImageService(instance_id=self.instance_id)
+        ogc_service = OgcImageService(config=self.config)
         self.download_list = ogc_service.get_request(self)
         self.wfs_iterator = ogc_service.get_wfs_iterator()
 
@@ -333,7 +345,7 @@ class OgcRequest(DataRequest):
                 acceptable cloud coverage.
         :rtype: list(datetime.datetime) or [None]
         """
-        return OgcImageService(instance_id=self.instance_id).get_dates(self)
+        return OgcImageService(config=self.config).get_dates(self)
 
     def get_tiles(self):
         """ Returns iterator over info about all satellite tiles used for the OgcRequest
@@ -357,56 +369,60 @@ class WmsRequest(OgcRequest):
     the other one will be calculated to best fit the bounding box ratio. If both of them are specified they will be used
     no matter the bounding box ratio.
 
-    :param width: width (number of columns) of the returned image (array)
-    :type width: int or None
-    :param height: height (number of rows) of the returned image (array)
-    :type height: int or None
-    :param data_source: Source of requested satellite data. It has to be the same as defined in Sentinel Hub
-        Configurator for the given layer. Default is Sentinel-2 L1C.
-    :type data_source: constants.DataSource
-    :param bbox: Bounding box of the requested image. Coordinates must be in the specified coordinate reference system.
-    :type bbox: geometry.BBox
-    :param time: time or time range for which to return the results, in ISO8601 format
-                (year-month-date, for example: ``2016-01-01``, or year-month-dateThours:minutes:seconds format,
-                i.e. ``2016-01-01T16:31:21``). When a single time is specified the request will return
-                data for that specific date, if it exists. If a time range is specified the result is a list of all
-                scenes between the specified dates conforming to the cloud coverage criteria. Most recent acquisition
-                being first in the list. For the latest acquisition use ``latest``.
-                Examples: ``latest``, ``'2016-01-01'``, or ``('2016-01-01', ' 2016-01-31')``
-    :type time: str or (str, str) or datetime.date or (datetime.date, datetime.date) or datetime.datetime or
-        (datetime.datetime, datetime.datetime)
-    :param layer: An ID of a layer configured in Sentinel Hub Configurator. It has to be configured for the same
-        instance ID which will be used for this request. Also the satellite source of the layer in Configurator must
-        match the one given by `data_source` parameter
-    :type layer: str
-    :param maxcc: maximum accepted cloud coverage of an image. Float between 0.0 and 1.0. Default is ``1.0``.
-    :type maxcc: float
-    :param image_format: format of the returned image by the Sentinel Hub's WMS getMap service. Default is PNG, but
-                        in some cases 32-bit TIFF is required, i.e. if requesting unprocessed raw bands.
-                        Default is ``constants.MimeType.PNG``.
-    :type image_format: constants.MimeType
-    :param instance_id: User's Sentinel Hub instance id. If `None` the instance id is taken from the ``config.json``
-                        configuration file.
-    :type instance_id: str
-    :param custom_url_params: dictionary of CustomUrlParameters and their values supported by Sentinel Hub's WMS and WCS
-                              services. All available parameters are described at
-                              http://www.sentinel-hub.com/develop/documentation/api/custom-url-parameters. Note: in
-                              case of constants.CustomUrlParam.EVALSCRIPT the dictionary value must be a string
-                              of Javascript code that is not encoded into base64.
-    :type custom_url_params: dictionary of CustomUrlParameter enum and its value, i.e.
-                              ``{constants.CustomUrlParam.ATMFILTER:'ATMCOR'}``
-    :param time_difference: The time difference below which dates are deemed equal. That is, if for the given set of OGC
-                            parameters the images are available at datestimes `d1<=d2<=...<=dn` then only those with
-                            `dk-dj>time_difference` will be considered. The default time difference is negative (`-1s`),
-                            meaning that all dates are considered by default.
-    :type time_difference: datetime.timedelta
-    :param data_folder: location of the directory where the fetched data will be saved.
-    :type data_folder: str
-
     More info available at:
     https://www.sentinel-hub.com/develop/documentation/api/ogc_api/wms-parameters
     """
     def __init__(self, *, width=None, height=None, **kwargs):
+        """
+        :param width: width (number of columns) of the returned image (array)
+        :type width: int or None
+        :param height: height (number of rows) of the returned image (array)
+        :type height: int or None
+        :param layer: An ID of a layer configured in Sentinel Hub Configurator. It has to be configured for the same
+            instance ID which will be used for this request. Also the satellite source of the layer in Configurator must
+            match the one given by `data_source` parameter
+        :type layer: str
+        :param bbox: Bounding box of the requested image. Coordinates must be in the specified coordinate reference
+            system.
+        :type bbox: geometry.BBox
+        :param time: time or time range for which to return the results, in ISO8601 format
+            (year-month-date, for example: ``2016-01-01``, or year-month-dateThours:minutes:seconds format,
+            i.e. ``2016-01-01T16:31:21``). When a single time is specified the request will return data for that
+            specific date, if it exists. If a time range is specified the result is a list of all scenes between the
+            specified dates conforming to the cloud coverage criteria. Most recent acquisition being first in the list.
+            For the latest acquisition use ``latest``. Examples: ``latest``, ``'2016-01-01'``, or
+            ``('2016-01-01', ' 2016-01-31')``
+        :type time: str or (str, str) or datetime.date or (datetime.date, datetime.date) or datetime.datetime or
+            (datetime.datetime, datetime.datetime)
+        :param data_source: Source of requested satellite data. It has to be the same as defined in Sentinel Hub
+            Configurator for the given layer. Default is Sentinel-2 L1C.
+        :type data_source: constants.DataSource
+        :param size_x: number of pixels in x or resolution in x (i.e. ``512`` or ``10m``)
+        :type size_x: int or str
+        :param size_y: number of pixels in x or resolution in y (i.e. ``512`` or ``10m``)
+        :type size_y: int or str
+        :param maxcc: maximum accepted cloud coverage of an image. Float between 0.0 and 1.0. Default is ``1.0``.
+        :type maxcc: float
+        :param image_format: format of the returned image by the Sentinel Hub's WMS getMap service. Default is PNG, but
+                            in some cases 32-bit TIFF is required, i.e. if requesting unprocessed raw bands.
+                            Default is ``constants.MimeType.PNG``.
+        :type image_format: constants.MimeType
+        :param custom_url_params: A dictionary of CustomUrlParameters and their values supported by Sentinel Hub's WMS
+            and WCS services. All available parameters are described at
+            http://www.sentinel-hub.com/develop/documentation/api/custom-url-parameters. Note: in case of
+            `CustomUrlParam.EVALSCRIPT` the dictionary value must be a string of Javascript code that is not
+            encoded into base64.
+        :type custom_url_params: Dict[CustomUrlParameter, object]
+        :param time_difference: The time difference below which dates are deemed equal. That is, if for the given set
+            of OGC parameters the images are available at datestimes `d1<=d2<=...<=dn` then only those with
+            `dk-dj>time_difference` will be considered. The default time difference is negative (`-1s`), meaning
+            that all dates are considered by default.
+        :type time_difference: datetime.timedelta
+        :param data_folder: location of the directory where the fetched data will be saved.
+        :type data_folder: str
+        :param config: A custom instance of config class to override parameters from the saved configuration.
+        :type config: SHConfig or None
+        """
         super().__init__(service_type=ServiceType.WMS, size_x=width, size_y=height, **kwargs)
 
 
@@ -421,56 +437,61 @@ class WcsRequest(OgcRequest):
 
     More info available at:
     https://www.sentinel-hub.com/develop/documentation/api/ogc_api/wcs-request
-
-    :param resx: resolution in x (resolution of a column) given in meters in the format (examples ``10m``,
-                 ``20m``, ...). Default is ``10m``, which is the best native resolution of some Sentinel-2 bands.
-    :type resx: str
-    :param resy: resolution in y (resolution of a row) given in meters in the format (examples ``10m``, ``20m``, ...).
-                Default is ``10m``, which is the best native resolution of some Sentinel-2 bands.
-    :type resy: str
-    :param data_source: Source of requested satellite data. It has to be the same as defined in Sentinel Hub
-        Configurator for the given layer. Default is Sentinel-2 L1C.
-    :type data_source: constants.DataSource
-    :param bbox: Bounding box of the requested image. Coordinates must be in the specified coordinate reference system.
-    :type bbox: geometry.BBox
-    :param time: time or time range for which to return the results, in ISO8601 format
-                (year-month-date, for example: ``2016-01-01``, or year-month-dateThours:minutes:seconds format,
-                i.e. ``2016-01-01T16:31:21``). When a single time is specified the request will return
-                data for that specific date, if it exists. If a time range is specified the result is a list of all
-                scenes between the specified dates conforming to the cloud coverage criteria. Most recent acquisition
-                being first in the list. For the latest acquisition use ``latest``.
-                Examples: ``latest``, ``'2016-01-01'``, or ``('2016-01-01', ' 2016-01-31')``
-    :type time: str or (str, str) or datetime.date or (datetime.date, datetime.date) or datetime.datetime or
-        (datetime.datetime, datetime.datetime)
-    :param layer: An ID of a layer configured in Sentinel Hub Configurator. It has to be configured for the same
-        instance ID which will be used for this request. Also the satellite source of the layer in Configurator must
-        match the one given by `data_source` parameter
-    :type layer: str
-    :param maxcc: maximum accepted cloud coverage of an image. Float between 0.0 and 1.0. Default is ``1.0``.
-    :type maxcc: float
-    :param image_format: format of the returned image by the Sentinel Hub's WMS getMap service. Default is PNG, but
-                        in some cases 32-bit TIFF is required, i.e. if requesting unprocessed raw bands.
-                        Default is ``constants.MimeType.PNG``.
-    :type image_format: constants.MimeType
-    :param instance_id: user's instance id. If `None` the instance id is taken from the ``config.json``
-                        configuration file.
-    :type instance_id: str
-    :param custom_url_params: dictionary of CustomUrlParameters and their values supported by Sentinel Hub's WMS and WCS
-                              services. All available parameters are described at
-                              http://www.sentinel-hub.com/develop/documentation/api/custom-url-parameters. Note: in
-                              case of constants.CustomUrlParam.EVALSCRIPT the dictionary value must be a string
-                              of Javascript code that is not encoded into base64.
-    :type custom_url_params: Dictionary of CustomUrlParameter enum and its value, i.e.
-                              ``{constants.CustomUrlParam.ATMFILTER:'ATMCOR'}``
-    :param time_difference: The time difference below which dates are deemed equal. That is, if for the given set of OGC
-                            parameters the images are available at datestimes `d1<=d2<=...<=dn` then only those with
-                            `dk-dj>time_difference` will be considered. The default time difference is negative (`-1s`),
-                            meaning that all dates are considered by default.
-    :type time_difference: datetime.timedelta
-    :param data_folder: location of the directory where the fetched data will be saved.
-    :type data_folder: str
     """
     def __init__(self, *, resx='10m', resy='10m', **kwargs):
+        """
+        :param resx: resolution in x (resolution of a column) given in meters in the format (examples ``10m``,
+            ``20m``, ...). Default is ``10m``, which is the best native resolution of some Sentinel-2 bands.
+        :type resx: str
+        :param resy: resolution in y (resolution of a row) given in meters in the format
+            (examples ``10m``, ``20m``, ...). Default is ``10m``, which is the best native resolution of some
+            Sentinel-2 bands.
+        :type resy: str
+        :param layer: An ID of a layer configured in Sentinel Hub Configurator. It has to be configured for the same
+            instance ID which will be used for this request. Also the satellite source of the layer in Configurator must
+            match the one given by `data_source` parameter
+        :type layer: str
+        :param bbox: Bounding box of the requested image. Coordinates must be in the specified coordinate reference
+            system.
+        :type bbox: geometry.BBox
+        :param time: time or time range for which to return the results, in ISO8601 format
+            (year-month-date, for example: ``2016-01-01``, or year-month-dateThours:minutes:seconds format,
+            i.e. ``2016-01-01T16:31:21``). When a single time is specified the request will return data for that
+            specific date, if it exists. If a time range is specified the result is a list of all scenes between the
+            specified dates conforming to the cloud coverage criteria. Most recent acquisition being first in the list.
+            For the latest acquisition use ``latest``. Examples: ``latest``, ``'2016-01-01'``, or
+            ``('2016-01-01', ' 2016-01-31')``
+        :type time: str or (str, str) or datetime.date or (datetime.date, datetime.date) or datetime.datetime or
+            (datetime.datetime, datetime.datetime)
+        :param data_source: Source of requested satellite data. It has to be the same as defined in Sentinel Hub
+            Configurator for the given layer. Default is Sentinel-2 L1C.
+        :type data_source: constants.DataSource
+        :param size_x: number of pixels in x or resolution in x (i.e. ``512`` or ``10m``)
+        :type size_x: int or str
+        :param size_y: number of pixels in x or resolution in y (i.e. ``512`` or ``10m``)
+        :type size_y: int or str
+        :param maxcc: maximum accepted cloud coverage of an image. Float between 0.0 and 1.0. Default is ``1.0``.
+        :type maxcc: float
+        :param image_format: format of the returned image by the Sentinel Hub's WMS getMap service. Default is PNG, but
+                            in some cases 32-bit TIFF is required, i.e. if requesting unprocessed raw bands.
+                            Default is ``constants.MimeType.PNG``.
+        :type image_format: constants.MimeType
+        :param custom_url_params: A dictionary of CustomUrlParameters and their values supported by Sentinel Hub's WMS
+            and WCS services. All available parameters are described at
+            http://www.sentinel-hub.com/develop/documentation/api/custom-url-parameters. Note: in case of
+            `CustomUrlParam.EVALSCRIPT` the dictionary value must be a string of Javascript code that is not
+            encoded into base64.
+        :type custom_url_params: Dict[CustomUrlParameter, object]
+        :param time_difference: The time difference below which dates are deemed equal. That is, if for the given set
+            of OGC parameters the images are available at datestimes `d1<=d2<=...<=dn` then only those with
+            `dk-dj>time_difference` will be considered. The default time difference is negative (`-1s`), meaning
+            that all dates are considered by default.
+        :type time_difference: datetime.timedelta
+        :param data_folder: location of the directory where the fetched data will be saved.
+        :type data_folder: str
+        :param config: A custom instance of config class to override parameters from the saved configuration.
+        :type config: SHConfig or None
+        """
         super().__init__(service_type=ServiceType.WCS, size_x=resx, size_y=resy, **kwargs)
 
 
@@ -487,47 +508,47 @@ class FisRequest(OgcRequest):
 
     More info available at:
     https://www.sentinel-hub.com/develop/documentation/api/ogc_api/wcs-request
-
-    :param layer: An ID of a layer configured in Sentinel Hub Configurator. It has to be configured for the same
-        instance ID which will be used for this request. Also the satellite source of the layer in Configurator must
-        match the one given by `data_source` parameter
-    :type layer: str
-    :param time: time or time range for which to return the results, in ISO8601 format
-        (year-month-date, for example: ``2016-01-01``, or year-month-dateThours:minutes:seconds format,
-        i.e. ``2016-01-01T16:31:21``). Examples: ``'2016-01-01'``, or ``('2016-01-01', ' 2016-01-31')``
-    :type time: str or (str, str) or datetime.date or (datetime.date, datetime.date) or datetime.datetime or
-        (datetime.datetime, datetime.datetime)
-    :param geometry_list: A WKT representation of a geometry describing the region of interest.
-        Note that WCS 1.1.1 standard is used here, so for EPSG:4326 coordinates should be in latitude/longitude order.
-    :type geometry_list: list, [geometry.Geometry or geometry.Bbox]
-    :param resolution: Specifies the spatial resolution, in meters per pixel, of the image from which the statistics
-        are to be estimated. When using CRS=EPSG:4326 one has to add the "m" suffix to
-        enforce resolution in meters per pixel (e.g. RESOLUTION=10m).
-    :type resolution: str
-    :param bins: The number of bins (a positive integer) in the histogram. If this parameter is absent no histogram
-        is computed.
-    :type bins: str
-    :param histogram_type: type of histogram
-    :type histogram_type: HistogramType
-    :param data_source: Source of requested satellite data. It has to be the same as defined in Sentinel Hub
-        Configurator for the given layer. Default is Sentinel-2 L1C.
-    :type data_source: constants.DataSource
-    :param maxcc: maximum accepted cloud coverage of an image. Float between 0.0 and 1.0. Default is ``1.0``.
-    :type maxcc: float
-    :param instance_id: user's instance id. If `None` the instance id is taken from the ``config.json``
-        configuration file.
-    :type instance_id: str
-    :param custom_url_params: Dictionary of CustomUrlParameters and their values supported by Sentinel Hub's WMS and WCS
-        services. All available parameters are described at
-        http://www.sentinel-hub.com/develop/documentation/api/custom-url-parameters. Note: in
-        case of constants.CustomUrlParam.EVALSCRIPT the dictionary value must be a string
-        of Javascript code that is not encoded into base64.
-    :type custom_url_params: dictionary of CustomUrlParameter enum and its value, i.e.
-        ``{constants.CustomUrlParam.ATMFILTER:'ATMCOR'}``
-    :param data_folder: location of the directory where the fetched data will be saved.
-    :type data_folder: str
     """
     def __init__(self, layer, time, geometry_list, *, resolution='10m', bins=None, histogram_type=None, **kwargs):
+        """
+        :param layer: An ID of a layer configured in Sentinel Hub Configurator. It has to be configured for the same
+            instance ID which will be used for this request. Also the satellite source of the layer in Configurator must
+            match the one given by `data_source` parameter
+        :type layer: str
+        :param time: time or time range for which to return the results, in ISO8601 format
+            (year-month-date, for example: ``2016-01-01``, or year-month-dateThours:minutes:seconds format,
+            i.e. ``2016-01-01T16:31:21``). Examples: ``'2016-01-01'``, or ``('2016-01-01', ' 2016-01-31')``
+        :type time: str or (str, str) or datetime.date or (datetime.date, datetime.date) or datetime.datetime or
+            (datetime.datetime, datetime.datetime)
+        :param geometry_list: A WKT representation of a geometry describing the region of interest.
+            Note that WCS 1.1.1 standard is used here, so for EPSG:4326 coordinates should be in latitude/longitude
+            order.
+        :type geometry_list: list, [geometry.Geometry or geometry.Bbox]
+        :param resolution: Specifies the spatial resolution, in meters per pixel, of the image from which the statistics
+            are to be estimated. When using CRS=EPSG:4326 one has to add the "m" suffix to
+            enforce resolution in meters per pixel (e.g. RESOLUTION=10m).
+        :type resolution: str
+        :param bins: The number of bins (a positive integer) in the histogram. If this parameter is absent no histogram
+            is computed.
+        :type bins: str
+        :param histogram_type: type of histogram
+        :type histogram_type: HistogramType
+        :param data_source: Source of requested satellite data. It has to be the same as defined in Sentinel Hub
+            Configurator for the given layer. Default is Sentinel-2 L1C.
+        :type data_source: constants.DataSource
+        :param maxcc: maximum accepted cloud coverage of an image. Float between 0.0 and 1.0. Default is ``1.0``.
+        :type maxcc: float
+        :param custom_url_params: Dictionary of CustomUrlParameters and their values supported by Sentinel Hub's WMS
+            and WCS services. All available parameters are described at
+            http://www.sentinel-hub.com/develop/documentation/api/custom-url-parameters. Note: in
+            case of constants.CustomUrlParam.EVALSCRIPT the dictionary value must be a string
+            of Javascript code that is not encoded into base64.
+        :type custom_url_params: Dict[CustomUrlParameter, object]
+        :param data_folder: location of the directory where the fetched data will be saved.
+        :type data_folder: str
+        :param config: A custom instance of config class to override parameters from the saved configuration.
+        :type config: SHConfig or None
+        """
         self.geometry_list = geometry_list
         self.resolution = resolution
         self.bins = bins
@@ -541,7 +562,7 @@ class FisRequest(OgcRequest):
         Create a list of DownloadRequests for all Sentinel-2 acquisitions within request's time interval and
         acceptable cloud coverage.
         """
-        fis_service = FisService(instance_id=self.instance_id)
+        fis_service = FisService(config=self.config)
         self.download_list = fis_service.get_request(self)
 
     def get_dates(self):
@@ -557,22 +578,25 @@ class FisRequest(OgcRequest):
 
 class GeopediaRequest(DataRequest):
     """ The base class for Geopedia requests where all common parameters are defined.
-
-    :param layer: Geopedia layer which contains requested data
-    :type layer: str
-    :param service_type: Type of the service, supported are ``ServiceType.WMS`` and ``ServiceType.IMAGE``
-    :type service_type: constants.ServiceType
-    :param bbox: Bounding box of the requested data
-    :type bbox: geometry.BBox
-    :param theme: Geopedia's theme endpoint string for which the layer is defined. Only required by WMS service.
-    :type theme: str
-    :param image_format: Format of the returned image by the Sentinel Hub's WMS getMap service. Default is
-        ``constants.MimeType.PNG``.
-    :type image_format: constants.MimeType
-    :param data_folder: Location of the directory where the fetched data will be saved.
-    :type data_folder: str
     """
     def __init__(self, layer, service_type, *, bbox=None, theme=None, image_format=MimeType.PNG, **kwargs):
+        """
+        :param layer: Geopedia layer which contains requested data
+        :type layer: str
+        :param service_type: Type of the service, supported are ``ServiceType.WMS`` and ``ServiceType.IMAGE``
+        :type service_type: constants.ServiceType
+        :param bbox: Bounding box of the requested data
+        :type bbox: geometry.BBox
+        :param theme: Geopedia's theme endpoint string for which the layer is defined. Only required by WMS service.
+        :type theme: str
+        :param image_format: Format of the returned image by the Sentinel Hub's WMS getMap service. Default is
+            ``constants.MimeType.PNG``.
+        :type image_format: constants.MimeType
+        :param data_folder: Location of the directory where the fetched data will be saved.
+        :type data_folder: str
+        :param config: A custom instance of config class to override parameters from the saved configuration.
+        :type config: SHConfig or None
+        """
         self.layer = layer
         self.service_type = service_type
 
@@ -596,28 +620,30 @@ class GeopediaWmsRequest(GeopediaRequest):
 
     Creates an instance of Geopedia's WMS (Web Map Service) GetMap request, which provides access to WMS layers in
     Geopedia.
-
-    :param layer: Geopedia layer which contains requested data
-    :type layer: str
-    :param theme: Geopedia's theme endpoint string for which the layer is defined.
-    :type theme: str
-    :param bbox: Bounding box of the requested data
-    :type bbox: geometry.BBox
-    :param width: width (number of columns) of the returned image (array)
-    :type width: int or None
-    :param height: height (number of rows) of the returned image (array)
-    :type height: int or None
-    :param custom_url_params: dictionary of CustomUrlParameters and their values supported by Geopedia's WMS services.
-                              At the moment only the transparency is supported (CustomUrlParam.TRANSPARENT).
-    :type custom_url_params: dictionary of CustomUrlParameter enum and its value, i.e.
-                              ``{constants.CustomUrlParam.TRANSPARENT:True}``
-    :param image_format: Format of the returned image by the Sentinel Hub's WMS getMap service. Default is
-        ``constants.MimeType.PNG``.
-    :type image_format: constants.MimeType
-    :param data_folder: Location of the directory where the fetched data will be saved.
-    :type data_folder: str
     """
     def __init__(self, layer, theme, bbox, *, width=None, height=None, custom_url_params=None, **kwargs):
+        """
+        :param layer: Geopedia layer which contains requested data
+        :type layer: str
+        :param theme: Geopedia's theme endpoint string for which the layer is defined.
+        :type theme: str
+        :param bbox: Bounding box of the requested data
+        :type bbox: geometry.BBox
+        :param width: width (number of columns) of the returned image (array)
+        :type width: int or None
+        :param height: height (number of rows) of the returned image (array)
+        :type height: int or None
+        :param custom_url_params: dictionary of CustomUrlParameters and their values supported by Geopedia's WMS
+            services. At the moment only the transparency is supported (CustomUrlParam.TRANSPARENT).
+        :type custom_url_params: Dict[CustomUrlParameter, object]
+        :param image_format: Format of the returned image by the Sentinel Hub's WMS getMap service. Default is
+            ``constants.MimeType.PNG``.
+        :type image_format: constants.MimeType
+        :param data_folder: Location of the directory where the fetched data will be saved.
+        :type data_folder: str
+        :param config: A custom instance of config class to override parameters from the saved configuration.
+        :type config: SHConfig or None
+        """
         self.size_x = width
         self.size_y = height
 
@@ -643,34 +669,37 @@ class GeopediaWmsRequest(GeopediaRequest):
         Create a list of DownloadRequests for all Sentinel-2 acquisitions within request's time interval and
         acceptable cloud coverage.
         """
-        gpd_service = GeopediaWmsService()
+        gpd_service = GeopediaWmsService(config=self.config)
         self.download_list = gpd_service.get_request(self)
 
 
 class GeopediaImageRequest(GeopediaRequest):
     """ Request to access data in a Geopedia vector / raster layer.
-
-    :param image_field_name: Name of the field in the data table which holds images
-    :type image_field_name: str
-    :param keep_image_names: If `True` images will be saved with the same names as in Geopedia otherwise Geopedia
-        hashes will be used as names. If there are multiple images with the same names in the Geopedia layer this
-        parameter should be set to `False` to prevent images being overwritten.
-    :type keep_image_names: bool
-    :param layer: Geopedia layer which contains requested data
-    :type layer: str
-    :param bbox: Bounding box of the requested data
-    :type bbox: geometry.BBox
-    :param image_format: Format of the returned image by the Sentinel Hub's WMS getMap service. Default is
-        ``constants.MimeType.PNG``.
-    :type image_format: constants.MimeType
-    :param gpd_session: Optional parameter for specifying a custom Geopedia session, which can also contain login
-        credentials. This can be used for accessing private Geopedia layers. By default it is set to `None` and a basic
-        Geopedia session without credentials will be created.
-    :type gpd_session: GeopediaSession or None
-    :param data_folder: Location of the directory where the fetched data will be saved.
-    :type data_folder: str
     """
     def __init__(self, *, image_field_name, keep_image_names=True, gpd_session=None, **kwargs):
+        """
+        :param image_field_name: Name of the field in the data table which holds images
+        :type image_field_name: str
+        :param keep_image_names: If `True` images will be saved with the same names as in Geopedia otherwise Geopedia
+            hashes will be used as names. If there are multiple images with the same names in the Geopedia layer this
+            parameter should be set to `False` to prevent images being overwritten.
+        :type keep_image_names: bool
+        :param layer: Geopedia layer which contains requested data
+        :type layer: str
+        :param bbox: Bounding box of the requested data
+        :type bbox: geometry.BBox
+        :param image_format: Format of the returned image by the Sentinel Hub's WMS getMap service. Default is
+            ``constants.MimeType.PNG``.
+        :type image_format: constants.MimeType
+        :param gpd_session: Optional parameter for specifying a custom Geopedia session, which can also contain login
+            credentials. This can be used for accessing private Geopedia layers. By default it is set to `None` and a
+            basic Geopedia session without credentials will be created.
+        :type gpd_session: GeopediaSession or None
+        :param data_folder: Location of the directory where the fetched data will be saved.
+        :type data_folder: str
+        :param config: A custom instance of config class to override parameters from the saved configuration.
+        :type config: SHConfig or None
+        """
         self.image_field_name = image_field_name
         self.keep_image_names = keep_image_names
         self.gpd_session = gpd_session
@@ -693,7 +722,7 @@ class GeopediaImageRequest(GeopediaRequest):
         if reset_gpd_iterator:
             self.gpd_iterator = None
 
-        gpd_service = GeopediaImageService()
+        gpd_service = GeopediaImageService(config=self.config)
         self.download_list = gpd_service.get_request(self)
         self.gpd_iterator = gpd_service.get_gpd_iterator()
 
@@ -714,19 +743,22 @@ class AwsRequest(DataRequest):
 
     AWS database is available at:
     http://sentinel-s2-l1c.s3-website.eu-central-1.amazonaws.com/
-
-    :param bands: List of Sentinel-2 bands for request. If `None` all bands will be obtained
-    :type bands: list(str) or None
-    :param metafiles: list of additional metafiles available on AWS
-                      (e.g. ``['metadata', 'tileInfo', 'preview/B01', 'TCI']``)
-    :type metafiles: list(str)
-    :param safe_format: flag that determines the structure of saved data. If `True` it will be saved in .SAFE format
-                        defined by ESA. If `False` it will be saved in the same structure as the structure at AWS.
-    :type safe_format: bool
-    :param data_folder: location of the directory where the fetched data will be saved.
-    :type data_folder: str
     """
     def __init__(self, *, bands=None, metafiles=None, safe_format=False, **kwargs):
+        """
+        :param bands: List of Sentinel-2 bands for request. If `None` all bands will be obtained
+        :type bands: list(str) or None
+        :param metafiles: list of additional metafiles available on AWS
+                          (e.g. ``['metadata', 'tileInfo', 'preview/B01', 'TCI']``)
+        :type metafiles: list(str)
+        :param safe_format: flag that determines the structure of saved data. If `True` it will be saved in .SAFE format
+                            defined by ESA. If `False` it will be saved in the same structure as the structure at AWS.
+        :type safe_format: bool
+        :param data_folder: location of the directory where the fetched data will be saved.
+        :type data_folder: str
+        :param config: A custom instance of config class to override parameters from the saved configuration.
+        :type config: SHConfig or None
+        """
         self.bands = bands
         self.metafiles = metafiles
         self.safe_format = safe_format
@@ -751,25 +783,28 @@ class AwsProductRequest(AwsRequest):
 
     List of available products:
     http://sentinel-s2-l1c.s3-website.eu-central-1.amazonaws.com/#products/
-
-    :param product_id: original ESA product identification string
-                       (e.g. ``'S2A_MSIL1C_20170414T003551_N0204_R016_T54HVH_20170414T003551'``)
-    :type product_id: str
-    :param tile_list: list of tiles inside the product to be downloaded. If parameter is set to `None` all
-                      tiles inside the product will be downloaded.
-    :type tile_list: list(str) or None
-    :param bands: List of Sentinel-2 bands for request. If `None` all bands will be obtained
-    :type bands: list(str) or None
-    :param metafiles: list of additional metafiles available on AWS
-                      (e.g. ``['metadata', 'tileInfo', 'preview/B01', 'TCI']``)
-    :type metafiles: list(str)
-    :param safe_format: flag that determines the structure of saved data. If `True` it will be saved in .SAFE format
-                        defined by ESA. If `False` it will be saved in the same structure as the structure at AWS.
-    :type safe_format: bool
-    :param data_folder: location of the directory where the fetched data will be saved.
-    :type data_folder: str
     """
     def __init__(self, product_id, *, tile_list=None, **kwargs):
+        """
+        :param product_id: original ESA product identification string
+            (e.g. ``'S2A_MSIL1C_20170414T003551_N0204_R016_T54HVH_20170414T003551'``)
+        :type product_id: str
+        :param tile_list: list of tiles inside the product to be downloaded. If parameter is set to `None` all
+            tiles inside the product will be downloaded.
+        :type tile_list: list(str) or None
+        :param bands: List of Sentinel-2 bands for request. If `None` all bands will be obtained
+        :type bands: list(str) or None
+        :param metafiles: list of additional metafiles available on AWS
+            (e.g. ``['metadata', 'tileInfo', 'preview/B01', 'TCI']``)
+        :type metafiles: list(str)
+        :param safe_format: flag that determines the structure of saved data. If `True` it will be saved in .SAFE format
+            defined by ESA. If `False` it will be saved in the same structure as the structure at AWS.
+        :type safe_format: bool
+        :param data_folder: location of the directory where the fetched data will be saved.
+        :type data_folder: str
+        :param config: A custom instance of config class to override parameters from the saved configuration.
+        :type config: SHConfig or None
+        """
         self.product_id = product_id
         self.tile_list = tile_list
 
@@ -778,10 +813,10 @@ class AwsProductRequest(AwsRequest):
     def create_request(self):
         if self.safe_format:
             self.aws_service = SafeProduct(self.product_id, tile_list=self.tile_list, bands=self.bands,
-                                           metafiles=self.metafiles)
+                                           metafiles=self.metafiles, config=self.config)
         else:
             self.aws_service = AwsProduct(self.product_id, tile_list=self.tile_list, bands=self.bands,
-                                          metafiles=self.metafiles)
+                                          metafiles=self.metafiles, config=self.config)
 
         self.download_list, self.folder_list = self.aws_service.get_requests()
 
@@ -791,31 +826,34 @@ class AwsTileRequest(AwsRequest):
 
     List of available products:
     http://sentinel-s2-l1c.s3-website.eu-central-1.amazonaws.com/#tiles/
-
-    :param tile: tile name (e.g. ``'T10UEV'``)
-    :type tile: str
-    :param time: tile sensing time in ISO8601 format
-    :type time: str
-    :param aws_index: there exist Sentinel-2 tiles with the same tile and time parameter. Therefore each tile on AWS
-                      also has an index which is visible in their url path. If aws_index is set to `None` the class
-                      will try to find the index automatically. If there will be multiple choices it will choose the
-                      lowest index and inform the user.
-    :type aws_index: int or None
-    :param data_source: Source of requested AWS data. Supported sources are Sentinel-2 L1C and Sentinel-2 L2A, default
-                        is Sentinel-2 L1C data.
-    :type data_source: constants.DataSource
-    :param bands: List of Sentinel-2 bands for request. If `None` all bands will be obtained
-    :type bands: list(str) or None
-    :param metafiles: list of additional metafiles available on AWS
-                      (e.g. ``['metadata', 'tileInfo', 'preview/B01', 'TCI']``)
-    :type metafiles: list(str)
-    :param safe_format: flag that determines the structure of saved data. If `True` it will be saved in .SAFE format
-                        defined by ESA. If `False` it will be saved in the same structure as the structure at AWS.
-    :type safe_format: bool
-    :param data_folder: location of the directory where the fetched data will be saved.
-    :type data_folder: str
     """
     def __init__(self, *, tile=None, time=None, aws_index=None, data_source=DataSource.SENTINEL2_L1C, **kwargs):
+        """
+        :param tile: tile name (e.g. ``'T10UEV'``)
+        :type tile: str
+        :param time: tile sensing time in ISO8601 format
+        :type time: str
+        :param aws_index: there exist Sentinel-2 tiles with the same tile and time parameter. Therefore each tile on
+            AWS also has an index which is visible in their url path. If aws_index is set to `None` the class
+            will try to find the index automatically. If there will be multiple choices it will choose the
+            lowest index and inform the user.
+        :type aws_index: int or None
+        :param data_source: Source of requested AWS data. Supported sources are Sentinel-2 L1C and Sentinel-2 L2A,
+            default is Sentinel-2 L1C data.
+        :type data_source: constants.DataSource
+        :param bands: List of Sentinel-2 bands for request. If `None` all bands will be obtained
+        :type bands: list(str) or None
+        :param metafiles: list of additional metafiles available on AWS
+            (e.g. ``['metadata', 'tileInfo', 'preview/B01', 'TCI']``)
+        :type metafiles: list(str)
+        :param safe_format: flag that determines the structure of saved data. If `True` it will be saved in .SAFE
+            format defined by ESA. If `False` it will be saved in the same structure as the structure at AWS.
+        :type safe_format: bool
+        :param data_folder: location of the directory where the fetched data will be saved.
+        :type data_folder: str
+        :param config: A custom instance of config class to override parameters from the saved configuration.
+        :type config: SHConfig or None
+        """
         self.tile = tile
         self.time = time
         self.aws_index = aws_index
@@ -826,10 +864,10 @@ class AwsTileRequest(AwsRequest):
     def create_request(self):
         if self.safe_format:
             self.aws_service = SafeTile(self.tile, self.time, self.aws_index, bands=self.bands,
-                                        metafiles=self.metafiles, data_source=self.data_source)
+                                        metafiles=self.metafiles, data_source=self.data_source, config=self.config)
         else:
             self.aws_service = AwsTile(self.tile, self.time, self.aws_index, bands=self.bands,
-                                       metafiles=self.metafiles, data_source=self.data_source)
+                                       metafiles=self.metafiles, data_source=self.data_source, config=self.config)
 
         self.download_list, self.folder_list = self.aws_service.get_requests()
 

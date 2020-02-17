@@ -14,7 +14,10 @@ Modules
     config
     constants
     data_request
-    download
+    download.aws_client
+    download.client
+    download.request
+    download.sentinelhub_client
     fis
     geo_utils
     geometry
@@ -23,6 +26,8 @@ Modules
     ogc
     opensearch
     os_utils
+    sentinelhub_rate_limit
     sentinelhub_request
+    sentinelhub_session
     testing_utils
     time_utils

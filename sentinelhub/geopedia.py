@@ -19,13 +19,13 @@ LOGGER = logging.getLogger(__name__)
 class GeopediaService:
     """ The class for Geopedia OGC services
     """
-    def __init__(self, base_url=None):
+    def __init__(self, config=None):
         """
-        :param base_url: Base url of Geopedia REST services. If `None`, the url specified in the configuration
-                    file is taken.
-        :type base_url: str or None
+        :param config: A custom instance of config class to override parameters from the saved configuration.
+        :type config: SHConfig or None
         """
-        self.base_url = SHConfig().geopedia_rest_url if base_url is None else base_url
+        self.config = config or SHConfig()
+        self._base_url = self.config.geopedia_rest_url
 
     @staticmethod
     def _parse_layer(layer, return_wms_name=False):
@@ -73,9 +73,8 @@ class GeopediaSession(GeopediaService):
         :param is_global: If `True` this session will be shared among all instances of this class, otherwise it will be
             used only with the single instance. Default is `False`.
         :type is_global: bool
-        :param base_url: Base url of Geopedia REST services. If `None`, the url specified in the configuration
-            file is taken.
-        :type base_url: str or None
+        :param config: A custom instance of config class to override parameters from the saved configuration.
+        :type config: SHConfig or None
         """
         super().__init__(**kwargs)
 
@@ -178,7 +177,7 @@ class GeopediaSession(GeopediaService):
         self._session_start = datetime.datetime.now()
 
         session_id = self._parse_session_id(self._session_info) if self._session_info else ''
-        session_url = '{}/data/v1/session/create?locale=en&sid={}'.format(self.base_url, session_id)
+        session_url = '{}/data/v1/session/create?locale=en&sid={}'.format(self._base_url, session_id)
         self._session_info = get_json(session_url)
 
         if self.username and self.password and self._parse_user_id(self._session_info) == self.UNAUTHENTICATED_USER_ID:
@@ -191,7 +190,7 @@ class GeopediaSession(GeopediaService):
     def _make_login(self):
         """ Private method that makes login
         """
-        login_url = '{}/data/v1/session/login?user={}&pass={}&sid={}'.format(self.base_url, self.username,
+        login_url = '{}/data/v1/session/login?user={}&pass={}&sid={}'.format(self._base_url, self.username,
                                                                              self.password,
                                                                              self._parse_session_id(self._session_info))
         self._session_info = get_json(login_url)
@@ -213,13 +212,14 @@ class GeopediaWmsService(GeopediaService, OgcImageService):
     """ Geopedia OGC services class for providing image data. Most of the methods are inherited from
     `sentinelhub.ogc.OgcImageService` class.
     """
-    def __init__(self, base_url=None):
+    def __init__(self, **kwargs):
         """
-        :param base_url: Base url of Geopedia WMS services. If `None`, the url specified in the configuration
-                    file is taken.
-        :type base_url: str or None
+        :param config: A custom instance of config class to override parameters from the saved configuration.
+        :type config: SHConfig or None
         """
-        super().__init__(base_url=SHConfig().geopedia_wms_url if base_url is None else base_url)
+        super().__init__(**kwargs)
+
+        self._base_url = self.config.geopedia_wms_url
 
     def get_request(self, request):
         """ Get a list of DownloadRequests for all data that are under the given field in the table of a Geopedia layer.
@@ -275,7 +275,7 @@ class GeopediaImageService(GeopediaService):
         """ Collects data from Geopedia layer and returns list of features
         """
         if request.gpd_iterator is None:
-            self.gpd_iterator = GeopediaFeatureIterator(request.layer, bbox=request.bbox, base_url=self.base_url,
+            self.gpd_iterator = GeopediaFeatureIterator(request.layer, bbox=request.bbox, config=self.config,
                                                         gpd_session=request.gpd_session)
         else:
             self.gpd_iterator = request.gpd_iterator
@@ -335,9 +335,8 @@ class GeopediaFeatureIterator(GeopediaService):
             credentials. This can be used for accessing private Geopedia layers. By default it is set to `None` and a
             basic Geopedia session without credentials will be created.
         :type gpd_session: GeopediaSession or None
-        :param base_url: Base url of Geopedia REST services. If `None`, the url specified in the configuration
-            file is taken.
-        :type base_url: str or None
+        :param config: A custom instance of config class to override parameters from the saved configuration.
+        :type config: SHConfig or None
         """
         super().__init__(**kwargs)
 
@@ -361,7 +360,7 @@ class GeopediaFeatureIterator(GeopediaService):
         self.layer_size = None
         self.index = 0
 
-        self.next_page_url = '{}/data/v2/search/tables/{}/features'.format(self.base_url, self.layer)
+        self.next_page_url = '{}/data/v2/search/tables/{}/features'.format(self._base_url, self.layer)
 
     def __iter__(self):
         self.index = 0

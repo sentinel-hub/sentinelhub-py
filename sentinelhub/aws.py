@@ -27,7 +27,7 @@ MAX_SUPPORTED_BASELINES = {
 class AwsService(ABC):
     """ Amazon Web Service (AWS) base class
     """
-    def __init__(self, parent_folder='', bands=None, metafiles=None):
+    def __init__(self, parent_folder='', bands=None, metafiles=None, config=None):
         """
         :param parent_folder: Folder where the fetched data will be saved.
         :type parent_folder: str
@@ -37,10 +37,13 @@ class AwsService(ABC):
                           (e.g. ``['metadata', 'tileInfo', 'preview/B01', 'TCI']``).
                           If parameter is set to `None` the list will be set automatically.
         :type metafiles: list(str) or None
+        :param config: A custom instance of config class to override parameters from the saved configuration.
+        :type config: SHConfig or None
         """
         self.parent_folder = parent_folder
         self.bands = self._parse_bands(bands)
         self.metafiles = self._parse_metafiles(metafiles)
+        self.config = config or SHConfig()
 
         self.download_list = []
         self.folder_list = []
@@ -117,9 +120,9 @@ class AwsService(ABC):
         :return: base url string
         :rtype: str
         """
-        base_url = SHConfig().aws_metadata_url if force_http else 's3://'
-        aws_bucket = SHConfig().aws_s3_l1c_bucket if self.data_source is DataSource.SENTINEL2_L1C else \
-            SHConfig().aws_s3_l2a_bucket
+        base_url = self.config.aws_metadata_url if force_http else 's3://'
+        aws_bucket = self.config.aws_s3_l1c_bucket if self.data_source is DataSource.SENTINEL2_L1C else \
+            self.config.aws_s3_l2a_bucket
 
         return '{}{}{}'.format(base_url, '' if base_url.endswith('/') else '/', aws_bucket)
 
@@ -313,6 +316,8 @@ class AwsProduct(AwsService):
                           (e.g. ``['metadata', 'tileInfo', 'preview/B01', 'TCI']``).
                           If parameter is set to `None` the list will be set automatically.
         :type metafiles: list(str) or None
+        :param config: A custom instance of config class to override parameters from the saved configuration.
+        :type config: SHConfig or None
         """
         self.product_id = product_id.split('.')[0]
         self.tile_list = self.parse_tile_list(tile_list)
@@ -471,6 +476,8 @@ class AwsTile(AwsService):
                           (e.g. ``['metadata', 'tileInfo', 'preview/B01', 'TCI']``).
                           If parameter is set to `None` the list will be set automatically.
         :type metafiles: list(str) or None
+        :param config: A custom instance of config class to override parameters from the saved configuration.
+        :type config: SHConfig or None
         """
         self.tile_name = self.parse_tile_name(tile_name)
         self.datetime = self.parse_datetime(time)

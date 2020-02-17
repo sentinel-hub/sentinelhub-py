@@ -21,19 +21,15 @@ LOGGER = logging.getLogger(__name__)
 class OgcService:
     """ The base class for Sentinel Hub OGC services
     """
-    def __init__(self, base_url=None, instance_id=None):
+    def __init__(self, config=None):
         """
-        :param base_url: base url of Sentinel Hub's OGC services. If `None`, the url specified in the configuration
-                    file is taken.
-        :type base_url: str or None
-        :param instance_id: user's instance id granting access to Sentinel Hub's OGC services. If `None`, the instance
-            ID specified in the configuration file is taken.
-        :type instance_id: str or None
+        :param config: A custom instance of config class to override parameters from the saved configuration.
+        :type config: SHConfig or None
         """
-        self.base_url = SHConfig().get_sh_ogc_url() if not base_url else base_url
-        self.instance_id = SHConfig().instance_id if not instance_id else instance_id
+        self.config = config or SHConfig()
+        self._base_url = self.config.get_sh_ogc_url()
 
-        if not self.instance_id:
+        if not self.config.instance_id:
             raise ValueError('Instance ID is not set. '
                              'Set it either in request initialization or in configuration file. '
                              'Check http://sentinelhub-py.readthedocs.io/en/latest/configure.html for more info.')
@@ -65,12 +61,8 @@ class OgcImageService(OgcService):
     """
     def __init__(self, **kwargs):
         """
-        :param base_url: base url of Sentinel Hub's OGC services. If `None`, the url specified in the configuration
-                    file is taken.
-        :type base_url: str or None
-        :param instance_id: user's instance id granting access to Sentinel Hub's OGC services. If `None`, the instance
-            ID specified in the configuration file is taken.
-        :type instance_id: str or None
+        :param config: A custom instance of config class to override parameters from the saved configuration.
+        :type config: SHConfig or None
         """
         super().__init__(**kwargs)
 
@@ -109,7 +101,7 @@ class OgcImageService(OgcService):
         :rtype: str
         """
         url = self.get_base_url(request)
-        authority = self.instance_id if hasattr(self, 'instance_id') else request.theme
+        authority = request.theme if hasattr(request, 'theme') else self.config.instance_id
 
         params = self._get_common_url_parameters(request)
         if request.service_type in (ServiceType.WMS, ServiceType.WCS):
@@ -131,12 +123,13 @@ class OgcImageService(OgcService):
         :return: base string for url to Sentinel Hub's OGC service for this product.
         :rtype: str
         """
-        url = '{}/{}'.format(self.base_url, request.service_type.value)
+        url = '{}/{}'.format(self._base_url, request.service_type.value)
         # These 2 lines are temporal and will be removed after the use of uswest url wont be required anymore:
-        if hasattr(request, 'data_source') and request.data_source.is_uswest_source():
+        if hasattr(request, 'data_source') and request.data_source.is_uswest_source(config=self.config):
             url = 'https://services-uswest2.sentinel-hub.com/ogc/{}'.format(request.service_type.value)
 
-        if hasattr(request, 'data_source') and request.data_source not in DataSource.get_available_sources():
+        if hasattr(request, 'data_source') and \
+                request.data_source not in DataSource.get_available_sources(config=self.config):
             raise ValueError("{} is not available for service at service available at {}. Try"
                              "changing 'sh_base_url' parameter in package configuration "
                              "file".format(request.data_source, SHConfig().get_sh_ogc_url()))
@@ -310,8 +303,7 @@ class OgcImageService(OgcService):
 
         if request.wfs_iterator is None:
             self.wfs_iterator = WebFeatureService(request.bbox, request.time, data_source=request.data_source,
-                                                  maxcc=request.maxcc, base_url=self.base_url,
-                                                  instance_id=self.instance_id)
+                                                  maxcc=request.maxcc, config=self.config)
         else:
             self.wfs_iterator = request.wfs_iterator
 
@@ -370,12 +362,8 @@ class WebFeatureService(OgcService):
         :type data_source: constants.DataSource
         :param maxcc: Maximum accepted cloud coverage of an image. Float between 0.0 and 1.0. Default is 1.0.
         :type maxcc: float
-        :param base_url: base url of Sentinel Hub's OGC services. If `None`, the url specified in the configuration
-                        file is taken.
-        :type base_url: str or None
-        :param instance_id: user's instance id granting access to Sentinel Hub's OGC services. If `None`, the instance
-            ID specified in the configuration file is taken.
-        :type instance_id: str or None
+        :param config: A custom instance of config class to override parameters from the saved configuration.
+        :type config: SHConfig or None
         """
         super().__init__(**kwargs)
 
@@ -420,11 +408,11 @@ class WebFeatureService(OgcService):
         :return: dictionary containing info about product tiles
         :rtype: dict
         """
-        main_url = '{}/{}/{}?'.format(self.base_url, ServiceType.WFS.value, self.instance_id)
+        main_url = '{}/{}/{}?'.format(self._base_url, ServiceType.WFS.value, self.config.instance_id)
 
         params = {'SERVICE': ServiceType.WFS.value,
                   'REQUEST': 'GetFeature',
-                  'TYPENAMES': DataSource.get_wfs_typename(self.data_source),
+                  'TYPENAMES': DataSource.get_wfs_typename(self.data_source, config=self.config),
                   'BBOX': str(self.bbox.reverse()) if self.bbox.crs is CRS.WGS84 else str(self.bbox),
                   'OUTPUTFORMAT': MimeType.get_string(MimeType.JSON),
                   'SRSNAME': CRS.ogc_string(self.bbox.crs),
