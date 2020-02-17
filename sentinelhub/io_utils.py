@@ -24,28 +24,6 @@ LOGGER = logging.getLogger(__name__)
 CSV_DELIMITER = ';'
 
 
-class LocalIO:
-    """ The default IO class for reading and writing the data
-    """
-    @staticmethod
-    def read(filename, **kwargs):
-        """ Function implementing the reading logic
-        """
-        return read_data(filename, **kwargs)
-
-    @staticmethod
-    def write(filename, data, **kwargs):
-        """ Function implementing the writing logic
-        """
-        return write_data(filename, data, **kwargs)
-
-    @staticmethod
-    def exists(file_path):
-        """ Function that checks if a given file exists
-        """
-        return os.path.exists(file_path)
-
-
 def read_data(filename, data_format=None):
     """ Read image data from file
 
@@ -66,6 +44,10 @@ def read_data(filename, data_format=None):
     if not isinstance(data_format, MimeType):
         data_format = get_data_format(filename)
 
+    if data_format is MimeType.RAW:
+        with open(filename, 'rb') as file:
+            return file.read()
+
     if data_format.is_tiff_format():
         return read_tiff_image(filename)
     if data_format is MimeType.JP2:
@@ -85,11 +67,13 @@ def read_data(filename, data_format=None):
     except KeyError:
         raise ValueError('Reading data format .{} is not supported'.format(data_format.value))
 
+
 def read_tar(filename):
     """ Read a tar from file
     """
     with open(filename, 'rb') as file:
         return decode_tar(file.read())
+
 
 def read_tiff_image(filename):
     """ Read data from TIFF file

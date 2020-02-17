@@ -93,8 +93,7 @@ class TestSentinelHubRequest(TestSentinelHub):
             ],
             bounds=BBox(bbox=[46.16, -16.15, 46.51, -15.58], crs=CRS.WGS84),
             size=(512, 856),
-            mime_type=MimeType.TIFF,
-            data_folder='testek'
+            mime_type=MimeType.TIFF
         )
 
         img = request.get_data(max_threads=3)

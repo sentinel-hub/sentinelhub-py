@@ -150,7 +150,7 @@ def parse_time_interval(time):
     :rtype: (str, str)
     :raises: ValueError
     """
-    if time is SHConstants.LATEST:
+    if time == SHConstants.LATEST:
         date_interval = '1985-01-01', get_current_date()
     elif isinstance(time, (str, datetime.date)):
         parsed_time = parse_time(time)
@@ -169,3 +169,23 @@ def parse_time_interval(time):
         raise ValueError('Start of time interval is larger than end of time interval')
 
     return date_interval
+
+
+def filter_times(timestamps, time_difference):
+    """ Filters out dates within time_difference, preserving only the oldest date.
+
+    :param timestamps: A list of timestamp objects
+    :type timestamps: list(datetime.datetime)
+    :param time_difference: A time difference threshold
+    :type time_difference: datetime.timedelta
+    :return: An ordered list of timestamps `d_1<=d_2<=...<=d_n` such that `d_(i+1)-d_i > time_difference`
+    :rtype: list(datetime.datetime)
+    """
+    timestamps = sorted(set(timestamps))
+
+    filtered_timestamps = []
+    for current_timestamp in timestamps:
+        if not filtered_timestamps or current_timestamp - filtered_timestamps[-1] > time_difference:
+            filtered_timestamps.append(current_timestamp)
+
+    return filtered_timestamps

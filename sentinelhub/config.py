@@ -4,7 +4,6 @@ Module for managing configuration data from `config.json`
 
 import os
 import json
-from collections import OrderedDict
 
 
 class SHConfig:
@@ -31,6 +30,7 @@ class SHConfig:
         - `max_download_attempts`: Maximum number of download attempts from a single URL until an error will be raised.
         - `download_sleep_time`: Number of seconds between the failed download attempt and the next attempt.
         - `download_timeout_seconds`: Maximum number of seconds before download attempt is canceled.
+        - `number_of_download_processes`: Number of download processes, used to calculate rate-limit sleep time.
 
     Usage in the code:
 
@@ -41,25 +41,26 @@ class SHConfig:
     class _SHConfig:
         """ Internal class holding configuration parameters
         """
-        CONFIG_PARAMS = OrderedDict([
-            ('instance_id', ''),
-            ('sh_client_id', ''),
-            ('sh_client_secret', ''),
-            ('sh_base_url', 'https://services.sentinel-hub.com'),
-            ('geopedia_wms_url', 'https://service.geopedia.world'),
-            ('geopedia_rest_url', 'https://www.geopedia.world/rest'),
-            ('aws_access_key_id', ''),
-            ('aws_secret_access_key', ''),
-            ('aws_metadata_url', 'https://roda.sentinel-hub.com'),
-            ('aws_s3_l1c_bucket', 'sentinel-s2-l1c'),
-            ('aws_s3_l2a_bucket', 'sentinel-s2-l2a'),
-            ('opensearch_url', 'http://opensearch.sentinel-hub.com/resto/api/collections/Sentinel2'),
-            ('max_wfs_records_per_query', 100),
-            ('max_opensearch_records_per_query', 500),
-            ('max_download_attempts', 4),
-            ('download_sleep_time', 5),
-            ('download_timeout_seconds', 120)
-        ])
+        CONFIG_PARAMS = {
+            'instance_id': '',
+            'sh_client_id': '',
+            'sh_client_secret': '',
+            'sh_base_url': 'https://services.sentinel-hub.com',
+            'geopedia_wms_url': 'https://service.geopedia.world',
+            'geopedia_rest_url': 'https://www.geopedia.world/rest',
+            'aws_access_key_id': '',
+            'aws_secret_access_key': '',
+            'aws_metadata_url': 'https://roda.sentinel-hub.com',
+            'aws_s3_l1c_bucket': 'sentinel-s2-l1c',
+            'aws_s3_l2a_bucket': 'sentinel-s2-l2a',
+            'opensearch_url': 'http://opensearch.sentinel-hub.com/resto/api/collections/Sentinel2',
+            'max_wfs_records_per_query': 100,
+            'max_opensearch_records_per_query': 500,
+            'max_download_attempts': 4,
+            'download_sleep_time': 5,
+            'download_timeout_seconds': 120,
+            'number_of_download_processes': 1
+        }
 
         def __init__(self):
             self.instance_id = ''
@@ -116,12 +117,12 @@ class SHConfig:
                     setattr(self, prop, config[prop])
 
         def get_config(self):
-            """ Returns ordered dictionary with configuration parameters
+            """ Returns a dictionary with configuration parameters
 
-            :return: Ordered dictionary
-            :rtype: collections.OrderedDict
+            :return: A dictionary
+            :rtype: dict
             """
-            config = OrderedDict((prop, getattr(self, prop)) for prop in self.CONFIG_PARAMS)
+            config = {prop: getattr(self, prop) for prop in self.CONFIG_PARAMS}
             if config['instance_id'] is None:
                 config['instance_id'] = ''
             return config
@@ -229,9 +230,9 @@ class SHConfig:
         """ Get a dictionary representation of `SHConfig` class
 
         :return: A dictionary with configuration parameters
-        :rtype: OrderedDict
+        :rtype: dict
         """
-        return OrderedDict((prop, getattr(self, prop)) for prop in self._instance.CONFIG_PARAMS)
+        return {prop: getattr(self, prop) for prop in self._instance.CONFIG_PARAMS}
 
     def get_config_location(self):
         """ Returns location of configuration file on disk

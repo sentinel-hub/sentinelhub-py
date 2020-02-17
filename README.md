@@ -19,7 +19,7 @@ stored in ESA .SAFE format (all types of .SAFE format are supported).
 
 # Installation
 
-The package requires a Python version >= 3.5 and installed C/C++ compiler. The package is available on
+The package requires a Python version >= 3.6 and installed C/C++ compiler. The package is available on
 the PyPI package manager and can be installed with
 
 ```

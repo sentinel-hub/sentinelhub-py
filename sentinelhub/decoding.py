@@ -167,4 +167,4 @@ def get_data_format(filename):
     :rtype: MimeType
     """
     fmt_ext = filename.split('.')[-1]
-    return MimeType(MimeType.canonical_extension(fmt_ext))
+    return MimeType.from_string(fmt_ext)

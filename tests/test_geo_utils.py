@@ -61,14 +61,14 @@ class TestGeo(TestSentinelHub):
 
     def test_bbox_transform(self):
         bbox = BBox(((111.644, 8.655), (111.7, 8.688)), CRS.WGS84)
-        new_bbox = geo_utils.transform_bbox(bbox, CRS.POP_WEB)
+        new_bbox = bbox.transform(CRS.POP_WEB)
         expected_bbox = BBox((12428153.23, 967155.41, 12434387.12, 970871.43), CRS.POP_WEB)
 
         for coord, expected_coord in zip(new_bbox, expected_bbox):
             self.assertAlmostEqual(coord, expected_coord, delta=1E-2,
                                    msg='Expected coord {}, got {}'.format(expected_coord, coord))
-        self.assertEqual(new_bbox.get_crs(), expected_bbox.get_crs(),
-                         'Expected CRS {}, got {}'.format(expected_bbox.get_crs(), new_bbox.get_crs()))
+        self.assertEqual(new_bbox.crs, expected_bbox.crs,
+                         'Expected CRS {}, got {}'.format(expected_bbox.crs, new_bbox.crs))
 
 
 if __name__ == '__main__':
