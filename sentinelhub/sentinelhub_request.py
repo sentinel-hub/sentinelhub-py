@@ -10,13 +10,14 @@ from .constants import MimeType, DataSource, RequestType
 from .download import DownloadRequest, SentinelHubDownloadClient
 from .data_request import DataRequest
 from .geometry import Geometry, BBox
+from .time_utils import parse_time_interval
 
 
 class SentinelHubRequest(DataRequest):
     """ Sentinel Hub API request class
     """
-    def __init__(self, evalscript, input_data, responses, bounds=None, size=None, resolution=None, maxcc=1.0,
-                 mosaicking_order='mostRecent', config=None, mime_type=MimeType.TIFF, **kwargs):
+    def __init__(self, evalscript, input_data, responses, bounds=None, size=None, resolution=None,
+                 config=None, mime_type=MimeType.TIFF, **kwargs):
         """
         :param bounds: Bounding box or geometry object
         :type bounds: sentinelhub.BBox or sentinelhub.Geometry
@@ -30,7 +31,7 @@ class SentinelHubRequest(DataRequest):
 
         self.config = config or SHConfig()
 
-        self.mime_type = mime_type
+        self.mime_type = MimeType(mime_type)
 
         self.payload = self.body(
             request_bounds=self.bounds(bounds),
@@ -41,18 +42,12 @@ class SentinelHubRequest(DataRequest):
 
         super().__init__(SentinelHubDownloadClient, **kwargs)
 
-    def get_data(self, save_data=False, redownload=False, max_threads=None):
-        """ Overrides DataRequest.get_data
-        """
-        self.download_list = [self._download_request]
-        return super().get_data(save_data=save_data, redownload=redownload, max_threads=max_threads)[0]
-
     def create_request(self):
         """ Prepares a download request
         """
-        headers = {'content-type': 'application/json', "accept": self.mime_type.get_string()}
+        headers = {'content-type': MimeType.JSON.get_string(), "accept": self.mime_type.get_string()}
 
-        self._download_request = DownloadRequest(
+        self.download_list = [DownloadRequest(
             request_type=RequestType.POST,
             url=self.config.get_sh_processing_api_url(),
             post_values=self.payload,
@@ -60,7 +55,7 @@ class SentinelHubRequest(DataRequest):
             hash_save=bool(self.data_folder),
             data_type=self.mime_type,
             headers=headers
-        )
+        )]
 
     @staticmethod
     def input_data(data_source=None, time_interval=None, maxcc=1.0, mosaicking_order='mostRecent', other_args=None):
@@ -73,19 +68,9 @@ class SentinelHubRequest(DataRequest):
         if not isinstance(maxcc, float) and (maxcc < 0 or maxcc > 1):
             raise ValueError('maxcc should be a float on an interval [0, 1]')
 
-        if time_interval and not isinstance(time_interval, tuple):
-            raise ValueError("'time_interval should be a tupe of of (datetime, datetime) or (str, str)")
-
-        if time_interval and all(isinstance(time, str) for time in time_interval):
-            time_interval = datetime.fromisoformat(time_interval[0]), datetime.fromisoformat(time_interval[1])
-        elif time_interval and not all(isinstance(time, datetime) for time in time_interval):
-            raise ValueError("'time_interval should be a tupe of of (datetime, datetime) or (str, str)")
-
         if time_interval:
-            date_from, date_to = time_interval
-            if date_from > date_to:
-                raise ValueError("'time_from' should not b greater than 'time_to'")
-            date_from, date_to = date_from.isoformat() + 'Z', date_to.isoformat() + 'Z'
+            date_from, date_to = parse_time_interval(time_interval)
+            date_from, date_to = date_from + 'Z', date_to + 'Z'
         else:
             date_from, date_to = "", ""
 

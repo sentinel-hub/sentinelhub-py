@@ -48,7 +48,7 @@ class TestSentinelHubRequest(TestSentinelHub):
             mime_type=MimeType.TIFF
         )
 
-        img = request.get_data(max_threads=3)
+        img = request.get_data(max_threads=3)[0]
 
         self.assertEqual(img.shape, (856, 512, 3))
         self.test_numpy_data(img, exp_min=0, exp_max=255, exp_mean=74.92)
@@ -96,7 +96,7 @@ class TestSentinelHubRequest(TestSentinelHub):
             mime_type=MimeType.TIFF
         )
 
-        img = request.get_data(max_threads=3)
+        img = request.get_data(max_threads=3)[0]
 
         self.assertEqual(img.shape, (856, 512, 3))
         self.test_numpy_data(img, exp_min=0, exp_max=255, exp_mean=74.92)
@@ -138,8 +138,7 @@ class TestSentinelHubRequest(TestSentinelHub):
             mime_type=MimeType.TIFF
         )
 
-        img = request.get_data(max_threads=3)
-        # import ipdb; ipdb.set_trace()
+        img = request.get_data(max_threads=3)[0]
 
         # self.assertEqual(img.shape, (856, 512, 3))
         # self.test_numpy_data(img, exp_min=0, exp_max=255, exp_mean=74.92)
@@ -191,7 +190,7 @@ class TestSentinelHubRequest(TestSentinelHub):
             mime_type=MimeType.TAR
         )
 
-        tar = request.get_data(max_threads=3)
+        tar = request.get_data(max_threads=3)[0]
 
         self.assertTrue('default.tif' in tar)
         self.assertTrue('userdata.json' in tar)
@@ -331,7 +330,7 @@ class TestSentinelHubRequest(TestSentinelHub):
             mime_type=MimeType.TAR
         )
 
-        tar = request.get_data(max_threads=3)
+        tar = request.get_data(max_threads=3)[0]
 
         img = tar['default.tif']
 
