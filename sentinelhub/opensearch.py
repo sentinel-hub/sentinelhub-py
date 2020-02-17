@@ -127,7 +127,7 @@ def reduce_by_maxcc(result_list, maxcc):
     return [tile_info for tile_info in result_list if tile_info['properties']['cloudCover'] <= 100 * float(maxcc)]
 
 
-def search_iter(tile_id=None, bbox=None, start_date=None, end_date=None, absolute_orbit=None):
+def search_iter(tile_id=None, bbox=None, start_date=None, end_date=None, absolute_orbit=None, config=None):
     """ A generator function that implements OpenSearch search queries and returns results
 
     All parameters for search are optional.
@@ -145,28 +145,32 @@ def search_iter(tile_id=None, bbox=None, start_date=None, end_date=None, absolut
     :type absolute_orbit: int
     :return: An iterator returning dictionaries with info provided by Sentinel Hub OpenSearch REST service
     :rtype: Iterator[dict]
+    :param config: A custom instance of config class to override parameters from the saved configuration.
+    :type config: SHConfig or None
     """
+    config = config or SHConfig()
+
     if bbox and bbox.crs is not CRS.WGS84:
         bbox = bbox.transform(CRS.WGS84)
 
     url_params = _prepare_url_params(tile_id, bbox, end_date, start_date, absolute_orbit)
-    url_params['maxRecords'] = SHConfig().max_opensearch_records_per_query
+    url_params['maxRecords'] = config.max_opensearch_records_per_query
 
     start_index = 1
 
     while True:
         url_params['index'] = start_index
 
-        url = '{}/search.json?{}'.format(SHConfig().opensearch_url, urlencode(url_params))
+        url = '{}/search.json?{}'.format(config.opensearch_url, urlencode(url_params))
         LOGGER.debug("URL=%s", url)
 
         response = get_json(url)
         for tile_info in response["features"]:
             yield tile_info
 
-        if len(response["features"]) < SHConfig().max_opensearch_records_per_query:
+        if len(response["features"]) < config.max_opensearch_records_per_query:
             break
-        start_index += SHConfig().max_opensearch_records_per_query
+        start_index += config.max_opensearch_records_per_query
 
 
 def _prepare_url_params(tile_id, bbox, end_date, start_date, absolute_orbit):

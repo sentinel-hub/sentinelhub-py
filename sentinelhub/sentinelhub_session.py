@@ -22,7 +22,7 @@ class SentinelHubSession:
         :param config: An instance of package configuration class
         :type config: SHConfig
         """
-        self.config = SHConfig() if config is None else config
+        self.config = config or SHConfig()
 
         if not (self.config.sh_client_id and self.config.sh_client_secret):
             raise ValueError("Configuration parameters 'sh_client_id' and 'sh_client_secret' have to be set in order"

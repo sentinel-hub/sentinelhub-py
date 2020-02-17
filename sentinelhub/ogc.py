@@ -27,6 +27,7 @@ class OgcService:
         :type config: SHConfig or None
         """
         self.config = config or SHConfig()
+        self._base_url = self.config.get_sh_ogc_url()
 
         if not self.config.instance_id:  #TODO
             raise ValueError('Instance ID is not set. '
@@ -122,7 +123,7 @@ class OgcImageService(OgcService):
         :return: base string for url to Sentinel Hub's OGC service for this product.
         :rtype: str
         """
-        url = '{}/{}'.format(self.config.get_sh_ogc_url(), request.service_type.value)
+        url = '{}/{}'.format(self._base_url, request.service_type.value)
         # These 2 lines are temporal and will be removed after the use of uswest url wont be required anymore:
         if hasattr(request, 'data_source') and request.data_source.is_uswest_source(config=self.config):
             url = 'https://services-uswest2.sentinel-hub.com/ogc/{}'.format(request.service_type.value)
@@ -407,7 +408,7 @@ class WebFeatureService(OgcService):
         :return: dictionary containing info about product tiles
         :rtype: dict
         """
-        main_url = '{}/{}/{}?'.format(self.config.get_sh_ogc_url(), ServiceType.WFS.value, self.config.instance_id)
+        main_url = '{}/{}/{}?'.format(self._base_url, ServiceType.WFS.value, self.config.instance_id)
 
         params = {'SERVICE': ServiceType.WFS.value,
                   'REQUEST': 'GetFeature',

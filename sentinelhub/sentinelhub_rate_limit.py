@@ -57,6 +57,7 @@ class SentinelHubRateLimit:
         if retry_after:
             self.next_download_time = max(time.monotonic() + retry_after, self.next_download_time)
 
+
 class PolicyBucket:
     """ A class representing Sentinel Hub policy bucket
     """

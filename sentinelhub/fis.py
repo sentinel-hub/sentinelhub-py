@@ -32,13 +32,13 @@ class FisService(OgcImageService):
     def _create_request(self, request, geometry):
 
         url = self.get_base_url(request)
-        authority = self.instance_id if hasattr(self, 'instance_id') else request.theme
+
         headers = {'Content-Type': MimeType.JSON.get_string(), **SHConstants.HEADERS}
 
         post_data = {**self._get_common_url_parameters(request), **self._get_fis_parameters(request, geometry)}
         post_data = {k.lower(): v for k, v in post_data.items()}  # lowercase required on SH service
 
-        return DownloadRequest(url='{}/{}'.format(url, authority),
+        return DownloadRequest(url='{}/{}'.format(url, self.config.instance_id),
                                post_values=post_data,
                                data_type=MimeType.JSON, headers=headers,
                                request_type=RequestType.POST)
