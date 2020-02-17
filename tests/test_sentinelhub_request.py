@@ -41,7 +41,7 @@ class TestSentinelHubRequest(TestSentinelHub):
                 )
             ],
             responses=[
-                SentinelHubRequest.output_response('default', 'image/tiff')
+                SentinelHubRequest.output_response('default', MimeType.TIFF)
             ],
             bbox=BBox(bbox=[46.16, -16.15, 46.51, -15.58], crs=CRS.WGS84),
             size=(512, 856),
@@ -89,7 +89,7 @@ class TestSentinelHubRequest(TestSentinelHub):
                 )
             ],
             responses=[
-                SentinelHubRequest.output_response('default', 'image/tiff')
+                SentinelHubRequest.output_response('default', 'tiff')
             ],
             bbox=BBox(bbox=[46.16, -16.15, 46.51, -15.58], crs=CRS.WGS84),
             size=(512, 856),
@@ -130,7 +130,7 @@ class TestSentinelHubRequest(TestSentinelHub):
                 )
             ],
             responses=[
-                SentinelHubRequest.output_response('default', 'image/tiff')
+                SentinelHubRequest.output_response('default', MimeType.TIFF)
             ],
 
             bbox=BBox(bbox=[9.250556, 41.36838, 9.25238, 41.369741], crs=CRS.WGS84),
@@ -182,8 +182,8 @@ class TestSentinelHubRequest(TestSentinelHub):
                 )
             ],
             responses=[
-                SentinelHubRequest.output_response('default', 'image/tiff'),
-                SentinelHubRequest.output_response('userdata', 'application/json')
+                SentinelHubRequest.output_response('default', MimeType.TIFF),
+                SentinelHubRequest.output_response('userdata', MimeType.JSON)
             ],
             bbox=BBox(bbox=[46.16, -16.15, 46.51, -15.58], crs=CRS.WGS84),
             size=(512, 856),
@@ -322,8 +322,8 @@ class TestSentinelHubRequest(TestSentinelHub):
                 )
             ],
             responses=[
-                SentinelHubRequest.output_response('default', 'image/tiff'),
-                SentinelHubRequest.output_response('userdata', 'application/json')
+                SentinelHubRequest.output_response('default', MimeType.TIFF),
+                SentinelHubRequest.output_response('userdata', MimeType.JSON)
             ],
             bbox=bbox,
             geometry=geo,
