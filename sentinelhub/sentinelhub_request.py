@@ -3,8 +3,6 @@
 Documentation: https://docs.sentinel-hub.com/api/latest/reference/
 """
 
-from datetime import datetime
-
 from .config import SHConfig
 from .constants import MimeType, DataSource, RequestType
 from .download import DownloadRequest, SentinelHubDownloadClient
@@ -16,7 +14,7 @@ from .time_utils import parse_time_interval
 class SentinelHubRequest(DataRequest):
     """ Sentinel Hub API request class
     """
-    def __init__(self, evalscript, input_data, responses, bounds=None, size=None, resolution=None,
+    def __init__(self, evalscript, input_data, responses, bbox=None, geometry=None, size=None, resolution=None,
                  config=None, mime_type=MimeType.TIFF, **kwargs):
         """
         :param bounds: Bounding box or geometry object
@@ -34,7 +32,7 @@ class SentinelHubRequest(DataRequest):
         self.mime_type = MimeType(mime_type)
 
         self.payload = self.body(
-            request_bounds=self.bounds(bounds),
+            request_bounds=self.bounds(bbox=bbox, geometry=geometry),
             request_data=input_data,
             request_output=self.output(size=size, resolution=resolution, responses=responses),
             evalscript=evalscript
@@ -156,15 +154,23 @@ class SentinelHubRequest(DataRequest):
         return request_output
 
     @staticmethod
-    def bounds(bounds_obj, other_args=None):
+    def bounds(bbox=None, geometry=None, other_args=None):
         """ Generate request bounds
         """
-        if isinstance(bounds_obj, BBox):
-            bbox, geometry = bounds_obj, None
-        elif isinstance(bounds_obj, Geometry):
-            bbox, geometry = None, bounds_obj
-        else:
-            raise ValueError('Unsupported bounds object: {}'.format(bounds_obj))
+        if bbox is None and geometry is None:
+            raise ValueError("'bbox' and/or 'geometry' have to be provided.")
+
+        if bbox and not isinstance(bbox, BBox):
+            raise ValueError("'bbox' should be an instance of sentinelhub.BBox")
+
+        if geometry and not isinstance(geometry, Geometry):
+            raise ValueError("'geometry' should be an instance of sentinelhub.Geometry")
+
+        if bbox and geometry and bbox.crs != geometry.crs:
+            raise ValueError("bbox and geometry should be in the same CRS")
+
+        if bbox is None:
+            bbox = geometry.bbox
 
         crs = bbox.crs if bbox else geometry.crs
 

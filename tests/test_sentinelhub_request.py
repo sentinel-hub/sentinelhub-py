@@ -43,7 +43,7 @@ class TestSentinelHubRequest(TestSentinelHub):
             responses=[
                 SentinelHubRequest.output_response('default', 'image/tiff')
             ],
-            bounds=BBox(bbox=[46.16, -16.15, 46.51, -15.58], crs=CRS.WGS84),
+            bbox=BBox(bbox=[46.16, -16.15, 46.51, -15.58], crs=CRS.WGS84),
             size=(512, 856),
             mime_type=MimeType.TIFF
         )
@@ -91,7 +91,7 @@ class TestSentinelHubRequest(TestSentinelHub):
             responses=[
                 SentinelHubRequest.output_response('default', 'image/tiff')
             ],
-            bounds=BBox(bbox=[46.16, -16.15, 46.51, -15.58], crs=CRS.WGS84),
+            bbox=BBox(bbox=[46.16, -16.15, 46.51, -15.58], crs=CRS.WGS84),
             size=(512, 856),
             mime_type=MimeType.TIFF
         )
@@ -133,7 +133,7 @@ class TestSentinelHubRequest(TestSentinelHub):
                 SentinelHubRequest.output_response('default', 'image/tiff')
             ],
 
-            bounds=BBox(bbox=[9.250556, 41.36838, 9.25238, 41.369741], crs=CRS.WGS84),
+            bbox=BBox(bbox=[9.250556, 41.36838, 9.25238, 41.369741], crs=CRS.WGS84),
             resolution=(10.0, 10.0),
             mime_type=MimeType.TIFF
         )
@@ -185,7 +185,7 @@ class TestSentinelHubRequest(TestSentinelHub):
                 SentinelHubRequest.output_response('default', 'image/tiff'),
                 SentinelHubRequest.output_response('userdata', 'application/json')
             ],
-            bounds=BBox(bbox=[46.16, -16.15, 46.51, -15.58], crs=CRS.WGS84),
+            bbox=BBox(bbox=[46.16, -16.15, 46.51, -15.58], crs=CRS.WGS84),
             size=(512, 856),
             mime_type=MimeType.TAR
         )
@@ -325,7 +325,8 @@ class TestSentinelHubRequest(TestSentinelHub):
                 SentinelHubRequest.output_response('default', 'image/tiff'),
                 SentinelHubRequest.output_response('userdata', 'application/json')
             ],
-            bounds=geo,
+            bbox=bbox,
+            geometry=geo,
             size=size,
             mime_type=MimeType.TAR
         )
