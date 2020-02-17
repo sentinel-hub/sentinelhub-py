@@ -121,6 +121,30 @@ class TestTime(TestSentinelHub):
                 self.assertEqual(parsed_interval, exp_interval,
                                  'Expected {}, got {}'.format(exp_interval, parsed_interval))
 
+    def test_filter_times(self):
+        time1 = datetime.datetime(year=2005, month=12, day=16, hour=2)
+        time2 = datetime.datetime(year=2005, month=12, day=16, hour=10)
+        time3 = datetime.datetime(year=2005, month=12, day=16, hour=23)
+        time4 = datetime.datetime(year=2005, month=12, day=17, hour=2)
+        time5 = datetime.datetime(year=2005, month=12, day=18, hour=2)
+        delta1 = datetime.timedelta(0)
+        delta2 = datetime.timedelta(hours=5)
+        delta3 = datetime.timedelta(hours=12)
+        delta4 = datetime.timedelta(days=1)
+
+        test_cases = [
+            ([time1], delta2, [time1]),
+            ([time1, time2], delta1, [time1, time2]),
+            ([time3, time1, time2, time2, time1], delta3, [time1, time3]),
+            ([time1, time4], delta4, [time1]),
+            ([time4, time5], delta4, [time4]),
+            ([time1, time4, time5], delta4, [time1, time5])
+        ]
+
+        for input_timestamps, time_difference, expected_result in test_cases:
+            result = time_utils.filter_times(input_timestamps, time_difference)
+            self.assertEqual(result, expected_result)
+
 
 if __name__ == '__main__':
     unittest.main()

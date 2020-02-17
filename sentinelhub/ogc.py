@@ -1,22 +1,19 @@
 """
 Module for working with Sentinel Hub OGC services
 """
-
 import logging
 import datetime
 from base64 import b64encode
 from urllib.parse import urlencode
 
 import shapely.geometry
-import shapely.wkt
-import shapely.ops
 
 from .constants import ServiceType, DataSource, MimeType, CRS, SHConstants, CustomUrlParam
 from .config import SHConfig
 from .geo_utils import get_image_dimension
 from .geometry import BBox, Geometry
 from .download import DownloadRequest, get_json
-from .time_utils import parse_time_interval
+from .time_utils import parse_time_interval, filter_times
 
 LOGGER = logging.getLogger(__name__)
 
@@ -40,29 +37,6 @@ class OgcService:
             raise ValueError('Instance ID is not set. '
                              'Set it either in request initialization or in configuration file. '
                              'Check http://sentinelhub-py.readthedocs.io/en/latest/configure.html for more info.')
-
-    @staticmethod
-    def _filter_dates(dates, time_difference):
-        """ Filters out dates within time_difference, preserving only the oldest date.
-
-        :param dates: a list of datetime objects
-        :param time_difference: a ``datetime.timedelta`` representing the time difference threshold
-        :return: an ordered list of datetimes `d1<=d2<=...<=dn` such that `d[i+1]-di > time_difference`
-        :rtype: list(datetime.datetime)
-        """
-
-        LOGGER.debug("dates=%s", dates)
-
-        if len(dates) <= 1:
-            return dates
-
-        sorted_dates = sorted(dates)
-
-        separate_dates = [sorted_dates[0]]
-        for curr_date in sorted_dates[1:]:
-            if curr_date - separate_dates[-1] > time_difference:
-                separate_dates.append(curr_date)
-        return separate_dates
 
     @staticmethod
     def _sentinel1_product_check(product_id, data_source):
@@ -416,22 +390,18 @@ class OgcImageService(OgcService):
         if DataSource.is_timeless(request.data_source):
             return [None]
 
-        date_interval = parse_time_interval(request.time)
-
-        LOGGER.debug('date_interval=%s', date_interval)
-
         if request.wfs_iterator is None:
-            self.wfs_iterator = WebFeatureService(request.bbox, date_interval, data_source=request.data_source,
+            self.wfs_iterator = WebFeatureService(request.bbox, request.time, data_source=request.data_source,
                                                   maxcc=request.maxcc, base_url=self.base_url,
                                                   instance_id=self.instance_id)
         else:
             self.wfs_iterator = request.wfs_iterator
 
-        dates = sorted(set(self.wfs_iterator.get_dates()))
+        dates = self.wfs_iterator.get_dates()
+        dates = filter_times(dates, request.time_difference)
 
-        if request.time is SHConstants.LATEST:
-            dates = dates[-1:]
-        return OgcService._filter_dates(dates, request.time_difference)
+        LOGGER.debug('Initializing requests for dates: %s', dates)
+        return dates
 
     @staticmethod
     def get_image_dimensions(request):
@@ -499,6 +469,8 @@ class WebFeatureService(OgcService):
         self.tile_list = []
         self.index = 0
         self.feature_offset = 0
+        self.latest_time_only = time_interval == SHConstants.LATEST
+        self.max_features_per_request = 1 if self.latest_time_only else SHConfig().max_wfs_records_per_query
 
     def __iter__(self):
         """ Iteration method
@@ -530,9 +502,6 @@ class WebFeatureService(OgcService):
         :return: dictionary containing info about product tiles
         :rtype: dict
         """
-        if self.feature_offset is None:
-            return
-
         main_url = '{}/{}/{}?'.format(self.base_url, ServiceType.WFS.value, self.instance_id)
 
         params = {'SERVICE': ServiceType.WFS.value,
@@ -543,7 +512,7 @@ class WebFeatureService(OgcService):
                   'SRSNAME': CRS.ogc_string(self.bbox.crs),
                   'TIME': '{}/{}'.format(self.time_interval[0], self.time_interval[1]),
                   'MAXCC': 100.0 * self.maxcc,
-                  'MAXFEATURES': SHConfig().max_wfs_records_per_query,
+                  'MAXFEATURES': self.max_features_per_request,
                   'FEATURE_OFFSET': self.feature_offset}
 
         url = main_url + urlencode(params)
@@ -560,10 +529,10 @@ class WebFeatureService(OgcService):
             else:
                 self.tile_list.append(tile_info)
 
-        if len(response["features"]) < SHConfig().max_wfs_records_per_query:
+        if len(response["features"]) < self.max_features_per_request or self.latest_time_only:
             self.feature_offset = None
         else:
-            self.feature_offset += SHConfig().max_wfs_records_per_query
+            self.feature_offset += self.max_features_per_request
 
     def get_dates(self):
         """ Returns a list of acquisition times from tile info data
