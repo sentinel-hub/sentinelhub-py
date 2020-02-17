@@ -57,7 +57,7 @@ update_package_config()
 
 setup(
     name='sentinelhub',
-    python_requires='>=3.5',
+    python_requires='>=3.6',
     version=get_version(),
     description='Sentinel Hub Utilities',
     long_description=get_long_description(),
@@ -90,7 +90,6 @@ setup(
         'Operating System :: Unix',
         'Programming Language :: Python',
         'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3.8',
