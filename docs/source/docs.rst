@@ -23,5 +23,6 @@ Modules
     ogc
     opensearch
     os_utils
+    sentinelhub_request
     testing_utils
     time_utils
