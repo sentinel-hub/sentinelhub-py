@@ -35,6 +35,7 @@ class SentinelHubSession:
                              "to authenticate with Sentinel Hub service")
 
         self._token = None
+        _ = self.token
 
     @property
     def token(self):
