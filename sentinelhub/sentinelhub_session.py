@@ -8,6 +8,7 @@ from oauthlib.oauth2 import BackendApplicationClient
 from requests_oauthlib import OAuth2Session
 
 from .config import SHConfig
+from .download.request import DownloadRequest
 from .download.handlers import retry_temporal_errors, fail_user_errors
 
 
@@ -45,7 +46,10 @@ class SentinelHubSession:
         if self._token and self._token['expires_at'] > time.time() + self.SECONDS_BEFORE_EXPIRY:
             return self._token
 
-        self._token = self._fetch_token()
+        # A request parameter is created only in order for error handling decorators to work correctly
+        request = DownloadRequest(url=self.config.get_sh_oauth_url())
+        self._token = self._fetch_token(request)
+
         return self._token
 
     @property
@@ -61,7 +65,7 @@ class SentinelHubSession:
 
     @retry_temporal_errors
     @fail_user_errors
-    def _fetch_token(self):
+    def _fetch_token(self, request):
         """ Collects a new token from Sentinel Hub service
         """
         oauth_client = BackendApplicationClient(client_id=self.config.sh_client_id)
@@ -69,7 +73,7 @@ class SentinelHubSession:
         LOGGER.debug('Creating a new authentication session with Sentinel Hub service')
         with OAuth2Session(client=oauth_client) as oauth_session:
             return oauth_session.fetch_token(
-                token_url=self.config.get_sh_oauth_url(),
+                token_url=request.url,
                 client_id=self.config.sh_client_id,
                 client_secret=self.config.sh_client_secret
             )
