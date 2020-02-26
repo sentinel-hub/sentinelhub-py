@@ -2,7 +2,6 @@
 Module implementing a rate-limited multi-threaded download client for downloading from Sentinel Hub service
 """
 import logging
-import warnings
 import time
 from threading import Lock, currentThread
 
@@ -10,7 +9,6 @@ import requests
 
 from .handlers import fail_user_errors, retry_temporal_errors
 from .client import DownloadClient
-from ..exceptions import SHUserWarning
 from ..sentinelhub_session import SentinelHubSession
 from ..sentinelhub_rate_limit import SentinelHubRateLimit
 
@@ -21,6 +19,8 @@ LOGGER = logging.getLogger(__name__)
 class SentinelHubDownloadClient(DownloadClient):
     """ Download client specifically configured for download from Sentinel Hub service
     """
+    _CACHED_SESSIONS = {}
+
     def __init__(self, *, session=None, **kwargs):
         """
         :param session: An OAuth2 session with Sentinel Hub service
@@ -42,11 +42,15 @@ class SentinelHubDownloadClient(DownloadClient):
 
         if session is None:
             if self.config.sh_client_id and self.config.sh_client_secret:
-                return SentinelHubSession(config=self.config)
+                credentials = self.config.sh_client_id, self.config.sh_client_secret
 
-            message = "In order to achieve faster download performance please set configuration parameters " \
-                      "'sh_client_id' and 'sh_client_secret'"
-            warnings.warn(message, category=SHUserWarning)
+                if credentials in SentinelHubDownloadClient._CACHED_SESSIONS:
+                    return SentinelHubDownloadClient._CACHED_SESSIONS[credentials]
+
+                session = SentinelHubSession(config=self.config)
+                SentinelHubDownloadClient._CACHED_SESSIONS[credentials] = session
+
+                return session
 
             return None
 
@@ -92,17 +96,22 @@ class SentinelHubDownloadClient(DownloadClient):
             request.request_type.value,
             url=request.url,
             json=request.post_values,
-            headers=self._prepare_headers(request.headers),
+            headers=self._prepare_headers(request),
             timeout=self.config.download_timeout_seconds
         )
 
-    def _prepare_headers(self, headers):
+    def _prepare_headers(self, request):
         """ Prepares final headers by potentially joining them with session headers
         """
+        if self.session is None and request.properties.get('session_required') and \
+                not (self.config.sh_client_id and self.config.sh_client_secret):
+            raise ValueError("Cannot create an authentication session with Sentinel Hub service. Configuration "
+                             "parameters 'sh_client_id' and 'sh_client_secret' are missing")
+
         if self.session is None:
-            return headers
+            return request.headers
 
         return {
             **self.session.session_headers,
-            **headers
+            **request.headers
         }

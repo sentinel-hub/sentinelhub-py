@@ -1,5 +1,5 @@
 wheel
-requests
+requests>=2.5.0
 click
 numpy
 tifffile

@@ -71,7 +71,8 @@ class SentinelHubRequest(DataRequest):
             data_folder=self.data_folder,
             save_response=bool(self.data_folder),
             data_type=self.mime_type,
-            headers=headers
+            headers=headers,
+            session_required=True
         )]
 
     @staticmethod

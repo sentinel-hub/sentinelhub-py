@@ -154,7 +154,7 @@ class TestRateLimit(TestSentinelHub):
             TestCaseContainer('Trial policy, unit hits', trial_policy_buckets, process_num=5, units_per_request=5,
                               process_time=0.5, request_num=14, max_elapsed_time=12, max_rate_limit_hits=10),
             TestCaseContainer('Small policies', small_policy_buckets, process_num=3, units_per_request=2,
-                              process_time=0.1, request_num=5, max_elapsed_time=3, max_rate_limit_hits=15),
+                              process_time=0.1, request_num=5, max_elapsed_time=3, max_rate_limit_hits=17),
             TestCaseContainer('Fixed policies', [fixed_bucket], process_num=2, units_per_request=20,
                               process_time=0.0, request_num=5, max_elapsed_time=0.6, max_rate_limit_hits=0),
         ]

@@ -84,10 +84,9 @@ def _is_temporal_problem(exception):
     :return: `True` if exception is temporal and `False` otherwise
     :rtype: bool
     """
-    try:
-        return isinstance(exception, (requests.ConnectionError, requests.Timeout))
-    except AttributeError:  # Earlier requests versions might not have requests.Timeout
-        return isinstance(exception, requests.ConnectionError)
+    return isinstance(exception, (requests.ConnectionError,
+                                  requests.Timeout,
+                                  requests.exceptions.ChunkedEncodingError))
 
 
 def _create_download_failed_message(exception, url):
