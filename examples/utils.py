@@ -4,7 +4,7 @@ from sentinelhub import BBox, CRS
 from ipywidgets import widgets as w
 
 
-class BboxSelector:
+class BBoxSelector:
     def __init__(self, bbox):
         center = (bbox.min_y + bbox.max_y) / 2, (bbox.min_x + bbox.max_x) / 2
         self.map = Map(center=center, zoom=12, scroll_wheel_zoom=True)
