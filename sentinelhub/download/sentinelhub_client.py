@@ -96,17 +96,22 @@ class SentinelHubDownloadClient(DownloadClient):
             request.request_type.value,
             url=request.url,
             json=request.post_values,
-            headers=self._prepare_headers(request.headers),
+            headers=self._prepare_headers(request),
             timeout=self.config.download_timeout_seconds
         )
 
-    def _prepare_headers(self, headers):
+    def _prepare_headers(self, request):
         """ Prepares final headers by potentially joining them with session headers
         """
+        if self.session is None and request.properties.get('session_required') and \
+                not (self.config.sh_client_id and self.config.sh_client_secret):
+            raise ValueError("Cannot create an authentication session with Sentinel Hub service. Configuration "
+                             "parameters 'sh_client_id' and 'sh_client_secret' are missing")
+
         if self.session is None:
-            return headers
+            return request.headers
 
         return {
             **self.session.session_headers,
-            **headers
+            **request.headers
         }
