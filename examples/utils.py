@@ -5,9 +5,11 @@ from ipywidgets import widgets as w
 
 
 class BBoxSelector:
-    def __init__(self, bbox):
+    def __init__(self, bbox, zoom=8, resolution=10):
         center = (bbox.min_y + bbox.max_y) / 2, (bbox.min_x + bbox.max_x) / 2
-        self.map = Map(center=center, zoom=12, scroll_wheel_zoom=True)
+        self.map = Map(center=center, zoom=zoom, scroll_wheel_zoom=True)
+
+        self.resolution = resolution
 
         control = DrawControl()
 
@@ -58,8 +60,8 @@ class BBoxSelector:
 
         # self.out.append_display_data((min_x, min_y, max_x, max_y))
 
-        size_x = abs(int((self.bbox.max_x - self.bbox.min_x) / 10))
-        size_y = abs(int((self.bbox.max_y - self.bbox.min_y) / 10))
+        size_x = abs(int((self.bbox.max_x - self.bbox.min_x) / self.resolution))
+        size_y = abs(int((self.bbox.max_y - self.bbox.min_y) / self.resolution))
 
         self.size = size_x, size_y
 
