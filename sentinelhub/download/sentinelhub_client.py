@@ -2,7 +2,6 @@
 Module implementing a rate-limited multi-threaded download client for downloading from Sentinel Hub service
 """
 import logging
-import warnings
 import time
 from threading import Lock, currentThread
 
@@ -10,7 +9,6 @@ import requests
 
 from .handlers import fail_user_errors, retry_temporal_errors
 from .client import DownloadClient
-from ..exceptions import SHUserWarning
 from ..sentinelhub_session import SentinelHubSession
 from ..sentinelhub_rate_limit import SentinelHubRateLimit
 
@@ -43,10 +41,6 @@ class SentinelHubDownloadClient(DownloadClient):
         if session is None:
             if self.config.sh_client_id and self.config.sh_client_secret:
                 return SentinelHubSession(config=self.config)
-
-            message = "In order to achieve faster download performance please set configuration parameters " \
-                      "'sh_client_id' and 'sh_client_secret'"
-            warnings.warn(message, category=SHUserWarning)
 
             return None
 
