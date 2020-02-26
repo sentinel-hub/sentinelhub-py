@@ -19,6 +19,8 @@ LOGGER = logging.getLogger(__name__)
 class SentinelHubDownloadClient(DownloadClient):
     """ Download client specifically configured for download from Sentinel Hub service
     """
+    _CACHED_SESSIONS = {}
+
     def __init__(self, *, session=None, **kwargs):
         """
         :param session: An OAuth2 session with Sentinel Hub service
@@ -40,7 +42,15 @@ class SentinelHubDownloadClient(DownloadClient):
 
         if session is None:
             if self.config.sh_client_id and self.config.sh_client_secret:
-                return SentinelHubSession(config=self.config)
+                credentials = self.config.sh_client_id, self.config.sh_client_secret
+
+                if credentials in SentinelHubDownloadClient._CACHED_SESSIONS:
+                    return SentinelHubDownloadClient._CACHED_SESSIONS[credentials]
+
+                session = SentinelHubSession(config=self.config)
+                SentinelHubDownloadClient._CACHED_SESSIONS[credentials] = session
+
+                return session
 
             return None
 
