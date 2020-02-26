@@ -1,12 +1,17 @@
 """
 Module implementing Sentinel Hub session object
 """
+import logging
 import time
 
 from oauthlib.oauth2 import BackendApplicationClient
 from requests_oauthlib import OAuth2Session
 
 from .config import SHConfig
+from .download.handlers import retry_temporal_errors, fail_user_errors
+
+
+LOGGER = logging.getLogger(__name__)
 
 
 class SentinelHubSession:
@@ -54,11 +59,14 @@ class SentinelHubSession:
             'Authorization': 'Bearer {}'.format(self.token['access_token'])
         }
 
+    @retry_temporal_errors
+    @fail_user_errors
     def _fetch_token(self):
         """ Collects a new token from Sentinel Hub service
         """
         oauth_client = BackendApplicationClient(client_id=self.config.sh_client_id)
 
+        LOGGER.debug('Creating a new authentication session with Sentinel Hub service')
         with OAuth2Session(client=oauth_client) as oauth_session:
             return oauth_session.fetch_token(
                 token_url=self.config.get_sh_oauth_url(),
