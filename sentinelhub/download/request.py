@@ -18,7 +18,7 @@ class DownloadRequest:
     The class is a container with all parameters needed to execute a single download request and save or return
     downloaded data.
     """
-    def __init__(self, *, url=None, headers=None, request_type=RequestType.GET, post_values=None,
+    def __init__(self, *, url=None, headers=None, request_type=RequestType.GET, post_values=None, use_session=False,
                  data_type=MimeType.RAW, save_response=False, data_folder=None, filename=None, return_data=True,
                  **properties):
         """
@@ -30,6 +30,8 @@ class DownloadRequest:
         :type request_type: str or RequestType
         :param post_values: A dictionary of values that will be sent with a POST request. Default is `None`
         :type post_values: dict or None
+        :param use_session: A flag that specifies if the download request will require a session header
+        :type use_session: bool
         :param data_type: An expected file format of downloaded data. Default is `MimeType.RAW`
         :type data_type: MimeType or str
         :param save_response: A flag defining if the downloaded data will be saved to disk. Default is `False`.
@@ -48,6 +50,7 @@ class DownloadRequest:
         self.headers = headers or {}
         self.request_type = RequestType(request_type)
         self.post_values = post_values
+        self.use_session = use_session
 
         self.data_type = MimeType(data_type)
 

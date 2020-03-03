@@ -29,32 +29,13 @@ class SentinelHubDownloadClient(DownloadClient):
         """
         super().__init__(**kwargs)
 
-        self.session = self._configure_session(session)
+        if session is not None and not isinstance(session, SentinelHubSession):
+            raise ValueError(f'A session parameter has to be an instance of {SentinelHubSession.__name__} or None, but '
+                             f'{session} was given')
+        self.session = session
 
         self.rate_limit = SentinelHubRateLimit(num_processes=self.config.number_of_download_processes)
         self.lock = Lock()
-
-    def _configure_session(self, session):
-        """ Configures session object if credentials are given
-        """
-        if isinstance(session, SentinelHubSession):
-            return session
-
-        if session is None:
-            if self.config.sh_client_id and self.config.sh_client_secret:
-                credentials = self.config.sh_client_id, self.config.sh_client_secret, self.config.get_sh_oauth_url()
-
-                if credentials in SentinelHubDownloadClient._CACHED_SESSIONS:
-                    return SentinelHubDownloadClient._CACHED_SESSIONS[credentials]
-
-                session = SentinelHubSession(config=self.config)
-                SentinelHubDownloadClient._CACHED_SESSIONS[credentials] = session
-
-                return session
-
-            return None
-
-        raise ValueError('Given session should be an instance of SentinelHubSession')
 
     @retry_temporal_errors
     @fail_user_errors
@@ -103,15 +84,24 @@ class SentinelHubDownloadClient(DownloadClient):
     def _prepare_headers(self, request):
         """ Prepares final headers by potentially joining them with session headers
         """
-        if self.session is None and request.properties.get('session_required') and \
-                not (self.config.sh_client_id and self.config.sh_client_secret):
-            raise ValueError("Cannot create an authentication session with Sentinel Hub service. Configuration "
-                             "parameters 'sh_client_id' and 'sh_client_secret' are missing")
+        if not request.use_session:
+            return request.headers
 
         if self.session is None:
-            return request.headers
+            self.session = self._execute_with_lock(self._get_session)
 
         return {
             **self.session.session_headers,
             **request.headers
         }
+
+    def _get_session(self):
+        """ Provides a session object either from cache or it creates a new one
+        """
+        cache_key = self.config.sh_client_id, self.config.sh_client_secret, self.config.get_sh_oauth_url()
+        if cache_key in SentinelHubDownloadClient._CACHED_SESSIONS:
+            return SentinelHubDownloadClient._CACHED_SESSIONS[cache_key]
+
+        session = SentinelHubSession(config=self.config)
+        SentinelHubDownloadClient._CACHED_SESSIONS[cache_key] = session
+        return session
