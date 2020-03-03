@@ -145,7 +145,8 @@ class OgcImageService(OgcService):
         :rtype: dict
         """
         params = {
-            'SERVICE': request.service_type.value
+            'SERVICE': request.service_type.value,
+            'WARNINGS': False
         }
 
         if hasattr(request, 'maxcc'):
@@ -410,16 +411,19 @@ class WebFeatureService(OgcService):
         """
         main_url = '{}/{}/{}?'.format(self._base_url, ServiceType.WFS.value, self.config.instance_id)
 
-        params = {'SERVICE': ServiceType.WFS.value,
-                  'REQUEST': 'GetFeature',
-                  'TYPENAMES': DataSource.get_wfs_typename(self.data_source, config=self.config),
-                  'BBOX': str(self.bbox.reverse()) if self.bbox.crs is CRS.WGS84 else str(self.bbox),
-                  'OUTPUTFORMAT': MimeType.get_string(MimeType.JSON),
-                  'SRSNAME': CRS.ogc_string(self.bbox.crs),
-                  'TIME': '{}/{}'.format(self.time_interval[0], self.time_interval[1]),
-                  'MAXCC': 100.0 * self.maxcc,
-                  'MAXFEATURES': self.max_features_per_request,
-                  'FEATURE_OFFSET': self.feature_offset}
+        params = {
+            'SERVICE': ServiceType.WFS.value,
+            'WARNINGS': False,
+            'REQUEST': 'GetFeature',
+            'TYPENAMES': DataSource.get_wfs_typename(self.data_source, config=self.config),
+            'BBOX': str(self.bbox.reverse()) if self.bbox.crs is CRS.WGS84 else str(self.bbox),
+            'OUTPUTFORMAT': MimeType.get_string(MimeType.JSON),
+            'SRSNAME': CRS.ogc_string(self.bbox.crs),
+            'TIME': '{}/{}'.format(self.time_interval[0], self.time_interval[1]),
+            'MAXCC': 100.0 * self.maxcc,
+            'MAXFEATURES': self.max_features_per_request,
+            'FEATURE_OFFSET': self.feature_offset
+        }
 
         url = main_url + urlencode(params)
 
