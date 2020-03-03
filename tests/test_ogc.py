@@ -5,7 +5,7 @@ import numpy as np
 from shapely.geometry import MultiPolygon
 
 from sentinelhub import WmsRequest, WcsRequest, CRS, MimeType, CustomUrlParam, ServiceType, DataSource, BBox,\
-    WebFeatureService, TestSentinelHub, TestCaseContainer
+    WebFeatureService, DownloadFailedException, TestSentinelHub, TestCaseContainer
 from sentinelhub.data_request import OgcRequest
 from sentinelhub.ogc import OgcImageService
 
@@ -297,6 +297,14 @@ class TestOgc(TestSentinelHub):
             self.test_numpy_data(test_case.data[0], exp_min=test_case.img_min, exp_max=test_case.img_max,
                                  exp_mean=test_case.img_mean, exp_median=test_case.img_median,
                                  test_name=test_case.name)
+
+    def test_to_large_request(self):
+        bbox = BBox((-5.23, 48.0, -5.03, 48.17), CRS.WGS84)
+        request = WmsRequest(layer='TRUE-COLOR-S2-L1C', height=6000, width=6000, bbox=bbox,
+                             time=('2017-10-01', '2017-10-02'))
+
+        with self.assertRaises(DownloadFailedException):
+            request.get_data()
 
 
 class TestWebFeatureService(TestSentinelHub):
