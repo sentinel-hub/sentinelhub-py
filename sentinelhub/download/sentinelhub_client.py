@@ -42,7 +42,7 @@ class SentinelHubDownloadClient(DownloadClient):
 
         if session is None:
             if self.config.sh_client_id and self.config.sh_client_secret:
-                credentials = self.config.sh_client_id, self.config.sh_client_secret
+                credentials = self.config.sh_client_id, self.config.sh_client_secret, self.config.get_sh_oauth_url()
 
                 if credentials in SentinelHubDownloadClient._CACHED_SESSIONS:
                     return SentinelHubDownloadClient._CACHED_SESSIONS[credentials]
