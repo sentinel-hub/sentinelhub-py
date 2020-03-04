@@ -363,6 +363,8 @@ class DataSource(Enum, metaclass=DataSourceMeta):
 class CRSMeta(EnumMeta):
     """ Metaclass used for building CRS Enum class
     """
+    _UNSUPPORTED_CRS = pyproj.CRS(4326)
+
     def __new__(mcs, cls, bases, classdict):
         """ This is executed at the beginning of runtime when CRS class is created
         """
@@ -385,8 +387,23 @@ class CRSMeta(EnumMeta):
 
     @staticmethod
     def _parse_crs(value):
-        """ Method for parsing different inputs representing the same CRS enum. Example:
+        """ Method for parsing different inputs representing the same CRS enum. Examples:
+
+        - 4326
+        - 'EPSG:3857'
+        - {'init': 32633}
+        - pyproj.CRS(32743)
         """
+        # pylint: disable=unsupported-membership-test
+        if isinstance(value, dict) and 'init' in value:
+            value = value['init']
+        if isinstance(value, pyproj.CRS):
+            if value == CRSMeta._UNSUPPORTED_CRS:
+                raise ValueError(f'sentinelhub-py supports only WGS 84 coordinate reference system with '
+                                 f'coordinate order lng-lat. However pyproj.CRS(4326) has coordinate order lat-lng')
+
+            value = value.to_epsg()
+
         if isinstance(value, int):
             return str(value)
         if isinstance(value, str):
@@ -468,15 +485,20 @@ class CRS(Enum, metaclass=CRSMeta):
         """ Returns a projection in form of pyproj class. For better time performance it will cache results of
         5 most recently used CRS classes.
 
-        :param self: An enum constant representing a coordinate reference system.
-        :type self: CRS
         :return: pyproj projection class
         :rtype: pyproj.Proj
         """
-        # The following ensures lng-lat order in WGS84
-        projection_string = '+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs' if self is CRS.WGS84 else \
-            self.ogc_string()
-        return pyproj.Proj(projection_string, preserve_units=True)
+        return pyproj.Proj(self._get_pyproj_projection_def(), preserve_units=True)
+
+    @functools.lru_cache(maxsize=5)
+    def pyproj_crs(self):
+        """ Returns a pyproj CRS class. For better time performance it will cache results of
+        5 most recently used CRS classes.
+
+        :return: pyproj CRS class
+        :rtype: pyproj.CRS
+        """
+        return pyproj.CRS(self._get_pyproj_projection_def())
 
     @functools.lru_cache(maxsize=10)
     def get_transform_function(self, other):
@@ -507,6 +529,13 @@ class CRS(Enum, metaclass=CRSMeta):
         _, _, zone, _ = utm.from_latlon(lat, lng)
         direction = 'N' if lat >= 0 else 'S'
         return CRS['UTM_{}{}'.format(str(zone), direction)]
+
+    def _get_pyproj_projection_def(self):
+        """ Returns a pyproj crs definition
+
+        For WGS 84 it ensures lng-lat order
+        """
+        return '+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs' if self is CRS.WGS84 else self.ogc_string()
 
 
 class CustomUrlParam(Enum):
