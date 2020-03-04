@@ -1,5 +1,7 @@
 import unittest
 
+import pyproj
+
 from sentinelhub import CRS, MimeType, TestSentinelHub
 from sentinelhub.constants import RequestType, DataSource
 
@@ -21,6 +23,23 @@ class TestCRS(TestSentinelHub):
                 self.assertEqual(epsg, crs.value,
                                  msg="Expected {}, got {} for lng={},lat={}".format(epsg, crs.value, str(lng),
                                                                                     str(lat)))
+
+    def test_crs_parsing(self):
+        test_cases = [
+            (4326, CRS.WGS84),
+            ('4326', CRS.WGS84),
+            ('EPSG:3857', CRS.POP_WEB),
+            ({'init': 'EPSG:32638'}, CRS.UTM_38N),
+            (pyproj.CRS('+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs'), CRS.WGS84),
+            (pyproj.CRS(3857), CRS.POP_WEB),
+        ]
+        for parse_value, expected_result in test_cases:
+            with self.subTest(msg=str(parse_value)):
+                parsed_result = CRS(parse_value)
+                self.assertEqual(parsed_result, expected_result)
+
+        with self.assertRaises(ValueError):
+            CRS(pyproj.CRS(4326))
 
     def test_ogc_string(self):
         crs_values = (
@@ -63,6 +82,11 @@ class TestCRS(TestSentinelHub):
 
             new_enum_value = str(correct_value).lower().strip('epsg: ')
             self.assertTrue(CRS.has_value(new_enum_value))
+
+    def test_pyproj_methods(self):
+        for crs in [CRS.WGS84, CRS.POP_WEB, CRS.UTM_38N]:
+            self.assertTrue(isinstance(crs.projection(), pyproj.Proj))
+            self.assertTrue(isinstance(crs.pyproj_crs(), pyproj.CRS))
 
 
 class TestMimeType(TestSentinelHub):
