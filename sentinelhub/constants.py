@@ -226,7 +226,7 @@ class DataSource(Enum, metaclass=DataSourceMeta):
             cls.LANDSAT5: 'L5.TILE',
             cls.LANDSAT7: 'L7.TILE',
             cls.SENTINEL3: 'S3.TILE',
-            cls.SENTINEL5P: 'S5p_L2.TILE',
+            cls.SENTINEL5P: 'S5p_L2.TILE' if is_eocloud else 'DSS7',
             cls.ENVISAT_MERIS: 'ENV.TILE',
             cls.SENTINEL2_L3B: 'SEN4CAP_S2L3B.TILE',
             cls.LANDSAT8_L2A: 'SEN4CAP_L8L2A.TILE'
@@ -340,7 +340,7 @@ class DataSource(Enum, metaclass=DataSourceMeta):
         return [cls.SENTINEL2_L1C, cls.SENTINEL2_L2A, cls.SENTINEL1_IW, cls.SENTINEL1_EW, cls.SENTINEL1_EW_SH,
                 cls.SENTINEL1_IW_ASC, cls.SENTINEL1_EW_ASC, cls.SENTINEL1_EW_SH_ASC, cls.SENTINEL1_IW_DES,
                 cls.SENTINEL1_EW_DES, cls.SENTINEL1_EW_SH_DES, cls.DEM, cls.MODIS, cls.LANDSAT8,
-                *cls.get_custom_sources()]
+                cls.SENTINEL5P, *cls.get_custom_sources()]
 
     @classmethod
     def get_custom_sources(cls):
@@ -558,6 +558,7 @@ class CustomUrlParam(Enum):
     TRANSPARENT = 'Transparent'
     BGCOLOR = 'BgColor'
     GEOMETRY = 'Geometry'
+    MINQA = 'MinQA'
 
     @classmethod
     def has_value(cls, value):
