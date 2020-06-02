@@ -123,6 +123,7 @@ class DataSourceMeta(EnumMeta):
 
         The method raises a ValueError if the 'something' does not match the format expected for collection id.
         """
+        # pylint: disable=signature-differs
         if not isinstance(collection_id, str):
             return super().__call__(collection_id, *args, **kwargs)
 
@@ -377,6 +378,7 @@ class CRSMeta(EnumMeta):
     def __call__(cls, crs_value, *args, **kwargs):
         """ This is executed whenever CRS('something') is called
         """
+        # pylint: disable=signature-differs
         crs_value = cls._parse_crs(crs_value)
 
         if isinstance(crs_value, str) and not cls.has_value(crs_value) and crs_value.isdigit() and len(crs_value) >= 4:
@@ -394,13 +396,12 @@ class CRSMeta(EnumMeta):
         - {'init': 32633}
         - pyproj.CRS(32743)
         """
-        # pylint: disable=unsupported-membership-test
         if isinstance(value, dict) and 'init' in value:
             value = value['init']
         if isinstance(value, pyproj.CRS):
             if value == CRSMeta._UNSUPPORTED_CRS:
-                raise ValueError(f'sentinelhub-py supports only WGS 84 coordinate reference system with '
-                                 f'coordinate order lng-lat. However pyproj.CRS(4326) has coordinate order lat-lng')
+                raise ValueError('sentinelhub-py supports only WGS 84 coordinate reference system with '
+                                 'coordinate order lng-lat. However pyproj.CRS(4326) has coordinate order lat-lng')
 
             value = value.to_epsg()
 
