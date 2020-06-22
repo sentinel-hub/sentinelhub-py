@@ -15,7 +15,7 @@ class SentinelHubRequest(DataRequest):
     """ Sentinel Hub API request class
     """
     def __init__(self, evalscript, input_data, responses, bbox=None, geometry=None, size=None, resolution=None,
-                 config=None, **kwargs):
+                 **kwargs):
         """
         For details of certain parameters check the
         `Processing API reference <https://docs.sentinel-hub.com/api/latest/reference/#operation/process>`_.
@@ -36,8 +36,10 @@ class SentinelHubRequest(DataRequest):
         :type size: Tuple[int, int]
         :param resolution: Resolution of the image. It has to be in units compatible with the given CRS.
         :type resolution: Tuple[float, float]
-        :param config: SHConfig object containing desired sentinel-hub configuration parameters.
-        :type config: sentinelhub.SHConfig
+        :param data_folder: location of the directory where the fetched data will be saved.
+        :type data_folder: str
+        :param config: A custom instance of config class to override parameters from the saved configuration.
+        :type config: SHConfig or None
         """
 
         if size is None and resolution is None:
@@ -45,8 +47,6 @@ class SentinelHubRequest(DataRequest):
 
         if not isinstance(evalscript, str):
             raise ValueError("'evalscript' should be a string")
-
-        self.config = config or SHConfig()
 
         self.mime_type = MimeType.TAR if len(responses) > 1 else MimeType(responses[0]['format']['type'].split('/')[1])
 
