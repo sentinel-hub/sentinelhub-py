@@ -3,7 +3,6 @@
 Documentation: https://docs.sentinel-hub.com/api/latest/reference/
 """
 
-from .config import SHConfig
 from .constants import MimeType, DataSource, RequestType
 from .download import DownloadRequest, SentinelHubDownloadClient
 from .data_request import DataRequest
