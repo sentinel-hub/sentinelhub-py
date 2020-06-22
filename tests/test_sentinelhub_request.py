@@ -1,11 +1,13 @@
 """ Tests for the Processing API requests
 """
 import unittest
-import numpy as np
 
+import numpy as np
 from shapely.geometry import Polygon
+from oauthlib.oauth2.rfc6749.errors import CustomOAuth2Error
+
 from sentinelhub import SentinelHubRequest, CRS, BBox, TestSentinelHub, DataSource, MimeType, bbox_to_dimensions, \
-    Geometry
+    Geometry, SHConfig
 
 
 class TestSentinelHubRequest(TestSentinelHub):
@@ -96,7 +98,9 @@ class TestSentinelHubRequest(TestSentinelHub):
                 SentinelHubRequest.output_response('default', 'tiff')
             ],
             bbox=BBox(bbox=[46.16, -16.15, 46.51, -15.58], crs=CRS.WGS84),
-            size=(512, 856)
+            size=(512, 856),
+            config=self.CONFIG,
+            data_folder=self.OUTPUT_FOLDER
         )
 
         img = request.get_data(max_threads=3)[0]
@@ -319,6 +323,53 @@ class TestSentinelHubRequest(TestSentinelHub):
 
         expected_ratios = [0.29098381560041126, 0.3227735909047216, 0.3862425934948671]
         self.assertTrue(np.allclose(json_data['rgb_ratios'], expected_ratios))
+
+    def test_bad_credentials(self):
+
+        evalscript = """
+                    //VERSION=3
+
+                    function setup() {
+                        return {
+                            input: ["B02", "B03", "B04"],
+                            sampleType: "UINT16",
+                            output: { bands: 3 }
+                        };
+                    }
+
+                    function evaluatePixel(sample) {
+                        return [2.5 * sample.B04, 2.5 * sample.B03, 2.5 * sample.B02];
+                    }
+                """
+        request_params = dict(
+            evalscript=evalscript,
+            input_data=[
+                SentinelHubRequest.input_data(
+                    data_source=DataSource.SENTINEL2_L1C,
+                    time_interval=('2017-12-15T07:12:03', '2017-12-15T07:12:04'),
+                )
+            ],
+            responses=[
+                SentinelHubRequest.output_response('default', 'tiff')
+            ],
+            bbox=BBox(bbox=[46.16, -16.15, 46.51, -15.58], crs=CRS.WGS84),
+            size=(512, 856)
+        )
+
+
+        bad_credentials_config = SHConfig()
+        bad_credentials_config.sh_client_secret = 'test-wrong-credentials'
+
+        request = SentinelHubRequest(**request_params, config=bad_credentials_config)
+        with self.assertRaises(CustomOAuth2Error):
+            request.get_data()
+
+        missing_credentials_config = SHConfig()
+        missing_credentials_config.sh_client_secret = ''
+
+        request = SentinelHubRequest(**request_params, config=missing_credentials_config)
+        with self.assertRaises(ValueError):
+            request.get_data()
 
 
 if __name__ == "__main__":
