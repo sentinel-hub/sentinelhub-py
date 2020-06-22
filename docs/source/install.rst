@@ -2,11 +2,15 @@
 Installation
 ************
 
-This package requires Python 3 and can be installed by the PyPI package manager::
+This package requires Python >=3.6 and can be installed with PyPI package manager::
 
 $ pip install sentinelhub --upgrade
 
-If want to install the latest (development) version clone the GitHub_ repository and install::
+Alternatively, the package can be installed with Conda from `conda-forge` channel::
+
+$ conda install -c conda-forge sentinelhub
+
+In order to install the latest (development) version clone the GitHub_ repository and install::
 
 $ pip install -e . --upgrade
 
