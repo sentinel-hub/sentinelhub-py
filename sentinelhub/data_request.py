@@ -32,7 +32,7 @@ class DataRequest(ABC):
     def __init__(self, download_client_class, *, data_folder=None, config=None, instance_id=None):
         """
         :param download_client_class: A class implementing a download client
-        :type download_client_class: object
+        :type download_client_class: type
         :param data_folder: location of the directory where the fetched data will be saved.
         :type data_folder: str
         :param config: A custom instance of config class to override parameters from the saved configuration.
@@ -176,7 +176,11 @@ class DataRequest(ABC):
         else:
             raise ValueError('data_filter parameter must be a list of indices')
 
-        client = self.download_client_class(redownload=redownload, raise_download_errors=raise_download_errors)
+        client = self.download_client_class(
+            redownload=redownload,
+            raise_download_errors=raise_download_errors,
+            config=self.config
+        )
         data_list = client.download(filtered_download_list, max_threads=max_threads, decode_data=decode_data)
 
         if is_repeating_filter:
