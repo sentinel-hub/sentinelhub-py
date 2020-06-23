@@ -1,4 +1,5 @@
 [![Package version](https://badge.fury.io/py/sentinelhub.svg)](https://pypi.org/project/sentinelhub/)
+[![Conda version](https://img.shields.io/conda/vn/conda-forge/sentinelhub.svg)](https://anaconda.org/conda-forge/sentinelhub)
 [![Supported Python versions](https://img.shields.io/pypi/pyversions/sentinelhub.svg?style=flat-square)](https://pypi.org/project/sentinelhub/)
 [![Build status](https://travis-ci.org/sentinel-hub/sentinelhub-py.svg?branch=master)](https://travis-ci.org/sentinel-hub/sentinelhub-py)
 [![Docs status](https://readthedocs.org/projects/sentinelhub-py/badge/?version=latest)](http://sentinelhub-py.readthedocs.io/en/latest/)
@@ -24,6 +25,12 @@ the PyPI package manager and can be installed with
 
 ```
 $ pip install sentinelhub --upgrade
+```
+
+Alternatively, the package can be installed with Conda from `conda-forge` channel
+
+```
+conda install -c conda-forge sentinelhub 
 ```
 
 To install the package manually, clone the repository and
