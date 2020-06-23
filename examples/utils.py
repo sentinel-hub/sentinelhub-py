@@ -1,5 +1,9 @@
+"""
+Utilities used by example notebooks
+"""
 import matplotlib.pyplot as plt
 import numpy as np
+
 
 def plot_image(image, factor=1.0, clip_range = None, **kwargs):
     """
