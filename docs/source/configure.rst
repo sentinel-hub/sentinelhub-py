@@ -10,13 +10,15 @@ $ sentinelhub.config --show
 Sentinel Hub Capabilities
 *************************
 
-The ``instance_id`` parameter will be empty. In case you would like to use any capabilities of the package that
-interact with `Sentinel Hub services`_ you can set your Sentinel Hub instance ID with::
+By default parameters ``instance_id``, ``sh_client_id`` and ``sh_client_secret`` will be empty. In case you would like
+to use any capabilities of the package that interact with `Sentinel Hub services`_ you can set any of these parameters
+with::
 
 $ sentinelhub.config --instance_id <your instance id>
+$ sentinelhub.config --sh_client_id <your client id> --sh_client_secret <your client secret>
 
-By doing so the package will use this instance ID to interact with Sentinel Hub unless you purposely specify a
-different one in the code.
+By doing so the package will use these parameters to interact with Sentinel Hub unless you purposely specify an
+instance of ``sentinelhub.SHConfig`` object containing different parameters.
 
 Amazon S3 Capabilities
 **********************
