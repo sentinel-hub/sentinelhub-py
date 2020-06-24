@@ -2,4 +2,4 @@
 Version of sentinelhub package
 """
 
-__version__ = '3.0.3'
+__version__ = '3.0.4'
