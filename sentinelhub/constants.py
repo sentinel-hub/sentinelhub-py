@@ -41,6 +41,7 @@ class ServiceType(Enum):
     AWS = 'aws'
     IMAGE = 'image'
     FIS = 'fis'
+    PROCESSING_API = 'processing'
 
 
 class _Source(Enum):
