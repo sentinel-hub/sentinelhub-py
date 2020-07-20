@@ -16,11 +16,8 @@ def _update_other_args(dict1, dict2):
     only the non-dict like values are assigned to the specified keys.
     """
     for key, value in dict2.items():
-        if key in dict1.keys():
-            if isinstance(value, dict):
-                _update_other_args(dict1[key], value)
-            else:
-                dict1[key] = value
+        if isinstance(value, dict) and key in dict1:
+            _update_other_args(dict1[key], value)
         else:
             dict1[key] = value
 
