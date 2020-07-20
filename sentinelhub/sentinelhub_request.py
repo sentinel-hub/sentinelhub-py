@@ -10,12 +10,16 @@ from .geometry import Geometry, BBox
 from .time_utils import parse_time_interval
 
 
-def update_other_args(d, u):
-    for k, v in u.items():
-        if isinstance(v, dict):
-            update_other_args(d[k], v)
+def update_other_args(dict1, dict2):
+    """
+    Function for a recursive update of `dict1` with `dict2`. The function loops over the keys in `dict2` and
+    only the non-dict like values are assigned to the specified keys.
+    """
+    for key, value in dict2.items():
+        if isinstance(value, dict):
+            update_other_args(dict1[key], value)
         else:
-            d[k] = v
+            dict1[key] = value
 
 
 class SentinelHubRequest(DataRequest):
