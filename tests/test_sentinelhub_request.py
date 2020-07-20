@@ -108,6 +108,60 @@ class TestSentinelHubRequest(TestSentinelHub):
         self.assertEqual(img.shape, (856, 512, 3))
         self.test_numpy_data(img, exp_min=0, exp_max=255, exp_mean=74.92)
 
+    def test_preview_mode(self):
+        """ Test downloading three bands of L1C
+        """
+        evalscript = """
+            //VERSION=3
+
+            function setup() {
+                return {
+                    input: [{
+                        bands: ["B02", "B03", "B04"],
+                        units: "DN"
+                    }],
+                    output: {
+                        bands: 3,
+                        sampleType: "UINT16"
+                    }
+                };
+            }
+
+            function evaluatePixel(sample) {
+                return [2.5 * sample.B04, 2.5 * sample.B03, 2.5 * sample.B02];
+            }
+        """
+
+        request = SentinelHubRequest(
+            evalscript=evalscript,
+            input_data=[
+                SentinelHubRequest.input_data(
+                    data_source=DataSource.SENTINEL2_L1C,
+                    time_interval=('2017-10-14T00:12:03', '2017-12-15T23:12:04'),
+                    mosaicking_order='leastCC',
+                    other_args={
+                        'dataFilter': {
+                            'previewMode': 'PREVIEW'
+                        }
+                    }
+                )
+            ],
+            responses=[
+                SentinelHubRequest.output_response('default', MimeType.TIFF)
+            ],
+
+            bbox=BBox(
+                bbox=[1155360.393335921, 5285081.168940068, 1156965.063795706, 5286609.808304847],
+                crs=CRS.POP_WEB
+            ),
+            resolution=(260.0, 260.0)
+        )
+
+        img = request.get_data(max_threads=3)[0]
+
+        self.assertEqual(img.shape, (6, 6, 3))
+        self.test_numpy_data(img, exp_min=330, exp_max=3128, exp_mean=1787.5185)
+
     def test_resolution_parameter(self):
         """ Test downloading three bands of L1C
         """
@@ -155,7 +209,7 @@ class TestSentinelHubRequest(TestSentinelHub):
         img = request.get_data(max_threads=3)[0]
 
         self.assertEqual(img.shape, (153, 160, 3))
-        self.test_numpy_data(img, exp_min=670, exp_max=6105, exp_mean=1848.2646)
+        self.test_numpy_data(img, exp_min=670, exp_max=6105, exp_mean=1848.7660)
 
     def test_multipart_tar(self):
         """ Test downloading multiple outputs, packed into a TAR file
