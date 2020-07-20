@@ -10,6 +10,14 @@ from .geometry import Geometry, BBox
 from .time_utils import parse_time_interval
 
 
+def update_other_args(d, u):
+    for k, v in u.items():
+        if isinstance(v, dict):
+            update_other_args(d[k], v)
+        else:
+            d[k] = v
+
+
 class SentinelHubRequest(DataRequest):
     """ Sentinel Hub API request class
     """
@@ -123,7 +131,7 @@ class SentinelHubRequest(DataRequest):
             input_data_object['dataFilter']['collectionId'] = data_source.value
 
         if other_args:
-            input_data_object.update(other_args)
+            update_other_args(input_data_object, other_args)
 
         return input_data_object
 
@@ -155,7 +163,7 @@ class SentinelHubRequest(DataRequest):
             request_body['output'] = request_output
 
         if other_args:
-            request_body.update(other_args)
+            update_other_args(request_body, other_args)
 
         return request_body
 
@@ -179,7 +187,7 @@ class SentinelHubRequest(DataRequest):
         }
 
         if other_args:
-            output_response.update(other_args)
+            update_other_args(output_response, other_args)
 
         return output_response
 
@@ -210,7 +218,7 @@ class SentinelHubRequest(DataRequest):
             request_output['resx'], request_output['resy'] = resolution
 
         if other_args:
-            request_output.update(other_args)
+            update_other_args(request_output, other_args)
 
         return request_output
 
@@ -256,6 +264,6 @@ class SentinelHubRequest(DataRequest):
             request_bounds['geometry'] = geometry.geojson
 
         if other_args:
-            request_bounds.update(other_args)
+            update_other_args(request_bounds, other_args)
 
         return request_bounds
