@@ -10,14 +10,14 @@ from .geometry import Geometry, BBox
 from .time_utils import parse_time_interval
 
 
-def update_other_args(dict1, dict2):
+def _update_other_args(dict1, dict2):
     """
     Function for a recursive update of `dict1` with `dict2`. The function loops over the keys in `dict2` and
     only the non-dict like values are assigned to the specified keys.
     """
     for key, value in dict2.items():
         if isinstance(value, dict):
-            update_other_args(dict1[key], value)
+            _update_other_args(dict1[key], value)
         else:
             dict1[key] = value
 
@@ -135,7 +135,7 @@ class SentinelHubRequest(DataRequest):
             input_data_object['dataFilter']['collectionId'] = data_source.value
 
         if other_args:
-            update_other_args(input_data_object, other_args)
+            _update_other_args(input_data_object, other_args)
 
         return input_data_object
 
@@ -167,7 +167,7 @@ class SentinelHubRequest(DataRequest):
             request_body['output'] = request_output
 
         if other_args:
-            update_other_args(request_body, other_args)
+            _update_other_args(request_body, other_args)
 
         return request_body
 
@@ -191,7 +191,7 @@ class SentinelHubRequest(DataRequest):
         }
 
         if other_args:
-            update_other_args(output_response, other_args)
+            _update_other_args(output_response, other_args)
 
         return output_response
 
@@ -222,7 +222,7 @@ class SentinelHubRequest(DataRequest):
             request_output['resx'], request_output['resy'] = resolution
 
         if other_args:
-            update_other_args(request_output, other_args)
+            _update_other_args(request_output, other_args)
 
         return request_output
 
@@ -268,6 +268,6 @@ class SentinelHubRequest(DataRequest):
             request_bounds['geometry'] = geometry.geojson
 
         if other_args:
-            update_other_args(request_bounds, other_args)
+            _update_other_args(request_bounds, other_args)
 
         return request_bounds
