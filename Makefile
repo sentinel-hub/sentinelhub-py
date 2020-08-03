@@ -11,10 +11,12 @@ reset-config:
 	$(CONFIG) --reset
 
 upload: reset-config
+	rm -r dist
 	$(PYTHON) setup.py sdist
 	twine upload dist/*
 
 # For testing:
 test-upload: reset-config
+	rm -r dist
 	$(PYTHON) setup.py sdist
 	twine upload --repository testpypi dist/*
