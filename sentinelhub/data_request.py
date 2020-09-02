@@ -169,8 +169,8 @@ class DataRequest(ABC):
         elif isinstance(data_filter, (list, tuple)):
             try:
                 filtered_download_list = [self.download_list[index] for index in data_filter]
-            except IndexError:
-                raise IndexError('Indices of data_filter are out of range')
+            except IndexError as exception:
+                raise IndexError('Indices of data_filter are out of range') from exception
 
             filtered_download_list, mapping_list = self._filter_repeating_items(filtered_download_list)
             is_repeating_filter = len(filtered_download_list) < len(mapping_list)

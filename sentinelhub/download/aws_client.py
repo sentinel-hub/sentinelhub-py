@@ -49,9 +49,9 @@ class AwsDownloadClient(DownloadClient):
         try:
             s3_client = boto3.Session().client('s3', **key_args)
             AwsDownloadClient.GLOBAL_S3_CLIENT = s3_client
-        except KeyError:  # Sometimes creation of client fails and we use the global client if it exists
+        except KeyError as exception:  # Sometimes creation of client fails and we use the global client if it exists
             if AwsDownloadClient.GLOBAL_S3_CLIENT is None:
-                raise ValueError('Failed to create a client for download from AWS')
+                raise ValueError('Failed to create a client for download from AWS') from exception
             s3_client = AwsDownloadClient.GLOBAL_S3_CLIENT
 
         return s3_client
@@ -65,17 +65,17 @@ class AwsDownloadClient(DownloadClient):
         try:
             response = s3_client.get_object(Bucket=bucket_name, Key=url_key, RequestPayer='requester')
             return response['Body'].read()
-        except NoCredentialsError:
+        except NoCredentialsError as exception:
             raise ValueError(
                 'The requested data is in Requester Pays AWS bucket. In order to download the data please set '
                 'your access key either in AWS credentials file or in sentinelhub config.json file using '
                 'command line:\n'
                 '$ sentinelhub.config --aws_access_key_id <your AWS key> --aws_secret_access_key '
-                '<your AWS secret key>')
-        except s3_client.exceptions.NoSuchKey:
-            raise AwsDownloadFailedException('File in location %s is missing' % request.url)
-        except s3_client.exceptions.NoSuchBucket:
-            raise ValueError('Aws bucket %s does not exist' % bucket_name)
+                '<your AWS secret key>') from exception
+        except s3_client.exceptions.NoSuchKey as exception:
+            raise AwsDownloadFailedException('File in location %s is missing' % request.url) from exception
+        except s3_client.exceptions.NoSuchBucket as exception:
+            raise ValueError('Aws bucket %s does not exist' % bucket_name) from exception
 
     @staticmethod
     def is_s3_request(request):

@@ -528,8 +528,8 @@ class AwsTile(AwsService):
         """
         try:
             return parse_time(time)
-        except Exception:
-            raise ValueError('Time must be in format YYYY-MM-DD or YYYY-MM-DDTHH:MM:SS')
+        except Exception as exception:
+            raise ValueError('Time must be in format YYYY-MM-DD or YYYY-MM-DDTHH:MM:SS') from exception
 
     def get_requests(self):
         """

@@ -340,8 +340,8 @@ class MimeType(Enum):
                 'hdf5': MimeType.HDF,
                 'h5': MimeType.HDF
             }[mime_type_str]
-        except KeyError:
-            raise ValueError('Data format .{} is not supported'.format(mime_type_str))
+        except KeyError as exception:
+            raise ValueError('Data format .{} is not supported'.format(mime_type_str)) from exception
 
     @staticmethod
     def canonical_extension(fmt_ext):
@@ -427,8 +427,8 @@ class MimeType(Enum):
                 MimeType.TIFF_d16: 'INT16',
                 MimeType.TIFF_d32f: 'FLOAT32'
             }[self]
-        except KeyError:
-            raise ValueError('Type {} is not supported by this method'.format(self))
+        except KeyError as exception:
+            raise ValueError('Type {} is not supported by this method'.format(self)) from exception
 
     def get_expected_max_value(self):
         """ Returns max value of image `MimeType` format and raises an error if it is not an image format
@@ -450,8 +450,8 @@ class MimeType(Enum):
                 MimeType.JPG: 255,
                 MimeType.JP2: 10000
             }[self]
-        except KeyError:
-            raise ValueError('Type {} is not supported by this method'.format(self))
+        except KeyError as exception:
+            raise ValueError('Type {} is not supported by this method'.format(self)) from exception
 
 
 class RequestType(Enum):

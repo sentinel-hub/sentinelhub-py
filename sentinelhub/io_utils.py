@@ -64,8 +64,8 @@ def read_data(filename, data_format=None):
             MimeType.GML: read_xml,
             MimeType.SAFE: read_xml
         }[data_format](filename)
-    except KeyError:
-        raise ValueError('Reading data format .{} is not supported'.format(data_format.value))
+    except KeyError as exception:
+        raise ValueError('Reading data format .{} is not supported'.format(data_format.value)) from exception
 
 
 def read_tar(filename):
@@ -206,8 +206,8 @@ def write_data(filename, data, data_format=None, compress=False, add=False):
             MimeType.XML: write_xml,
             MimeType.GML: write_xml
         }[data_format](filename, data)
-    except KeyError:
-        raise ValueError('Writing data format .{} is not supported'.format(data_format.value))
+    except KeyError as exception:
+        raise ValueError('Writing data format .{} is not supported'.format(data_format.value)) from exception
 
 
 def write_tiff_image(filename, image, compress=False):
