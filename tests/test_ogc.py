@@ -39,7 +39,6 @@ class TestOgc(TestSentinelHub):
         wgs84_bbox_2 = BBox(bbox=(21.3, 64.0, 22.0, 64.5), crs=CRS.WGS84)
         wgs84_bbox_3 = BBox(bbox=(-72.0, -70.4, -71.8, -70.2), crs=CRS.WGS84)
         wgs84_bbox_4 = BBox(bbox=(-72.0, -66.4, -71.8, -66.2), crs=CRS.WGS84)
-        wgs84_bbox_byoc = BBox(bbox=(13.82387, 45.85221, 13.83313, 45.85901), crs=CRS.WGS84)
         pop_web_bbox = BBox(bbox=(1292344.0, 5195920.0, 1310615.0, 5214191.0), crs=CRS.POP_WEB)
         geometry_wkt_pop_web = 'POLYGON((1292344.0 5205055.5, 1301479.5 5195920.0, 1310615.0 5205055.5, ' \
                                '1301479.5 5214191.0, 1292344.0 5205055.5))'
@@ -167,14 +166,6 @@ class TestOgc(TestSentinelHub):
                                        time_difference=datetime.timedelta(hours=1)),
                             result_len=1, img_min=472, img_max=3538, img_mean=926.8818, img_median=894.0,
                             tile_num=1),
-            cls.OgcTestCase('S1 IW ASC Test',
-                            WmsRequest(data_source=DataSource.SENTINEL1_IW_ASC, data_folder=cls.OUTPUT_FOLDER,
-                                       image_format=MimeType.TIFF_d32f, layer='BANDS-S1-IW',
-                                       width=img_width, height=img_height, bbox=wgs84_bbox,
-                                       time=('2017-10-01', '2017-10-03'),
-                                       time_difference=datetime.timedelta(hours=1)),
-                            result_len=1, img_min=0.00150, img_max=MimeType.TIFF_d32f.get_expected_max_value(),
-                            img_mean=0.1135815, img_median=0.0621000, tile_num=2),
             cls.OgcTestCase('S1 EW ASC Test',
                             WmsRequest(data_source=DataSource.SENTINEL1_EW_ASC, data_folder=cls.OUTPUT_FOLDER,
                                        image_format=MimeType.TIFF_d32f, layer='BANDS-S1-EW',
@@ -183,15 +174,6 @@ class TestOgc(TestSentinelHub):
                                        time_difference=datetime.timedelta(hours=1)),
                             result_len=1, img_min=0.0003, img_max=0.2322, img_mean=0.02199, img_median=0.0102,
                             tile_num=2),
-            cls.OgcTestCase('S1 EW SH ASC Test',
-                            WmsRequest(data_source=DataSource.SENTINEL1_EW_SH_ASC,
-                                       data_folder=cls.OUTPUT_FOLDER,
-                                       image_format=MimeType.TIFF_d16, layer='BANDS-S1-EW-SH',
-                                       width=img_width, height=img_height, bbox=wgs84_bbox_3,
-                                       time=('2018-2-6', '2018-2-8'),
-                                       time_difference=datetime.timedelta(hours=1)),
-                            result_len=1, img_min=472, img_max=3538, img_mean=926.8818, img_median=894.0,
-                            tile_num=1),
             cls.OgcTestCase('S1 IW DES Test',
                             WmsRequest(data_source=DataSource.SENTINEL1_IW_DES, data_folder=cls.OUTPUT_FOLDER,
                                        image_format=MimeType.TIFF_d32f, layer='BANDS-S1-IW',
@@ -200,44 +182,16 @@ class TestOgc(TestSentinelHub):
                                        time_difference=datetime.timedelta(hours=1)),
                             result_len=1, img_min=0.0, img_max=0.07700,
                             img_mean=0.0210801, img_median=0.0132, tile_num=1),
-            cls.OgcTestCase('S1 EW DES Test',
-                            WmsRequest(data_source=DataSource.SENTINEL1_EW_DES, data_folder=cls.OUTPUT_FOLDER,
-                                       image_format=MimeType.TIFF_d32f, layer='BANDS-S1-EW',
-                                       width=img_width, height=img_height, bbox=wgs84_bbox_2,
-                                       time=('2018-2-7', '2018-2-8'),
-                                       time_difference=datetime.timedelta(hours=1)),
-                            result_len=1, img_min=0.0003, img_max=1.0, img_mean=0.53118, img_median=1.0, tile_num=1),
-            cls.OgcTestCase('S1 EW SH DES Test',
-                            WmsRequest(data_source=DataSource.SENTINEL1_EW_SH_DES,
+            cls.OgcTestCase('S3 OLCI Test',
+                            WmsRequest(data_source=DataSource.SENTINEL3_OLCI,
                                        data_folder=cls.OUTPUT_FOLDER,
-                                       image_format=MimeType.TIFF_d16, layer='BANDS-S1-EW-SH',
+                                       image_format=MimeType.TIFF, layer='TRUE-COLOR-S3-OLCI',
                                        width=img_width, height=img_height, bbox=wgs84_bbox_4,
-                                       time=('2018-2-5', '2018-2-6'),
+                                       time=('2020-2-5', '2020-2-10'),
                                        time_difference=datetime.timedelta(hours=1)),
-                            result_len=1, img_min=3975, img_max=37973, img_mean=15061.2035, img_median=14769.0,
-                            tile_num=1),
-            # cls.OgcTestCase('BYOC Test',
-            #                 WmsRequest(data_source=DataSource('31df1de4-8bd4-43e0-8c3f-b04262d111b6'),
-            #                            data_folder=cls.OUTPUT_FOLDER,
-            #                            image_format=MimeType.TIFF_d16, layer='DEMO_BYOC_LAYER',
-            #                            width=img_width, height=img_height, bbox=wgs84_bbox_byoc,
-            #                            custom_url_params={CustomUrlParam.SHOWLOGO: False}),
-            #                 result_len=1, img_min=0, img_max=65535, img_mean=17158.8938, img_median=15728.0,
-            #                 tile_num=1)
+                            result_len=11, img_min=243, img_max=255, img_mean=248.80765, img_median=248.0,
+                            tile_num=33),
         ]
-        """
-        # Test case for eocloud data source
-        cls.test_cases.extend([
-            cls.OgcTestCase('EOCloud S1 IW Test',
-                            WmsRequest(data_source=DataSource.SENTINEL1_IW, data_folder=cls.OUTPUT_FOLDER,
-                                       image_format=MimeType.TIFF_d32f, layer='BANDS_S1_IW',
-                                       width=img_width, height=img_height, bbox=wgs84_bbox,
-                                       time=('2017-10-01', '2017-10-02'),
-                                       time_difference=datetime.timedelta(hours=1)),
-                            result_len=1, img_min=0.0, img_max=0.49706, img_mean=0.04082, img_median=0.00607,
-                            tile_num=2),
-        ])
-        """
 
         for test_case in cls.test_cases:
             test_case.collect_data()
