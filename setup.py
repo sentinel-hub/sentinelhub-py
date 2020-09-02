@@ -1,6 +1,7 @@
 import io
 import os
 from setuptools import setup, find_packages
+from sys import version_info
 
 
 def parse_requirements(file):
@@ -10,6 +11,17 @@ def parse_requirements(file):
             if '/' not in line:
                 required_packages.append(line.strip())
     return required_packages
+
+
+def get_main_requirements():
+    """ Collects requirements from a file and adds additional requirement for Python 3.6
+    """
+    requirements = parse_requirements('requirements.txt')
+
+    if version_info.major == 3 and version_info.minor == 6:
+        requirements.append('dataclasses')
+
+    return requirements
 
 
 def get_version():
@@ -69,7 +81,7 @@ setup(
     packages=find_packages(),
     package_data={'sentinelhub': ['sentinelhub/config.json', 'sentinelhub/.utmzones.geojson']},
     include_package_data=True,
-    install_requires=parse_requirements('requirements.txt'),
+    install_requires=get_main_requirements(),
     extras_require={
         'DEV': parse_requirements('requirements-dev.txt'),
         'DOCS': parse_requirements('requirements-docs.txt')
