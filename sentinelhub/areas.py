@@ -13,7 +13,8 @@ import shapely.geometry
 from shapely.geometry import Polygon, MultiPolygon, GeometryCollection
 
 from .config import SHConfig
-from .constants import CRS, DataSource
+from .constants import CRS
+from .data_sources import DataSource
 from .geometry import BBox, BBoxCollection, BaseGeometry, Geometry
 from .geo_utils import transform_point
 from .ogc import WebFeatureService
@@ -358,7 +359,7 @@ class TileSplitter(AreaSplitter):
                              as `(n, n)`.
     :type split_shape: int or (int, int)
     :param data_source: Source of requested satellite data. Default is Sentinel-2 L1C data.
-    :type data_source: sentinelhub.constants.DataSource
+    :type data_source: DataSource
     :param config: A custom instance of config class to override parameters from the saved configuration.
     :type config: SHConfig or None
     :param reduce_bbox_sizes: If `True` it will reduce the sizes of bounding boxes so that they will tightly fit the

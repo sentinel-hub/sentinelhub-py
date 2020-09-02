@@ -5,7 +5,7 @@ Module that implements command line interface for the package
 import click
 
 from .config import SHConfig
-from .constants import DataSource
+from .data_sources import DataSource
 from .data_request import get_safe_format, download_safe_format
 from .download import DownloadRequest, DownloadClient
 

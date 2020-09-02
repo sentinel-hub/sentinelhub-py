@@ -5,7 +5,8 @@ Module for creating .SAFE structure with data from AWS
 import warnings
 
 from .aws import AwsProduct, AwsTile
-from .constants import AwsConstants, EsaSafeType, MimeType, DataSource
+from .constants import AwsConstants, EsaSafeType, MimeType
+from .data_sources import DataSource
 from .download.aws_client import get_aws_xml
 from .exceptions import SHRuntimeWarning
 

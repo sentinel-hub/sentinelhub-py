@@ -3,7 +3,8 @@
 Documentation: https://docs.sentinel-hub.com/api/latest/reference/
 """
 
-from .constants import MimeType, DataSource, RequestType
+from .constants import MimeType, RequestType
+from .data_sources import DataSource
 from .download import DownloadRequest, SentinelHubDownloadClient
 from .data_request import DataRequest
 from .geometry import Geometry, BBox
@@ -120,19 +121,14 @@ class SentinelHubRequest(DataRequest):
             msg = "{} is not a valid mosaickingOrder parameter, it should be one of: {}"
             raise ValueError(msg.format(mosaicking_order, mosaic_order_params))
 
-        data_type = 'CUSTOM' if data_source.is_custom() else data_source.api_identifier()
-
         input_data_object = {
-            "type": data_type,
+            "type": data_source.api_id,
             "dataFilter": {
                 "timeRange": {"from": date_from, "to": date_to},
                 "maxCloudCoverage": int(maxcc * 100),
                 "mosaickingOrder": mosaicking_order,
             }
         }
-
-        if data_type == 'CUSTOM':
-            input_data_object['dataFilter']['collectionId'] = data_source.value
 
         if other_args:
             _update_other_args(input_data_object, other_args)

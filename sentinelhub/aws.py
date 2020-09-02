@@ -8,7 +8,8 @@ import warnings
 from abc import ABC, abstractmethod
 
 from .config import SHConfig
-from .constants import AwsConstants, EsaSafeType, MimeType, DataSource
+from .constants import AwsConstants, EsaSafeType, MimeType
+from .data_sources import DataSource
 from .download import DownloadRequest
 from .download.aws_client import get_aws_json
 from .exceptions import AwsDownloadFailedException, SHUserWarning
@@ -467,7 +468,7 @@ class AwsTile(AwsService):
         :type aws_index: int or None
         :param data_source: Source of requested AWS data. Supported sources are Sentinel-2 L1C and Sentinel-2 L2A,
             default is Sentinel-2 L1C data.
-        :type data_source: constants.DataSource
+        :type data_source: DataSource
         :param parent_folder: folder where the fetched data will be saved.
         :type parent_folder: str
         :param bands: List of Sentinel-2 bands for request. If parameter is set to `None` all bands will be used.

@@ -18,7 +18,8 @@ from .aws_safe import SafeProduct, SafeTile
 from .download import DownloadRequest, DownloadClient, AwsDownloadClient, SentinelHubDownloadClient
 from .exceptions import SHDeprecationWarning
 from .os_utils import make_folder
-from .constants import DataSource, MimeType, CustomUrlParam, ServiceType, CRS, HistogramType
+from .constants import MimeType, CustomUrlParam, ServiceType, CRS, HistogramType
+from .data_sources import DataSource
 
 LOGGER = logging.getLogger(__name__)
 
@@ -261,7 +262,7 @@ class OgcRequest(DataRequest):
         :type service_type: constants.ServiceType
         :param data_source: Source of requested satellite data. It has to be the same as defined in Sentinel Hub
             Configurator for the given layer. Default is Sentinel-2 L1C.
-        :type data_source: constants.DataSource
+        :type data_source: DataSource
         :param size_x: number of pixels in x or resolution in x (i.e. ``512`` or ``10m``)
         :type size_x: int or str
         :param size_y: number of pixels in x or resolution in y (i.e. ``512`` or ``10m``)
@@ -400,7 +401,7 @@ class WmsRequest(OgcRequest):
             (datetime.datetime, datetime.datetime)
         :param data_source: Source of requested satellite data. It has to be the same as defined in Sentinel Hub
             Configurator for the given layer. Default is Sentinel-2 L1C.
-        :type data_source: constants.DataSource
+        :type data_source: DataSource
         :param size_x: number of pixels in x or resolution in x (i.e. ``512`` or ``10m``)
         :type size_x: int or str
         :param size_y: number of pixels in x or resolution in y (i.e. ``512`` or ``10m``)
@@ -469,7 +470,7 @@ class WcsRequest(OgcRequest):
             (datetime.datetime, datetime.datetime)
         :param data_source: Source of requested satellite data. It has to be the same as defined in Sentinel Hub
             Configurator for the given layer. Default is Sentinel-2 L1C.
-        :type data_source: constants.DataSource
+        :type data_source: DataSource
         :param size_x: number of pixels in x or resolution in x (i.e. ``512`` or ``10m``)
         :type size_x: int or str
         :param size_y: number of pixels in x or resolution in y (i.e. ``512`` or ``10m``)
@@ -539,7 +540,7 @@ class FisRequest(OgcRequest):
         :type histogram_type: HistogramType
         :param data_source: Source of requested satellite data. It has to be the same as defined in Sentinel Hub
             Configurator for the given layer. Default is Sentinel-2 L1C.
-        :type data_source: constants.DataSource
+        :type data_source: DataSource
         :param maxcc: maximum accepted cloud coverage of an image. Float between 0.0 and 1.0. Default is ``1.0``.
         :type maxcc: float
         :param custom_url_params: Dictionary of CustomUrlParameters and their values supported by Sentinel Hub's WMS
@@ -844,7 +845,7 @@ class AwsTileRequest(AwsRequest):
         :type aws_index: int or None
         :param data_source: Source of requested AWS data. Supported sources are Sentinel-2 L1C and Sentinel-2 L2A,
             default is Sentinel-2 L1C data.
-        :type data_source: constants.DataSource
+        :type data_source: DataSource
         :param bands: List of Sentinel-2 bands for request. If `None` all bands will be obtained
         :type bands: list(str) or None
         :param metafiles: list of additional metafiles available on AWS
@@ -891,7 +892,7 @@ def get_safe_format(product_id=None, tile=None, entire_product=False, bands=None
     :type bands: list(str) or None
     :param data_source: In case of tile request the source of satellite data has to be specified. Default is Sentinel-2
                         L1C data.
-    :type data_source: constants.DataSource
+    :type data_source: DataSource
     :return: Nested dictionaries representing .SAFE structure.
     :rtype: dict
     """
@@ -929,7 +930,7 @@ def download_safe_format(product_id=None, tile=None, folder='.', redownload=Fals
     :type bands: list(str) or None
     :param data_source: In case of tile request the source of satellite data has to be specified. Default is Sentinel-2
                         L1C data.
-    :type data_source: constants.DataSource
+    :type data_source: DataSource
     :return: Nested dictionaries representing .SAFE structure.
     :rtype: dict
     """

@@ -1,7 +1,6 @@
 """
 Module defining constants and enumerate types used in the package
 """
-import re
 import functools
 import itertools as it
 import mimetypes
@@ -12,7 +11,6 @@ import utm
 import pyproj
 from aenum import extend_enum
 
-from .config import SHConfig
 from .exceptions import SHDeprecationWarning
 from ._version import __version__
 
@@ -30,6 +28,16 @@ class PackageProps:
         return __version__
 
 
+class ServiceUrl:
+    """ Most commonly used Sentinel Hub service URLs
+    """
+    MAIN = 'https://services.sentinel-hub.com'
+    USWEST = 'https://services-uswest2.sentinel-hub.com'
+    CREODIAS = 'https://creodias.sentinel-hub.com'
+    EOCLOUD = 'http://services.eocloud.sentinel-hub.com'
+    MUNDI = 'https://shservices.mundiwebservices.com'
+
+
 class ServiceType(Enum):
     """ Enum constant class for type of service
 
@@ -42,324 +50,6 @@ class ServiceType(Enum):
     IMAGE = 'image'
     FIS = 'fis'
     PROCESSING_API = 'processing'
-
-
-class _Source(Enum):
-    """
-    Types of satellite sources
-    """
-    SENTINEL2 = 'Sentinel-2'
-    SENTINEL1 = 'Sentinel-1'
-    LANDSAT8 = 'Landsat 8'
-    MODIS = 'MODIS'
-    DEM = 'Mapzen DEM'
-    LANDSAT5 = 'Landsat 5'
-    LANDSAT7 = 'Landsat 7'
-    SENTINEL3 = 'Sentinel-3'
-    SENTINEL5P = 'Sentinel-5P'
-    ENVISAT_MERIS = 'Envisat Meris'
-
-
-class _ProcessingLevel(Enum):
-    """
-    Types of processing level
-    """
-    # pylint: disable=invalid-name
-    L2 = 'L2'
-    L1C = 'L1C'
-    L2A = 'L2A'
-    L3B = 'L3B'
-    L1TP = 'L1TP'
-    GRD = 'GRD'
-    MCD43A4 = 'MCD43A4'
-
-
-class _Acquisition(Enum):
-    """
-    Types of satellite acquisition
-    """
-    # pylint: disable=invalid-name
-    IW = 'IW'
-    EW = 'EW'
-    OLCI = 'OLCI'
-
-
-class _Polarisation(Enum):
-    """
-    Types of Sentinel-1 polarisation
-    """
-    # pylint: disable=invalid-name
-    DV = 'VV+VH'
-    DH = 'HH+HV'
-    SV = 'VV'
-    SH = 'HH'
-
-
-class _Resolution(Enum):
-    """
-    Types of Sentinel-1 resolution
-    """
-    MEDIUM = 'medium'
-    HIGH = 'high'
-
-
-class _OrbitDirection(Enum):
-    """
-    Types of Sentinel-1 orbit direction
-    """
-    ASCENDING = 'ascending'
-    DESCENDING = 'descending'
-    BOTH = 'both'
-
-
-class DataSourceMeta(EnumMeta):
-    """
-    Meta class used to add custom (BYOC) datasources to DataSource enumerator.
-
-    BYOC stands for Bring Your Own Data. For more details see: https://docs.sentinel-hub.com/api/latest/#/API/byoc
-    """
-    def __call__(cls, collection_id, *args, **kwargs):
-        """
-        This is executed whenever DataSource('something') is called.
-
-        The method raises a ValueError if the 'something' does not match the format expected for collection id.
-        """
-        # pylint: disable=signature-differs
-        if not isinstance(collection_id, str):
-            return super().__call__(collection_id, *args, **kwargs)
-
-        collection_id_pattern = '.{8}-.{4}-.{4}-.{4}-.{12}'
-        if not re.compile(collection_id_pattern).match(collection_id):
-            raise ValueError("Given collection id does not match the expected format {}".format(collection_id_pattern))
-
-        datasource_name = cls._custom_datasource_name(collection_id)
-        if datasource_name not in cls._member_names_:
-            extend_enum(cls, datasource_name, collection_id)
-
-        return super().__call__(collection_id, *args, **kwargs)
-
-    @staticmethod
-    def _custom_datasource_name(collection_id):
-        """
-        Prepares a name for custom (BYOC) datasource, which is then added to DataSource enum.
-
-        :param: collection_id: Collection id of the BYOC, user's input.
-        :type: string
-        :return: Name for custom (BYOC) datasource.
-        :rtype: string
-        """
-        return 'BYOC_{}'.format(collection_id)
-
-
-class DataSource(Enum, metaclass=DataSourceMeta):
-    """ Enum constant class for types of satellite data
-
-    Supported types are SENTINEL2_L1C, SENTINEL2_L2A, LANDSAT8, SENTINEL1_IW, SENTINEL1_EW, SENTINEL1_EW_SH,
-    SENTINEL1_IW_ASC, SENTINEL1_EW_ASC, SENTINEL1_EW_SH_ASC, SENTINEL1_IW_DES, SENTINEL1_EW_DES, SENTINEL1_EW_SH_DES,
-    DEM, MODIS, LANDSAT5, LANDSAT7, SENTINEL3, SENTINEL5P, ENVISAT_MERIS, SENTINEL2_L3B, LANDSAT8_L2A
-    """
-    SENTINEL2_L1C = (_Source.SENTINEL2, _ProcessingLevel.L1C)
-    SENTINEL2_L2A = (_Source.SENTINEL2, _ProcessingLevel.L2A)
-    SENTINEL1_IW = (_Source.SENTINEL1, _ProcessingLevel.GRD, _Acquisition.IW, _Polarisation.DV, _Resolution.HIGH,
-                    _OrbitDirection.BOTH)
-    SENTINEL1_EW = (_Source.SENTINEL1, _ProcessingLevel.GRD, _Acquisition.EW, _Polarisation.DH, _Resolution.MEDIUM,
-                    _OrbitDirection.BOTH)
-    SENTINEL1_EW_SH = (_Source.SENTINEL1, _ProcessingLevel.GRD, _Acquisition.EW, _Polarisation.SH, _Resolution.MEDIUM,
-                       _OrbitDirection.BOTH)
-    SENTINEL1_IW_ASC = (_Source.SENTINEL1, _ProcessingLevel.GRD, _Acquisition.IW, _Polarisation.DV, _Resolution.HIGH,
-                        _OrbitDirection.ASCENDING)
-    SENTINEL1_EW_ASC = (_Source.SENTINEL1, _ProcessingLevel.GRD, _Acquisition.EW, _Polarisation.DH, _Resolution.MEDIUM,
-                        _OrbitDirection.ASCENDING)
-    SENTINEL1_EW_SH_ASC = (_Source.SENTINEL1, _ProcessingLevel.GRD, _Acquisition.EW, _Polarisation.SH,
-                           _Resolution.MEDIUM, _OrbitDirection.ASCENDING)
-    SENTINEL1_IW_DES = (_Source.SENTINEL1, _ProcessingLevel.GRD, _Acquisition.IW, _Polarisation.DV, _Resolution.HIGH,
-                        _OrbitDirection.DESCENDING)
-    SENTINEL1_EW_DES = (_Source.SENTINEL1, _ProcessingLevel.GRD, _Acquisition.EW, _Polarisation.DH, _Resolution.MEDIUM,
-                        _OrbitDirection.DESCENDING)
-    SENTINEL1_EW_SH_DES = (_Source.SENTINEL1, _ProcessingLevel.GRD, _Acquisition.EW, _Polarisation.SH,
-                           _Resolution.MEDIUM, _OrbitDirection.DESCENDING)
-    DEM = (_Source.DEM, )
-    MODIS = (_Source.MODIS, _ProcessingLevel.MCD43A4)
-    LANDSAT8 = (_Source.LANDSAT8, _ProcessingLevel.L1TP)
-    #: custom BYOC enum members are defined in DataSourceMeta
-    # eocloud sources:
-    LANDSAT5 = (_Source.LANDSAT5, _ProcessingLevel.GRD)
-    LANDSAT7 = (_Source.LANDSAT7, _ProcessingLevel.GRD)
-    SENTINEL3 = (_Source.SENTINEL3, _ProcessingLevel.L2, _Acquisition.OLCI)
-    SENTINEL5P = (_Source.SENTINEL5P, _ProcessingLevel.L2)
-    ENVISAT_MERIS = (_Source.ENVISAT_MERIS, )
-    SENTINEL2_L3B = (_Source.SENTINEL2, _ProcessingLevel.L3B)
-    LANDSAT8_L2A = (_Source.LANDSAT8, _ProcessingLevel.L2A)
-    LANDSAT8_L1C = (_Source.LANDSAT8, _ProcessingLevel.L1C)
-
-    @classmethod
-    def get_wfs_typename(cls, data_source, config=None):
-        """ Maps data source to string identifier for WFS
-
-        :param data_source: One of the supported data sources
-        :type data_source: DataSource
-        :param config: A custom instance of config class to override parameters from the saved configuration.
-        :type config: SHConfig or None
-        :return: Product identifier for WFS
-        :rtype: str
-        """
-        config = config or SHConfig()
-        is_eocloud = config.has_eocloud_url()
-
-        if data_source.is_custom():
-            return 'DSS10-{}'.format(data_source.value)
-
-        return {
-            cls.SENTINEL2_L1C: 'S2.TILE',
-            cls.SENTINEL2_L2A: 'SEN4CAP_S2L2A.TILE' if is_eocloud else 'DSS2',
-            cls.SENTINEL1_IW: 'S1.TILE' if is_eocloud else 'DSS3',
-            cls.SENTINEL1_EW: 'S1_EW.TILE' if is_eocloud else 'DSS3',
-            cls.SENTINEL1_EW_SH: 'S1_EW_SH.TILE' if is_eocloud else 'DSS3',
-            cls.SENTINEL1_IW_ASC: 'S1.TILE' if is_eocloud else 'DSS3',
-            cls.SENTINEL1_EW_ASC: 'S1_EW.TILE' if is_eocloud else 'DSS3',
-            cls.SENTINEL1_EW_SH_ASC: 'S1_EW_SH.TILE' if is_eocloud else 'DSS3',
-            cls.SENTINEL1_IW_DES: 'S1.TILE' if is_eocloud else 'DSS3',
-            cls.SENTINEL1_EW_DES: 'S1_EW.TILE' if is_eocloud else 'DSS3',
-            cls.SENTINEL1_EW_SH_DES: 'S1_EW_SH.TILE' if is_eocloud else 'DSS3',
-            cls.DEM: 'DSS4',
-            cls.MODIS: 'DSS5',
-            cls.LANDSAT8: 'L8.TILE' if is_eocloud else 'DSS6',
-            # eocloud sources only:
-            cls.LANDSAT5: 'L5.TILE',
-            cls.LANDSAT7: 'L7.TILE',
-            cls.SENTINEL3: 'S3.TILE',
-            cls.SENTINEL5P: 'S5p_L2.TILE' if is_eocloud else 'DSS7',
-            cls.ENVISAT_MERIS: 'ENV.TILE',
-            cls.SENTINEL2_L3B: 'SEN4CAP_S2L3B.TILE',
-            cls.LANDSAT8_L2A: 'SEN4CAP_L8L2A.TILE'
-        }[data_source]
-
-    def api_identifier(self):
-        """ Returns Sentinel Hub API identifier string
-
-        :return: A data source identifier string
-        :rtype: str
-        """
-        return {
-            DataSource.SENTINEL2_L1C: 'S2L1C',
-            DataSource.SENTINEL2_L2A: 'S2L2A',
-            DataSource.LANDSAT8_L1C: 'L8L1C',
-            DataSource.DEM: 'DEM',
-            DataSource.MODIS: 'MODIS'
-        }[self]
-
-    def bands(self):
-        """ Get available bands for a particular data source
-        """
-        return {
-            DataSource.SENTINEL2_L1C: [
-                "B01", "B02", "B03", "B04", "B05", "B06", "B07", "B08", "B8A", "B09", "B10", "B11", "B12"
-            ],
-            DataSource.SENTINEL2_L2A: [
-                "B01", "B02", "B03", "B04", "B05", "B06", "B07", "B08", "B8A", "B09", "B11", "B12"
-            ],
-            DataSource.LANDSAT8_L1C: [
-                "B01", "B02", "B03", "B04", "B05", "B06", "B07", "B08", "B09", "B10", "B11"
-            ],
-            DataSource.DEM: [
-                "DEM"
-            ],
-            DataSource.MODIS: [
-                "B01", "B02", "B03", "B04", "B05", "B06", "B07"
-            ]
-        }[self]
-
-    def is_sentinel1(self):
-        """Checks if source is Sentinel-1
-
-        Example: ``DataSource.SENTINEL1_IW.is_sentinel1()`` or ``DataSource.is_sentinel1(DataSource.SENTINEL1_IW)``
-
-        :param self: One of the supported data sources
-        :type self: DataSource
-        :return: `True` if source is Sentinel-1 and `False` otherwise
-        :rtype: bool
-        """
-        return self.value[0] is _Source.SENTINEL1
-
-    def contains_orbit_direction(self, orbit_direction):
-        """Checks if Sentine-1 data source contains given orbit direction.
-        Note: Data sources with "both" orbit directions contain ascending and descending orbit directions.
-
-        :param self: One of the supported Sentinel-1 data sources
-        :type self: DataSource
-        :param orbit_direction: One of the orbit directions
-        :type orbit_direction: string
-        :return: `True` if data source contains the orbit direction
-        :return: bool
-        """
-        if not self.is_sentinel1():
-            raise ValueError("Orbit direction can only be checked for Sentinel-1 data source.")
-        return self.value[5].name.upper() in [orbit_direction.upper(), _OrbitDirection.BOTH.value.upper()]
-
-    def is_timeless(self):
-        """Checks if data source is time independent
-
-        Example: ``DataSource.DEM.is_timeless()`` or ``DataSource.is_timeless(DataSource.DEM)``
-
-        :param self: One of the supported data sources
-        :type self: DataSource
-        :return: `True` if data source is time independent and `False` otherwise
-        :rtype: bool
-        """
-        return self.value[0] is _Source.DEM
-
-    def is_uswest_source(self, config=None):
-        """Checks if data source via Sentinel Hub services is available at US West server
-
-        Example: ``DataSource.LANDSAT8.is_uswest_source()`` or ``DataSource.is_uswest_source(DataSource.LANDSAT8)``
-
-        :param self: One of the supported data sources
-        :type self: DataSource
-        :param config: A custom instance of config class to override parameters from the saved configuration.
-        :type config: SHConfig or None
-        :return: `True` if data source exists at US West server and `False` otherwise
-        :rtype: bool
-        """
-        config = config or SHConfig()
-        return not config.has_eocloud_url() and self.value[0] in [_Source.LANDSAT8, _Source.MODIS, _Source.DEM]
-
-    @classmethod
-    def get_available_sources(cls, config=None):
-        """ Returns which data sources are available for configured Sentinel Hub OGC URL
-
-        :param config: A custom instance of config class to override parameters from the saved configuration.
-        :type config: SHConfig or None
-        :return: List of available data sources
-        :rtype: list(sentinelhub.DataSource)
-        """
-        config = config or SHConfig()
-
-        if config.has_eocloud_url():
-            return [cls.SENTINEL2_L1C, cls.SENTINEL2_L2A, cls.SENTINEL2_L3B, cls.SENTINEL1_IW, cls.SENTINEL1_EW,
-                    cls.SENTINEL1_EW_SH, cls.SENTINEL3, cls.SENTINEL5P, cls.LANDSAT5, cls.LANDSAT7, cls.LANDSAT8,
-                    cls.LANDSAT8_L2A, cls.ENVISAT_MERIS]
-
-        return [cls.SENTINEL2_L1C, cls.SENTINEL2_L2A, cls.SENTINEL1_IW, cls.SENTINEL1_EW, cls.SENTINEL1_EW_SH,
-                cls.SENTINEL1_IW_ASC, cls.SENTINEL1_EW_ASC, cls.SENTINEL1_EW_SH_ASC, cls.SENTINEL1_IW_DES,
-                cls.SENTINEL1_EW_DES, cls.SENTINEL1_EW_SH_DES, cls.DEM, cls.MODIS, cls.LANDSAT8,
-                cls.SENTINEL5P, *cls.get_custom_sources()]
-
-    @classmethod
-    def get_custom_sources(cls):
-        """Returns the list of all custom (BYOC) datasources, which have ben added to the DataSource enumerator.
-
-        :return: List of custom (BYOC) datasources
-        :rtype: list(sentinelhub.DataSource)
-        """
-        return [datasource for datasource in cls if datasource.is_custom()]
-
-    def is_custom(self):
-        """ Checks is if datasource is a custom Sentinel Hub BYOC data source
-
-        :return: True if datasource is custom and False otherwise
-        :rtype: bool
-        """
-        return self.name.startswith('BYOC_')
 
 
 class CRSMeta(EnumMeta):

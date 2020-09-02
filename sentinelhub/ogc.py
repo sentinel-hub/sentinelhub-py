@@ -8,8 +8,9 @@ from urllib.parse import urlencode
 
 import shapely.geometry
 
-from .constants import ServiceType, DataSource, MimeType, CRS, SHConstants, CustomUrlParam
+from .constants import ServiceType, MimeType, CRS, SHConstants, CustomUrlParam
 from .config import SHConfig
+from .data_sources import DataSource
 from .geo_utils import get_image_dimension
 from .geometry import BBox, Geometry
 from .download import DownloadRequest, get_json
@@ -33,24 +34,6 @@ class OgcService:
             raise ValueError('Instance ID is not set. '
                              'Set it either in request initialization or in configuration file. '
                              'Check http://sentinelhub-py.readthedocs.io/en/latest/configure.html for more info.')
-
-    @staticmethod
-    def _sentinel1_product_check(product_id, data_source):
-        """ Checks if Sentinel-1 product ID matches Sentinel-1 DataSource configuration
-
-        :param product_id: Sentinel-1 product ID
-        :type product_id: str
-        :param data_source: One of the supported Sentinel-1 data sources
-        :type data_source: constants.DataSource
-        :return: `True` if data_source contains product_id and `False` otherwise
-        :rtype: bool
-        """
-        props = product_id.split('_')
-        acquisition, resolution, polarisation = props[1], props[2][3], props[3][2:4]
-        if acquisition in ['IW', 'EW'] and resolution in ['M', 'H'] and polarisation in ['DV', 'DH', 'SV', 'SH']:
-            return acquisition == data_source.value[2].name and polarisation == data_source.value[3].name and \
-                   resolution == data_source.value[4].name[0]
-        raise ValueError('Unknown Sentinel-1 tile type: {}'.format(product_id))
 
 
 class OgcImageService(OgcService):
@@ -124,15 +107,10 @@ class OgcImageService(OgcService):
         :rtype: str
         """
         url = '{}/{}'.format(self._base_url, request.service_type.value)
-        # These 2 lines are temporal and will be removed after the use of uswest url wont be required anymore:
-        if hasattr(request, 'data_source') and request.data_source.is_uswest_source(config=self.config):
-            url = 'https://services-uswest2.sentinel-hub.com/ogc/{}'.format(request.service_type.value)
 
-        if hasattr(request, 'data_source') and \
-                request.data_source not in DataSource.get_available_sources(config=self.config):
-            raise ValueError("{} is not available for service at service available at {}. Try"
-                             "changing 'sh_base_url' parameter in package configuration "
-                             "file".format(request.data_source, SHConfig().get_sh_ogc_url()))
+        if hasattr(request, 'data_source') and request.data_source.service_url:
+            url = url.replace(self.config.sh_base_url, request.data_source.service_url)
+
         return url
 
     @staticmethod
@@ -299,7 +277,7 @@ class OgcImageService(OgcService):
         :return: List of dates of existing acquisitions for the given request
         :rtype: list(datetime.datetime) or [None]
         """
-        if DataSource.is_timeless(request.data_source):
+        if request.data_source.is_timeless:
             return [None]
 
         if request.wfs_iterator is None:
@@ -360,7 +338,7 @@ class WebFeatureService(OgcService):
         :param time_interval: interval with start and end date of the form YYYY-MM-DDThh:mm:ss or YYYY-MM-DD
         :type time_interval: (str, str)
         :param data_source: Source of requested satellite data. Default is Sentinel-2 L1C data.
-        :type data_source: constants.DataSource
+        :type data_source: DataSource
         :param maxcc: Maximum accepted cloud coverage of an image. Float between 0.0 and 1.0. Default is 1.0.
         :type maxcc: float
         :param config: A custom instance of config class to override parameters from the saved configuration.
@@ -415,7 +393,7 @@ class WebFeatureService(OgcService):
             'SERVICE': ServiceType.WFS.value,
             'WARNINGS': False,
             'REQUEST': 'GetFeature',
-            'TYPENAMES': DataSource.get_wfs_typename(self.data_source, config=self.config),
+            'TYPENAMES': self.data_source.wfs_id,
             'BBOX': str(self.bbox.reverse()) if self.bbox.crs is CRS.WGS84 else str(self.bbox),
             'OUTPUTFORMAT': MimeType.get_string(MimeType.JSON),
             'SRSNAME': CRS.ogc_string(self.bbox.crs),
@@ -430,16 +408,12 @@ class WebFeatureService(OgcService):
         LOGGER.debug("URL=%s", url)
         response = get_json(url)
 
-        is_sentinel1 = self.data_source.is_sentinel1()
-        for tile_info in response["features"]:
-            if is_sentinel1:
-                if self._sentinel1_product_check(tile_info['properties']['id'], self.data_source) and \
-                        self.data_source.contains_orbit_direction(tile_info['properties']['orbitDirection']):
-                    self.tile_list.append(tile_info)
-            else:
+        is_sentinel1 = self.data_source.is_sentinel1
+        for tile_info in response['features']:
+            if not is_sentinel1 or self._sentinel1_product_check(tile_info):
                 self.tile_list.append(tile_info)
 
-        if len(response["features"]) < self.max_features_per_request or self.latest_time_only:
+        if len(response['features']) < self.max_features_per_request or self.latest_time_only:
             self.feature_offset = None
         else:
             self.feature_offset += self.max_features_per_request
@@ -490,3 +464,19 @@ class WebFeatureService(OgcService):
         """
         props = tile_url.rsplit('/', 7)
         return ''.join(props[1:4]), '-'.join(props[4:7]), int(props[7])
+
+    def _sentinel1_product_check(self, tile_info):
+        """ Checks if Sentinel-1 tile info match the data source definition
+        """
+        product_id = tile_info['properties']['id']
+        props = product_id.split('_')
+        sensor_type, resolution, polarisation = props[1], props[2][3], props[3][2:4]
+        orbit_direction = tile_info['properties'].get('orbitDirection', '')
+
+        if not (sensor_type in ['IW', 'EW'] and resolution in ['M', 'H'] and polarisation in ['DV', 'DH', 'SV', 'SH']):
+            raise ValueError(f'Unknown Sentinel-1 tile type: {product_id}')
+
+        return (sensor_type == self.data_source.sensor_type or self.data_source.sensor_type is None) \
+            and (polarisation == self.data_source.polarisation or self.data_source.polarisation is None) \
+            and (resolution == self.data_source.resolution or self.data_source.resolution is None) \
+            and self.data_source.contains_orbit_direction(orbit_direction)
