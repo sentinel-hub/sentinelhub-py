@@ -410,7 +410,6 @@ class TestSentinelHubRequest(TestSentinelHub):
             size=(512, 856)
         )
 
-
         bad_credentials_config = SHConfig()
         bad_credentials_config.sh_client_secret = 'test-wrong-credentials'
 
