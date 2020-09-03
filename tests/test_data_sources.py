@@ -45,16 +45,19 @@ class TestDataSource(TestSentinelHub):
         self.assertTrue(DataSource.is_defined(datasource.value))
 
     def test_define_from(self):
+        bands = ['B01', 'XYZ']
         for _ in range(3):
             datasource = DataSource.define_from(
                 DataSource.SENTINEL5P,
                 'NEW_5P',
                 api_id='X',
+                bands=bands
             )
 
         self.assertEqual(datasource, DataSource.NEW_5P)
         self.assertEqual(datasource.api_id, 'X')
-        self.assertEqual(datasource.bands, DataSource.SENTINEL5P.bands)
+        self.assertEqual(datasource.wfs_id, DataSource.SENTINEL5P.wfs_id)
+        self.assertEqual(datasource.bands, tuple(bands))
 
     def test_define_byoc_and_batch(self):
         byoc_id = '0000d273-7e89-4f00-971e-9024f89a0000'

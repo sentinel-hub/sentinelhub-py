@@ -138,6 +138,12 @@ class DataSourceDefinition:
     collection_id: str = None
     is_timeless: bool = False
 
+    def __post_init__(self):
+        """ In case a list of bands has been given this makes sure to cast it into a tuple
+        """
+        if isinstance(self.bands, list):
+            object.__setattr__(self, 'bands', tuple(self.bands))
+
     def __repr__(self):
         """ A nicer representation of parameters that define a data source
         """

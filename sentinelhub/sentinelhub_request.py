@@ -27,7 +27,7 @@ class SentinelHubRequest(DataRequest):
     """ Sentinel Hub API request class
     """
     def __init__(self, evalscript, input_data, responses, bbox=None, geometry=None, size=None, resolution=None,
-                 **kwargs):
+                 base_url=None, **kwargs):
         """
         For details of certain parameters check the
         `Processing API reference <https://docs.sentinel-hub.com/api/latest/reference/#operation/process>`_.
@@ -48,12 +48,14 @@ class SentinelHubRequest(DataRequest):
         :type size: Tuple[int, int]
         :param resolution: Resolution of the image. It has to be in units compatible with the given CRS.
         :type resolution: Tuple[float, float]
+        :param base_url: A base URL of Sentinel Hub service deployment from where to download data. This overrides a
+            default `config.sh_base_url` which is then only used for authentication
+        :type base_url: str or None
         :param data_folder: location of the directory where the fetched data will be saved.
         :type data_folder: str
         :param config: A custom instance of config class to override parameters from the saved configuration.
         :type config: SHConfig or None
         """
-
         if size is None and resolution is None:
             raise ValueError("Either size or resolution argument should be given")
 
@@ -61,6 +63,7 @@ class SentinelHubRequest(DataRequest):
             raise ValueError("'evalscript' should be a string")
 
         self.mime_type = MimeType.TAR if len(responses) > 1 else MimeType(responses[0]['format']['type'].split('/')[1])
+        self.base_url = base_url.rstrip('/') if base_url else None
 
         self.payload = self.body(
             request_bounds=self.bounds(bbox=bbox, geometry=geometry),
@@ -76,9 +79,12 @@ class SentinelHubRequest(DataRequest):
         """
         headers = {'content-type': MimeType.JSON.get_string(), "accept": self.mime_type.get_string()}
 
+        base_url = self.base_url or self.config.sh_base_url
+        url = f'{base_url}/api/v1/process'
+
         self.download_list = [DownloadRequest(
             request_type=RequestType.POST,
-            url=self.config.get_sh_processing_api_url(),
+            url=url,
             post_values=self.payload,
             data_folder=self.data_folder,
             save_response=bool(self.data_folder),
@@ -88,7 +94,7 @@ class SentinelHubRequest(DataRequest):
         )]
 
     @staticmethod
-    def input_data(data_source=None, time_interval=None, maxcc=1.0, mosaicking_order='mostRecent', other_args=None):
+    def input_data(data_source=None, time_interval=None, maxcc=None, mosaicking_order=None, other_args=None):
         """ Generate the `input` part of the Processing API request body
 
         :param data_source: One of supported ProcessingAPI data sources.
@@ -96,37 +102,41 @@ class SentinelHubRequest(DataRequest):
         :param time_interval: interval with start and end date of the form YYYY-MM-DDThh:mm:ss or YYYY-MM-DD
         :type time_interval: (str, str) or (datetime, datetime)
         :param maxcc: Maximum accepted cloud coverage of an image. Float between 0.0 and 1.0. Default is 1.0.
-        :type maxcc: float
+        :type maxcc: float or None
         :param mosaicking_order: Mosaicking order, which has to be either 'mostRecent', 'leastRecent' or 'leastCC'.
-        :type mosaicking_order: str
+        :type mosaicking_order: str or None
         :param other_args: Additional dictionary of arguments. If provided, the resulting dictionary will get updated
                            by it.
         :param other_args: dict
         """
-
         if not isinstance(data_source, DataSource):
             raise ValueError("'data_source' should be an instance of sentinelhub.DataSource")
 
-        if not isinstance(maxcc, float) and (maxcc < 0 or maxcc > 1):
-            raise ValueError('maxcc should be a float on an interval [0, 1]')
-
-        mosaic_order_params = ["mostRecent", "leastRecent", "leastCC"]
-        if mosaicking_order not in mosaic_order_params:
-            msg = "{} is not a valid mosaickingOrder parameter, it should be one of: {}"
-            raise ValueError(msg.format(mosaicking_order, mosaic_order_params))
-
-        input_data_object = {
-            "type": data_source.api_id,
-            "dataFilter": {
-                "maxCloudCoverage": int(maxcc * 100),
-                "mosaickingOrder": mosaicking_order,
-            }
-        }
+        data_filter = {}
 
         if time_interval:
             date_from, date_to = parse_time_interval(time_interval)
             date_from, date_to = date_from + 'Z', date_to + 'Z'
-            input_data_object['dataFilter']['timeRange'] = {'from': date_from, 'to': date_to}
+            data_filter['timeRange'] = {'from': date_from, 'to': date_to}
+
+        if maxcc is not None:
+            if not isinstance(maxcc, float) and (maxcc < 0 or maxcc > 1):
+                raise ValueError('maxcc should be a float on an interval [0, 1]')
+
+            data_filter['maxCloudCoverage'] = int(maxcc * 100)
+
+        if mosaicking_order:
+            mosaic_order_params = ["mostRecent", "leastRecent", "leastCC"]
+            if mosaicking_order not in mosaic_order_params:
+                msg = "{} is not a valid mosaickingOrder parameter, it should be one of: {}"
+                raise ValueError(msg.format(mosaicking_order, mosaic_order_params))
+
+            data_filter['mosaickingOrder'] = mosaicking_order
+
+        input_data_object = {
+            'type': data_source.api_id,
+            'dataFilter': data_filter
+        }
 
         if other_args:
             _update_other_args(input_data_object, other_args)
