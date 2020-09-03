@@ -109,7 +109,7 @@ class TestDataSource(TestSentinelHub):
         config.sh_base_url = ServiceUrl.EOCLOUD
         eocloud_sources = DataSource.get_available_sources(config=config)
         self._check_source_list(eocloud_sources)
-        self.assertTrue(len(eocloud_sources) > len(sources))
+        self.assertNotEqual(eocloud_sources, sources)
 
     def _check_source_list(self, source_list):
         self.assertTrue(isinstance(source_list, list))

@@ -501,9 +501,10 @@ class DataSource(Enum, metaclass=_DataSourceMeta):
         :rtype: list(sentinelhub.DataSource)
         """
         config = config or SHConfig()
+        is_eocloud = config.has_eocloud_url()
 
         return [data_source for data_source in cls
-                if data_source.service_url is None or config.sh_base_url.startswith(data_source.service_url)]
+                if (data_source.service_url == ServiceUrl.EOCLOUD) == is_eocloud]
 
 
 def _raise_invalid_id(collection_id):
