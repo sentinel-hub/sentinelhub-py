@@ -110,12 +110,6 @@ class SentinelHubRequest(DataRequest):
         if not isinstance(maxcc, float) and (maxcc < 0 or maxcc > 1):
             raise ValueError('maxcc should be a float on an interval [0, 1]')
 
-        if time_interval:
-            date_from, date_to = parse_time_interval(time_interval)
-            date_from, date_to = date_from + 'Z', date_to + 'Z'
-        else:
-            date_from, date_to = "", ""
-
         mosaic_order_params = ["mostRecent", "leastRecent", "leastCC"]
         if mosaicking_order not in mosaic_order_params:
             msg = "{} is not a valid mosaickingOrder parameter, it should be one of: {}"
@@ -124,11 +118,15 @@ class SentinelHubRequest(DataRequest):
         input_data_object = {
             "type": data_source.api_id,
             "dataFilter": {
-                "timeRange": {"from": date_from, "to": date_to},
                 "maxCloudCoverage": int(maxcc * 100),
                 "mosaickingOrder": mosaicking_order,
             }
         }
+
+        if time_interval:
+            date_from, date_to = parse_time_interval(time_interval)
+            date_from, date_to = date_from + 'Z', date_to + 'Z'
+            input_data_object['dataFilter']['timeRange'] = {'from': date_from, 'to': date_to}
 
         if other_args:
             _update_other_args(input_data_object, other_args)

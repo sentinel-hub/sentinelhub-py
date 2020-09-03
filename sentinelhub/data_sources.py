@@ -245,7 +245,8 @@ class DataSource(Enum, metaclass=_DataSourceMeta):
         wfs_id='DSS6',
         service_url=ServiceUrl.USWEST,
         source=_Source.LANDSAT8,
-        processing_level=_ProcessingLevel.L1C
+        processing_level=_ProcessingLevel.L1C,
+        bands=_Bands.LANDSAT8
     )
 
     SENTINEL5P = DataSourceDefinition(
