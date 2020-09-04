@@ -56,8 +56,8 @@ class _ProcessingLevel:
     MCD43A4 = 'MCD43A4'
 
 
-class _Polarisation:
-    """ Types of SAR polarisations
+class _Polarization:
+    """ Types of SAR polarizations
     """
     # pylint: disable=invalid-name
     DV = 'DV'
@@ -69,16 +69,16 @@ class _Polarisation:
 class _Resolution:
     """ Types of product resolution (specific to Sentinel-1 sources)
     """
-    MEDIUM = 'M'
-    HIGH = 'H'
+    MEDIUM = 'MEDIUM'
+    HIGH = 'HIGH'
 
 
-class _OrbitDirection:
+class OrbitDirection:
     """ Types of orbit directions
     """
-    ASCENDING = 'ascending'
-    DESCENDING = 'descending'
-    BOTH = 'both'
+    ASCENDING = 'ASCENDING'
+    DESCENDING = 'DESCENDING'
+    BOTH = 'BOTH'
 
 
 class _Bands:
@@ -131,7 +131,7 @@ class DataSourceDefinition:
     source: str = None
     sensor_type: str = None
     processing_level: str = None
-    polarisation: str = None
+    polarization: str = None
     resolution: str = None
     orbit_direction: str = None
     bands: Tuple[str, ...] = None
@@ -194,41 +194,41 @@ class DataSource(Enum, metaclass=_DataSourceMeta):
         wfs_id='DSS3',
         source=_Source.SENTINEL1,
         processing_level=_ProcessingLevel.GRD,
-        orbit_direction=_OrbitDirection.BOTH
+        orbit_direction=OrbitDirection.BOTH
     )
     SENTINEL1_IW = SENTINEL1.derive(
         sensor_type=_SensorType.IW,
-        polarisation=_Polarisation.DV,
+        polarization=_Polarization.DV,
         resolution=_Resolution.HIGH,
         bands=_Bands.SENTINEL1_IW
     )
     SENTINEL1_IW_ASC = SENTINEL1_IW.derive(
-        orbit_direction=_OrbitDirection.ASCENDING
+        orbit_direction=OrbitDirection.ASCENDING
     )
     SENTINEL1_IW_DES = SENTINEL1_IW.derive(
-        orbit_direction=_OrbitDirection.DESCENDING
+        orbit_direction=OrbitDirection.DESCENDING
     )
     SENTINEL1_EW = SENTINEL1.derive(
         sensor_type=_SensorType.EW,
-        polarisation=_Polarisation.DH,
+        polarization=_Polarization.DH,
         resolution=_Resolution.MEDIUM,
         bands=_Bands.SENTINEL1_EW
     )
     SENTINEL1_EW_ASC = SENTINEL1_EW.derive(
-        orbit_direction=_OrbitDirection.ASCENDING
+        orbit_direction=OrbitDirection.ASCENDING
     )
     SENTINEL1_EW_DES = SENTINEL1_EW.derive(
-        orbit_direction=_OrbitDirection.DESCENDING
+        orbit_direction=OrbitDirection.DESCENDING
     )
     SENTINEL1_EW_SH = SENTINEL1_EW.derive(
-        polarisation=_Polarisation.SH,
+        polarization=_Polarization.SH,
         bands=_Bands.SENTINEL1_EW_SH
     )
     SENTINEL1_EW_SH_ASC = SENTINEL1_EW_SH.derive(
-        orbit_direction=_OrbitDirection.ASCENDING
+        orbit_direction=OrbitDirection.ASCENDING
     )
     SENTINEL1_EW_SH_DES = SENTINEL1_EW_SH.derive(
-        orbit_direction=_OrbitDirection.DESCENDING
+        orbit_direction=OrbitDirection.DESCENDING
     )
 
     DEM = DataSourceDefinition(
@@ -302,7 +302,7 @@ class DataSource(Enum, metaclass=_DataSourceMeta):
 
     @classmethod
     def define(cls, name, *, api_id=None, wfs_id=None, service_url=None, source=None, sensor_type=None,
-               processing_level=None, polarisation=None, resolution=None, orbit_direction=None, bands=None,
+               processing_level=None, polarization=None, resolution=None, orbit_direction=None, bands=None,
                collection_id=None, is_timeless=False):
         """ Define a new data source
 
@@ -324,8 +324,8 @@ class DataSource(Enum, metaclass=_DataSourceMeta):
         :type sensor_type: str or None
         :param processing_level: A level of processing applied on satellite data
         :type processing_level: str or None
-        :param polarisation: A type of polarisation
-        :type polarisation: str or None
+        :param polarization: A type of polarization
+        :type polarization: str or None
         :param resolution: A type of (Sentinel-1) resolution
         :type resolution: str or None
         :param orbit_direction: A direction of satellite's orbit by which to filter satellite's data
@@ -346,7 +346,7 @@ class DataSource(Enum, metaclass=_DataSourceMeta):
             source=source,
             sensor_type=sensor_type,
             processing_level=processing_level,
-            polarisation=polarisation,
+            polarization=polarization,
             resolution=resolution,
             orbit_direction=orbit_direction,
             bands=bands,
@@ -487,7 +487,7 @@ class DataSource(Enum, metaclass=_DataSourceMeta):
         :return: bool
         """
         defined_direction = self.orbit_direction
-        if defined_direction is None or defined_direction.upper() == _OrbitDirection.BOTH.upper():
+        if defined_direction is None or defined_direction.upper() == OrbitDirection.BOTH:
             return True
         return orbit_direction.upper() == defined_direction.upper()
 

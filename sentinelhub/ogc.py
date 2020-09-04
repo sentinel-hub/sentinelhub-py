@@ -470,13 +470,13 @@ class WebFeatureService(OgcService):
         """
         product_id = tile_info['properties']['id']
         props = product_id.split('_')
-        sensor_type, resolution, polarisation = props[1], props[2][3], props[3][2:4]
+        sensor_type, resolution, polarization = props[1], props[2][3], props[3][2:4]
         orbit_direction = tile_info['properties'].get('orbitDirection', '')
 
-        if not (sensor_type in ['IW', 'EW'] and resolution in ['M', 'H'] and polarisation in ['DV', 'DH', 'SV', 'SH']):
+        if not (sensor_type in ['IW', 'EW'] and resolution in ['M', 'H'] and polarization in ['DV', 'DH', 'SV', 'SH']):
             raise ValueError(f'Unknown Sentinel-1 tile type: {product_id}')
 
         return (sensor_type == self.data_source.sensor_type or self.data_source.sensor_type is None) \
-            and (polarisation == self.data_source.polarisation or self.data_source.polarisation is None) \
-            and (resolution == self.data_source.resolution or self.data_source.resolution is None) \
+            and (polarization == self.data_source.polarization or self.data_source.polarization is None) \
+            and (resolution == self.data_source.resolution[0] or self.data_source.resolution is None) \
             and self.data_source.contains_orbit_direction(orbit_direction)

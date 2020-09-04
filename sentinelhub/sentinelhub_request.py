@@ -4,23 +4,11 @@ Documentation: https://docs.sentinel-hub.com/api/latest/reference/
 """
 
 from .constants import MimeType, RequestType
-from .data_sources import DataSource
+from .data_sources import DataSource, OrbitDirection
 from .download import DownloadRequest, SentinelHubDownloadClient
 from .data_request import DataRequest
 from .geometry import Geometry, BBox
 from .time_utils import parse_time_interval
-
-
-def _update_other_args(dict1, dict2):
-    """
-    Function for a recursive update of `dict1` with `dict2`. The function loops over the keys in `dict2` and
-    only the non-dict like values are assigned to the specified keys.
-    """
-    for key, value in dict2.items():
-        if isinstance(value, dict) and key in dict1:
-            _update_other_args(dict1[key], value)
-        else:
-            dict1[key] = value
 
 
 class SentinelHubRequest(DataRequest):
@@ -77,7 +65,7 @@ class SentinelHubRequest(DataRequest):
     def create_request(self):
         """ Prepares a download request
         """
-        headers = {'content-type': MimeType.JSON.get_string(), "accept": self.mime_type.get_string()}
+        headers = {'content-type': MimeType.JSON.get_string(), 'accept': self.mime_type.get_string()}
 
         base_url = self.base_url or self.config.sh_base_url
         url = f'{base_url}/api/v1/process'
@@ -132,6 +120,11 @@ class SentinelHubRequest(DataRequest):
                 raise ValueError(msg.format(mosaicking_order, mosaic_order_params))
 
             data_filter['mosaickingOrder'] = mosaicking_order
+
+        data_filter = {
+            **data_filter,
+            **_get_data_source_filters(data_source)
+        }
 
         input_data_object = {
             'type': data_source.api_id,
@@ -275,3 +268,35 @@ class SentinelHubRequest(DataRequest):
             _update_other_args(request_bounds, other_args)
 
         return request_bounds
+
+
+def _get_data_source_filters(data_source):
+    """ Builds a dictionary of filters for Processing API from a data source definition
+    """
+    filters = {}
+
+    if data_source.is_sentinel1 and data_source.sensor_type:
+        filters['acquisitionMode'] = data_source.sensor_type.upper()
+
+    if data_source.polarization:
+        filters['polarization'] = data_source.polarization.upper()
+
+    if data_source.resolution:
+        filters['resolution'] = data_source.resolution.upper()
+
+    if data_source.orbit_direction and data_source.orbit_direction.upper() != OrbitDirection.BOTH:
+        filters['orbitDirection'] = data_source.orbit_direction.upper()
+
+    return filters
+
+
+def _update_other_args(dict1, dict2):
+    """
+    Function for a recursive update of `dict1` with `dict2`. The function loops over the keys in `dict2` and
+    only the non-dict like values are assigned to the specified keys.
+    """
+    for key, value in dict2.items():
+        if isinstance(value, dict) and key in dict1:
+            _update_other_args(dict1[key], value)
+        else:
+            dict1[key] = value
