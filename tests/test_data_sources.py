@@ -42,7 +42,21 @@ class TestDataSource(TestSentinelHub):
             )
 
         self.assertEqual(datasource, DataSource.NEW)
-        self.assertTrue(DataSource.is_defined(datasource.value))
+
+        with self.assertRaises(ValueError):
+            DataSource.define(
+                'NEW_NEW',
+                api_id='X',
+                sensor_type='Sensor',
+                bands=('B01',),
+                is_timeless=True
+            )
+
+        with self.assertRaises(ValueError):
+            DataSource.define(
+                'NEW',
+                api_id='Y'
+            )
 
     def test_define_from(self):
         bands = ['B01', 'XYZ']
@@ -61,7 +75,7 @@ class TestDataSource(TestSentinelHub):
 
     def test_define_byoc_and_batch(self):
         byoc_id = '0000d273-7e89-4f00-971e-9024f89a0000'
-        byoc = DataSource.define_byoc(byoc_id, name='MY_BYOC')
+        byoc = DataSource.define_byoc(byoc_id, name=f'MY_BYOC')
         batch = DataSource.define_batch(byoc_id, name='MY_BATCH')
 
         self.assertEqual(byoc, DataSource.MY_BYOC)
@@ -72,7 +86,7 @@ class TestDataSource(TestSentinelHub):
             self.assertEqual(ds.collection_id, byoc_id)
 
         with self.assertWarns(SHDeprecationWarning):
-            byoc2 = DataSource(byoc_id)
+            byoc2 = DataSource(byoc_id.replace('0', '1'))
 
         self.assertTrue(byoc, byoc2)
 

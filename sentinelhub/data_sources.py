@@ -339,7 +339,7 @@ class DataSource(Enum, metaclass=_DataSourceMeta):
         :return: A new data source
         :rtype: DataSource
         """
-        data_source_definition = DataSourceDefinition(
+        definition = DataSourceDefinition(
             api_id=api_id,
             wfs_id=wfs_id,
             service_url=service_url,
@@ -353,10 +353,8 @@ class DataSource(Enum, metaclass=_DataSourceMeta):
             collection_id=collection_id,
             is_timeless=is_timeless
         )
-        if not cls.is_defined(data_source_definition):
-            extend_enum(cls, name, data_source_definition)
-
-        return cls(data_source_definition)
+        cls._try_add_data_source(name, definition)
+        return cls(definition)
 
     def define_from(self, name, **params):
         """ Define a new data source from an existing one
@@ -370,10 +368,29 @@ class DataSource(Enum, metaclass=_DataSourceMeta):
         definition = self.value
         new_definition = definition.derive(**params)
 
-        if not self.is_defined(new_definition):
-            extend_enum(DataSource, name, new_definition)
-
+        self._try_add_data_source(name, new_definition)
         return DataSource(new_definition)
+
+    @classmethod
+    def _try_add_data_source(cls, name, definition):
+        """ Tries adding a new data source definition. If the exact enum has already been defined then it won't do
+        anything. However, if either a name or a definition has already been matched with another name or definition
+        then it will raise an error.
+        """
+        is_name_defined = name in cls.__members__
+        is_enum_defined = is_name_defined and cls.__members__[name].value == definition
+        is_definition_defined = definition in cls._value2member_map_
+
+        if is_enum_defined:
+            return
+
+        if not is_name_defined and not is_definition_defined:
+            extend_enum(cls, name, definition)
+            return
+
+        if is_name_defined:
+            raise ValueError(f"Data source name '{name}' is already taken by another data source")
+        raise ValueError(f'Data source definition is already taken by a data source with a different name')
 
     @classmethod
     def define_byoc(cls, collection_id, **params):
@@ -408,17 +425,6 @@ class DataSource(Enum, metaclass=_DataSourceMeta):
         params['source'] = params.get('source', _Source.BATCH)
         params['collection_id'] = collection_id
         return cls.define(**params)
-
-    @classmethod
-    def is_defined(cls, data_source_definition):
-        """ Checks if there already exists a data source with a given definition
-
-        :param data_source_definition: A data source definition
-        :type data_source_definition: DataSourceDefinition
-        :return: `True` if it is defined and `False` otherwise
-        :rtype: bool
-        """
-        return data_source_definition in cls._value2member_map_
 
     @property
     def api_id(self):
