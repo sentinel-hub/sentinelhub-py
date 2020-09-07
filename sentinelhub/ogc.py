@@ -357,6 +357,9 @@ class WebFeatureService(OgcService):
         self.latest_time_only = time_interval == SHConstants.LATEST
         self.max_features_per_request = 1 if self.latest_time_only else SHConfig().max_wfs_records_per_query
 
+        if self.data_source.service_url:
+            self._base_url = self._base_url.replace(self.config.sh_base_url, self.data_source.service_url)
+
     def __iter__(self):
         """ Iteration method
 
