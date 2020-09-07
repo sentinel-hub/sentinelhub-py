@@ -390,7 +390,7 @@ class DataSource(Enum, metaclass=_DataSourceMeta):
 
         if is_name_defined:
             raise ValueError(f"Data source name '{name}' is already taken by another data source")
-        raise ValueError(f'Data source definition is already taken by a data source with a different name')
+        raise ValueError('Data source definition is already taken by a data source with a different name')
 
     @classmethod
     def define_byoc(cls, collection_id, **params):
