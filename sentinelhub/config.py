@@ -272,8 +272,8 @@ class SHConfig:
         :return: An URL endpoint
         :rtype: str
         """
-        ogc_enpoint = 'v1' if self.has_eocloud_url() else 'ogc'
-        return '{}/{}'.format(self.sh_base_url, ogc_enpoint)
+        ogc_endpoint = 'v1' if self.has_eocloud_url() else 'ogc'
+        return '{}/{}'.format(self.sh_base_url, ogc_endpoint)
 
     def get_sh_rate_limit_url(self):
         """ Provides URL for Sentinel Hub rate limiting endpoint

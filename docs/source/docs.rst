@@ -14,6 +14,7 @@ Modules
     config
     constants
     data_request
+    data_sources
     download.aws_client
     download.client
     download.request

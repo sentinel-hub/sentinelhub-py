@@ -504,7 +504,7 @@ class DataSource(Enum, metaclass=_DataSourceMeta):
         :param config: A custom instance of config class to override parameters from the saved configuration.
         :type config: SHConfig or None
         :return: List of available data sources
-        :rtype: list(sentinelhub.DataSource)
+        :rtype: list(DataSource)
         """
         config = config or SHConfig()
         is_eocloud = config.has_eocloud_url()
