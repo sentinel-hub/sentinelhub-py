@@ -203,7 +203,7 @@ class SentinelHubRequest(DataRequest):
         :param resolution: Resolution of the image. It has to be in units compatible with the given CRS.
         :type resolution: Tuple[float, float]
         :param other_args: Additional dictionary of arguments. If provided, the resulting dictionary will get updated
-                           by it.
+            by it.
         :param other_args: dict
         """
         if size and resolution:

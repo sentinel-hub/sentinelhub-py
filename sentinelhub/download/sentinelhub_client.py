@@ -8,7 +8,7 @@ from threading import Lock, currentThread
 import requests
 
 from .handlers import fail_user_errors, retry_temporal_errors
-from .client import DownloadClient
+from .client import DownloadClient, get_json
 from ..sentinelhub_session import SentinelHubSession
 from ..sentinelhub_rate_limit import SentinelHubRateLimit
 
@@ -105,3 +105,11 @@ class SentinelHubDownloadClient(DownloadClient):
         session = SentinelHubSession(config=self.config)
         SentinelHubDownloadClient._CACHED_SESSIONS[cache_key] = session
         return session
+
+
+def get_sh_json(url, post_values=None, headers=None):
+    """
+    TODO
+    """
+    return get_json(url, post_values=post_values, headers=headers, download_client_class=SentinelHubDownloadClient,
+                    use_session=True)

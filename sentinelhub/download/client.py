@@ -139,7 +139,7 @@ class DownloadClient:
                (self.redownload or response_path is None or not os.path.exists(response_path))
 
 
-def get_json(url, post_values=None, headers=None, download_client_class=DownloadClient):
+def get_json(url, post_values=None, headers=None, download_client_class=DownloadClient, **kwargs):
     """ Download request as JSON data type
 
     :param url: url to Sentinel Hub's services or other sources from where the data is downloaded
@@ -151,6 +151,7 @@ def get_json(url, post_values=None, headers=None, download_client_class=Download
     :return: request response as JSON instance
     :param download_client_class: A class that implements a download client
     :type download_client_class: object
+    :param kwargs: Parameters that are passed to a DownloadRequest class
     :rtype: JSON instance or None
     :raises: RunTimeError
     """
@@ -163,7 +164,7 @@ def get_json(url, post_values=None, headers=None, download_client_class=Download
         json_headers = {**json_headers, **{'Content-Type': MimeType.JSON.get_string()}}
 
     request = DownloadRequest(url=url, headers=json_headers, request_type=request_type, post_values=post_values,
-                              save_response=False, return_data=True, data_type=MimeType.JSON)
+                              save_response=False, return_data=True, data_type=MimeType.JSON, **kwargs)
 
     return download_client_class().download(request)
 
