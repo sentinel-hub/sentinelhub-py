@@ -15,7 +15,7 @@ from .exceptions import SHDeprecationWarning
 
 
 class _Source:
-    """ Types of satellite sources
+    """ Satellite sources
     """
     SENTINEL2 = 'Sentinel-2'
     SENTINEL1 = 'Sentinel-1'
@@ -32,7 +32,7 @@ class _Source:
 
 
 class _SensorType:
-    """ Types of satellite sensors
+    """ Satellite sensors
     """
     # pylint: disable=invalid-name
     MSI = 'MSI'
@@ -44,7 +44,7 @@ class _SensorType:
 
 
 class _ProcessingLevel:
-    """ Types of processing level
+    """ Processing levels
     """
     # pylint: disable=invalid-name
     L1B = 'L1B'
@@ -53,28 +53,31 @@ class _ProcessingLevel:
     L3B = 'L3B'
     L2 = 'L2'
     GRD = 'GRD'
-    MCD43A4 = 'MCD43A4'
 
 
 class _Polarization:
-    """ Types of SAR polarizations
+    """ SAR polarizations
     """
     # pylint: disable=invalid-name
     DV = 'DV'
     DH = 'DH'
     SV = 'SV'
     SH = 'SH'
+    HH = 'HH'
+    HV = 'HV'
+    VV = 'VV'
+    VH = 'VH'
 
 
 class _Resolution:
-    """ Types of product resolution (specific to Sentinel-1 sources)
+    """ Product resolution (specific to Sentinel-1 sources)
     """
     MEDIUM = 'MEDIUM'
     HIGH = 'HIGH'
 
 
 class OrbitDirection:
-    """ Types of orbit directions
+    """ Orbit directions
     """
     ASCENDING = 'ASCENDING'
     DESCENDING = 'DESCENDING'
@@ -243,7 +246,6 @@ class DataSource(Enum, metaclass=_DataSourceMeta):
         wfs_id='DSS5',
         service_url=ServiceUrl.USWEST,
         source=_Source.MODIS,
-        processing_level=_ProcessingLevel.MCD43A4,
         bands=_Bands.MODIS
     )
     LANDSAT8 = DataSourceDefinition(
