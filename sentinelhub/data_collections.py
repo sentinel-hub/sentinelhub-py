@@ -147,6 +147,7 @@ class DataCollectionDefinition:
     polarization: str = None
     resolution: str = None
     orbit_direction: str = None
+    timeliness: str = None
     bands: Tuple[str, ...] = None
     collection_id: str = None
     is_timeless: bool = False
@@ -317,7 +318,7 @@ class DataCollection(Enum, metaclass=_DataCollectionMeta):
     @classmethod
     def define(cls, name, *, api_id=None, wfs_id=None, service_url=None, collection_type=None, sensor_type=None,
                processing_level=None, swath_mode=None, polarization=None, resolution=None, orbit_direction=None,
-               bands=None, collection_id=None, is_timeless=False):
+               timeliness=None, bands=None, collection_id=None, is_timeless=False):
         """ Define a new data collection
 
         Note that all parameters, except `name` are optional. If a data collection definition won't be used for a
@@ -346,6 +347,8 @@ class DataCollection(Enum, metaclass=_DataCollectionMeta):
         :type resolution: str or None
         :param orbit_direction: A direction of satellite's orbit by which to filter satellite's data
         :type orbit_direction: str or None
+        :param timeliness: A timeliness of data
+        :type timeliness: str or None
         :param bands: Names of data collection bands
         :type bands: tuple(str) or None
         :param collection_id: An ID of a BYOC or BATCH collection

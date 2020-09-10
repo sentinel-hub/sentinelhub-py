@@ -296,6 +296,9 @@ def _get_data_collection_filters(data_collection):
     if data_collection.orbit_direction and data_collection.orbit_direction.upper() != OrbitDirection.BOTH:
         filters['orbitDirection'] = data_collection.orbit_direction.upper()
 
+    if data_collection.timeliness:
+        filters['timeliness'] = data_collection.timeliness
+
     return filters
 
 
