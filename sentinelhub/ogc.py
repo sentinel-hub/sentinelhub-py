@@ -3,6 +3,7 @@ Module for working with Sentinel Hub OGC services
 """
 import logging
 import datetime
+import warnings
 from base64 import b64encode
 from urllib.parse import urlencode
 
@@ -10,7 +11,8 @@ import shapely.geometry
 
 from .constants import ServiceType, MimeType, CRS, SHConstants, CustomUrlParam
 from .config import SHConfig
-from .data_sources import DataSource
+from .data_collections import DataCollection
+from .exceptions import SHDeprecationWarning
 from .geo_utils import get_image_dimension
 from .geometry import BBox, Geometry
 from .download import DownloadRequest, get_json
@@ -108,8 +110,8 @@ class OgcImageService(OgcService):
         """
         url = '{}/{}'.format(self._base_url, request.service_type.value)
 
-        if hasattr(request, 'data_source') and request.data_source.service_url:
-            url = url.replace(self.config.sh_base_url, request.data_source.service_url)
+        if hasattr(request, 'data_collection') and request.data_collection.service_url:
+            url = url.replace(self.config.sh_base_url, request.data_collection.service_url)
 
         return url
 
@@ -277,11 +279,11 @@ class OgcImageService(OgcService):
         :return: List of dates of existing acquisitions for the given request
         :rtype: list(datetime.datetime) or [None]
         """
-        if request.data_source.is_timeless:
+        if request.data_collection.is_timeless:
             return [None]
 
         if request.wfs_iterator is None:
-            self.wfs_iterator = WebFeatureService(request.bbox, request.time, data_source=request.data_source,
+            self.wfs_iterator = WebFeatureService(request.bbox, request.time, data_collection=request.data_collection,
                                                   maxcc=request.maxcc, config=self.config)
         else:
             self.wfs_iterator = request.wfs_iterator
@@ -317,7 +319,7 @@ class OgcImageService(OgcService):
         """ Returns iterator over info about all satellite tiles used for the request
 
         :return: Iterator of dictionaries containing info about all satellite tiles used in the request. In case of
-                 DataSource.DEM it returns None.
+                 DataCollection.DEM it returns None.
         :rtype: Iterator[dict] or None
         """
         return self.wfs_iterator
@@ -330,25 +332,32 @@ class WebFeatureService(OgcService):
     from Sentinel Hub service only during the first iteration. During next iterations it returns already obtained data.
     The data is in the order returned by Sentinel Hub WFS service.
     """
-    def __init__(self, bbox, time_interval, *, data_source=DataSource.SENTINEL2_L1C, maxcc=1.0, **kwargs):
+    def __init__(self, bbox, time_interval, *, data_collection=DataCollection.SENTINEL2_L1C, maxcc=1.0,
+                 data_source=None, **kwargs):
         """
         :param bbox: Bounding box of the requested image. Coordinates must be in the specified coordinate reference
             system.
         :type bbox: geometry.BBox
         :param time_interval: interval with start and end date of the form YYYY-MM-DDThh:mm:ss or YYYY-MM-DD
         :type time_interval: (str, str)
-        :param data_source: Source of requested satellite data. Default is Sentinel-2 L1C data.
-        :type data_source: DataSource
+        :param data_collection: A collection of requested satellite data. Default is Sentinel-2 L1C data.
+        :type data_collection: DataCollection
         :param maxcc: Maximum accepted cloud coverage of an image. Float between 0.0 and 1.0. Default is 1.0.
         :type maxcc: float
         :param config: A custom instance of config class to override parameters from the saved configuration.
         :type config: SHConfig or None
+        :param data_source: A deprecated alternative to data_collection
+        :type data_source: DataCollection
         """
         super().__init__(**kwargs)
 
+        if data_source is not None:
+            warnings.warn('Parameter data_source is deprecated, use data_collection instead',
+                          category=SHDeprecationWarning)
+
         self.bbox = bbox
         self.time_interval = parse_time_interval(time_interval)
-        self.data_source = data_source
+        self.data_collection = data_source or data_collection
         self.maxcc = maxcc
 
         self.tile_list = []
@@ -357,8 +366,8 @@ class WebFeatureService(OgcService):
         self.latest_time_only = time_interval == SHConstants.LATEST
         self.max_features_per_request = 1 if self.latest_time_only else SHConfig().max_wfs_records_per_query
 
-        if self.data_source.service_url:
-            self._base_url = self._base_url.replace(self.config.sh_base_url, self.data_source.service_url)
+        if self.data_collection.service_url:
+            self._base_url = self._base_url.replace(self.config.sh_base_url, self.data_collection.service_url)
 
     def __iter__(self):
         """ Iteration method
@@ -396,7 +405,7 @@ class WebFeatureService(OgcService):
             'SERVICE': ServiceType.WFS.value,
             'WARNINGS': False,
             'REQUEST': 'GetFeature',
-            'TYPENAMES': self.data_source.wfs_id,
+            'TYPENAMES': self.data_collection.wfs_id,
             'BBOX': str(self.bbox.reverse()) if self.bbox.crs is CRS.WGS84 else str(self.bbox),
             'OUTPUTFORMAT': MimeType.get_string(MimeType.JSON),
             'SRSNAME': CRS.ogc_string(self.bbox.crs),
@@ -411,7 +420,7 @@ class WebFeatureService(OgcService):
         LOGGER.debug("URL=%s", url)
         response = get_json(url)
 
-        is_sentinel1 = self.data_source.is_sentinel1
+        is_sentinel1 = self.data_collection.is_sentinel1
         for tile_info in response['features']:
             if not is_sentinel1 or self._sentinel1_product_check(tile_info):
                 self.tile_list.append(tile_info)
@@ -430,7 +439,7 @@ class WebFeatureService(OgcService):
         tile_dates = []
 
         for tile_info in self:
-            if not tile_info['properties']['date']:  # could be True for custom (BYOC) data sources
+            if not tile_info['properties']['date']:  # could be True for custom (BYOC) data collections
                 tile_dates.append(None)
             else:
                 tile_dates.append(datetime.datetime.strptime('{}T{}'.
@@ -469,7 +478,7 @@ class WebFeatureService(OgcService):
         return ''.join(props[1:4]), '-'.join(props[4:7]), int(props[7])
 
     def _sentinel1_product_check(self, tile_info):
-        """ Checks if Sentinel-1 tile info match the data source definition
+        """ Checks if Sentinel-1 tile info match the data collection definition
         """
         product_id = tile_info['properties']['id']
         props = product_id.split('_')
@@ -479,7 +488,7 @@ class WebFeatureService(OgcService):
         if not (sensor_type in ['IW', 'EW'] and resolution in ['M', 'H'] and polarization in ['DV', 'DH', 'SV', 'SH']):
             raise ValueError(f'Unknown Sentinel-1 tile type: {product_id}')
 
-        return (sensor_type == self.data_source.sensor_type or self.data_source.sensor_type is None) \
-            and (polarization == self.data_source.polarization or self.data_source.polarization is None) \
-            and (resolution == self.data_source.resolution[0] or self.data_source.resolution is None) \
-            and self.data_source.contains_orbit_direction(orbit_direction)
+        return (sensor_type == self.data_collection.sensor_type or self.data_collection.sensor_type is None) \
+            and (polarization == self.data_collection.polarization or self.data_collection.polarization is None) \
+            and (resolution == self.data_collection.resolution[0] or self.data_collection.resolution is None) \
+            and self.data_collection.contains_orbit_direction(orbit_direction)

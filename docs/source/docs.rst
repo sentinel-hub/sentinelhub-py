@@ -13,8 +13,8 @@ Modules
     aws_safe
     config
     constants
+    data_collections
     data_request
-    data_sources
     download.aws_client
     download.client
     download.request
