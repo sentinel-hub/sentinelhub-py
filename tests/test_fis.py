@@ -4,7 +4,7 @@ import os
 
 from shapely.geometry import Polygon
 
-from sentinelhub import CRS, DataSource
+from sentinelhub import CRS, DataCollection
 from sentinelhub import BBox, Geometry
 from sentinelhub import TestCaseContainer, CustomUrlParam
 from sentinelhub import FisRequest, TestSentinelHub
@@ -70,7 +70,7 @@ class TestFis(TestSentinelHub):
                             raw_result=results[1],
                             result_length=1),
             cls.FisTestCase('list',
-                            FisRequest(data_source=DataSource.LANDSAT8,
+                            FisRequest(data_collection=DataCollection.LANDSAT8,
                                        layer='BANDS-L8',
                                        geometry_list=[bbox, geometry1],
                                        time=('2017-1-1', '2017-1-10'),

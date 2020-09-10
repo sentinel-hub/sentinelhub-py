@@ -1,7 +1,7 @@
 import unittest
 import os
 
-from sentinelhub import AwsTileRequest, AwsProductRequest, read_data, write_data, DataSource, AwsConstants,\
+from sentinelhub import AwsTileRequest, AwsProductRequest, read_data, write_data, DataCollection, AwsConstants,\
     TestSentinelHub, TestCaseContainer
 
 
@@ -56,7 +56,7 @@ class TestSafeFormat(TestSentinelHub):
                                                tile_list=['T59HNA'], safe_format=True, data_folder=cls.INPUT_FOLDER)),
             cls.SafeTestCase('L1C_02.01_tile',
                              AwsTileRequest(tile='29KQB', time='2016-04-12', aws_index=None,
-                                            data_source=DataSource.SENTINEL2_L1C, safe_format=True,
+                                            data_collection=DataCollection.SENTINEL2_L1C, safe_format=True,
                                             data_folder=cls.INPUT_FOLDER)),
             cls.SafeTestCase('L1C_02.02',
                              AwsProductRequest('S2A_OPER_PRD_MSIL1C_PDMC_20160606T232310_R121_V20160526T0'

@@ -1,12 +1,12 @@
 """
 Module for working with large geographical areas
 """
-
 import os
 import itertools
 from abc import ABC, abstractmethod
 import json
 import math
+import warnings
 
 import shapely.ops
 import shapely.geometry
@@ -14,7 +14,8 @@ from shapely.geometry import Polygon, MultiPolygon, GeometryCollection
 
 from .config import SHConfig
 from .constants import CRS
-from .data_sources import DataSource
+from .data_collections import DataCollection
+from .exceptions import SHDeprecationWarning
 from .geometry import BBox, BBoxCollection, BaseGeometry, Geometry
 from .geo_utils import transform_point
 from .ogc import WebFeatureService
@@ -23,16 +24,17 @@ from .ogc import WebFeatureService
 class AreaSplitter(ABC):
     """ Abstract class for splitter classes. It implements common methods used for splitting large area into smaller
     parts.
-
-    :param shape_list: A list of geometrical shapes describing the area of interest
-    :type shape_list: list(shapely.geometry.multipolygon.MultiPolygon or shapely.geometry.polygon.Polygon)
-    :param crs: Coordinate reference system of the shapes in `shape_list`
-    :type crs: CRS
-    :param reduce_bbox_sizes: If `True` it will reduce the sizes of bounding boxes so that they will tightly fit the
-        given geometry in `shape_list`.
-    :type reduce_bbox_sizes: bool
     """
     def __init__(self, shape_list, crs, reduce_bbox_sizes=False):
+        """
+        :param shape_list: A list of geometrical shapes describing the area of interest
+        :type shape_list: list(shapely.geometry.multipolygon.MultiPolygon or shapely.geometry.polygon.Polygon)
+        :param crs: Coordinate reference system of the shapes in `shape_list`
+        :type crs: CRS
+        :param reduce_bbox_sizes: If `True` it will reduce the sizes of bounding boxes so that they will tightly fit
+            the given geometry in `shape_list`.
+        :type reduce_bbox_sizes: bool
+        """
         self.crs = CRS(crs)
         self._parse_shape_list(shape_list, self.crs)
         self.shape_list = shape_list
@@ -221,20 +223,21 @@ class BBoxSplitter(AreaSplitter):
     """ A tool that splits the given area into smaller parts. Given the area it calculates its bounding box and splits
     it into smaller bounding boxes of equal size. Then it filters out the bounding boxes that do not intersect the
     area. If specified by user it can also reduce the sizes of the remaining bounding boxes to best fit the area.
-
-    :param shape_list: A list of geometrical shapes describing the area of interest
-    :type shape_list: list(shapely.geometry.multipolygon.MultiPolygon or shapely.geometry.polygon.Polygon)
-    :param crs: Coordinate reference system of the shapes in `shape_list`
-    :type crs: CRS
-    :param split_shape: Parameter that describes the shape in which the area bounding box will be split. It can be a
-                        tuple of the form `(n, m)` which means the area bounding box will be split into `n` columns and
-                        `m` rows. It can also be a single integer `n` which is the same as `(n, n)`.
-    :type split_shape: int or (int, int)
-    :param reduce_bbox_sizes: If `True` it will reduce the sizes of bounding boxes so that they will tightly fit
-        the given area geometry from `shape_list`.
-    :type reduce_bbox_sizes: bool
     """
     def __init__(self, shape_list, crs, split_shape, **kwargs):
+        """
+        :param shape_list: A list of geometrical shapes describing the area of interest
+        :type shape_list: list(shapely.geometry.multipolygon.MultiPolygon or shapely.geometry.polygon.Polygon)
+        :param crs: Coordinate reference system of the shapes in `shape_list`
+        :type crs: CRS
+        :param split_shape: Parameter that describes the shape in which the area bounding box will be split.
+            It can be a tuple of the form `(n, m)` which means the area bounding box will be split into `n` columns
+            and `m` rows. It can also be a single integer `n` which is the same as `(n, n)`.
+        :type split_shape: int or (int, int)
+        :param reduce_bbox_sizes: If `True` it will reduce the sizes of bounding boxes so that they will tightly fit
+            the given area geometry from `shape_list`.
+        :type reduce_bbox_sizes: bool
+        """
         super().__init__(shape_list, crs, **kwargs)
 
         self.split_shape = self._parse_split_parameters(split_shape)
@@ -263,20 +266,22 @@ class OsmSplitter(AreaSplitter):
     """ A tool that splits the given area into smaller parts. For the splitting it uses Open Street Map (OSM) grid on
     the specified zoom level. It calculates bounding boxes of all OSM tiles that intersect the area. If specified by
     user it can also reduce the sizes of the remaining bounding boxes to best fit the area.
-
-    :param shape_list: A list of geometrical shapes describing the area of interest
-    :type shape_list: list(shapely.geometry.multipolygon.MultiPolygon or shapely.geometry.polygon.Polygon)
-    :param crs: Coordinate reference system of the shapes in `shape_list`
-    :type crs: CRS
-    :param zoom_level: A zoom level defined by OSM. Level 0 is entire world, level 1 splits the world into 4 parts, etc.
-    :type zoom_level: int
-    :param reduce_bbox_sizes: If `True` it will reduce the sizes of bounding boxes so that they will tightly fit
-        the given area geometry from `shape_list`.
-    :type reduce_bbox_sizes: bool
     """
-    POP_WEB_MAX = transform_point((180, 0), CRS.WGS84, CRS.POP_WEB)[0]
+    _POP_WEB_MAX = transform_point((180, 0), CRS.WGS84, CRS.POP_WEB)[0]
 
     def __init__(self, shape_list, crs, zoom_level, **kwargs):
+        """
+        :param shape_list: A list of geometrical shapes describing the area of interest
+        :type shape_list: list(shapely.geometry.multipolygon.MultiPolygon or shapely.geometry.polygon.Polygon)
+        :param crs: Coordinate reference system of the shapes in `shape_list`
+        :type crs: CRS
+        :param zoom_level: A zoom level defined by OSM. Level 0 is entire world, level 1 splits the world into
+            4 parts, etc.
+        :type zoom_level: int
+        :param reduce_bbox_sizes: If `True` it will reduce the sizes of bounding boxes so that they will tightly fit
+            the given area geometry from `shape_list`.
+        :type reduce_bbox_sizes: bool
+        """
         super().__init__(shape_list, crs, **kwargs)
 
         self.zoom_level = zoom_level
@@ -303,7 +308,7 @@ class OsmSplitter(AreaSplitter):
         :raises: ValueError
         """
         for coord in self.area_bbox:
-            if abs(coord) > self.POP_WEB_MAX:
+            if abs(coord) > self._POP_WEB_MAX:
                 raise ValueError('OsmTileSplitter only works for areas which have latitude in interval '
                                  '(-85.0511, 85.0511)')
 
@@ -313,7 +318,7 @@ class OsmSplitter(AreaSplitter):
         :return: Bounding box of entire world
         :rtype: BBox
         """
-        return BBox((-self.POP_WEB_MAX, -self.POP_WEB_MAX, self.POP_WEB_MAX, self.POP_WEB_MAX), crs=CRS.POP_WEB)
+        return BBox((-self._POP_WEB_MAX, -self._POP_WEB_MAX, self._POP_WEB_MAX, self._POP_WEB_MAX), crs=CRS.POP_WEB)
 
     def _recursive_split(self, bbox, zoom_level, column, row):
         """ Method that recursively creates bounding boxes of OSM grid that intersect the area.
@@ -341,42 +346,49 @@ class OsmSplitter(AreaSplitter):
 
 
 class TileSplitter(AreaSplitter):
-    """ A tool that splits the given area into smaller parts. Given the area, time interval and data source it collects
-    info from Sentinel Hub WFS service about all satellite tiles intersecting the area. For each of them it calculates
-    bounding box and if specified it splits these bounding boxes into smaller bounding boxes. Then it filters out the
-    ones that do not intersect the area. If specified by user it can also reduce the sizes of the remaining bounding
-    boxes to best fit the area.
-
-    :param shape_list: A list of geometrical shapes describing the area of interest
-    :type shape_list: list(shapely.geometry.multipolygon.MultiPolygon or shapely.geometry.polygon.Polygon)
-    :param crs: Coordinate reference system of the shapes in `shape_list`
-    :type crs: CRS
-    :param time_interval: Interval with start and end date of the form YYYY-MM-DDThh:mm:ss or YYYY-MM-DD
-    :type time_interval: (str, str)
-    :param tile_split_shape: Parameter that describes the shape in which the satellite tile bounding boxes will be
-                             split. It can be a tuple of the form `(n, m)` which means the tile bounding boxes will be
-                             split into `n` columns and `m` rows. It can also be a single integer `n` which is the same
-                             as `(n, n)`.
-    :type split_shape: int or (int, int)
-    :param data_source: Source of requested satellite data. Default is Sentinel-2 L1C data.
-    :type data_source: DataSource
-    :param config: A custom instance of config class to override parameters from the saved configuration.
-    :type config: SHConfig or None
-    :param reduce_bbox_sizes: If `True` it will reduce the sizes of bounding boxes so that they will tightly fit the
-        given area geometry from `shape_list`.
-    :type reduce_bbox_sizes: bool
+    """ A tool that splits the given area into smaller parts. Given the area, time interval and data collection it
+    collects info from Sentinel Hub WFS service about all satellite tiles intersecting the area. For each of them
+    it calculates bounding box and if specified it splits these bounding boxes into smaller bounding boxes. Then
+    it filters out the ones that do not intersect the area. If specified by user it can also reduce the sizes of
+    the remaining bounding boxes to best fit the area.
     """
-    def __init__(self, shape_list, crs, time_interval, tile_split_shape=1, data_source=DataSource.SENTINEL2_L1C,
-                 config=None, **kwargs):
+    def __init__(self, shape_list, crs, time_interval, tile_split_shape=1, data_collection=DataCollection.SENTINEL2_L1C,
+                 config=None, data_source=None, **kwargs):
+        """
+        :param shape_list: A list of geometrical shapes describing the area of interest
+        :type shape_list: list(shapely.geometry.multipolygon.MultiPolygon or shapely.geometry.polygon.Polygon)
+        :param crs: Coordinate reference system of the shapes in `shape_list`
+        :type crs: CRS
+        :param time_interval: Interval with start and end date of the form YYYY-MM-DDThh:mm:ss or YYYY-MM-DD
+        :type time_interval: (str, str)
+        :param tile_split_shape: Parameter that describes the shape in which the satellite tile bounding boxes will be
+            split. It can be a tuple of the form `(n, m)` which means the tile bounding boxes will be
+            split into `n` columns and `m` rows. It can also be a single integer `n` which is the same
+            as `(n, n)`.
+        :type split_shape: int or (int, int)
+        :param data_collection: A satellite data collection. Default is Sentinel-2 L1C data.
+        :type data_collection: DataCollection
+        :param config: A custom instance of config class to override parameters from the saved configuration.
+        :type config: SHConfig or None
+        :param reduce_bbox_sizes: If `True` it will reduce the sizes of bounding boxes so that they will tightly fit
+            the given area geometry from `shape_list`.
+        :type reduce_bbox_sizes: bool
+        :param data_source: A deprecated alternative of data_collection
+        :type data_source: DataCollection
+        """
         super().__init__(shape_list, crs, **kwargs)
 
-        if data_source is DataSource.DEM:
+        data_collection = data_source or data_collection
+        if data_source is not None:
+            warnings.warn('Parameter data_source is deprecated, use data_collection instead',
+                          category=SHDeprecationWarning)
+        if data_collection is DataCollection.DEM:
             raise ValueError('This splitter does not support splitting area by DEM tiles. Please specify some other '
-                             'DataSource')
+                             'DataCollection')
 
         self.time_interval = time_interval
         self.tile_split_shape = tile_split_shape
-        self.data_source = data_source
+        self.data_collection = data_collection
         self.config = config or SHConfig()
 
         self.tile_dict = None
@@ -388,7 +400,7 @@ class TileSplitter(AreaSplitter):
         """
         self.tile_dict = {}
 
-        wfs = WebFeatureService(self.area_bbox, self.time_interval, data_source=self.data_source,
+        wfs = WebFeatureService(self.area_bbox, self.time_interval, data_collection=self.data_collection,
                                 config=self.config)
         date_list = wfs.get_dates()
         geometry_list = wfs.get_geometries()
@@ -432,23 +444,24 @@ class TileSplitter(AreaSplitter):
 
 class CustomGridSplitter(AreaSplitter):
     """ Splitting class which can split according to given custom collection of bounding boxes
-
-    :param shape_list: A list of geometrical shapes describing the area of interest
-    :type shape_list: list(shapely.geometry.multipolygon.MultiPolygon or shapely.geometry.polygon.Polygon)
-    :param crs: Coordinate reference system of the shapes in `shape_list`
-    :type crs: CRS
-    :param bbox_grid: A collection of bounding boxes defining a grid of splitting. All of them have to be in the same
-        CRS.
-    :type bbox_grid: list(BBox) or BBoxCollection
-    :param bbox_split_shape: Parameter that describes the shape in which each of the bounding boxes in the given grid
-        will be split. It can be a tuple of the form `(n, m)` which means the tile bounding boxes will be
-        split into `n` columns and `m` rows. It can also be a single integer `n` which is the same as `(n, n)`.
-    :type bbox_split_shape: int or (int, int)
-    :param reduce_bbox_sizes: If `True` it will reduce the sizes of bounding boxes so that they will tightly fit
-        the given geometry in `shape_list`.
-    :type reduce_bbox_sizes: bool
     """
     def __init__(self, shape_list, crs, bbox_grid, bbox_split_shape=1, **kwargs):
+        """
+        :param shape_list: A list of geometrical shapes describing the area of interest
+        :type shape_list: list(shapely.geometry.multipolygon.MultiPolygon or shapely.geometry.polygon.Polygon)
+        :param crs: Coordinate reference system of the shapes in `shape_list`
+        :type crs: CRS
+        :param bbox_grid: A collection of bounding boxes defining a grid of splitting. All of them have to be in the
+            same CRS.
+        :type bbox_grid: list(BBox) or BBoxCollection
+        :param bbox_split_shape: Parameter that describes the shape in which each of the bounding boxes in the given
+            grid will be split. It can be a tuple of the form `(n, m)` which means the tile bounding boxes will be
+            split into `n` columns and `m` rows. It can also be a single integer `n` which is the same as `(n, n)`.
+        :type bbox_split_shape: int or (int, int)
+        :param reduce_bbox_sizes: If `True` it will reduce the sizes of bounding boxes so that they will tightly fit
+            the given geometry in `shape_list`.
+        :type reduce_bbox_sizes: bool
+        """
         super().__init__(shape_list, crs, **kwargs)
 
         self.bbox_grid = self._parse_bbox_grid(bbox_grid)

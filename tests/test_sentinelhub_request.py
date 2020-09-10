@@ -6,7 +6,7 @@ import numpy as np
 from shapely.geometry import Polygon
 from oauthlib.oauth2.rfc6749.errors import CustomOAuth2Error
 
-from sentinelhub import SentinelHubRequest, CRS, BBox, TestSentinelHub, DataSource, MimeType, bbox_to_dimensions, \
+from sentinelhub import SentinelHubRequest, CRS, BBox, TestSentinelHub, DataCollection, MimeType, bbox_to_dimensions, \
     Geometry, SHConfig
 
 
@@ -42,7 +42,7 @@ class TestSentinelHubRequest(TestSentinelHub):
             evalscript=evalscript,
             input_data=[
                 SentinelHubRequest.input_data(
-                    data_source=DataSource.SENTINEL2_L1C,
+                    data_collection=DataCollection.SENTINEL2_L1C,
                     time_interval=('2017-12-15T07:12:03', '2017-12-15T07:12:04'),
                     maxcc=0.8
                 )
@@ -82,7 +82,7 @@ class TestSentinelHubRequest(TestSentinelHub):
             evalscript=evalscript,
             input_data=[
                 SentinelHubRequest.input_data(
-                    data_source=DataSource.SENTINEL2_L1C,
+                    data_collection=DataCollection.SENTINEL2_L1C,
                     time_interval=('2017-12-15T07:12:03', '2017-12-15T07:12:04'),
                     maxcc=0.8,
                     other_args={
@@ -136,7 +136,7 @@ class TestSentinelHubRequest(TestSentinelHub):
             evalscript=evalscript,
             input_data=[
                 SentinelHubRequest.input_data(
-                    data_source=DataSource.SENTINEL2_L1C,
+                    data_collection=DataCollection.SENTINEL2_L1C,
                     time_interval=('2017-10-14T00:12:03', '2017-12-15T23:12:04'),
                     mosaicking_order='leastCC',
                     other_args={
@@ -190,7 +190,7 @@ class TestSentinelHubRequest(TestSentinelHub):
             evalscript=evalscript,
             input_data=[
                 SentinelHubRequest.input_data(
-                    data_source=DataSource.SENTINEL2_L1C,
+                    data_collection=DataCollection.SENTINEL2_L1C,
                     time_interval=('2017-10-14T00:12:03', '2017-12-15T23:12:04'),
                     mosaicking_order='leastCC'
                 )
@@ -243,7 +243,7 @@ class TestSentinelHubRequest(TestSentinelHub):
             evalscript=evalscript,
             input_data=[
                 SentinelHubRequest.input_data(
-                    data_source=DataSource.SENTINEL2_L1C,
+                    data_collection=DataCollection.SENTINEL2_L1C,
                     time_interval=('2017-12-15T07:12:03', '2017-12-15T07:12:04'),
                     maxcc=0.8
                 )
@@ -351,7 +351,7 @@ class TestSentinelHubRequest(TestSentinelHub):
             evalscript=evalscript,
             input_data=[
                 SentinelHubRequest.input_data(
-                    data_source=DataSource.SENTINEL2_L1C,
+                    data_collection=DataCollection.SENTINEL2_L1C,
                     time_interval=('2017-11-15T07:12:03', '2017-12-15T07:12:04'),
                 )
             ],
@@ -399,7 +399,7 @@ class TestSentinelHubRequest(TestSentinelHub):
             evalscript=evalscript,
             input_data=[
                 SentinelHubRequest.input_data(
-                    data_source=DataSource.SENTINEL2_L1C,
+                    data_collection=DataCollection.SENTINEL2_L1C,
                     time_interval=('2017-12-15T07:12:03', '2017-12-15T07:12:04'),
                 )
             ],

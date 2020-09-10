@@ -5,7 +5,7 @@ Module that implements command line interface for the package
 import click
 
 from .config import SHConfig
-from .data_sources import DataSource
+from .data_collections import DataCollection
 from .data_request import get_safe_format, download_safe_format
 from .download import DownloadRequest, DownloadClient
 
@@ -53,16 +53,16 @@ def aws(product, tile, folder, redownload, info, entire, bands, l2a):
       sentinelhub.aws --tile T33XWJ 2018-04-02 --l2a
     """
     band_list = None if bands is None else bands.split(',')
-    data_source = DataSource.SENTINEL2_L2A if l2a else DataSource.SENTINEL2_L1C
+    data_collection = DataCollection.SENTINEL2_L2A if l2a else DataCollection.SENTINEL2_L1C
     if info:
         if product is None:
-            click.echo(get_safe_format(tile=tile, entire_product=entire, data_source=data_source))
+            click.echo(get_safe_format(tile=tile, entire_product=entire, data_collection=data_collection))
         else:
             click.echo(get_safe_format(product_id=product))
     else:
         if product is None:
             download_safe_format(tile=tile, folder=folder, redownload=redownload, entire_product=entire,
-                                 bands=band_list, data_source=data_source)
+                                 bands=band_list, data_collection=data_collection)
         else:
             download_safe_format(product_id=product, folder=folder, redownload=redownload, bands=band_list)
 

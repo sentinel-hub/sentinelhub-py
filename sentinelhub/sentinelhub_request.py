@@ -2,11 +2,13 @@
 
 Documentation: https://docs.sentinel-hub.com/api/latest/reference/
 """
+import warnings
 
 from .constants import MimeType, RequestType
-from .data_sources import DataSource, OrbitDirection
+from .data_collections import DataCollection, OrbitDirection
 from .download import DownloadRequest, SentinelHubDownloadClient
 from .data_request import DataRequest
+from .exceptions import SHDeprecationWarning
 from .geometry import Geometry, BBox
 from .time_utils import parse_time_interval
 
@@ -79,11 +81,12 @@ class SentinelHubRequest(DataRequest):
         )]
 
     @staticmethod
-    def input_data(data_source=None, time_interval=None, maxcc=None, mosaicking_order=None, other_args=None):
+    def input_data(data_collection=None, time_interval=None, maxcc=None, mosaicking_order=None, other_args=None,
+                   data_source=None):
         """ Generate the `input` part of the Processing API request body
 
-        :param data_source: One of supported ProcessingAPI data sources.
-        :type data_source: sentinelhub.DataSource
+        :param data_collection: One of supported ProcessingAPI data sources.
+        :type data_collection: DataCollection
         :param time_interval: interval with start and end date of the form YYYY-MM-DDThh:mm:ss or YYYY-MM-DD
         :type time_interval: (str, str) or (datetime, datetime)
         :param maxcc: Maximum accepted cloud coverage of an image. Float between 0.0 and 1.0. Default is 1.0.
@@ -93,9 +96,15 @@ class SentinelHubRequest(DataRequest):
         :param other_args: Additional dictionary of arguments. If provided, the resulting dictionary will get updated
                            by it.
         :param other_args: dict
+        :param data_source: A deprecated alternative of data_collection
+        :type data_source: DataCollection
         """
-        if not isinstance(data_source, DataSource):
-            raise ValueError("'data_source' should be an instance of sentinelhub.DataSource")
+        data_collection = data_source or data_collection
+        if data_source is not None:
+            warnings.warn('Parameter data_source is deprecated, use data_collection instead',
+                          category=SHDeprecationWarning)
+        if not isinstance(data_collection, DataCollection):
+            raise ValueError("'data_collection' should be an instance of sentinelhub.DataCollection")
 
         data_filter = {}
 
@@ -120,11 +129,11 @@ class SentinelHubRequest(DataRequest):
 
         data_filter = {
             **data_filter,
-            **_get_data_source_filters(data_source)
+            **_get_data_collection_filters(data_collection)
         }
 
         input_data_object = {
-            'type': data_source.api_id,
+            'type': data_collection.api_id,
             'dataFilter': data_filter
         }
 
@@ -267,22 +276,25 @@ class SentinelHubRequest(DataRequest):
         return request_bounds
 
 
-def _get_data_source_filters(data_source):
+def _get_data_collection_filters(data_collection):
     """ Builds a dictionary of filters for Processing API from a data source definition
     """
     filters = {}
 
-    if data_source.is_sentinel1 and data_source.sensor_type:
-        filters['acquisitionMode'] = data_source.sensor_type.upper()
+    if data_collection.swath_mode:
+        filters['acquisitionMode'] = data_collection.swath_mode.upper()
 
-    if data_source.polarization:
-        filters['polarization'] = data_source.polarization.upper()
+    if data_collection.polarization:
+        filters['polarization'] = data_collection.polarization.upper()
 
-    if data_source.resolution:
-        filters['resolution'] = data_source.resolution.upper()
+    if data_collection.resolution:
+        filters['resolution'] = data_collection.resolution.upper()
 
-    if data_source.orbit_direction and data_source.orbit_direction.upper() != OrbitDirection.BOTH:
-        filters['orbitDirection'] = data_source.orbit_direction.upper()
+    if data_collection.orbit_direction and data_collection.orbit_direction.upper() != OrbitDirection.BOTH:
+        filters['orbitDirection'] = data_collection.orbit_direction.upper()
+
+    if data_collection.timeliness:
+        filters['timeliness'] = data_collection.timeliness
 
     return filters
 

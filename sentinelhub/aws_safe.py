@@ -6,7 +6,7 @@ import warnings
 
 from .aws import AwsProduct, AwsTile
 from .constants import AwsConstants, EsaSafeType, MimeType
-from .data_sources import DataSource
+from .data_collections import DataCollection
 from .download.aws_client import get_aws_xml
 from .exceptions import SHRuntimeWarning
 
@@ -46,7 +46,7 @@ class SafeProduct(AwsProduct):
             safe[main_folder][AwsConstants.DATASTRIP][datastrip_folder] = {}
             safe[main_folder][AwsConstants.DATASTRIP][datastrip_folder][AwsConstants.QI_DATA] = {}
             # S-2 L1C reports are on AWS only stored with tiles and without RADIOMETRIC_QUALITY
-            if self.has_reports() and self.data_source is DataSource.SENTINEL2_L2A:
+            if self.has_reports() and self.data_collection is DataCollection.SENTINEL2_L2A:
                 for metafile in AwsConstants.QUALITY_REPORTS:
                     metafile_name = self.add_file_extension(metafile)
                     safe[main_folder][AwsConstants.DATASTRIP][datastrip_folder][AwsConstants.QI_DATA][
@@ -62,7 +62,7 @@ class SafeProduct(AwsProduct):
             tile_name, date, aws_index = self.url_to_tile(self.get_tile_url(tile_info))
             if self.tile_list is None or AwsTile.parse_tile_name(tile_name) in self.tile_list:
                 tile_struct = SafeTile(tile_name, date, aws_index, parent_folder=None, bands=self.bands,
-                                       metafiles=self.metafiles, data_source=self.data_source).get_safe_struct()
+                                       metafiles=self.metafiles, data_collection=self.data_collection).get_safe_struct()
                 for tile_name, safe_struct in tile_struct.items():
                     safe[main_folder][AwsConstants.GRANULE][tile_name] = safe_struct
 
@@ -191,8 +191,8 @@ class SafeTile(AwsTile):
 
         safe[main_folder][AwsConstants.AUX_DATA] = {}
         # Not sure if 2nd condition of the following is correct:
-        if self.data_source is not DataSource.SENTINEL2_L1C or self.baseline != '02.04':
-            ecmwft_file = AwsConstants.ECMWFT if self.data_source is DataSource.SENTINEL2_L1C or \
+        if self.data_collection is not DataCollection.SENTINEL2_L1C or self.baseline != '02.04':
+            ecmwft_file = AwsConstants.ECMWFT if self.data_collection is DataCollection.SENTINEL2_L1C or \
                                                  self.safe_type is EsaSafeType.OLD_TYPE else AwsConstants.AUX_ECMWFT
             safe[main_folder][AwsConstants.AUX_DATA][self.get_aux_data_name()] = self.get_url(ecmwft_file)
         # Old products also have DEM and MSI in aux folder
@@ -202,7 +202,7 @@ class SafeTile(AwsTile):
                 self.get_url(AwsConstants.GIPP)
 
         safe[main_folder][AwsConstants.IMG_DATA] = {}
-        if self.data_source is DataSource.SENTINEL2_L1C:
+        if self.data_collection is DataCollection.SENTINEL2_L1C:
             for band in self.bands:
                 safe[main_folder][AwsConstants.IMG_DATA][self.get_img_name(band)] = self.get_url(band)
             if self.safe_type == EsaSafeType.COMPACT_TYPE:
@@ -226,14 +226,14 @@ class SafeTile(AwsTile):
 
         if self.has_reports():
             for metafile in AwsConstants.QUALITY_REPORTS:
-                if metafile == AwsConstants.RADIOMETRIC_QUALITY and self.data_source is DataSource.SENTINEL2_L2A and \
-                   self.baseline <= '02.07':
+                if metafile == AwsConstants.RADIOMETRIC_QUALITY and \
+                        self.data_collection is DataCollection.SENTINEL2_L2A and self.baseline <= '02.07':
                     continue
 
                 metafile_name = self.add_file_extension(metafile, remove_path=True)
                 safe[main_folder][AwsConstants.QI_DATA][metafile_name] = self.get_qi_url(metafile_name)
 
-        if self.data_source is DataSource.SENTINEL2_L2A:
+        if self.data_collection is DataCollection.SENTINEL2_L2A:
             for mask in AwsConstants.CLASS_MASKS:
                 for resolution in [AwsConstants.R20m, AwsConstants.R60m]:
                     if self.baseline <= '02.06':
@@ -246,7 +246,8 @@ class SafeTile(AwsTile):
         if self.is_early_compact_l2a():
             safe[main_folder][AwsConstants.QI_DATA][self.get_img_name(AwsConstants.PVI)] = self.get_preview_url('L2A')
 
-        preview_type = 'L2A' if self.data_source is DataSource.SENTINEL2_L2A and self.baseline >= '02.07' else 'L1C'
+        preview_type = 'L2A' if (self.data_collection is DataCollection.SENTINEL2_L2A
+                                 and self.baseline >= '02.07') else 'L1C'
         safe[main_folder][AwsConstants.QI_DATA][self.get_preview_name()] = self.get_preview_url(preview_type)
 
         safe[main_folder][self.get_tile_metadata_name()] = self.get_url(AwsConstants.METADATA)
@@ -261,16 +262,16 @@ class SafeTile(AwsTile):
         """
         tree = get_aws_xml(self.get_url(AwsConstants.METADATA))
 
-        tile_id_tag = 'TILE_ID_2A' if self.data_source is DataSource.SENTINEL2_L2A and self.baseline <= '02.06' else\
-            'TILE_ID'
+        tile_id_tag = 'TILE_ID_2A' if (self.data_collection is DataCollection.SENTINEL2_L2A
+                                       and self.baseline <= '02.06') else 'TILE_ID'
         tile_id = tree[0].find(tile_id_tag).text
         if self.safe_type is EsaSafeType.OLD_TYPE:
             return tile_id
 
         info = tile_id.split('_')
 
-        if (self.data_source is DataSource.SENTINEL2_L1C and self.baseline >= '02.07') or \
-           (self.data_source is DataSource.SENTINEL2_L2A and self.baseline >= '02.10'):
+        if (self.data_collection is DataCollection.SENTINEL2_L1C and self.baseline >= '02.07') or \
+           (self.data_collection is DataCollection.SENTINEL2_L2A and self.baseline >= '02.10'):
             tile_id_time = self.get_datastrip_time()
         else:
             tile_id_time = self.get_sensing_time()
@@ -343,9 +344,9 @@ class SafeTile(AwsTile):
             name = self.tile_id.rsplit('_', 1)[0] + '_' + band
         else:
             name = '_'.join([self.tile_id.split('_')[1], self.get_datatake_time(), band])
-        if self.data_source is DataSource.SENTINEL2_L2A and resolution is not None:
+        if self.data_collection is DataCollection.SENTINEL2_L2A and resolution is not None:
             name = '{}_{}'.format(name, resolution.lstrip('R'))
-        if self.data_source is DataSource.SENTINEL2_L2A and self.baseline <= '02.06':
+        if self.data_collection is DataCollection.SENTINEL2_L2A and self.baseline <= '02.06':
             name = 'L2A_{}'.format(name)
         return '{}.jp2'.format(name)
 
@@ -363,8 +364,8 @@ class SafeTile(AwsTile):
         band = band.split('/')[-1]
         if self.safe_type == EsaSafeType.OLD_TYPE:
             name = _edit_name(self.tile_id, 'MSK', delete_end=True)
-            source_param = '{}_TL'.format('L1C' if self.data_source is DataSource.SENTINEL2_L1C else 'L2A')
-            name = name.replace(source_param, qi_type)
+            collection_param = '{}_TL'.format('L1C' if self.data_collection is DataCollection.SENTINEL2_L1C else 'L2A')
+            name = name.replace(collection_param, qi_type)
             name = '{}_{}_MSIL1C'.format(name, band)
         else:
             name = 'MSK_{}_{}'.format(qi_type, band)
