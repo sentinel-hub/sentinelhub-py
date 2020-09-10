@@ -284,8 +284,8 @@ def _get_data_collection_filters(data_collection):
     """
     filters = {}
 
-    if data_collection.is_sentinel1 and data_collection.sensor_type:
-        filters['acquisitionMode'] = data_collection.sensor_type.upper()
+    if data_collection.swath_mode:
+        filters['acquisitionMode'] = data_collection.swath_mode.upper()
 
     if data_collection.polarization:
         filters['polarization'] = data_collection.polarization.upper()

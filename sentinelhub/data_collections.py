@@ -15,7 +15,7 @@ from .exceptions import SHDeprecationWarning
 
 
 class _CollectionType:
-    """ Types of data collections
+    """ Types of Sentinel Hub data collections
     """
     SENTINEL2 = 'Sentinel-2'
     SENTINEL1 = 'Sentinel-1'
@@ -36,8 +36,7 @@ class _SensorType:
     """
     # pylint: disable=invalid-name
     MSI = 'MSI'
-    IW = 'IW'
-    EW = 'EW'
+    C_SAR = 'C-SAR'
     OLCI = 'OLCI'
     SLSTR = 'SLSTR'
     TROPOMI = 'TROPOMI'
@@ -53,6 +52,16 @@ class _ProcessingLevel:
     L3B = 'L3B'
     L2 = 'L2'
     GRD = 'GRD'
+
+
+class _SwathMode:
+    """ Swath modes for SAR sensors
+    """
+    # pylint: disable=invalid-name
+    IW = 'IW'
+    EW = 'EW'
+    SM = 'SM'
+    WV = 'WV'
 
 
 class _Polarization:
@@ -134,6 +143,7 @@ class DataCollectionDefinition:
     collection_type: str = None
     sensor_type: str = None
     processing_level: str = None
+    swath_mode: str = None
     polarization: str = None
     resolution: str = None
     orbit_direction: str = None
@@ -197,11 +207,12 @@ class DataCollection(Enum, metaclass=_DataCollectionMeta):
         api_id='S1GRD',
         wfs_id='DSS3',
         collection_type=_CollectionType.SENTINEL1,
+        sensor_type=_SensorType.C_SAR,
         processing_level=_ProcessingLevel.GRD,
         orbit_direction=OrbitDirection.BOTH
     )
     SENTINEL1_IW = SENTINEL1.derive(
-        sensor_type=_SensorType.IW,
+        swath_mode=_SwathMode.IW,
         polarization=_Polarization.DV,
         resolution=_Resolution.HIGH,
         bands=_Bands.SENTINEL1_IW
@@ -213,7 +224,7 @@ class DataCollection(Enum, metaclass=_DataCollectionMeta):
         orbit_direction=OrbitDirection.DESCENDING
     )
     SENTINEL1_EW = SENTINEL1.derive(
-        sensor_type=_SensorType.EW,
+        swath_mode=_SwathMode.EW,
         polarization=_Polarization.DH,
         resolution=_Resolution.MEDIUM,
         bands=_Bands.SENTINEL1_EW
@@ -305,8 +316,8 @@ class DataCollection(Enum, metaclass=_DataCollectionMeta):
 
     @classmethod
     def define(cls, name, *, api_id=None, wfs_id=None, service_url=None, collection_type=None, sensor_type=None,
-               processing_level=None, polarization=None, resolution=None, orbit_direction=None, bands=None,
-               collection_id=None, is_timeless=False):
+               processing_level=None, swath_mode=None, polarization=None, resolution=None, orbit_direction=None,
+               bands=None, collection_id=None, is_timeless=False):
         """ Define a new data collection
 
         Note that all parameters, except `name` are optional. If a data collection definition won't be used for a
@@ -327,6 +338,8 @@ class DataCollection(Enum, metaclass=_DataCollectionMeta):
         :type sensor_type: str or None
         :param processing_level: A level of processing applied on satellite data
         :type processing_level: str or None
+        :param swath_mode: A swath mode of SAR sensors
+        :type swath_mode: str or None
         :param polarization: A type of polarization
         :type polarization: str or None
         :param resolution: A type of (Sentinel-1) resolution
@@ -349,6 +362,7 @@ class DataCollection(Enum, metaclass=_DataCollectionMeta):
             collection_type=collection_type,
             sensor_type=sensor_type,
             processing_level=processing_level,
+            swath_mode=swath_mode,
             polarization=polarization,
             resolution=resolution,
             orbit_direction=orbit_direction,
