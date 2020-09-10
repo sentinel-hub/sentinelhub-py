@@ -107,9 +107,9 @@ class SentinelHubDownloadClient(DownloadClient):
         return session
 
 
-def get_sh_json(url, post_values=None, headers=None):
+def get_sh_json(url, post_values=None, headers=None, **kwargs):
     """
     TODO
     """
     return get_json(url, post_values=post_values, headers=headers, download_client_class=SentinelHubDownloadClient,
-                    use_session=True)
+                    use_session=True, **kwargs)

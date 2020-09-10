@@ -44,9 +44,6 @@ class SentinelHubRequest(DataRequest):
         :param config: A custom instance of config class to override parameters from the saved configuration.
         :type config: SHConfig or None
         """
-        if size is None and resolution is None:
-            raise ValueError("Either size or resolution argument should be given")
-
         if not isinstance(evalscript, str):
             raise ValueError("'evalscript' should be a string")
 
