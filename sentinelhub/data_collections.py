@@ -369,6 +369,7 @@ class DataCollection(Enum, metaclass=_DataCollectionMeta):
             polarization=polarization,
             resolution=resolution,
             orbit_direction=orbit_direction,
+            timeliness=timeliness,
             bands=bands,
             collection_id=collection_id,
             is_timeless=is_timeless
