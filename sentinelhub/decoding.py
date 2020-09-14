@@ -31,7 +31,10 @@ def decode_data(response_content, data_type):
     :raises: ValueError
     """
     if data_type is MimeType.JSON:
-        return json.loads(response_content.decode('utf-8'))
+        response_text = response_content.decode('utf-8')
+        if not response_text:
+            return response_text
+        return json.loads(response_text)
     if data_type is MimeType.TAR:
         return decode_tar(response_content)
     if MimeType.is_image_format(data_type):

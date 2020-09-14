@@ -458,6 +458,9 @@ class RequestType(Enum):
     """ Enum constant class for GET/POST request type """
     GET = 'GET'
     POST = 'POST'
+    DELETE = 'DELETE'
+    PUT = 'PUT'
+    PATCH = 'PATCH'
 
 
 class SHConstants:

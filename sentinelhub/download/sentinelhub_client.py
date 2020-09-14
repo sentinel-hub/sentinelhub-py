@@ -107,9 +107,22 @@ class SentinelHubDownloadClient(DownloadClient):
         return session
 
 
-def get_sh_json(url, post_values=None, headers=None, **kwargs):
+def get_auth_json(url, post_values=None, headers=None, request_type=None, **kwargs):
+    """ Make an authenticated request to Sentinel Hub service and obtain a JSON response. Authentication happens
+    automatically before the main request is executed.
+
+    :param url: An URL to Sentinel Hub services
+    :type url: str
+    :param post_values: A dictionary of parameters for a POST request
+    :type post_values: dict or None
+    :param headers: A dictionary of additional request headers
+    :type headers: dict or None
+    :param request_type: A type of HTTP request to make. If not specified, then it will be a GET request if
+        `post_values=None` and a POST request otherwise
+    :type request_type: RequestType or None
+    :param kwargs: Parameters that are passed to a DownloadRequest class
+    :return: JSON data parsed into Python objects
+    :rtype: object or None
     """
-    TODO
-    """
-    return get_json(url, post_values=post_values, headers=headers, download_client_class=SentinelHubDownloadClient,
-                    use_session=True, **kwargs)
+    return get_json(url, post_values=post_values, headers=headers, request_type=request_type,
+                    download_client_class=SentinelHubDownloadClient, use_session=True, **kwargs)

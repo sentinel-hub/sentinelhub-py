@@ -139,29 +139,34 @@ class DownloadClient:
                (self.redownload or response_path is None or not os.path.exists(response_path))
 
 
-def get_json(url, post_values=None, headers=None, download_client_class=DownloadClient, **kwargs):
+def get_json(url, post_values=None, headers=None, request_type=None, download_client_class=DownloadClient, **kwargs):
     """ Download request as JSON data type
 
-    :param url: url to Sentinel Hub's services or other sources from where the data is downloaded
+    :param url: An URL from where the data will be downloaded
     :type url: str
-    :param post_values: form encoded data to send in POST request. Default is `None`
-    :type post_values: dict
-    :param headers: add HTTP headers to request. Default is `None`
+    :param post_values: A dictionary of parameters for a POST request
+    :type post_values: dict or None
+    :param headers: A dictionary of additional request headers
     :type headers: dict
-    :return: request response as JSON instance
+    :param request_type: A type of HTTP request to make. If not specified, then it will be a GET request if
+        `post_values=None` and a POST request otherwise
+    :type request_type: RequestType or None
     :param download_client_class: A class that implements a download client
     :type download_client_class: object
     :param kwargs: Parameters that are passed to a DownloadRequest class
-    :rtype: JSON instance or None
-    :raises: RunTimeError
+    :return: JSON data parsed into Python objects
+    :rtype: object or None
     """
     json_headers = {} if headers is None else headers
 
-    if post_values is None:
-        request_type = RequestType.GET
-    else:
-        request_type = RequestType.POST
-        json_headers = {**json_headers, **{'Content-Type': MimeType.JSON.get_string()}}
+    if request_type is None:
+        request_type = RequestType.GET if post_values is None else RequestType.POST
+
+    if request_type is RequestType.POST and 'Content-Type' not in json_headers:
+        json_headers = {
+            'Content-Type': MimeType.JSON.get_string(),
+            **json_headers
+        }
 
     request = DownloadRequest(url=url, headers=json_headers, request_type=request_type, post_values=post_values,
                               save_response=False, return_data=True, data_type=MimeType.JSON, **kwargs)
