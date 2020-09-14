@@ -149,6 +149,8 @@ class BBox(BaseGeometry):
         :return: `True` if bounding boxes have the same coordinates and the same CRS and `False otherwise
         :rtype: bool
         """
+        if not isinstance(other, BBox):
+            return False
         return list(self) == list(other) and self.crs == other.crs
 
     @property
@@ -392,6 +394,8 @@ class Geometry(BaseGeometry):
         :return: `True` if geometry objects have the same geometry and CRS and `False` otherwise
         :rtype: bool
         """
+        if not isinstance(other, Geometry):
+            return False
         return self.geometry == other.geometry and self.crs == other.crs
 
     def reverse(self):
@@ -480,6 +484,8 @@ class BBoxCollection(BaseGeometry):
     def __eq__(self, other):
         """ Method for comparing two BBoxCollection classes
         """
+        if not isinstance(other, BBoxCollection):
+            return False
         return self.crs == other.crs and len(self.bbox_list) == len(other.bbox_list) and \
             all(bbox == other_bbox for bbox, other_bbox in zip(self, other))
 
