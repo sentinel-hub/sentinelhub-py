@@ -22,7 +22,6 @@ install:
 
 script:
 - if [[ $TRAVIS_PYTHON_VERSION == '3.6' ]]; then pylint sentinelhub ; fi
-- radon cc sentinelhub/*.py -a -nb
 - >
   if [[ ("$TRAVIS_PULL_REQUEST" != "false") || ( $TRAVIS_PYTHON_VERSION != '3.7') ]] ;
   then pytest --cov \

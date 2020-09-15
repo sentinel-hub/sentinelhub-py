@@ -3,5 +3,4 @@ pytest-cov
 codecov
 pylint>=2.2.0
 twine
-radon
 requests-mock
