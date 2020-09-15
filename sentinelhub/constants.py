@@ -99,6 +99,8 @@ class CRSMeta(EnumMeta):
         if isinstance(value, int):
             return str(value)
         if isinstance(value, str):
+            if value.upper() == 'CRS84':
+                return '4326'
             return value.lower().strip('epsg: ')
         return value
 
