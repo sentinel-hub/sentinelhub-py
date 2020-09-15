@@ -207,18 +207,26 @@ class SentinelHubBatch:
         return self.info['processRequest']['evalscript']
 
     @property
+    def bbox(self):
+        """Provides a bounding box used by a batch request
+
+        :return: An area bounding box together with CRS
+        :rtype: BBox
+        """
+        bbox, _, crs = self._parse_bounds_payload()
+        return BBox(bbox, crs)
+
+    @property
     def geometry(self):
         """ Provides a geometry used by a batch request
 
-        :return: Either a Geometry or a BBox object, which also contains a CRS
-        :rtype: Geometry or BBox
+        :return: An area geometry together with CRS
+        :rtype: Geometry
         """
-        bounds_definition = self.info['processRequest']['input']['bounds']
-        crs = CRS(bounds_definition['properties']['crs'].rsplit('/', 1)[-1])
-
-        if 'bbox' in bounds_definition:
-            return BBox(bounds_definition['bbox'], crs)
-        return Geometry(bounds_definition['geometry'], crs)
+        bbox, geometry, crs = self._parse_bounds_payload()
+        if geometry is None:
+            geometry = self.bbox.geometry
+        return Geometry(geometry, crs)
 
     @staticmethod
     def iter_requests(search=None, sort=None, user_id=None, config=None, **kwargs):
@@ -308,6 +316,15 @@ class SentinelHubBatch:
         :type tile_id: int or None
         """
         self._call_job(f'tiles/{tile_id}/restart')
+
+    def _parse_bounds_payload(self):
+        """ Parses bbox, geometry and crs from batch request payload. If bbox or geometry don't exist it returns None
+        instead.
+        """
+        bounds_definition = self.info['processRequest']['input']['bounds']
+        crs = CRS(bounds_definition['properties']['crs'].rsplit('/', 1)[-1])
+
+        return bounds_definition.get('bbox'), bounds_definition.get('geometry'), crs
 
     def _call_job(self, endpoint_name):
         """ Makes a POST request to the service that triggers a processing job

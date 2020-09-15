@@ -88,7 +88,8 @@ def test_create_and_run_batch_request(config, requests_mock):
     assert batch_request.request_id == request_id
     assert batch_request.info['id'] == request_id
     assert request_id in repr(batch_request)
-    assert batch_request.geometry == bbox
+    assert batch_request.bbox == bbox
+    assert batch_request.geometry.bbox == bbox
 
     endpoints = ['analyse', 'start', 'cancel', 'restartpartial']
     full_endpoints = [f'/api/v1/batch/process/{request_id}/{endpoint}' for endpoint in endpoints]
