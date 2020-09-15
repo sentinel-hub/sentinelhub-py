@@ -27,6 +27,7 @@ script:
   if [[ ("$TRAVIS_PULL_REQUEST" != "false") || ( $TRAVIS_PYTHON_VERSION != '3.7') ]] ;
   then pytest --cov \
     --ignore tests/test_ogc.py \
+    --ignore tests/test_sentinelhub_batch.py \
     --ignore tests/test_sentinelhub_client.py \
     --ignore tests/test_session.py \
     --ignore tests/test_fis.py \
