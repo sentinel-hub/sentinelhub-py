@@ -223,7 +223,7 @@ class SentinelHubBatch:
         :return: An area geometry together with CRS
         :rtype: Geometry
         """
-        bbox, geometry, crs = self._parse_bounds_payload()
+        _, geometry, crs = self._parse_bounds_payload()
         if geometry is None:
             geometry = self.bbox.geometry
         return Geometry(geometry, crs)
