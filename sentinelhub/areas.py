@@ -19,6 +19,7 @@ from .exceptions import SHDeprecationWarning
 from .geometry import BBox, BBoxCollection, BaseGeometry, Geometry
 from .geo_utils import transform_point
 from .ogc import WebFeatureService
+from .sentinelhub_batch import SentinelHubBatch
 
 
 class AreaSplitter(ABC):
@@ -666,3 +667,38 @@ class UtmZoneSplitter(BaseUtmSplitter):
                          for direction in ['N', 'S'] for zone in range(1, 61)]
 
         return list(zip(utm_geom_list, utm_prop_list))
+
+
+class BatchSplitter(AreaSplitter):
+    """ A splitter that obtains split bounding boxes from Sentinel Hub Batch API
+    """
+    def __init__(self, *, request_id=None, batch_request=None, config=None):
+        """
+        :param request_id: An ID of a batch request
+        :type request_id: str or None
+        :param batch_request: A batch request object. It is an alternative to the `request_id` parameter
+        :type batch_request: SentinelHubBatch or None
+        :param config: A configuration object
+        :type config: SHConfig or None
+        """
+        if not (request_id or batch_request):
+            raise ValueError('One of the parameters request_id and batch_request has to be given')
+        if batch_request is None:
+            batch_request = SentinelHubBatch(request_id, config=config)
+
+        self.batch_request = batch_request
+
+        batch_geometry = batch_request.geometry
+        super().__init__([batch_geometry.geometry], batch_geometry.crs)
+
+        self._make_split()
+
+    def _make_split(self):
+        """ This method actually loads bounding boxes from the service and prepares the lists
+        """
+        tile_info_list = list(self.batch_request.iter_tiles())
+
+        self.bbox_list = [shapely.geometry.shape(tile_info['geometry']) for tile_info in tile_info_list]
+        self.info_list = [
+            {key: value for key, value in tile_info.items() if key != 'geometry'} for tile_info in tile_info_list
+        ]

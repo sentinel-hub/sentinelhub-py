@@ -8,7 +8,8 @@ from .data_request import WmsRequest, WcsRequest, FisRequest, GeopediaWmsRequest
 from .aws import AwsProduct, AwsTile
 from .aws_safe import SafeProduct, SafeTile
 
-from .areas import BBoxSplitter, OsmSplitter, TileSplitter, CustomGridSplitter, UtmGridSplitter, UtmZoneSplitter
+from .areas import BBoxSplitter, OsmSplitter, TileSplitter, CustomGridSplitter, UtmGridSplitter, UtmZoneSplitter, \
+    BatchSplitter
 
 from .ogc import WebFeatureService
 from .geopedia import GeopediaFeatureIterator, GeopediaSession
