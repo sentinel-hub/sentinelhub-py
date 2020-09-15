@@ -257,22 +257,22 @@ class SentinelHubBatch:
     def start_analysis(self):
         """ Starts analysis of a batch job request
         """
-        self._call_job('analyse')
+        return self._call_job('analyse')
 
     def start_job(self):
         """ Starts running a batch job
         """
-        self._call_job('start')
+        return self._call_job('start')
 
     def cancel_job(self):
         """ Cancels a batch job
         """
-        self._call_job('cancel')
+        return self._call_job('cancel')
 
     def restart_job(self):
         """ Restarts only those parts of a job that failed
         """
-        self._call_job('restartpartial')
+        return self._call_job('restartpartial')
 
     def iter_tiles(self, status=None, **kwargs):
         """ Iterate over info about batch request tiles
@@ -314,7 +314,7 @@ class SentinelHubBatch:
         """
         process_url = self._get_process_url(request_id=self.request_id, config=self.config)
         url = f'{process_url}/{endpoint_name}'
-        get_auth_json(url, request_type=RequestType.POST)
+        return get_auth_json(url, request_type=RequestType.POST)
 
     def _get_tiles_url(self, tile_id=None):
         """ Creates an URL for tiles endpoint
