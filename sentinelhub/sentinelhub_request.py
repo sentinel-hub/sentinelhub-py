@@ -2,13 +2,11 @@
 
 Documentation: https://docs.sentinel-hub.com/api/latest/reference/
 """
-import warnings
-
 from .constants import MimeType, RequestType
 from .data_collections import DataCollection, OrbitDirection
 from .download import DownloadRequest, SentinelHubDownloadClient
 from .data_request import DataRequest
-from .exceptions import SHDeprecationWarning
+from .exceptions import handle_deprecated_data_source
 from .geometry import Geometry, BBox
 from .time_utils import parse_time_interval
 
@@ -102,12 +100,7 @@ class SentinelHubRequest(DataRequest):
         :param data_source: A deprecated alternative of data_collection
         :type data_source: DataCollection
         """
-        data_collection = data_source or data_collection
-        if data_source is not None:
-            warnings.warn('Parameter data_source is deprecated, use data_collection instead',
-                          category=SHDeprecationWarning)
-        if not isinstance(data_collection, DataCollection):
-            raise ValueError("'data_collection' should be an instance of sentinelhub.DataCollection")
+        data_collection = DataCollection(handle_deprecated_data_source(data_collection, data_source))
 
         data_filter = {}
 

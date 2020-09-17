@@ -2,7 +2,8 @@ import unittest
 import os
 import copy
 
-from sentinelhub import WcsRequest, AwsProductRequest, BBox, CRS, get_file_list, get_folder_list, TestSentinelHub
+from sentinelhub import WcsRequest, AwsProductRequest, DataCollection, BBox, CRS, get_file_list, get_folder_list, \
+    TestSentinelHub
 
 
 class TestDataRequest(TestSentinelHub):
@@ -12,7 +13,12 @@ class TestDataRequest(TestSentinelHub):
         super().setUpClass()
 
         bbox = BBox((111.7, 8.655, 111.6, 8.688), crs=CRS.WGS84)
-        cls.request = WcsRequest(data_folder=cls.OUTPUT_FOLDER, bbox=bbox, layer='TRUE-COLOR-S2-L1C')
+        cls.request = WcsRequest(
+            data_folder=cls.OUTPUT_FOLDER,
+            bbox=bbox,
+            data_collection=DataCollection.SENTINEL2_L1C,
+            layer='TRUE-COLOR-S2-L1C'
+        )
 
     def test_init(self):
         data_request = copy.deepcopy(self.request)

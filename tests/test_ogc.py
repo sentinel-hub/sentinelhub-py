@@ -52,6 +52,7 @@ class TestOgc(TestSentinelHub):
         cls.test_cases = [
             cls.OgcTestCase('generalWmsTest',
                             OgcRequest(data_folder=cls.OUTPUT_FOLDER, image_format=MimeType.TIFF_d32f, bbox=wgs84_bbox,
+                                       data_collection=DataCollection.SENTINEL2_L1C,
                                        layer='BANDS-S2-L1C', maxcc=0.5, size_x=img_width, size_y=img_height,
                                        time=(datetime.date(year=2017, month=1, day=5),
                                              datetime.date(year=2017, month=12, day=16)),
@@ -60,6 +61,7 @@ class TestOgc(TestSentinelHub):
                             save_data=True, data_filter=[0, -2, 0]),
             cls.OgcTestCase('generalWcsTest',
                             OgcRequest(data_folder=cls.OUTPUT_FOLDER, image_format=MimeType.TIFF_d32f, bbox=wgs84_bbox,
+                                       data_collection=DataCollection.SENTINEL2_L1C,
                                        layer='BANDS-S2-L1C', maxcc=0.6, size_x=resx, size_y=resy,
                                        time=(datetime.datetime(year=2017, month=10, day=7, hour=1),
                                              datetime.datetime(year=2017, month=12, day=11)),
@@ -69,6 +71,7 @@ class TestOgc(TestSentinelHub):
             # CustomUrlParam tests:
             cls.OgcTestCase('customUrlLogoQualitySampling',
                             WmsRequest(data_folder=cls.OUTPUT_FOLDER, image_format=MimeType.PNG,
+                                       data_collection=DataCollection.SENTINEL2_L1C,
                                        layer='TRUE-COLOR-S2-L1C', width=img_width, bbox=wgs84_bbox,
                                        time=('2017-10-01', '2017-10-02'),
                                        custom_url_params={CustomUrlParam.SHOWLOGO: True,
@@ -79,12 +82,14 @@ class TestOgc(TestSentinelHub):
                             data_filter=[0, -1]),
             cls.OgcTestCase('customUrlPreview',
                             WmsRequest(data_folder=cls.OUTPUT_FOLDER, image_format=MimeType.PNG,
+                                       data_collection=DataCollection.SENTINEL2_L1C,
                                        layer='TRUE-COLOR-S2-L1C', height=img_height, bbox=wgs84_bbox,
                                        time=('2017-10-01', '2017-10-02'),
                                        custom_url_params={CustomUrlParam.PREVIEW: 2}),
                             result_len=1, img_min=27, img_max=244, img_mean=175.51357, img_median=177, tile_num=2),
             cls.OgcTestCase('customUrlEvalscripturl',
                             WcsRequest(data_folder=cls.OUTPUT_FOLDER, image_format=MimeType.PNG,
+                                       data_collection=DataCollection.SENTINEL2_L1C,
                                        layer='TRUE-COLOR-S2-L1C', resx=resx, resy=resy, bbox=pop_web_bbox,
                                        time=('2017-10-01', '2017-10-02'),
                                        custom_url_params={CustomUrlParam.EVALSCRIPTURL:
@@ -94,6 +99,7 @@ class TestOgc(TestSentinelHub):
                             result_len=1, img_min=46, img_max=255, img_mean=231.051154, img_median=255, tile_num=3),
             cls.OgcTestCase('customUrlEvalscript,Transparent,Geometry',
                             WcsRequest(data_folder=cls.OUTPUT_FOLDER, image_format=MimeType.PNG,
+                                       data_collection=DataCollection.SENTINEL2_L1C,
                                        layer='TRUE-COLOR-S2-L1C', resx=resx, resy=resy, bbox=wgs84_bbox,
                                        time=('2017-10-01', '2017-10-02'),
                                        custom_url_params={CustomUrlParam.TRANSPARENT: True,
@@ -102,6 +108,7 @@ class TestOgc(TestSentinelHub):
                             result_len=1, img_min=0, img_max=255, img_mean=50.726361, img_median=1.0, tile_num=2),
             cls.OgcTestCase('FalseLogo,BgColor,Geometry',
                             WmsRequest(data_folder=cls.OUTPUT_FOLDER, image_format=MimeType.PNG,
+                                       data_collection=DataCollection.SENTINEL2_L1C,
                                        layer='TRUE-COLOR-S2-L1C', width=img_width, height=img_height, bbox=pop_web_bbox,
                                        time=('2017-10-01', '2017-10-02'),
                                        custom_url_params={CustomUrlParam.SHOWLOGO: False,
@@ -248,10 +255,14 @@ class TestOgc(TestSentinelHub):
                                  exp_mean=test_case.img_mean, exp_median=test_case.img_median,
                                  test_name=test_case.name)
 
-    def test_to_large_request(self):
+    def test_too_large_request(self):
         bbox = BBox((-5.23, 48.0, -5.03, 48.17), CRS.WGS84)
-        request = WmsRequest(layer='TRUE-COLOR-S2-L1C', height=6000, width=6000, bbox=bbox,
-                             time=('2017-10-01', '2017-10-02'))
+        request = WmsRequest(
+            data_collection=DataCollection.SENTINEL2_L1C,
+            layer='TRUE-COLOR-S2-L1C',
+            height=6000, width=6000, bbox=bbox,
+            time=('2017-10-01', '2017-10-02')
+        )
 
         with self.assertRaises(DownloadFailedException):
             request.get_data()

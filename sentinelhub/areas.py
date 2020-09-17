@@ -6,7 +6,6 @@ import itertools
 from abc import ABC, abstractmethod
 import json
 import math
-import warnings
 
 import shapely.ops
 import shapely.geometry
@@ -15,7 +14,7 @@ from shapely.geometry import Polygon, MultiPolygon, GeometryCollection
 from .config import SHConfig
 from .constants import CRS
 from .data_collections import DataCollection
-from .exceptions import SHDeprecationWarning
+from .exceptions import handle_deprecated_data_source
 from .geometry import BBox, BBoxCollection, BaseGeometry, Geometry
 from .geo_utils import transform_point
 from .ogc import WebFeatureService
@@ -352,7 +351,7 @@ class TileSplitter(AreaSplitter):
     it filters out the ones that do not intersect the area. If specified by user it can also reduce the sizes of
     the remaining bounding boxes to best fit the area.
     """
-    def __init__(self, shape_list, crs, time_interval, tile_split_shape=1, data_collection=DataCollection.SENTINEL2_L1C,
+    def __init__(self, shape_list, crs, time_interval, tile_split_shape=1, data_collection=None,
                  config=None, data_source=None, **kwargs):
         """
         :param shape_list: A list of geometrical shapes describing the area of interest
@@ -366,7 +365,7 @@ class TileSplitter(AreaSplitter):
             split into `n` columns and `m` rows. It can also be a single integer `n` which is the same
             as `(n, n)`.
         :type split_shape: int or (int, int)
-        :param data_collection: A satellite data collection. Default is Sentinel-2 L1C data.
+        :param data_collection: A satellite data collection
         :type data_collection: DataCollection
         :param config: A custom instance of config class to override parameters from the saved configuration.
         :type config: SHConfig or None
@@ -378,10 +377,8 @@ class TileSplitter(AreaSplitter):
         """
         super().__init__(shape_list, crs, **kwargs)
 
-        data_collection = data_source or data_collection
-        if data_source is not None:
-            warnings.warn('Parameter data_source is deprecated, use data_collection instead',
-                          category=SHDeprecationWarning)
+        data_collection = DataCollection(handle_deprecated_data_source(data_collection, data_source,
+                                                                       default=DataCollection.SENTINEL2_L1C))
         if data_collection is DataCollection.DEM:
             raise ValueError('This splitter does not support splitting area by DEM tiles. Please specify some other '
                              'DataCollection')

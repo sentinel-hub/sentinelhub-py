@@ -3,7 +3,6 @@ Module for working with Sentinel Hub OGC services
 """
 import logging
 import datetime
-import warnings
 from base64 import b64encode
 from urllib.parse import urlencode
 
@@ -12,7 +11,7 @@ import shapely.geometry
 from .constants import ServiceType, MimeType, CRS, SHConstants, CustomUrlParam
 from .config import SHConfig
 from .data_collections import DataCollection
-from .exceptions import SHDeprecationWarning
+from .exceptions import handle_deprecated_data_source
 from .geo_utils import get_image_dimension
 from .geometry import BBox, Geometry
 from .download import DownloadRequest, get_json
@@ -332,15 +331,14 @@ class WebFeatureService(OgcService):
     from Sentinel Hub service only during the first iteration. During next iterations it returns already obtained data.
     The data is in the order returned by Sentinel Hub WFS service.
     """
-    def __init__(self, bbox, time_interval, *, data_collection=DataCollection.SENTINEL2_L1C, maxcc=1.0,
-                 data_source=None, **kwargs):
+    def __init__(self, bbox, time_interval, *, data_collection=None, maxcc=1.0, data_source=None, **kwargs):
         """
         :param bbox: Bounding box of the requested image. Coordinates must be in the specified coordinate reference
             system.
         :type bbox: geometry.BBox
         :param time_interval: interval with start and end date of the form YYYY-MM-DDThh:mm:ss or YYYY-MM-DD
         :type time_interval: (str, str)
-        :param data_collection: A collection of requested satellite data. Default is Sentinel-2 L1C data.
+        :param data_collection: A collection of requested satellite data
         :type data_collection: DataCollection
         :param maxcc: Maximum accepted cloud coverage of an image. Float between 0.0 and 1.0. Default is 1.0.
         :type maxcc: float
@@ -351,13 +349,10 @@ class WebFeatureService(OgcService):
         """
         super().__init__(**kwargs)
 
-        if data_source is not None:
-            warnings.warn('Parameter data_source is deprecated, use data_collection instead',
-                          category=SHDeprecationWarning)
-
         self.bbox = bbox
         self.time_interval = parse_time_interval(time_interval)
-        self.data_collection = data_source or data_collection
+        self.data_collection = DataCollection(handle_deprecated_data_source(data_collection, data_source,
+                                                                            default=DataCollection.SENTINEL2_L1C))
         self.maxcc = maxcc
 
         self.tile_list = []
