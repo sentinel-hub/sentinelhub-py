@@ -15,8 +15,9 @@ from .fis import FisService
 from .geopedia import GeopediaWmsService, GeopediaImageService
 from .aws import AwsProduct, AwsTile
 from .aws_safe import SafeProduct, SafeTile
+from .data_collections import handle_deprecated_data_source
 from .download import DownloadRequest, DownloadClient, AwsDownloadClient, SentinelHubDownloadClient
-from .exceptions import SHDeprecationWarning, handle_deprecated_data_source
+from .exceptions import SHDeprecationWarning
 from .os_utils import make_folder
 from .constants import MimeType, CustomUrlParam, ServiceType, CRS, HistogramType
 from .data_collections import DataCollection

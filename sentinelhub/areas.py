@@ -13,8 +13,7 @@ from shapely.geometry import Polygon, MultiPolygon, GeometryCollection
 
 from .config import SHConfig
 from .constants import CRS
-from .data_collections import DataCollection
-from .exceptions import handle_deprecated_data_source
+from .data_collections import DataCollection, handle_deprecated_data_source
 from .geometry import BBox, BBoxCollection, BaseGeometry, Geometry
 from .geo_utils import transform_point
 from .ogc import WebFeatureService

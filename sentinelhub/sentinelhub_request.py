@@ -3,10 +3,9 @@
 Documentation: https://docs.sentinel-hub.com/api/latest/reference/
 """
 from .constants import MimeType, RequestType
-from .data_collections import DataCollection, OrbitDirection
+from .data_collections import DataCollection, OrbitDirection, handle_deprecated_data_source
 from .download import DownloadRequest, SentinelHubDownloadClient
 from .data_request import DataRequest
-from .exceptions import handle_deprecated_data_source
 from .geometry import Geometry, BBox
 from .time_utils import parse_time_interval
 

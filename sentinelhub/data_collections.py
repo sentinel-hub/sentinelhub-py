@@ -544,3 +544,25 @@ def _raise_invalid_id(collection_id):
 
 
 DataSource = DataCollection
+
+
+def handle_deprecated_data_source(data_collection, data_source, default=None):
+    """ Joins parameters used to specify a data collection. In case data_source is given it raises a warning. In case
+    both are given it raises an error. In case neither are given but there is a default collection it raises another
+    warning.
+
+    Note that this function is only temporary and will be removed in future package versions
+    """
+    if data_source is not None:
+        warnings.warn('Parameter data_source is deprecated, use data_collection instead',
+                      category=SHDeprecationWarning)
+
+    if data_collection is not None and data_source is not None:
+        raise ValueError('Only one of the parameters data_collection and data_source should be given')
+
+    if data_collection is None and data_source is None and default is not None:
+        warnings.warn('In the future please specify data_collection parameter, for now taking '
+                      'DataCollection.SENTINEL2_L1C', category=SHDeprecationWarning)
+        return default
+
+    return data_collection or data_source

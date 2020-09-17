@@ -10,8 +10,7 @@ import shapely.geometry
 
 from .constants import ServiceType, MimeType, CRS, SHConstants, CustomUrlParam
 from .config import SHConfig
-from .data_collections import DataCollection
-from .exceptions import handle_deprecated_data_source
+from .data_collections import DataCollection, handle_deprecated_data_source
 from .geo_utils import get_image_dimension
 from .geometry import BBox, Geometry
 from .download import DownloadRequest, get_json
