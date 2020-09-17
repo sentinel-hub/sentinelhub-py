@@ -14,7 +14,7 @@ class SentinelHubRequest(DataRequest):
     """ Sentinel Hub API request class
     """
     def __init__(self, evalscript, input_data, responses, bbox=None, geometry=None, size=None, resolution=None,
-                 base_url=None, **kwargs):
+                 **kwargs):
         """
         For details of certain parameters check the
         `Processing API reference <https://docs.sentinel-hub.com/api/latest/reference/#operation/process>`_.
@@ -23,7 +23,7 @@ class SentinelHubRequest(DataRequest):
         :type evalscript: str
         :param input_data: A list of input dictionary objects as described in the API reference. It can be generated
                            with the helper function `SentinelHubRequest.input_data`
-        :type input_data: List[dict]
+        :type input_data: List[dict or InputDataDict]
         :param responses: A list of `output.responses` objects as described in the API reference. It can be generated
                            with the helper function `SentinelHubRequest.output_response`
         :type responses: List[dict]
@@ -35,9 +35,6 @@ class SentinelHubRequest(DataRequest):
         :type size: Tuple[int, int]
         :param resolution: Resolution of the image. It has to be in units compatible with the given CRS.
         :type resolution: Tuple[float, float]
-        :param base_url: A base URL of Sentinel Hub service deployment from where to download data. This overrides a
-            default `config.sh_base_url` which is then only used for authentication
-        :type base_url: str or None
         :param data_folder: location of the directory where the fetched data will be saved.
         :type data_folder: str
         :param config: A custom instance of config class to override parameters from the saved configuration.
@@ -45,12 +42,10 @@ class SentinelHubRequest(DataRequest):
         """
         if size is None and resolution is None:
             raise ValueError("Either size or resolution argument should be given")
-
         if not isinstance(evalscript, str):
             raise ValueError("'evalscript' should be a string")
 
         self.mime_type = MimeType.TAR if len(responses) > 1 else MimeType(responses[0]['format']['type'].split('/')[1])
-        self.base_url = base_url.rstrip('/') if base_url else None
 
         self.payload = self.body(
             request_bounds=self.bounds(bbox=bbox, geometry=geometry),
@@ -66,12 +61,9 @@ class SentinelHubRequest(DataRequest):
         """
         headers = {'content-type': MimeType.JSON.get_string(), 'accept': self.mime_type.get_string()}
 
-        base_url = self.base_url or self.config.sh_base_url
-        url = f'{base_url}/api/v1/process'
-
         self.download_list = [DownloadRequest(
             request_type=RequestType.POST,
-            url=url,
+            url=self._get_request_url(),
             post_values=self.payload,
             data_folder=self.data_folder,
             save_response=bool(self.data_folder),
@@ -85,7 +77,7 @@ class SentinelHubRequest(DataRequest):
                    data_source=None):
         """ Generate the `input` part of the Processing API request body
 
-        :param data_collection: One of supported ProcessingAPI data sources.
+        :param data_collection: One of supported ProcessingAPI data collections.
         :type data_collection: DataCollection
         :param time_interval: interval with start and end date of the form YYYY-MM-DDThh:mm:ss or YYYY-MM-DD
         :type time_interval: (str, str) or (datetime, datetime)
@@ -98,6 +90,8 @@ class SentinelHubRequest(DataRequest):
         :param other_args: dict
         :param data_source: A deprecated alternative of data_collection
         :type data_source: DataCollection
+        :return: A dictionary-like object that also contains additional attributes
+        :rtype: InputDataDict
         """
         data_collection = DataCollection(handle_deprecated_data_source(data_collection, data_source))
 
@@ -127,15 +121,15 @@ class SentinelHubRequest(DataRequest):
             **_get_data_collection_filters(data_collection)
         }
 
-        input_data_object = {
+        input_data_dict = {
             'type': data_collection.api_id,
             'dataFilter': data_filter
         }
 
         if other_args:
-            _update_other_args(input_data_object, other_args)
+            _update_other_args(input_data_dict, other_args)
 
-        return input_data_object
+        return InputDataDict(input_data_dict, service_url=data_collection.service_url)
 
     @staticmethod
     def body(request_bounds, request_data, evalscript, request_output=None, other_args=None):
@@ -270,9 +264,44 @@ class SentinelHubRequest(DataRequest):
 
         return request_bounds
 
+    def _get_request_url(self):
+        """ It decides which service URL to query. Restrictions from data collection definitions overrule the
+        settings from config object.
+        """
+        data_collection_urls = tuple({
+            input_data_dict.service_url for input_data_dict in self.payload['input']['data']
+            if isinstance(input_data_dict, InputDataDict) and input_data_dict.service_url is not None
+        })
+        if len(data_collection_urls) > 1:
+            raise ValueError(f'Given data collections are restricted to different services: {data_collection_urls}\n'
+                             f'Try defining data collections without these restrictions')
+
+        base_url = data_collection_urls[0] if data_collection_urls else self.config.sh_base_url
+        return f'{base_url}/api/v1/process'
+
+
+class InputDataDict(dict):
+    """ An input data dictionary which also holds additional attributes
+    """
+    def __init__(self, input_data_dict, *, service_url=None):
+        """
+        :param input_data_dict: A normal dictionary with input parameters
+        :type input_data_dict: dict
+        :param service_url: A service URL defined by a data collection
+        :type service_url: str
+        """
+        super().__init__(input_data_dict)
+        self.service_url = service_url
+
+    def __repr__(self):
+        """ Modified dictionary representation that also shows additional attributes
+        """
+        normal_dict_repr = super().__repr__()
+        return f'{self.__class__.__name__}({normal_dict_repr}, service_url={self.service_url})'
+
 
 def _get_data_collection_filters(data_collection):
-    """ Builds a dictionary of filters for Processing API from a data source definition
+    """ Builds a dictionary of filters for Processing API from a data collection definition
     """
     filters = {}
 
