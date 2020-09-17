@@ -92,21 +92,23 @@ class SHConfig:
 
         @staticmethod
         def get_config_file():
-            """ Checks if configuration file exists and returns its file path
+            """ Returns the path of the configuration file
 
             :return: location of configuration file
             :rtype: str
             """
             config_file = os.path.join(os.path.dirname(__file__), 'config.json')
-
-            if not os.path.isfile(config_file):
-                raise IOError('Configuration file does not exist: %s' % os.path.abspath(config_file))
-
             return config_file
 
         def load_configuration(self):
             """ Method reads and loads the configuration file.
+            If the configuration file doesn't exist it creates it from the default.
             """
+            config_file = self.get_config_file()
+            if not os.path.isfile(config_file):
+                with open(config_file, 'w') as cfg_file:
+                    json.dump(self.CONFIG_PARAMS, cfg_file, indent=2)
+
             with open(self.get_config_file(), 'r') as cfg_file:
                 config = json.load(cfg_file)
 
