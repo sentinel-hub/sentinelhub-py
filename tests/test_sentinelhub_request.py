@@ -1,6 +1,7 @@
 """ Tests for the Processing API requests
 """
 import unittest
+import json
 
 import numpy as np
 from shapely.geometry import Polygon
@@ -8,6 +9,7 @@ from oauthlib.oauth2.rfc6749.errors import CustomOAuth2Error
 
 from sentinelhub import SentinelHubRequest, CRS, BBox, TestSentinelHub, DataCollection, MimeType, bbox_to_dimensions, \
     Geometry, SHConfig
+from sentinelhub.sentinelhub_request import InputDataDict
 
 
 class TestSentinelHubRequest(TestSentinelHub):
@@ -424,6 +426,52 @@ class TestSentinelHubRequest(TestSentinelHub):
         with self.assertRaises(ValueError):
             request.get_data()
 
+    def test_conflicting_service_url_restrictions(self):
+        request_params = dict(
+            evalscript='',
+            input_data=[
+                SentinelHubRequest.input_data(
+                    data_collection=DataCollection.LANDSAT8
+                ),
+                SentinelHubRequest.input_data(
+                    data_collection=DataCollection.SENTINEL3_OLCI
+                )
+            ],
+            responses=[
+                SentinelHubRequest.output_response('default', 'tiff')
+            ],
+            bbox=BBox(bbox=[46.16, -16.15, 46.51, -15.58], crs=CRS.WGS84),
+            size=(512, 856),
+            config=self.CONFIG
+        )
 
-if __name__ == "__main__":
+        with self.assertRaises(ValueError):
+            SentinelHubRequest(**request_params)
+
+
+class TestInputDataDict(TestSentinelHub):
+
+    normal_dict = {
+        'a': 10,
+        'b': {
+            'c': 20,
+            30: 'd'
+        }
+    }
+    service_url = 'xyz'
+
+    def test_basic_functionalities(self):
+        input_data_dict = InputDataDict(self.normal_dict, service_url=self.service_url)
+
+        self.assertEqual({**input_data_dict}, {**self.normal_dict})
+        self.assertEqual(input_data_dict.service_url, self.service_url)
+
+        input_data_dict_repr = repr(input_data_dict)
+        self.assertTrue(input_data_dict_repr.startswith(InputDataDict.__name__))
+        self.assertTrue(self.service_url in input_data_dict_repr)
+
+        self.assertEqual(json.dumps(input_data_dict), json.dumps(self.normal_dict))
+
+
+if __name__ == '__main__':
     unittest.main()
