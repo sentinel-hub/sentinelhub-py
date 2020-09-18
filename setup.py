@@ -53,6 +53,16 @@ def update_package_config():
         pass
 
 
+def try_create_config_file():
+    """ After the package is installed it will try to trigger saving a config.json file
+    """
+    try:
+        from sentinelhub.config import SHConfig
+        SHConfig()
+    except BaseException:
+        pass
+
+
 update_package_config()
 
 setup(
@@ -98,3 +108,4 @@ setup(
         'Topic :: Software Development'
     ]
 )
+try_create_config_file()

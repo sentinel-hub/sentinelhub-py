@@ -90,9 +90,9 @@ class SHConfig:
 
             return config
 
-        @staticmethod
-        def get_config_file():
-            """ Checks if configuration file exists and returns its file path
+        def get_config_file(self):
+            """ Checks if configuration file exists and returns its file path.
+            If file doesn't exist it creates a default configurations file.
 
             :return: location of configuration file
             :rtype: str
@@ -100,7 +100,8 @@ class SHConfig:
             config_file = os.path.join(os.path.dirname(__file__), 'config.json')
 
             if not os.path.isfile(config_file):
-                raise IOError('Configuration file does not exist: %s' % os.path.abspath(config_file))
+                with open(config_file, 'w') as cfg_file:
+                    json.dump(self.CONFIG_PARAMS, cfg_file, indent=2)
 
             return config_file
 
