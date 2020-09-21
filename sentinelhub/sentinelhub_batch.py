@@ -15,7 +15,8 @@ class SentinelHubBatch:
 
     For more info check `Batch API reference <https://docs.sentinel-hub.com/api/latest/reference/#tag/batch_process>`_.
     """
-    _REPR_PARAM_NAMES = ['id', 'description', 'bucketName', 'created', 'status', 'userAction', 'valueEstimate']
+    _REPR_PARAM_NAMES = ['id', 'description', 'bucketName', 'created', 'status', 'userAction', 'valueEstimate',
+                         'tileCount']
 
     def __init__(self, request_id=None, *, request_info=None, config=None):
         """
