@@ -15,6 +15,7 @@ from .fis import FisService
 from .geopedia import GeopediaWmsService, GeopediaImageService
 from .aws import AwsProduct, AwsTile
 from .aws_safe import SafeProduct, SafeTile
+from .data_collections import handle_deprecated_data_source
 from .download import DownloadRequest, DownloadClient, AwsDownloadClient, SentinelHubDownloadClient
 from .exceptions import SHDeprecationWarning
 from .os_utils import make_folder
@@ -238,7 +239,7 @@ class DataRequest(ABC):
 class OgcRequest(DataRequest):
     """ The base class for OGC-type requests (WMS and WCS) where all common parameters are defined
     """
-    def __init__(self, layer, bbox, *, time='latest', service_type=None, data_collection=DataCollection.SENTINEL2_L1C,
+    def __init__(self, layer, bbox, *, time='latest', service_type=None, data_collection=None,
                  size_x=None, size_y=None, maxcc=1.0, image_format=MimeType.PNG, custom_url_params=None,
                  time_difference=datetime.timedelta(seconds=-1), data_source=None, **kwargs):
         """
@@ -261,7 +262,7 @@ class OgcRequest(DataRequest):
         :param service_type: type of OGC service (WMS or WCS)
         :type service_type: constants.ServiceType
         :param data_collection: A collection of requested satellite data. It has to be the same as defined in
-            Sentinel Hub Configurator for the given layer. Default is Sentinel-2 L1C.
+            Sentinel Hub Configurator for the given layer.
         :type data_collection: DataCollection
         :param size_x: number of pixels in x or resolution in x (i.e. ``512`` or ``10m``)
         :type size_x: int or str
@@ -291,14 +292,11 @@ class OgcRequest(DataRequest):
         :param data_source: A deprecated alternative to data_collection
         :type data_source: DataCollection
         """
-        if data_source is not None:
-            warnings.warn('Parameter data_source is deprecated, use data_collection instead',
-                          category=SHDeprecationWarning)
-
         self.layer = layer
         self.bbox = bbox
         self.time = time
-        self.data_collection = data_source or data_collection
+        self.data_collection = DataCollection(handle_deprecated_data_source(data_collection, data_source,
+                                                                            default=DataCollection.SENTINEL2_L1C))
         self.maxcc = maxcc
         self.image_format = MimeType(image_format)
         self.service_type = service_type
@@ -844,8 +842,7 @@ class AwsTileRequest(AwsRequest):
     List of available products:
     http://sentinel-s2-l1c.s3-website.eu-central-1.amazonaws.com/#tiles/
     """
-    def __init__(self, *, tile=None, time=None, aws_index=None, data_collection=DataCollection.SENTINEL2_L1C,
-                 data_source=None, **kwargs):
+    def __init__(self, *, tile=None, time=None, aws_index=None, data_collection=None, data_source=None, **kwargs):
         """
         :param tile: tile name (e.g. ``'T10UEV'``)
         :type tile: str
@@ -857,7 +854,7 @@ class AwsTileRequest(AwsRequest):
             lowest index and inform the user.
         :type aws_index: int or None
         :param data_collection: A collection of requested AWS data. Supported collections are Sentinel-2 L1C and
-            Sentinel-2 L2A, default is Sentinel-2 L1C data.
+            Sentinel-2 L2A.
         :type data_collection: DataCollection
         :param bands: List of Sentinel-2 bands for request. If `None` all bands will be obtained
         :type bands: list(str) or None
@@ -874,14 +871,11 @@ class AwsTileRequest(AwsRequest):
         :param data_source: A deprecated alternative to data_collection
         :type data_source: DataCollection
         """
-        if data_source is not None:
-            warnings.warn('Parameter data_source is deprecated, use data_collection instead',
-                          category=SHDeprecationWarning)
-
         self.tile = tile
         self.time = time
         self.aws_index = aws_index
-        self.data_collection = data_source or data_collection
+        self.data_collection = DataCollection(handle_deprecated_data_source(data_collection, data_source,
+                                                                            default=DataCollection.SENTINEL2_L1C))
 
         super().__init__(**kwargs)
 
@@ -899,7 +893,7 @@ class AwsTileRequest(AwsRequest):
 
 
 def get_safe_format(product_id=None, tile=None, entire_product=False, bands=None,
-                    data_collection=DataCollection.SENTINEL2_L1C, data_source=None):
+                    data_collection=None, data_source=None):
     """ Returns .SAFE format structure in form of nested dictionaries. Either ``product_id`` or ``tile`` must be
     specified.
 
@@ -912,18 +906,14 @@ def get_safe_format(product_id=None, tile=None, entire_product=False, bands=None
     :type entire_product: bool
     :param bands: list of bands to download. If `None` all bands will be downloaded. Default is `None`
     :type bands: list(str) or None
-    :param data_collection: In case of tile request the collection of satellite data has to be specified. Default is
-        Sentinel-2 L1C data.
+    :param data_collection: In case of tile request the collection of satellite data has to be specified.
     :type data_collection: DataCollection
     :param data_source: A deprecated alternative to data_collection
     :type data_source: DataCollection
     :return: Nested dictionaries representing .SAFE structure.
     :rtype: dict
     """
-    if data_source is not None:
-        warnings.warn('Parameter data_source is deprecated, use data_collection instead',
-                      category=SHDeprecationWarning)
-    data_collection = data_source or data_collection
+    data_collection = handle_deprecated_data_source(data_collection, data_source)
 
     entire_product = entire_product and product_id is None
     if tile is not None:
@@ -939,7 +929,7 @@ def get_safe_format(product_id=None, tile=None, entire_product=False, bands=None
 
 
 def download_safe_format(product_id=None, tile=None, folder='.', redownload=False, entire_product=False, bands=None,
-                         data_collection=DataCollection.SENTINEL2_L1C, data_source=None):
+                         data_collection=None, data_source=None):
     """ Downloads .SAFE format structure in form of nested dictionaries. Either ``product_id`` or ``tile`` must
     be specified.
 
@@ -957,18 +947,14 @@ def download_safe_format(product_id=None, tile=None, folder='.', redownload=Fals
     :type entire_product: bool
     :param bands: list of bands to download. If `None` all bands will be downloaded. Default is `None`
     :type bands: list(str) or None
-    :param data_collection: In case of tile request the collection of satellite data has to be specified. Default is
-        Sentinel-2 L1C data.
+    :param data_collection: In case of tile request the collection of satellite data has to be specified.
     :type data_collection: DataCollection
     :param data_source: A deprecated alternative to data_collection
     :type data_source: DataCollection
     :return: Nested dictionaries representing .SAFE structure.
     :rtype: dict
     """
-    if data_source is not None:
-        warnings.warn('Parameter data_source is deprecated, use data_collection instead',
-                      category=SHDeprecationWarning)
-    data_collection = data_source or data_collection
+    data_collection = handle_deprecated_data_source(data_collection, data_source)
 
     entire_product = entire_product and product_id is None
     if tile is not None:
