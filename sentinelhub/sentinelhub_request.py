@@ -2,24 +2,12 @@
 
 Documentation: https://docs.sentinel-hub.com/api/latest/reference/
 """
-
-from .constants import MimeType, DataSource, RequestType
+from .constants import MimeType, RequestType
+from .data_collections import DataCollection, OrbitDirection, handle_deprecated_data_source
 from .download import DownloadRequest, SentinelHubDownloadClient
 from .data_request import DataRequest
 from .geometry import Geometry, BBox
 from .time_utils import parse_time_interval
-
-
-def _update_other_args(dict1, dict2):
-    """
-    Function for a recursive update of `dict1` with `dict2`. The function loops over the keys in `dict2` and
-    only the non-dict like values are assigned to the specified keys.
-    """
-    for key, value in dict2.items():
-        if isinstance(value, dict) and key in dict1:
-            _update_other_args(dict1[key], value)
-        else:
-            dict1[key] = value
 
 
 class SentinelHubRequest(DataRequest):
@@ -35,7 +23,7 @@ class SentinelHubRequest(DataRequest):
         :type evalscript: str
         :param input_data: A list of input dictionary objects as described in the API reference. It can be generated
                            with the helper function `SentinelHubRequest.input_data`
-        :type input_data: List[dict]
+        :type input_data: List[dict or InputDataDict]
         :param responses: A list of `output.responses` objects as described in the API reference. It can be generated
                            with the helper function `SentinelHubRequest.output_response`
         :type responses: List[dict]
@@ -52,10 +40,8 @@ class SentinelHubRequest(DataRequest):
         :param config: A custom instance of config class to override parameters from the saved configuration.
         :type config: SHConfig or None
         """
-
         if size is None and resolution is None:
             raise ValueError("Either size or resolution argument should be given")
-
         if not isinstance(evalscript, str):
             raise ValueError("'evalscript' should be a string")
 
@@ -73,11 +59,11 @@ class SentinelHubRequest(DataRequest):
     def create_request(self):
         """ Prepares a download request
         """
-        headers = {'content-type': MimeType.JSON.get_string(), "accept": self.mime_type.get_string()}
+        headers = {'content-type': MimeType.JSON.get_string(), 'accept': self.mime_type.get_string()}
 
         self.download_list = [DownloadRequest(
             request_type=RequestType.POST,
-            url=self.config.get_sh_processing_api_url(),
+            url=self._get_request_url(),
             post_values=self.payload,
             data_folder=self.data_folder,
             save_response=bool(self.data_folder),
@@ -87,57 +73,63 @@ class SentinelHubRequest(DataRequest):
         )]
 
     @staticmethod
-    def input_data(data_source=None, time_interval=None, maxcc=1.0, mosaicking_order='mostRecent', other_args=None):
+    def input_data(data_collection=None, time_interval=None, maxcc=None, mosaicking_order=None, other_args=None,
+                   data_source=None):
         """ Generate the `input` part of the Processing API request body
 
-        :param data_source: One of supported ProcessingAPI data sources.
-        :type data_source: sentinelhub.DataSource
+        :param data_collection: One of supported ProcessingAPI data collections.
+        :type data_collection: DataCollection
         :param time_interval: interval with start and end date of the form YYYY-MM-DDThh:mm:ss or YYYY-MM-DD
         :type time_interval: (str, str) or (datetime, datetime)
         :param maxcc: Maximum accepted cloud coverage of an image. Float between 0.0 and 1.0. Default is 1.0.
-        :type maxcc: float
+        :type maxcc: float or None
         :param mosaicking_order: Mosaicking order, which has to be either 'mostRecent', 'leastRecent' or 'leastCC'.
-        :type mosaicking_order: str
+        :type mosaicking_order: str or None
         :param other_args: Additional dictionary of arguments. If provided, the resulting dictionary will get updated
                            by it.
         :param other_args: dict
+        :param data_source: A deprecated alternative of data_collection
+        :type data_source: DataCollection
+        :return: A dictionary-like object that also contains additional attributes
+        :rtype: InputDataDict
         """
+        data_collection = DataCollection(handle_deprecated_data_source(data_collection, data_source))
 
-        if not isinstance(data_source, DataSource):
-            raise ValueError("'data_source' should be an instance of sentinelhub.DataSource")
-
-        if not isinstance(maxcc, float) and (maxcc < 0 or maxcc > 1):
-            raise ValueError('maxcc should be a float on an interval [0, 1]')
+        data_filter = {}
 
         if time_interval:
             date_from, date_to = parse_time_interval(time_interval)
             date_from, date_to = date_from + 'Z', date_to + 'Z'
-        else:
-            date_from, date_to = "", ""
+            data_filter['timeRange'] = {'from': date_from, 'to': date_to}
 
-        mosaic_order_params = ["mostRecent", "leastRecent", "leastCC"]
-        if mosaicking_order not in mosaic_order_params:
-            msg = "{} is not a valid mosaickingOrder parameter, it should be one of: {}"
-            raise ValueError(msg.format(mosaicking_order, mosaic_order_params))
+        if maxcc is not None:
+            if not isinstance(maxcc, float) and (maxcc < 0 or maxcc > 1):
+                raise ValueError('maxcc should be a float on an interval [0, 1]')
 
-        data_type = 'CUSTOM' if data_source.is_custom() else data_source.api_identifier()
+            data_filter['maxCloudCoverage'] = int(maxcc * 100)
 
-        input_data_object = {
-            "type": data_type,
-            "dataFilter": {
-                "timeRange": {"from": date_from, "to": date_to},
-                "maxCloudCoverage": int(maxcc * 100),
-                "mosaickingOrder": mosaicking_order,
-            }
+        if mosaicking_order:
+            mosaic_order_params = ["mostRecent", "leastRecent", "leastCC"]
+            if mosaicking_order not in mosaic_order_params:
+                msg = "{} is not a valid mosaickingOrder parameter, it should be one of: {}"
+                raise ValueError(msg.format(mosaicking_order, mosaic_order_params))
+
+            data_filter['mosaickingOrder'] = mosaicking_order
+
+        data_filter = {
+            **data_filter,
+            **_get_data_collection_filters(data_collection)
         }
 
-        if data_type == 'CUSTOM':
-            input_data_object['dataFilter']['collectionId'] = data_source.value
+        input_data_dict = {
+            'type': data_collection.api_id,
+            'dataFilter': data_filter
+        }
 
         if other_args:
-            _update_other_args(input_data_object, other_args)
+            _update_other_args(input_data_dict, other_args)
 
-        return input_data_object
+        return InputDataDict(input_data_dict, service_url=data_collection.service_url)
 
     @staticmethod
     def body(request_bounds, request_data, evalscript, request_output=None, other_args=None):
@@ -271,3 +263,73 @@ class SentinelHubRequest(DataRequest):
             _update_other_args(request_bounds, other_args)
 
         return request_bounds
+
+    def _get_request_url(self):
+        """ It decides which service URL to query. Restrictions from data collection definitions overrule the
+        settings from config object.
+        """
+        data_collection_urls = tuple({
+            input_data_dict.service_url for input_data_dict in self.payload['input']['data']
+            if isinstance(input_data_dict, InputDataDict) and input_data_dict.service_url is not None
+        })
+        if len(data_collection_urls) > 1:
+            raise ValueError(f'Given data collections are restricted to different services: {data_collection_urls}\n'
+                             f'Try defining data collections without these restrictions')
+
+        base_url = data_collection_urls[0] if data_collection_urls else self.config.sh_base_url
+        return f'{base_url}/api/v1/process'
+
+
+class InputDataDict(dict):
+    """ An input data dictionary which also holds additional attributes
+    """
+    def __init__(self, input_data_dict, *, service_url=None):
+        """
+        :param input_data_dict: A normal dictionary with input parameters
+        :type input_data_dict: dict
+        :param service_url: A service URL defined by a data collection
+        :type service_url: str
+        """
+        super().__init__(input_data_dict)
+        self.service_url = service_url
+
+    def __repr__(self):
+        """ Modified dictionary representation that also shows additional attributes
+        """
+        normal_dict_repr = super().__repr__()
+        return f'{self.__class__.__name__}({normal_dict_repr}, service_url={self.service_url})'
+
+
+def _get_data_collection_filters(data_collection):
+    """ Builds a dictionary of filters for Processing API from a data collection definition
+    """
+    filters = {}
+
+    if data_collection.swath_mode:
+        filters['acquisitionMode'] = data_collection.swath_mode.upper()
+
+    if data_collection.polarization:
+        filters['polarization'] = data_collection.polarization.upper()
+
+    if data_collection.resolution:
+        filters['resolution'] = data_collection.resolution.upper()
+
+    if data_collection.orbit_direction and data_collection.orbit_direction.upper() != OrbitDirection.BOTH:
+        filters['orbitDirection'] = data_collection.orbit_direction.upper()
+
+    if data_collection.timeliness:
+        filters['timeliness'] = data_collection.timeliness
+
+    return filters
+
+
+def _update_other_args(dict1, dict2):
+    """
+    Function for a recursive update of `dict1` with `dict2`. The function loops over the keys in `dict2` and
+    only the non-dict like values are assigned to the specified keys.
+    """
+    for key, value in dict2.items():
+        if isinstance(value, dict) and key in dict1:
+            _update_other_args(dict1[key], value)
+        else:
+            dict1[key] = value

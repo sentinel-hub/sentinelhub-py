@@ -6,6 +6,7 @@ Examples
     :maxdepth: 4
 
     examples/processing_api_request.ipynb
+    examples/data_collections.ipynb
     examples/ogc_request.ipynb
     examples/large_area_utilities.ipynb
     examples/fis_request.ipynb

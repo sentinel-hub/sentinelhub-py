@@ -4,7 +4,7 @@ import os
 
 from shapely.geometry import Polygon
 
-from sentinelhub import CRS, DataSource
+from sentinelhub import CRS, DataCollection
 from sentinelhub import BBox, Geometry
 from sentinelhub import TestCaseContainer, CustomUrlParam
 from sentinelhub import FisRequest, TestSentinelHub
@@ -48,7 +48,8 @@ class TestFis(TestSentinelHub):
 
         cls.test_cases = [
             cls.FisTestCase('geometry',
-                            FisRequest(layer='TRUE-COLOR-S2-L1C',
+                            FisRequest(data_collection=DataCollection.SENTINEL2_L1C,
+                                       layer='TRUE-COLOR-S2-L1C',
                                        geometry_list=[geometry1],
                                        time=('2017-1-1', '2017-2-1'),
                                        resolution="50m",
@@ -57,7 +58,8 @@ class TestFis(TestSentinelHub):
                             raw_result=results[0],
                             result_length=1),
             cls.FisTestCase('bbox',
-                            FisRequest(layer='BANDS-S2-L1C',
+                            FisRequest(data_collection=DataCollection.SENTINEL2_L1C,
+                                       layer='BANDS-S2-L1C',
                                        geometry_list=[bbox],
                                        time='2017-1-1',
                                        resolution="50m",
@@ -70,7 +72,7 @@ class TestFis(TestSentinelHub):
                             raw_result=results[1],
                             result_length=1),
             cls.FisTestCase('list',
-                            FisRequest(data_source=DataSource.LANDSAT8,
+                            FisRequest(data_collection=DataCollection.LANDSAT8,
                                        layer='BANDS-L8',
                                        geometry_list=[bbox, geometry1],
                                        time=('2017-1-1', '2017-1-10'),
@@ -79,7 +81,8 @@ class TestFis(TestSentinelHub):
                             raw_result=results[2], result_length=2,
                             save_data=True),
             cls.FisTestCase('Polygon in WGS84',
-                            FisRequest(layer='TRUE-COLOR-S2-L1C',
+                            FisRequest(data_collection=DataCollection.SENTINEL2_L1C,
+                                       layer='TRUE-COLOR-S2-L1C',
                                        geometry_list=[geometry2],
                                        time=('2017-10-1', '2017-10-2'),
                                        resolution="60m",

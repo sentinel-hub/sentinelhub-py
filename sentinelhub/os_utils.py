@@ -70,7 +70,7 @@ def make_folder(path):
         except OSError as exception:
             if exception.errno != errno.EEXIST:
                 raise ValueError('Specified folder is not writable: %s'
-                                 '\nPlease check permissions or set a new valid folder.' % path)
+                                 '\nPlease check permissions or set a new valid folder.' % path) from exception
 
 
 def rename(old_path, new_path, edit_folders=True):

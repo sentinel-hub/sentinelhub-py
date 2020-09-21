@@ -15,10 +15,12 @@ from .fis import FisService
 from .geopedia import GeopediaWmsService, GeopediaImageService
 from .aws import AwsProduct, AwsTile
 from .aws_safe import SafeProduct, SafeTile
+from .data_collections import handle_deprecated_data_source
 from .download import DownloadRequest, DownloadClient, AwsDownloadClient, SentinelHubDownloadClient
 from .exceptions import SHDeprecationWarning
 from .os_utils import make_folder
-from .constants import DataSource, MimeType, CustomUrlParam, ServiceType, CRS, HistogramType
+from .constants import MimeType, CustomUrlParam, ServiceType, CRS, HistogramType
+from .data_collections import DataCollection
 
 LOGGER = logging.getLogger(__name__)
 
@@ -168,8 +170,8 @@ class DataRequest(ABC):
         elif isinstance(data_filter, (list, tuple)):
             try:
                 filtered_download_list = [self.download_list[index] for index in data_filter]
-            except IndexError:
-                raise IndexError('Indices of data_filter are out of range')
+            except IndexError as exception:
+                raise IndexError('Indices of data_filter are out of range') from exception
 
             filtered_download_list, mapping_list = self._filter_repeating_items(filtered_download_list)
             is_repeating_filter = len(filtered_download_list) < len(mapping_list)
@@ -237,13 +239,13 @@ class DataRequest(ABC):
 class OgcRequest(DataRequest):
     """ The base class for OGC-type requests (WMS and WCS) where all common parameters are defined
     """
-    def __init__(self, layer, bbox, *, time='latest', service_type=None, data_source=DataSource.SENTINEL2_L1C,
+    def __init__(self, layer, bbox, *, time='latest', service_type=None, data_collection=None,
                  size_x=None, size_y=None, maxcc=1.0, image_format=MimeType.PNG, custom_url_params=None,
-                 time_difference=datetime.timedelta(seconds=-1), **kwargs):
+                 time_difference=datetime.timedelta(seconds=-1), data_source=None, **kwargs):
         """
         :param layer: An ID of a layer configured in Sentinel Hub Configurator. It has to be configured for the same
-            instance ID which will be used for this request. Also the satellite source of the layer in Configurator must
-            match the one given by `data_source` parameter
+            instance ID which will be used for this request. Also the satellite collection of the layer in Configurator
+            must match the one given by `data_collection` parameter
         :type layer: str
         :param bbox: Bounding box of the requested image. Coordinates must be in the specified coordinate reference
             system.
@@ -259,9 +261,9 @@ class OgcRequest(DataRequest):
             (datetime.datetime, datetime.datetime)
         :param service_type: type of OGC service (WMS or WCS)
         :type service_type: constants.ServiceType
-        :param data_source: Source of requested satellite data. It has to be the same as defined in Sentinel Hub
-            Configurator for the given layer. Default is Sentinel-2 L1C.
-        :type data_source: constants.DataSource
+        :param data_collection: A collection of requested satellite data. It has to be the same as defined in
+            Sentinel Hub Configurator for the given layer.
+        :type data_collection: DataCollection
         :param size_x: number of pixels in x or resolution in x (i.e. ``512`` or ``10m``)
         :type size_x: int or str
         :param size_y: number of pixels in x or resolution in y (i.e. ``512`` or ``10m``)
@@ -287,11 +289,14 @@ class OgcRequest(DataRequest):
         :type data_folder: str
         :param config: A custom instance of config class to override parameters from the saved configuration.
         :type config: SHConfig or None
+        :param data_source: A deprecated alternative to data_collection
+        :type data_source: DataCollection
         """
         self.layer = layer
         self.bbox = bbox
         self.time = time
-        self.data_source = data_source
+        self.data_collection = DataCollection(handle_deprecated_data_source(data_collection, data_source,
+                                                                            default=DataCollection.SENTINEL2_L1C))
         self.maxcc = maxcc
         self.image_format = MimeType(image_format)
         self.service_type = service_type
@@ -355,7 +360,7 @@ class OgcRequest(DataRequest):
         """ Returns iterator over info about all satellite tiles used for the OgcRequest
 
         :return: Iterator of dictionaries containing info about all satellite tiles used in the request. In case of
-                 DataSource.DEM it returns None.
+                 DataCollection.DEM it returns None.
         :rtype: Iterator[dict] or None
         """
         return self.wfs_iterator
@@ -383,8 +388,8 @@ class WmsRequest(OgcRequest):
         :param height: height (number of rows) of the returned image (array)
         :type height: int or None
         :param layer: An ID of a layer configured in Sentinel Hub Configurator. It has to be configured for the same
-            instance ID which will be used for this request. Also the satellite source of the layer in Configurator must
-            match the one given by `data_source` parameter
+            instance ID which will be used for this request. Also the satellite collection of the layer in Configurator
+            must match the one given by `data_collection` parameter
         :type layer: str
         :param bbox: Bounding box of the requested image. Coordinates must be in the specified coordinate reference
             system.
@@ -398,9 +403,9 @@ class WmsRequest(OgcRequest):
             ``('2016-01-01', ' 2016-01-31')``
         :type time: str or (str, str) or datetime.date or (datetime.date, datetime.date) or datetime.datetime or
             (datetime.datetime, datetime.datetime)
-        :param data_source: Source of requested satellite data. It has to be the same as defined in Sentinel Hub
-            Configurator for the given layer. Default is Sentinel-2 L1C.
-        :type data_source: constants.DataSource
+        :param data_collection: A collection of requested satellite data. It has to be the same as defined in
+            Sentinel Hub Configurator for the given layer. Default is Sentinel-2 L1C.
+        :type data_collection: DataCollection
         :param size_x: number of pixels in x or resolution in x (i.e. ``512`` or ``10m``)
         :type size_x: int or str
         :param size_y: number of pixels in x or resolution in y (i.e. ``512`` or ``10m``)
@@ -426,6 +431,8 @@ class WmsRequest(OgcRequest):
         :type data_folder: str
         :param config: A custom instance of config class to override parameters from the saved configuration.
         :type config: SHConfig or None
+        :param data_source: A deprecated alternative to data_collection
+        :type data_source: DataCollection
         """
         super().__init__(service_type=ServiceType.WMS, size_x=width, size_y=height, **kwargs)
 
@@ -452,8 +459,8 @@ class WcsRequest(OgcRequest):
             Sentinel-2 bands.
         :type resy: str
         :param layer: An ID of a layer configured in Sentinel Hub Configurator. It has to be configured for the same
-            instance ID which will be used for this request. Also the satellite source of the layer in Configurator must
-            match the one given by `data_source` parameter
+            instance ID which will be used for this request. Also the satellite collection of the layer in Configurator
+            must match the one given by `data_collection` parameter
         :type layer: str
         :param bbox: Bounding box of the requested image. Coordinates must be in the specified coordinate reference
             system.
@@ -467,9 +474,9 @@ class WcsRequest(OgcRequest):
             ``('2016-01-01', ' 2016-01-31')``
         :type time: str or (str, str) or datetime.date or (datetime.date, datetime.date) or datetime.datetime or
             (datetime.datetime, datetime.datetime)
-        :param data_source: Source of requested satellite data. It has to be the same as defined in Sentinel Hub
-            Configurator for the given layer. Default is Sentinel-2 L1C.
-        :type data_source: constants.DataSource
+        :param data_collection: A collection of requested satellite data. It has to be the same as defined in Sentinel
+            Hub Configurator for the given layer. Default is Sentinel-2 L1C.
+        :type data_collection: DataCollection
         :param size_x: number of pixels in x or resolution in x (i.e. ``512`` or ``10m``)
         :type size_x: int or str
         :param size_y: number of pixels in x or resolution in y (i.e. ``512`` or ``10m``)
@@ -495,6 +502,8 @@ class WcsRequest(OgcRequest):
         :type data_folder: str
         :param config: A custom instance of config class to override parameters from the saved configuration.
         :type config: SHConfig or None
+        :param data_source: A deprecated alternative to data_collection
+        :type data_source: DataCollection
         """
         super().__init__(service_type=ServiceType.WCS, size_x=resx, size_y=resy, **kwargs)
 
@@ -516,8 +525,8 @@ class FisRequest(OgcRequest):
     def __init__(self, layer, time, geometry_list, *, resolution='10m', bins=None, histogram_type=None, **kwargs):
         """
         :param layer: An ID of a layer configured in Sentinel Hub Configurator. It has to be configured for the same
-            instance ID which will be used for this request. Also the satellite source of the layer in Configurator must
-            match the one given by `data_source` parameter
+            instance ID which will be used for this request. Also the satellite collection of the layer in Configurator
+            must match the one given by `data_collection` parameter
         :type layer: str
         :param time: time or time range for which to return the results, in ISO8601 format
             (year-month-date, for example: ``2016-01-01``, or year-month-dateThours:minutes:seconds format,
@@ -537,9 +546,9 @@ class FisRequest(OgcRequest):
         :type bins: str
         :param histogram_type: type of histogram
         :type histogram_type: HistogramType
-        :param data_source: Source of requested satellite data. It has to be the same as defined in Sentinel Hub
-            Configurator for the given layer. Default is Sentinel-2 L1C.
-        :type data_source: constants.DataSource
+        :param data_collection: A collection of requested satellite data. It has to be the same as defined in Sentinel
+            Hub Configurator for the given layer. Default is Sentinel-2 L1C.
+        :type data_collection: DataCollection
         :param maxcc: maximum accepted cloud coverage of an image. Float between 0.0 and 1.0. Default is ``1.0``.
         :type maxcc: float
         :param custom_url_params: Dictionary of CustomUrlParameters and their values supported by Sentinel Hub's WMS
@@ -552,6 +561,8 @@ class FisRequest(OgcRequest):
         :type data_folder: str
         :param config: A custom instance of config class to override parameters from the saved configuration.
         :type config: SHConfig or None
+        :param data_source: A deprecated alternative to data_collection
+        :type data_source: DataCollection
         """
         self.geometry_list = geometry_list
         self.resolution = resolution
@@ -831,7 +842,7 @@ class AwsTileRequest(AwsRequest):
     List of available products:
     http://sentinel-s2-l1c.s3-website.eu-central-1.amazonaws.com/#tiles/
     """
-    def __init__(self, *, tile=None, time=None, aws_index=None, data_source=DataSource.SENTINEL2_L1C, **kwargs):
+    def __init__(self, *, tile=None, time=None, aws_index=None, data_collection=None, data_source=None, **kwargs):
         """
         :param tile: tile name (e.g. ``'T10UEV'``)
         :type tile: str
@@ -842,9 +853,9 @@ class AwsTileRequest(AwsRequest):
             will try to find the index automatically. If there will be multiple choices it will choose the
             lowest index and inform the user.
         :type aws_index: int or None
-        :param data_source: Source of requested AWS data. Supported sources are Sentinel-2 L1C and Sentinel-2 L2A,
-            default is Sentinel-2 L1C data.
-        :type data_source: constants.DataSource
+        :param data_collection: A collection of requested AWS data. Supported collections are Sentinel-2 L1C and
+            Sentinel-2 L2A.
+        :type data_collection: DataCollection
         :param bands: List of Sentinel-2 bands for request. If `None` all bands will be obtained
         :type bands: list(str) or None
         :param metafiles: list of additional metafiles available on AWS
@@ -857,26 +868,32 @@ class AwsTileRequest(AwsRequest):
         :type data_folder: str
         :param config: A custom instance of config class to override parameters from the saved configuration.
         :type config: SHConfig or None
+        :param data_source: A deprecated alternative to data_collection
+        :type data_source: DataCollection
         """
         self.tile = tile
         self.time = time
         self.aws_index = aws_index
-        self.data_source = data_source
+        self.data_collection = DataCollection(handle_deprecated_data_source(data_collection, data_source,
+                                                                            default=DataCollection.SENTINEL2_L1C))
 
         super().__init__(**kwargs)
 
     def create_request(self):
         if self.safe_format:
             self.aws_service = SafeTile(self.tile, self.time, self.aws_index, bands=self.bands,
-                                        metafiles=self.metafiles, data_source=self.data_source, config=self.config)
+                                        metafiles=self.metafiles, data_collection=self.data_collection,
+                                        config=self.config)
         else:
             self.aws_service = AwsTile(self.tile, self.time, self.aws_index, bands=self.bands,
-                                       metafiles=self.metafiles, data_source=self.data_source, config=self.config)
+                                       metafiles=self.metafiles, data_collection=self.data_collection,
+                                       config=self.config)
 
         self.download_list, self.folder_list = self.aws_service.get_requests()
 
 
-def get_safe_format(product_id=None, tile=None, entire_product=False, bands=None, data_source=DataSource.SENTINEL2_L1C):
+def get_safe_format(product_id=None, tile=None, entire_product=False, bands=None,
+                    data_collection=None, data_source=None):
     """ Returns .SAFE format structure in form of nested dictionaries. Either ``product_id`` or ``tile`` must be
     specified.
 
@@ -885,19 +902,22 @@ def get_safe_format(product_id=None, tile=None, entire_product=False, bands=None
     :param tile: tuple containing tile name and sensing time/date. Default is `None`
     :type tile: (str, str)
     :param entire_product: in case tile is specified this flag determines if it will be place inside a .SAFE structure
-                           of the product. Default is `False`
+        of the product. Default is `False`
     :type entire_product: bool
     :param bands: list of bands to download. If `None` all bands will be downloaded. Default is `None`
     :type bands: list(str) or None
-    :param data_source: In case of tile request the source of satellite data has to be specified. Default is Sentinel-2
-                        L1C data.
-    :type data_source: constants.DataSource
+    :param data_collection: In case of tile request the collection of satellite data has to be specified.
+    :type data_collection: DataCollection
+    :param data_source: A deprecated alternative to data_collection
+    :type data_source: DataCollection
     :return: Nested dictionaries representing .SAFE structure.
     :rtype: dict
     """
+    data_collection = handle_deprecated_data_source(data_collection, data_source)
+
     entire_product = entire_product and product_id is None
     if tile is not None:
-        safe_tile = SafeTile(tile_name=tile[0], time=tile[1], bands=bands, data_source=data_source)
+        safe_tile = SafeTile(tile_name=tile[0], time=tile[1], bands=bands, data_collection=data_collection)
         if not entire_product:
             return safe_tile.get_safe_struct()
         product_id = safe_tile.get_product_id()
@@ -909,7 +929,7 @@ def get_safe_format(product_id=None, tile=None, entire_product=False, bands=None
 
 
 def download_safe_format(product_id=None, tile=None, folder='.', redownload=False, entire_product=False, bands=None,
-                         data_source=DataSource.SENTINEL2_L1C):
+                         data_collection=None, data_source=None):
     """ Downloads .SAFE format structure in form of nested dictionaries. Either ``product_id`` or ``tile`` must
     be specified.
 
@@ -920,23 +940,26 @@ def download_safe_format(product_id=None, tile=None, folder='.', redownload=Fals
     :param folder: location of the directory where the fetched data will be saved. Default is ``'.'``
     :type folder: str
     :param redownload: if `True`, download again the requested data even though it's already saved to disk. If
-                       `False`, do not download if data is already available on disk. Default is `False`
+        `False`, do not download if data is already available on disk. Default is `False`
     :type redownload: bool
     :param entire_product: in case tile is specified this flag determines if it will be place inside a .SAFE structure
-                           of the product. Default is `False`
+        of the product. Default is `False`
     :type entire_product: bool
     :param bands: list of bands to download. If `None` all bands will be downloaded. Default is `None`
     :type bands: list(str) or None
-    :param data_source: In case of tile request the source of satellite data has to be specified. Default is Sentinel-2
-                        L1C data.
-    :type data_source: constants.DataSource
+    :param data_collection: In case of tile request the collection of satellite data has to be specified.
+    :type data_collection: DataCollection
+    :param data_source: A deprecated alternative to data_collection
+    :type data_source: DataCollection
     :return: Nested dictionaries representing .SAFE structure.
     :rtype: dict
     """
+    data_collection = handle_deprecated_data_source(data_collection, data_source)
+
     entire_product = entire_product and product_id is None
     if tile is not None:
         safe_request = AwsTileRequest(tile=tile[0], time=tile[1], data_folder=folder, bands=bands,
-                                      safe_format=True, data_source=data_source)
+                                      safe_format=True, data_collection=data_collection)
         if entire_product:
             safe_tile = safe_request.get_aws_service()
             product_id = safe_tile.get_product_id()

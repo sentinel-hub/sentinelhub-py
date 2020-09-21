@@ -1,7 +1,7 @@
 import unittest
 import numpy as np
 
-from sentinelhub import AwsTileRequest, AwsProductRequest, TestSentinelHub
+from sentinelhub import AwsTileRequest, AwsProductRequest, DataCollection, TestSentinelHub
 
 
 class TestAwsTile(TestSentinelHub):
@@ -11,7 +11,8 @@ class TestAwsTile(TestSentinelHub):
 
         cls.request = AwsTileRequest(data_folder=cls.OUTPUT_FOLDER, bands='B01, B05',
                                      metafiles='metadata,tileInfo,  productInfo, qi/MSK_TECQUA_B04,  auxiliary/ECMWFT ',
-                                     tile='10UEV', time='2016-01-09', aws_index=0)
+                                     tile='10UEV', time='2016-01-09', aws_index=0,
+                                     data_collection=DataCollection.SENTINEL2_L1C)
         cls.data = cls.request.get_data(redownload=True, data_filter=[0] + list(range(2, 7)))
 
     def test_return_type(self):

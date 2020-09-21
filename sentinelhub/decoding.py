@@ -46,8 +46,8 @@ def decode_data(response_content, data_type):
             MimeType.TXT: response_content,
             MimeType.ZIP: BytesIO(response_content)
         }[data_type]
-    except KeyError:
-        raise ValueError('Unknown response data type {}'.format(data_type))
+    except KeyError as exception:
+        raise ValueError('Unknown response data type {}'.format(data_type)) from exception
 
 
 def decode_image(data, image_type):
@@ -150,9 +150,9 @@ def fix_jp2_image(image, bit_depth):
     if bit_depth == 15:
         try:
             return image >> 1
-        except TypeError:
+        except TypeError as exception:
             raise IOError('Failed to read JPEG 2000 image correctly. Most likely reason is that Pillow did not '
-                          'install OpenJPEG library correctly. Try reinstalling Pillow from a wheel')
+                          'install OpenJPEG library correctly. Try reinstalling Pillow from a wheel') from exception
 
     raise ValueError('Bit depth {} of jp2 image is currently not supported. '
                      'Please raise an issue on package Github page'.format(bit_depth))

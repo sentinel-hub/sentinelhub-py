@@ -14,8 +14,9 @@ from .ogc import WebFeatureService
 from .geopedia import GeopediaFeatureIterator, GeopediaSession
 
 from .geometry import BBox, Geometry, BBoxCollection
-from .constants import DataSource, CustomUrlParam, CRS, MimeType, SHConstants, AwsConstants, ServiceType, \
+from .constants import CustomUrlParam, CRS, MimeType, SHConstants, AwsConstants, ServiceType, \
     HistogramType
+from .data_collections import DataCollection, DataSource
 
 from .config import SHConfig
 

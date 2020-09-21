@@ -8,7 +8,8 @@ import warnings
 from abc import ABC, abstractmethod
 
 from .config import SHConfig
-from .constants import AwsConstants, EsaSafeType, MimeType, DataSource
+from .constants import AwsConstants, EsaSafeType, MimeType
+from .data_collections import DataCollection
 from .download import DownloadRequest
 from .download.aws_client import get_aws_json
 from .exceptions import AwsDownloadFailedException, SHUserWarning
@@ -19,8 +20,8 @@ from .time_utils import parse_time
 LOGGER = logging.getLogger(__name__)
 
 MAX_SUPPORTED_BASELINES = {
-    DataSource.SENTINEL2_L1C: '02.07',
-    DataSource.SENTINEL2_L2A: '02.11'
+    DataCollection.SENTINEL2_L1C: '02.07',
+    DataCollection.SENTINEL2_L2A: '02.11'
 }
 
 
@@ -66,7 +67,7 @@ class AwsService(ABC):
         :return: verified list of bands
         :rtype: list(str)
         """
-        all_bands = AwsConstants.S2_L1C_BANDS if self.data_source is DataSource.SENTINEL2_L1C else \
+        all_bands = AwsConstants.S2_L1C_BANDS if self.data_collection is DataCollection.SENTINEL2_L1C else \
             AwsConstants.S2_L2A_BANDS
 
         if band_input is None:
@@ -91,7 +92,7 @@ class AwsService(ABC):
         :return: verified list of metadata files
         :rtype: list(str)
         """
-        all_metafiles = AwsConstants.S2_L1C_METAFILES if self.data_source is DataSource.SENTINEL2_L1C else \
+        all_metafiles = AwsConstants.S2_L1C_METAFILES if self.data_collection is DataCollection.SENTINEL2_L1C else \
             AwsConstants.S2_L2A_METAFILES
 
         if metafile_input is None:
@@ -121,7 +122,7 @@ class AwsService(ABC):
         :rtype: str
         """
         base_url = self.config.aws_metadata_url if force_http else 's3://'
-        aws_bucket = self.config.aws_s3_l1c_bucket if self.data_source is DataSource.SENTINEL2_L1C else \
+        aws_bucket = self.config.aws_s3_l1c_bucket if self.data_collection is DataCollection.SENTINEL2_L1C else \
             self.config.aws_s3_l2a_bucket
 
         return '{}{}{}'.format(base_url, '' if base_url.endswith('/') else '/', aws_bucket)
@@ -156,7 +157,7 @@ class AwsService(ABC):
                 raise ValueError('Unable to recognize baseline number from the product id {}'.format(self.product_id))
             baseline = '{}.{}'.format(baseline[:2], baseline[2:])
 
-            if baseline > MAX_SUPPORTED_BASELINES[self.data_source]:
+            if baseline > MAX_SUPPORTED_BASELINES[self.data_collection]:
                 message = 'Products with baseline {} are not officially supported in sentinelhub-py. If you notice ' \
                           'any errors in naming structure of downloaded data please report an issue at ' \
                           'https://github.com/sentinel-hub/sentinelhub-py/issues. Pull requests are also very ' \
@@ -295,7 +296,7 @@ class AwsService(ABC):
         :return: `True` if product is early version of compact L2A product and `False` otherwise
         :rtype: bool
         """
-        return self.data_source is DataSource.SENTINEL2_L2A and self.safe_type is EsaSafeType.COMPACT_TYPE and \
+        return self.data_collection is DataCollection.SENTINEL2_L2A and self.safe_type is EsaSafeType.COMPACT_TYPE and \
             self.baseline <= '02.06'
 
 
@@ -322,7 +323,7 @@ class AwsProduct(AwsService):
         self.product_id = product_id.split('.')[0]
         self.tile_list = self.parse_tile_list(tile_list)
 
-        self.data_source = self.get_data_source()
+        self.data_collection = self.get_data_collection()
         self.safe_type = self.get_safe_type()
 
         super().__init__(**kwargs)
@@ -369,25 +370,25 @@ class AwsProduct(AwsService):
             if self.tile_list is None or AwsTile.parse_tile_name(tile_name) in self.tile_list:
                 tile_downloads, tile_folders = AwsTile(tile_name, date, aws_index, parent_folder=tile_parent_folder,
                                                        bands=self.bands, metafiles=self.metafiles,
-                                                       data_source=self.data_source).get_requests()
+                                                       data_collection=self.data_collection).get_requests()
                 self.download_list.extend(tile_downloads)
                 self.folder_list.extend(tile_folders)
         self.sort_download_list()
         return self.download_list, self.folder_list
 
-    def get_data_source(self):
-        """ The method determines data source from product ID.
+    def get_data_collection(self):
+        """ The method determines data collection from product ID.
 
-        :return: Data source of the product
-        :rtype: DataSource
+        :return: Data collection of the product
+        :rtype: DataCollection
         :raises: ValueError
         """
         product_type = self.product_id.split('_')[1]
         if product_type.endswith('L1C') or product_type == 'OPER':
-            return DataSource.SENTINEL2_L1C
+            return DataCollection.SENTINEL2_L1C
         if product_type.endswith('L2A') or product_type == 'USER':
-            return DataSource.SENTINEL2_L2A
-        raise ValueError('Unknown data source of product {}'.format(self.product_id))
+            return DataCollection.SENTINEL2_L2A
+        raise ValueError('Unknown data collection of product {}'.format(self.product_id))
 
     def get_date(self):
         """ Collects sensing date of the product.
@@ -454,7 +455,7 @@ class AwsProduct(AwsService):
 class AwsTile(AwsService):
     """ Service class for Sentinel-2 product on AWS
     """
-    def __init__(self, tile_name, time, aws_index=None, data_source=DataSource.SENTINEL2_L1C, **kwargs):
+    def __init__(self, tile_name, time, aws_index=None, data_collection=DataCollection.SENTINEL2_L1C, **kwargs):
         """
         :param tile: Tile name (e.g. 'T10UEV')
         :type tile: str
@@ -465,9 +466,9 @@ class AwsTile(AwsService):
             class will try to find the index automatically. If there will be multiple choices it will choose
             the lowest index and inform the user.
         :type aws_index: int or None
-        :param data_source: Source of requested AWS data. Supported sources are Sentinel-2 L1C and Sentinel-2 L2A,
-            default is Sentinel-2 L1C data.
-        :type data_source: constants.DataSource
+        :param data_collection: A collection of requested AWS data. Supported collections are Sentinel-2 L1C and
+            Sentinel-2 L2A, default is Sentinel-2 L1C data.
+        :type data_collection: DataCollection
         :param parent_folder: folder where the fetched data will be saved.
         :type parent_folder: str
         :param bands: List of Sentinel-2 bands for request. If parameter is set to `None` all bands will be used.
@@ -483,7 +484,7 @@ class AwsTile(AwsService):
         self.datetime = self.parse_datetime(time)
         self.date = self.datetime.split('T')[0]
         self.aws_index = aws_index
-        self.data_source = data_source
+        self.data_collection = data_collection
 
         super().__init__(**kwargs)
         self.tile_url = None
@@ -527,8 +528,8 @@ class AwsTile(AwsService):
         """
         try:
             return parse_time(time)
-        except Exception:
-            raise ValueError('Time must be in format YYYY-MM-DD or YYYY-MM-DDTHH:MM:SS')
+        except Exception as exception:
+            raise ValueError('Time must be in format YYYY-MM-DD or YYYY-MM-DDTHH:MM:SS') from exception
 
     def get_requests(self):
         """
@@ -562,7 +563,7 @@ class AwsTile(AwsService):
         if not tile_info_list:
             raise ValueError('Cannot find aws_index for specified tile and time')
 
-        if self.data_source is DataSource.SENTINEL2_L2A:
+        if self.data_collection is DataCollection.SENTINEL2_L2A:
             for tile_info in sorted(tile_info_list, key=self._parse_aws_index):
                 try:
                     self.aws_index = self._parse_aws_index(tile_info)
@@ -660,7 +661,7 @@ class AwsTile(AwsService):
         """Returns url location of full resolution L1C preview
         :return:
         """
-        if self.data_source is DataSource.SENTINEL2_L1C or self.safe_type is EsaSafeType.OLD_TYPE:
+        if self.data_collection is DataCollection.SENTINEL2_L1C or self.safe_type is EsaSafeType.OLD_TYPE:
             return self.get_url(AwsConstants.PREVIEW_JP2)
         return self.get_qi_url('{}_PVI.jp2'.format(data_type))
 
@@ -686,7 +687,7 @@ class AwsTile(AwsService):
         return self.tile_info['productName']
 
     def _band_exists(self, band_name):
-        if self.data_source is DataSource.SENTINEL2_L1C:
+        if self.data_collection is DataCollection.SENTINEL2_L1C:
             return True
         resolution, band = band_name.split('/')
         if self.safe_type is EsaSafeType.COMPACT_TYPE:
