@@ -263,6 +263,12 @@ class SentinelHubBatch:
         batch_requests = list(SentinelHubBatch.iter_requests(config=config))
         return max(*batch_requests, key=lambda request: request.info['created'])
 
+    def delete(self):
+        """ Delete a batch job request
+        """
+        url = self._get_process_url(self.config, request_id=self.request_id)
+        return get_auth_json(url, request_type=RequestType.DELETE)
+
     def start_analysis(self):
         """ Starts analysis of a batch job request
         """

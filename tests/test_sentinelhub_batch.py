@@ -91,6 +91,12 @@ def test_create_and_run_batch_request(config, requests_mock):
     assert batch_request.bbox == bbox
     assert batch_request.geometry.bbox == bbox
 
+    delete_endpoint = f'/api/v1/batch/process/{request_id}'
+    requests_mock.delete(delete_endpoint, [{'json': ''}])
+
+    batch_request.delete()
+    requests_mock.request_history[-1].url.endswith(delete_endpoint)
+
     endpoints = ['analyse', 'start', 'cancel', 'restartpartial']
     full_endpoints = [f'/api/v1/batch/process/{request_id}/{endpoint}' for endpoint in endpoints]
     for full_endpoint in full_endpoints:
