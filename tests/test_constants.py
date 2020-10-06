@@ -4,6 +4,7 @@ import pyproj
 
 from sentinelhub import CRS, MimeType, TestSentinelHub
 from sentinelhub.constants import RequestType
+from sentinelhub.exceptions import SHUserWarning
 
 
 class TestCRS(TestSentinelHub):
@@ -38,8 +39,9 @@ class TestCRS(TestSentinelHub):
                 parsed_result = CRS(parse_value)
                 self.assertEqual(parsed_result, expected_result)
 
-        with self.assertRaises(ValueError):
-            CRS(pyproj.CRS(4326))
+        with self.assertWarns(SHUserWarning):
+            wgs84 = CRS(pyproj.CRS(4326))
+        self.assertEqual(wgs84, CRS.WGS84)
 
     def test_ogc_string(self):
         crs_values = (

@@ -11,7 +11,7 @@ import utm
 import pyproj
 from aenum import extend_enum
 
-from .exceptions import SHDeprecationWarning
+from .exceptions import SHDeprecationWarning, SHUserWarning
 from ._version import __version__
 
 
@@ -91,8 +91,10 @@ class CRSMeta(EnumMeta):
             value = value['init']
         if isinstance(value, pyproj.CRS):
             if value == CRSMeta._UNSUPPORTED_CRS:
-                raise ValueError('sentinelhub-py supports only WGS 84 coordinate reference system with '
-                                 'coordinate order lng-lat. However pyproj.CRS(4326) has coordinate order lat-lng')
+                message = 'sentinelhub-py supports only WGS 84 coordinate reference system with ' \
+                          'coordinate order lng-lat. Given pyproj.CRS(4326) has coordinate order lat-lng. Be careful ' \
+                          'to use the correct order of coordinates.'
+                warnings.warn(message, category=SHUserWarning)
 
             value = value.to_epsg()
 
