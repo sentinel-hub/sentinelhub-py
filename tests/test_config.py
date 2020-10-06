@@ -9,7 +9,7 @@ class TestSHConfig(TestSentinelHub):
     def test_configuration(self):
         SHConfig().save()
 
-        config_file = os.path.join(os.path.dirname(os.path.realpath(__file__)), '..', 'sentinelhub', 'config.json')
+        config_file = SHConfig().get_config_location()
 
         if not os.path.isfile(config_file):
             self.fail(msg='Config file does not exist: {}'.format(os.path.abspath(config_file)))
