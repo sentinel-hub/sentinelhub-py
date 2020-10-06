@@ -492,7 +492,7 @@ class DataCollection(Enum, metaclass=_DataCollectionMeta):
             if item in definition_dict:
                 return definition_dict[item]
 
-        return super().__getattr__(item, *args, **kwargs)
+        return super().__getattribute__(item, *args, **kwargs)
 
     @property
     def is_sentinel1(self):
