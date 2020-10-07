@@ -87,10 +87,10 @@ class TestSentinelHubRequest(TestSentinelHub):
                     data_collection=DataCollection.SENTINEL2_L1C,
                     time_interval=('2017-12-15T07:12:03', '2017-12-15T07:12:04'),
                     maxcc=0.8,
+                    upsampling='NEAREST',
+                    downsampling='NEAREST',
                     other_args={
                         'processing': {
-                            'upsampling': 'NEAREST',
-                            'downsampling': 'NEAREST',
                             'atmosphericCorrection': 'NONE'
                         }
                     }
