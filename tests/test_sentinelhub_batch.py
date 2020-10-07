@@ -89,7 +89,6 @@ def test_create_and_run_batch_request(config, requests_mock):
     assert batch_request.info['id'] == request_id
     assert request_id in repr(batch_request)
     assert batch_request.bbox == bbox
-    assert batch_request.geometry.bbox == bbox
 
     delete_endpoint = f'/api/v1/batch/process/{request_id}'
     requests_mock.delete(delete_endpoint, [{'json': ''}])

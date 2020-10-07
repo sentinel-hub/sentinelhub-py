@@ -49,9 +49,9 @@ class SentinelHubBatch:
         :param sentinelhub_request: An instance of SentinelHubRequest class containing all request parameters.
             Alternatively, it can also be just a payload dictionary for Processing API request
         :type sentinelhub_request: SentinelHubRequest or dict
-        :param tiling_grid: A dictionary with tiling grid parameters. It can be build with `tiling_grid` method
+        :param tiling_grid: A dictionary with tiling grid parameters. It can be built with `tiling_grid` method
         :type tiling_grid: dict
-        :param output: A dictionary with output parameters. It can be build with `output` method. Alternatively, one
+        :param output: A dictionary with output parameters. It can be built with `output` method. Alternatively, one
             can set `bucket_name` parameter instead.
         :type output: dict or None
         :param bucket_name: A name of an s3 bucket where to save data. Alternatively, one can set `output` parameter
@@ -64,9 +64,10 @@ class SentinelHubBatch:
         """
         if isinstance(sentinelhub_request, SentinelHubRequest):
             sentinelhub_request = sentinelhub_request.download_list[0].post_values
+
         if not isinstance(sentinelhub_request, dict):
             raise ValueError('Parameter sentinelhub_request should be an instance of SentinelHubRequest or a '
-                             'dictionary of request payload')
+                             'dictionary with a request payload')
 
         payload = {
             'processRequest': sentinelhub_request,
@@ -213,8 +214,11 @@ class SentinelHubBatch:
 
         :return: An area bounding box together with CRS
         :rtype: BBox
+        :raises: ValueError
         """
         bbox, _, crs = self._parse_bounds_payload()
+        if bbox is None:
+            raise ValueError('Bounding box is not defined for this batch request')
         return BBox(bbox, crs)
 
     @property
@@ -223,10 +227,11 @@ class SentinelHubBatch:
 
         :return: An area geometry together with CRS
         :rtype: Geometry
+        :raises: ValueError
         """
         _, geometry, crs = self._parse_bounds_payload()
         if geometry is None:
-            geometry = self.bbox.geometry
+            raise ValueError('Geometry is not defined for this batch request')
         return Geometry(geometry, crs)
 
     @staticmethod
