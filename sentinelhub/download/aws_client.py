@@ -8,7 +8,7 @@ import boto3
 from botocore.exceptions import NoCredentialsError
 
 from ..exceptions import AwsDownloadFailedException
-from .client import DownloadClient, get_json, get_xml
+from .client import DownloadClient
 from .handlers import fail_missing_file
 
 
@@ -85,15 +85,3 @@ class AwsDownloadClient(DownloadClient):
         :rtype: bool
         """
         return request.url.startswith('s3://')
-
-
-def get_aws_json(*args, **kwargs):
-    """ Download a json from AWS
-    """
-    return get_json(*args, download_client_class=AwsDownloadClient, **kwargs)
-
-
-def get_aws_xml(*args, **kwargs):
-    """ Download an xml from AWS
-    """
-    return get_xml(*args, download_client_class=AwsDownloadClient, **kwargs)

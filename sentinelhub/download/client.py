@@ -12,7 +12,7 @@ import requests
 from ..config import SHConfig
 from ..constants import RequestType, MimeType
 from ..decoding import decode_data as decode_data_function
-from ..exceptions import DownloadFailedException, SHRuntimeWarning
+from ..exceptions import DownloadFailedException, SHRuntimeWarning, SHDeprecationWarning
 from ..io_utils import read_data, write_data
 from .handlers import fail_user_errors, retry_temporal_errors
 from .request import DownloadRequest
@@ -138,6 +138,50 @@ class DownloadClient:
         return (request.save_response or request.return_data) and \
                (self.redownload or response_path is None or not os.path.exists(response_path))
 
+    def get_json(self, url, post_values=None, headers=None, request_type=None, **kwargs):
+        """ Download request as JSON data type
+
+        :param url: An URL from where the data will be downloaded
+        :type url: str
+        :param post_values: A dictionary of parameters for a POST request
+        :type post_values: dict or None
+        :param headers: A dictionary of additional request headers
+        :type headers: dict
+        :param request_type: A type of HTTP request to make. If not specified, then it will be a GET request if
+            `post_values=None` and a POST request otherwise
+        :type request_type: RequestType or None
+        :param kwargs: Any other parameters that are passed to DownloadRequest class
+        :return: JSON data parsed into Python objects
+        :rtype: object or None
+        """
+        json_headers = headers or {}
+
+        if request_type is None:
+            request_type = RequestType.GET if post_values is None else RequestType.POST
+
+        if request_type is RequestType.POST and 'Content-Type' not in json_headers:
+            json_headers = {
+                'Content-Type': MimeType.JSON.get_string(),
+                **json_headers
+            }
+
+        request = DownloadRequest(url=url, headers=json_headers, request_type=request_type, post_values=post_values,
+                                  data_type=MimeType.JSON, **kwargs)
+
+        return self.download(request)
+
+    def get_xml(self, url, **kwargs):
+        """ Download request as XML data type
+
+        :param url: url to Sentinel Hub's services or other sources from where the data is downloaded
+        :type url: str
+        :param kwargs: Any other parameters that are passed to DownloadRequest class
+        :return: request response as XML instance
+        :rtype: XML instance or None
+        """
+        request = DownloadRequest(url=url, data_type=MimeType.XML, **kwargs)
+        return self.download(request)
+
 
 def get_json(url, post_values=None, headers=None, request_type=None, download_client_class=DownloadClient, **kwargs):
     """ Download request as JSON data type
@@ -157,21 +201,16 @@ def get_json(url, post_values=None, headers=None, request_type=None, download_cl
     :return: JSON data parsed into Python objects
     :rtype: object or None
     """
-    json_headers = {} if headers is None else headers
+    warnings.warn('Function get_json is deprecated and will soon be removed, please use DownloadClient.get_json '
+                  'instead', category=SHDeprecationWarning)
 
-    if request_type is None:
-        request_type = RequestType.GET if post_values is None else RequestType.POST
-
-    if request_type is RequestType.POST and 'Content-Type' not in json_headers:
-        json_headers = {
-            'Content-Type': MimeType.JSON.get_string(),
-            **json_headers
-        }
-
-    request = DownloadRequest(url=url, headers=json_headers, request_type=request_type, post_values=post_values,
-                              save_response=False, return_data=True, data_type=MimeType.JSON, **kwargs)
-
-    return download_client_class().download(request)
+    return download_client_class().get_json(
+        url=url,
+        post_values=post_values,
+        headers=headers,
+        request_type=request_type,
+        **kwargs
+    )
 
 
 def get_xml(url, download_client_class=DownloadClient):
@@ -185,7 +224,7 @@ def get_xml(url, download_client_class=DownloadClient):
     :type download_client_class: object
     :raises: RunTimeError
     """
-    request = DownloadRequest(url=url, request_type=RequestType.GET, save_response=False, return_data=True,
-                              data_type=MimeType.XML)
+    warnings.warn('Function get_xml is deprecated and will soon be removed, please use DownloadClient.get_xml '
+                  'instead', category=SHDeprecationWarning)
 
-    return download_client_class().download(request)
+    return download_client_class().get_xml(url)

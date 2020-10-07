@@ -13,7 +13,7 @@ from .config import SHConfig
 from .data_collections import DataCollection, handle_deprecated_data_source
 from .geo_utils import get_image_dimension
 from .geometry import BBox, Geometry
-from .download import DownloadRequest, get_json
+from .download import DownloadRequest, SentinelHubDownloadClient
 from .time_utils import parse_time_interval, filter_times
 
 LOGGER = logging.getLogger(__name__)
@@ -412,7 +412,8 @@ class WebFeatureService(OgcService):
         url = main_url + urlencode(params)
 
         LOGGER.debug("URL=%s", url)
-        response = get_json(url)
+        client = SentinelHubDownloadClient(config=self.config)
+        response = client.get_json(url)
 
         is_sentinel1 = self.data_collection.is_sentinel1
         for tile_info in response['features']:
