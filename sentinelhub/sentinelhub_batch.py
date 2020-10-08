@@ -5,7 +5,7 @@ from urllib.parse import urlencode
 
 from .config import SHConfig
 from .constants import RequestType
-from .download.sentinelhub_client import get_auth_json
+from .download.sentinelhub_client import SentinelHubDownloadClient
 from .geometry import Geometry, BBox, CRS
 from .sentinelhub_request import SentinelHubRequest
 
@@ -79,7 +79,9 @@ class SentinelHubBatch:
         payload = _remove_undefined_params(payload)
 
         url = cls._get_process_url(config)
-        request_info = get_auth_json(url, post_values=payload)
+        client = SentinelHubDownloadClient(config=config)
+        request_info = client.get_json(url, post_values=payload, use_session=True)
+
         return cls(request_info=request_info, config=config)
 
     @staticmethod
@@ -163,7 +165,7 @@ class SentinelHubBatch:
             'sort': sort,
             **kwargs
         })
-        return _iter_pages(url, **params)
+        return _iter_pages(url, config, **params)
 
     @staticmethod
     def get_tiling_grid(grid_id, config=None):
@@ -177,7 +179,8 @@ class SentinelHubBatch:
         :rtype: dict
         """
         url = f'{SentinelHubBatch._get_tiling_grids_url(config)}/{grid_id}'
-        return get_auth_json(url)
+        client = SentinelHubDownloadClient(config=config)
+        return client.get_json(url, use_session=True)
 
     @property
     def info(self):
@@ -197,7 +200,8 @@ class SentinelHubBatch:
         :rtype: dict
         """
         url = self._get_process_url(self.config, request_id=self.request_id)
-        self._request_info = get_auth_json(url)
+        client = SentinelHubDownloadClient(config=self.config)
+        self._request_info = client.get_json(url, use_session=True)
 
     @property
     def evalscript(self):
@@ -257,7 +261,7 @@ class SentinelHubBatch:
             'userid': user_id,
             **kwargs
         })
-        for request_info in _iter_pages(url, **params):
+        for request_info in _iter_pages(url, config, **params):
             yield SentinelHubBatch(request_info=request_info, config=config)
 
     @staticmethod
@@ -272,7 +276,8 @@ class SentinelHubBatch:
         """ Delete a batch job request
         """
         url = self._get_process_url(self.config, request_id=self.request_id)
-        return get_auth_json(url, request_type=RequestType.DELETE)
+        client = SentinelHubDownloadClient(config=self.config)
+        return client.get_json(url, request_type=RequestType.DELETE, use_session=True)
 
     def start_analysis(self):
         """ Starts analysis of a batch job request
@@ -308,7 +313,7 @@ class SentinelHubBatch:
             'status': status,
             **kwargs
         })
-        return _iter_pages(url, **params)
+        return _iter_pages(url, self.config, **params)
 
     def get_tile(self, tile_id):
         """ Provides information about a single batch request tile
@@ -319,7 +324,8 @@ class SentinelHubBatch:
         :rtype: dict
         """
         url = self._get_tiles_url(tile_id=tile_id)
-        return get_auth_json(url)
+        client = SentinelHubDownloadClient(config=self.config)
+        return client.get_json(url, use_session=True)
 
     def reprocess_tile(self, tile_id):
         """ Reprocess a single failed tile
@@ -343,7 +349,9 @@ class SentinelHubBatch:
         """
         process_url = self._get_process_url(request_id=self.request_id, config=self.config)
         url = f'{process_url}/{endpoint_name}'
-        return get_auth_json(url, request_type=RequestType.POST)
+
+        client = SentinelHubDownloadClient(config=self.config)
+        return client.get_json(url, request_type=RequestType.POST, use_session=True)
 
     def _get_tiles_url(self, tile_id=None):
         """ Creates an URL for tiles endpoint
@@ -383,17 +391,18 @@ def _remove_undefined_params(payload):
     return {name: value for name, value in payload.items() if value is not None}
 
 
-def _iter_pages(service_url, **params):
+def _iter_pages(service_url, config, **params):
     """ Iterates over pages of items
     """
     token = None
+    client = SentinelHubDownloadClient(config=config)
 
     while True:
         if token is not None:
             params['viewtoken'] = token
 
         url = f'{service_url}?{urlencode(params)}'
-        results = get_auth_json(url)
+        results = client.get_json(url, use_session=True)
 
         for item in results['member']:
             yield item

@@ -7,7 +7,7 @@ import warnings
 from .aws import AwsProduct, AwsTile
 from .constants import AwsConstants, EsaSafeType, MimeType
 from .data_collections import DataCollection
-from .download.aws_client import get_aws_xml
+from .download.aws_client import AwsDownloadClient
 from .exceptions import SHRuntimeWarning
 
 
@@ -145,7 +145,8 @@ class SafeProduct(AwsProduct):
         :return: String in a form YYYYMMDDTHHMMSS
         :rtype: str
         """
-        tree = get_aws_xml(self.get_url(AwsConstants.REPORT))
+        client = AwsDownloadClient(config=self.config)
+        tree = client.get_xml(self.get_url(AwsConstants.REPORT))
 
         try:
             timestamp = tree.find('check/inspection').attrib['execution']
@@ -260,7 +261,8 @@ class SafeTile(AwsTile):
         :return: ESA tile ID
         :rtype: str
         """
-        tree = get_aws_xml(self.get_url(AwsConstants.METADATA))
+        client = AwsDownloadClient(config=self.config)
+        tree = client.get_xml(self.get_url(AwsConstants.METADATA))
 
         tile_id_tag = 'TILE_ID_2A' if (self.data_collection is DataCollection.SENTINEL2_L2A
                                        and self.baseline <= '02.06') else 'TILE_ID'

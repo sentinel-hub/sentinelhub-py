@@ -11,7 +11,7 @@ from .config import SHConfig
 from .constants import AwsConstants, EsaSafeType, MimeType
 from .data_collections import DataCollection
 from .download import DownloadRequest
-from .download.aws_client import get_aws_json
+from .download.aws_client import AwsDownloadClient
 from .exceptions import AwsDownloadFailedException, SHUserWarning
 from .opensearch import get_tile_info, get_tile_info_id
 from .time_utils import parse_time
@@ -330,7 +330,9 @@ class AwsProduct(AwsService):
 
         self.date = self.get_date()
         self.product_url = self.get_product_url()
-        self.product_info = get_aws_json(self.get_url(AwsConstants.PRODUCT_INFO))
+
+        client = AwsDownloadClient(config=self.config)
+        self.product_info = client.get_json(self.get_url(AwsConstants.PRODUCT_INFO))
 
         self.baseline = self.get_baseline()
 
@@ -601,7 +603,8 @@ class AwsTile(AwsService):
         :return: dictionary with tile information
         :rtype: dict
         """
-        return get_aws_json(self.get_url(AwsConstants.TILE_INFO))
+        client = AwsDownloadClient(config=self.config)
+        return client.get_json(self.get_url(AwsConstants.TILE_INFO))
 
     def get_url(self, filename):
         """

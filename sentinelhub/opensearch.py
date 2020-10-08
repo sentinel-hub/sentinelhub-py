@@ -10,7 +10,7 @@ from urllib.parse import urlencode
 
 from .constants import CRS
 from .config import SHConfig
-from .download import get_json
+from .download import DownloadClient
 from .time_utils import parse_time_interval
 
 
@@ -157,6 +157,7 @@ def search_iter(tile_id=None, bbox=None, start_date=None, end_date=None, absolut
     url_params['maxRecords'] = config.max_opensearch_records_per_query
 
     start_index = 1
+    client = DownloadClient(config=config)
 
     while True:
         url_params['index'] = start_index
@@ -164,7 +165,7 @@ def search_iter(tile_id=None, bbox=None, start_date=None, end_date=None, absolut
         url = '{}/search.json?{}'.format(config.opensearch_url, urlencode(url_params))
         LOGGER.debug("URL=%s", url)
 
-        response = get_json(url)
+        response = client.get_json(url)
         for tile_info in response["features"]:
             yield tile_info
 
