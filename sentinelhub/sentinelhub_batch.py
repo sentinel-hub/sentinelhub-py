@@ -404,9 +404,11 @@ def _iter_pages(service_url, config, **params):
         url = f'{service_url}?{urlencode(params)}'
         results = client.get_json(url, use_session=True)
 
-        for item in results['member']:
+        results_data = results.get('data') or results.get('member')
+        for item in results_data:
             yield item
 
-        token = results['view'].get('nextToken')
+        results_links = results.get('links') or results.get('view')
+        token = results_links.get('nextToken')
         if token is None:
             break

@@ -152,7 +152,7 @@ class DownloadClient:
         :type request_type: RequestType or None
         :param kwargs: Any other parameters that are passed to DownloadRequest class
         :return: JSON data parsed into Python objects
-        :rtype: object or None
+        :rtype: dict or list or str or None
         """
         json_headers = headers or {}
 
