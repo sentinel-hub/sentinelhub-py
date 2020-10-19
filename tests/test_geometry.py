@@ -128,6 +128,7 @@ class TestBBox(TestSentinelHub):
                                                                                                    repr(bbox3)))
         self.assertNotEqual(bbox1, bbox4, "Bounding boxes {} and {} should not be the same".format(repr(bbox1),
                                                                                                    repr(bbox4)))
+        self.assertNotEqual(bbox1, None)
 
     def test_geometry(self):
         bbox = BBox([46.07, 13.23, 46.24, 13.57], CRS.WGS84)
@@ -172,6 +173,7 @@ class TestGeometry(TestSentinelHub):
     def test_eq(self):
         for geometry in self.geometry_list:
             self.assertEqual(geometry, copy.deepcopy(geometry), 'Deep copied object should be the same as original')
+            self.assertNotEqual(geometry, None)
 
     def test_reverse(self):
         for geometry in self.geometry_list:

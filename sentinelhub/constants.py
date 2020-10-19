@@ -101,6 +101,8 @@ class CRSMeta(EnumMeta):
         if isinstance(value, int):
             return str(value)
         if isinstance(value, str):
+            if value.upper() == 'CRS84':
+                return '4326'
             return value.lower().strip('epsg: ')
         return value
 
@@ -460,6 +462,9 @@ class RequestType(Enum):
     """ Enum constant class for GET/POST request type """
     GET = 'GET'
     POST = 'POST'
+    DELETE = 'DELETE'
+    PUT = 'PUT'
+    PATCH = 'PATCH'
 
 
 class SHConstants:

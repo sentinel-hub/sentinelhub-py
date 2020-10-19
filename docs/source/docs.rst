@@ -27,6 +27,7 @@ Modules
     ogc
     opensearch
     os_utils
+    sentinelhub_batch
     sentinelhub_rate_limit
     sentinelhub_request
     sentinelhub_session

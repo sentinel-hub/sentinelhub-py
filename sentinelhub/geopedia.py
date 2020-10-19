@@ -10,7 +10,7 @@ from shapely.geometry import shape as geo_shape
 
 from .ogc import OgcImageService, MimeType
 from .config import SHConfig
-from .download import DownloadRequest, get_json
+from .download import DownloadRequest, DownloadClient
 from .constants import CRS
 
 LOGGER = logging.getLogger(__name__)
@@ -178,7 +178,9 @@ class GeopediaSession(GeopediaService):
 
         session_id = self._parse_session_id(self._session_info) if self._session_info else ''
         session_url = '{}/data/v1/session/create?locale=en&sid={}'.format(self._base_url, session_id)
-        self._session_info = get_json(session_url)
+
+        client = DownloadClient(config=self.config)
+        self._session_info = client.get_json(session_url)
 
         if self.username and self.password and self._parse_user_id(self._session_info) == self.UNAUTHENTICATED_USER_ID:
             self._make_login()
@@ -193,7 +195,8 @@ class GeopediaSession(GeopediaService):
         login_url = '{}/data/v1/session/login?user={}&pass={}&sid={}'.format(self._base_url, self.username,
                                                                              self.password,
                                                                              self._parse_session_id(self._session_info))
-        self._session_info = get_json(login_url)
+        client = DownloadClient(config=self.config)
+        self._session_info = client.get_json(login_url)
 
     @staticmethod
     def _parse_session_id(session_info):
@@ -388,7 +391,8 @@ class GeopediaFeatureIterator(GeopediaService):
         if self.next_page_url is None:
             return
 
-        response = get_json(self.next_page_url, post_values=self.query, headers=self.gpd_session.session_headers)
+        client = DownloadClient(config=self.config)
+        response = client.get_json(self.next_page_url, post_values=self.query, headers=self.gpd_session.session_headers)
 
         self.features.extend(response['features'])
         self.next_page_url = response['pagination']['next']

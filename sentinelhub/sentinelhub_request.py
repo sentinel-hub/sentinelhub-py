@@ -40,8 +40,6 @@ class SentinelHubRequest(DataRequest):
         :param config: A custom instance of config class to override parameters from the saved configuration.
         :type config: SHConfig or None
         """
-        if size is None and resolution is None:
-            raise ValueError("Either size or resolution argument should be given")
         if not isinstance(evalscript, str):
             raise ValueError("'evalscript' should be a string")
 
@@ -73,8 +71,8 @@ class SentinelHubRequest(DataRequest):
         )]
 
     @staticmethod
-    def input_data(data_collection=None, time_interval=None, maxcc=None, mosaicking_order=None, other_args=None,
-                   data_source=None):
+    def input_data(data_collection=None, time_interval=None, maxcc=None, mosaicking_order=None, upsampling=None,
+                   downsampling=None, other_args=None, data_source=None):
         """ Generate the `input` part of the Processing API request body
 
         :param data_collection: One of supported ProcessingAPI data collections.
@@ -85,6 +83,10 @@ class SentinelHubRequest(DataRequest):
         :type maxcc: float or None
         :param mosaicking_order: Mosaicking order, which has to be either 'mostRecent', 'leastRecent' or 'leastCC'.
         :type mosaicking_order: str or None
+        :param upsampling: A type of upsampling to apply on data
+        :type upsampling: str
+        :param downsampling: A type of downsampling to apply on data
+        :type downsampling: str
         :param other_args: Additional dictionary of arguments. If provided, the resulting dictionary will get updated
                            by it.
         :param other_args: dict
@@ -94,37 +96,17 @@ class SentinelHubRequest(DataRequest):
         :rtype: InputDataDict
         """
         data_collection = DataCollection(handle_deprecated_data_source(data_collection, data_source))
-
-        data_filter = {}
-
-        if time_interval:
-            date_from, date_to = parse_time_interval(time_interval)
-            date_from, date_to = date_from + 'Z', date_to + 'Z'
-            data_filter['timeRange'] = {'from': date_from, 'to': date_to}
-
-        if maxcc is not None:
-            if not isinstance(maxcc, float) and (maxcc < 0 or maxcc > 1):
-                raise ValueError('maxcc should be a float on an interval [0, 1]')
-
-            data_filter['maxCloudCoverage'] = int(maxcc * 100)
-
-        if mosaicking_order:
-            mosaic_order_params = ["mostRecent", "leastRecent", "leastCC"]
-            if mosaicking_order not in mosaic_order_params:
-                msg = "{} is not a valid mosaickingOrder parameter, it should be one of: {}"
-                raise ValueError(msg.format(mosaicking_order, mosaic_order_params))
-
-            data_filter['mosaickingOrder'] = mosaicking_order
-
-        data_filter = {
-            **data_filter,
-            **_get_data_collection_filters(data_collection)
-        }
-
         input_data_dict = {
             'type': data_collection.api_id,
-            'dataFilter': data_filter
         }
+
+        data_filters = _get_data_filters(data_collection, time_interval, maxcc, mosaicking_order)
+        if data_filters:
+            input_data_dict['dataFilter'] = data_filters
+
+        processing_params = _get_processing_params(upsampling, downsampling)
+        if processing_params:
+            input_data_dict['processing'] = processing_params
 
         if other_args:
             _update_other_args(input_data_dict, other_args)
@@ -198,7 +180,7 @@ class SentinelHubRequest(DataRequest):
         :param resolution: Resolution of the image. It has to be in units compatible with the given CRS.
         :type resolution: Tuple[float, float]
         :param other_args: Additional dictionary of arguments. If provided, the resulting dictionary will get updated
-                           by it.
+            by it.
         :param other_args: dict
         """
         if size and resolution:
@@ -300,6 +282,37 @@ class InputDataDict(dict):
         return f'{self.__class__.__name__}({normal_dict_repr}, service_url={self.service_url})'
 
 
+def _get_data_filters(data_collection, time_interval, maxcc, mosaicking_order):
+    """ Builds a dictionary of data filters for Processing API
+    """
+    data_filter = {}
+
+    if time_interval:
+        date_from, date_to = parse_time_interval(time_interval)
+        date_from, date_to = date_from + 'Z', date_to + 'Z'
+        data_filter['timeRange'] = {'from': date_from, 'to': date_to}
+
+    if maxcc is not None:
+        if not isinstance(maxcc, float) and (maxcc < 0 or maxcc > 1):
+            raise ValueError('maxcc should be a float on an interval [0, 1]')
+
+        data_filter['maxCloudCoverage'] = int(maxcc * 100)
+
+    if mosaicking_order:
+        mosaic_order_params = ['mostRecent', 'leastRecent', 'leastCC']
+
+        if mosaicking_order not in mosaic_order_params:
+            raise ValueError(f'{mosaicking_order} is not a valid mosaickingOrder parameter, it should be one '
+                             f'of: {mosaic_order_params}')
+
+        data_filter['mosaickingOrder'] = mosaicking_order
+
+    return {
+        **data_filter,
+        **_get_data_collection_filters(data_collection)
+    }
+
+
 def _get_data_collection_filters(data_collection):
     """ Builds a dictionary of filters for Processing API from a data collection definition
     """
@@ -321,6 +334,20 @@ def _get_data_collection_filters(data_collection):
         filters['timeliness'] = data_collection.timeliness
 
     return filters
+
+
+def _get_processing_params(upsampling, downsampling):
+    """ Builds a dictionary of processing parameters for Processing API
+    """
+    processing_params = {}
+
+    if upsampling:
+        processing_params['upsampling'] = upsampling
+
+    if downsampling:
+        processing_params['downsampling'] = downsampling
+
+    return processing_params
 
 
 def _update_other_args(dict1, dict2):

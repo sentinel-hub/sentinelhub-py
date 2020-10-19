@@ -1,0 +1,9 @@
+{
+"type": "FeatureCollection",
+"name": "california_crop_fields",
+"crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:OGC:1.3:CRS84" } },
+"features": [
+{ "type": "Feature", "properties": { "name": "Entire area" }, "geometry": { "type": "MultiPolygon", "coordinates": [ [ [ [ -119.2089, 36.1383 ], [ -119.1323, 36.0980 ], [ -119.1282, 35.9869 ], [ -119.2264, 35.9532 ], [ -119.3263, 35.9822 ], [ -119.3488, 36.0899 ], [ -119.2089, 36.1383 ] ] ] ] } },
+{ "type": "Feature", "properties": { "name": "Test sub-area" }, "geometry": { "type": "MultiPolygon", "coordinates": [ [ [ [ -119.2778, 36.0806 ], [ -119.2776, 36.04 ], [ -119.2135, 36.04 ], [ -119.21409, 36.0806 ], [ -119.2778, 36.0806 ] ] ] ] } }
+]
+}

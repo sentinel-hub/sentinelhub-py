@@ -8,7 +8,8 @@ from .data_request import WmsRequest, WcsRequest, FisRequest, GeopediaWmsRequest
 from .aws import AwsProduct, AwsTile
 from .aws_safe import SafeProduct, SafeTile
 
-from .areas import BBoxSplitter, OsmSplitter, TileSplitter, CustomGridSplitter, UtmGridSplitter, UtmZoneSplitter
+from .areas import BBoxSplitter, OsmSplitter, TileSplitter, CustomGridSplitter, UtmGridSplitter, UtmZoneSplitter, \
+    BatchSplitter
 
 from .ogc import WebFeatureService
 from .geopedia import GeopediaFeatureIterator, GeopediaSession
@@ -35,7 +36,7 @@ from .time_utils import next_date, prev_date, get_current_date
 from .testing_utils import TestSentinelHub, TestCaseContainer
 
 from .sentinelhub_session import SentinelHubSession
-
+from .sentinelhub_batch import SentinelHubBatch
 from .sentinelhub_request import SentinelHubRequest
 
 from .time_utils import parse_time_interval, filter_times
