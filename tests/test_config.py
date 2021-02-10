@@ -43,6 +43,18 @@ class TestSHConfig(TestSentinelHub):
         self.assertEqual(config.instance_id, config._instance.CONFIG_PARAMS['instance_id'],
                          'Instance ID should reset')
 
+    def test_save(self):
+        config = SHConfig()
+        old_value = config.download_timeout_seconds
+        config.download_timeout_seconds = "abcd"
+        self.assertRaises(ValueError, config.save)
+        new_value = 150.5
+        config.download_timeout_seconds = new_value
+        config.save()
+        config = SHConfig()
+        self.assertEqual(config.download_timeout_seconds, new_value, "Saved value has not changed")
+        config.download_timeout_seconds = old_value
+        config.save()
 
 if __name__ == '__main__':
     unittest.main()
