@@ -78,7 +78,7 @@ class SHConfig:
                 param_type = type(default_param)
                 if (param_type is float) and isinstance(config[param], numbers.Number):
                     continue
-                elif not isinstance(config[param], param_type):
+                if not isinstance(config[param], param_type):
                     raise ValueError("Value of parameter '{}' must be of type {}".format(param, param_type.__name__))
 
             if config['max_wfs_records_per_query'] > 100:
