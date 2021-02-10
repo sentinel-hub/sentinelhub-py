@@ -405,6 +405,9 @@ def _iter_pages(service_url, config, **params):
         results = client.get_json(url, use_session=True)
 
         results_data = results.get('data') or results.get('member')
+        if results_data is None:
+            raise Exception("No tiles found, please run analysis on batch request before calling this method.")
+
         for item in results_data:
             yield item
 
