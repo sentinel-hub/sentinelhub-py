@@ -43,7 +43,8 @@ class SentinelHubRequest(DataRequest):
         if not isinstance(evalscript, str):
             raise ValueError("'evalscript' should be a string")
 
-        self.mime_type = MimeType.TAR if len(responses) > 1 else MimeType(responses[0]['format']['type'].split('/')[1])
+        parsed_mime_type = MimeType.from_string(responses[0]['format']['type'].split('/')[1])
+        self.mime_type = MimeType.TAR if len(responses) > 1 else parsed_mime_type
 
         self.payload = self.body(
             request_bounds=self.bounds(bbox=bbox, geometry=geometry),
