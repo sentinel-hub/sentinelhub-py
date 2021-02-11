@@ -16,7 +16,7 @@ class TestSentinelHubRequest(TestSentinelHub):
     """ Tests for the Processing API requests
     """
 
-    def test_single_tiff(self):
+    def test_single_jpg(self):
         """ Test downloading three bands of L1C
         """
         evalscript = """
@@ -29,8 +29,7 @@ class TestSentinelHubRequest(TestSentinelHub):
                         units: "REFLECTANCE"
                     }],
                     output: {
-                        bands: 3,
-                        sampleType: "FLOAT32"
+                        bands: 3
                     }
                 };
             }
@@ -50,7 +49,7 @@ class TestSentinelHubRequest(TestSentinelHub):
                 )
             ],
             responses=[
-                SentinelHubRequest.output_response('default', MimeType.TIFF)
+                SentinelHubRequest.output_response('default', MimeType.JPG)
             ],
             bbox=BBox(bbox=[46.16, -16.15, 46.51, -15.58], crs=CRS.WGS84),
             size=(512, 856)
@@ -59,7 +58,7 @@ class TestSentinelHubRequest(TestSentinelHub):
         img = request.get_data(max_threads=3)[0]
 
         self.assertEqual(img.shape, (856, 512, 3))
-        self.test_numpy_data(img, exp_min=0, exp_max=2.01825, exp_mean=0.29408056)
+        self.test_numpy_data(img, exp_min=0, exp_max=255, exp_mean=74.898)
 
     def test_other_args(self):
         """ Test downloading three bands of L1C
