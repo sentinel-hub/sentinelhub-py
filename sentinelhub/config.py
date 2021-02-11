@@ -4,6 +4,7 @@ Module for managing configuration data from `config.json`
 
 import os
 import json
+import numbers
 
 
 class SHConfig:
@@ -57,8 +58,8 @@ class SHConfig:
             'max_wfs_records_per_query': 100,
             'max_opensearch_records_per_query': 500,
             'max_download_attempts': 4,
-            'download_sleep_time': 5,
-            'download_timeout_seconds': 120,
+            'download_sleep_time': 5.0,
+            'download_timeout_seconds': 120.0,
             'number_of_download_processes': 1
         }
 
@@ -75,6 +76,8 @@ class SHConfig:
 
             for param, default_param in self.CONFIG_PARAMS.items():
                 param_type = type(default_param)
+                if (param_type is float) and isinstance(config[param], numbers.Number):
+                    continue
                 if not isinstance(config[param], param_type):
                     raise ValueError("Value of parameter '{}' must be of type {}".format(param, param_type.__name__))
 
