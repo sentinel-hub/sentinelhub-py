@@ -296,11 +296,8 @@ class MimeType(Enum):
     XML, GML, RAW
     """
     TIFF = 'tiff'
-    TIFF_d8 = 'tiff;depth=8'
-    TIFF_d16 = 'tiff;depth=16'  # This is the same as TIFF
-    TIFF_d32f = 'tiff;depth=32f'
     PNG = 'png'
-    JPG = 'jpg'
+    JPG = 'jpeg'
     JP2 = 'jp2'
     JSON = 'json'
     CSV = 'csv'
@@ -341,6 +338,7 @@ class MimeType(Enum):
             return {
                 'tif': MimeType.TIFF,
                 'jpeg': MimeType.JPG,
+                'jpg': MimeType.JPG,
                 'hdf5': MimeType.HDF,
                 'h5': MimeType.HDF
             }[mime_type_str]
@@ -365,8 +363,7 @@ class MimeType(Enum):
         :return: `True` if file is in image format, `False` otherwise
         :rtype: bool
         """
-        return self in frozenset([MimeType.TIFF, MimeType.TIFF_d8, MimeType.TIFF_d16, MimeType.TIFF_d32f, MimeType.PNG,
-                                  MimeType.JP2, MimeType.JPG])
+        return self in frozenset([MimeType.TIFF, MimeType.PNG, MimeType.JP2, MimeType.JPG])
 
     def is_api_format(self):
         """ Checks if mime type is supported by Sentinel Hub API
@@ -386,7 +383,7 @@ class MimeType(Enum):
         :return: `True` if file is in image format, `False` otherwise
         :rtype: bool
         """
-        return self in frozenset([MimeType.TIFF, MimeType.TIFF_d8, MimeType.TIFF_d16, MimeType.TIFF_d32f])
+        return self is MimeType.TIFF
 
     @classmethod
     def has_value(cls, value):
@@ -409,30 +406,11 @@ class MimeType(Enum):
             return 'application/x-tar'
         if self is MimeType.JSON:
             return 'application/json'
-        if self in [MimeType.TIFF_d8, MimeType.TIFF_d16, MimeType.TIFF_d32f]:
-            return 'image/{}'.format(self.value)
         if self is MimeType.JP2:
             return 'image/jpeg2000'
         if self is MimeType.RAW:
             return self.value
         return mimetypes.types_map['.' + self.value]
-
-    def get_sample_type(self):
-        """ Returns sampleType used in Sentinel-Hub evalscripts.
-
-        :return: sampleType
-        :rtype: str
-        :raises: ValueError
-        """
-        try:
-            return {
-                MimeType.TIFF: 'INT16',
-                MimeType.TIFF_d8: 'INT8',
-                MimeType.TIFF_d16: 'INT16',
-                MimeType.TIFF_d32f: 'FLOAT32'
-            }[self]
-        except KeyError as exception:
-            raise ValueError('Type {} is not supported by this method'.format(self)) from exception
 
     def get_expected_max_value(self):
         """ Returns max value of image `MimeType` format and raises an error if it is not an image format
@@ -447,9 +425,6 @@ class MimeType(Enum):
         try:
             return {
                 MimeType.TIFF: 65535,
-                MimeType.TIFF_d8: 255,
-                MimeType.TIFF_d16: 65535,
-                MimeType.TIFF_d32f: 1.0,
                 MimeType.PNG: 255,
                 MimeType.JPG: 255,
                 MimeType.JP2: 10000

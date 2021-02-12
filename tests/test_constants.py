@@ -97,6 +97,7 @@ class TestMimeType(TestSentinelHub):
         extension_pairs = (
             ('tif', MimeType.TIFF),
             ('jpeg', MimeType.JPG),
+            ('jpg', MimeType.JPG),
             ('h5', MimeType.HDF),
             ('hdf5', MimeType.HDF)
         )
@@ -110,9 +111,10 @@ class TestMimeType(TestSentinelHub):
 
         with self.assertRaises(ValueError):
             MimeType.from_string('unknown ext')
+            MimeType.from_string('tiff;depth=32f')
 
     def test_has_value(self):
-        self.assertTrue(MimeType.has_value('tiff;depth=32f'))
+        self.assertFalse(MimeType.has_value('tiff;depth=32f'))
         self.assertFalse(MimeType.has_value('unknown value'))
 
     def test_is_image_format(self):
@@ -126,7 +128,6 @@ class TestMimeType(TestSentinelHub):
             (MimeType.PNG, 'image/png'),
             (MimeType.JPG, 'image/jpeg'),
             (MimeType.TIFF, 'image/tiff'),
-            (MimeType.TIFF_d32f, 'image/tiff;depth=32f'),
             (MimeType.JSON, 'application/json'),
             (MimeType.CSV, 'text/csv'),
             (MimeType.ZIP, 'application/zip'),
@@ -139,14 +140,9 @@ class TestMimeType(TestSentinelHub):
             res = MimeType.get_string(img_type)
             self.assertEqual(img_str, res, msg="Expected {}, got {}".format(img_str, res))
 
-    def test_get_sample_type(self):
-        self.assertEqual(MimeType.TIFF_d16.get_sample_type(), 'INT16')
-
-        with self.assertRaises(ValueError):
-            MimeType.TXT.get_sample_type()
-
     def test_get_expected_max_value(self):
-        self.assertEqual(MimeType.TIFF_d32f.get_expected_max_value(), 1.0)
+        self.assertEqual(MimeType.TIFF.get_expected_max_value(), 65535)
+        self.assertEqual(MimeType.PNG.get_expected_max_value(), 255)
 
         with self.assertRaises(ValueError):
             MimeType.TAR.get_expected_max_value()
