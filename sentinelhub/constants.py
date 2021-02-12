@@ -237,24 +237,21 @@ class CRS(Enum, metaclass=CRSMeta):
 class CustomUrlParam(Enum):
     """ Enum class to represent supported custom url parameters of OGC services
 
-    Supported parameters are `SHOWLOGO`, `ATMFILTER`, `EVALSCRIPT`, `EVALSCRIPTURL`, `PREVIEW`, `QUALITY`, `UPSAMPLING`,
-    `DOWNSAMPLING`, `TRANSPARENT`, `BGCOLOR` and `GEOMETRY`.
+    Supported parameters are `SHOWLOGO`, `EVALSCRIPT`, `EVALSCRIPTURL`, `PREVIEW`, `QUALITY`, `UPSAMPLING`,
+    `DOWNSAMPLING`, `GEOMETRY` and `WARNINGS`.
 
     See http://sentinel-hub.com/develop/documentation/api/custom-url-parameters and
     https://www.sentinel-hub.com/develop/documentation/api/ogc_api/wms-parameters for more information.
     """
     SHOWLOGO = 'ShowLogo'
-    ATMFILTER = 'AtmFilter'
     EVALSCRIPT = 'EvalScript'
     EVALSCRIPTURL = 'EvalScriptUrl'
     PREVIEW = 'Preview'
     QUALITY = 'Quality'
     UPSAMPLING = 'Upsampling'
     DOWNSAMPLING = 'Downsampling'
-    TRANSPARENT = 'Transparent'
-    BGCOLOR = 'BgColor'
     GEOMETRY = 'Geometry'
-    MINQA = 'MinQA'
+    WARNINGS = 'Warnings'
 
     @classmethod
     def has_value(cls, value):

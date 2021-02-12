@@ -65,7 +65,6 @@ class TestFis(TestSentinelHub):
                                        resolution="50m",
                                        maxcc=0.2,
                                        custom_url_params={
-                                           CustomUrlParam.ATMFILTER: "ATMCOR",
                                            CustomUrlParam.DOWNSAMPLING: "BICUBIC",
                                            CustomUrlParam.UPSAMPLING: "BICUBIC"}
                                        ),

@@ -636,7 +636,7 @@ class GeopediaWmsRequest(GeopediaRequest):
     Creates an instance of Geopedia's WMS (Web Map Service) GetMap request, which provides access to WMS layers in
     Geopedia.
     """
-    def __init__(self, layer, theme, bbox, *, width=None, height=None, custom_url_params=None, **kwargs):
+    def __init__(self, layer, theme, bbox, *, width=None, height=None, **kwargs):
         """
         :param layer: Geopedia layer which contains requested data
         :type layer: str
@@ -648,9 +648,6 @@ class GeopediaWmsRequest(GeopediaRequest):
         :type width: int or None
         :param height: height (number of rows) of the returned image (array)
         :type height: int or None
-        :param custom_url_params: dictionary of CustomUrlParameters and their values supported by Geopedia's WMS
-            services. At the moment only the transparency is supported (CustomUrlParam.TRANSPARENT).
-        :type custom_url_params: Dict[CustomUrlParameter, object]
         :param image_format: Format of the returned image by the Sentinel Hub's WMS getMap service. Default is
             ``constants.MimeType.PNG``.
         :type image_format: constants.MimeType
@@ -662,21 +659,7 @@ class GeopediaWmsRequest(GeopediaRequest):
         self.size_x = width
         self.size_y = height
 
-        self.custom_url_params = custom_url_params
-
-        if self.custom_url_params is not None:
-            self._check_custom_url_parameters()
-
         super().__init__(layer=layer, theme=theme, bbox=bbox, service_type=ServiceType.WMS, **kwargs)
-
-    def _check_custom_url_parameters(self):
-        """ Checks if custom url parameters are valid parameters.
-
-        Throws ValueError if the provided parameter is not a valid parameter.
-        """
-        for param in self.custom_url_params.keys():
-            if param is not CustomUrlParam.TRANSPARENT:
-                raise ValueError('Parameter {} is currently not supported.'.format(param))
 
     def create_request(self):
         """ Set download requests
