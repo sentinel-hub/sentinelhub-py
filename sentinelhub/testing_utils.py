@@ -102,6 +102,7 @@ class TestSentinelHub(unittest.TestCase):
                     self.assertEqual(stat_val, exp_stat,
                                      msg='Expected {} {}, got {}'.format(stat_name, exp_stat, stat_val))
 
+        data = data[~np.isnan(data)]
         for exp_stat, stat_func, stat_name in [(exp_min, np.amin, 'min'), (exp_max, np.amax, 'max'),
                                                (exp_mean, np.mean, 'mean'), (exp_median, np.median, 'median')]:
             if exp_stat is not None:
