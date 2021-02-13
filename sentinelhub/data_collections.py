@@ -125,7 +125,7 @@ class _DataCollectionMeta(EnumMeta):
 
         byoc_data_collection = cls.define_byoc(value)
         message = 'This way of defining a BYOC data collection is deprecated and will soon be removed. Please use ' \
-                  'DataCollection.from_byoc(collection_id) instead'
+                  'DataCollection.define_byoc(collection_id) instead'
         warnings.warn(message, category=SHDeprecationWarning)
 
         return byoc_data_collection

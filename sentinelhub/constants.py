@@ -251,7 +251,7 @@ class CustomUrlParam(Enum):
     UPSAMPLING = 'Upsampling'
     DOWNSAMPLING = 'Downsampling'
     GEOMETRY = 'Geometry'
-    WARNINGS = 'Warnings'
+    MINQA = 'MinQA'
 
     @classmethod
     def has_value(cls, value):
