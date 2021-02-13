@@ -106,8 +106,7 @@ class TestMimeType(TestSentinelHub):
             self.assertEqual(mime_type, parsed_mime_type)
 
         for mime_type in MimeType:
-            if not mime_type.is_tiff_format():
-                self.assertEqual(MimeType.from_string(mime_type.extension), mime_type)
+            self.assertEqual(MimeType.from_string(mime_type.extension), mime_type)
 
         with self.assertRaises(ValueError):
             MimeType.from_string('unknown ext')

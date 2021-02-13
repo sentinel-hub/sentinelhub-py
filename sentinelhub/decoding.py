@@ -66,7 +66,7 @@ def decode_image(data, image_type):
     :raises: ImageDecodingError
     """
     bytes_data = BytesIO(data)
-    if image_type.is_tiff_format():
+    if image_type is MimeType.TIFF:
         image = tiff.imread(bytes_data)
     else:
         image = np.array(Image.open(bytes_data))

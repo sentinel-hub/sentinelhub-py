@@ -317,9 +317,6 @@ class MimeType(Enum):
         :returns: A file extension string
         :rtype: str
         """
-        if self.is_tiff_format():
-            return MimeType.TIFF.value
-
         return self.value
 
     @staticmethod
