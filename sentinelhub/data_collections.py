@@ -138,6 +138,7 @@ class DataCollectionDefinition:
     Check `DataCollection.define` for more info about attributes of this class
     """
     api_id: str = None
+    catalog_id: str = None
     wfs_id: str = None
     service_url: str = None
     collection_type: str = None
@@ -189,6 +190,7 @@ class DataCollection(Enum, metaclass=_DataCollectionMeta):
     """
     SENTINEL2_L1C = DataCollectionDefinition(
         api_id='S2L1C',
+        catalog_id='sentinel-2-l1c',
         wfs_id='DSS1',
         collection_type=_CollectionType.SENTINEL2,
         sensor_type=_SensorType.MSI,
@@ -197,6 +199,7 @@ class DataCollection(Enum, metaclass=_DataCollectionMeta):
     )
     SENTINEL2_L2A = DataCollectionDefinition(
         api_id='S2L2A',
+        catalog_id='sentinel-2-l2a',
         wfs_id='DSS2',
         collection_type=_CollectionType.SENTINEL2,
         sensor_type=_SensorType.MSI,
@@ -206,6 +209,7 @@ class DataCollection(Enum, metaclass=_DataCollectionMeta):
 
     SENTINEL1 = DataCollectionDefinition(
         api_id='S1GRD',
+        catalog_id='sentinel-1-grd',
         wfs_id='DSS3',
         collection_type=_CollectionType.SENTINEL1,
         sensor_type=_SensorType.C_SAR,
@@ -256,6 +260,7 @@ class DataCollection(Enum, metaclass=_DataCollectionMeta):
     )
     MODIS = DataCollectionDefinition(
         api_id='MODIS',
+        catalog_id='modis',
         wfs_id='DSS5',
         service_url=ServiceUrl.USWEST,
         collection_type=_CollectionType.MODIS,
@@ -263,6 +268,7 @@ class DataCollection(Enum, metaclass=_DataCollectionMeta):
     )
     LANDSAT8 = DataCollectionDefinition(
         api_id='L8L1C',
+        catalog_id='landsat-8-l1c',
         wfs_id='DSS6',
         service_url=ServiceUrl.USWEST,
         collection_type=_CollectionType.LANDSAT8,
@@ -272,6 +278,7 @@ class DataCollection(Enum, metaclass=_DataCollectionMeta):
 
     SENTINEL5P = DataCollectionDefinition(
         api_id='S5PL2',
+        catalog_id='sentinel-5p-l2',
         wfs_id='DSS7',
         service_url=ServiceUrl.CREODIAS,
         collection_type=_CollectionType.SENTINEL5P,
@@ -281,6 +288,7 @@ class DataCollection(Enum, metaclass=_DataCollectionMeta):
     )
     SENTINEL3_OLCI = DataCollectionDefinition(
         api_id='S3OLCI',
+        catalog_id='sentinel-3-olci',
         wfs_id='DSS8',
         service_url=ServiceUrl.CREODIAS,
         collection_type=_CollectionType.SENTINEL3,
@@ -290,6 +298,7 @@ class DataCollection(Enum, metaclass=_DataCollectionMeta):
     )
     SENTINEL3_SLSTR = DataCollectionDefinition(
         api_id='S3SLSTR',
+        catalog_id='sentinel-3-slstr',
         wfs_id='DSS9',
         service_url=ServiceUrl.CREODIAS,
         collection_type=_CollectionType.SENTINEL3,
@@ -316,9 +325,9 @@ class DataCollection(Enum, metaclass=_DataCollectionMeta):
     )
 
     @classmethod
-    def define(cls, name, *, api_id=None, wfs_id=None, service_url=None, collection_type=None, sensor_type=None,
-               processing_level=None, swath_mode=None, polarization=None, resolution=None, orbit_direction=None,
-               timeliness=None, bands=None, collection_id=None, is_timeless=False):
+    def define(cls, name, *, api_id=None, catalog_id=None, wfs_id=None, service_url=None, collection_type=None,
+               sensor_type=None, processing_level=None, swath_mode=None, polarization=None, resolution=None,
+               orbit_direction=None, timeliness=None, bands=None, collection_id=None, is_timeless=False):
         """ Define a new data collection
 
         Note that all parameters, except `name` are optional. If a data collection definition won't be used for a
@@ -328,6 +337,8 @@ class DataCollection(Enum, metaclass=_DataCollectionMeta):
         :type name: str
         :param api_id: An ID to be used for Sentinel Hub Processing API
         :type api_id: str or None
+        :param catalog_id: An ID to be used for Sentinel Hub Catalog API
+        :type catalog_id: str or None
         :param wfs_id: An ID to be used for Sentinel Hub WFS service
         :type wfs_id: str or None
         :param service_url: A base URL of Sentinel Hub service deployment from where to download data. If it is not
@@ -360,6 +371,7 @@ class DataCollection(Enum, metaclass=_DataCollectionMeta):
         """
         definition = DataCollectionDefinition(
             api_id=api_id,
+            catalog_id=catalog_id,
             wfs_id=wfs_id,
             service_url=service_url,
             collection_type=collection_type,
@@ -425,6 +437,7 @@ class DataCollection(Enum, metaclass=_DataCollectionMeta):
         """
         params['name'] = params.get('name', f'BYOC_{collection_id}')
         params['api_id'] = params.get('api_id', f'byoc-{collection_id}')
+        params['catalog_id'] = params.get('catalog_id', f'byoc-{collection_id}')
         params['wfs_id'] = params.get('wfs_id', f'DSS10-{collection_id}')
         params['collection_type'] = params.get('collection_type', _CollectionType.BYOC)
         params['collection_id'] = collection_id
@@ -458,6 +471,18 @@ class DataCollection(Enum, metaclass=_DataCollectionMeta):
         if self.value.api_id is None:
             raise ValueError(f'Data collection {self.name} is missing a Sentinel Hub Processing API identifier')
         return self.value.api_id
+
+    @property
+    def catalog_id(self):
+        """ Provides a Sentinel Hub Catalog API identifier or raises an error if it is not defined
+
+        :return: An identifier
+        :rtype: str
+        :raises: ValueError
+        """
+        if self.value.catalog_id is None:
+            raise ValueError(f'Data collection {self.name} is missing a Sentinel Hub Catalog API identifier')
+        return self.value.catalog_id
 
     @property
     def wfs_id(self):
