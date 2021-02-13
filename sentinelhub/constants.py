@@ -373,18 +373,6 @@ class MimeType(Enum):
         """
         return self in frozenset([MimeType.JPG, MimeType.PNG, MimeType.TIFF, MimeType.JSON])
 
-    def is_tiff_format(self):
-        """ Checks whether file format is a TIFF image format
-
-        Example: ``MimeType.TIFF.is_tiff_format()`` or ``MimeType.is_tiff_format(MimeType.TIFF)``
-
-        :param self: File format
-        :type self: MimeType
-        :return: `True` if file is in image format, `False` otherwise
-        :rtype: bool
-        """
-        return self is MimeType.TIFF
-
     @classmethod
     def has_value(cls, value):
         """ Tests whether MimeType contains a constant defined with string ``value``
@@ -414,9 +402,6 @@ class MimeType(Enum):
 
     def get_expected_max_value(self):
         """ Returns max value of image `MimeType` format and raises an error if it is not an image format
-
-        Note: For `MimeType.TIFF_d32f` it will return ``1.0`` as that is expected maximum for an image even though it
-        could be higher.
 
         :return: A maximum value of specified image format
         :rtype: int or float
