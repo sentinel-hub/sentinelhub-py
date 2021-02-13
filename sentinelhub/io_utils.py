@@ -48,7 +48,7 @@ def read_data(filename, data_format=None):
         with open(filename, 'rb') as file:
             return file.read()
 
-    if data_format.is_tiff_format():
+    if data_format is MimeType.TIFF:
         return read_tiff_image(filename)
     if data_format is MimeType.JP2:
         return read_jp2_image(filename)
@@ -191,7 +191,7 @@ def write_data(filename, data, data_format=None, compress=False, add=False):
     if not isinstance(data_format, MimeType):
         data_format = get_data_format(filename)
 
-    if data_format.is_tiff_format():
+    if data_format is MimeType.TIFF:
         return write_tiff_image(filename, data, compress)
     if data_format.is_image_format():
         return write_image(filename, data)
