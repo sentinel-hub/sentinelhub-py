@@ -1,9 +1,12 @@
 """
 A client interface for Sentinel Hub Catalog API
 """
+import dateutil.parser
+
 from .config import SHConfig
 from .constants import CRS
 from .data_collections import DataCollection
+from .geometry import Geometry, CRS
 from .download.sentinelhub_client import SentinelHubDownloadClient
 from .sentinelhub_batch import _remove_undefined_params
 from .time_utils import parse_time_interval
@@ -123,8 +126,8 @@ class SentinelHubCatalog:
         payload = _remove_undefined_params({
             'collections': [collection_id],
             'datetime': f'{start_time}Z/{end_time}Z',
-            'bbox': list(bbox),
-            'intersects': geometry.geojson,
+            'bbox': list(bbox) if bbox else None,
+            'intersects': geometry.geojson if geometry else None,
             'ids': ids,
             'query': query,
             'fields': fields,
@@ -214,3 +217,28 @@ class CatalogSearchIterator:
 
         self.next = results['context'].get('next')
         self.finished = self.next is None or not new_features
+
+    def get_timestamps(self):
+        """ Provides features timestamps
+
+        :return: A list of sensing times
+        :rtype: list(datetime.datetime)
+        """
+        return [dateutil.parser.parse(feature['properties']['datetime']) for feature in self]
+
+    def get_geometries(self):
+        """ Provides features geometries
+
+        :return: A list of geometry objects with CRS
+        :rtype: list(Geometry)
+        """
+        return [Geometry(feature['geometry'],
+                         crs=feature['geometry']['crs']['properties']['name'].rsplit(':')[-1]) for feature in self]
+
+    def get_ids(self):
+        """ Provides features IDs
+
+        :return: A list of IDs
+        :rtype: list(str)
+        """
+        return [feature['id'] for feature in self]
