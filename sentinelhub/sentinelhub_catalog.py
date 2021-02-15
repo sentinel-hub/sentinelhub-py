@@ -155,7 +155,7 @@ class CatalogSearchIterator:
     Note that:
     - The iterator will load only as many features as needed at any moment
     - It will keep downloaded features in memory so that iterating over it again will not have to download the same
-      features again.
+    features again.
     """
     def __init__(self, client, url, payload):
         """
