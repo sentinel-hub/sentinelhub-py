@@ -5,14 +5,25 @@ from .config import SHConfig
 from .constants import CRS
 from .data_collections import DataCollection
 from .download.sentinelhub_client import SentinelHubDownloadClient
-from .sentinelhub_batch import _iter_pages, _remove_undefined_params  # TODO: move to utils
+from .sentinelhub_batch import _remove_undefined_params
 from .time_utils import parse_time_interval
 
 
 class SentinelHubCatalog:
     """ The main class for interacting with Sentinel Hub Catalog API
+
+    For more details about certain endoints and parameters check
+    `Catalog API documentation <https://docs.sentinel-hub.com/api/latest/api/catalog>`_.
     """
     def __init__(self, base_url=None, config=None):
+        """
+        :param base_url: A base URL of Sentinel Hub service specifying which service deployment to use. By default the
+            one in config object will be used.
+        :type base_url: str or None
+        :param config: A configuration object with required parameters `sh_client_id`, `sh_client_secret`, and
+            `sh_base_url` which will be used of authentication.
+        :type config: SHConfig or None
+        """
         self.config = config or SHConfig()
 
         base_url = base_url or self.config.sh_base_url
@@ -73,36 +84,56 @@ class SentinelHubCatalog:
         url = f'{self.catalog_url}/collections/{collection_id}/items/{feature_id}'
         return self.client.get_json(url, use_session=True)
 
-    def search(self, collection, *, time, bbox=None, geometry=None, ids=None, limit=100, query=None, fields=None,
-               distinct=None, **kwargs):
+    def search(self, collection, *, time, bbox=None, geometry=None, ids=None, query=None, fields=None, distinct=None,
+               limit=100, **kwargs):
         """ Catalog STAC search
 
         :param collection: A data collection object or a collection ID
         :type collection: DataCollection or str
-        TODO: can you use intersects without bbox?
-        TODO: time_interval instead of time? what does return if a single timestamp is given?
+        :param time: A time interval or a single time. It can either be a string in form  YYYY-MM-DDThh:mm:ss or
+            YYYY-MM-DD or a datetime object
+        :type time: (str, str) or (datetime, datetime) or str or datetime
+        :param bbox: A search bounding box, it will always be reprojected to WGS 84 before being sent to the service.
+        :type bbox: BBox
+        :param geometry: A search geometry, it will always reprojected to WGS 84 before being sent to the service.
+            This parameter is defined with parameter `intersects` at the service.
+        :type geometry: Geometry
+        :param ids: A list of feature ids as defined in service documentation
+        :type ids: list(str)
+        :param query: A STAC query described in Catalog API documentation
+        :type query: dict
+        :param fields: A dictionary of fields to include or exclude described in Catalog API documentation
+        :type fields: dict
+        :param distinct: A special query attribute described in Catalog API documentation
+        :type distinct: str
+        :param limit: A number of results to return per each request. At the end iterator will always provide all
+            results the difference is only in how many requests it will have to make in the background.
+        :type limit: int
+        :param kwargs: Any other parameters that will be passed directly to the service
         """
         url = f'{self.catalog_url}/search'
 
         collection_id = self._parse_collection_id(collection)
         start_time, end_time = parse_time_interval(time)
+
+        # TODO: perhaps transform into geometry before reprojecting to another CRS?
         bbox = bbox.transform(CRS.WGS84) if bbox else None
         geometry = geometry.transform(CRS.WGS84) if geometry else None
 
-        params = _remove_undefined_params({
+        payload = _remove_undefined_params({
             'collections': [collection_id],
-            'bbox': list(bbox),
             'datetime': f'{start_time}Z/{end_time}Z',
+            'bbox': list(bbox),
             'intersects': geometry.geojson,
             'ids': ids,
-            'limit': limit,
             'query': query,
             'fields': fields,
             'distinct': distinct,
+            'limit': limit,
             **kwargs
         })
 
-        return CatalogSearchIterator(self.client, url, **params)
+        return CatalogSearchIterator(self.client, url, payload)
 
     @staticmethod
     def _parse_collection_id(collection):
@@ -116,11 +147,25 @@ class SentinelHubCatalog:
 
 
 class CatalogSearchIterator:
+    """ Searches a catalog with a given query and provides results
 
-    def __init__(self, client, url, **params):
+    Note that:
+    - The iterator will load only as many features as needed at any moment
+    - It will keep downloaded features in memory so that iterating over it again will not have to download the same
+      features again.
+    """
+    def __init__(self, client, url, payload):
+        """
+        :param client: An instance of a download client object
+        :type client: DownloadClient
+        :param url: An URL where requests will be made
+        :type url: str
+        :param payload: A payload of parameters to be sent with each request
+        :type payload: dict
+        """
         self.client = client
         self.url = url
-        self.params = params
+        self.payload = payload
 
         self.index = 0
         self.features = []
@@ -155,14 +200,14 @@ class CatalogSearchIterator:
         """ Collects (more) results from the service
         """
         if self.next is not None:
-            params = {
-                **self.params,
+            payload = {
+                **self.payload,
                 'next': self.next
             }
         else:
-            params = self.params
+            payload = self.payload
 
-        results = self.client.get_json(self.url, post_values=params, use_session=True)
+        results = self.client.get_json(self.url, post_values=payload, use_session=True)
 
         new_features = results['features']
         self.features.extend(new_features)
