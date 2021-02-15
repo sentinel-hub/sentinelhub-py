@@ -38,6 +38,7 @@ from .testing_utils import TestSentinelHub, TestCaseContainer
 from .sentinelhub_session import SentinelHubSession
 from .sentinelhub_batch import SentinelHubBatch
 from .sentinelhub_request import SentinelHubRequest
+from .sentinelhub_catalog import SentinelHubCatalog
 
 from .time_utils import parse_time_interval, filter_times
 
