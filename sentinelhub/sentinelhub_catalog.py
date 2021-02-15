@@ -233,7 +233,7 @@ class CatalogSearchIterator:
         :rtype: list(Geometry)
         """
         return [Geometry(feature['geometry'],
-                         crs=feature['geometry']['crs']['properties']['name'].rsplit(':')[-1]) for feature in self]
+                         crs=feature['geometry']['crs']['properties']['name'].rsplit(':', 1)[-1]) for feature in self]
 
     def get_ids(self):
         """ Provides features IDs
