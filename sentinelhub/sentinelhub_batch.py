@@ -6,6 +6,7 @@ from urllib.parse import urlencode
 from .config import SHConfig
 from .constants import RequestType
 from .download.sentinelhub_client import SentinelHubDownloadClient
+from .exceptions import MissingDataInRequestException
 from .geometry import Geometry, BBox, CRS
 from .sentinelhub_request import SentinelHubRequest
 
@@ -406,7 +407,8 @@ def _iter_pages(service_url, config, **params):
 
         results_data = results.get('data') or results.get('member')
         if results_data is None:
-            raise Exception("No tiles found, please run analysis on batch request before calling this method.")
+            raise MissingDataInRequestException('No tiles found, please run analysis on batch request before'
+                                                ' calling this method.')
 
         for item in results_data:
             yield item

@@ -30,6 +30,11 @@ class ImageDecodingError(BaseSentinelHubException):
     """
 
 
+class MissingDataInRequestException(BaseSentinelHubException):
+    """This exception is raised when an iteration is performed on a request without data.
+    """
+
+
 class SHDeprecationWarning(DeprecationWarning):
     """ A custom deprecation warning for sentinelhub-py package
     """
