@@ -360,7 +360,6 @@ class TestSentinelHubRequest(TestSentinelHub):
                 SentinelHubRequest.output_response('default', MimeType.TIFF),
                 SentinelHubRequest.output_response('userdata', MimeType.JSON)
             ],
-            bbox=bbox,
             geometry=geo,
             size=size
         )
