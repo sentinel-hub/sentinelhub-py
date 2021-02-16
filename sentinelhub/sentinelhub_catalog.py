@@ -96,6 +96,9 @@ class SentinelHubCatalog:
             YYYY-MM-DD or a datetime object
         :type time: (str, str) or (datetime, datetime) or str or datetime
         :param bbox: A search bounding box, it will always be reprojected to WGS 84 before being sent to the service.
+            Re-projection will be done with BBox.transform_bounds method which can produce a slightly larger bounding
+            box. If that is a problem then transform a BBox object into a Geometry object and search with geometry
+            parameter instead.
         :type bbox: BBox
         :param geometry: A search geometry, it will always reprojected to WGS 84 before being sent to the service.
             This parameter is defined with parameter `intersects` at the service.
@@ -118,9 +121,10 @@ class SentinelHubCatalog:
         collection_id = self._parse_collection_id(collection)
         start_time, end_time = parse_time_interval(time)
 
-        # TODO: perhaps transform into geometry before reprojecting to another CRS?
-        bbox = bbox.transform(CRS.WGS84) if bbox else None
-        geometry = geometry.transform(CRS.WGS84) if geometry else None
+        if bbox and bbox.crs is not CRS.WGS84:
+            bbox = bbox.transform_bounds(CRS.WGS84)
+        if geometry and geometry.crs is not CRS.WGS84:
+            geometry = geometry.transform(CRS.WGS84)
 
         payload = _remove_undefined_params({
             'collections': [collection_id],

@@ -80,7 +80,7 @@ def test_search_bbox(catalog):
     search_iterator = catalog.search(
         collection=DataCollection.SENTINEL2_L1C,
         time=time_interval,
-        bbox=TEST_BBOX,
+        bbox=TEST_BBOX.transform(CRS.POP_WEB),
         query={
             'eo:cloud_cover': {
                 'gt': cloud_cover_interval[0],

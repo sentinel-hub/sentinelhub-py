@@ -3,7 +3,7 @@ import copy
 
 import shapely.geometry
 
-from sentinelhub import BBox, Geometry, BBoxCollection, CRS, TestSentinelHub
+from sentinelhub import BBox, Geometry, BBoxCollection, CRS, get_utm_crs, TestSentinelHub
 
 
 class TestBBox(TestSentinelHub):
@@ -129,6 +129,22 @@ class TestBBox(TestSentinelHub):
         self.assertNotEqual(bbox1, bbox4, "Bounding boxes {} and {} should not be the same".format(repr(bbox1),
                                                                                                    repr(bbox4)))
         self.assertNotEqual(bbox1, None)
+
+    def test_transform(self):
+        bbox1 = BBox([46.07, 13.23, 46.24, 13.57], CRS.WGS84)
+        bbox2 = bbox1.transform(CRS.POP_WEB).transform(CRS.WGS84)
+
+        for coord1, coord2 in zip(bbox1, bbox2):
+            self.assertAlmostEqual(coord1, coord2, delta=1e-8)
+        self.assertEqual(bbox1.crs, bbox2.crs)
+
+    def test_transform_bounds(self):
+        bbox1 = BBox([46.07, 13.23, 46.24, 13.57], CRS.WGS84)
+        utm_crs = get_utm_crs(*bbox1.middle, CRS.WGS84)
+        bbox2 = bbox1.transform_bounds(utm_crs).transform_bounds(CRS.WGS84)
+
+        self.assertTrue(bbox2.geometry.contains(bbox1.geometry))
+        self.assertGreater(bbox2.geometry.difference(bbox1.geometry).area, 1e-4)
 
     def test_geometry(self):
         bbox = BBox([46.07, 13.23, 46.24, 13.57], CRS.WGS84)
