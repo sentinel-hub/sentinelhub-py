@@ -243,8 +243,8 @@ class OgcRequest(DataRequest):
                  size_x=None, size_y=None, maxcc=1.0, image_format=MimeType.PNG, custom_url_params=None,
                  time_difference=datetime.timedelta(seconds=-1), data_source=None, **kwargs):
         """
-        :param layer: An ID of a layer configured in Sentinel Hub Configurator. It has to be configured for the same
-            instance ID which will be used for this request. Also the satellite collection of the layer in Configurator
+        :param layer: An ID of a layer configured in Sentinel Hub Dashboard. It has to be configured for the same
+            instance ID which will be used for this request. Also the satellite collection of the layer in Dashboard
             must match the one given by `data_collection` parameter
         :type layer: str
         :param bbox: Bounding box of the requested image. Coordinates must be in the specified coordinate reference
@@ -262,7 +262,7 @@ class OgcRequest(DataRequest):
         :param service_type: type of OGC service (WMS or WCS)
         :type service_type: constants.ServiceType
         :param data_collection: A collection of requested satellite data. It has to be the same as defined in
-            Sentinel Hub Configurator for the given layer.
+            Sentinel Hub Dashboard for the given layer.
         :type data_collection: DataCollection
         :param size_x: number of pixels in x or resolution in x (i.e. ``512`` or ``10m``)
         :type size_x: int or str
@@ -387,8 +387,8 @@ class WmsRequest(OgcRequest):
         :type width: int or None
         :param height: height (number of rows) of the returned image (array)
         :type height: int or None
-        :param layer: An ID of a layer configured in Sentinel Hub Configurator. It has to be configured for the same
-            instance ID which will be used for this request. Also the satellite collection of the layer in Configurator
+        :param layer: An ID of a layer configured in Sentinel Hub Dashboard. It has to be configured for the same
+            instance ID which will be used for this request. Also the satellite collection of the layer in Dashboard
             must match the one given by `data_collection` parameter
         :type layer: str
         :param bbox: Bounding box of the requested image. Coordinates must be in the specified coordinate reference
@@ -404,7 +404,7 @@ class WmsRequest(OgcRequest):
         :type time: str or (str, str) or datetime.date or (datetime.date, datetime.date) or datetime.datetime or
             (datetime.datetime, datetime.datetime)
         :param data_collection: A collection of requested satellite data. It has to be the same as defined in
-            Sentinel Hub Configurator for the given layer. Default is Sentinel-2 L1C.
+            Sentinel Hub Dashboard for the given layer. Default is Sentinel-2 L1C.
         :type data_collection: DataCollection
         :param size_x: number of pixels in x or resolution in x (i.e. ``512`` or ``10m``)
         :type size_x: int or str
@@ -458,8 +458,8 @@ class WcsRequest(OgcRequest):
             (examples ``10m``, ``20m``, ...). Default is ``10m``, which is the best native resolution of some
             Sentinel-2 bands.
         :type resy: str
-        :param layer: An ID of a layer configured in Sentinel Hub Configurator. It has to be configured for the same
-            instance ID which will be used for this request. Also the satellite collection of the layer in Configurator
+        :param layer: An ID of a layer configured in Sentinel Hub Dashboard. It has to be configured for the same
+            instance ID which will be used for this request. Also the satellite collection of the layer in Dashboard
             must match the one given by `data_collection` parameter
         :type layer: str
         :param bbox: Bounding box of the requested image. Coordinates must be in the specified coordinate reference
@@ -475,7 +475,7 @@ class WcsRequest(OgcRequest):
         :type time: str or (str, str) or datetime.date or (datetime.date, datetime.date) or datetime.datetime or
             (datetime.datetime, datetime.datetime)
         :param data_collection: A collection of requested satellite data. It has to be the same as defined in Sentinel
-            Hub Configurator for the given layer. Default is Sentinel-2 L1C.
+            Hub Dashboard for the given layer. Default is Sentinel-2 L1C.
         :type data_collection: DataCollection
         :param size_x: number of pixels in x or resolution in x (i.e. ``512`` or ``10m``)
         :type size_x: int or str
@@ -524,8 +524,8 @@ class FisRequest(OgcRequest):
     """
     def __init__(self, layer, time, geometry_list, *, resolution='10m', bins=None, histogram_type=None, **kwargs):
         """
-        :param layer: An ID of a layer configured in Sentinel Hub Configurator. It has to be configured for the same
-            instance ID which will be used for this request. Also the satellite collection of the layer in Configurator
+        :param layer: An ID of a layer configured in Sentinel Hub Dashboard. It has to be configured for the same
+            instance ID which will be used for this request. Also the satellite collection of the layer in Dashboard
             must match the one given by `data_collection` parameter
         :type layer: str
         :param time: time or time range for which to return the results, in ISO8601 format
@@ -547,7 +547,7 @@ class FisRequest(OgcRequest):
         :param histogram_type: type of histogram
         :type histogram_type: HistogramType
         :param data_collection: A collection of requested satellite data. It has to be the same as defined in Sentinel
-            Hub Configurator for the given layer. Default is Sentinel-2 L1C.
+            Hub Dashboard for the given layer. Default is Sentinel-2 L1C.
         :type data_collection: DataCollection
         :param maxcc: maximum accepted cloud coverage of an image. Float between 0.0 and 1.0. Default is ``1.0``.
         :type maxcc: float
