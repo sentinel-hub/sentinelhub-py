@@ -118,7 +118,7 @@ def parse_time(time_input):
     :rtype: str
     """
     if isinstance(time_input, datetime.date):
-        return time_input.isoformat()  # datetime.date only returns date, datetime.datetime also returns time
+        return time_input.isoformat().replace('+00:00', '')
 
     if len(time_input) < 8:
         raise ValueError('Invalid time string {}.\n'

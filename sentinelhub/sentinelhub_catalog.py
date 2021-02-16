@@ -4,7 +4,6 @@ A client interface for Sentinel Hub Catalog API
 import dateutil.parser
 
 from .config import SHConfig
-from .constants import CRS
 from .data_collections import DataCollection
 from .geometry import Geometry, CRS
 from .download.sentinelhub_client import SentinelHubDownloadClient
