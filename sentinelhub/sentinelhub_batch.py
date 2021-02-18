@@ -405,7 +405,7 @@ def _iter_pages(service_url, config, **params):
         url = f'{service_url}?{urlencode(params)}'
         results = client.get_json(url, use_session=True)
 
-        results_data = results.get('data') or results.get('member')
+        results_data = results.get('data')
         if results_data is None:
             raise MissingDataInRequestException('No tiles found, please run analysis on batch request before'
                                                 ' calling this method.')
@@ -413,7 +413,6 @@ def _iter_pages(service_url, config, **params):
         for item in results_data:
             yield item
 
-        results_links = results.get('links') or results.get('view')
-        token = results_links.get('nextToken')
+        token = results['links'].get('nextToken')
         if token is None:
             break

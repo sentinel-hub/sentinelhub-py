@@ -191,6 +191,10 @@ class BBox(BaseGeometry):
     def transform(self, crs):
         """ Transforms BBox from current CRS to target CRS
 
+        This transformation will take lower left and upper right corners of the bounding box, transform these 2 points
+        and define a new bounding box with them. The resulting bounding box might not completely cover the original
+        bounding box but at least the transformation is reversible.
+
         :param crs: target CRS
         :type crs: constants.CRS
         :return: Bounding box in target CRS
@@ -199,6 +203,22 @@ class BBox(BaseGeometry):
         new_crs = CRS(crs)
         return BBox((transform_point(self.lower_left, self.crs, new_crs),
                      transform_point(self.upper_right, self.crs, new_crs)), crs=new_crs)
+
+    def transform_bounds(self, crs):
+        """ Alternative way to transform BBox from current CRS to target CRS.
+
+        This transformation will transform the bounding box geometry to another CRS as a geometric object, and then
+        define a new bounding box from boundaries of that geometry. The resulting bounding box might be larger than
+        original bounding box but it will always completely cover it.
+
+        :param crs: target CRS
+        :type crs: constants.CRS
+        :return: Bounding box in target CRS
+        :rtype: BBox
+        """
+        bbox_geometry = Geometry(self.geometry, self.crs)
+        bbox_geometry = bbox_geometry.transform(crs)
+        return bbox_geometry.bbox
 
     def buffer(self, buffer):
         """ Changes both BBox dimensions (width and height) by a percentage of size of each dimension. If number is
