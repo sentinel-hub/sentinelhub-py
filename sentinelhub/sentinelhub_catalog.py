@@ -60,7 +60,7 @@ class SentinelHubCatalog:
         url = f'{self.catalog_url}/collections'
         return self.client.get_json(url, use_session=True)['collections']
 
-    def get_collection_info(self, collection):
+    def get_collection(self, collection):
         """ Provides information about given collection
 
         :param collection: A data collection object or a collection ID

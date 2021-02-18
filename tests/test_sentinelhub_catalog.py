@@ -41,7 +41,7 @@ def test_conformance(catalog):
     assert isinstance(conformance, dict)
 
 
-def test_collections(catalog):
+def test_get_collections(catalog):
     """ Tests collections endpoint
     """
     collections = catalog.get_collections()
@@ -54,10 +54,10 @@ def test_collections(catalog):
     'sentinel-2-l1c',
     DataCollection.SENTINEL1_IW
 ])
-def test_collection_info(catalog, collection_input):
+def test_get_collection(catalog, collection_input):
     """ Test endpoint for a single collection info
     """
-    collection_info = catalog.get_collection_info(collection_input)
+    collection_info = catalog.get_collection(collection_input)
     assert isinstance(collection_info, dict)
 
 
