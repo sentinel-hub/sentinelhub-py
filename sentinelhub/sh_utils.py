@@ -4,6 +4,8 @@ Module implementing some utility functions not suitable for other utility module
 from datetime import datetime
 from urllib.parse import urlencode
 
+import dateutil
+
 from sentinelhub.config import SHConfig
 from sentinelhub.download import SentinelHubDownloadClient
 from sentinelhub.exceptions import MissingDataInRequestException
@@ -50,7 +52,7 @@ def from_sh_datetime(date_time):
     if isinstance(date_time, datetime):
         return date_time
     if isinstance(date_time, str):
-        return datetime.fromisoformat(date_time.replace('Z', '+00:00'))
+        return dateutil.parser.parse(date_time.replace('Z', '+00:00'))
     return None
 
 
