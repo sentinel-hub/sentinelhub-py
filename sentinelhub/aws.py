@@ -483,7 +483,7 @@ class AwsTile(AwsService):
         :type config: SHConfig or None
         """
         self.tile_name = self.parse_tile_name(tile_name)
-        self.datetime = self.parse_datetime(time)
+        self.datetime = parse_time(time)  # TODO
         self.date = self.datetime.split('T')[0]
         self.aws_index = aws_index
         self.data_collection = data_collection
@@ -517,21 +517,6 @@ class AwsTile(AwsService):
         if len(tile_name) != 5:
             raise ValueError('Invalid tile name {}'.format(name))
         return tile_name
-
-    @staticmethod
-    def parse_datetime(time):
-        """
-        Parses and verifies tile sensing time.
-
-        :param time: tile sensing time
-        :type time: str
-        :return: tile sensing time in ISO8601 format
-        :rtype: str
-        """
-        try:
-            return parse_time(time)
-        except Exception as exception:
-            raise ValueError('Time must be in format YYYY-MM-DD or YYYY-MM-DDTHH:MM:SS') from exception
 
     def get_requests(self):
         """
@@ -594,7 +579,7 @@ class AwsTile(AwsService):
         :rtype: bool
         """
         return self.tile_info is not None \
-            and (self.datetime == self.date or self.datetime == self.parse_datetime(self.tile_info['timestamp']))
+            and (self.datetime == self.date or self.datetime == parse_time(self.tile_info['timestamp'], ignoretz=True))  # TODO
 
     def get_tile_info(self):
         """
