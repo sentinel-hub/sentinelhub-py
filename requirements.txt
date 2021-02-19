@@ -13,3 +13,4 @@ pyproj>=2.2.0
 oauthlib
 requests_oauthlib
 aenum>=2.1.4
+dataclasses-json

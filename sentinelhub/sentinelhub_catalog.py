@@ -7,7 +7,7 @@ from .config import SHConfig
 from .data_collections import DataCollection
 from .geometry import Geometry, CRS
 from .download.sentinelhub_client import SentinelHubDownloadClient
-from .sentinelhub_batch import _remove_undefined_params
+from .sh_utils import remove_undefined
 from .time_utils import parse_time_interval
 
 
@@ -126,7 +126,7 @@ class SentinelHubCatalog:
         if geometry and geometry.crs is not CRS.WGS84:
             geometry = geometry.transform(CRS.WGS84)
 
-        payload = _remove_undefined_params({
+        payload = remove_undefined({
             'collections': [collection_id],
             'datetime': f'{start_time}Z/{end_time}Z',
             'bbox': list(bbox) if bbox else None,
@@ -235,8 +235,7 @@ class CatalogSearchIterator:
         :return: A list of geometry objects with CRS
         :rtype: list(Geometry)
         """
-        return [Geometry(feature['geometry'],
-                         crs=feature['geometry']['crs']['properties']['name'].rsplit(':', 1)[-1]) for feature in self]
+        return [Geometry.from_geojson(feature['geometry']) for feature in self]
 
     def get_ids(self):
         """ Provides features IDs

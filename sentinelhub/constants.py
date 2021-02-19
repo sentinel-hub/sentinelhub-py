@@ -4,6 +4,7 @@ Module defining constants and enumerate types used in the package
 import functools
 import itertools as it
 import mimetypes
+import re
 import warnings
 from enum import Enum, EnumMeta
 
@@ -85,6 +86,7 @@ class CRSMeta(EnumMeta):
         - 4326
         - 'EPSG:3857'
         - {'init': 32633}
+        - geojson['crs']['properties']['name'] string (urn:ogc:def:crs:...)
         - pyproj.CRS(32743)
         """
         if isinstance(value, dict) and 'init' in value:
@@ -101,6 +103,9 @@ class CRSMeta(EnumMeta):
         if isinstance(value, int):
             return str(value)
         if isinstance(value, str):
+            if 'urn:ogc:def:crs' in value.lower():
+                crs_template = re.compile(r'urn:ogc:def:crs:.+::(?P<code>.+)', re.IGNORECASE)
+                value = crs_template.match(value).group("code")
             if value.upper() == 'CRS84':
                 return '4326'
             return value.lower().strip('epsg: ')

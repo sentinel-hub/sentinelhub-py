@@ -4,8 +4,8 @@ Module implementing geometry classes
 from abc import ABC, abstractmethod
 from math import ceil
 
-import shapely.ops
 import shapely.geometry
+import shapely.ops
 import shapely.wkt
 
 from .constants import CRS
@@ -15,6 +15,7 @@ from .geo_utils import transform_point
 class BaseGeometry(ABC):
     """ Base geometry class
     """
+
     def __init__(self, crs):
         """
         :param crs: Coordinate reference system of the geometry
@@ -105,6 +106,7 @@ class BBox(BaseGeometry):
         - In case of ``constants.CRS.POP_WEB`` axis x represents easting and axis y represents northing
         - In case of ``constants.CRS.UTM_*`` axis x represents easting and axis y represents northing
     """
+
     def __init__(self, bbox, crs):
         """
         :param bbox: A bbox in any valid representation
@@ -390,6 +392,7 @@ class Geometry(BaseGeometry):
     - A GeoJSON dictionary with (multi)polygon coordinates
     - A WKT string with (multi)polygon coordinates
     """
+
     def __init__(self, geometry, crs):
         """
         :param geometry: A polygon or multipolygon in any valid representation
@@ -443,6 +446,25 @@ class Geometry(BaseGeometry):
 
         return Geometry(geometry, crs=new_crs)
 
+    @classmethod
+    def from_geojson(cls, geojson, crs=None):
+        """ Create Geometry object from geojson. It will parse crs from geojson (if info is available),
+        otherwise it will be set to crs (WGS84 if parameter is empty)
+
+        :param geojson: geojson geometry (single feature)
+        :param crs: crs to be used if not available in geojson, CRS.WGS84 if not provided
+        :return: Geometry object
+        """
+        try:
+            crs = CRS(geojson['crs']['properties']['name'])
+        except (KeyError, AttributeError, TypeError):
+            pass
+
+        if not crs:
+            crs = CRS.WGS84
+
+        return cls(geojson, crs=crs)
+
     @property
     def geometry(self):
         """ Returns shapely object representing geometry in this class
@@ -486,6 +508,7 @@ class Geometry(BaseGeometry):
 class BBoxCollection(BaseGeometry):
     """ A collection of bounding boxes
     """
+
     def __init__(self, bbox_list):
         """
         :param bbox_list: A list of BBox objects which have to be in the same CRS
