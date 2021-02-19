@@ -15,7 +15,6 @@ from .geo_utils import transform_point
 class BaseGeometry(ABC):
     """ Base geometry class
     """
-
     def __init__(self, crs):
         """
         :param crs: Coordinate reference system of the geometry
@@ -106,7 +105,6 @@ class BBox(BaseGeometry):
         - In case of ``constants.CRS.POP_WEB`` axis x represents easting and axis y represents northing
         - In case of ``constants.CRS.UTM_*`` axis x represents easting and axis y represents northing
     """
-
     def __init__(self, bbox, crs):
         """
         :param bbox: A bbox in any valid representation
@@ -392,7 +390,6 @@ class Geometry(BaseGeometry):
     - A GeoJSON dictionary with (multi)polygon coordinates
     - A WKT string with (multi)polygon coordinates
     """
-
     def __init__(self, geometry, crs):
         """
         :param geometry: A polygon or multipolygon in any valid representation
@@ -508,7 +505,6 @@ class Geometry(BaseGeometry):
 class BBoxCollection(BaseGeometry):
     """ A collection of bounding boxes
     """
-
     def __init__(self, bbox_list):
         """
         :param bbox_list: A list of BBox objects which have to be in the same CRS
