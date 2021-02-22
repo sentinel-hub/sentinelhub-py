@@ -13,11 +13,15 @@ from .config import SHConfig
 from .constants import RequestType, MimeType
 from .download.sentinelhub_client import SentinelHubDownloadClient
 from .geometry import Geometry
-from .sh_utils import iter_pages, remove_undefined, from_sh_datetime, to_sh_datetime
+from .sh_utils import iter_pages, remove_undefined
+from .time_utils import parse_time, serialize_time
 
 
-datetime_config = dataclass_config(encoder=to_sh_datetime, decoder=from_sh_datetime,
-                                   letter_case=LetterCase.CAMEL)
+datetime_config = dataclass_config(
+    encoder=lambda time: serialize_time(time, use_tz=True) if time else None,
+    decoder=lambda time: parse_time(time, force_datetime=True) if time else None,
+    letter_case=LetterCase.CAMEL
+)
 
 geometry_config = dataclass_config(encoder=Geometry.get_geojson,
                                    decoder=lambda x: Geometry.from_geojson(x) if x else None,

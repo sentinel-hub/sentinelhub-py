@@ -201,8 +201,8 @@ def _prepare_url_params(tile_id, bbox, end_date, start_date, absolute_orbit):
     """
     url_params = {
         'identifier': tile_id,
-        'startDate': serialize_time(start_date) if start_date else None,
-        'completionDate': serialize_time(end_date) if end_date else None,
+        'startDate': serialize_time(start_date, use_tz=False) if start_date else None,
+        'completionDate': serialize_time(end_date, use_tz=False) if end_date else None,
         'orbitNumber': absolute_orbit,
         'box': bbox
     }

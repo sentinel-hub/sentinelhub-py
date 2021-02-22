@@ -193,7 +193,7 @@ def serialize_time(timestamp_input, *, use_tz=False):
     :param timestamp_input: A datetime object or a tuple of datetime objects
     :type timestamp_input: datetime.date or datetime.datetime or tuple(datetime.date or datetime.datetime)
     :param use_tz: If `True` it will ensure that the serialized string contains a timezone information (typically
-        with `Z` at the end instead of +00:00). Otherwise it will make sure to remove it.
+        with `Z` at the end instead of +00:00). If `False` it will make sure to remove any timezone information
     :type use_tz: bool
     :return: Timestamp(s) serialized into string(s)
     :rtype: str or tuple(str)
