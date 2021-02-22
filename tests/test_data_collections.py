@@ -93,14 +93,14 @@ class TestDataCollection(TestSentinelHub):
     def test_attributes(self):
         ds = DataCollection.SENTINEL3_OLCI
 
-        for attr_name in ['api_id', 'wfs_id', 'service_url', 'bands', 'sensor_type']:
+        for attr_name in ['api_id', 'catalog_id', 'wfs_id', 'service_url', 'bands', 'sensor_type']:
             value = getattr(ds, attr_name)
             self.assertNotEqual(value, None)
             self.assertEqual(value, getattr(ds.value, attr_name))
 
         ds = DataCollection.define('EMPTY')
 
-        for attr_name in ['api_id', 'wfs_id', 'bands']:
+        for attr_name in ['api_id', 'catalog_id', 'wfs_id', 'bands']:
             with self.assertRaises(ValueError):
                 getattr(ds, attr_name)
 

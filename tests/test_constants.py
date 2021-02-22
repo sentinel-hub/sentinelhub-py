@@ -32,6 +32,9 @@ class TestCRS(TestSentinelHub):
             ('EPSG:3857', CRS.POP_WEB),
             ({'init': 'EPSG:32638'}, CRS.UTM_38N),
             (pyproj.CRS('+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs'), CRS.WGS84),
+            ('urn:ogc:def:crs:epsg::32631', CRS.UTM_31N),
+            ('urn:ogc:def:crs:OGC::CRS84', CRS.WGS84),
+            (pyproj.CRS(3857), CRS.POP_WEB),
             (pyproj.CRS(3857), CRS.POP_WEB),
         ]
         for parse_value, expected_result in test_cases:

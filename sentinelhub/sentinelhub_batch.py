@@ -1,14 +1,13 @@
 """
 Module implementing an interface with Sentinel Hub Batch service
 """
-from urllib.parse import urlencode
 
 from .config import SHConfig
 from .constants import RequestType
 from .download.sentinelhub_client import SentinelHubDownloadClient
-from .exceptions import MissingDataInRequestException
 from .geometry import Geometry, BBox, CRS
 from .sentinelhub_request import SentinelHubRequest
+from .sh_utils import iter_pages, remove_undefined
 
 
 class SentinelHubBatch:
@@ -77,7 +76,7 @@ class SentinelHubBatch:
             'bucketName': bucket_name,
             'description': description
         }
-        payload = _remove_undefined_params(payload)
+        payload = remove_undefined(payload)
 
         url = cls._get_process_url(config)
         client = SentinelHubDownloadClient(config=config)
@@ -136,7 +135,7 @@ class SentinelHubBatch:
         :return: A dictionary of output parameters
         :rtype: dict
         """
-        return _remove_undefined_params({
+        return remove_undefined({
             'defaultTilePath': default_tile_path,
             'cogOutput': cog_output,
             'cogParameters': cog_parameters,
@@ -161,12 +160,14 @@ class SentinelHubBatch:
         :rtype: Iterator[dict]
         """
         url = SentinelHubBatch._get_tiling_grids_url(config)
-        params = _remove_undefined_params({
+        params = remove_undefined({
             'search': search,
             'sort': sort,
             **kwargs
         })
-        return _iter_pages(url, config, **params)
+        return iter_pages(service_url=url, config=config,
+                          exception_message='Failed to obtain information about available tiling grids.',
+                          **params)
 
     @staticmethod
     def get_tiling_grid(grid_id, config=None):
@@ -256,13 +257,15 @@ class SentinelHubBatch:
         :rtype: Iterator[SentinelHubBatch]
         """
         url = SentinelHubBatch._get_process_url(config)
-        params = _remove_undefined_params({
+        params = remove_undefined({
             'search': search,
             'sort': sort,
             'userid': user_id,
             **kwargs
         })
-        for request_info in _iter_pages(url, config, **params):
+        for request_info in iter_pages(service_url=url, config=config,
+                                       exception_message='No requests found.',
+                                       **params):
             yield SentinelHubBatch(request_info=request_info, config=config)
 
     @staticmethod
@@ -310,11 +313,14 @@ class SentinelHubBatch:
         :rtype: Iterator[dict]
         """
         url = self._get_tiles_url()
-        params = _remove_undefined_params({
+        params = remove_undefined({
             'status': status,
             **kwargs
         })
-        return _iter_pages(url, self.config, **params)
+        return iter_pages(service_url=url, config=self.config,
+                          exception_message='No tiles found, please run analysis on batch request before calling '
+                                            'this method.',
+                          **params)
 
     def get_tile(self, tile_id):
         """ Provides information about a single batch request tile
@@ -384,36 +390,3 @@ class SentinelHubBatch:
         """
         config = config or SHConfig()
         return f'{config.sh_base_url}/api/v1/batch'
-
-
-def _remove_undefined_params(payload):
-    """ Takes a dictionary with a payload and removes parameter which value is None
-    """
-    return {name: value for name, value in payload.items() if value is not None}
-
-
-def _iter_pages(service_url, config, **params):
-    """ Iterates over pages of items
-    """
-    token = None
-    client = SentinelHubDownloadClient(config=config)
-
-    while True:
-        if token is not None:
-            params['viewtoken'] = token
-
-        url = f'{service_url}?{urlencode(params)}'
-        results = client.get_json(url, use_session=True)
-
-        results_data = results.get('data') or results.get('member')
-        if results_data is None:
-            raise MissingDataInRequestException('No tiles found, please run analysis on batch request before'
-                                                ' calling this method.')
-
-        for item in results_data:
-            yield item
-
-        results_links = results.get('links') or results.get('view')
-        token = results_links.get('nextToken')
-        if token is None:
-            break

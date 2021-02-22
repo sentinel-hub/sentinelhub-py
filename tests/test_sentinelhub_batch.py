@@ -1,23 +1,10 @@
 """
 A module that tests an interface for Sentinel Hub Batch processing
 """
-import os
 import datetime as dt
 import itertools as it
 
-import pytest
-
-from sentinelhub import SentinelHubBatch, SentinelHubRequest, DataCollection, BBox, CRS, SHConfig, MimeType
-
-
-@pytest.fixture(name='config')
-def config_fixture():
-    config = SHConfig()
-    for param in config.get_params():
-        env_variable = param.upper()
-        if os.environ.get(env_variable):
-            setattr(config, param, os.environ.get(env_variable))
-    return config
+from sentinelhub import SentinelHubBatch, SentinelHubRequest, DataCollection, BBox, CRS, MimeType
 
 
 def test_iter_tiling_grids(config):
