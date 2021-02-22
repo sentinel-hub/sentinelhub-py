@@ -5,7 +5,7 @@ from .config import SHConfig
 from .data_collections import DataCollection
 from .geometry import Geometry, CRS
 from .download.sentinelhub_client import SentinelHubDownloadClient
-from .sh_utils import remove_undefined
+from .sh_utils import FeatureIterator, remove_undefined
 from .time_utils import parse_time_interval, serialize_time, parse_time
 
 
@@ -150,74 +150,27 @@ class SentinelHubCatalog:
         raise ValueError(f'Expected either a DataCollection object or a collection id string, got {collection}')
 
 
-class CatalogSearchIterator:
+class CatalogSearchIterator(FeatureIterator):
     """ Searches a catalog with a given query and provides results
-
-    Note that:
-    - The iterator will load only as many features as needed at any moment
-    - It will keep downloaded features in memory so that iterating over it again will not have to download the same
-    features again.
     """
-    def __init__(self, client, url, payload):
-        """
-        :param client: An instance of a download client object
-        :type client: DownloadClient
-        :param url: An URL where requests will be made
-        :type url: str
-        :param payload: A payload of parameters to be sent with each request
-        :type payload: dict
-        """
-        self.client = client
-        self.url = url
-        self.payload = payload
-
-        self.index = 0
-        self.features = []
-        self.next = None
-        self.finished = False
-
-    def __iter__(self):
-        """ Iteration method
-
-        :return: the iterator class itself
-        :rtype: CatalogSearchIterator
-        """
-        self.index = 0
-        return self
-
-    def __next__(self):
-        """ Next method
-
-        :return: dictionary containing info about product tiles
-        :rtype: dict
-        """
-        while self.index >= len(self.features) and not self.finished:
-            self._fetch_features()
-
-        if self.index < len(self.features):
-            self.index += 1
-            return self.features[self.index - 1]
-
-        raise StopIteration
-
     def _fetch_features(self):
         """ Collects (more) results from the service
         """
         if self.next is not None:
             payload = {
-                **self.payload,
+                **self.params,
                 'next': self.next
             }
         else:
-            payload = self.payload
+            payload = self.params
 
         results = self.client.get_json(self.url, post_values=payload, use_session=True)
 
-        new_features = results['features']
-        self.features.extend(new_features)
-
         self.next = results['context'].get('next')
+        new_features = results['features']
         self.finished = self.next is None or not new_features
+
+        return new_features
 
     def get_timestamps(self):
         """ Provides features timestamps
