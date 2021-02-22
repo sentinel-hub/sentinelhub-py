@@ -74,26 +74,6 @@ class ByocTile:
     sensing_time: Optional[datetime] = field(metadata=datetime_config, default=None)
     additional_data: Optional[dict] = None
 
-    @property
-    def tile_geometry_crs(self):
-        """ CRS of tile geometry
-        """
-        return self.tile_geometry.crs if self.tile_geometry and not self.tile_geometry.geometry.is_empty else None
-
-    @property
-    def cover_geometry_crs(self):
-        """ CRS of tile cover geometry
-        """
-        return self.cover_geometry.crs if self.cover_geometry and not self.cover_geometry.geometry.is_empty else None
-
-    @property
-    def geometry(self):
-        """ Tile cover geometry as shapely object
-        """
-        if self.cover_geometry and not self.cover_geometry.geometry.is_empty:
-            return self.cover_geometry.geometry
-        return None
-
 
 class SentinelHubBYOC:
     """ An interface class for Sentinel Hub Bring your own COG (BYOC) API
