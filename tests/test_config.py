@@ -56,5 +56,16 @@ class TestSHConfig(TestSentinelHub):
         config.download_timeout_seconds = old_value
         config.save()
 
+    def test_raise_missing_instance_id(self):
+        config = SHConfig()
+
+        config.instance_id = 'xxx'
+        config.raise_missing_instance_id()
+
+        config.instance_id = ''
+        with self.assertRaises(ValueError):
+            config.raise_missing_instance_id()
+
+
 if __name__ == '__main__':
     unittest.main()
