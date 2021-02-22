@@ -33,6 +33,7 @@ def fail_user_errors(download_func):
 def retry_temporal_errors(download_func):
     """ Decorator function for handling server and connection errors
     """
+    # pylint: disable=inconsistent-return-statements
     backoff_coefficient = 3
 
     def new_download_func(self, request):
