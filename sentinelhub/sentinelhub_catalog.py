@@ -1,14 +1,12 @@
 """
 A client interface for Sentinel Hub Catalog API
 """
-import dateutil.parser
-
 from .config import SHConfig
 from .data_collections import DataCollection
 from .geometry import Geometry, CRS
 from .download.sentinelhub_client import SentinelHubDownloadClient
 from .sh_utils import remove_undefined
-from .time_utils import parse_time_interval, serialize_time
+from .time_utils import parse_time_interval, serialize_time, parse_time
 
 
 class SentinelHubCatalog:
@@ -227,7 +225,7 @@ class CatalogSearchIterator:
         :return: A list of sensing times
         :rtype: list(datetime.datetime)
         """
-        return [dateutil.parser.parse(feature['properties']['datetime']) for feature in self]
+        return [parse_time(feature['properties']['datetime']) for feature in self]
 
     def get_geometries(self):
         """ Provides features geometries

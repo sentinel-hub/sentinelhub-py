@@ -14,7 +14,7 @@ from .data_collections import DataCollection, handle_deprecated_data_source
 from .geo_utils import get_image_dimension
 from .geometry import BBox, Geometry
 from .download import DownloadRequest, SentinelHubDownloadClient
-from .time_utils import parse_time_interval, serialize_time, filter_times
+from .time_utils import parse_time, parse_time_interval, serialize_time, filter_times
 
 LOGGER = logging.getLogger(__name__)
 
@@ -438,10 +438,9 @@ class WebFeatureService(OgcService):
             if not tile_info['properties']['date']:  # could be True for custom (BYOC) data collections
                 tile_dates.append(None)
             else:
-                tile_dates.append(datetime.datetime.strptime('{}T{}'.
-                                                             format(tile_info['properties']['date'],
-                                                                    tile_info['properties']['time'].split('.')[0]),
-                                                             '%Y-%m-%dT%H:%M:%S'))
+                date_str = tile_info['properties']['date']
+                time_str = tile_info['properties']['time']
+                tile_dates.append(parse_time(f'{date_str}T{time_str}'))
 
         return tile_dates
 

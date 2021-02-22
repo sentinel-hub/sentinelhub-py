@@ -3,9 +3,7 @@ Module for communication with http://opensearch.sentinel-hub.com/resto/api
 
 For more search parameters check: http://opensearch.sentinel-hub.com/resto/api/collections/Sentinel2/describe.xml
 """
-
 import logging
-import datetime
 from urllib.parse import urlencode
 
 from .constants import CRS
@@ -114,9 +112,7 @@ def get_area_dates(bbox, date_interval, maxcc=None):
     """
 
     area_info = get_area_info(bbox, date_interval, maxcc=maxcc)
-    return sorted({datetime.datetime.strptime(tile_info['properties']['startDate'].strip('Z'),
-                                              '%Y-%m-%dT%H:%M:%S')
-                   for tile_info in area_info})
+    return sorted({parse_time(tile_info['properties']['startDate']) for tile_info in area_info})
 
 
 def reduce_by_maxcc(result_list, maxcc):
