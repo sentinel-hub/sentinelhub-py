@@ -154,15 +154,12 @@ class CatalogSearchIterator(FeatureIterator):
     """ Searches a catalog with a given query and provides results
     """
     def _fetch_features(self):
-        """ Collects (more) results from the service
+        """ Collects more results from the service
         """
-        if self.next is not None:
-            payload = {
-                **self.params,
-                'next': self.next
-            }
-        else:
-            payload = self.params
+        payload = remove_undefined({
+            **self.params,
+            'next': self.next
+        })
 
         results = self.client.get_json(self.url, post_values=payload, use_session=True)
 

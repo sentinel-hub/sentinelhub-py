@@ -7,7 +7,7 @@ from .constants import RequestType
 from .download.sentinelhub_client import SentinelHubDownloadClient
 from .geometry import Geometry, BBox, CRS
 from .sentinelhub_request import SentinelHubRequest
-from .sh_utils import iter_pages, remove_undefined
+from .sh_utils import SentinelHubFeatureIterator, remove_undefined
 
 
 class SentinelHubBatch:
@@ -165,9 +165,12 @@ class SentinelHubBatch:
             'sort': sort,
             **kwargs
         })
-        return iter_pages(service_url=url, config=config,
-                          exception_message='Failed to obtain information about available tiling grids.',
-                          **params)
+        return SentinelHubFeatureIterator(
+            client=SentinelHubDownloadClient(config=config),
+            url=url,
+            params=params,
+            exception_message='Failed to obtain information about available tiling grids'
+        )
 
     @staticmethod
     def get_tiling_grid(grid_id, config=None):
@@ -263,9 +266,13 @@ class SentinelHubBatch:
             'userid': user_id,
             **kwargs
         })
-        for request_info in iter_pages(service_url=url, config=config,
-                                       exception_message='No requests found.',
-                                       **params):
+        feature_iterator = SentinelHubFeatureIterator(
+            client=SentinelHubDownloadClient(config=config),
+            url=url,
+            params=params,
+            exception_message='No requests found'
+        )
+        for request_info in feature_iterator:
             yield SentinelHubBatch(request_info=request_info, config=config)
 
     @staticmethod
@@ -317,10 +324,12 @@ class SentinelHubBatch:
             'status': status,
             **kwargs
         })
-        return iter_pages(service_url=url, config=self.config,
-                          exception_message='No tiles found, please run analysis on batch request before calling '
-                                            'this method.',
-                          **params)
+        return SentinelHubFeatureIterator(
+            client=SentinelHubDownloadClient(config=self.config),
+            url=url,
+            params=params,
+            exception_message='No tiles found, please run analysis on batch request before calling this method'
+        )
 
     def get_tile(self, tile_id):
         """ Provides information about a single batch request tile

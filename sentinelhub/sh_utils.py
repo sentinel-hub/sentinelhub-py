@@ -4,8 +4,6 @@ Module implementing some utility functions not suitable for other utility module
 from abc import ABC, abstractmethod
 from urllib.parse import urlencode
 
-from sentinelhub.config import SHConfig
-from sentinelhub.download import SentinelHubDownloadClient
 from sentinelhub.exceptions import MissingDataInRequestException
 
 
@@ -17,18 +15,18 @@ class FeatureIterator(ABC):
     - It will keep downloaded features in memory so that iterating over it again will not have to download the same
     features again.
     """
-    def __init__(self, client, url, params):
+    def __init__(self, client, url, params=None):
         """
         :param client: An instance of a download client object
         :type client: DownloadClient
         :param url: An URL where requests will be made
         :type url: str
         :param params: Parameters to be sent with each request
-        :type params: dict
+        :type params: dict or None
         """
         self.client = client
         self.url = url
-        self.params = params
+        self.params = params or {}
 
         self.index = 0
         self.features = []
@@ -66,33 +64,39 @@ class FeatureIterator(ABC):
         raise NotImplementedError
 
 
-def iter_pages(service_url, client=None, config=None, exception_message=None, **params):
-    """ Iterates over pages of items retrieved from Sentinel-Hub service
+class SentinelHubFeatureIterator(FeatureIterator):
+    """ Feature iterator for the most common implementation of feature pagination at Sentinel Hub services
     """
+    def __init__(self, *args, exception_message=None, **kwargs):
+        """
+        :param args: Arguments passed to FeatureIterator
+        :param exception_message: A message to be raise if no feature are found
+        :type exception_message: str
+        :param kwargs: Keyword arguments passed to FeatureIterator
+        """
+        self.exception_message = exception_message or 'No data found'
 
-    config = config or SHConfig()
-    client = client or SentinelHubDownloadClient(config=config)
+        super().__init__(*args, **kwargs)
 
-    token = None
-    exception_message = exception_message or 'No data.'
+    def _fetch_features(self):
+        """ Collect more results from the service
+        """
+        params = remove_undefined({
+            **self.params,
+            'viewtoken': self.next
+        })
+        url = f'{self.url}?{urlencode(params)}'
 
-    while True:
-        if token is not None:
-            params['viewtoken'] = token
+        results = self.client.get_json(url, use_session=True)
 
-        url = f'{service_url}?{urlencode(params)}'
-        results = client.get_json(url, use_session=True)
+        new_features = results.get('data')
+        if new_features is None:
+            raise MissingDataInRequestException(self.exception_message)
 
-        results_data = results.get('data')
-        if results_data is None:
-            raise MissingDataInRequestException(exception_message)
+        self.next = results['links'].get('nextToken')
+        self.finished = self.next is None or not new_features
 
-        for item in results_data:
-            yield item
-
-        token = results['links'].get('nextToken')
-        if token is None:
-            break
+        return new_features
 
 
 def remove_undefined(payload):

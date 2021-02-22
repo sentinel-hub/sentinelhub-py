@@ -13,7 +13,7 @@ from .config import SHConfig
 from .constants import RequestType, MimeType
 from .download.sentinelhub_client import SentinelHubDownloadClient
 from .geometry import Geometry
-from .sh_utils import iter_pages, remove_undefined
+from .sh_utils import SentinelHubFeatureIterator, remove_undefined
 from .time_utils import parse_time, serialize_time
 
 
@@ -98,8 +98,11 @@ class SentinelHubBYOC:
         :return: iterator over collections
         """
         url = f'{self.byoc_url}/collections'
-        return iter_pages(client=self.client, service_url=url,
-                          exception_message='Failed to obtain information about available collections.')
+        return SentinelHubFeatureIterator(
+            client=self.client,
+            url=url,
+            exception_message='Failed to obtain information about available BYOC collections'
+        )
 
     def get_collection(self, collection):
         """ Get collection by its id
@@ -164,9 +167,12 @@ class SentinelHubBYOC:
         :return: iterator
         """
         url = f'{self.byoc_url}/collections/{self._parse_id(collection)}/tiles'
-        return iter_pages(client=self.client, service_url=url,
-                          exception_message=f'Failed to obtain information about tiles in ByocCollection '
-                                            f'{self._parse_id(collection)}.')
+        return SentinelHubFeatureIterator(
+            client=self.client,
+            url=url,
+            exception_message=f'Failed to obtain information about tiles in BYOC collection '
+                              f'{self._parse_id(collection)}'
+        )
 
     def get_tile(self, collection, tile):
         """ Get a tile of collection
