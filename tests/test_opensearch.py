@@ -5,7 +5,7 @@ from sentinelhub import get_tile_info, get_area_dates, BBox, CRS, TestSentinelHu
 
 class TestOpensearch(TestSentinelHub):
     def test_get_tile_info(self):
-        tile_info = get_tile_info('T30SVH', '2015-11-29', aws_index=1)
+        tile_info = get_tile_info('T17SNV', '2015-11-29', aws_index=1)
         self.assertTrue(isinstance(tile_info, dict), msg="Expected a dict, got {}".format(type(tile_info)))
 
     def test_get_area_dates(self):

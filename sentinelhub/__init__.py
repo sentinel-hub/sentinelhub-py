@@ -39,6 +39,6 @@ from .sentinelhub_session import SentinelHubSession
 from .sentinelhub_batch import SentinelHubBatch
 from .sentinelhub_request import SentinelHubRequest
 
-from .time_utils import parse_time_interval, filter_times
+from .time_utils import parse_time, parse_time_interval, serialize_time, is_valid_time, filter_times
 
 from ._version import __version__

@@ -5,6 +5,7 @@ Module for obtaining data from Amazon Web Service
 import logging
 import os
 import warnings
+import datetime as dt
 from abc import ABC, abstractmethod
 
 from .config import SHConfig
@@ -288,7 +289,7 @@ class AwsService(ABC):
         :return: `True` if the product has report xml files and `False` otherwise
         :rtype: bool
         """
-        return self.baseline > '02.05' or (self.baseline == '02.05' and self.date >= '2017-10-12')  # Not sure
+        return self.baseline > '02.05' or (self.baseline == '02.05' and self.date_str >= '2017-10-12')  # Not sure
 
     def is_early_compact_l2a(self):
         """ Check if product is early version of compact L2A product
@@ -328,7 +329,7 @@ class AwsProduct(AwsService):
 
         super().__init__(**kwargs)
 
-        self.date = self.get_date()
+        self.date_str = self.get_date()
         self.product_url = self.get_product_url()
 
         client = AwsDownloadClient(config=self.config)
@@ -431,7 +432,7 @@ class AwsProduct(AwsService):
         :rtype: str
         """
         base_url = self.base_http_url if force_http else self.base_url
-        return '{}/products/{}/{}'.format(base_url, self.date.replace('-', '/'), self.product_id)
+        return '{}/products/{}/{}'.format(base_url, self.date_str.replace('-', '/'), self.product_id)
 
     def get_tile_url(self, tile_info):
         """ Collects tile url from `productInfo.json` file.
@@ -483,8 +484,8 @@ class AwsTile(AwsService):
         :type config: SHConfig or None
         """
         self.tile_name = self.parse_tile_name(tile_name)
-        self.datetime = parse_time(time)  # TODO
-        self.date = self.datetime.split('T')[0]
+        self.timestamp = parse_time(time, ignoretz=True)
+        self.date_str = self.timestamp.isoformat().split('T')[0]
         self.aws_index = aws_index
         self.data_collection = data_collection
 
@@ -546,7 +547,7 @@ class AwsTile(AwsService):
         """
         if self.aws_index is not None:
             return self.aws_index
-        tile_info_list = get_tile_info(self.tile_name, self.datetime, all_tiles=True)
+        tile_info_list = get_tile_info(self.tile_name, self.timestamp, all_tiles=True)
         if not tile_info_list:
             raise ValueError('Cannot find aws_index for specified tile and time')
 
@@ -578,8 +579,9 @@ class AwsTile(AwsService):
         :return: `True` if tile is valid and `False` otherwise
         :rtype: bool
         """
-        return self.tile_info is not None \
-            and (self.datetime == self.date or self.datetime == parse_time(self.tile_info['timestamp'], ignoretz=True))  # TODO
+        tile_info_datetime = parse_time(self.tile_info['timestamp'], ignoretz=True) if self.tile_info else None
+        only_date_given = not isinstance(self.timestamp, dt.datetime)
+        return self.tile_info is not None and (only_date_given or self.timestamp == tile_info_datetime)
 
     def get_tile_info(self):
         """
@@ -618,7 +620,7 @@ class AwsTile(AwsService):
         base_url = self.base_http_url if force_http else self.base_url
         url = '{}/tiles/{}/{}/{}/'.format(base_url, self.tile_name[0:2].lstrip('0'), self.tile_name[2],
                                           self.tile_name[3:5])
-        date_params = self.date.split('-')
+        date_params = self.date_str.split('-')
         for param in date_params:
             url += param.lstrip('0') + '/'
         return url + str(self.aws_index)
@@ -662,7 +664,7 @@ class AwsTile(AwsService):
         :return: filename with path on disk
         :rtype: str
         """
-        return os.path.join(self.parent_folder, '{},{},{}'.format(self.tile_name, self.date, self.aws_index),
+        return os.path.join(self.parent_folder, '{},{},{}'.format(self.tile_name, self.date_str, self.aws_index),
                             self.add_file_extension(filename)).replace(':', '.')
 
     def get_product_id(self):
