@@ -4,8 +4,8 @@ Module implementing geometry classes
 from abc import ABC, abstractmethod
 from math import ceil
 
-import shapely.ops
 import shapely.geometry
+import shapely.ops
 import shapely.wkt
 
 from .constants import CRS
@@ -442,6 +442,25 @@ class Geometry(BaseGeometry):
             geometry = shapely.ops.transform(transform_function, geometry)
 
         return Geometry(geometry, crs=new_crs)
+
+    @classmethod
+    def from_geojson(cls, geojson, crs=None):
+        """ Create Geometry object from geojson. It will parse crs from geojson (if info is available),
+        otherwise it will be set to crs (WGS84 if parameter is empty)
+
+        :param geojson: geojson geometry (single feature)
+        :param crs: crs to be used if not available in geojson, CRS.WGS84 if not provided
+        :return: Geometry object
+        """
+        try:
+            crs = CRS(geojson['crs']['properties']['name'])
+        except (KeyError, AttributeError, TypeError):
+            pass
+
+        if not crs:
+            crs = CRS.WGS84
+
+        return cls(geojson, crs=crs)
 
     @property
     def geometry(self):
