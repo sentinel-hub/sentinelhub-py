@@ -35,7 +35,20 @@ class SentinelHubDownloadClient(DownloadClient):
         self.session = session
 
         self.rate_limit = SentinelHubRateLimit(num_processes=self.config.number_of_download_processes)
+        self.lock = None
+
+    def download(self, *args, **kwargs):
+        """ The main download method
+
+        :param args: Passed to DownloadClient.download
+        :param kwargs: Passed to DownloadClient.download
+        """
+        # Because the Lock object cannot be pickled we create it only here and remove it afterward
         self.lock = Lock()
+        try:
+            return super().download(*args, **kwargs)
+        finally:
+            self.lock = None
 
     @retry_temporal_errors
     @fail_user_errors
@@ -45,12 +58,12 @@ class SentinelHubDownloadClient(DownloadClient):
         thread_name = currentThread().getName()
 
         while True:
-            sleep_time = self._execute_with_lock(self.rate_limit.register_next)
+            sleep_time = self._execute_thread_safe(self.rate_limit.register_next)
 
             if sleep_time == 0:
                 response = self._do_download(request)
 
-                self._execute_with_lock(self.rate_limit.update, response.headers)
+                self._execute_thread_safe(self.rate_limit.update, response.headers)
 
                 if response.status_code != requests.status_codes.codes.TOO_MANY_REQUESTS:
                     response.raise_for_status()
@@ -61,9 +74,12 @@ class SentinelHubDownloadClient(DownloadClient):
                 LOGGER.debug('%s: Sleeping for %0.2f', thread_name, sleep_time)
                 time.sleep(sleep_time)
 
-    def _execute_with_lock(self, thread_unsafe_function, *args, **kwargs):
+    def _execute_thread_safe(self, thread_unsafe_function, *args, **kwargs):
         """ Executes a function inside a thread lock and handles potential errors
         """
+        if self.lock is None:
+            return thread_unsafe_function(*args, **kwargs)
+
         self.lock.acquire()
         try:
             return thread_unsafe_function(*args, **kwargs)
@@ -87,17 +103,29 @@ class SentinelHubDownloadClient(DownloadClient):
         if not request.use_session:
             return request.headers
 
-        if self.session is None:
-            self.session = self._execute_with_lock(self._get_session)
-
+        session_headers = self._execute_thread_safe(self._get_session_headers)
         return {
-            **self.session.session_headers,
+            **session_headers,
             **request.headers
         }
 
-    def _get_session(self):
-        """ Provides a session object either from cache or it creates a new one
+    def _get_session_headers(self):
+        """ Provides up-to-date session headers
+
+        Note that calling session_headers property triggers update if session has expired therefore this has to be
+        called in a thread-safe way
         """
+        return self.get_session().session_headers
+
+    def get_session(self):
+        """ Provides the session object used by the client
+
+        :return: A Sentinel Hub session object
+        :rtype: SentinelHubSession
+        """
+        if self.session:
+            return self.session
+
         cache_key = self.config.sh_client_id, self.config.sh_client_secret, self.config.get_sh_oauth_url()
         if cache_key in SentinelHubDownloadClient._CACHED_SESSIONS:
             return SentinelHubDownloadClient._CACHED_SESSIONS[cache_key]
