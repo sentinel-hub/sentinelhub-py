@@ -263,7 +263,7 @@ class SHConfig:
         return '{}/oauth/token'.format(self.sh_base_url)
 
     def get_sh_processing_api_url(self):
-        """  Provides URL for Sentinel Hub processing API endpoint
+        """  Provides URL for Sentinel Hub Process API endpoint
 
         :return: An URL endpoint
         :rtype: str

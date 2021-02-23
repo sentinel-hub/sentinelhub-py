@@ -47,7 +47,7 @@ class SentinelHubBatch:
         """ Create a new batch request
 
         :param sentinelhub_request: An instance of SentinelHubRequest class containing all request parameters.
-            Alternatively, it can also be just a payload dictionary for Processing API request
+            Alternatively, it can also be just a payload dictionary for Process API request
         :type sentinelhub_request: SentinelHubRequest or dict
         :param tiling_grid: A dictionary with tiling grid parameters. It can be built with `tiling_grid` method
         :type tiling_grid: dict
