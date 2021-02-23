@@ -12,7 +12,7 @@ from .time_utils import parse_time_interval, serialize_time, parse_time
 class SentinelHubCatalog:
     """ The main class for interacting with Sentinel Hub Catalog API
 
-    For more details about certain endoints and parameters check
+    For more details about certain endpoints and parameters check
     `Catalog API documentation <https://docs.sentinel-hub.com/api/latest/api/catalog>`_.
     """
     def __init__(self, base_url=None, config=None):
@@ -35,6 +35,8 @@ class SentinelHubCatalog:
     def get_info(self):
         """ Provides the main information that define Sentinel Hub Catalog API
 
+        `Catalog API reference <https://docs.sentinel-hub.com/api/latest/reference/#operation/getLandingPage>`_
+
         :return: A service payload with information
         :rtype: dict
         """
@@ -42,6 +44,9 @@ class SentinelHubCatalog:
 
     def get_conformance(self):
         """ Get information about specifications that this API conforms to
+
+        `Catalog API reference
+        <https://docs.sentinel-hub.com/api/latest/reference/#operation/getConformanceDeclaration>`_
 
         :return: A service payload with information
         :rtype: dict
@@ -52,6 +57,8 @@ class SentinelHubCatalog:
     def get_collections(self):
         """ Provides a list of collections that are available to a user
 
+        `Catalog API reference <https://docs.sentinel-hub.com/api/latest/reference/#operation/getCollections>`_
+
         :return: A list of collections with information
         :rtype: list(dict)
         """
@@ -60,6 +67,8 @@ class SentinelHubCatalog:
 
     def get_collection(self, collection):
         """ Provides information about given collection
+
+        `Catalog API reference <https://docs.sentinel-hub.com/api/latest/reference/#operation/describeCollection>`_
 
         :param collection: A data collection object or a collection ID
         :type collection: DataCollection or str
@@ -72,6 +81,8 @@ class SentinelHubCatalog:
 
     def get_feature(self, collection, feature_id):
         """ Provides information about a single feature in a collection
+
+        `Catalog API reference <https://docs.sentinel-hub.com/api/latest/reference/#operation/getFeature>`_
 
         :param collection: A data collection object or a collection ID
         :type collection: DataCollection or str
@@ -87,6 +98,8 @@ class SentinelHubCatalog:
     def search(self, collection, *, time, bbox=None, geometry=None, ids=None, query=None, fields=None, distinct=None,
                limit=100, **kwargs):
         """ Catalog STAC search
+
+        `Catalog API reference <https://docs.sentinel-hub.com/api/latest/reference/#operation/postSearchSTAC>`_
 
         :param collection: A data collection object or a collection ID
         :type collection: DataCollection or str
