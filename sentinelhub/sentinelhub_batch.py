@@ -149,16 +149,12 @@ class SentinelHubBatch:
         })
 
     @staticmethod
-    def iter_tiling_grids(search=None, sort=None, config=None, **kwargs):
+    def iter_tiling_grids(config=None, **kwargs):
         """ An iterator over tiling grids
 
         `Batch API reference
         <https://docs.sentinel-hub.com/api/latest/reference/#operation/getBatchTilingGridsProperties>`_
 
-        :param search: A search parameter
-        :type search: str
-        :param sort: A sort parameter
-        :type sort: str
         :param config: A configuration object
         :type config: SHConfig
         :param kwargs: Any other request query parameters
@@ -166,15 +162,10 @@ class SentinelHubBatch:
         :rtype: Iterator[dict]
         """
         url = SentinelHubBatch._get_tiling_grids_url(config)
-        params = remove_undefined({
-            'search': search,
-            'sort': sort,
-            **kwargs
-        })
         return SentinelHubFeatureIterator(
             client=SentinelHubDownloadClient(config=config),
             url=url,
-            params=params,
+            params=remove_undefined(kwargs),
             exception_message='Failed to obtain information about available tiling grids'
         )
 
@@ -256,16 +247,12 @@ class SentinelHubBatch:
         return Geometry(geometry, crs)
 
     @staticmethod
-    def iter_requests(search=None, sort=None, user_id=None, config=None, **kwargs):
+    def iter_requests(user_id=None, config=None, **kwargs):
         """ Iterate existing batch requests
 
         `Batch API reference
         <https://docs.sentinel-hub.com/api/latest/reference/#operation/getAllBathProcessRequests>`_
 
-        :param search: Filter requests by a search query
-        :type search: str or None
-        :param sort: Sort obtained batch requests in a specific order
-        :type sort: str or None
         :param user_id: Filter requests by a user id who defined a request
         :type user_id: str or None
         :param config: A configuration object
@@ -276,8 +263,6 @@ class SentinelHubBatch:
         """
         url = SentinelHubBatch._get_process_url(config)
         params = remove_undefined({
-            'search': search,
-            'sort': sort,
             'userid': user_id,
             **kwargs
         })
