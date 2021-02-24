@@ -178,7 +178,8 @@ class OgcImageService(OgcService):
             end_date = date if request.time_difference < datetime.timedelta(
                 seconds=0) else date + request.time_difference
 
-            params['TIME'] = f'{serialize_time(start_date, use_tz=True)}/{serialize_time(end_date, use_tz=True)}'
+            start_date, end_date = serialize_time((start_date, end_date), use_tz=True)
+            params['TIME'] = f'{start_date}/{end_date}'
 
         return params
 
@@ -350,7 +351,7 @@ class WebFeatureService(OgcService):
         super().__init__(**kwargs)
 
         self.bbox = bbox
-        self.time_interval = serialize_time(parse_time_interval(time_interval), use_tz=True)
+        self.time_interval = parse_time_interval(time_interval)
         self.data_collection = DataCollection(handle_deprecated_data_source(data_collection, data_source,
                                                                             default=DataCollection.SENTINEL2_L1C))
         self.maxcc = maxcc
@@ -396,6 +397,7 @@ class WebFeatureService(OgcService):
         """
         main_url = '{}/{}/{}?'.format(self._base_url, ServiceType.WFS.value, self.config.instance_id)
 
+        start_time, end_time = serialize_time(self.time_interval, use_tz=True)
         params = {
             'SERVICE': ServiceType.WFS.value,
             'WARNINGS': False,
@@ -404,7 +406,7 @@ class WebFeatureService(OgcService):
             'BBOX': str(self.bbox.reverse()) if self.bbox.crs is CRS.WGS84 else str(self.bbox),
             'OUTPUTFORMAT': MimeType.get_string(MimeType.JSON),
             'SRSNAME': CRS.ogc_string(self.bbox.crs),
-            'TIME': f'{self.time_interval[0]}/{self.time_interval[1]}',
+            'TIME': f'{start_time}/{end_time}',
             'MAXCC': 100.0 * self.maxcc,
             'MAXFEATURES': self.max_features_per_request,
             'FEATURE_OFFSET': self.feature_offset
