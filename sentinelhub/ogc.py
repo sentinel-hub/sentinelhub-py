@@ -164,7 +164,8 @@ class OgcImageService:
             end_date = date if request.time_difference < datetime.timedelta(
                 seconds=0) else date + request.time_difference
 
-            params['TIME'] = f'{serialize_time(start_date, use_tz=True)}/{serialize_time(end_date, use_tz=True)}'
+            start_date, end_date = serialize_time((start_date, end_date), use_tz=True)
+            params['TIME'] = f'{start_date}/{end_date}'
 
         return params
 
@@ -333,17 +334,21 @@ class WebFeatureService(FeatureIterator):
         :param data_source: A deprecated alternative to data_collection
         :type data_source: DataCollection
         """
+        self.config = config or SHConfig()
+        self.config.raise_missing_instance_id()
+
         self.bbox = bbox
-        self.time_interval = serialize_time(parse_time_interval(time_interval), use_tz=True)
+
+        self.latest_time_only = time_interval == SHConstants.LATEST
+        if self.latest_time_only:
+            self.time_interval = datetime.datetime(year=1985, month=1, day=1), datetime.datetime.now()
+        else:
+            self.time_interval = parse_time_interval(time_interval)
+
         self.data_collection = DataCollection(handle_deprecated_data_source(data_collection, data_source,
                                                                             default=DataCollection.SENTINEL2_L1C))
         self.maxcc = maxcc
-
-        self.latest_time_only = time_interval == SHConstants.LATEST
-        self.max_features_per_request = 1 if self.latest_time_only else SHConfig().max_wfs_records_per_query
-
-        self.config = config or SHConfig()
-        self.config.raise_missing_instance_id()
+        self.max_features_per_request = 1 if self.latest_time_only else self.config.max_wfs_records_per_query
 
         client = SentinelHubDownloadClient(config=self.config)
         url = self._build_service_url()
@@ -365,6 +370,7 @@ class WebFeatureService(FeatureIterator):
     def _build_request_params(self):
         """ Builds URL parameters for WFS service
         """
+        start_time, end_time = serialize_time(self.time_interval, use_tz=True)
         return {
             'SERVICE': ServiceType.WFS.value,
             'WARNINGS': False,
@@ -373,7 +379,7 @@ class WebFeatureService(FeatureIterator):
             'BBOX': str(self.bbox.reverse()) if self.bbox.crs is CRS.WGS84 else str(self.bbox),
             'OUTPUTFORMAT': MimeType.JSON.get_string(),
             'SRSNAME': self.bbox.crs.ogc_string(),
-            'TIME': f'{self.time_interval[0]}/{self.time_interval[1]}',
+            'TIME': f'{start_time}/{end_time}',
             'MAXCC': 100.0 * self.maxcc,
             'MAXFEATURES': self.max_features_per_request
         }

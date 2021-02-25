@@ -289,7 +289,9 @@ class AwsService(ABC):
         :return: `True` if the product has report xml files and `False` otherwise
         :rtype: bool
         """
-        return self.baseline > '02.05' or (self.baseline == '02.05' and self.date_str >= '2017-10-12')  # Not sure
+        # Not completely sure if this condition is correct
+        return self.baseline > '02.05' or (self.baseline == '02.05' and
+                                           self.date >= dt.date(year=2017, month=10, day=12))
 
     def is_early_compact_l2a(self):
         """ Check if product is early version of compact L2A product
@@ -329,7 +331,7 @@ class AwsProduct(AwsService):
 
         super().__init__(**kwargs)
 
-        self.date_str = self.get_date()
+        self.date = self.get_date()
         self.product_url = self.get_product_url()
 
         client = AwsDownloadClient(config=self.config)
@@ -397,7 +399,7 @@ class AwsProduct(AwsService):
         """ Collects sensing date of the product.
 
         :return: Sensing date
-        :rtype: str
+        :rtype: datetime.date
         """
         if self.safe_type == EsaSafeType.OLD_TYPE:
             name = self.product_id.split('_')[-2]
@@ -405,7 +407,9 @@ class AwsProduct(AwsService):
         else:
             name = self.product_id.split('_')[2]
             date = [name[:4], name[4:6], name[6:8]]
-        return '-'.join(date_part.lstrip('0') for date_part in date)
+
+        date = list(map(int, date))
+        return dt.date(year=date[0], month=date[1], day=date[2])
 
     def get_url(self, filename, data_format=None):
         """ Creates url of file location on AWS.
@@ -432,7 +436,7 @@ class AwsProduct(AwsService):
         :rtype: str
         """
         base_url = self.base_http_url if force_http else self.base_url
-        return '{}/products/{}/{}'.format(base_url, self.date_str.replace('-', '/'), self.product_id)
+        return f'{base_url}/products/{self.date.year}/{self.date.month}/{self.date.day}/{self.product_id}'
 
     def get_tile_url(self, tile_info):
         """ Collects tile url from `productInfo.json` file.
@@ -484,8 +488,10 @@ class AwsTile(AwsService):
         :type config: SHConfig or None
         """
         self.tile_name = self.parse_tile_name(tile_name)
+
         self.timestamp = parse_time(time, ignoretz=True)
-        self.date_str = self.timestamp.isoformat().split('T')[0]
+        self.date = self.timestamp.date() if isinstance(self.timestamp, dt.datetime) else self.timestamp
+
         self.aws_index = aws_index
         self.data_collection = data_collection
 
@@ -618,12 +624,10 @@ class AwsTile(AwsService):
         :rtype: str
         """
         base_url = self.base_http_url if force_http else self.base_url
-        url = '{}/tiles/{}/{}/{}/'.format(base_url, self.tile_name[0:2].lstrip('0'), self.tile_name[2],
-                                          self.tile_name[3:5])
-        date_params = self.date_str.split('-')
-        for param in date_params:
-            url += param.lstrip('0') + '/'
-        return url + str(self.aws_index)
+        name_parts = self.tile_name[0:2].lstrip('0'), self.tile_name[2], self.tile_name[3:5]
+
+        return f'{base_url}/tiles/{name_parts[0]}/{name_parts[1]}/{name_parts[2]}/{self.date.year}/' \
+               f'{self.date.month}/{self.date.day}/{self.aws_index}'
 
     def get_qi_url(self, metafile):
         """Returns url of tile metadata products
@@ -664,8 +668,8 @@ class AwsTile(AwsService):
         :return: filename with path on disk
         :rtype: str
         """
-        return os.path.join(self.parent_folder, '{},{},{}'.format(self.tile_name, self.date_str, self.aws_index),
-                            self.add_file_extension(filename)).replace(':', '.')
+        tile_folder = f'{self.tile_name},{self.date.isoformat()},{self.aws_index}'
+        return os.path.join(self.parent_folder, tile_folder, self.add_file_extension(filename)).replace(':', '.')
 
     def get_product_id(self):
         """
