@@ -4,6 +4,7 @@ A module that tests an interface for Sentinel Hub Batch processing
 import os
 from datetime import datetime
 
+import dateutil.tz
 import pytest
 
 from sentinelhub import SentinelHubBYOC, ByocCollection, ByocTile, SHConfig, DownloadFailedException
@@ -135,7 +136,7 @@ def test_create_tile(byoc, collection, requests_mock):
     requests_mock.post('/oauth/token', real_http=True)
     mocked_url = f'/api/v1/byoc/collections/{collection["id"]}/tiles'
 
-    tile = ByocTile(path='mocked/path/mocked.tiff', sensing_time=datetime.now())
+    tile = ByocTile(path='mocked/path/mocked.tiff', sensing_time=datetime.now(tz=dateutil.tz.tzutc()))
     requests_mock.post(mocked_url, json={'data': tile.to_dict()})
 
     response = byoc.create_tile(collection=collection, tile=tile)

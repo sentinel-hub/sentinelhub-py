@@ -1,11 +1,13 @@
 """
 Module with useful time/date functions
 """
+import datetime as dt
+import warnings
 
-import datetime
 import dateutil.parser
+import dateutil.tz
 
-from .constants import SHConstants
+from .exceptions import SHDeprecationWarning
 
 
 def get_dates_in_range(start_date, end_date):
@@ -18,10 +20,11 @@ def get_dates_in_range(start_date, end_date):
     :return: list of dates between start_date and end_date in ISO 8601 format
     :rtype: list of str
     """
+    warnings.warn('This function will be removed in the next version', category=SHDeprecationWarning)
     start_dt = iso_to_datetime(start_date)
     end_dt = iso_to_datetime(end_date)
     num_days = int((end_dt - start_dt).days)
-    return [datetime_to_iso(start_dt + datetime.timedelta(i)) for i in range(num_days + 1)]
+    return [datetime_to_iso(start_dt + dt.timedelta(i)) for i in range(num_days + 1)]
 
 
 def next_date(date):
@@ -34,8 +37,9 @@ def next_date(date):
     :return: date after input date in ISO 8601 format
     :rtype: str
     """
+    warnings.warn('This function will be removed in the next version', category=SHDeprecationWarning)
     dtm = iso_to_datetime(date)
-    return datetime_to_iso(dtm + datetime.timedelta(1))
+    return datetime_to_iso(dtm + dt.timedelta(1))
 
 
 def prev_date(date):
@@ -48,8 +52,9 @@ def prev_date(date):
     :return: date previous to input date in ISO 8601 format
     :rtype: str
     """
+    warnings.warn('This function will be removed in the next version', category=SHDeprecationWarning)
     dtm = iso_to_datetime(date)
-    return datetime_to_iso(dtm - datetime.timedelta(1))
+    return datetime_to_iso(dtm - dt.timedelta(1))
 
 
 def iso_to_datetime(date):
@@ -63,8 +68,9 @@ def iso_to_datetime(date):
     :return: datetime instance
     :rtype: datetime
     """
+    warnings.warn('This function will be removed in the next version', category=SHDeprecationWarning)
     chunks = list(map(int, date.split('T')[0].split('-')))
-    return datetime.datetime(chunks[0], chunks[1], chunks[2])
+    return dt.datetime(chunks[0], chunks[1], chunks[2])
 
 
 def datetime_to_iso(date, only_date=True):
@@ -80,6 +86,7 @@ def datetime_to_iso(date, only_date=True):
     :return: date in ISO 8601 format
     :rtype: str
     """
+    warnings.warn('This function will be removed in the next version', category=SHDeprecationWarning)
     if only_date:
         return date.isoformat().split('T')[0]
     return date.isoformat()
@@ -91,7 +98,8 @@ def get_current_date():
     :return: current date in ISO 8601 format
     :rtype: str
     """
-    return datetime_to_iso(datetime.datetime.now())
+    warnings.warn('This function will be removed in the next version', category=SHDeprecationWarning)
+    return datetime_to_iso(dt.datetime.now())
 
 
 def is_valid_time(time):
@@ -105,34 +113,39 @@ def is_valid_time(time):
     try:
         dateutil.parser.parse(time)
         return True
-    except BaseException:
+    except dateutil.parser.ParserError:
         return False
 
 
-def parse_time(time_input):
-    """ Parse input time/date string into ISO 8601 string
+def parse_time(time_input, *, force_datetime=False, **kwargs):
+    """ Parse input time/date string
 
     :param time_input: time/date to parse
     :type time_input: str or datetime.date or datetime.datetime
-    :return: parsed string in ISO 8601 format
-    :rtype: str
+    :param force_datetime: If True it will always return datetime.datetime object, if False it can also return only
+        datetime.date object if only date is provided as input.
+    :type force_datetime: bool
+    :param kwargs: Any keyword arguments to be passed to `dateutil.parser.parse`. Example: `ignoretz=True`
+    :return: A datetime object
+    :rtype: datetime.datetime or datetime.date
     """
-    if isinstance(time_input, datetime.date):
-        return time_input.isoformat().replace('+00:00', '')
+    if isinstance(time_input, dt.date):
+        if force_datetime and not isinstance(time_input, dt.datetime):
+            return date_to_datetime(time_input)
 
-    if len(time_input) < 8:
-        raise ValueError('Invalid time string {}.\n'
-                         'Please specify time in formats YYYY-MM-DD or YYYY-MM-DDTHH:MM:SS'.format(time_input))
-    time = dateutil.parser.parse(time_input)
-    if len(time_input) <= 10:
-        return time.date().isoformat()
-    return time.isoformat()
+        if kwargs.get('ignoretz') and isinstance(time_input, dt.datetime):
+            return time_input.replace(tzinfo=None)
+
+        return time_input
+
+    time = dateutil.parser.parse(time_input, **kwargs)
+    if force_datetime or len(time_input) > 10:  # This check is not very accurate but it works for iso format
+        return time
+    return time.date()
 
 
-def parse_time_interval(time):
-    """ Parse input into an interval of two times, specifying start and end time, in ISO 8601 format, for example:
-
-    ``(2017-01-15:T00:00:00, 2017-01-16:T23:59:59)``
+def parse_time_interval(time, **kwargs):
+    """ Parse input into an interval of two times, specifying start and end time, into datetime objects.
 
     The input time can have the following formats, which will be parsed as:
 
@@ -147,34 +160,77 @@ def parse_time_interval(time):
     :param time: An input time
     :type time: str or datetime.datetime or (str, str) or (datetime.datetime, datetime.datetime)
     :return: interval of start and end date of the form `YYYY-MM-DDThh:mm:ss`
-    :rtype: (str, str)
+    :rtype: (datetime.datetime, datetime.datetime)
     :raises: ValueError
     """
-    if time == SHConstants.LATEST:
-        date_interval = '1985-01-01', get_current_date()
-    elif isinstance(time, (str, datetime.date)):
-        parsed_time = parse_time(time)
+    if isinstance(time, (str, dt.date)):
+        parsed_time = parse_time(time, **kwargs)
         date_interval = parsed_time, parsed_time
     elif isinstance(time, (tuple, list)) and len(time) == 2:
-        date_interval = parse_time(time[0]), parse_time(time[1])
+        date_interval = parse_time(time[0], **kwargs), parse_time(time[1], **kwargs)
     else:
         raise ValueError('Time must be a string/datetime object or tuple/list of 2 strings/datetime objects')
 
-    if 'T' not in date_interval[0]:
-        date_interval = date_interval[0] + 'T00:00:00', date_interval[1]
-    if 'T' not in date_interval[1]:
-        date_interval = date_interval[0], date_interval[1] + 'T23:59:59'
+    start_time, end_time = date_interval
+    if not isinstance(start_time, dt.datetime):
+        start_time = date_to_datetime(start_time)
+    if not isinstance(end_time, dt.datetime):
+        end_time = date_to_datetime(end_time, dt.time(hour=23, minute=59, second=59))
 
-    if date_interval[1] < date_interval[0]:
+    if start_time > end_time:
         raise ValueError('Start of time interval is larger than end of time interval')
 
-    return date_interval
+    return start_time, end_time
+
+
+def serialize_time(timestamp_input, *, use_tz=False):
+    """ Transforms datetime objects into ISO 8601 strings
+
+    :param timestamp_input: A datetime object or a tuple of datetime objects
+    :type timestamp_input: datetime.date or datetime.datetime or tuple(datetime.date or datetime.datetime)
+    :param use_tz: If `True` it will ensure that the serialized string contains a timezone information (typically
+        with `Z` at the end instead of +00:00). If `False` it will make sure to remove any timezone information
+    :type use_tz: bool
+    :return: Timestamp(s) serialized into string(s)
+    :rtype: str or tuple(str)
+    """
+    if isinstance(timestamp_input, tuple):
+        return tuple(serialize_time(timestamp, use_tz=use_tz) for timestamp in timestamp_input)
+
+    if not isinstance(timestamp_input, dt.date):
+        raise ValueError('Expected a datetime object or a tuple of datetime objects')
+
+    if use_tz and not isinstance(timestamp_input, dt.datetime):
+        raise ValueError('Cannot ensure timezone information for datetime.date objects, use datetime.datetime instead')
+
+    if use_tz and not timestamp_input.tzinfo:
+        timestamp_input = timestamp_input.replace(tzinfo=dateutil.tz.tzutc())
+
+    if not use_tz and isinstance(timestamp_input, dt.datetime) and timestamp_input.tzinfo:
+        timestamp_input = timestamp_input.replace(tzinfo=None)
+
+    return timestamp_input.isoformat().replace('+00:00', 'Z')
+
+
+def date_to_datetime(date, time=None):
+    """ Converts a date object into datetime object
+
+    :param date: a date object
+    :type date: datetime.date
+    :param time: an option time object, if not provided it will replace it with 00:00:00
+    :type time: datetime.time
+    :return: A datetime object derived from date and time
+    :rtype: datetime.datetime
+    """
+    if time is None:
+        time = dt.datetime.min.time()
+    return dt.datetime.combine(date, time)
 
 
 def filter_times(timestamps, time_difference):
-    """ Filters out dates within time_difference, preserving only the oldest date.
+    """ Filters out timestamps within time_difference, preserving only the oldest timestamp.
 
-    :param timestamps: A list of timestamp objects
+    :param timestamps: A list of timestamps
     :type timestamps: list(datetime.datetime)
     :param time_difference: A time difference threshold
     :type time_difference: datetime.timedelta

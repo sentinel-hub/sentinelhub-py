@@ -58,6 +58,9 @@ def retry_temporal_errors(download_func):
                 time.sleep(sleep_time)
                 sleep_time *= backoff_coefficient
 
+        raise DownloadFailedException('No download attempts available - configuration parameter max_download_attempts '
+                                      'should be greater than 0')
+
     return new_download_func
 
 

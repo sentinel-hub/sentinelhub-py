@@ -1,14 +1,12 @@
 """
 A client interface for Sentinel Hub Catalog API
 """
-import dateutil.parser
-
 from .config import SHConfig
 from .data_collections import DataCollection
 from .geometry import Geometry, CRS
 from .download.sentinelhub_client import SentinelHubDownloadClient
 from .sh_utils import remove_undefined
-from .time_utils import parse_time_interval
+from .time_utils import parse_time_interval, serialize_time, parse_time
 
 
 class SentinelHubCatalog:
@@ -119,7 +117,7 @@ class SentinelHubCatalog:
         url = f'{self.catalog_url}/search'
 
         collection_id = self._parse_collection_id(collection)
-        start_time, end_time = parse_time_interval(time)
+        start_time, end_time = serialize_time(parse_time_interval(time), use_tz=True)
 
         if bbox and bbox.crs is not CRS.WGS84:
             bbox = bbox.transform_bounds(CRS.WGS84)
@@ -128,7 +126,7 @@ class SentinelHubCatalog:
 
         payload = remove_undefined({
             'collections': [collection_id],
-            'datetime': f'{start_time}Z/{end_time}Z',
+            'datetime': f'{start_time}/{end_time}',
             'bbox': list(bbox) if bbox else None,
             'intersects': geometry.geojson if geometry else None,
             'ids': ids,
@@ -227,7 +225,7 @@ class CatalogSearchIterator:
         :return: A list of sensing times
         :rtype: list(datetime.datetime)
         """
-        return [dateutil.parser.parse(feature['properties']['datetime']) for feature in self]
+        return [parse_time(feature['properties']['datetime']) for feature in self]
 
     def get_geometries(self):
         """ Provides features geometries

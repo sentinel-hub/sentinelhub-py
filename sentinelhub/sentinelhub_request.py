@@ -7,7 +7,7 @@ from .data_collections import DataCollection, OrbitDirection, handle_deprecated_
 from .download import DownloadRequest, SentinelHubDownloadClient
 from .data_request import DataRequest
 from .geometry import Geometry, BBox
-from .time_utils import parse_time_interval
+from .time_utils import parse_time_interval, serialize_time
 
 
 class SentinelHubRequest(DataRequest):
@@ -289,9 +289,8 @@ def _get_data_filters(data_collection, time_interval, maxcc, mosaicking_order):
     data_filter = {}
 
     if time_interval:
-        date_from, date_to = parse_time_interval(time_interval)
-        date_from, date_to = date_from + 'Z', date_to + 'Z'
-        data_filter['timeRange'] = {'from': date_from, 'to': date_to}
+        start_time, end_time = serialize_time(parse_time_interval(time_interval), use_tz=True)
+        data_filter['timeRange'] = {'from': start_time, 'to': end_time}
 
     if maxcc is not None:
         if not isinstance(maxcc, float) and (maxcc < 0 or maxcc > 1):

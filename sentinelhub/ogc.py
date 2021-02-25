@@ -14,7 +14,7 @@ from .data_collections import DataCollection, handle_deprecated_data_source
 from .geo_utils import get_image_dimension
 from .geometry import BBox, Geometry
 from .download import DownloadRequest, SentinelHubDownloadClient
-from .time_utils import parse_time_interval, filter_times
+from .time_utils import parse_time, parse_time_interval, serialize_time, filter_times
 
 LOGGER = logging.getLogger(__name__)
 
@@ -177,7 +177,9 @@ class OgcImageService(OgcService):
                 seconds=0) else date - request.time_difference
             end_date = date if request.time_difference < datetime.timedelta(
                 seconds=0) else date + request.time_difference
-            params['TIME'] = '{}/{}'.format(start_date.isoformat(), end_date.isoformat())
+
+            start_date, end_date = serialize_time((start_date, end_date), use_tz=True)
+            params['TIME'] = f'{start_date}/{end_date}'
 
         return params
 
@@ -234,13 +236,13 @@ class OgcImageService(OgcService):
         :return:  dictionary with parameters
         :rtype: dict
         """
-        date_interval = parse_time_interval(request.time)
+        start_time, end_time = serialize_time(parse_time_interval(request.time), use_tz=True)
 
         params = {
             'CRS': CRS.ogc_string(geometry.crs),
             'LAYER': request.layer,
             'RESOLUTION': request.resolution,
-            'TIME': '{}/{}'.format(date_interval[0], date_interval[1])
+            'TIME': f'{start_time}/{end_time}'
         }
 
         if not isinstance(geometry, (BBox, Geometry)):
@@ -349,7 +351,13 @@ class WebFeatureService(OgcService):
         super().__init__(**kwargs)
 
         self.bbox = bbox
-        self.time_interval = parse_time_interval(time_interval)
+
+        self.latest_time_only = time_interval == SHConstants.LATEST
+        if self.latest_time_only:
+            self.time_interval = datetime.datetime(year=1985, month=1, day=1), datetime.datetime.now()
+        else:
+            self.time_interval = parse_time_interval(time_interval)
+
         self.data_collection = DataCollection(handle_deprecated_data_source(data_collection, data_source,
                                                                             default=DataCollection.SENTINEL2_L1C))
         self.maxcc = maxcc
@@ -357,7 +365,6 @@ class WebFeatureService(OgcService):
         self.tile_list = []
         self.index = 0
         self.feature_offset = 0
-        self.latest_time_only = time_interval == SHConstants.LATEST
         self.max_features_per_request = 1 if self.latest_time_only else SHConfig().max_wfs_records_per_query
 
         if self.data_collection.service_url:
@@ -395,6 +402,7 @@ class WebFeatureService(OgcService):
         """
         main_url = '{}/{}/{}?'.format(self._base_url, ServiceType.WFS.value, self.config.instance_id)
 
+        start_time, end_time = serialize_time(self.time_interval, use_tz=True)
         params = {
             'SERVICE': ServiceType.WFS.value,
             'WARNINGS': False,
@@ -403,7 +411,7 @@ class WebFeatureService(OgcService):
             'BBOX': str(self.bbox.reverse()) if self.bbox.crs is CRS.WGS84 else str(self.bbox),
             'OUTPUTFORMAT': MimeType.get_string(MimeType.JSON),
             'SRSNAME': CRS.ogc_string(self.bbox.crs),
-            'TIME': '{}/{}'.format(self.time_interval[0], self.time_interval[1]),
+            'TIME': f'{start_time}/{end_time}',
             'MAXCC': 100.0 * self.maxcc,
             'MAXFEATURES': self.max_features_per_request,
             'FEATURE_OFFSET': self.feature_offset
@@ -437,10 +445,9 @@ class WebFeatureService(OgcService):
             if not tile_info['properties']['date']:  # could be True for custom (BYOC) data collections
                 tile_dates.append(None)
             else:
-                tile_dates.append(datetime.datetime.strptime('{}T{}'.
-                                                             format(tile_info['properties']['date'],
-                                                                    tile_info['properties']['time'].split('.')[0]),
-                                                             '%Y-%m-%dT%H:%M:%S'))
+                date_str = tile_info['properties']['date']
+                time_str = tile_info['properties']['time']
+                tile_dates.append(parse_time(f'{date_str}T{time_str}'))
 
         return tile_dates
 

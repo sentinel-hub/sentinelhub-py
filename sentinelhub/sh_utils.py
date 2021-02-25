@@ -1,10 +1,7 @@
 """
 Module implementing some utility functions not suitable for other utility modules
 """
-from datetime import datetime
 from urllib.parse import urlencode
-
-import dateutil
 
 from sentinelhub.config import SHConfig
 from sentinelhub.download import SentinelHubDownloadClient
@@ -44,23 +41,3 @@ def remove_undefined(payload):
     """ Takes a dictionary and removes keys without value
     """
     return {name: value for name, value in payload.items() if value is not None}
-
-
-def from_sh_datetime(date_time):
-    """ Parse datetime from SH service (which is always in UTC, but missing 'Z')
-    """
-    if isinstance(date_time, datetime):
-        return date_time
-    if isinstance(date_time, str):
-        return dateutil.parser.parse(date_time.replace('Z', '+00:00'))
-    return None
-
-
-def to_sh_datetime(date_time):
-    """ Parse datetime to what SH service expects
-    """
-    if date_time:
-        if datetime.tzinfo:
-            return datetime.isoformat(date_time)
-        return datetime.isoformat(date_time) + 'Z'
-    return None

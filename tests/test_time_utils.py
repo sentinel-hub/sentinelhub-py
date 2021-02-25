@@ -1,150 +1,109 @@
-import unittest
-import datetime
+"""
+Unit tests for time utility functions
+"""
+import datetime as dt
 
-from sentinelhub import time_utils, TestSentinelHub
+import pytest
+import dateutil.tz
 
-
-class TestTime(TestSentinelHub):
-    def test_get_dates_in_range(self):
-        test_pairs = [
-            (('2018-01-01', '2017-12-31'), 0),
-            (('2017-01-01', '2017-01-31'), 31),
-            (('2017-02-01', '2017-03-01'), 28+1),
-            (('2018-02-01', '2018-03-01'), 28+1),
-            (('2020-02-01', '2020-03-01'), 29+1),
-            (('2018-01-01', '2018-12-31'), 365),
-            (('2020-01-01', '2020-12-31'), 366)
-        ]
-        for daterange, nr_dates in test_pairs:
-            with self.subTest(msg=daterange):
-                start_date, end_date = daterange
-                dates = time_utils.get_dates_in_range(start_date, end_date)
-                self.assertEqual(len(dates), nr_dates,
-                                 msg='Expected {} dates, got {}'.format(str(len(dates)), str(nr_dates)))
-
-    def test_next_date(self):
-        test_pairs = [
-            ('2017-12-31', '2018-01-01'),
-            ('2018-02-28', '2018-03-01'),
-            ('2020-02-28', '2020-02-29'),
-            ('2020-02-29', '2020-03-01'),
-            ('2018-01-05', '2018-01-06')
-        ]
-        for curr_date, next_date in test_pairs:
-            with self.subTest(msg='{}/{}'.format(curr_date, next_date)):
-                res_date = time_utils.next_date(curr_date)
-                self.assertEqual(res_date, next_date,
-                                 msg='Expected {}, got {}'.format(curr_date, next_date))
-
-    def test_prev_date(self):
-        test_pairs = [
-            ('2018-02-28', '2018-03-01'),
-            ('2017-12-31', '2018-01-01'),
-            ('2018-01-31', '2018-02-01')
-        ]
-        for prev_date, curr_date in test_pairs:
-            with self.subTest(msg='{}/{}'.format(prev_date, curr_date)):
-                res_date = time_utils.prev_date(curr_date)
-                self.assertEqual(prev_date, res_date,
-                                 msg='Expected {}, got {}'.format(prev_date, res_date))
-
-    def test_iso_to_datetime(self):
-        test_pairs = [
-            ('2018-01-01', datetime.datetime(2018, 1, 1)),
-            ('2017-02-28', datetime.datetime(2017, 2, 28))
-        ]
-        for date_str, date_dt in test_pairs:
-            with self.subTest(msg=date_str):
-                res_dt = time_utils.iso_to_datetime(date_str)
-                self.assertEqual(res_dt, date_dt,
-                                 msg='Expected {}, got {}'.format(date_dt, res_dt))
-
-    def test_datetime_to_iso(self):
-        test_pairs = [
-            (datetime.datetime(2018, 1, 1), '2018-01-01'),
-            (datetime.datetime(2017, 2, 28), '2017-02-28')
-        ]
-        for date_dt, date_str in test_pairs:
-            with self.subTest(msg=date_str):
-                res_str = time_utils.datetime_to_iso(date_dt)
-                self.assertEqual(res_str, date_str,
-                                 msg='Expected {}, got {}'.format(date_str, res_str))
-
-    def test_get_current_date(self):
-        current_date = time_utils.get_current_date()
-        self.assertTrue(isinstance(current_date, str), 'Expected date in str format')
-        self.assertEqual(len(current_date), 10, 'Expected date length 10, got {}'.format(current_date))
-
-    def test_is_valid_time(self):
-        test_pairs = [
-            ('2017-01-32', False),
-            ('2017-13-1', False),
-            ('2017-02-29', False),
-            ('2020-02-29', True),
-            ('2020-02-30', False)
-        ]
-        for iso_str, is_ok in test_pairs:
-            with self.subTest(msg=iso_str):
-                self.assertEqual(time_utils.is_valid_time(iso_str), is_ok,
-                                 msg='Expected {}, got {}'.format(not is_ok, is_ok))
-
-    def test_parse_time(self):
-        test_pairs = [
-            ('2015.4.12', '2015-04-12'),
-            ('2015.4.12T12:32:14', '2015-04-12T12:32:14'),
-            (datetime.date(year=2015, month=2, day=3), '2015-02-03'),
-            (datetime.datetime(year=2015, month=2, day=3), '2015-02-03T00:00:00')
-        ]
-
-        for idx, (input_time, exp_time) in enumerate(test_pairs):
-            with self.subTest(msg='Test case {}'.format(idx + 1)):
-                parsed_time = time_utils.parse_time(input_time)
-                self.assertEqual(parsed_time, exp_time, 'Expected {}, got {}'.format(exp_time, parsed_time))
-
-    def test_parse_time_interval(self):
-        current_time = datetime.datetime.now()
-        test_pairs = [
-            ('2015.4.12', ('2015-04-12T00:00:00', '2015-04-12T23:59:59')),
-            ('2015-4-12T5:4:3', ('2015-04-12T05:04:03', '2015-04-12T05:04:03')),
-            (('2015-4-12', '2017-4-12'), ('2015-04-12T00:00:00', '2017-04-12T23:59:59')),
-            (('2015-4-12T5:4:3', '2017-4-12T5:4:3'), ('2015-04-12T05:04:03', '2017-04-12T05:04:03')),
-            (datetime.date(year=2015, month=2, day=3), ('2015-02-03T00:00:00', '2015-02-03T23:59:59')),
-            ((datetime.date(year=2015, month=2, day=3), datetime.date(year=2015, month=2, day=15)),
-             ('2015-02-03T00:00:00', '2015-02-15T23:59:59')),
-            ((datetime.datetime(year=2005, month=12, day=16, hour=23, minute=2, second=15), current_time),
-             ('2005-12-16T23:02:15', current_time.isoformat()))
-        ]
-
-        for idx, (input_time, exp_interval) in enumerate(test_pairs):
-            with self.subTest(msg='Test case {}'.format(idx + 1)):
-                parsed_interval = time_utils.parse_time_interval(input_time)
-                self.assertEqual(parsed_interval, exp_interval,
-                                 'Expected {}, got {}'.format(exp_interval, parsed_interval))
-
-    def test_filter_times(self):
-        time1 = datetime.datetime(year=2005, month=12, day=16, hour=2)
-        time2 = datetime.datetime(year=2005, month=12, day=16, hour=10)
-        time3 = datetime.datetime(year=2005, month=12, day=16, hour=23)
-        time4 = datetime.datetime(year=2005, month=12, day=17, hour=2)
-        time5 = datetime.datetime(year=2005, month=12, day=18, hour=2)
-        delta1 = datetime.timedelta(0)
-        delta2 = datetime.timedelta(hours=5)
-        delta3 = datetime.timedelta(hours=12)
-        delta4 = datetime.timedelta(days=1)
-
-        test_cases = [
-            ([time1], delta2, [time1]),
-            ([time1, time2], delta1, [time1, time2]),
-            ([time3, time1, time2, time2, time1], delta3, [time1, time3]),
-            ([time1, time4], delta4, [time1]),
-            ([time4, time5], delta4, [time4]),
-            ([time1, time4, time5], delta4, [time1, time5])
-        ]
-
-        for input_timestamps, time_difference, expected_result in test_cases:
-            result = time_utils.filter_times(input_timestamps, time_difference)
-            self.assertEqual(result, expected_result)
+from sentinelhub import time_utils
 
 
-if __name__ == '__main__':
-    unittest.main()
+TEST_DATE = dt.date(year=2015, month=4, day=12)
+TEST_DATETIME = dt.datetime(year=2015, month=4, day=12, hour=12, minute=32, second=14)
+TEST_DATETIME_TZ = dt.datetime(year=2015, month=4, day=12, hour=12, minute=32, second=14, tzinfo=dateutil.tz.tzutc())
+TEST_TIME_START = dt.datetime(year=2015, month=4, day=12)
+TEST_TIME_END = dt.datetime(year=2015, month=4, day=12, hour=23, minute=59, second=59)
+
+TIMES = [
+    dt.datetime(year=2005, month=12, day=16, hour=2),
+    dt.datetime(year=2005, month=12, day=16, hour=10),
+    dt.datetime(year=2005, month=12, day=16, hour=23),
+    dt.datetime(year=2005, month=12, day=17, hour=2),
+    dt.datetime(year=2005, month=12, day=18, hour=2)
+]
+
+DELTAS = [
+    dt.timedelta(0),
+    dt.timedelta(hours=5),
+    dt.timedelta(hours=12),
+    dt.timedelta(days=1),
+]
+
+
+@pytest.mark.parametrize('time_input,is_valid', [
+    ('2017-01-32', False),
+    ('2017-13-1', False),
+    ('2017-02-29', False),
+    ('2020-02-29', True),
+    ('2020-02-30', False)
+])
+def test_is_valid_time(time_input, is_valid):
+    assert time_utils.is_valid_time(time_input) is is_valid
+
+
+@pytest.mark.parametrize('time_input,params,expected_output', [
+    ('2015.4.12', {}, TEST_DATE),
+    ('2015.4.12', {'force_datetime': True}, dt.datetime(year=2015, month=4, day=12)),
+    ('2015.4.12T12:32:14', {}, TEST_DATETIME),
+    ('2015.4.12T12:32:14Z', {}, TEST_DATETIME_TZ),
+    ('2015.4.12T12:32:14Z', {'ignoretz': True}, TEST_DATETIME),
+    (TEST_DATETIME, {}, TEST_DATETIME),
+    (TEST_DATETIME_TZ, {}, TEST_DATETIME_TZ),
+    (TEST_DATETIME_TZ, {'ignoretz': True}, TEST_DATETIME),
+    (TEST_DATE, {}, TEST_DATE),
+    (TEST_DATE, {'force_datetime': True}, dt.datetime(year=2015, month=4, day=12))
+])
+def test_parse_time(time_input, params, expected_output):
+    parsed_time = time_utils.parse_time(time_input, **params)
+    assert parsed_time == expected_output
+
+
+@pytest.mark.parametrize('time_input,params,expected_output', [
+    ('2015.4.12', {}, (TEST_TIME_START, TEST_TIME_END)),
+    ('2015.4.12T12:32:14', {}, (TEST_DATETIME, TEST_DATETIME)),
+    ('2015.4.12T12:32:14Z', {}, (TEST_DATETIME_TZ, TEST_DATETIME_TZ)),
+    ('2015.4.12T12:32:14Z', {'ignoretz': True}, (TEST_DATETIME, TEST_DATETIME)),
+    (('2015-4-12', '2017-4-12'), {}, (TEST_TIME_START, TEST_TIME_END.replace(year=2017))),
+    (('2015.4.12T12:32:14', '2017.4.12T12:32:14'), {}, (TEST_DATETIME, TEST_DATETIME.replace(year=2017))),
+    ((TEST_DATE, TEST_DATE.replace(year=2017)), {}, (TEST_TIME_START, TEST_TIME_END.replace(year=2017))),
+    ((TEST_DATETIME, TEST_DATETIME.replace(year=2017)), {}, (TEST_DATETIME, TEST_DATETIME.replace(year=2017)))
+])
+def test_parse_time_interval(time_input, params, expected_output):
+    parsed_interval = time_utils.parse_time_interval(time_input, **params)
+    assert parsed_interval == expected_output
+
+
+@pytest.mark.parametrize('time_input,params,expected_output', [
+    (TEST_DATE, {}, '2015-04-12'),
+    (TEST_DATETIME, {}, '2015-04-12T12:32:14'),
+    (TEST_DATETIME, {'use_tz': True}, '2015-04-12T12:32:14Z'),
+    (TEST_DATETIME_TZ, {'use_tz': False}, '2015-04-12T12:32:14'),
+    (TEST_DATETIME_TZ, {'use_tz': True}, '2015-04-12T12:32:14Z'),
+    ((TEST_DATE, TEST_DATETIME, TEST_DATETIME_TZ), {}, ('2015-04-12', '2015-04-12T12:32:14', '2015-04-12T12:32:14'))
+])
+def test_parse_time_interval(time_input, params, expected_output):
+    serialized_result = time_utils.serialize_time(time_input, **params)
+    assert serialized_result == expected_output
+
+
+@pytest.mark.parametrize('input_date,input_time,expected_output', [
+    (TEST_DATE, None, TEST_TIME_START),
+    (TEST_DATE, dt.time(hour=12, minute=32, second=14), TEST_DATETIME)
+])
+def test_date_to_datetime(input_date,input_time,expected_output):
+    result_datetime = time_utils.date_to_datetime(input_date, time=input_time)
+    assert result_datetime == expected_output
+
+
+@pytest.mark.parametrize('input_timestamps,time_difference,expected_result', [
+    ([TIMES[0]], DELTAS[1], [TIMES[0]]),
+    ([TIMES[0], TIMES[1]], DELTAS[0], [TIMES[0], TIMES[1]]),
+    ([TIMES[2], TIMES[0], TIMES[1], TIMES[1], TIMES[0]], DELTAS[2], [TIMES[0], TIMES[2]]),
+    ([TIMES[0], TIMES[3]], DELTAS[3], [TIMES[0]]),
+    ([TIMES[3], TIMES[4]], DELTAS[3], [TIMES[3]]),
+    ([TIMES[0], TIMES[3], TIMES[4]], DELTAS[3], [TIMES[0], TIMES[4]])
+])
+def test_filter_times(input_timestamps, time_difference, expected_result):
+    result = time_utils.filter_times(input_timestamps, time_difference)
+    assert result == expected_result
