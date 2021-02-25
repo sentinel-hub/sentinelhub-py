@@ -358,8 +358,6 @@ class WebFeatureService(OgcService):
         else:
             self.time_interval = parse_time_interval(time_interval)
 
-        self.latest_time_only = time_interval == SHConstants.LATEST
-
         self.data_collection = DataCollection(handle_deprecated_data_source(data_collection, data_source,
                                                                             default=DataCollection.SENTINEL2_L1C))
         self.maxcc = maxcc
