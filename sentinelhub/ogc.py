@@ -351,7 +351,15 @@ class WebFeatureService(OgcService):
         super().__init__(**kwargs)
 
         self.bbox = bbox
-        self.time_interval = parse_time_interval(time_interval)
+
+        self.latest_time_only = time_interval == SHConstants.LATEST
+        if self.latest_time_only:
+            self.time_interval = datetime.datetime(year=1985, month=1, day=1), datetime.datetime.now()
+        else:
+            self.time_interval = parse_time_interval(time_interval)
+
+        self.latest_time_only = time_interval == SHConstants.LATEST
+
         self.data_collection = DataCollection(handle_deprecated_data_source(data_collection, data_source,
                                                                             default=DataCollection.SENTINEL2_L1C))
         self.maxcc = maxcc
@@ -359,7 +367,6 @@ class WebFeatureService(OgcService):
         self.tile_list = []
         self.index = 0
         self.feature_offset = 0
-        self.latest_time_only = time_interval == SHConstants.LATEST
         self.max_features_per_request = 1 if self.latest_time_only else SHConfig().max_wfs_records_per_query
 
         if self.data_collection.service_url:

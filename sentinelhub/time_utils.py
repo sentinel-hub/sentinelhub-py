@@ -7,7 +7,6 @@ import warnings
 import dateutil.parser
 import dateutil.tz
 
-from .constants import SHConstants
 from .exceptions import SHDeprecationWarning
 
 
@@ -164,9 +163,6 @@ def parse_time_interval(time, **kwargs):
     :rtype: (datetime.datetime, datetime.datetime)
     :raises: ValueError
     """
-    if time == SHConstants.LATEST:
-        return dt.datetime(year=1985, month=1, day=1), dt.datetime.now()
-
     if isinstance(time, (str, dt.date)):
         parsed_time = parse_time(time, **kwargs)
         date_interval = parsed_time, parsed_time
