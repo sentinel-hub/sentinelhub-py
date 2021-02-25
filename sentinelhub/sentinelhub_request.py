@@ -225,9 +225,6 @@ class SentinelHubRequest(DataRequest):
         if bbox and geometry and bbox.crs != geometry.crs:
             raise ValueError("bbox and geometry should be in the same CRS")
 
-        if bbox is None:
-            bbox = geometry.bbox
-
         crs = bbox.crs if bbox else geometry.crs
 
         request_bounds = {

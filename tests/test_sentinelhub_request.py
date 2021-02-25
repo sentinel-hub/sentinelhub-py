@@ -360,7 +360,6 @@ class TestSentinelHubRequest(TestSentinelHub):
                 SentinelHubRequest.output_response('default', MimeType.TIFF),
                 SentinelHubRequest.output_response('userdata', MimeType.JSON)
             ],
-            bbox=bbox,
             geometry=geo,
             size=size
         )
@@ -446,6 +445,56 @@ class TestSentinelHubRequest(TestSentinelHub):
 
         with self.assertRaises(ValueError):
             SentinelHubRequest(**request_params)
+
+    def test_bbox_geometry(self):
+        """ Test intersection between bbox and geometry
+        """
+        evalscript = """
+            //VERSION=3
+
+            function setup() {
+                return {
+                    input: [{
+                        bands: ["B02", "B03", "B04"],
+                        units: "REFLECTANCE"
+                    }],
+                    output: {
+                        bands: 3
+                    }
+                };
+            }
+
+            function evaluatePixel(sample) {
+                return [2.5 * sample.B04, 2.5 * sample.B03, 2.5 * sample.B02];
+            }
+        """
+
+        delta = 0.2
+        bbox = BBox(bbox=[46.16, -16.15, 46.51, -15.58], crs=CRS.WGS84)
+        geometry = Geometry(bbox.geometry, crs=bbox.crs)
+        bbox_translated = BBox(bbox=[46.16 + delta, -16.15 + delta, 46.51 + delta, -15.58 + delta], crs=CRS.WGS84)
+
+        request = SentinelHubRequest(
+            evalscript=evalscript,
+            input_data=[
+                SentinelHubRequest.input_data(
+                    data_collection=DataCollection.SENTINEL2_L1C,
+                    time_interval=('2017-12-15T07:12:03', '2017-12-15T07:12:04'),
+                    maxcc=0.8
+                )
+            ],
+            responses=[
+                SentinelHubRequest.output_response('default', MimeType.JPG)
+            ],
+            geometry=geometry,
+            bbox=bbox_translated,
+            size=(512, 856)
+        )
+
+        img = request.get_data(max_threads=3)[0]
+
+        self.assertEqual(img.shape, (856, 512, 3))
+        self.test_numpy_data(img, exp_min=0, exp_max=255, exp_mean=22.625)
 
 
 class TestInputDataDict(TestSentinelHub):
