@@ -2,8 +2,9 @@
 Configuration
 *************
 
+
 The package contains a configuration file ``config.json``. After the package is installed you can check the initial
-configuration parameters in command line::
+configuration parameters using the command line::
 
 $ sentinelhub.config --show
 
@@ -31,6 +32,11 @@ without passing parameters the ``config.json`` will be used to populate the valu
 Sentinel Hub Configuration
 **************************
 
+
+In order to use Sentinel Hub services you will need a Sentinel Hub account. If you do not have one yet, you can
+create a free trial account at `Sentinel Hub`_. If you are a researcher you can even apply for a free non-commercial
+account at `ESA OSEO page`_. The following configurations are then linked to your account.
+
 By default parameters ``instance_id``, ``sh_client_id`` and ``sh_client_secret`` will be empty.
 
 Parameter ``instance_id`` is used when using OGC endpoints of the `Sentinel Hub services`_. It is the identifier of a
@@ -38,7 +44,7 @@ configuration users can set up in the `Sentinel Hub Dashboard`_ under "Configura
 
 The ``sh_client_id`` and ``sh_client_secret`` parameters can also be created in the `Sentinel Hub Dashboard`_ under
 "User settings". The two parameters are needed when accessing protected endpoints of the service (Process, Catalog,
-Batch, BYOC and other APIs). There is "OAuth clients" frame where we can create a new OAuth client.
+Batch, BYOC, and other APIs). There is "OAuth clients" frame where we can create a new OAuth client.
 
 You can set any of these parameters with::
 
@@ -70,7 +76,7 @@ object containing different parameters.
 
 .. admonition:: Additional information on creating OAuth client
 
-    For a good instructions on how to obtain credentials you can see the `Sentinel Hub webinar`_.
+    For detailed instructions on how to obtain credentials, you can see the `Sentinel Hub webinar`_.
 
 
 
@@ -79,8 +85,8 @@ Amazon S3 Configuration
 
 The package enables downloading Sentinel-2 L1C and L2A data from `Amazon S3`_ storage buckets. The data is contained in
 Requester Pays buckets therefore `AWS credentials`_ are required to use these capabilities. The credentials
-can be set in package's configuration file with parameters ``aws_access_key_id`` and ``aws_secret_access_key``. This can
-be configured from command line::
+can be set in the package configuration file with parameters ``aws_access_key_id`` and ``aws_secret_access_key``. This
+can be configured using the command line as::
 
 $ sentinelhub.config --aws_access_key_id <your access key> --aws_secret_access_key <your secret access key>
 
@@ -118,14 +124,17 @@ is setting them to *AmazonS3ReadOnlyAccess*.
     Files *metadata.xml*, *tileInfo.json* and *productInfo.json* will be obtained without any charge from
     `Sentinel Hub public repository`_.
 
-Other
-*****
+
+Other configuration options
+***************************
 
 For more configuration options check::
 
 $ sentinelhub.config --help
 
 
+.. _`Sentinel Hub`: https://services.sentinel-hub.com/oauth/subscription
+.. _`ESA OSEO page`: https://earth.esa.int/aos/OSEO
 .. _`Sentinel Hub Dashboard`: https://apps.sentinel-hub.com/dashboard/
 .. _`Sentinel Hub services`: https://www.sentinel-hub.com/develop/documentation/api/ogc_api/
 .. _`Sentinel Hub webinar`: https://www.youtube.com/watch?v=CBIlTOl2po4&t=1760s
