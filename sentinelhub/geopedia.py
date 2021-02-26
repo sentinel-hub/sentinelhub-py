@@ -395,6 +395,9 @@ class GeopediaFeatureIterator(FeatureIterator):
         if not self.next or not new_features:
             self.finished = True
 
+        elif 'offset=' not in self.next or f'limit={self.MAX_FEATURES_PER_REQUEST}' not in self.next:
+            raise ValueError(f'Next page does not have an offset or correct limit parameter: {self.next}')
+
         return new_features
 
     def get_geometry_iterator(self):
