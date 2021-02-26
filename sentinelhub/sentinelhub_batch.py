@@ -7,7 +7,7 @@ from .constants import RequestType
 from .download.sentinelhub_client import SentinelHubDownloadClient
 from .geometry import Geometry, BBox, CRS
 from .sentinelhub_request import SentinelHubRequest
-from .sh_utils import iter_pages, remove_undefined
+from .sh_utils import SentinelHubFeatureIterator, remove_undefined
 
 
 class SentinelHubBatch:
@@ -46,8 +46,11 @@ class SentinelHubBatch:
     def create(cls, sentinelhub_request, tiling_grid, output=None, bucket_name=None, description=None, config=None):
         """ Create a new batch request
 
+        `Batch API reference
+        <https://docs.sentinel-hub.com/api/latest/reference/#operation/createNewBatchProcessingRequest>`_
+
         :param sentinelhub_request: An instance of SentinelHubRequest class containing all request parameters.
-            Alternatively, it can also be just a payload dictionary for Processing API request
+            Alternatively, it can also be just a payload dictionary for Process API request
         :type sentinelhub_request: SentinelHubRequest or dict
         :param tiling_grid: A dictionary with tiling grid parameters. It can be built with `tiling_grid` method
         :type tiling_grid: dict
@@ -146,13 +149,12 @@ class SentinelHubBatch:
         })
 
     @staticmethod
-    def iter_tiling_grids(search=None, sort=None, config=None, **kwargs):
+    def iter_tiling_grids(config=None, **kwargs):
         """ An iterator over tiling grids
 
-        :param search: A search parameter
-        :type search: str
-        :param sort: A sort parameter
-        :type sort: str
+        `Batch API reference
+        <https://docs.sentinel-hub.com/api/latest/reference/#operation/getBatchTilingGridsProperties>`_
+
         :param config: A configuration object
         :type config: SHConfig
         :param kwargs: Any other request query parameters
@@ -160,18 +162,19 @@ class SentinelHubBatch:
         :rtype: Iterator[dict]
         """
         url = SentinelHubBatch._get_tiling_grids_url(config)
-        params = remove_undefined({
-            'search': search,
-            'sort': sort,
-            **kwargs
-        })
-        return iter_pages(service_url=url, config=config,
-                          exception_message='Failed to obtain information about available tiling grids.',
-                          **params)
+        return SentinelHubFeatureIterator(
+            client=SentinelHubDownloadClient(config=config),
+            url=url,
+            params=remove_undefined(kwargs),
+            exception_message='Failed to obtain information about available tiling grids'
+        )
 
     @staticmethod
     def get_tiling_grid(grid_id, config=None):
         """ Provides a single tiling grid
+
+        `Batch API reference
+        <https://docs.sentinel-hub.com/api/latest/reference/#operation/getBatchTilingGridProperties>`_
 
         :param grid_id: An ID of a requested tiling grid
         :type grid_id: str or int
@@ -197,6 +200,9 @@ class SentinelHubBatch:
 
     def update_info(self):
         """ Updates information about a batch request
+
+        `Batch API reference
+        <https://docs.sentinel-hub.com/api/latest/reference/#operation/getSingleBatchProcessRequestById>`_
 
         :return: Batch request info
         :rtype: dict
@@ -241,13 +247,12 @@ class SentinelHubBatch:
         return Geometry(geometry, crs)
 
     @staticmethod
-    def iter_requests(search=None, sort=None, user_id=None, config=None, **kwargs):
+    def iter_requests(user_id=None, config=None, **kwargs):
         """ Iterate existing batch requests
 
-        :param search: Filter requests by a search query
-        :type search: str or None
-        :param sort: Sort obtained batch requests in a specific order
-        :type sort: str or None
+        `Batch API reference
+        <https://docs.sentinel-hub.com/api/latest/reference/#operation/getAllBathProcessRequests>`_
+
         :param user_id: Filter requests by a user id who defined a request
         :type user_id: str or None
         :param config: A configuration object
@@ -258,14 +263,16 @@ class SentinelHubBatch:
         """
         url = SentinelHubBatch._get_process_url(config)
         params = remove_undefined({
-            'search': search,
-            'sort': sort,
             'userid': user_id,
             **kwargs
         })
-        for request_info in iter_pages(service_url=url, config=config,
-                                       exception_message='No requests found.',
-                                       **params):
+        feature_iterator = SentinelHubFeatureIterator(
+            client=SentinelHubDownloadClient(config=config),
+            url=url,
+            params=params,
+            exception_message='No requests found'
+        )
+        for request_info in feature_iterator:
             yield SentinelHubBatch(request_info=request_info, config=config)
 
     @staticmethod
@@ -278,6 +285,9 @@ class SentinelHubBatch:
 
     def delete(self):
         """ Delete a batch job request
+
+        `Batch API reference
+        <https://docs.sentinel-hub.com/api/latest/reference/#operation/deleteBatchProcessRequest>`_
         """
         url = self._get_process_url(self.config, request_id=self.request_id)
         client = SentinelHubDownloadClient(config=self.config)
@@ -285,26 +295,37 @@ class SentinelHubBatch:
 
     def start_analysis(self):
         """ Starts analysis of a batch job request
+
+        `Batch API reference <https://docs.sentinel-hub.com/api/latest/reference/#operation/batchAnalyse>`_
         """
         return self._call_job('analyse')
 
     def start_job(self):
         """ Starts running a batch job
+
+        `Batch API reference <https://docs.sentinel-hub.com/api/latest/reference/#operation/batchStartProcessRequest>`_
         """
         return self._call_job('start')
 
     def cancel_job(self):
         """ Cancels a batch job
+
+        `Batch API reference <https://docs.sentinel-hub.com/api/latest/reference/#operation/batchCancelProcessRequest>`_
         """
         return self._call_job('cancel')
 
     def restart_job(self):
         """ Restarts only those parts of a job that failed
+
+        `Batch API reference
+        <https://docs.sentinel-hub.com/api/latest/reference/#operation/batchRestartPartialProcessRequest>`_
         """
         return self._call_job('restartpartial')
 
     def iter_tiles(self, status=None, **kwargs):
         """ Iterate over info about batch request tiles
+
+        `Batch API reference <https://docs.sentinel-hub.com/api/latest/reference/#operation/getAllBatchProcessTiles>`_
 
         :param status: A filter to obtain only tiles with a certain status
         :type status: str or None
@@ -317,13 +338,17 @@ class SentinelHubBatch:
             'status': status,
             **kwargs
         })
-        return iter_pages(service_url=url, config=self.config,
-                          exception_message='No tiles found, please run analysis on batch request before calling '
-                                            'this method.',
-                          **params)
+        return SentinelHubFeatureIterator(
+            client=SentinelHubDownloadClient(config=self.config),
+            url=url,
+            params=params,
+            exception_message='No tiles found, please run analysis on batch request before calling this method'
+        )
 
     def get_tile(self, tile_id):
         """ Provides information about a single batch request tile
+
+        `Batch API reference <https://docs.sentinel-hub.com/api/latest/reference/#operation/getBatchTileById>`_
 
         :param tile_id: An ID of a tile
         :type tile_id: int or None
@@ -336,6 +361,8 @@ class SentinelHubBatch:
 
     def reprocess_tile(self, tile_id):
         """ Reprocess a single failed tile
+
+        `Batch API reference <https://docs.sentinel-hub.com/api/latest/reference/#operation/restartBatchTileById>`_
 
         :param tile_id: An ID of a tile
         :type tile_id: int or None

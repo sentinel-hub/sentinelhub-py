@@ -126,17 +126,19 @@ def test_search_geometry_and_iterator_methods(catalog):
     assert geometries[0].geometry.intersects(search_geometry.geometry)
 
 
-@pytest.mark.parametrize('data_collection', [
-    DataCollection.SENTINEL2_L1C,
-    DataCollection.SENTINEL2_L2A,
-    DataCollection.SENTINEL1_EW,
-    DataCollection.LANDSAT8,
-    DataCollection.MODIS,
-    DataCollection.SENTINEL3_OLCI,
-    DataCollection.SENTINEL3_SLSTR,
-    DataCollection.SENTINEL5P
+@pytest.mark.parametrize('data_collection,feature_id', [
+    (DataCollection.SENTINEL2_L1C, 'S2A_MSIL1C_20210113T071211_N0209_R020_T38LPH_20210113T075941'),
+    (DataCollection.SENTINEL2_L2A, 'S2A_MSIL2A_20210113T071211_N0214_R020_T38LPH_20210113T083244'),
+    (DataCollection.SENTINEL1_EW, 'S1A_IW_GRDH_1SDV_20210113T022710_20210113T022735_036113_043BC9_2981'),
+    (DataCollection.LANDSAT8, 'LC08_L1TP_160071_20210113_20210113_01_RT'),
+    (DataCollection.MODIS, 'MCD43A4.006/22/10/2021014/MCD43A4.A2021014.h22v10.006.2021025214119'),
+    (DataCollection.SENTINEL3_OLCI,
+     'S3A_OL_1_EFR____20210114T063914_20210114T064214_20210114T081357_0179_067_191_3240_LN1_O_NR_002.SEN3'),
+    (DataCollection.SENTINEL3_SLSTR,
+     'S3A_SL_1_RBT____20210114T190809_20210114T191109_20210114T202622_0179_067_198_5760_LN2_O_NR_004.SEN3'),
+    (DataCollection.SENTINEL5P, 'S5P_NRTI_L2__AER_AI_20210114T100354_20210114T100854_16869_01_010400_20210114T104450')
 ])
-def test_search_for_data_collection(config, data_collection):
+def test_search_for_data_collection(config, data_collection, feature_id):
     """ Tests search functionality for each data collection to confirm compatibility between DataCollection parameters
     and Catalog API
     """
@@ -150,3 +152,5 @@ def test_search_for_data_collection(config, data_collection):
     )
     result = next(search_iterator)
     assert isinstance(result, dict)
+    assert result['id'] == feature_id
+

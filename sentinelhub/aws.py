@@ -5,6 +5,7 @@ Module for obtaining data from Amazon Web Service
 import logging
 import os
 import warnings
+import datetime as dt
 from abc import ABC, abstractmethod
 
 from .config import SHConfig
@@ -288,7 +289,9 @@ class AwsService(ABC):
         :return: `True` if the product has report xml files and `False` otherwise
         :rtype: bool
         """
-        return self.baseline > '02.05' or (self.baseline == '02.05' and self.date >= '2017-10-12')  # Not sure
+        # Not completely sure if this condition is correct
+        return self.baseline > '02.05' or (self.baseline == '02.05' and
+                                           self.date >= dt.date(year=2017, month=10, day=12))
 
     def is_early_compact_l2a(self):
         """ Check if product is early version of compact L2A product
@@ -396,7 +399,7 @@ class AwsProduct(AwsService):
         """ Collects sensing date of the product.
 
         :return: Sensing date
-        :rtype: str
+        :rtype: datetime.date
         """
         if self.safe_type == EsaSafeType.OLD_TYPE:
             name = self.product_id.split('_')[-2]
@@ -404,7 +407,9 @@ class AwsProduct(AwsService):
         else:
             name = self.product_id.split('_')[2]
             date = [name[:4], name[4:6], name[6:8]]
-        return '-'.join(date_part.lstrip('0') for date_part in date)
+
+        date = list(map(int, date))
+        return dt.date(year=date[0], month=date[1], day=date[2])
 
     def get_url(self, filename, data_format=None):
         """ Creates url of file location on AWS.
@@ -431,7 +436,7 @@ class AwsProduct(AwsService):
         :rtype: str
         """
         base_url = self.base_http_url if force_http else self.base_url
-        return '{}/products/{}/{}'.format(base_url, self.date.replace('-', '/'), self.product_id)
+        return f'{base_url}/products/{self.date.year}/{self.date.month}/{self.date.day}/{self.product_id}'
 
     def get_tile_url(self, tile_info):
         """ Collects tile url from `productInfo.json` file.
@@ -483,8 +488,10 @@ class AwsTile(AwsService):
         :type config: SHConfig or None
         """
         self.tile_name = self.parse_tile_name(tile_name)
-        self.datetime = self.parse_datetime(time)
-        self.date = self.datetime.split('T')[0]
+
+        self.timestamp = parse_time(time, ignoretz=True)
+        self.date = self.timestamp.date() if isinstance(self.timestamp, dt.datetime) else self.timestamp
+
         self.aws_index = aws_index
         self.data_collection = data_collection
 
@@ -518,21 +525,6 @@ class AwsTile(AwsService):
             raise ValueError('Invalid tile name {}'.format(name))
         return tile_name
 
-    @staticmethod
-    def parse_datetime(time):
-        """
-        Parses and verifies tile sensing time.
-
-        :param time: tile sensing time
-        :type time: str
-        :return: tile sensing time in ISO8601 format
-        :rtype: str
-        """
-        try:
-            return parse_time(time)
-        except Exception as exception:
-            raise ValueError('Time must be in format YYYY-MM-DD or YYYY-MM-DDTHH:MM:SS') from exception
-
     def get_requests(self):
         """
         Creates tile structure and returns list of files for download.
@@ -561,7 +553,7 @@ class AwsTile(AwsService):
         """
         if self.aws_index is not None:
             return self.aws_index
-        tile_info_list = get_tile_info(self.tile_name, self.datetime, all_tiles=True)
+        tile_info_list = get_tile_info(self.tile_name, self.timestamp, all_tiles=True)
         if not tile_info_list:
             raise ValueError('Cannot find aws_index for specified tile and time')
 
@@ -593,8 +585,9 @@ class AwsTile(AwsService):
         :return: `True` if tile is valid and `False` otherwise
         :rtype: bool
         """
-        return self.tile_info is not None \
-            and (self.datetime == self.date or self.datetime == self.parse_datetime(self.tile_info['timestamp']))
+        tile_info_datetime = parse_time(self.tile_info['timestamp'], ignoretz=True) if self.tile_info else None
+        only_date_given = not isinstance(self.timestamp, dt.datetime)
+        return self.tile_info is not None and (only_date_given or self.timestamp == tile_info_datetime)
 
     def get_tile_info(self):
         """
@@ -631,12 +624,10 @@ class AwsTile(AwsService):
         :rtype: str
         """
         base_url = self.base_http_url if force_http else self.base_url
-        url = '{}/tiles/{}/{}/{}/'.format(base_url, self.tile_name[0:2].lstrip('0'), self.tile_name[2],
-                                          self.tile_name[3:5])
-        date_params = self.date.split('-')
-        for param in date_params:
-            url += param.lstrip('0') + '/'
-        return url + str(self.aws_index)
+        name_parts = self.tile_name[0:2].lstrip('0'), self.tile_name[2], self.tile_name[3:5]
+
+        return f'{base_url}/tiles/{name_parts[0]}/{name_parts[1]}/{name_parts[2]}/{self.date.year}/' \
+               f'{self.date.month}/{self.date.day}/{self.aws_index}'
 
     def get_qi_url(self, metafile):
         """Returns url of tile metadata products
@@ -677,8 +668,8 @@ class AwsTile(AwsService):
         :return: filename with path on disk
         :rtype: str
         """
-        return os.path.join(self.parent_folder, '{},{},{}'.format(self.tile_name, self.date, self.aws_index),
-                            self.add_file_extension(filename)).replace(':', '.')
+        tile_folder = f'{self.tile_name},{self.date.isoformat()},{self.aws_index}'
+        return os.path.join(self.parent_folder, tile_folder, self.add_file_extension(filename)).replace(':', '.')
 
     def get_product_id(self):
         """

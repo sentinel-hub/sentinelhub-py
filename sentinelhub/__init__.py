@@ -41,6 +41,6 @@ from .sentinelhub_request import SentinelHubRequest
 from .sentinelhub_byoc import SentinelHubBYOC, ByocCollection, ByocCollectionAdditionalData, ByocTile
 from .sentinelhub_catalog import SentinelHubCatalog
 
-from .time_utils import parse_time_interval, filter_times
+from .time_utils import parse_time, parse_time_interval, serialize_time, is_valid_time, filter_times
 
 from ._version import __version__
