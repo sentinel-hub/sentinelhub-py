@@ -14,13 +14,17 @@ from .data_collections import DataCollection, handle_deprecated_data_source
 from .geo_utils import get_image_dimension
 from .geometry import BBox, Geometry
 from .download import DownloadRequest, SentinelHubDownloadClient
+from .sh_utils import FeatureIterator
 from .time_utils import parse_time, parse_time_interval, serialize_time, filter_times
 
 LOGGER = logging.getLogger(__name__)
 
 
-class OgcService:
-    """ The base class for Sentinel Hub OGC services
+class OgcImageService:
+    """Sentinel Hub OGC services class for providing image data
+
+    Intermediate layer between QGC-type requests (WmsRequest and WcsRequest) and the Sentinel Hub OGC (WMS and WCS)
+    services.
     """
     def __init__(self, config=None):
         """
@@ -28,27 +32,9 @@ class OgcService:
         :type config: SHConfig or None
         """
         self.config = config or SHConfig()
+        self.config.raise_for_missing_instance_id()
+
         self._base_url = self.config.get_sh_ogc_url()
-
-        if not self.config.instance_id:
-            raise ValueError('Instance ID is not set. '
-                             'Set it either in request initialization or in configuration file. '
-                             'Check http://sentinelhub-py.readthedocs.io/en/latest/configure.html for more info.')
-
-
-class OgcImageService(OgcService):
-    """Sentinel Hub OGC services class for providing image data
-
-    Intermediate layer between QGC-type requests (WmsRequest and WcsRequest) and the Sentinel Hub OGC (WMS and WCS)
-    services.
-    """
-    def __init__(self, **kwargs):
-        """
-        :param config: A custom instance of config class to override parameters from the saved configuration.
-        :type config: SHConfig or None
-        """
-        super().__init__(**kwargs)
-
         self.wfs_iterator = None
 
     def get_request(self, request):
@@ -325,14 +311,14 @@ class OgcImageService(OgcService):
         return self.wfs_iterator
 
 
-class WebFeatureService(OgcService):
+class WebFeatureService(FeatureIterator):
     """ Class for interaction with Sentinel Hub WFS service
 
     The class is an iterator over info data of all available satellite tiles for requested parameters. It collects data
     from Sentinel Hub service only during the first iteration. During next iterations it returns already obtained data.
     The data is in the order returned by Sentinel Hub WFS service.
     """
-    def __init__(self, bbox, time_interval, *, data_collection=None, maxcc=1.0, data_source=None, **kwargs):
+    def __init__(self, bbox, time_interval, *, data_collection=None, maxcc=1.0, data_source=None, config=None):
         """
         :param bbox: Bounding box of the requested image. Coordinates must be in the specified coordinate reference
             system.
@@ -348,7 +334,8 @@ class WebFeatureService(OgcService):
         :param data_source: A deprecated alternative to data_collection
         :type data_source: DataCollection
         """
-        super().__init__(**kwargs)
+        self.config = config or SHConfig()
+        self.config.raise_for_missing_instance_id()
 
         self.bbox = bbox
 
@@ -361,77 +348,65 @@ class WebFeatureService(OgcService):
         self.data_collection = DataCollection(handle_deprecated_data_source(data_collection, data_source,
                                                                             default=DataCollection.SENTINEL2_L1C))
         self.maxcc = maxcc
+        self.max_features_per_request = 1 if self.latest_time_only else self.config.max_wfs_records_per_query
 
-        self.tile_list = []
-        self.index = 0
-        self.feature_offset = 0
-        self.max_features_per_request = 1 if self.latest_time_only else SHConfig().max_wfs_records_per_query
+        client = SentinelHubDownloadClient(config=self.config)
+        url = self._build_service_url()
+        params = self._build_request_params()
+
+        super().__init__(client, url, params)
+        self.next = 0
+
+    def _build_service_url(self):
+        """ Creates an URL to WFS service
+        """
+        base_url = self.config.get_sh_ogc_url()
 
         if self.data_collection.service_url:
-            self._base_url = self._base_url.replace(self.config.sh_base_url, self.data_collection.service_url)
+            base_url = base_url.replace(self.config.sh_base_url, self.data_collection.service_url)
 
-    def __iter__(self):
-        """ Iteration method
+        return f'{base_url}/{ServiceType.WFS.value}/{self.config.instance_id}'
 
-        :return: iterator of dictionaries containing info about product tiles
-        :rtype: Iterator[dict]
+    def _build_request_params(self):
+        """ Builds URL parameters for WFS service
         """
-        self.index = 0
-        return self
-
-    def __next__(self):
-        """ Next method
-
-        :return: dictionary containing info about product tiles
-        :rtype: dict
-        """
-        while self.index >= len(self.tile_list) and self.feature_offset is not None:
-            self._fetch_features()
-
-        if self.index < len(self.tile_list):
-            self.index += 1
-            return self.tile_list[self.index - 1]
-
-        raise StopIteration
-
-    def _fetch_features(self):
-        """ Collects data from WFS service
-
-        :return: dictionary containing info about product tiles
-        :rtype: dict
-        """
-        main_url = '{}/{}/{}?'.format(self._base_url, ServiceType.WFS.value, self.config.instance_id)
-
         start_time, end_time = serialize_time(self.time_interval, use_tz=True)
-        params = {
+        return {
             'SERVICE': ServiceType.WFS.value,
             'WARNINGS': False,
             'REQUEST': 'GetFeature',
             'TYPENAMES': self.data_collection.wfs_id,
             'BBOX': str(self.bbox.reverse()) if self.bbox.crs is CRS.WGS84 else str(self.bbox),
-            'OUTPUTFORMAT': MimeType.get_string(MimeType.JSON),
-            'SRSNAME': CRS.ogc_string(self.bbox.crs),
+            'OUTPUTFORMAT': MimeType.JSON.get_string(),
+            'SRSNAME': self.bbox.crs.ogc_string(),
             'TIME': f'{start_time}/{end_time}',
             'MAXCC': 100.0 * self.maxcc,
-            'MAXFEATURES': self.max_features_per_request,
-            'FEATURE_OFFSET': self.feature_offset
+            'MAXFEATURES': self.max_features_per_request
         }
 
-        url = main_url + urlencode(params)
+    def _fetch_features(self):
+        """ Collects data from WFS service
+        """
+        params = {
+            **self.params,
+            'FEATURE_OFFSET': self.next
+        }
+        url = f'{self.url}?{urlencode(params)}'
 
         LOGGER.debug("URL=%s", url)
-        client = SentinelHubDownloadClient(config=self.config)
-        response = client.get_json(url)
+        response = self.client.get_json(url)
+
+        new_features = response['features']
+
+        if len(new_features) < self.max_features_per_request or self.latest_time_only:
+            self.finished = True
+        else:
+            self.next += self.max_features_per_request
 
         is_sentinel1 = self.data_collection.is_sentinel1
-        for tile_info in response['features']:
-            if not is_sentinel1 or self._sentinel1_product_check(tile_info):
-                self.tile_list.append(tile_info)
-
-        if len(response['features']) < self.max_features_per_request or self.latest_time_only:
-            self.feature_offset = None
-        else:
-            self.feature_offset += self.max_features_per_request
+        new_features = [feature_info for feature_info in new_features
+                        if not is_sentinel1 or self._sentinel1_product_check(feature_info)]
+        return new_features
 
     def get_dates(self):
         """ Returns a list of acquisition times from tile info data

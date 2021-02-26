@@ -262,8 +262,8 @@ class SHConfig:
         """
         return '{}/oauth/token'.format(self.sh_base_url)
 
-    def get_sh_processing_api_url(self):
-        """  Provides URL for Sentinel Hub processing API endpoint
+    def get_sh_process_api_url(self):
+        """  Provides URL for Sentinel Hub Process API endpoint
 
         :return: An URL endpoint
         :rtype: str
@@ -286,3 +286,13 @@ class SHConfig:
         :rtype: str
         """
         return '{}/aux/ratelimit'.format(self.sh_base_url)
+
+    def raise_for_missing_instance_id(self):
+        """ In case Sentinel Hub instance ID is missing it raises an informative error
+
+        :raises: ValueError
+        """
+        if not self.instance_id:
+            raise ValueError('Sentinel Hub instance ID is missing. '
+                             'Either provide it with SHConfig object or save it into config.json configuration file. '
+                             'Check http://sentinelhub-py.readthedocs.io/en/latest/configure.html for more info.')

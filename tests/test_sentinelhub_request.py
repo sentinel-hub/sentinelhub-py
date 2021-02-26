@@ -1,4 +1,4 @@
-""" Tests for the Processing API requests
+""" Tests for the Process API requests
 """
 import unittest
 import json
@@ -13,7 +13,7 @@ from sentinelhub.sentinelhub_request import InputDataDict
 
 
 class TestSentinelHubRequest(TestSentinelHub):
-    """ Tests for the Processing API requests
+    """ Tests for the Process API requests
     """
 
     def test_single_jpg(self):

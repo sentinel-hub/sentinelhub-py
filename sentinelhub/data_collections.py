@@ -331,11 +331,11 @@ class DataCollection(Enum, metaclass=_DataCollectionMeta):
         """ Define a new data collection
 
         Note that all parameters, except `name` are optional. If a data collection definition won't be used for a
-        certain use case (e.g. Processing API, WFS, etc.), parameters for that use case don't have to be defined
+        certain use case (e.g. Process API, WFS, etc.), parameters for that use case don't have to be defined
 
         :param name: A name of a new data collection
         :type name: str
-        :param api_id: An ID to be used for Sentinel Hub Processing API
+        :param api_id: An ID to be used for Sentinel Hub Process API
         :type api_id: str or None
         :param catalog_id: An ID to be used for Sentinel Hub Catalog API
         :type catalog_id: str or None
@@ -463,14 +463,14 @@ class DataCollection(Enum, metaclass=_DataCollectionMeta):
 
     @property
     def api_id(self):
-        """ Provides a Sentinel Hub Processing API identifier or raises an error if it is not defined
+        """ Provides a Sentinel Hub Process API identifier or raises an error if it is not defined
 
         :return: An identifier
         :rtype: str
         :raises: ValueError
         """
         if self.value.api_id is None:
-            raise ValueError(f'Data collection {self.name} is missing a Sentinel Hub Processing API identifier')
+            raise ValueError(f'Data collection {self.name} is missing a Sentinel Hub Process API identifier')
         return self.value.api_id
 
     @property

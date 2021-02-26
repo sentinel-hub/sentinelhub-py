@@ -12,6 +12,7 @@ from .ogc import OgcImageService, MimeType
 from .config import SHConfig
 from .download import DownloadRequest, DownloadClient
 from .constants import CRS
+from .sh_utils import FeatureIterator
 
 LOGGER = logging.getLogger(__name__)
 
@@ -27,27 +28,27 @@ class GeopediaService:
         self.config = config or SHConfig()
         self._base_url = self.config.geopedia_rest_url
 
-    @staticmethod
-    def _parse_layer(layer, return_wms_name=False):
-        """ Helper function for parsing Geopedia layer name. If WMS name is required and wrong form is given it will
-        return a string with 'ttl' at the beginning. (WMS name can also start with something else, e.g. only 't'
-        instead 'ttl', therefore anything else is also allowed.) Otherwise it will parse it into a number.
-        """
-        if not isinstance(layer, (int, str)):
-            raise ValueError("Parameter 'layer' should be an integer or a string, but {} found".format(type(layer)))
 
-        if return_wms_name:
-            if isinstance(layer, int) or layer.isdigit():
-                return 'ttl{}'.format(layer)
-            return layer
+def _parse_geopedia_layer(layer, return_wms_name=False):
+    """ Helper function for parsing Geopedia layer name. If WMS name is required and wrong form is given it will
+    return a string with 'ttl' at the beginning. (WMS name can also start with something else, e.g. only 't'
+    instead 'ttl', therefore anything else is also allowed.) Otherwise it will parse it into a number.
+    """
+    if not isinstance(layer, (int, str)):
+        raise ValueError("Parameter 'layer' should be an integer or a string, but {} found".format(type(layer)))
 
-        if isinstance(layer, str):
-            stripped_layer = layer.lstrip('tl')
-            if not stripped_layer.isdigit():
-                raise ValueError("Parameter 'layer' has unsupported value {}, expected an integer".format(layer))
-            layer = stripped_layer
+    if return_wms_name:
+        if isinstance(layer, int) or layer.isdigit():
+            return f'ttl{layer}'
+        return layer
 
-        return int(layer)
+    if isinstance(layer, str):
+        stripped_layer = layer.lstrip('tl')
+        if not stripped_layer.isdigit():
+            raise ValueError("Parameter 'layer' has unsupported value {}, expected an integer".format(layer))
+        layer = stripped_layer
+
+    return int(layer)
 
 
 class GeopediaSession(GeopediaService):
@@ -230,7 +231,7 @@ class GeopediaWmsService(GeopediaService, OgcImageService):
         :return: list of items which have to be downloaded
         :rtype: list(DownloadRequest)
         """
-        request.layer = self._parse_layer(request.layer, return_wms_name=True)
+        request.layer = _parse_geopedia_layer(request.layer, return_wms_name=True)
 
         return super().get_request(request)
 
@@ -320,12 +321,13 @@ class GeopediaImageService(GeopediaService):
         return self.gpd_iterator
 
 
-class GeopediaFeatureIterator(GeopediaService):
+class GeopediaFeatureIterator(FeatureIterator):
     """ Iterator for Geopedia Vector Service
     """
     FILTER_EXPRESSION = 'filterExpression'
+    MAX_FEATURES_PER_REQUEST = 1000
 
-    def __init__(self, layer, bbox=None, query_filter=None, gpd_session=None, **kwargs):
+    def __init__(self, layer, bbox=None, query_filter=None, offset=0, gpd_session=None, config=None):
         """
         :param layer: Geopedia layer which contains requested data
         :type layer: str
@@ -334,6 +336,8 @@ class GeopediaFeatureIterator(GeopediaService):
         :type bbox: BBox
         :param query_filter: Query string used for filtering returned features.
         :type query_filter: str
+        :param offset: Offset of resulting features
+        :type offset: int
         :param gpd_session: Optional parameter for specifying a custom Geopedia session, which can also contain login
             credentials. This can be used for accessing private Geopedia layers. By default it is set to `None` and a
             basic Geopedia session without credentials will be created.
@@ -341,44 +345,36 @@ class GeopediaFeatureIterator(GeopediaService):
         :param config: A custom instance of config class to override parameters from the saved configuration.
         :type config: SHConfig or None
         """
-        super().__init__(**kwargs)
+        self.layer = _parse_geopedia_layer(layer)
+        self.config = config or SHConfig()
+        self.gpd_session = gpd_session if gpd_session else GeopediaSession(is_global=True)
 
-        self.layer = self._parse_layer(layer)
+        client = DownloadClient(config=self.config)
+        url = f'{self.config.geopedia_rest_url}/data/v2/search/tables/{self.layer}/features'
+        params = self._build_request_params(bbox, query_filter)
 
-        self.query = {}
+        super().__init__(client, url, params)
+        self.next = f'{url}?offset={offset}&limit={self.MAX_FEATURES_PER_REQUEST}'
+
+        self.layer_size = None
+
+    def _build_request_params(self, bbox, query_filter):
+        """ Builds payload parameters for requests to Geopedia
+        """
+        params = {}
         if bbox is not None:
             if bbox.crs is not CRS.POP_WEB:
                 bbox = bbox.transform(CRS.POP_WEB)
 
-            self.query[self.FILTER_EXPRESSION] = 'bbox({},"EPSG:3857")'.format(bbox)
+            params[self.FILTER_EXPRESSION] = f'bbox({bbox},"EPSG:3857")'
+
         if query_filter is not None:
-            if self.FILTER_EXPRESSION in self.query:
-                self.query[self.FILTER_EXPRESSION] = '{} && ({})'.format(self.query[self.FILTER_EXPRESSION],
-                                                                         query_filter)
+            if self.FILTER_EXPRESSION in params:
+                params[self.FILTER_EXPRESSION] = f'{params[self.FILTER_EXPRESSION]} && ({query_filter})'
             else:
-                self.query[self.FILTER_EXPRESSION] = query_filter
+                params[self.FILTER_EXPRESSION] = query_filter
 
-        self.gpd_session = gpd_session if gpd_session else GeopediaSession(is_global=True)
-        self.features = []
-        self.layer_size = None
-        self.index = 0
-
-        self.next_page_url = '{}/data/v2/search/tables/{}/features'.format(self._base_url, self.layer)
-
-    def __iter__(self):
-        self.index = 0
-
-        return self
-
-    def __next__(self):
-        if self.index == len(self.features):
-            self._fetch_features()
-
-        if self.index < len(self.features):
-            self.index += 1
-            return self.features[self.index - 1]
-
-        raise StopIteration
+        return params
 
     def __len__(self):
         """ Length of iterator is number of features which can be obtained from Geopedia with applied filters
@@ -388,15 +384,21 @@ class GeopediaFeatureIterator(GeopediaService):
     def _fetch_features(self):
         """ Retrieves a new page of features from Geopedia
         """
-        if self.next_page_url is None:
-            return
+        response = self.client.get_json(self.next, post_values=self.params, headers=self.gpd_session.session_headers)
 
-        client = DownloadClient(config=self.config)
-        response = client.get_json(self.next_page_url, post_values=self.query, headers=self.gpd_session.session_headers)
+        new_features = response['features']
+        pagination = response['pagination']
 
-        self.features.extend(response['features'])
-        self.next_page_url = response['pagination']['next']
-        self.layer_size = response['pagination']['total']
+        self.layer_size = pagination.get('total')
+        self.next = pagination.get('next')
+
+        if not self.next or not new_features:
+            self.finished = True
+
+        elif 'offset=' not in self.next or f'limit={self.MAX_FEATURES_PER_REQUEST}' not in self.next:
+            raise ValueError(f'Next page does not have an offset or correct limit parameter: {self.next}')
+
+        return new_features
 
     def get_geometry_iterator(self):
         """ Iterator over Geopedia feature geometries
