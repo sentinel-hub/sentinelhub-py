@@ -32,7 +32,7 @@ class OgcImageService:
         :type config: SHConfig or None
         """
         self.config = config or SHConfig()
-        self.config.raise_missing_instance_id()
+        self.config.raise_for_missing_instance_id()
 
         self._base_url = self.config.get_sh_ogc_url()
         self.wfs_iterator = None
@@ -335,7 +335,7 @@ class WebFeatureService(FeatureIterator):
         :type data_source: DataCollection
         """
         self.config = config or SHConfig()
-        self.config.raise_missing_instance_id()
+        self.config.raise_for_missing_instance_id()
 
         self.bbox = bbox
 

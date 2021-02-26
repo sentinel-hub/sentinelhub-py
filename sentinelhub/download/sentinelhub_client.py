@@ -128,8 +128,10 @@ class SentinelHubDownloadClient(DownloadClient):
 
         cache_key = self.config.sh_client_id, self.config.sh_client_secret, self.config.get_sh_oauth_url()
         if cache_key in SentinelHubDownloadClient._CACHED_SESSIONS:
-            return SentinelHubDownloadClient._CACHED_SESSIONS[cache_key]
+            session = SentinelHubDownloadClient._CACHED_SESSIONS[cache_key]
+        else:
+            session = SentinelHubSession(config=self.config)
+            SentinelHubDownloadClient._CACHED_SESSIONS[cache_key] = session
 
-        session = SentinelHubSession(config=self.config)
-        SentinelHubDownloadClient._CACHED_SESSIONS[cache_key] = session
+        self.session = session
         return session

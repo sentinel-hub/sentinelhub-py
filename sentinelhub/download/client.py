@@ -168,7 +168,7 @@ class DownloadClient:
         request = DownloadRequest(url=url, headers=json_headers, request_type=request_type, post_values=post_values,
                                   data_type=MimeType.JSON, **kwargs)
 
-        return self._single_download(request, True)
+        return self._single_download(request, decode_data=True)
 
     def get_xml(self, url, **kwargs):
         """ Download request as XML data type
@@ -180,7 +180,7 @@ class DownloadClient:
         :rtype: XML instance or None
         """
         request = DownloadRequest(url=url, data_type=MimeType.XML, **kwargs)
-        return self._single_download(request, True)
+        return self._single_download(request, decode_data=True)
 
 
 def get_json(url, post_values=None, headers=None, request_type=None, download_client_class=DownloadClient, **kwargs):

@@ -39,7 +39,7 @@ def _parse_geopedia_layer(layer, return_wms_name=False):
 
     if return_wms_name:
         if isinstance(layer, int) or layer.isdigit():
-            return 'ttl{}'.format(layer)
+            return f'ttl{layer}'
         return layer
 
     if isinstance(layer, str):

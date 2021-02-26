@@ -100,10 +100,9 @@ class SentinelHubBYOC:
 
         :return: iterator over collections
         """
-        url = f'{self.byoc_url}/collections'
         return SentinelHubFeatureIterator(
             client=self.client,
-            url=url,
+            url=f'{self.byoc_url}/collections',
             exception_message='Failed to obtain information about available BYOC collections'
         )
 
@@ -175,12 +174,11 @@ class SentinelHubBYOC:
         :param collection: a ByocCollection, dict or collection id string
         :return: iterator
         """
-        url = f'{self.byoc_url}/collections/{self._parse_id(collection)}/tiles'
+        collection_id = self._parse_id(collection)
         return SentinelHubFeatureIterator(
             client=self.client,
-            url=url,
-            exception_message=f'Failed to obtain information about tiles in BYOC collection '
-                              f'{self._parse_id(collection)}'
+            url=f'{self.byoc_url}/collections/{collection_id}/tiles',
+            exception_message=f'Failed to obtain information about tiles in BYOC collection {collection_id}'
         )
 
     def get_tile(self, collection, tile):
