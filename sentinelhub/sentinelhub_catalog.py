@@ -35,7 +35,7 @@ class SentinelHubCatalog:
     def get_info(self):
         """ Provides the main information that define Sentinel Hub Catalog API
 
-        `Catalog API reference <https://docs.sentinel-hub.com/api/latest/reference/#operation/getLandingPage>`_
+        `Catalog API reference <https://docs.sentinel-hub.com/api/latest/reference/#operation/getLandingPage>`__
 
         :return: A service payload with information
         :rtype: dict
@@ -46,7 +46,7 @@ class SentinelHubCatalog:
         """ Get information about specifications that this API conforms to
 
         `Catalog API reference
-        <https://docs.sentinel-hub.com/api/latest/reference/#operation/getConformanceDeclaration>`_
+        <https://docs.sentinel-hub.com/api/latest/reference/#operation/getConformanceDeclaration>`__
 
         :return: A service payload with information
         :rtype: dict
@@ -57,7 +57,7 @@ class SentinelHubCatalog:
     def get_collections(self):
         """ Provides a list of collections that are available to a user
 
-        `Catalog API reference <https://docs.sentinel-hub.com/api/latest/reference/#operation/getCollections>`_
+        `Catalog API reference <https://docs.sentinel-hub.com/api/latest/reference/#operation/getCollections>`__
 
         :return: A list of collections with information
         :rtype: list(dict)
@@ -68,7 +68,7 @@ class SentinelHubCatalog:
     def get_collection(self, collection):
         """ Provides information about given collection
 
-        `Catalog API reference <https://docs.sentinel-hub.com/api/latest/reference/#operation/describeCollection>`_
+        `Catalog API reference <https://docs.sentinel-hub.com/api/latest/reference/#operation/describeCollection>`__
 
         :param collection: A data collection object or a collection ID
         :type collection: DataCollection or str
@@ -82,7 +82,7 @@ class SentinelHubCatalog:
     def get_feature(self, collection, feature_id):
         """ Provides information about a single feature in a collection
 
-        `Catalog API reference <https://docs.sentinel-hub.com/api/latest/reference/#operation/getFeature>`_
+        `Catalog API reference <https://docs.sentinel-hub.com/api/latest/reference/#operation/getFeature>`__
 
         :param collection: A data collection object or a collection ID
         :type collection: DataCollection or str
@@ -99,7 +99,7 @@ class SentinelHubCatalog:
                limit=100, **kwargs):
         """ Catalog STAC search
 
-        `Catalog API reference <https://docs.sentinel-hub.com/api/latest/reference/#operation/postSearchSTAC>`_
+        `Catalog API reference <https://docs.sentinel-hub.com/api/latest/reference/#operation/postSearchSTAC>`__
 
         :param collection: A data collection object or a collection ID
         :type collection: DataCollection or str
