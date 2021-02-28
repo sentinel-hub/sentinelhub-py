@@ -299,7 +299,7 @@ class MimeType(Enum):
     """
     TIFF = 'tiff'
     PNG = 'png'
-    JPG = 'jpeg'
+    JPG = 'jpg'
     JP2 = 'jp2'
     JSON = 'json'
     CSV = 'csv'
