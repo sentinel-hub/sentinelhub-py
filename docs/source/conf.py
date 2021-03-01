@@ -54,7 +54,8 @@ extensions = [
     'nbsphinx',
     'sphinx.ext.mathjax',
     'sphinx.ext.viewcode',
-    'sphinx.ext.githubpages'
+    'sphinx.ext.githubpages',
+    'sphinx_reredirects'
 ]
 
 # Both the class’ and the __init__ method’s docstring are concatenated and inserted.
@@ -223,3 +224,8 @@ try:
     shutil.copytree('../../examples', './examples')
 except FileExistsError:
     pass
+
+# redirects
+redirects = {
+    "examples/processing_api_request": "examples/process_request.html",
+}

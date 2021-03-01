@@ -3,3 +3,4 @@ sphinx_rtd_theme
 nbsphinx
 matplotlib
 ipython
+sphinx-reredirects
