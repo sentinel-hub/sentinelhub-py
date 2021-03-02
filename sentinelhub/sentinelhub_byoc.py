@@ -83,7 +83,7 @@ class SentinelHubBYOC:
     """ An interface class for Sentinel Hub Bring your own COG (BYOC) API
 
     For more info check `BYOC API reference
-    <https://docs.sentinel-hub.com/api/latest/reference/#tag/byoc_collection>`_.
+    <https://docs.sentinel-hub.com/api/latest/reference/#tag/byoc_collection>`__.
     """
     def __init__(self, base_url=None, config=None):
         self.config = config or SHConfig()
@@ -96,7 +96,7 @@ class SentinelHubBYOC:
     def iter_collections(self):
         """ Retrieve collections
 
-        `BYOC API reference <https://docs.sentinel-hub.com/api/latest/reference/#operation/getByocCollections>`_
+        `BYOC API reference <https://docs.sentinel-hub.com/api/latest/reference/#operation/getByocCollections>`__
 
         :return: iterator over collections
         """
@@ -109,7 +109,7 @@ class SentinelHubBYOC:
     def get_collection(self, collection):
         """ Get collection by its id
 
-        `BYOC API reference <https://docs.sentinel-hub.com/api/latest/reference/#operation/getByocCollectionById>`_
+        `BYOC API reference <https://docs.sentinel-hub.com/api/latest/reference/#operation/getByocCollectionById>`__
 
         :param collection: a ByocCollection, dict or collection id string
         :return: dictionary of the collection
@@ -121,7 +121,7 @@ class SentinelHubBYOC:
     def create_collection(self, collection):
         """ Create a new collection
 
-        `BYOC API reference <https://docs.sentinel-hub.com/api/latest/reference/#operation/createByocCollection>`_
+        `BYOC API reference <https://docs.sentinel-hub.com/api/latest/reference/#operation/createByocCollection>`__
 
         :param collection: ByocCollection object or a dictionary
         :return: dictionary of the created collection
@@ -134,7 +134,7 @@ class SentinelHubBYOC:
     def update_collection(self, collection):
         """ Update an existing collection
 
-        `BYOC API reference <https://docs.sentinel-hub.com/api/latest/reference/#operation/updateByocCollectionById>`_
+        `BYOC API reference <https://docs.sentinel-hub.com/api/latest/reference/#operation/updateByocCollectionById>`__
 
         :param collection: ByocCollection object or a dictionary
         """
@@ -147,7 +147,7 @@ class SentinelHubBYOC:
     def delete_collection(self, collection):
         """ Delete existing collection by its id
 
-        `BYOC API reference <https://docs.sentinel-hub.com/api/latest/reference/#operation/deleteByocCollectionById>`_
+        `BYOC API reference <https://docs.sentinel-hub.com/api/latest/reference/#operation/deleteByocCollectionById>`__
 
         :param collection: a ByocCollection, dict or collection id string
         """
@@ -157,7 +157,7 @@ class SentinelHubBYOC:
     def copy_tiles(self, from_collection, to_collection):
         """ Copy tiles from one collection to another
 
-        `BYOC API reference <https://docs.sentinel-hub.com/api/latest/reference/#operation/copyByocCollectionTiles>`_
+        `BYOC API reference <https://docs.sentinel-hub.com/api/latest/reference/#operation/copyByocCollectionTiles>`__
 
         :param from_collection: a ByocCollection, dict or collection id string
         :param to_collection: a ByocCollection, dict or collection id string
@@ -169,7 +169,7 @@ class SentinelHubBYOC:
     def iter_tiles(self, collection):
         """ Iterator over collection tiles
 
-        `BYOC API reference <https://docs.sentinel-hub.com/api/latest/reference/#operation/getByocCollectionTiles>`_
+        `BYOC API reference <https://docs.sentinel-hub.com/api/latest/reference/#operation/getByocCollectionTiles>`__
 
         :param collection: a ByocCollection, dict or collection id string
         :return: iterator
@@ -184,7 +184,7 @@ class SentinelHubBYOC:
     def get_tile(self, collection, tile):
         """ Get a tile of collection
 
-        `BYOC API reference <https://docs.sentinel-hub.com/api/latest/reference/#operation/getByocCollectionTileById>`_
+        `BYOC API reference <https://docs.sentinel-hub.com/api/latest/reference/#operation/getByocCollectionTileById>`__
 
         :param collection: a ByocCollection, dict or collection id string
         :param tile: a ByocTile, dict or tile id string
@@ -197,7 +197,7 @@ class SentinelHubBYOC:
     def create_tile(self, collection, tile):
         """ Create tile within collection
 
-        `BYOC API reference <https://docs.sentinel-hub.com/api/latest/reference/#operation/createByocCollectionTile>`_
+        `BYOC API reference <https://docs.sentinel-hub.com/api/latest/reference/#operation/createByocCollectionTile>`__
 
         :param collection: a ByocCollection, dict or collection id string
         :param tile: a ByocTile or dict
@@ -212,7 +212,7 @@ class SentinelHubBYOC:
         """ Update a tile within collection
 
         `BYOC API reference
-        <https://docs.sentinel-hub.com/api/latest/reference/#operation/updateByocCollectionTileById>`_
+        <https://docs.sentinel-hub.com/api/latest/reference/#operation/updateByocCollectionTileById>`__
 
         :param collection: a ByocCollection, dict or collection id string
         :param tile: a ByocTile or dict
@@ -234,7 +234,7 @@ class SentinelHubBYOC:
         """ Delete a tile from collection
 
         `BYOC API reference
-        <https://docs.sentinel-hub.com/api/latest/reference/#operation/deleteByocCollectionTileById>`_
+        <https://docs.sentinel-hub.com/api/latest/reference/#operation/deleteByocCollectionTileById>`__
 
         :param collection: a ByocCollection, dict or collection id string
         :param tile: a ByocTile, dict or tile id string

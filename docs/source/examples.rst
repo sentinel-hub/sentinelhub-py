@@ -5,7 +5,7 @@ Examples
 .. toctree::
     :maxdepth: 4
 
-    examples/processing_api_request.ipynb
+    examples/process_request.ipynb
     examples/data_collections.ipynb
     examples/data_search.ipynb
     examples/ogc_request.ipynb

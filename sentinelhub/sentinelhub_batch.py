@@ -13,7 +13,7 @@ from .sh_utils import SentinelHubFeatureIterator, remove_undefined
 class SentinelHubBatch:
     """ An interface class for Sentinel Hub Batch API
 
-    For more info check `Batch API reference <https://docs.sentinel-hub.com/api/latest/reference/#tag/batch_process>`_.
+    For more info check `Batch API reference <https://docs.sentinel-hub.com/api/latest/reference/#tag/batch_process>`__.
     """
     _REPR_PARAM_NAMES = ['id', 'description', 'bucketName', 'created', 'status', 'userAction', 'valueEstimate',
                          'tileCount']
@@ -47,7 +47,7 @@ class SentinelHubBatch:
         """ Create a new batch request
 
         `Batch API reference
-        <https://docs.sentinel-hub.com/api/latest/reference/#operation/createNewBatchProcessingRequest>`_
+        <https://docs.sentinel-hub.com/api/latest/reference/#operation/createNewBatchProcessingRequest>`__
 
         :param sentinelhub_request: An instance of SentinelHubRequest class containing all request parameters.
             Alternatively, it can also be just a payload dictionary for Process API request
@@ -153,7 +153,7 @@ class SentinelHubBatch:
         """ An iterator over tiling grids
 
         `Batch API reference
-        <https://docs.sentinel-hub.com/api/latest/reference/#operation/getBatchTilingGridsProperties>`_
+        <https://docs.sentinel-hub.com/api/latest/reference/#operation/getBatchTilingGridsProperties>`__
 
         :param config: A configuration object
         :type config: SHConfig
@@ -174,7 +174,7 @@ class SentinelHubBatch:
         """ Provides a single tiling grid
 
         `Batch API reference
-        <https://docs.sentinel-hub.com/api/latest/reference/#operation/getBatchTilingGridProperties>`_
+        <https://docs.sentinel-hub.com/api/latest/reference/#operation/getBatchTilingGridProperties>`__
 
         :param grid_id: An ID of a requested tiling grid
         :type grid_id: str or int
@@ -202,7 +202,7 @@ class SentinelHubBatch:
         """ Updates information about a batch request
 
         `Batch API reference
-        <https://docs.sentinel-hub.com/api/latest/reference/#operation/getSingleBatchProcessRequestById>`_
+        <https://docs.sentinel-hub.com/api/latest/reference/#operation/getSingleBatchProcessRequestById>`__
 
         :return: Batch request info
         :rtype: dict
@@ -251,7 +251,7 @@ class SentinelHubBatch:
         """ Iterate existing batch requests
 
         `Batch API reference
-        <https://docs.sentinel-hub.com/api/latest/reference/#operation/getAllBathProcessRequests>`_
+        <https://docs.sentinel-hub.com/api/latest/reference/#operation/getAllBathProcessRequests>`__
 
         :param user_id: Filter requests by a user id who defined a request
         :type user_id: str or None
@@ -287,7 +287,7 @@ class SentinelHubBatch:
         """ Delete a batch job request
 
         `Batch API reference
-        <https://docs.sentinel-hub.com/api/latest/reference/#operation/deleteBatchProcessRequest>`_
+        <https://docs.sentinel-hub.com/api/latest/reference/#operation/deleteBatchProcessRequest>`__
         """
         url = self._get_process_url(self.config, request_id=self.request_id)
         client = SentinelHubDownloadClient(config=self.config)
@@ -296,21 +296,22 @@ class SentinelHubBatch:
     def start_analysis(self):
         """ Starts analysis of a batch job request
 
-        `Batch API reference <https://docs.sentinel-hub.com/api/latest/reference/#operation/batchAnalyse>`_
+        `Batch API reference <https://docs.sentinel-hub.com/api/latest/reference/#operation/batchAnalyse>`__
         """
         return self._call_job('analyse')
 
     def start_job(self):
         """ Starts running a batch job
 
-        `Batch API reference <https://docs.sentinel-hub.com/api/latest/reference/#operation/batchStartProcessRequest>`_
+        `Batch API reference <https://docs.sentinel-hub.com/api/latest/reference/#operation/batchStartProcessRequest>`__
         """
         return self._call_job('start')
 
     def cancel_job(self):
         """ Cancels a batch job
 
-        `Batch API reference <https://docs.sentinel-hub.com/api/latest/reference/#operation/batchCancelProcessRequest>`_
+        `Batch API reference
+        <https://docs.sentinel-hub.com/api/latest/reference/#operation/batchCancelProcessRequest>`__
         """
         return self._call_job('cancel')
 
@@ -318,14 +319,14 @@ class SentinelHubBatch:
         """ Restarts only those parts of a job that failed
 
         `Batch API reference
-        <https://docs.sentinel-hub.com/api/latest/reference/#operation/batchRestartPartialProcessRequest>`_
+        <https://docs.sentinel-hub.com/api/latest/reference/#operation/batchRestartPartialProcessRequest>`__
         """
         return self._call_job('restartpartial')
 
     def iter_tiles(self, status=None, **kwargs):
         """ Iterate over info about batch request tiles
 
-        `Batch API reference <https://docs.sentinel-hub.com/api/latest/reference/#operation/getAllBatchProcessTiles>`_
+        `Batch API reference <https://docs.sentinel-hub.com/api/latest/reference/#operation/getAllBatchProcessTiles>`__
 
         :param status: A filter to obtain only tiles with a certain status
         :type status: str or None
@@ -348,7 +349,7 @@ class SentinelHubBatch:
     def get_tile(self, tile_id):
         """ Provides information about a single batch request tile
 
-        `Batch API reference <https://docs.sentinel-hub.com/api/latest/reference/#operation/getBatchTileById>`_
+        `Batch API reference <https://docs.sentinel-hub.com/api/latest/reference/#operation/getBatchTileById>`__
 
         :param tile_id: An ID of a tile
         :type tile_id: int or None
@@ -362,7 +363,7 @@ class SentinelHubBatch:
     def reprocess_tile(self, tile_id):
         """ Reprocess a single failed tile
 
-        `Batch API reference <https://docs.sentinel-hub.com/api/latest/reference/#operation/restartBatchTileById>`_
+        `Batch API reference <https://docs.sentinel-hub.com/api/latest/reference/#operation/restartBatchTileById>`__
 
         :param tile_id: An ID of a tile
         :type tile_id: int or None

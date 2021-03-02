@@ -172,7 +172,6 @@ latex_documents = [
      author, 'manual'),
 ]
 
-
 # -- Options for manual page output ---------------------------------------
 
 # One entry per manual page. List of tuples
@@ -181,7 +180,6 @@ man_pages = [
     (master_doc, 'sentinelhub', doc_title,
      [author], 1)
 ]
-
 
 # -- Options for Texinfo output -------------------------------------------
 
@@ -193,7 +191,6 @@ texinfo_documents = [
      author, 'sentinelhub', 'One line description of project.',
      'Miscellaneous'),
 ]
-
 
 # -- Options for Epub output ----------------------------------------------
 
