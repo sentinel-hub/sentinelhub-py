@@ -224,7 +224,7 @@ except FileExistsError:
 
 # redirects
 redirects = {
-    "examples/processing_api_request": "examples/process_request.html",
+    "examples/processing_api_request": "process_request.html",
 }
 # create empty files to redirect from
 for file_path in redirects:
