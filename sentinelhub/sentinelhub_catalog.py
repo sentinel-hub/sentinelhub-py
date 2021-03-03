@@ -130,7 +130,7 @@ class SentinelHubCatalog:
         url = f'{self.catalog_url}/search'
 
         collection_id = self._parse_collection_id(collection)
-        start_time, end_time = serialize_time(parse_time_interval(time), use_tz=True)
+        start_time, end_time = serialize_time(parse_time_interval(time, allow_undefined=True), use_tz=True)
 
         if bbox and bbox.crs is not CRS.WGS84:
             bbox = bbox.transform_bounds(CRS.WGS84)
