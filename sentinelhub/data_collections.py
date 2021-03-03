@@ -137,6 +137,7 @@ class DataCollectionDefinition:
 
     Check `DataCollection.define` for more info about attributes of this class
     """
+    # pylint: disable=too-many-instance-attributes
     api_id: str = None
     catalog_id: str = None
     wfs_id: str = None
