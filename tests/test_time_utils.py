@@ -9,7 +9,6 @@ import dateutil.tz
 from sentinelhub import time_utils
 
 
-TEST_NONE_DATE = None
 TEST_DATE = dt.date(year=2015, month=4, day=12)
 TEST_DATETIME = dt.datetime(year=2015, month=4, day=12, hour=12, minute=32, second=14)
 TEST_DATETIME_TZ = dt.datetime(year=2015, month=4, day=12, hour=12, minute=32, second=14, tzinfo=dateutil.tz.tzutc())
@@ -71,10 +70,10 @@ def test_parse_time(time_input, params, expected_output):
     (('2015.4.12T12:32:14', '2017.4.12T12:32:14'), {}, (TEST_DATETIME, TEST_DATETIME.replace(year=2017))),
     ((TEST_DATE, TEST_DATE.replace(year=2017)), {}, (TEST_TIME_START, TEST_TIME_END.replace(year=2017))),
     ((TEST_DATETIME, TEST_DATETIME.replace(year=2017)), {}, (TEST_DATETIME, TEST_DATETIME.replace(year=2017))),
-    (None, {'allow_undefined': True}, '..'),
-    ((None, None), {'allow_undefined': True}, ('..', '..')),
-    ((None, TEST_DATE), {'allow_undefined': True}, ('..', TEST_DATE)),
-    ((TEST_DATE, None), {'allow_undefined': True}, (TEST_DATE, '..')),
+    (None, {'allow_undefined': True}, (None, None)),
+    ((None, None), {'allow_undefined': True}, (None, None)),
+    ((TEST_DATETIME, None), {'allow_undefined': True}, (TEST_DATETIME, None)),
+    ((None, TEST_DATE), {'allow_undefined': True}, (None, TEST_TIME_END)),
 ])
 def test_parse_time_interval(time_input, params, expected_output):
     parsed_interval = time_utils.parse_time_interval(time_input, **params)
@@ -82,28 +81,20 @@ def test_parse_time_interval(time_input, params, expected_output):
 
 
 @pytest.mark.parametrize('time_input,params,expected_output', [
-    (TEST_NONE_DATE, {'allow_undefined': True}, '..'),
+    (None, {}, '..'),
     (TEST_DATE, {}, '2015-04-12'),
     (TEST_DATETIME, {}, '2015-04-12T12:32:14'),
     (TEST_DATETIME, {'use_tz': True}, '2015-04-12T12:32:14Z'),
     (TEST_DATETIME_TZ, {'use_tz': False}, '2015-04-12T12:32:14'),
     (TEST_DATETIME_TZ, {'use_tz': True}, '2015-04-12T12:32:14Z'),
-    ((TEST_DATE, TEST_DATETIME, TEST_DATETIME_TZ), {}, ('2015-04-12', '2015-04-12T12:32:14', '2015-04-12T12:32:14'))
+    ((TEST_DATE, TEST_DATETIME, TEST_DATETIME_TZ), {}, ('2015-04-12', '2015-04-12T12:32:14', '2015-04-12T12:32:14')),
+    ((None, None), {}, ('..', '..')),
+    ((TEST_DATETIME, None), {}, ('2015-04-12T12:32:14', '..')),
+    ((None, TEST_DATETIME), {}, ('..', '2015-04-12T12:32:14'))
 ])
-def test_parse_time_interval(time_input, params, expected_output):
+def test_serialize_time(time_input, params, expected_output):
     serialized_result = time_utils.serialize_time(time_input, **params)
     assert serialized_result == expected_output
-
-
-@pytest.mark.parametrize('non_allowed_time_input', [
-    None,
-    (None, None),
-    (dt.datetime.now(), None),
-    (None, dt.datetime.now())
-])
-def test_empty_time_not_allowed(non_allowed_time_input):
-    with pytest.raises(ValueError):
-        time_utils.serialize_time(non_allowed_time_input)
 
 
 @pytest.mark.parametrize('input_date,input_time,expected_output', [

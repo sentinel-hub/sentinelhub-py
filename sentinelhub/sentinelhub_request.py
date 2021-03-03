@@ -286,7 +286,7 @@ def _get_data_filters(data_collection, time_interval, maxcc, mosaicking_order):
     data_filter = {}
 
     if time_interval:
-        start_time, end_time = serialize_time(parse_time_interval(time_interval), use_tz=True)
+        start_time, end_time = serialize_time(parse_time_interval(time_interval, allow_undefined=True), use_tz=True)
         data_filter['timeRange'] = {'from': start_time, 'to': end_time}
 
     if maxcc is not None:
