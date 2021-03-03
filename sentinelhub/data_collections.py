@@ -152,6 +152,7 @@ class DataCollectionDefinition:
     bands: Tuple[str, ...] = None
     collection_id: str = None
     is_timeless: bool = False
+    has_cloud_coverage: bool = False
 
     def __post_init__(self):
         """ In case a list of bands has been given this makes sure to cast it into a tuple
@@ -195,7 +196,8 @@ class DataCollection(Enum, metaclass=_DataCollectionMeta):
         collection_type=_CollectionType.SENTINEL2,
         sensor_type=_SensorType.MSI,
         processing_level=_ProcessingLevel.L1C,
-        bands=_Bands.SENTINEL2_L1C
+        bands=_Bands.SENTINEL2_L1C,
+        has_cloud_coverage=True
     )
     SENTINEL2_L2A = DataCollectionDefinition(
         api_id='S2L2A',
@@ -204,7 +206,8 @@ class DataCollection(Enum, metaclass=_DataCollectionMeta):
         collection_type=_CollectionType.SENTINEL2,
         sensor_type=_SensorType.MSI,
         processing_level=_ProcessingLevel.L2A,
-        bands=_Bands.SENTINEL2_L2A
+        bands=_Bands.SENTINEL2_L2A,
+        has_cloud_coverage=True
     )
 
     SENTINEL1 = DataCollectionDefinition(
@@ -273,7 +276,8 @@ class DataCollection(Enum, metaclass=_DataCollectionMeta):
         service_url=ServiceUrl.USWEST,
         collection_type=_CollectionType.LANDSAT8,
         processing_level=_ProcessingLevel.L1C,
-        bands=_Bands.LANDSAT8
+        bands=_Bands.LANDSAT8,
+        has_cloud_coverage=True
     )
 
     SENTINEL5P = DataCollectionDefinition(
@@ -304,7 +308,8 @@ class DataCollection(Enum, metaclass=_DataCollectionMeta):
         collection_type=_CollectionType.SENTINEL3,
         sensor_type=_SensorType.SLSTR,
         processing_level=_ProcessingLevel.L1B,
-        bands=_Bands.SENTINEL3_SLSTR
+        bands=_Bands.SENTINEL3_SLSTR,
+        has_cloud_coverage=True
     )
 
     # EOCloud collections (which are only available on a development eocloud service):
