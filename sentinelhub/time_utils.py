@@ -117,7 +117,7 @@ def is_valid_time(time):
         return False
 
 
-def parse_time(time_input, *, force_datetime=False, **kwargs):
+def parse_time(time_input, *, force_datetime=False, allow_undefined=False, **kwargs):
     """ Parse input time/date string
 
     :param time_input: time/date to parse
@@ -125,10 +125,16 @@ def parse_time(time_input, *, force_datetime=False, **kwargs):
     :param force_datetime: If True it will always return datetime.datetime object, if False it can also return only
         datetime.date object if only date is provided as input.
     :type force_datetime: bool
+    :param allow_undefined: Flag to allow parsing None or '..' into None
+    :param allow_undefined: bool (default is False)
     :param kwargs: Any keyword arguments to be passed to `dateutil.parser.parse`. Example: `ignoretz=True`
     :return: A datetime object
     :rtype: datetime.datetime or datetime.date
     """
+
+    if allow_undefined and time_input in [None, '..']:
+        return None
+
     if isinstance(time_input, dt.date):
         if force_datetime and not isinstance(time_input, dt.datetime):
             return date_to_datetime(time_input)
@@ -144,7 +150,7 @@ def parse_time(time_input, *, force_datetime=False, **kwargs):
     return time.date()
 
 
-def parse_time_interval(time, **kwargs):
+def parse_time_interval(time, allow_undefined=False, **kwargs):
     """ Parse input into an interval of two times, specifying start and end time, into datetime objects.
 
     The input time can have the following formats, which will be parsed as:
@@ -157,27 +163,32 @@ def parse_time_interval(time, **kwargs):
     All input times can also be specified as `datetime` objects. Instances of `datetime.date` will be treated as
     `YYYY-MM-DD` and instance of `datetime.datetime` will be treated as `YYYY-MM-DDThh:mm:ss`.
 
+    :param allow_undefined: Boolean flag controls if None or '..' are allowed
+    :param allow_undefined: bool
     :param time: An input time
     :type time: str or datetime.datetime or (str, str) or (datetime.datetime, datetime.datetime)
     :return: interval of start and end date of the form `YYYY-MM-DDThh:mm:ss`
     :rtype: (datetime.datetime, datetime.datetime)
     :raises: ValueError
     """
-    if isinstance(time, (str, dt.date)):
+    if allow_undefined and time in [None, '..']:
+        date_interval = None, None
+    elif isinstance(time, (str, dt.date)):
         parsed_time = parse_time(time, **kwargs)
         date_interval = parsed_time, parsed_time
     elif isinstance(time, (tuple, list)) and len(time) == 2:
-        date_interval = parse_time(time[0], **kwargs), parse_time(time[1], **kwargs)
+        date_interval = parse_time(time[0], allow_undefined=allow_undefined, **kwargs), \
+                        parse_time(time[1], allow_undefined=allow_undefined, **kwargs)
     else:
         raise ValueError('Time must be a string/datetime object or tuple/list of 2 strings/datetime objects')
 
     start_time, end_time = date_interval
-    if not isinstance(start_time, dt.datetime):
+    if not isinstance(start_time, dt.datetime) and start_time is not None:
         start_time = date_to_datetime(start_time)
-    if not isinstance(end_time, dt.datetime):
+    if not isinstance(end_time, dt.datetime) and end_time is not None:
         end_time = date_to_datetime(end_time, dt.time(hour=23, minute=59, second=59))
 
-    if start_time > end_time:
+    if start_time and end_time and start_time > end_time:
         raise ValueError('Start of time interval is larger than end of time interval')
 
     return start_time, end_time
@@ -196,6 +207,9 @@ def serialize_time(timestamp_input, *, use_tz=False):
     """
     if isinstance(timestamp_input, tuple):
         return tuple(serialize_time(timestamp, use_tz=use_tz) for timestamp in timestamp_input)
+
+    if timestamp_input is None:
+        return '..'
 
     if not isinstance(timestamp_input, dt.date):
         raise ValueError('Expected a datetime object or a tuple of datetime objects')

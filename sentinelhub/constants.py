@@ -292,7 +292,7 @@ class HistogramType(Enum):
 
 
 class MimeType(Enum):
-    """ Enum class to represent supported image file formats
+    """ Enum class to represent supported file formats
 
     Supported file formats are TIFF 8-bit, TIFF 16-bit, TIFF 32-bit float, PNG, JPEG, JPEG2000, JSON, CSV, ZIP, HDF5,
     XML, GML, RAW
