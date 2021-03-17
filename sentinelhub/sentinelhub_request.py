@@ -14,7 +14,7 @@ class SentinelHubRequest(DataRequest):
     """ Sentinel Hub API request class
     """
     def __init__(self, evalscript, input_data, responses, bbox=None, geometry=None, size=None, resolution=None,
-                 **kwargs):
+                 mime_type=None, **kwargs):
         """
         For details of certain parameters check the
         `Process API reference <https://docs.sentinel-hub.com/api/latest/reference/#operation/process>`_.
@@ -43,7 +43,7 @@ class SentinelHubRequest(DataRequest):
         if not isinstance(evalscript, str):
             raise ValueError("'evalscript' should be a string")
 
-        parsed_mime_type = MimeType.from_string(responses[0]['format']['type'].split('/')[1])
+        parsed_mime_type = mime_type or MimeType.from_string(responses[0]['format']['type'].split('/')[1])
         self.mime_type = MimeType.TAR if len(responses) > 1 else parsed_mime_type
 
         self.payload = self.body(
