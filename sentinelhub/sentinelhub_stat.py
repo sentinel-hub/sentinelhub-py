@@ -13,6 +13,12 @@ from .time_utils import parse_time_interval, serialize_time
 class SentinelHubStat(DataRequest):
 
     def __init__(self, aggregation, input_data, bbox=None, geometry=None, calculations=None, **kwargs):
+
+        # For now service won't work without this
+        for input_data_payload in input_data:
+            if 'dataFilter' not in input_data_payload:
+                input_data_payload['dataFilter'] = {}
+
         self.payload = self.body(
             request_bounds=SentinelHubRequest.bounds(bbox=bbox, geometry=geometry),
             request_data=input_data,
