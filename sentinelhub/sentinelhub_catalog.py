@@ -2,7 +2,7 @@
 A client interface for Sentinel Hub Catalog API
 """
 from .config import SHConfig
-from .data_collections import DataCollection
+from .data_collections import DataCollection, OrbitDirection
 from .geometry import Geometry, CRS
 from .download.sentinelhub_client import SentinelHubDownloadClient
 from .sh_utils import FeatureIterator, remove_undefined
@@ -15,6 +15,7 @@ class SentinelHubCatalog:
     For more details about certain endpoints and parameters check
     `Catalog API documentation <https://docs.sentinel-hub.com/api/latest/api/catalog>`_.
     """
+
     def __init__(self, base_url=None, config=None):
         """
         :param base_url: A base URL of Sentinel Hub service specifying which service deployment to use. By default the
@@ -137,13 +138,17 @@ class SentinelHubCatalog:
         if geometry and geometry.crs is not CRS.WGS84:
             geometry = geometry.transform(CRS.WGS84)
 
+        _query = self._get_data_collection_filters(collection)
+        if query:
+            _query.update(query)
+
         payload = remove_undefined({
             'collections': [collection_id],
-            'datetime': f'{start_time}/{end_time}',
+            'datetime': f'{start_time}/{end_time}' if time else None,
             'bbox': list(bbox) if bbox else None,
             'intersects': geometry.geojson if geometry else None,
             'ids': ids,
-            'query': query,
+            'query': _query,
             'fields': fields,
             'distinct': distinct,
             'limit': limit,
@@ -162,10 +167,34 @@ class SentinelHubCatalog:
             return collection
         raise ValueError(f'Expected either a DataCollection object or a collection id string, got {collection}')
 
+    @staticmethod
+    def _get_data_collection_filters(data_collection):
+        """ Builds a dictionary of query filters for catalog API from a data collection definition
+        """
+        filters = {}
+
+        if data_collection.swath_mode:
+            filters['sar:instrument_mode'] = {'eq': data_collection.swath_mode.upper()}
+
+        if data_collection.polarization:
+            filters['polarization'] = {'eq': data_collection.polarization.upper()}
+
+        if data_collection.resolution:
+            filters['resolution'] = {'eq': data_collection.resolution.upper()}
+
+        if data_collection.orbit_direction and data_collection.orbit_direction.upper() != OrbitDirection.BOTH:
+            filters['sat:orbit_state'] = {'eq': data_collection.orbit_direction.lower()}
+
+        if data_collection.timeliness:
+            filters['timeliness'] = {'eq': data_collection.timeliness}
+
+        return filters
+
 
 class CatalogSearchIterator(FeatureIterator):
     """ Searches a catalog with a given query and provides results
     """
+
     def _fetch_features(self):
         """ Collects more results from the service
         """
