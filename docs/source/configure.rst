@@ -133,7 +133,7 @@ For more configuration options check::
 $ sentinelhub.config --help
 
 
-.. _`Sentinel Hub`: https://services.sentinel-hub.com/oauth/subscription
+.. _`Sentinel Hub`: https://www.sentinel-hub.com/trial
 .. _`ESA OSEO page`: https://earth.esa.int/aos/OSEO
 .. _`Sentinel Hub Dashboard`: https://apps.sentinel-hub.com/dashboard/
 .. _`Sentinel Hub services`: https://www.sentinel-hub.com/develop/documentation/api/ogc_api/
