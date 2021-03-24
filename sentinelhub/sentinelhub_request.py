@@ -330,6 +330,9 @@ def _get_data_collection_filters(data_collection):
     if data_collection.timeliness:
         filters['timeliness'] = data_collection.timeliness
 
+    if data_collection.dem_instance:
+        filters['demInstance'] = data_collection.dem_instance
+
     return filters
 
 
