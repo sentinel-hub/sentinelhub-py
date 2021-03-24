@@ -188,6 +188,9 @@ class SentinelHubCatalog:
         if data_collection.timeliness:
             filters['timeliness'] = {'eq': data_collection.timeliness}
 
+        if data_collection.dem_instance:
+            filters['demInstance'] = data_collection.dem_instance
+
         return filters
 
 

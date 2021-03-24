@@ -154,6 +154,7 @@ class DataCollectionDefinition:
     collection_id: str = None
     is_timeless: bool = False
     has_cloud_coverage: bool = False
+    dem_instance: str = None
 
     def __post_init__(self):
         """ In case a list of bands has been given this makes sure to cast it into a tuple
@@ -260,7 +261,8 @@ class DataCollection(Enum, metaclass=_DataCollectionMeta):
         wfs_id='DSS4',
         collection_type=_CollectionType.DEM,
         bands=_Bands.DEM,
-        is_timeless=True
+        is_timeless=True,
+        dem_instance='MAPZEN'
     )
     MODIS = DataCollectionDefinition(
         api_id='MODIS',
@@ -333,7 +335,8 @@ class DataCollection(Enum, metaclass=_DataCollectionMeta):
     @classmethod
     def define(cls, name, *, api_id=None, catalog_id=None, wfs_id=None, service_url=None, collection_type=None,
                sensor_type=None, processing_level=None, swath_mode=None, polarization=None, resolution=None,
-               orbit_direction=None, timeliness=None, bands=None, collection_id=None, is_timeless=False):
+               orbit_direction=None, timeliness=None, bands=None, collection_id=None, is_timeless=False,
+               dem_instance=None):
         """ Define a new data collection
 
         Note that all parameters, except `name` are optional. If a data collection definition won't be used for a
@@ -372,6 +375,8 @@ class DataCollection(Enum, metaclass=_DataCollectionMeta):
         :type collection_id: str or None
         :param is_timeless: `True` if a data collection can be filtered by time dimension and `False` otherwise
         :type is_timeless: bool
+        :param dem_instance: DEM instance for DEM collections (one of MAPZEN, COPERNICUS_30, COPERNICUS_90)
+        :type dem_instance: str
         :return: A new data collection
         :rtype: DataCollection
         """
@@ -390,7 +395,8 @@ class DataCollection(Enum, metaclass=_DataCollectionMeta):
             timeliness=timeliness,
             bands=bands,
             collection_id=collection_id,
-            is_timeless=is_timeless
+            is_timeless=is_timeless,
+            dem_instance=dem_instance
         )
         cls._try_add_data_collection(name, definition)
         return cls(definition)
