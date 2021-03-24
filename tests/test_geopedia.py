@@ -113,22 +113,23 @@ class TestGeopediaFeatureIterator(TestSentinelHub):
         query_filter2 = 'f12458==32635'
 
         cls.test_cases = [
-            TestCaseContainer('All features', GeopediaFeatureIterator(1749, gpd_session=GeopediaSession()),
+            TestCaseContainer('All features', dict(layer=1749, gpd_session=GeopediaSession()),
                               min_features=100, min_size=1609),
-            TestCaseContainer('BBox filter', GeopediaFeatureIterator('1749', bbox=bbox), min_features=21),
-            TestCaseContainer('Query Filter', GeopediaFeatureIterator('ttl1749', query_filter=query_filter1),
+            TestCaseContainer('BBox filter', dict(layer='1749', bbox=bbox), min_features=21),
+            TestCaseContainer('Query Filter', dict(layer='ttl1749', query_filter=query_filter1),
                               min_features=76),
             TestCaseContainer('Both filters - No data',
-                              GeopediaFeatureIterator(1749, bbox=bbox, query_filter=query_filter1), min_features=0),
+                              dict(layer=1749, bbox=bbox, query_filter=query_filter1), min_features=0),
             TestCaseContainer('Both filters - Some data',
-                              GeopediaFeatureIterator(1749, bbox=bbox, query_filter=query_filter2), min_features=21)
+                              dict(layer=1749, bbox=bbox, query_filter=query_filter2), min_features=21)
         ]
 
     def test_iterator(self):
         for test_case in self.test_cases:
             with self.subTest(msg='Test case {}'.format(test_case.name)):
+                params = test_case.request
+                gpd_iter = GeopediaFeatureIterator(**params)
 
-                gpd_iter = test_case.request
                 for idx, feature in enumerate(gpd_iter):
                     self.assertTrue(isinstance(feature, dict), 'Expected at dictionary, got {}'.format(type(feature)))
 
@@ -142,6 +143,23 @@ class TestGeopediaFeatureIterator(TestSentinelHub):
                     self.assertTrue(test_case.min_size <= len(gpd_iter),
                                     'There should be at least {} features available, '
                                     'got {}'.format(test_case.min_size, gpd_iter.get_size()))
+
+    def test_size_before_iteration(self):
+        for test_case in self.test_cases:
+            if not test_case.min_features:
+                continue
+
+            with self.subTest(msg='Test case {}'.format(test_case.name)):
+                params = test_case.request
+
+                gpd_iter1 = GeopediaFeatureIterator(**params)
+                _ = gpd_iter1.get_size()
+                first_feature1 = next(gpd_iter1)
+
+                gpd_iter2 = GeopediaFeatureIterator(**params)
+                first_feature2 = next(gpd_iter2)
+
+                self.assertEqual(first_feature1, first_feature2)
 
 
 if __name__ == '__main__':

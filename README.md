@@ -48,7 +48,7 @@ Once installed or updated the package can be configured according to [instructio
 
 ### OGC web service
 
-Some of the major features are linked to one's [Sentinel Hub account](https://services.sentinel-hub.com/oauth/subscription):
+Some of the major features are linked to one's [Sentinel Hub account](https://www.sentinel-hub.com/trial):
  * support for Web Map Service (WMS) and Web Coverage Service (WCS) requests using your Sentinel Hub account;
  * support for standard and custom multi-spectra layers, such as unprocessed
  bands, true color imagery, or NDVI;

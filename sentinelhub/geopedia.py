@@ -420,5 +420,7 @@ class GeopediaFeatureIterator(FeatureIterator):
         :rtype: int
         """
         if self.layer_size is None:
-            self._fetch_features()
+            new_features = self._fetch_features()
+            self.features.extend(new_features)
+
         return self.layer_size
