@@ -14,3 +14,9 @@ Module for working with large geographical areas
     :members:
 .. autoclass:: CustomGridSplitter
     :members:
+.. autoclass:: UtmGridSplitter
+    :members:
+.. autoclass:: UtmZoneSplitter
+    :members:
+.. autoclass:: BatchSplitter
+    :members:
