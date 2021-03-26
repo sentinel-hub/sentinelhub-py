@@ -10,8 +10,9 @@ class SentinelHubRateLimit:
     """ Class implementing rate limiting logic of Sentinel Hub service
 
     It has 2 public methods:
-     - register_next - tells if next download can start or if not, what is the wait before it can be asked again
-     - update - updates expectations according to headers obtained from download
+
+    - register_next - tells if next download can start or if not, what is the wait before it can be asked again
+    - update - updates expectations according to headers obtained from download
 
     The rate limiting object is collecting information about the status of rate limiting policy buckets from
     Sentinel Hub service. According to this information and a feedback from download requests it adapts expectations

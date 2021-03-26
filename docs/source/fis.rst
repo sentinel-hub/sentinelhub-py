@@ -1,5 +1,5 @@
 fis
-======
+===
 
 .. automodule:: sentinelhub.fis
     :members:

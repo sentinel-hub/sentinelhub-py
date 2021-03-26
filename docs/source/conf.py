@@ -213,7 +213,7 @@ epub_copyright = project_copyright
 epub_exclude_files = ['search.html']
 
 # Example configuration for intersphinx: refer to the Python standard library.
-intersphinx_mapping = {'https://docs.python.org/3.6/': None}
+intersphinx_mapping = {'https://docs.python.org/3.8/': None}
 
 # copy examples
 try:
