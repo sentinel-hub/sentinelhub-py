@@ -17,7 +17,7 @@ class SHConfig:
         - `sh_client_id`: User's OAuth client ID for Sentinel Hub service
         - `sh_client_secret`: User's OAuth client secret for Sentinel Hub service
         - `sh_base_url`: There exist multiple deployed instances of Sentinel Hub service, this parameter defines the
-            location of a specific service instance.
+          location of a specific service instance.
         - `geopedia_wms_url`: Base url for Geopedia WMS services.
         - `geopedia_rest_url`: Base url for Geopedia REST services.
         - `aws_access_key_id`: Access key for AWS Requester Pays buckets.

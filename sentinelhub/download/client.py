@@ -25,10 +25,11 @@ class DownloadClient:
     """ A basic download client object
 
     It does the following:
-      - downloads the data with multiple threads in parallel,
-      - handles any exceptions that occur during download,
-      - decodes downloaded data,
-      - reads and writes locally stored/cached data
+
+    - downloads the data with multiple threads in parallel,
+    - handles any exceptions that occur during download,
+    - decodes downloaded data,
+    - reads and writes locally stored/cached data
     """
     def __init__(self, *, redownload=False, raise_download_errors=True, config=None):
         """

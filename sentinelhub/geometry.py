@@ -101,9 +101,10 @@ class BBox(BaseGeometry):
         9) ``bbox``, where ``bbox`` is an instance of ``BBox``.
 
     Note that BBox coordinate system depends on ``crs`` parameter:
-        - In case of ``constants.CRS.WGS84`` axis x represents longitude and axis y represents latitude
-        - In case of ``constants.CRS.POP_WEB`` axis x represents easting and axis y represents northing
-        - In case of ``constants.CRS.UTM_*`` axis x represents easting and axis y represents northing
+
+    - In case of ``constants.CRS.WGS84`` axis x represents longitude and axis y represents latitude
+    - In case of ``constants.CRS.POP_WEB`` axis x represents easting and axis y represents northing
+    - In case of ``constants.CRS.UTM_*`` axis x represents easting and axis y represents northing
     """
     def __init__(self, bbox, crs):
         """

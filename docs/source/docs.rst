@@ -33,6 +33,6 @@ Modules
     sentinelhub_rate_limit
     sentinelhub_request
     sentinelhub_session
+    sh_utils
     testing_utils
     time_utils
-    sh_utils
