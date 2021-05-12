@@ -9,7 +9,7 @@ from oauthlib.oauth2.rfc6749.errors import CustomOAuth2Error
 
 from sentinelhub import SentinelHubRequest, CRS, BBox, TestSentinelHub, DataCollection, MimeType, bbox_to_dimensions, \
     Geometry, SHConfig
-from sentinelhub.sentinelhub_request import InputDataDict
+from sentinelhub.sentinelhub_base_api import InputDataDict
 
 
 class TestSentinelHubRequest(TestSentinelHub):
