@@ -91,10 +91,9 @@ def decode_tar(data):
     :return: A dictionary of decoded files from a tar file
     :rtype: dict(str: object)
     """
-    tar = tarfile.open(fileobj=BytesIO(data))
-    itr = ((member.name, get_data_format(member.name), tar.extractfile(member)) for member in tar.getmembers())
-
-    return {filename: decode_data(file.read(), file_type) for filename, file_type, file in itr}
+    with tarfile.open(fileobj=BytesIO(data)) as tar:
+        itr = ((member.name, get_data_format(member.name), tar.extractfile(member)) for member in tar.getmembers())
+        return {filename: decode_data(file.read(), file_type) for filename, file_type, file in itr}
 
 
 def decode_sentinelhub_err_msg(response):

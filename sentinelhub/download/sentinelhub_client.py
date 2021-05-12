@@ -80,6 +80,7 @@ class SentinelHubDownloadClient(DownloadClient):
         if self.lock is None:
             return thread_unsafe_function(*args, **kwargs)
 
+        # pylint: disable=consider-using-with
         self.lock.acquire()
         try:
             return thread_unsafe_function(*args, **kwargs)
