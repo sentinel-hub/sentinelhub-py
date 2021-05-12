@@ -21,7 +21,8 @@ from .data_collections import DataCollection, DataSource
 
 from .config import SHConfig
 
-from .download import DownloadRequest, get_json, get_xml, DownloadClient, AwsDownloadClient, SentinelHubDownloadClient
+from .download import DownloadRequest, get_json, get_xml, DownloadClient, AwsDownloadClient, \
+    SentinelHubDownloadClient, SentinelHubStatisticalDownloadClient
 
 from .exceptions import DownloadFailedException, AwsDownloadFailedException
 
@@ -40,6 +41,7 @@ from .sentinelhub_batch import SentinelHubBatch
 from .sentinelhub_request import SentinelHubRequest
 from .sentinelhub_byoc import SentinelHubBYOC, ByocCollection, ByocCollectionAdditionalData, ByocTile
 from .sentinelhub_catalog import SentinelHubCatalog
+from .sentinelhub_statistical import SentinelHubStatistical
 
 from .time_utils import parse_time, parse_time_interval, serialize_time, is_valid_time, filter_times
 

@@ -4,7 +4,7 @@ Module implementing some utility functions not suitable for other utility module
 from abc import ABC, abstractmethod
 from urllib.parse import urlencode
 
-from sentinelhub.exceptions import MissingDataInRequestException
+from .exceptions import MissingDataInRequestException
 
 
 class FeatureIterator(ABC):
@@ -98,6 +98,17 @@ class SentinelHubFeatureIterator(FeatureIterator):
         self.finished = self.next is None or not new_features
 
         return new_features
+
+
+def _update_other_args(dict1, dict2):
+    """ Function for a recursive update of `dict1` with `dict2`. The function loops over the keys in `dict2` and
+    only the non-dict like values are assigned to the specified keys.
+    """
+    for key, value in dict2.items():
+        if isinstance(value, dict) and key in dict1:
+            _update_other_args(dict1[key], value)
+        else:
+            dict1[key] = value
 
 
 def remove_undefined(payload):
