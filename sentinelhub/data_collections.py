@@ -462,7 +462,7 @@ class DataCollection(Enum, metaclass=_DataCollectionMeta):
         params['name'] = params.get('name', f'BYOC_{collection_id}')
         params['api_id'] = params.get('api_id', f'byoc-{collection_id}')
         params['catalog_id'] = params.get('catalog_id', f'byoc-{collection_id}')
-        params['wfs_id'] = params.get('wfs_id', f'DSS10-{collection_id}')
+        params['wfs_id'] = params.get('wfs_id', f'byoc-{collection_id}')
         params['collection_type'] = params.get('collection_type', _CollectionType.BYOC)
         params['collection_id'] = collection_id
         return cls.define(**params)
@@ -480,7 +480,7 @@ class DataCollection(Enum, metaclass=_DataCollectionMeta):
         params['name'] = params.get('name', f'BATCH_{collection_id}')
         params['api_id'] = params.get('api_id', f'batch-{collection_id}')
         params['catalog_id'] = params.get('catalog_id', f'batch-{collection_id}')
-        # WFS is not yet supported
+        params['wfs_id'] = params.get('wfs_id', f'batch-{collection_id}')
         params['collection_type'] = params.get('collection_type', _CollectionType.BATCH)
         params['collection_id'] = collection_id
         return cls.define(**params)
