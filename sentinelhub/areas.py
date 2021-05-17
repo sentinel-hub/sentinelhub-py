@@ -65,8 +65,8 @@ class AreaSplitter(ABC):
             return shape
         if isinstance(shape, BaseGeometry):
             return shape.transform(crs).geometry
-        raise ValueError('The list of shapes must contain shapes of types {}, {} or subtype of '
-                         '{}'.format(type(Polygon), type(MultiPolygon), type(BaseGeometry)))
+        raise ValueError(f'The list of shapes must contain shapes of types {Polygon}, {MultiPolygon} or subtype of '
+                         f'{BaseGeometry}')
 
     @staticmethod
     def _parse_split_parameters(split_parameter, allow_float=False):
@@ -84,13 +84,14 @@ class AreaSplitter(ABC):
         parameters_type = (int, float) if allow_float else int
         if isinstance(split_parameter, parameters_type):
             return split_parameter, split_parameter
-        if isinstance(split_parameter, (tuple, list)):
-            if len(split_parameter) == 2 and all(isinstance(param, parameters_type) for param in split_parameter):
-                return split_parameter[0], split_parameter[1]
-            raise ValueError("Split parameter {} must be 2 int{}.".format(split_parameter,
-                                                                          '/float' if allow_float else ''))
-        raise ValueError("Split parameter must be an int{0} or a tuple of 2 int{0}.".format('/float' if allow_float
-                                                                                            else ''))
+
+        if isinstance(split_parameter, (tuple, list)) and len(split_parameter) == 2 and \
+                all(isinstance(param, parameters_type) for param in split_parameter):
+            return split_parameter[0], split_parameter[1]
+
+        extra_type = '/float' if allow_float else ''
+        raise ValueError(f'Split parameter must be an int{extra_type} or a tuple of 2 int{extra_type} but '
+                         f'{split_parameter} was given')
 
     @staticmethod
     def _join_shape_list(shape_list):
@@ -266,7 +267,7 @@ class OsmSplitter(AreaSplitter):
     the specified zoom level. It calculates bounding boxes of all OSM tiles that intersect the area. If specified by
     user it can also reduce the sizes of the remaining bounding boxes to best fit the area.
     """
-    _POP_WEB_MAX = transform_point((180, 0), CRS.WGS84, CRS.POP_WEB)[0]
+    _POP_WEB_MAX = None
 
     def __init__(self, shape_list, crs, zoom_level, **kwargs):
         """
@@ -281,8 +282,10 @@ class OsmSplitter(AreaSplitter):
             the given area geometry from `shape_list`.
         :type reduce_bbox_sizes: bool
         """
-        super().__init__(shape_list, crs, **kwargs)
+        if self._POP_WEB_MAX is None:
+            OsmSplitter._POP_WEB_MAX = transform_point((180, 0), CRS.WGS84, CRS.POP_WEB)[0]
 
+        super().__init__(shape_list, crs, **kwargs)
         self.zoom_level = zoom_level
 
         self._make_split()
@@ -476,7 +479,7 @@ class CustomGridSplitter(AreaSplitter):
         if isinstance(bbox_grid, list):
             return BBoxCollection(bbox_grid)
 
-        raise ValueError("Parameter 'bbox_grid' should be an instance of {}".format(BBoxCollection.__name__))
+        raise ValueError(f"Parameter 'bbox_grid' should be an instance of {BBoxCollection}")
 
     def _make_split(self):
         """ This method makes the split
@@ -550,7 +553,9 @@ class BaseUtmSplitter(AreaSplitter):
         :return: UTM coordinate reference system
         :rtype: sentinelhub.CRS
         """
-        return CRS('32{}{}'.format(6 if utm_dict['direction'] == 'N' else 7, str(utm_dict['zone']).zfill(2)))
+        hemisphere_digit = 6 if utm_dict['direction'] == 'N' else 7
+        zone_digits = str(utm_dict['zone']).zfill(2)
+        return CRS(f'32{hemisphere_digit}{zone_digits}')
 
     def _align_bbox_to_size(self, bbox):
         """ Align input bbox coordinates to be multiples of the bbox size
