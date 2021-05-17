@@ -500,25 +500,42 @@ class CustomGridSplitter(AreaSplitter):
 
 class BaseUtmSplitter(AreaSplitter):
     """ Base splitter that returns bboxes of fixed size aligned to UTM zones or UTM grid tiles as defined by the MGRS
+
+    The generated bounding box grid will have coordinates in form of
+    `(N * bbox_size_x + offset_x, M * bbox_size_y + offset_y)`
     """
-    def __init__(self, shape_list, crs, bbox_size):
+    def __init__(self, shape_list, crs, bbox_size, offset=None):
         """
         :param shape_list: A list of geometrical shapes describing the area of interest
         :type shape_list: list(shapely.geometry.multipolygon.MultiPolygon or shapely.geometry.polygon.Polygon)
         :param crs: Coordinate reference system of the shapes in `shape_list`
         :type crs: CRS
-        :param bbox_size: Physical size in metres of generated bounding boxes. Could be a float or tuple of floats
+        :param bbox_size: A size of generated bounding boxes in horizontal and vertical directions in meters. If a
+            single value is given that will be interpreted as (value, value).
         :type bbox_size: int or (int, int) or float or (float, float)
+        :param offset: Bounding box offset in horizontal and vertical directions in meters.
+        :type offset: (int, int) or (float, float) or None
         """
         super().__init__(shape_list, crs)
 
         self.bbox_size = self._parse_split_parameters(bbox_size, allow_float=True)
+        self.offset = self._parse_offset(offset)
 
         self.shape_geometry = Geometry(self.area_shape, self.crs).transform(CRS.WGS84)
 
         self.utm_grid = self._get_utm_polygons()
 
         self._make_split()
+
+    @staticmethod
+    def _parse_offset(offset_input):
+        """ Validates and parses offset input
+        """
+        if offset_input is None:
+            return 0, 0
+        if isinstance(offset_input, (tuple, list)) and len(offset_input) == 2:
+            return offset_input
+        raise ValueError(f'An offset parameter should be a tuple of two numbers, instead {offset_input} was given')
 
     @abstractmethod
     def _get_utm_polygons(self):
@@ -544,9 +561,13 @@ class BaseUtmSplitter(AreaSplitter):
         :rtype: sentinelhub.BBox
         """
         size_x, size_y = self.bbox_size
+        offset_x, offset_y = self.offset
         lower_left_x, lower_left_y = bbox.lower_left
-        return BBox([(math.floor(lower_left_x / size_x) * size_x, math.floor(lower_left_y / size_y) * size_y),
-                     bbox.upper_right], crs=bbox.crs)
+
+        aligned_x = math.floor((lower_left_x - offset_x) / size_x) * size_x + offset_x
+        aligned_y = math.floor((lower_left_y - offset_y) / size_y) * size_y + offset_y
+
+        return BBox(((aligned_x, aligned_y), bbox.upper_right), crs=bbox.crs)
 
     def _make_split(self):
         """ Split each UTM grid into equally sized bboxes in correct UTM zone
