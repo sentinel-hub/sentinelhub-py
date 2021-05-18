@@ -43,7 +43,10 @@ class TestAreaSplitters(TestSentinelHub):
             cls.SplitterTestCase('UTMGridSplitter',
                                  UtmGridSplitter([cls.area], CRS.WGS84, bbox_size=(1200, 1200)), bbox_len=16),
             cls.SplitterTestCase('UTMZoneSplitter',
-                                 UtmZoneSplitter([cls.area], CRS.WGS84, bbox_size=(1000, 1000)), bbox_len=19)
+                                 UtmZoneSplitter([cls.area], CRS.WGS84, bbox_size=(1000, 1000)), bbox_len=19),
+            cls.SplitterTestCase('UTMZoneSplitter',
+                                 UtmZoneSplitter([cls.area], CRS.WGS84, bbox_size=(1000, 1000), offset=(500, 500)),
+                                 bbox_len=21)
         ]
 
     def test_return_type(self):

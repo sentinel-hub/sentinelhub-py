@@ -65,8 +65,8 @@ class AreaSplitter(ABC):
             return shape
         if isinstance(shape, BaseGeometry):
             return shape.transform(crs).geometry
-        raise ValueError('The list of shapes must contain shapes of types {}, {} or subtype of '
-                         '{}'.format(type(Polygon), type(MultiPolygon), type(BaseGeometry)))
+        raise ValueError(f'The list of shapes must contain shapes of types {Polygon}, {MultiPolygon} or subtype of '
+                         f'{BaseGeometry}')
 
     @staticmethod
     def _parse_split_parameters(split_parameter, allow_float=False):
@@ -84,13 +84,14 @@ class AreaSplitter(ABC):
         parameters_type = (int, float) if allow_float else int
         if isinstance(split_parameter, parameters_type):
             return split_parameter, split_parameter
-        if isinstance(split_parameter, (tuple, list)):
-            if len(split_parameter) == 2 and all(isinstance(param, parameters_type) for param in split_parameter):
-                return split_parameter[0], split_parameter[1]
-            raise ValueError("Split parameter {} must be 2 int{}.".format(split_parameter,
-                                                                          '/float' if allow_float else ''))
-        raise ValueError("Split parameter must be an int{0} or a tuple of 2 int{0}.".format('/float' if allow_float
-                                                                                            else ''))
+
+        if isinstance(split_parameter, (tuple, list)) and len(split_parameter) == 2 and \
+                all(isinstance(param, parameters_type) for param in split_parameter):
+            return split_parameter[0], split_parameter[1]
+
+        extra_type = '/float' if allow_float else ''
+        raise ValueError(f'Split parameter must be an int{extra_type} or a tuple of 2 int{extra_type} but '
+                         f'{split_parameter} was given')
 
     @staticmethod
     def _join_shape_list(shape_list):
@@ -266,7 +267,7 @@ class OsmSplitter(AreaSplitter):
     the specified zoom level. It calculates bounding boxes of all OSM tiles that intersect the area. If specified by
     user it can also reduce the sizes of the remaining bounding boxes to best fit the area.
     """
-    _POP_WEB_MAX = transform_point((180, 0), CRS.WGS84, CRS.POP_WEB)[0]
+    _POP_WEB_MAX = None
 
     def __init__(self, shape_list, crs, zoom_level, **kwargs):
         """
@@ -281,8 +282,10 @@ class OsmSplitter(AreaSplitter):
             the given area geometry from `shape_list`.
         :type reduce_bbox_sizes: bool
         """
-        super().__init__(shape_list, crs, **kwargs)
+        if self._POP_WEB_MAX is None:
+            OsmSplitter._POP_WEB_MAX = transform_point((180, 0), CRS.WGS84, CRS.POP_WEB)[0]
 
+        super().__init__(shape_list, crs, **kwargs)
         self.zoom_level = zoom_level
 
         self._make_split()
@@ -476,7 +479,7 @@ class CustomGridSplitter(AreaSplitter):
         if isinstance(bbox_grid, list):
             return BBoxCollection(bbox_grid)
 
-        raise ValueError("Parameter 'bbox_grid' should be an instance of {}".format(BBoxCollection.__name__))
+        raise ValueError(f"Parameter 'bbox_grid' should be an instance of {BBoxCollection}")
 
     def _make_split(self):
         """ This method makes the split
@@ -500,25 +503,42 @@ class CustomGridSplitter(AreaSplitter):
 
 class BaseUtmSplitter(AreaSplitter):
     """ Base splitter that returns bboxes of fixed size aligned to UTM zones or UTM grid tiles as defined by the MGRS
+
+    The generated bounding box grid will have coordinates in form of
+    `(N * bbox_size_x + offset_x, M * bbox_size_y + offset_y)`
     """
-    def __init__(self, shape_list, crs, bbox_size):
+    def __init__(self, shape_list, crs, bbox_size, offset=None):
         """
         :param shape_list: A list of geometrical shapes describing the area of interest
         :type shape_list: list(shapely.geometry.multipolygon.MultiPolygon or shapely.geometry.polygon.Polygon)
         :param crs: Coordinate reference system of the shapes in `shape_list`
         :type crs: CRS
-        :param bbox_size: Physical size in metres of generated bounding boxes. Could be a float or tuple of floats
+        :param bbox_size: A size of generated bounding boxes in horizontal and vertical directions in meters. If a
+            single value is given that will be interpreted as (value, value).
         :type bbox_size: int or (int, int) or float or (float, float)
+        :param offset: Bounding box offset in horizontal and vertical directions in meters.
+        :type offset: (int, int) or (float, float) or None
         """
         super().__init__(shape_list, crs)
 
         self.bbox_size = self._parse_split_parameters(bbox_size, allow_float=True)
+        self.offset = self._parse_offset(offset)
 
         self.shape_geometry = Geometry(self.area_shape, self.crs).transform(CRS.WGS84)
 
         self.utm_grid = self._get_utm_polygons()
 
         self._make_split()
+
+    @staticmethod
+    def _parse_offset(offset_input):
+        """ Validates and parses offset input
+        """
+        if offset_input is None:
+            return 0, 0
+        if isinstance(offset_input, (tuple, list)) and len(offset_input) == 2:
+            return tuple(offset_input)
+        raise ValueError(f'An offset parameter should be a tuple of two numbers, instead {offset_input} was given')
 
     @abstractmethod
     def _get_utm_polygons(self):
@@ -533,7 +553,9 @@ class BaseUtmSplitter(AreaSplitter):
         :return: UTM coordinate reference system
         :rtype: sentinelhub.CRS
         """
-        return CRS('32{}{}'.format(6 if utm_dict['direction'] == 'N' else 7, str(utm_dict['zone']).zfill(2)))
+        hemisphere_digit = 6 if utm_dict['direction'] == 'N' else 7
+        zone_number = utm_dict['zone']
+        return CRS(f'32{hemisphere_digit}{zone_number:02d}')
 
     def _align_bbox_to_size(self, bbox):
         """ Align input bbox coordinates to be multiples of the bbox size
@@ -544,9 +566,13 @@ class BaseUtmSplitter(AreaSplitter):
         :rtype: sentinelhub.BBox
         """
         size_x, size_y = self.bbox_size
+        offset_x, offset_y = self.offset
         lower_left_x, lower_left_y = bbox.lower_left
-        return BBox([(math.floor(lower_left_x / size_x) * size_x, math.floor(lower_left_y / size_y) * size_y),
-                     bbox.upper_right], crs=bbox.crs)
+
+        aligned_x = math.floor((lower_left_x - offset_x) / size_x) * size_x + offset_x
+        aligned_y = math.floor((lower_left_y - offset_y) / size_y) * size_y + offset_y
+
+        return BBox(((aligned_x, aligned_y), bbox.upper_right), crs=bbox.crs)
 
     def _make_split(self):
         """ Split each UTM grid into equally sized bboxes in correct UTM zone
