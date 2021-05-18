@@ -537,7 +537,7 @@ class BaseUtmSplitter(AreaSplitter):
         if offset_input is None:
             return 0, 0
         if isinstance(offset_input, (tuple, list)) and len(offset_input) == 2:
-            return offset_input
+            return tuple(offset_input)
         raise ValueError(f'An offset parameter should be a tuple of two numbers, instead {offset_input} was given')
 
     @abstractmethod
@@ -554,8 +554,8 @@ class BaseUtmSplitter(AreaSplitter):
         :rtype: sentinelhub.CRS
         """
         hemisphere_digit = 6 if utm_dict['direction'] == 'N' else 7
-        zone_digits = str(utm_dict['zone']).zfill(2)
-        return CRS(f'32{hemisphere_digit}{zone_digits}')
+        zone_number = utm_dict['zone']
+        return CRS(f'32{hemisphere_digit}{zone_number:02d}')
 
     def _align_bbox_to_size(self, bbox):
         """ Align input bbox coordinates to be multiples of the bbox size
