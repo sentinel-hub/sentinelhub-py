@@ -127,7 +127,7 @@ class TestOgc(TestSentinelHub):
                                        image_format=MimeType.TIFF, layer='BANDS-S2-L2A',
                                        width=img_width, height=img_height, bbox=wgs84_bbox,
                                        time=('2017-10-01', '2017-10-02')),
-                            result_len=1, img_min=0.0, img_max=1.6720, img_mean=0.39766, img_median=0.3393, tile_num=2),
+                            result_len=1, img_min=0.0, img_max=1.6167, img_mean=0.39534, img_median=0.3373, tile_num=2),
             cls.OgcTestCase('L8 Test',
                             WmsRequest(data_collection=DataCollection.LANDSAT8, data_folder=cls.OUTPUT_FOLDER,
                                        image_format=MimeType.TIFF, layer='BANDS-L8',
