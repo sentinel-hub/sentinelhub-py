@@ -265,7 +265,7 @@ class SafeTile(AwsTile):
         tree = client.get_xml(self.get_url(AwsConstants.METADATA))
 
         tile_id_tag = 'TILE_ID_2A' if (self.data_collection is DataCollection.SENTINEL2_L2A
-                                       and self.baseline <= '02.06') else 'TILE_ID'
+                                       and '00.01' < self.baseline <= '02.06') else 'TILE_ID'
         tile_id = tree[0].find(tile_id_tag).text
         if self.safe_type is EsaSafeType.OLD_TYPE:
             return tile_id
