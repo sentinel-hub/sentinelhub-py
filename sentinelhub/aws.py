@@ -300,7 +300,7 @@ class AwsService(ABC):
         :rtype: bool
         """
         return self.data_collection is DataCollection.SENTINEL2_L2A and self.safe_type is EsaSafeType.COMPACT_TYPE and \
-            self.baseline <= '02.06'
+            '00.01' < self.baseline <= '02.06'
 
 
 class AwsProduct(AwsService):
