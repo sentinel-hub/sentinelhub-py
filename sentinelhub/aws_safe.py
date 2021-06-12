@@ -248,7 +248,7 @@ class SafeTile(AwsTile):
             safe[main_folder][AwsConstants.QI_DATA][self.get_img_name(AwsConstants.PVI)] = self.get_preview_url('L2A')
 
         preview_type = 'L2A' if (self.data_collection is DataCollection.SENTINEL2_L2A
-                                 and self.baseline >= '02.07') else 'L1C'
+                                 and (self.baseline >= '02.07' or self.baseline == '00.01')) else 'L1C'
         safe[main_folder][AwsConstants.QI_DATA][self.get_preview_name()] = self.get_preview_url(preview_type)
 
         safe[main_folder][self.get_tile_metadata_name()] = self.get_url(AwsConstants.METADATA)
