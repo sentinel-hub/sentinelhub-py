@@ -237,7 +237,7 @@ class SafeTile(AwsTile):
         if self.data_collection is DataCollection.SENTINEL2_L2A:
             for mask in AwsConstants.CLASS_MASKS:
                 for resolution in [AwsConstants.R20m, AwsConstants.R60m]:
-                    if self.baseline <= '02.06':
+                    if self.baseline <= '02.06' or self.baseline == '00.01':
                         mask_name = self.get_img_name(mask, resolution)
                     else:
                         mask_name = self.get_qi_name('{}PRB'.format(mask), resolution.lstrip('R'), MimeType.JP2)
