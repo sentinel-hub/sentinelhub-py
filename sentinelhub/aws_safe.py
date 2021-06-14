@@ -348,7 +348,7 @@ class SafeTile(AwsTile):
             name = '_'.join([self.tile_id.split('_')[1], self.get_datatake_time(), band])
         if self.data_collection is DataCollection.SENTINEL2_L2A and resolution is not None:
             name = '{}_{}'.format(name, resolution.lstrip('R'))
-        if self.data_collection is DataCollection.SENTINEL2_L2A and self.baseline <= '02.06':
+        if self.data_collection is DataCollection.SENTINEL2_L2A and '00.01' < self.baseline <= '02.06':
             name = 'L2A_{}'.format(name)
         return '{}.jp2'.format(name)
 
