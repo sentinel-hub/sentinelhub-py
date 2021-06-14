@@ -63,7 +63,7 @@ class CRSMeta(EnumMeta):
         """
         for direction, direction_value in [('N', '6'), ('S', '7')]:
             for zone in range(1, 61):
-                classdict['UTM_{}{}'.format(zone, direction)] = '32{}{}'.format(direction_value, str(zone).zfill(2))
+                classdict[f'UTM_{zone}{direction}'] = f'32{direction_value}{zone:02}'
 
         return super().__new__(mcs, cls, bases, classdict)
 
@@ -74,7 +74,7 @@ class CRSMeta(EnumMeta):
         crs_value = cls._parse_crs(crs_value)
 
         if isinstance(crs_value, str) and not cls.has_value(crs_value) and crs_value.isdigit() and len(crs_value) >= 4:
-            crs_name = 'EPSG_{}'.format(crs_value)
+            crs_name = f'EPSG_{crs_value}'
             extend_enum(cls, crs_name, crs_value)
 
         return super().__call__(crs_value, *args, **kwargs)
@@ -139,7 +139,7 @@ class CRS(Enum, metaclass=CRSMeta):
     def __repr__(self):
         """ Method for retrieving CRS enum representation
         """
-        return "CRS('{}')".format(self.value)
+        return f"CRS('{self.value}')"
 
     @classmethod
     def has_value(cls, value):
@@ -169,7 +169,7 @@ class CRS(Enum, metaclass=CRSMeta):
         :return: A string representation of the CRS.
         :rtype: str
         """
-        return 'EPSG:{}'.format(CRS(self).value)
+        return f'EPSG:{CRS(self).value}'
 
     @property
     def opengis_string(self):
@@ -178,7 +178,7 @@ class CRS(Enum, metaclass=CRSMeta):
         :return: An URL with CRS definition
         :rtype: str
         """
-        return 'http://www.opengis.net/def/crs/EPSG/0/{}'.format(self.epsg)
+        return f'http://www.opengis.net/def/crs/EPSG/0/{self.epsg}'
 
     def is_utm(self):
         """ Checks if crs is one of the 64 possible UTM coordinate reference systems.
@@ -238,7 +238,7 @@ class CRS(Enum, metaclass=CRSMeta):
         """
         _, _, zone, _ = utm.from_latlon(lat, lng)
         direction = 'N' if lat >= 0 else 'S'
-        return CRS['UTM_{}{}'.format(str(zone), direction)]
+        return CRS[f'UTM_{zone}{direction}']
 
     def _get_pyproj_projection_def(self):
         """ Returns a pyproj crs definition
@@ -351,7 +351,7 @@ class MimeType(Enum):
                 'h5': MimeType.HDF
             }[mime_type_str]
         except KeyError as exception:
-            raise ValueError('Data format .{} is not supported'.format(mime_type_str)) from exception
+            raise ValueError(f'Data format .{mime_type_str} is not supported') from exception
 
     @staticmethod
     def canonical_extension(fmt_ext):
@@ -423,7 +423,7 @@ class MimeType(Enum):
                 MimeType.JP2: 10000
             }[self]
         except KeyError as exception:
-            raise ValueError('Type {} is not supported by this method'.format(self)) from exception
+            raise ValueError(f'Type {self} is not supported by this method') from exception
 
 
 class RequestType(Enum):
@@ -441,7 +441,7 @@ class SHConstants:
         Constants are LATEST
     """
     LATEST = 'latest'
-    HEADERS = {'User-Agent': 'sentinelhub-py/v{}'.format(PackageProps.get_version())}
+    HEADERS = {'User-Agent': f'sentinelhub-py/v{PackageProps.get_version()}'}
 
 
 class AwsConstants:
@@ -507,25 +507,23 @@ class AwsConstants:
     S2_L1C_BANDS = ['B01', 'B02', 'B03', 'B04', 'B05', 'B06', 'B07', 'B08', 'B8A', 'B09', 'B10', 'B11', 'B12']
     S2_L1C_METAFILES = [PRODUCT_INFO, TILE_INFO, METADATA, INSPIRE, MANIFEST, DATASTRIP_METADATA] +\
                        [PREVIEW, PREVIEW_JP2, TCI] +\
-                       ['{}/{}'.format(preview, band) for preview, band in it.zip_longest([], S2_L1C_BANDS,
-                                                                                          fillvalue=PREVIEW)] +\
+                       [f'{preview}/{band}' for preview, band in it.zip_longest([], S2_L1C_BANDS, fillvalue=PREVIEW)] +\
                        [QI_MSK_CLOUD] +\
-                       ['qi/MSK_{}_{}'.format(qi, band) for qi, band in it.product(QI_LIST, S2_L1C_BANDS)] + \
-                       ['qi/{}'.format(qi_report) for qi_report in [FORMAT_CORRECTNESS, GENERAL_QUALITY,
-                                                                    GEOMETRIC_QUALITY, SENSOR_QUALITY]] +\
+                       [f'qi/MSK_{qi}_{band}' for qi, band in it.product(QI_LIST, S2_L1C_BANDS)] + \
+                       [f'qi/{qi_report}' for qi_report in [FORMAT_CORRECTNESS, GENERAL_QUALITY,
+                                                            GEOMETRIC_QUALITY, SENSOR_QUALITY]] +\
                        [ECMWFT]
 
     # Sentinel-2 L2A products:
-    S2_L2A_BANDS = ['{}/{}'.format(resolution, band) for resolution, band_list in sorted(S2_L2A_BAND_MAP.items())
+    S2_L2A_BANDS = [f'{resolution}/{band}' for resolution, band_list in sorted(S2_L2A_BAND_MAP.items())
                     for band in band_list]
     S2_L2A_METAFILES = [PRODUCT_INFO, TILE_INFO, METADATA, INSPIRE, MANIFEST, L2A_MANIFEST, REPORT,
-                        DATASTRIP_METADATA] + ['datastrip/*/qi/{}'.format(qi_report)for qi_report in QUALITY_REPORTS] +\
-                       ['qi/{}_PVI'.format(source_id) for source_id in SOURCE_ID_LIST] +\
-                       ['qi/{}_{}'.format(mask, res.lstrip('R')) for mask, res in it.product(CLASS_MASKS,
-                                                                                             [R20m, R60m])] +\
-                       ['qi/MSK_{}_{}'.format(qi, band) for qi, band in it.product(QI_LIST, S2_L1C_BANDS)] +\
+                        DATASTRIP_METADATA] + [f'datastrip/*/qi/{qi_report}' for qi_report in QUALITY_REPORTS] +\
+                       [f'qi/{source_id}_PVI' for source_id in SOURCE_ID_LIST] +\
+                       [f'qi/{mask}_{res.lstrip("R")}' for mask, res in it.product(CLASS_MASKS, [R20m, R60m])] +\
+                       [f'qi/MSK_{qi}_{band}' for qi, band in it.product(QI_LIST, S2_L1C_BANDS)] +\
                        [QI_MSK_CLOUD] +\
-                       ['qi/{}'.format(qi_report) for qi_report in QUALITY_REPORTS] +\
+                       [f'qi/{qi_report}' for qi_report in QUALITY_REPORTS] +\
                        [ECMWFT, AUX_ECMWFT, GIPP]
 
     # Product files with formats:
@@ -536,7 +534,7 @@ class AwsConstants:
                         L2A_MANIFEST: MimeType.XML,
                         REPORT: MimeType.XML,
                         DATASTRIP_METADATA: MimeType.XML},
-                     **{'datastrip/*/qi/{}'.format(qi_report): MimeType.XML for qi_report in QUALITY_REPORTS}}
+                     **{f'datastrip/*/qi/{qi_report}': MimeType.XML for qi_report in QUALITY_REPORTS}}
     # Tile files with formats:
     TILE_FILES = {**{TILE_INFO: MimeType.JSON,
                      PRODUCT_INFO: MimeType.JSON,
@@ -548,15 +546,15 @@ class AwsConstants:
                      ECMWFT: MimeType.RAW,
                      AUX_ECMWFT: MimeType.RAW,
                      GIPP: MimeType.XML},
-                  **{'qi/{}'.format(qi_report): MimeType.XML for qi_report in QUALITY_REPORTS},
-                  **{'{}/{}'.format(preview, band): MimeType.JP2
+                  **{f'qi/{qi_report}': MimeType.XML for qi_report in QUALITY_REPORTS},
+                  **{f'{preview}/{band}': MimeType.JP2
                      for preview, band in it.zip_longest([], S2_L1C_BANDS, fillvalue=PREVIEW)},
-                  **{'qi/MSK_{}_{}'.format(qi, band): MimeType.GML for qi, band in it.product(QI_LIST, S2_L1C_BANDS)},
+                  **{f'qi/MSK_{qi}_{band}': MimeType.GML for qi, band in it.product(QI_LIST, S2_L1C_BANDS)},
                   **{band: MimeType.JP2 for band in S2_L1C_BANDS},
                   **{band: MimeType.JP2 for band in S2_L2A_BANDS},
-                  **{'qi/{}_PVI'.format(source_id): MimeType.JP2 for source_id in SOURCE_ID_LIST},
-                  **{'qi/{}_{}'.format(mask, res.lstrip('R')): MimeType.JP2 for mask, res in it.product(CLASS_MASKS,
-                                                                                                        [R20m, R60m])}}
+                  **{f'qi/{source_id}_PVI': MimeType.JP2 for source_id in SOURCE_ID_LIST},
+                  **{f'qi/{mask}_{res.lstrip("R")}': MimeType.JP2 for mask, res in it.product(CLASS_MASKS,
+                                                                                              [R20m, R60m])}}
 
     # All files joined together
     AWS_FILES = {**PRODUCT_FILES,
