@@ -116,13 +116,17 @@ class SentinelHubBatch:
         return payload
 
     @staticmethod
-    def output(*, default_tile_path=None, cog_output=None, cog_parameters=None, create_collection=None,
-               collection_id=None, responses=None, **kwargs):
+    def output(*, default_tile_path=None, overwrite=None, skip_existing=None, cog_output=None, cog_parameters=None,
+               create_collection=None, collection_id=None, responses=None, **kwargs):
         """ A helper method to build a dictionary with tiling grid parameters
 
         :param default_tile_path: A path or a template on an s3 bucket where to store results. More info at Batch API
             documentation
         :type default_tile_path: str or None
+        :param overwrite: A flag specifying if a request should overwrite existing outputs without failing
+        :type overwrite: bool or None
+        :param skip_existing: A flag specifying if existing outputs should be overwritten
+        :type skip_existing: bool or None
         :param cog_output: A flag specifying if outputs should be written in COGs (cloud-optimized GeoTIFFs )or
             normal GeoTIFFs
         :type cog_output: bool or None
@@ -140,6 +144,8 @@ class SentinelHubBatch:
         """
         return remove_undefined({
             'defaultTilePath': default_tile_path,
+            'overwrite': overwrite,
+            'skipExisting': skip_existing,
             'cogOutput': cog_output,
             'cogParameters': cog_parameters,
             'createCollection': create_collection,
@@ -247,7 +253,7 @@ class SentinelHubBatch:
         return Geometry(geometry, crs)
 
     @staticmethod
-    def iter_requests(user_id=None, config=None, **kwargs):
+    def iter_requests(user_id=None, count=None, search=None, sort=None, config=None, **kwargs):
         """ Iterate existing batch requests
 
         `Batch API reference
@@ -255,6 +261,12 @@ class SentinelHubBatch:
 
         :param user_id: Filter requests by a user id who defined a request
         :type user_id: str or None
+        :param count: Maximal number of items to return
+        :type count: int or None
+        :param search: A search query to filter requests
+        :type search: str or None
+        :param sort: A sort query
+        :type sort: str or None
         :param config: A configuration object
         :type config: SHConfig or None
         :param kwargs: Any additional parameters to include in a request query
@@ -264,6 +276,9 @@ class SentinelHubBatch:
         url = SentinelHubBatch._get_process_url(config)
         params = remove_undefined({
             'userid': user_id,
+            'count': count,
+            'search': search,
+            'sort': sort,
             **kwargs
         })
         feature_iterator = SentinelHubFeatureIterator(
