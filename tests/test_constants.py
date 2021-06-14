@@ -1,4 +1,5 @@
 import unittest
+import warnings
 
 import pyproj
 
@@ -35,7 +36,6 @@ class TestCRS(TestSentinelHub):
             ('urn:ogc:def:crs:epsg::32631', CRS.UTM_31N),
             ('urn:ogc:def:crs:OGC::CRS84', CRS.WGS84),
             (pyproj.CRS(3857), CRS.POP_WEB),
-            (pyproj.CRS(3857), CRS.POP_WEB),
         ]
         for parse_value, expected_result in test_cases:
             with self.subTest(msg=str(parse_value)):
@@ -45,6 +45,14 @@ class TestCRS(TestSentinelHub):
         with self.assertWarns(SHUserWarning):
             wgs84 = CRS(pyproj.CRS(4326))
         self.assertEqual(wgs84, CRS.WGS84)
+
+    def test_failed_crs_parsing(self):
+        with warnings.catch_warnings():
+            warnings.simplefilter('ignore')
+            wgs84_with_init = pyproj.CRS({'init': 'epsg:4326'})
+
+        with self.assertRaises(ValueError):
+            CRS(wgs84_with_init)
 
     def test_ogc_string(self):
         crs_values = (

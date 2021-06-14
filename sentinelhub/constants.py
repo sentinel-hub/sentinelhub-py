@@ -98,7 +98,16 @@ class CRSMeta(EnumMeta):
                           'to use the correct order of coordinates.'
                 warnings.warn(message, category=SHUserWarning)
 
-            value = value.to_epsg()
+            epsg_code = value.to_epsg()
+            if epsg_code is not None:
+                return str(epsg_code)
+
+            error_message = f'Failed to determine an EPSG code of the given CRS:\n{repr(value)}'
+            maybe_epsg = value.to_epsg(min_confidence=0)
+            if maybe_epsg is not None:
+                error_message = f'{error_message}\nIt might be EPSG {maybe_epsg} but pyproj is not confident ' \
+                                'enough.'
+            raise ValueError(error_message)
 
         if isinstance(value, int):
             return str(value)
