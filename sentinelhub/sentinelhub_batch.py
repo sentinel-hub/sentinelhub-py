@@ -298,8 +298,8 @@ class SentinelHubBatch:
         )
         try:
             return next(latest_request_iter)
-        except StopIteration:
-            raise ValueError('No batch request is available')
+        except StopIteration as exception:
+            raise ValueError('No batch request is available') from exception
 
     def delete(self):
         """ Delete a batch job request
