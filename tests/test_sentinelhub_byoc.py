@@ -151,11 +151,11 @@ def test_update_tile(byoc, collection, tile, requests_mock):
     updated_tile = dict(tile)
     updated_tile['sensingTime']: datetime.now().isoformat()
 
-    requests_mock.put(mocked_url, json={'data': updated_tile})
+    requests_mock.put(mocked_url, content=None)
 
     response = byoc.update_tile(collection=collection, tile=updated_tile)
 
-    assert ByocTile.from_dict(response) == ByocTile.from_dict(updated_tile)
+    assert response == ''
 
 
 def test_delete_tile(byoc, collection, tile, requests_mock):
