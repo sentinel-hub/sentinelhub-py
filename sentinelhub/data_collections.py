@@ -17,18 +17,19 @@ from .exceptions import SHDeprecationWarning
 class _CollectionType:
     """ Types of Sentinel Hub data collections
     """
-    SENTINEL2 = 'Sentinel-2'
     SENTINEL1 = 'Sentinel-1'
+    SENTINEL2 = 'Sentinel-2'
+    SENTINEL3 = 'Sentinel-3'
+    SENTINEL5P = 'Sentinel-5P'
+    LANDSAT45 = 'Landsat 4-5'
+    LANDSAT5 = 'Landsat 5'
+    LANDSAT7 = 'Landsat 7'
     LANDSAT8 = 'Landsat 8'
     MODIS = 'MODIS'
+    ENVISAT_MERIS = 'Envisat Meris'
     DEM = 'DEM'
     BYOC = 'BYOC'
     BATCH = 'BATCH'
-    LANDSAT5 = 'Landsat 5'
-    LANDSAT7 = 'Landsat 7'
-    SENTINEL3 = 'Sentinel-3'
-    SENTINEL5P = 'Sentinel-5P'
-    ENVISAT_MERIS = 'Envisat Meris'
 
 
 class _SensorType:
@@ -36,6 +37,8 @@ class _SensorType:
     """
     # pylint: disable=invalid-name
     MSI = 'MSI'
+    OLI_TIRS = 'OLI-TIRS'
+    TM = 'TM'
     C_SAR = 'C-SAR'
     OLCI = 'OLCI'
     SLSTR = 'SLSTR'
@@ -46,11 +49,12 @@ class _ProcessingLevel:
     """ Processing levels
     """
     # pylint: disable=invalid-name
+    L1 = 'L1'
+    L2 = 'L2'
     L1B = 'L1B'
     L1C = 'L1C'
     L2A = 'L2A'
     L3B = 'L3B'
-    L2 = 'L2'
     GRD = 'GRD'
 
 
@@ -96,19 +100,21 @@ class OrbitDirection:
 class _Bands:
     """ Different collections of bands
     """
+    SENTINEL1_IW = ('VV', 'VH')
+    SENTINEL1_EW = ('HH', 'HV')
+    SENTINEL1_EW_SH = ('HH',)
     SENTINEL2_L1C = ('B01', 'B02', 'B03', 'B04', 'B05', 'B06', 'B07', 'B08', 'B8A', 'B09', 'B10', 'B11', 'B12')
     SENTINEL2_L2A = ('B01', 'B02', 'B03', 'B04', 'B05', 'B06', 'B07', 'B08', 'B8A', 'B09', 'B11', 'B12')
     SENTINEL3_OLCI = tuple(f'B{str(index).zfill(2)}' for index in range(1, 22))
     SENTINEL3_SLSTR = ('S1', 'S2', 'S3', 'S4', 'S5', 'S6', 'S7', 'S8', 'S9', 'F1', 'F2')
-    LANDSAT8 = ('B01', 'B02', 'B03', 'B04', 'B05', 'B06', 'B07', 'B08', 'B09', 'B10', 'B11')
-    DEM = ('DEM',)
-    MODIS = ('B01', 'B02', 'B03', 'B04', 'B05', 'B06', 'B07')
-    SENTINEL1_IW = ('VV', 'VH')
-    SENTINEL1_EW = ('HH', 'HV')
-    SENTINEL1_EW_SH = ('HH',)
     SENTINEL5P = ('AER_AI_340_380', 'AER_AI_354_388', 'CLOUD_BASE_HEIGHT', 'CLOUD_BASE_PRESSURE', 'CLOUD_FRACTION',
                   'CLOUD_OPTICAL_THICKNESS', 'CLOUD_TOP_HEIGHT', 'CLOUD_TOP_PRESSURE', 'CO', 'HCHO', 'NO2', 'O3',
                   'SO2', 'CH4')
+    LANDSAT45 = ('B01', 'B02', 'B03', 'B04', 'B05', 'B06', 'B07')
+    LANDSAT8 = ('B01', 'B02', 'B03', 'B04', 'B05', 'B06', 'B07', 'B08', 'B09', 'B10', 'B11')
+    LANDSAT8_L2 = ('B01', 'B02', 'B03', 'B04', 'B05', 'B06', 'B07', 'B10')
+    DEM = ('DEM',)
+    MODIS = ('B01', 'B02', 'B03', 'B04', 'B05', 'B06', 'B07')
 
 
 class _DataCollectionMeta(EnumMeta):
@@ -280,15 +286,47 @@ class DataCollection(Enum, metaclass=_DataCollectionMeta):
         collection_type=_CollectionType.MODIS,
         bands=_Bands.MODIS
     )
+
+    LANDSAT45_L1 = DataCollectionDefinition(
+        api_id='landsat-tm-l1',
+        catalog_id='landsat-tm-l1',
+        wfs_id='DSS15',
+        service_url=ServiceUrl.USWEST,
+        collection_type=_CollectionType.LANDSAT45,
+        sensor_type=_SensorType.TM,
+        processing_level=_ProcessingLevel.L1,
+        bands=_Bands.LANDSAT45,
+        has_cloud_coverage=True
+    )
+    LANDSAT45_L2 = LANDSAT45_L1.derive(
+        api_id='landsat-tm-l2',
+        catalog_id='landsat-tm-l2',
+        wfs_id='DSS16',
+        processing_level=_ProcessingLevel.L2
+    )
+
     LANDSAT8 = DataCollectionDefinition(
         api_id='landsat-8-l1c',
         catalog_id='landsat-8-l1c',
         wfs_id='DSS6',
         service_url=ServiceUrl.USWEST,
         collection_type=_CollectionType.LANDSAT8,
-        processing_level=_ProcessingLevel.L1C,
+        sensor_type=_SensorType.OLI_TIRS,
+        processing_level=_ProcessingLevel.L1,
         bands=_Bands.LANDSAT8,
         has_cloud_coverage=True
+    )
+    LANDSAT8_L1 = LANDSAT8.derive(
+        api_id='landsat-ot-l1',
+        catalog_id='landsat-ot-l1',
+        wfs_id='DSS12'
+    )
+    LANDSAT8_L2 = LANDSAT8.derive(
+        api_id='landsat-ot-l2',
+        catalog_id='landsat-ot-l2',
+        wfs_id='DSS13',
+        processing_level=_ProcessingLevel.L2,
+        bands=_Bands.LANDSAT8_L2
     )
 
     SENTINEL5P = DataCollectionDefinition(
@@ -344,7 +382,7 @@ class DataCollection(Enum, metaclass=_DataCollectionMeta):
     def define(cls, name, *, api_id=None, catalog_id=None, wfs_id=None, service_url=None, collection_type=None,
                sensor_type=None, processing_level=None, swath_mode=None, polarization=None, resolution=None,
                orbit_direction=None, timeliness=None, bands=None, collection_id=None, is_timeless=False,
-               dem_instance=None):
+               has_cloud_coverage=False, dem_instance=None):
         """ Define a new data collection
 
         Note that all parameters, except `name` are optional. If a data collection definition won't be used for a
@@ -383,8 +421,11 @@ class DataCollection(Enum, metaclass=_DataCollectionMeta):
         :type collection_id: str or None
         :param is_timeless: `True` if a data collection can be filtered by time dimension and `False` otherwise
         :type is_timeless: bool
+        :param has_cloud_coverage: `True` if data collection can be filtered by cloud coverage percentage and `False`
+            otherwise
+        :type has_cloud_coverage: bool
         :param dem_instance: one of the options listed in
-                `DEM documentation <https://docs.sentinel-hub.com/api/latest/data/dem/#deminstance>`__
+            `DEM documentation <https://docs.sentinel-hub.com/api/latest/data/dem/#deminstance>`__
         :type dem_instance: str or None
         :return: A new data collection
         :rtype: DataCollection
@@ -405,6 +446,7 @@ class DataCollection(Enum, metaclass=_DataCollectionMeta):
             bands=bands,
             collection_id=collection_id,
             is_timeless=is_timeless,
+            has_cloud_coverage=has_cloud_coverage,
             dem_instance=dem_instance
         )
         cls._try_add_data_collection(name, definition)
