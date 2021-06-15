@@ -446,6 +446,7 @@ class DataCollection(Enum, metaclass=_DataCollectionMeta):
             bands=bands,
             collection_id=collection_id,
             is_timeless=is_timeless,
+            has_cloud_coverage=has_cloud_coverage,
             dem_instance=dem_instance
         )
         cls._try_add_data_collection(name, definition)
