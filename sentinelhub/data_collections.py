@@ -192,7 +192,7 @@ class DataCollection(Enum, metaclass=_DataCollectionMeta):
     the service. Check `DataCollection.define` and similar methods for more.
     """
     SENTINEL2_L1C = DataCollectionDefinition(
-        api_id='S2L1C',
+        api_id='sentinel-2-l1c',
         catalog_id='sentinel-2-l1c',
         wfs_id='DSS1',
         collection_type=_CollectionType.SENTINEL2,
@@ -202,7 +202,7 @@ class DataCollection(Enum, metaclass=_DataCollectionMeta):
         has_cloud_coverage=True
     )
     SENTINEL2_L2A = DataCollectionDefinition(
-        api_id='S2L2A',
+        api_id='sentinel-2-l2a',
         catalog_id='sentinel-2-l2a',
         wfs_id='DSS2',
         collection_type=_CollectionType.SENTINEL2,
@@ -213,7 +213,7 @@ class DataCollection(Enum, metaclass=_DataCollectionMeta):
     )
 
     SENTINEL1 = DataCollectionDefinition(
-        api_id='S1GRD',
+        api_id='sentinel-1-grd',
         catalog_id='sentinel-1-grd',
         wfs_id='DSS3',
         collection_type=_CollectionType.SENTINEL1,
@@ -257,7 +257,7 @@ class DataCollection(Enum, metaclass=_DataCollectionMeta):
     )
 
     DEM = DataCollectionDefinition(
-        api_id='DEM',
+        api_id='dem',
         collection_type=_CollectionType.DEM,
         bands=_Bands.DEM,
         is_timeless=True
@@ -273,7 +273,7 @@ class DataCollection(Enum, metaclass=_DataCollectionMeta):
     )
 
     MODIS = DataCollectionDefinition(
-        api_id='MODIS',
+        api_id='modis',
         catalog_id='modis',
         wfs_id='DSS5',
         service_url=ServiceUrl.USWEST,
@@ -281,7 +281,7 @@ class DataCollection(Enum, metaclass=_DataCollectionMeta):
         bands=_Bands.MODIS
     )
     LANDSAT8 = DataCollectionDefinition(
-        api_id='L8L1C',
+        api_id='landsat-8-l1c',
         catalog_id='landsat-8-l1c',
         wfs_id='DSS6',
         service_url=ServiceUrl.USWEST,
@@ -292,7 +292,7 @@ class DataCollection(Enum, metaclass=_DataCollectionMeta):
     )
 
     SENTINEL5P = DataCollectionDefinition(
-        api_id='S5PL2',
+        api_id='sentinel-5p-l2',
         catalog_id='sentinel-5p-l2',
         wfs_id='DSS7',
         service_url=ServiceUrl.CREODIAS,
@@ -302,7 +302,7 @@ class DataCollection(Enum, metaclass=_DataCollectionMeta):
         bands=_Bands.SENTINEL5P
     )
     SENTINEL3_OLCI = DataCollectionDefinition(
-        api_id='S3OLCI',
+        api_id='sentinel-3-olci',
         catalog_id='sentinel-3-olci',
         wfs_id='DSS8',
         service_url=ServiceUrl.CREODIAS,
@@ -312,7 +312,7 @@ class DataCollection(Enum, metaclass=_DataCollectionMeta):
         bands=_Bands.SENTINEL3_OLCI
     )
     SENTINEL3_SLSTR = DataCollectionDefinition(
-        api_id='S3SLSTR',
+        api_id='sentinel-3-slstr',
         catalog_id='sentinel-3-slstr',
         wfs_id='DSS9',
         service_url=ServiceUrl.CREODIAS,

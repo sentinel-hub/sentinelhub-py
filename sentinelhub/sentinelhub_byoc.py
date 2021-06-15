@@ -93,16 +93,22 @@ class SentinelHubBYOC:
 
         self.client = SentinelHubDownloadClient(config=self.config)
 
-    def iter_collections(self):
+    def iter_collections(self, search=None, **kwargs):
         """ Retrieve collections
 
         `BYOC API reference <https://docs.sentinel-hub.com/api/latest/reference/#operation/getByocCollections>`__
 
+        :param search: A search query
+        :param kwargs: Any other request parameters
         :return: iterator over collections
         """
         return SentinelHubFeatureIterator(
             client=self.client,
             url=f'{self.byoc_url}/collections',
+            params={
+                'search': search,
+                **kwargs
+            },
             exception_message='Failed to obtain information about available BYOC collections'
         )
 
@@ -166,18 +172,26 @@ class SentinelHubBYOC:
               f'/copyTiles?toCollection={self._parse_id(to_collection)}'
         return self.client.get_json(url=url, request_type=RequestType.POST, use_session=True)
 
-    def iter_tiles(self, collection):
+    def iter_tiles(self, collection, sort=None, path=None, **kwargs):
         """ Iterator over collection tiles
 
         `BYOC API reference <https://docs.sentinel-hub.com/api/latest/reference/#operation/getByocCollectionTiles>`__
 
         :param collection: a ByocCollection, dict or collection id string
+        :param sort: Order in which to return tiles
+        :param path: An exact path where tiles are located
+        :param kwargs: Any other request parameters
         :return: iterator
         """
         collection_id = self._parse_id(collection)
         return SentinelHubFeatureIterator(
             client=self.client,
             url=f'{self.byoc_url}/collections/{collection_id}/tiles',
+            params={
+                'sort': sort,
+                'path': path,
+                **kwargs
+            },
             exception_message=f'Failed to obtain information about tiles in BYOC collection {collection_id}'
         )
 
@@ -228,7 +242,7 @@ class SentinelHubBYOC:
         })
 
         return self.client.get_json(url=url, request_type=RequestType.PUT, post_values=updates,
-                                    headers=headers, use_session=True)['data']
+                                    headers=headers, use_session=True)
 
     def delete_tile(self, collection, tile):
         """ Delete a tile from collection

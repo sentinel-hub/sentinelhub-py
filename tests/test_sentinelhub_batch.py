@@ -99,5 +99,9 @@ def test_create_and_run_batch_request(config, requests_mock):
 
 def test_iter_requests(config):
     batch_requests = list(it.islice(SentinelHubBatch.iter_requests(config=config), 10))
-
     assert all(isinstance(request, SentinelHubBatch) for request in batch_requests)
+
+    if batch_requests:
+        latest_request = SentinelHubBatch.get_latest_request(config=config)
+        assert isinstance(latest_request, SentinelHubBatch)
+        assert all(latest_request.info['created'] >= request.info['created'] for request in batch_requests)

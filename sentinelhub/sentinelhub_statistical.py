@@ -19,7 +19,7 @@ class SentinelHubStatistical(SentinelHubBaseApiRequest):
     def __init__(self, aggregation, input_data, bbox=None, geometry=None, calculations=None, **kwargs):
         """
         For details of certain parameters check the
-        `Statistical API reference <https://docs.sentinel-hub.com/api/latest/reference/#operation/process>`_.
+        `Statistical API reference <https://docs.sentinel-hub.com/api/latest/reference/#tag/statistical>`_.
 
         :param aggregation: Aggregation part of the payload, which can be generated with `aggregation` method
         :type aggregation: dict
