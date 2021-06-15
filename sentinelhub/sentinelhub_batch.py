@@ -253,7 +253,7 @@ class SentinelHubBatch:
         return Geometry(geometry, crs)
 
     @staticmethod
-    def iter_requests(user_id=None, count=None, search=None, sort=None, config=None, **kwargs):
+    def iter_requests(user_id=None, search=None, sort=None, config=None, **kwargs):
         """ Iterate existing batch requests
 
         `Batch API reference
@@ -261,8 +261,6 @@ class SentinelHubBatch:
 
         :param user_id: Filter requests by a user id who defined a request
         :type user_id: str or None
-        :param count: Maximal number of items to return
-        :type count: int or None
         :param search: A search query to filter requests
         :type search: str or None
         :param sort: A sort query
@@ -276,7 +274,6 @@ class SentinelHubBatch:
         url = SentinelHubBatch._get_process_url(config)
         params = remove_undefined({
             'userid': user_id,
-            'count': count,
             'search': search,
             'sort': sort,
             **kwargs
@@ -294,9 +291,15 @@ class SentinelHubBatch:
     def get_latest_request(config=None):
         """ Provides a batch request that has been created the latest
         """
-        # This should be improved once sort parameter will be supported
-        batch_requests = list(SentinelHubBatch.iter_requests(config=config))
-        return max(*batch_requests, key=lambda request: request.info['created'])
+        latest_request_iter = SentinelHubBatch.iter_requests(
+            sort='created:desc',
+            count=1,
+            config=config
+        )
+        try:
+            return next(latest_request_iter)
+        except StopIteration:
+            raise ValueError('No batch request is available')
 
     def delete(self):
         """ Delete a batch job request
