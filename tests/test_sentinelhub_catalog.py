@@ -20,7 +20,7 @@ def catalog_fixture(config):
 
 @pytest.mark.parametrize('data_collection', [
     DataCollection.SENTINEL2_L2A,
-    DataCollection.LANDSAT8,
+    DataCollection.LANDSAT45_L2,
     DataCollection.SENTINEL3_OLCI
 ])
 def test_info_with_different_deployments(config, data_collection):
@@ -130,7 +130,8 @@ def test_search_geometry_and_iterator_methods(catalog):
     (DataCollection.SENTINEL2_L1C, 'S2A_MSIL1C_20210113T071211_N0209_R020_T38LPH_20210113T075941'),
     (DataCollection.SENTINEL2_L2A, 'S2A_MSIL2A_20210113T071211_N0214_R020_T38LPH_20210113T083244'),
     (DataCollection.SENTINEL1_IW, 'S1A_IW_GRDH_1SDV_20210113T022710_20210113T022735_036113_043BC9_2981'),
-    (DataCollection.LANDSAT8, 'LC08_L1TP_160071_20210113_20210113_01_RT'),
+    (DataCollection.LANDSAT8_L1, 'LC08_L1TP_160071_20210113_20210308_02_T1'),
+    (DataCollection.LANDSAT8_L2, 'LC08_L2SP_160071_20210113_20210308_02_T1'),
     (DataCollection.MODIS, 'MCD43A4.006/22/10/2021014/MCD43A4.A2021014.h22v10.006.2021025214119'),
     (DataCollection.SENTINEL3_OLCI,
      'S3A_OL_1_EFR____20210114T063914_20210114T064214_20210114T081357_0179_067_191_3240_LN1_O_NR_002.SEN3'),
@@ -153,4 +154,3 @@ def test_search_for_data_collection(config, data_collection, feature_id):
     result = next(search_iterator)
     assert isinstance(result, dict)
     assert result['id'] == feature_id
-

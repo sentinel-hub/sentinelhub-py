@@ -429,7 +429,7 @@ class TestSentinelHubRequest(TestSentinelHub):
             evalscript='',
             input_data=[
                 SentinelHubRequest.input_data(
-                    data_collection=DataCollection.LANDSAT8
+                    data_collection=DataCollection.LANDSAT8_L2
                 ),
                 SentinelHubRequest.input_data(
                     data_collection=DataCollection.SENTINEL3_OLCI
