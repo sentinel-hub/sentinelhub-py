@@ -133,7 +133,7 @@ class TestOgc(TestSentinelHub):
                                        image_format=MimeType.TIFF, layer='BANDS-L8',
                                        width=img_width, height=img_height, bbox=wgs84_bbox,
                                        time=('2017-10-05', '2017-10-10'), time_difference=datetime.timedelta(hours=1)),
-                            result_len=1, img_min=0.0012, img_max=285.0, img_mean=47.66204, img_median=0.5325,
+                            result_len=1, img_min=0.0012, img_max=285.16916, img_mean=47.74750, img_median=0.5325,
                             tile_num=2),
             cls.OgcTestCase('DEM Test',
                             WmsRequest(data_collection=DataCollection.DEM, data_folder=cls.OUTPUT_FOLDER,
