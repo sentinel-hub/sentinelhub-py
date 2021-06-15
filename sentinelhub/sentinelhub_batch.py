@@ -257,7 +257,7 @@ class SentinelHubBatch:
         """ Iterate existing batch requests
 
         `Batch API reference
-        <https://docs.sentinel-hub.com/api/latest/reference/#operation/getAllBathProcessRequests>`__
+        <https://docs.sentinel-hub.com/api/latest/reference/#operation/getAllBatchProcessRequests>`__
 
         :param user_id: Filter requests by a user id who defined a request
         :type user_id: str or None
