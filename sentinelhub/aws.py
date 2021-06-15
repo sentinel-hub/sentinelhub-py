@@ -300,7 +300,7 @@ class AwsService(ABC):
         :rtype: bool
         """
         return self.data_collection is DataCollection.SENTINEL2_L2A and self.safe_type is EsaSafeType.COMPACT_TYPE and \
-            self.baseline <= '02.06'
+            '00.01' < self.baseline <= '02.06'
 
 
 class AwsProduct(AwsService):
@@ -685,7 +685,7 @@ class AwsTile(AwsService):
             return True
         resolution, band = band_name.split('/')
         if self.safe_type is EsaSafeType.COMPACT_TYPE:
-            return not (self.baseline >= '02.07' and band.endswith(AwsConstants.VIS))
+            return not ((self.baseline >= '02.07' or self.baseline == '00.01') and band.endswith(AwsConstants.VIS))
         return band != AwsConstants.TCI and not (band == AwsConstants.SCL and resolution == AwsConstants.R60m)
 
     @staticmethod

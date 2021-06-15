@@ -237,7 +237,7 @@ class SafeTile(AwsTile):
         if self.data_collection is DataCollection.SENTINEL2_L2A:
             for mask in AwsConstants.CLASS_MASKS:
                 for resolution in [AwsConstants.R20m, AwsConstants.R60m]:
-                    if self.baseline <= '02.06':
+                    if '00.01' < self.baseline <= '02.06':
                         mask_name = self.get_img_name(mask, resolution)
                     else:
                         mask_name = self.get_qi_name('{}PRB'.format(mask), resolution.lstrip('R'), MimeType.JP2)
@@ -248,7 +248,7 @@ class SafeTile(AwsTile):
             safe[main_folder][AwsConstants.QI_DATA][self.get_img_name(AwsConstants.PVI)] = self.get_preview_url('L2A')
 
         preview_type = 'L2A' if (self.data_collection is DataCollection.SENTINEL2_L2A
-                                 and self.baseline >= '02.07') else 'L1C'
+                                 and (self.baseline >= '02.07' or self.baseline == '00.01')) else 'L1C'
         safe[main_folder][AwsConstants.QI_DATA][self.get_preview_name()] = self.get_preview_url(preview_type)
 
         safe[main_folder][self.get_tile_metadata_name()] = self.get_url(AwsConstants.METADATA)
@@ -265,7 +265,7 @@ class SafeTile(AwsTile):
         tree = client.get_xml(self.get_url(AwsConstants.METADATA))
 
         tile_id_tag = 'TILE_ID_2A' if (self.data_collection is DataCollection.SENTINEL2_L2A
-                                       and self.baseline <= '02.06') else 'TILE_ID'
+                                       and '00.01' < self.baseline <= '02.06') else 'TILE_ID'
         tile_id = tree[0].find(tile_id_tag).text
         if self.safe_type is EsaSafeType.OLD_TYPE:
             return tile_id
@@ -348,7 +348,7 @@ class SafeTile(AwsTile):
             name = '_'.join([self.tile_id.split('_')[1], self.get_datatake_time(), band])
         if self.data_collection is DataCollection.SENTINEL2_L2A and resolution is not None:
             name = '{}_{}'.format(name, resolution.lstrip('R'))
-        if self.data_collection is DataCollection.SENTINEL2_L2A and self.baseline <= '02.06':
+        if self.data_collection is DataCollection.SENTINEL2_L2A and '00.01' < self.baseline <= '02.06':
             name = 'L2A_{}'.format(name)
         return '{}.jp2'.format(name)
 
