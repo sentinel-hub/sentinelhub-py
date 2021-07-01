@@ -3,7 +3,7 @@ Unit tests for data_collections module
 """
 import unittest
 
-import ray
+import pytest
 
 from sentinelhub import DataCollection, TestSentinelHub, SHConfig
 from sentinelhub.constants import ServiceUrl
@@ -142,6 +142,7 @@ def test_data_collection_transfer_with_ray():
     """ This tests makes sure that the process of transferring a custom DataCollection object to a Ray worker and back
     works correctly.
     """
+    ray = pytest.importorskip('ray')
     ray.init(log_to_driver=False)
 
     collection = DataCollection.SENTINEL2_L1C.define_from('MY_NEW_COLLECTION', api_id='xxx')
