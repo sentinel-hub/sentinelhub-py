@@ -5,7 +5,7 @@ import re
 import warnings
 from enum import Enum, EnumMeta
 from typing import Tuple
-from dataclasses import dataclass, asdict
+from dataclasses import dataclass, asdict, field
 
 from aenum import extend_enum
 
@@ -125,6 +125,10 @@ class _DataCollectionMeta(EnumMeta):
 
         This implements a shortcut to create a BYOC data collection by calling DataCollection('<BYOC collection ID>')
         """
+        # This solves a problem of pickling a custom DataCollection and unpickling it in another process
+        if isinstance(value, DataCollectionDefinition) and value not in cls._value2member_map_ and value._name:
+            cls._try_add_data_collection(value._name, value)
+
         # pylint: disable=signature-differs
         if not isinstance(value, str):
             return super().__call__(value, *args, **kwargs)
@@ -161,6 +165,8 @@ class DataCollectionDefinition:
     is_timeless: bool = False
     has_cloud_coverage: bool = False
     dem_instance: str = None
+    # The following parameter is used to preserve custom DataCollection name during pickling and unpickling process:
+    _name: str = field(default=None, compare=False)
 
     def __post_init__(self):
         """ In case a list of bands has been given this makes sure to cast it into a tuple
@@ -172,7 +178,7 @@ class DataCollectionDefinition:
         """ A nicer representation of parameters that define a data collection
         """
         valid_params = {name: value for name, value in asdict(self).items() if value is not None}
-        params_repr = '\n  '.join(f'{name}: {value}' for name, value in valid_params.items())
+        params_repr = '\n  '.join(f'{name}: {value}' for name, value in valid_params.items() if name != '_name')
         return f'{self.__class__.__name__}(\n  {params_repr}\n)'
 
     def derive(self, **params):
@@ -447,7 +453,8 @@ class DataCollection(Enum, metaclass=_DataCollectionMeta):
             collection_id=collection_id,
             is_timeless=is_timeless,
             has_cloud_coverage=has_cloud_coverage,
-            dem_instance=dem_instance
+            dem_instance=dem_instance,
+            _name=name
         )
         cls._try_add_data_collection(name, definition)
         return cls(definition)
@@ -462,7 +469,7 @@ class DataCollection(Enum, metaclass=_DataCollectionMeta):
         :rtype: DataCollection
         """
         definition = self.value
-        new_definition = definition.derive(**params)
+        new_definition = definition.derive(**params, _name=name)
 
         self._try_add_data_collection(name, new_definition)
         return DataCollection(new_definition)
