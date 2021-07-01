@@ -1,8 +1,14 @@
 """
 Unit tests for data_collections module
 """
+import importlib
+import pickle
+import tempfile
 import unittest
 
+import pytest
+
+import sentinelhub.data_collections
 from sentinelhub import DataCollection, TestSentinelHub, SHConfig
 from sentinelhub.constants import ServiceUrl
 from sentinelhub.data_collections import DataCollectionDefinition
@@ -27,6 +33,12 @@ class TestDataCollectionDefinition(TestSentinelHub):
         self.assertEqual(derived_definition.api_id, 'X')
         self.assertEqual(derived_definition.wfs_id, 'Z')
         self.assertEqual(derived_definition.collection_type, None)
+
+    def test_compare(self):
+        def1 = DataCollectionDefinition(api_id='X', _name='A')
+        def2 = DataCollectionDefinition(api_id='X', _name='B')
+
+        self.assertEqual(def1, def2)
 
 
 class TestDataCollection(TestSentinelHub):
@@ -128,6 +140,32 @@ class TestDataCollection(TestSentinelHub):
     def _check_collection_list(self, collection_list):
         self.assertTrue(isinstance(collection_list, list))
         self.assertTrue(all(isinstance(data_collection, DataCollection) for data_collection in collection_list))
+
+
+@pytest.mark.parametrize('pickle_protocol', [3, 4, 5])
+def test_data_collection_transfer(pickle_protocol):
+    """ This is a test for a scenario where a custom DataCollection enum would be defined in the main process and
+    passed another process that is not aware of the definition e.g. to a ray worker process. We simulate such a
+    scenario with serialization, resetting DataCollection class and deserialization.
+    """
+    from sentinelhub.data_collections import DataCollection
+
+    collection = DataCollection.SENTINEL2_L1C.define_from('MY_NEW_COLLECTION', api_id='xxx')
+
+    with tempfile.NamedTemporaryFile() as fp:
+        pickle.dump(collection, fp, protocol=pickle_protocol)
+
+        # The following simulates another process which is not aware of a new DataCollection definition:
+        importlib.reload(sentinelhub.data_collections)
+        from sentinelhub.data_collections import DataCollection
+
+        with pytest.raises((AttributeError, ValueError)):
+            DataCollection.MY_NEW_COLLECTION
+
+        fp.seek(0)
+        reloaded_collection = pickle.load(fp)
+
+    assert reloaded_collection is DataCollection.MY_NEW_COLLECTION
 
 
 if __name__ == '__main__':
