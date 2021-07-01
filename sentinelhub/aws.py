@@ -226,7 +226,7 @@ class AwsService(ABC):
             if not isinstance(substruct, dict):
                 product_name, data_name = self._url_to_props(substruct)
                 if '.' in data_name:
-                    data_type = MimeType(data_name.split('.')[-1])
+                    data_type = MimeType(data_name.split('.', 1)[-1])
                     data_name = data_name.rsplit('.', 1)[0]
                 else:
                     data_type = MimeType.RAW
