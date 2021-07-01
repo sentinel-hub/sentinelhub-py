@@ -1,14 +1,10 @@
 """
 Unit tests for data_collections module
 """
-import importlib
-import pickle
-import tempfile
 import unittest
 
-import pytest
+import ray
 
-import sentinelhub.data_collections
 from sentinelhub import DataCollection, TestSentinelHub, SHConfig
 from sentinelhub.constants import ServiceUrl
 from sentinelhub.data_collections import DataCollectionDefinition
@@ -142,30 +138,20 @@ class TestDataCollection(TestSentinelHub):
         self.assertTrue(all(isinstance(data_collection, DataCollection) for data_collection in collection_list))
 
 
-@pytest.mark.parametrize('pickle_protocol', [3, 4, 5])
-def test_data_collection_transfer(pickle_protocol):
-    """ This is a test for a scenario where a custom DataCollection enum would be defined in the main process and
-    passed another process that is not aware of the definition e.g. to a ray worker process. We simulate such a
-    scenario with serialization, resetting DataCollection class and deserialization.
+def test_data_collection_transfer_with_ray():
+    """ This tests makes sure that the process of transferring a custom DataCollection object to a Ray worker and back
+    works correctly.
     """
-    from sentinelhub.data_collections import DataCollection
+    ray.init(log_to_driver=False)
 
     collection = DataCollection.SENTINEL2_L1C.define_from('MY_NEW_COLLECTION', api_id='xxx')
 
-    with tempfile.NamedTemporaryFile() as fp:
-        pickle.dump(collection, fp, protocol=pickle_protocol)
+    collection_future = ray.remote(lambda x: x).remote(collection)
+    transferred_collection = ray.get(collection_future)
 
-        # The following simulates another process which is not aware of a new DataCollection definition:
-        importlib.reload(sentinelhub.data_collections)
-        from sentinelhub.data_collections import DataCollection
+    assert collection is transferred_collection
 
-        with pytest.raises((AttributeError, ValueError)):
-            DataCollection.MY_NEW_COLLECTION
-
-        fp.seek(0)
-        reloaded_collection = pickle.load(fp)
-
-    assert reloaded_collection is DataCollection.MY_NEW_COLLECTION
+    ray.shutdown()
 
 
 if __name__ == '__main__':
