@@ -3,6 +3,8 @@ Unit tests for data_collections module
 """
 import unittest
 
+import pytest
+
 from sentinelhub import DataCollection, TestSentinelHub, SHConfig
 from sentinelhub.constants import ServiceUrl
 from sentinelhub.data_collections import DataCollectionDefinition
@@ -27,6 +29,12 @@ class TestDataCollectionDefinition(TestSentinelHub):
         self.assertEqual(derived_definition.api_id, 'X')
         self.assertEqual(derived_definition.wfs_id, 'Z')
         self.assertEqual(derived_definition.collection_type, None)
+
+    def test_compare(self):
+        def1 = DataCollectionDefinition(api_id='X', _name='A')
+        def2 = DataCollectionDefinition(api_id='X', _name='B')
+
+        self.assertEqual(def1, def2)
 
 
 class TestDataCollection(TestSentinelHub):
@@ -128,6 +136,23 @@ class TestDataCollection(TestSentinelHub):
     def _check_collection_list(self, collection_list):
         self.assertTrue(isinstance(collection_list, list))
         self.assertTrue(all(isinstance(data_collection, DataCollection) for data_collection in collection_list))
+
+
+def test_data_collection_transfer_with_ray():
+    """ This tests makes sure that the process of transferring a custom DataCollection object to a Ray worker and back
+    works correctly.
+    """
+    ray = pytest.importorskip('ray')
+    ray.init(log_to_driver=False)
+
+    collection = DataCollection.SENTINEL2_L1C.define_from('MY_NEW_COLLECTION', api_id='xxx')
+
+    collection_future = ray.remote(lambda x: x).remote(collection)
+    transferred_collection = ray.get(collection_future)
+
+    assert collection is transferred_collection
+
+    ray.shutdown()
 
 
 if __name__ == '__main__':
