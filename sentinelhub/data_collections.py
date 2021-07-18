@@ -21,6 +21,7 @@ class _CollectionType:
     SENTINEL2 = 'Sentinel-2'
     SENTINEL3 = 'Sentinel-3'
     SENTINEL5P = 'Sentinel-5P'
+    LANDSAT15 = 'Landsat 1-5'
     LANDSAT45 = 'Landsat 4-5'
     LANDSAT5 = 'Landsat 5'
     LANDSAT7 = 'Landsat 7'
@@ -39,6 +40,8 @@ class _SensorType:
     MSI = 'MSI'
     OLI_TIRS = 'OLI-TIRS'
     TM = 'TM'
+    ETM = 'ETM+'
+    MSS = 'MSS'
     C_SAR = 'C-SAR'
     OLCI = 'OLCI'
     SLSTR = 'SLSTR'
@@ -110,7 +113,10 @@ class _Bands:
     SENTINEL5P = ('AER_AI_340_380', 'AER_AI_354_388', 'CLOUD_BASE_HEIGHT', 'CLOUD_BASE_PRESSURE', 'CLOUD_FRACTION',
                   'CLOUD_OPTICAL_THICKNESS', 'CLOUD_TOP_HEIGHT', 'CLOUD_TOP_PRESSURE', 'CO', 'HCHO', 'NO2', 'O3',
                   'SO2', 'CH4')
+    LANDSAT15 = ('B01', 'B02', 'B03', 'B04')
     LANDSAT45 = ('B01', 'B02', 'B03', 'B04', 'B05', 'B06', 'B07')
+    LANDSAT7_L1 = ('B01', 'B02', 'B03', 'B04', 'B05', 'B06_VCID1', 'B06_VCID2', 'B07', 'B08')
+    LANDSAT7_L2 = ('B01', 'B02', 'B03', 'B04', 'B05', 'B06', 'B07')
     LANDSAT8 = ('B01', 'B02', 'B03', 'B04', 'B05', 'B06', 'B07', 'B08', 'B09', 'B10', 'B11')
     LANDSAT8_L2 = ('B01', 'B02', 'B03', 'B04', 'B05', 'B06', 'B07', 'B10')
     DEM = ('DEM',)
@@ -293,6 +299,18 @@ class DataCollection(Enum, metaclass=_DataCollectionMeta):
         bands=_Bands.MODIS
     )
 
+    LANDSAT15_L1 = DataCollectionDefinition(
+        api_id='landsat-mss-l1',
+        catalog_id='landsat-mss-l1',
+        wfs_id='DSS14',
+        service_url=ServiceUrl.USWEST,
+        collection_type=_CollectionType.LANDSAT15,
+        sensor_type=_SensorType.MSS,
+        processing_level=_ProcessingLevel.L1,
+        bands=_Bands.LANDSAT15,
+        has_cloud_coverage=True
+    )
+
     LANDSAT45_L1 = DataCollectionDefinition(
         api_id='landsat-tm-l1',
         catalog_id='landsat-tm-l1',
@@ -309,6 +327,25 @@ class DataCollection(Enum, metaclass=_DataCollectionMeta):
         catalog_id='landsat-tm-l2',
         wfs_id='DSS16',
         processing_level=_ProcessingLevel.L2
+    )
+
+    LANDSAT7_L1 = DataCollectionDefinition(
+        api_id='landsat-etm-l1',
+        catalog_id='landsat-etm-l1',
+        wfs_id='DSS17',
+        service_url=ServiceUrl.USWEST,
+        collection_type=_CollectionType.LANDSAT7,
+        sensor_type=_SensorType.ETM,
+        processing_level=_ProcessingLevel.L1,
+        bands=_Bands.LANDSAT7_L1,
+        has_cloud_coverage=True
+    )
+    LANDSAT7_L2 = LANDSAT7_L1.derive(
+        api_id='landsat-etm-l2',
+        catalog_id='landsat-etm-l2',
+        wfs_id='DSS18',
+        processing_level=_ProcessingLevel.L2,
+        bands=_Bands.LANDSAT7_L2
     )
 
     LANDSAT8 = DataCollectionDefinition(
