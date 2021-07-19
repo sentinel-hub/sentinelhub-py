@@ -70,7 +70,7 @@ class BaseGeometry(ABC):
         return {
             'crs': {
                 'type': 'name',
-                'properties': {'name': 'urn:ogc:def:crs:EPSG::{}'.format(self.crs.value)}
+                'properties': {'name': f'urn:ogc:def:crs:EPSG::{self.crs.value}'}
             }
         }
 
@@ -128,7 +128,7 @@ class BBox(BaseGeometry):
     def __repr__(self):
         """ Class representation
         """
-        return '{}((({}, {}), ({}, {})), crs={})'.format(self.__class__.__name__, *self, repr(self.crs))
+        return f'{self.__class__.__name__}(({self.lower_left}, {self.upper_right}), crs={repr(self.crs)})'
 
     def __str__(self, reverse=False):
         """ Transforms bounding box into a string of coordinates
@@ -139,8 +139,8 @@ class BBox(BaseGeometry):
         :rtype: str
         """
         if reverse:
-            return '{},{},{},{}'.format(self.min_y, self.min_x, self.max_y, self.max_x)
-        return '{},{},{},{}'.format(self.min_x, self.min_y, self.max_x, self.max_y)
+            return f'{self.min_y},{self.min_x},{self.max_y},{self.max_x}'
+        return f'{self.min_x},{self.min_y},{self.max_x},{self.max_y}'
 
     def __eq__(self, other):
         """ Method for comparing two bounding boxes
@@ -152,7 +152,7 @@ class BBox(BaseGeometry):
         """
         if not isinstance(other, BBox):
             return False
-        return list(self) == list(other) and self.crs == other.crs
+        return list(self) == list(other) and self.crs is other.crs
 
     @property
     def lower_left(self):
@@ -316,7 +316,7 @@ class BBox(BaseGeometry):
         if isinstance(res, (int, float)):
             return float(res)
 
-        raise TypeError('Resolution should be a float, got resolution of type {}'.format(type(res)))
+        raise TypeError(f'Resolution should be a float, got resolution of type {type(res)}')
 
     @staticmethod
     def _to_tuple(bbox):
@@ -405,7 +405,7 @@ class Geometry(BaseGeometry):
     def __repr__(self):
         """ Method for class representation
         """
-        return '{}({}, crs={})'.format(self.__class__.__name__, self.wkt, self.crs)
+        return f'{self.__class__.__name__}({self.wkt}, crs={self.crs})'
 
     def __eq__(self, other):
         """ Method for comparing two Geometry classes
@@ -417,7 +417,7 @@ class Geometry(BaseGeometry):
         """
         if not isinstance(other, Geometry):
             return False
-        return self.geometry == other.geometry and self.crs == other.crs
+        return self.geometry == other.geometry and self.crs is other.crs
 
     def reverse(self):
         """ Returns a new Geometry object where x and y coordinates are switched
@@ -498,7 +498,7 @@ class Geometry(BaseGeometry):
             raise TypeError('Unsupported geometry representation')
 
         if not isinstance(geometry, (shapely.geometry.Polygon, shapely.geometry.MultiPolygon)):
-            raise ValueError('Supported geometry types are polygon and multipolygon, got {}'.format(type(geometry)))
+            raise ValueError(f'Supported geometry types are polygon and multipolygon, got {type(geometry)}')
 
         return geometry
 
@@ -519,14 +519,15 @@ class BBoxCollection(BaseGeometry):
     def __repr__(self):
         """ Method for class representation
         """
-        return '{}({})'.format(self.__class__.__name__, ', '.join([repr(bbox) for bbox in self.bbox_list]))
+        bbox_list_repr = ', '.join([repr(bbox) for bbox in self.bbox_list])
+        return f'{self.__class__.__name__}({bbox_list_repr})'
 
     def __eq__(self, other):
         """ Method for comparing two BBoxCollection classes
         """
         if not isinstance(other, BBoxCollection):
             return False
-        return self.crs == other.crs and len(self.bbox_list) == len(other.bbox_list) and \
+        return self.crs is other.crs and len(self.bbox_list) == len(other.bbox_list) and \
             all(bbox == other_bbox for bbox, other_bbox in zip(self, other))
 
     def __iter__(self):
@@ -596,7 +597,7 @@ class BBoxCollection(BaseGeometry):
 
         for bbox in bbox_list:
             if not isinstance(bbox, BBox):
-                raise ValueError('Elements in the list should be of type {}, got {}'.format(BBox.__name__, type(bbox)))
+                raise ValueError(f'Elements in the list should be of type {BBox.__name__}, got {type(bbox)}')
 
         crs = bbox_list[0].crs
         for bbox in bbox_list:
