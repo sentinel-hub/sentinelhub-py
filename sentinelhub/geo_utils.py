@@ -225,7 +225,7 @@ def transform_point(point, source_crs, target_crs, always_xy=True):
     :param target_crs: target CRS
     :type target_crs: constants.CRS
     :param always_xy: Parameter that is passed to `pyproj.Transformer` object and defines axis order for
-        transformation
+        transformation. The default value `True` is in most cases the correct one.
     :type always_xy: bool
     :return: point in target CRS
     :rtype: (float, float)
