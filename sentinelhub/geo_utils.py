@@ -215,7 +215,7 @@ def get_utm_crs(lng, lat, source_crs=CRS.WGS84):
     return CRS.get_utm_from_wgs84(lng, lat)
 
 
-def transform_point(point, source_crs, target_crs):
+def transform_point(point, source_crs, target_crs, always_xy=True):
     """ Maps point form src_crs to tgt_crs
 
     :param point: a tuple `(x, y)`
@@ -224,10 +224,13 @@ def transform_point(point, source_crs, target_crs):
     :type source_crs: constants.CRS
     :param target_crs: target CRS
     :type target_crs: constants.CRS
+    :param always_xy: Parameter that is passed to `pyproj.Transformer` object and defines axis order for
+        transformation. The default value `True` is in most cases the correct one.
+    :type always_xy: bool
     :return: point in target CRS
     :rtype: (float, float)
     """
     if source_crs == target_crs:
         return point
     old_x, old_y = point
-    return CRS.get_transform_function(source_crs, target_crs)(old_x, old_y)
+    return CRS.get_transform_function(source_crs, target_crs, always_xy=always_xy)(old_x, old_y)

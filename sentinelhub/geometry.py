@@ -70,7 +70,7 @@ class BaseGeometry(ABC):
         return {
             'crs': {
                 'type': 'name',
-                'properties': {'name': 'urn:ogc:def:crs:EPSG::{}'.format(self.crs.value)}
+                'properties': {'name': f'urn:ogc:def:crs:EPSG::{self.crs.value}'}
             }
         }
 
@@ -128,7 +128,7 @@ class BBox(BaseGeometry):
     def __repr__(self):
         """ Class representation
         """
-        return '{}((({}, {}), ({}, {})), crs={})'.format(self.__class__.__name__, *self, repr(self.crs))
+        return f'{self.__class__.__name__}(({self.lower_left}, {self.upper_right}), crs={repr(self.crs)})'
 
     def __str__(self, reverse=False):
         """ Transforms bounding box into a string of coordinates
@@ -139,8 +139,8 @@ class BBox(BaseGeometry):
         :rtype: str
         """
         if reverse:
-            return '{},{},{},{}'.format(self.min_y, self.min_x, self.max_y, self.max_x)
-        return '{},{},{},{}'.format(self.min_x, self.min_y, self.max_x, self.max_y)
+            return f'{self.min_y},{self.min_x},{self.max_y},{self.max_x}'
+        return f'{self.min_x},{self.min_y},{self.max_x},{self.max_y}'
 
     def __eq__(self, other):
         """ Method for comparing two bounding boxes
@@ -152,7 +152,7 @@ class BBox(BaseGeometry):
         """
         if not isinstance(other, BBox):
             return False
-        return list(self) == list(other) and self.crs == other.crs
+        return list(self) == list(other) and self.crs is other.crs
 
     @property
     def lower_left(self):
@@ -189,7 +189,7 @@ class BBox(BaseGeometry):
         """
         return BBox((self.min_y, self.min_x, self.max_y, self.max_x), crs=self.crs)
 
-    def transform(self, crs):
+    def transform(self, crs, always_xy=True):
         """ Transforms BBox from current CRS to target CRS
 
         This transformation will take lower left and upper right corners of the bounding box, transform these 2 points
@@ -198,14 +198,17 @@ class BBox(BaseGeometry):
 
         :param crs: target CRS
         :type crs: constants.CRS
+        :param always_xy: Parameter that is passed to `pyproj.Transformer` object and defines axis order for
+            transformation. The default value `True` is in most cases the correct one.
+        :type always_xy: bool
         :return: Bounding box in target CRS
         :rtype: BBox
         """
         new_crs = CRS(crs)
-        return BBox((transform_point(self.lower_left, self.crs, new_crs),
-                     transform_point(self.upper_right, self.crs, new_crs)), crs=new_crs)
+        return BBox((transform_point(self.lower_left, self.crs, new_crs, always_xy=always_xy),
+                     transform_point(self.upper_right, self.crs, new_crs, always_xy=always_xy)), crs=new_crs)
 
-    def transform_bounds(self, crs):
+    def transform_bounds(self, crs, always_xy=True):
         """ Alternative way to transform BBox from current CRS to target CRS.
 
         This transformation will transform the bounding box geometry to another CRS as a geometric object, and then
@@ -214,11 +217,14 @@ class BBox(BaseGeometry):
 
         :param crs: target CRS
         :type crs: constants.CRS
+        :param always_xy: Parameter that is passed to `pyproj.Transformer` object and defines axis order for
+            transformation. The default value `True` is in most cases the correct one.
+        :type always_xy: bool
         :return: Bounding box in target CRS
         :rtype: BBox
         """
         bbox_geometry = Geometry(self.geometry, self.crs)
-        bbox_geometry = bbox_geometry.transform(crs)
+        bbox_geometry = bbox_geometry.transform(crs, always_xy=always_xy)
         return bbox_geometry.bbox
 
     def buffer(self, buffer):
@@ -316,7 +322,7 @@ class BBox(BaseGeometry):
         if isinstance(res, (int, float)):
             return float(res)
 
-        raise TypeError('Resolution should be a float, got resolution of type {}'.format(type(res)))
+        raise TypeError(f'Resolution should be a float, got resolution of type {type(res)}')
 
     @staticmethod
     def _to_tuple(bbox):
@@ -405,7 +411,7 @@ class Geometry(BaseGeometry):
     def __repr__(self):
         """ Method for class representation
         """
-        return '{}({}, crs={})'.format(self.__class__.__name__, self.wkt, self.crs)
+        return f'{self.__class__.__name__}({self.wkt}, crs={self.crs})'
 
     def __eq__(self, other):
         """ Method for comparing two Geometry classes
@@ -417,7 +423,7 @@ class Geometry(BaseGeometry):
         """
         if not isinstance(other, Geometry):
             return False
-        return self.geometry == other.geometry and self.crs == other.crs
+        return self.geometry == other.geometry and self.crs is other.crs
 
     def reverse(self):
         """ Returns a new Geometry object where x and y coordinates are switched
@@ -427,11 +433,14 @@ class Geometry(BaseGeometry):
         """
         return Geometry(shapely.ops.transform(lambda x, y: (y, x), self.geometry), crs=self.crs)
 
-    def transform(self, crs):
+    def transform(self, crs, always_xy=True):
         """ Transforms Geometry from current CRS to target CRS
 
         :param crs: target CRS
         :type crs: constants.CRS
+        :param always_xy: Parameter that is passed to `pyproj.Transformer` object and defines axis order for
+            transformation. The default value `True` is in most cases the correct one.
+        :type always_xy: bool
         :return: Geometry in target CRS
         :rtype: Geometry
         """
@@ -439,7 +448,7 @@ class Geometry(BaseGeometry):
 
         geometry = self.geometry
         if new_crs is not self.crs:
-            transform_function = self.crs.get_transform_function(new_crs)
+            transform_function = self.crs.get_transform_function(new_crs, always_xy=always_xy)
             geometry = shapely.ops.transform(transform_function, geometry)
 
         return Geometry(geometry, crs=new_crs)
@@ -498,7 +507,7 @@ class Geometry(BaseGeometry):
             raise TypeError('Unsupported geometry representation')
 
         if not isinstance(geometry, (shapely.geometry.Polygon, shapely.geometry.MultiPolygon)):
-            raise ValueError('Supported geometry types are polygon and multipolygon, got {}'.format(type(geometry)))
+            raise ValueError(f'Supported geometry types are polygon and multipolygon, got {type(geometry)}')
 
         return geometry
 
@@ -519,14 +528,15 @@ class BBoxCollection(BaseGeometry):
     def __repr__(self):
         """ Method for class representation
         """
-        return '{}({})'.format(self.__class__.__name__, ', '.join([repr(bbox) for bbox in self.bbox_list]))
+        bbox_list_repr = ', '.join([repr(bbox) for bbox in self.bbox_list])
+        return f'{self.__class__.__name__}({bbox_list_repr})'
 
     def __eq__(self, other):
         """ Method for comparing two BBoxCollection classes
         """
         if not isinstance(other, BBoxCollection):
             return False
-        return self.crs == other.crs and len(self.bbox_list) == len(other.bbox_list) and \
+        return self.crs is other.crs and len(self.bbox_list) == len(other.bbox_list) and \
             all(bbox == other_bbox for bbox, other_bbox in zip(self, other))
 
     def __iter__(self):
@@ -569,15 +579,18 @@ class BBoxCollection(BaseGeometry):
         """
         return BBoxCollection([bbox.reverse() for bbox in self.bbox_list])
 
-    def transform(self, crs):
+    def transform(self, crs, always_xy=True):
         """ Transforms BBoxCollection from current CRS to target CRS
 
         :param crs: target CRS
         :type crs: constants.CRS
+        :param always_xy: Parameter that is passed to `pyproj.Transformer` object and defines axis order for
+            transformation. The default value `True` is in most cases the correct one.
+        :type always_xy: bool
         :return: BBoxCollection in target CRS
         :rtype: BBoxCollection
         """
-        return BBoxCollection([bbox.transform(crs) for bbox in self.bbox_list])
+        return BBoxCollection([bbox.transform(crs, always_xy=always_xy) for bbox in self.bbox_list])
 
     def _get_geometry(self):
         """ Creates a multipolygon of bounding box polygons
@@ -596,7 +609,7 @@ class BBoxCollection(BaseGeometry):
 
         for bbox in bbox_list:
             if not isinstance(bbox, BBox):
-                raise ValueError('Elements in the list should be of type {}, got {}'.format(BBox.__name__, type(bbox)))
+                raise ValueError(f'Elements in the list should be of type {BBox.__name__}, got {type(bbox)}')
 
         crs = bbox_list[0].crs
         for bbox in bbox_list:
