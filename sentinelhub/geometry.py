@@ -189,7 +189,7 @@ class BBox(BaseGeometry):
         """
         return BBox((self.min_y, self.min_x, self.max_y, self.max_x), crs=self.crs)
 
-    def transform(self, crs):
+    def transform(self, crs, always_xy=True):
         """ Transforms BBox from current CRS to target CRS
 
         This transformation will take lower left and upper right corners of the bounding box, transform these 2 points
@@ -198,14 +198,17 @@ class BBox(BaseGeometry):
 
         :param crs: target CRS
         :type crs: constants.CRS
+        :param always_xy: Parameter that is passed to `pyproj.Transformer` object and defines axis order for
+            transformation. The default value `True` is in most cases the correct one.
+        :type always_xy: bool
         :return: Bounding box in target CRS
         :rtype: BBox
         """
         new_crs = CRS(crs)
-        return BBox((transform_point(self.lower_left, self.crs, new_crs),
-                     transform_point(self.upper_right, self.crs, new_crs)), crs=new_crs)
+        return BBox((transform_point(self.lower_left, self.crs, new_crs, always_xy=always_xy),
+                     transform_point(self.upper_right, self.crs, new_crs, always_xy=always_xy)), crs=new_crs)
 
-    def transform_bounds(self, crs):
+    def transform_bounds(self, crs, always_xy=True):
         """ Alternative way to transform BBox from current CRS to target CRS.
 
         This transformation will transform the bounding box geometry to another CRS as a geometric object, and then
@@ -214,11 +217,14 @@ class BBox(BaseGeometry):
 
         :param crs: target CRS
         :type crs: constants.CRS
+        :param always_xy: Parameter that is passed to `pyproj.Transformer` object and defines axis order for
+            transformation. The default value `True` is in most cases the correct one.
+        :type always_xy: bool
         :return: Bounding box in target CRS
         :rtype: BBox
         """
         bbox_geometry = Geometry(self.geometry, self.crs)
-        bbox_geometry = bbox_geometry.transform(crs)
+        bbox_geometry = bbox_geometry.transform(crs, always_xy=always_xy)
         return bbox_geometry.bbox
 
     def buffer(self, buffer):
@@ -427,11 +433,14 @@ class Geometry(BaseGeometry):
         """
         return Geometry(shapely.ops.transform(lambda x, y: (y, x), self.geometry), crs=self.crs)
 
-    def transform(self, crs):
+    def transform(self, crs, always_xy=True):
         """ Transforms Geometry from current CRS to target CRS
 
         :param crs: target CRS
         :type crs: constants.CRS
+        :param always_xy: Parameter that is passed to `pyproj.Transformer` object and defines axis order for
+            transformation. The default value `True` is in most cases the correct one.
+        :type always_xy: bool
         :return: Geometry in target CRS
         :rtype: Geometry
         """
@@ -439,7 +448,7 @@ class Geometry(BaseGeometry):
 
         geometry = self.geometry
         if new_crs is not self.crs:
-            transform_function = self.crs.get_transform_function(new_crs)
+            transform_function = self.crs.get_transform_function(new_crs, always_xy=always_xy)
             geometry = shapely.ops.transform(transform_function, geometry)
 
         return Geometry(geometry, crs=new_crs)
@@ -570,15 +579,18 @@ class BBoxCollection(BaseGeometry):
         """
         return BBoxCollection([bbox.reverse() for bbox in self.bbox_list])
 
-    def transform(self, crs):
+    def transform(self, crs, always_xy=True):
         """ Transforms BBoxCollection from current CRS to target CRS
 
         :param crs: target CRS
         :type crs: constants.CRS
+        :param always_xy: Parameter that is passed to `pyproj.Transformer` object and defines axis order for
+            transformation. The default value `True` is in most cases the correct one.
+        :type always_xy: bool
         :return: BBoxCollection in target CRS
         :rtype: BBoxCollection
         """
-        return BBoxCollection([bbox.transform(crs) for bbox in self.bbox_list])
+        return BBoxCollection([bbox.transform(crs, always_xy=always_xy) for bbox in self.bbox_list])
 
     def _get_geometry(self):
         """ Creates a multipolygon of bounding box polygons

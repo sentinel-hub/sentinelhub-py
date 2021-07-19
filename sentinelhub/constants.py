@@ -211,7 +211,7 @@ class CRS(Enum, metaclass=CRSMeta):
         return pyproj.CRS(self._get_pyproj_projection_def())
 
     @functools.lru_cache(maxsize=10)
-    def get_transform_function(self, other):
+    def get_transform_function(self, other, always_xy=True):
         """ Returns a function for transforming geometrical objects from one CRS to another. The function will support
         transformations between any objects that pyproj supports.
         For better time performance this method will cache results of 10 most recently used pairs of CRS classes.
@@ -220,10 +220,13 @@ class CRS(Enum, metaclass=CRSMeta):
         :type self: CRS
         :param other: Target CRS
         :type other: CRS
+        :param always_xy: Parameter that is passed to `pyproj.Transformer` object and defines axis order for
+            transformation. The default value `True` is in most cases the correct one.
+        :type always_xy: bool
         :return: A projection function obtained from pyproj package
         :rtype: function
         """
-        return pyproj.Transformer.from_proj(self.projection(), other.projection()).transform
+        return pyproj.Transformer.from_proj(self.projection(), other.projection(), always_xy=always_xy).transform
 
     @staticmethod
     def get_utm_from_wgs84(lng, lat):
