@@ -108,5 +108,7 @@ ENV/
 
 .pytest_cache
 
+Pipfile*
+
 # A fail-safe preventing commits of user's credentials
 sentinelhub/config.json
