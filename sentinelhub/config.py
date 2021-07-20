@@ -62,6 +62,13 @@ class SHConfig:
             'download_timeout_seconds': 120.0,
             'number_of_download_processes': 1
         }
+        CREDENTIALS = {
+            'instance_id',
+            'sh_client_id',
+            'sh_client_secret',
+            'aws_access_key_id',
+            'aws_secret_access_key'
+        }
 
         def __init__(self):
             self.instance_id = ''
@@ -79,7 +86,7 @@ class SHConfig:
                 if (param_type is float) and isinstance(config[param], numbers.Number):
                     continue
                 if not isinstance(config[param], param_type):
-                    raise ValueError("Value of parameter '{}' must be of type {}".format(param, param_type.__name__))
+                    raise ValueError(f"Value of parameter '{param}' must be of type {param_type.__name__}")
 
             if config['max_wfs_records_per_query'] > 100:
                 raise ValueError("Value of config parameter 'max_wfs_records_per_query' must be at most 100")
@@ -143,7 +150,15 @@ class SHConfig:
 
     _instance = None
 
-    def __init__(self):
+    def __init__(self, hide_credentials=False):
+        """
+        :param hide_credentials: If `True` then methods that provide the entire content of the config object will mask
+            out all credentials. But credentials could still be accessed directly from config object attributes. The
+            default is `False`.
+        :type hide_credentials: bool
+        """
+        self._hide_credentials = hide_credentials
+
         if not SHConfig._instance:
             SHConfig._instance = self._SHConfig()
 
@@ -162,14 +177,16 @@ class SHConfig:
         return sorted(list(dir(super())) + list(self._instance.CONFIG_PARAMS))
 
     def __str__(self):
-        """ Content of SHConfig in json schema
+        """ Content of SHConfig in json schema. If `hide_credentials` is set to `True` then credentials will be
+        masked.
         """
         return json.dumps(self.get_config_dict(), indent=2)
 
     def __repr__(self):
-        """ Representation of SHConfig parameters
+        """ Representation of SHConfig parameters. If `hide_credentials` is set to `True` then credentials will be
+        masked.
         """
-        repr_list = ['{}('.format(self.__class__.__name__)]
+        repr_list = [f'{self.__class__.__name__}(']
 
         for key, value in self.get_config_dict().items():
             repr_list.append('%s=%r,' % (key, value))
@@ -210,7 +227,7 @@ class SHConfig:
                 self._reset_param(param)
         else:
             raise ValueError('Parameters must be specified in form of a list of strings or as a single string, instead '
-                             'got {}'.format(params))
+                             f'got {params}')
 
     def _reset_param(self, param):
         """ Resets a single parameter
@@ -219,7 +236,7 @@ class SHConfig:
         :type param: str
         """
         if param not in self._instance.CONFIG_PARAMS:
-            raise ValueError("Cannot reset unknown parameter '{}'".format(param))
+            raise ValueError(f"Cannot reset unknown parameter '{param}'")
         setattr(self, param, self._instance.CONFIG_PARAMS[param])
 
     def get_params(self):
@@ -231,12 +248,18 @@ class SHConfig:
         return list(self._instance.CONFIG_PARAMS)
 
     def get_config_dict(self):
-        """ Get a dictionary representation of `SHConfig` class
+        """ Get a dictionary representation of `SHConfig` class. If `hide_credentials` is set to `True` then
+        credentials will be masked.
 
         :return: A dictionary with configuration parameters
         :rtype: dict
         """
-        return {prop: getattr(self, prop) for prop in self._instance.CONFIG_PARAMS}
+        config_params = {param: getattr(self, param) for param in self._instance.CONFIG_PARAMS}
+
+        if self._hide_credentials:
+            config_params = {param: self._mask_credentials(param, value) for param, value in config_params.items()}
+
+        return config_params
 
     def get_config_location(self):
         """ Returns location of configuration file on disk
@@ -260,7 +283,7 @@ class SHConfig:
         :return: An URL endpoint
         :rtype: str
         """
-        return '{}/oauth/token'.format(self.sh_base_url)
+        return f'{self.sh_base_url}/oauth/token'
 
     def get_sh_process_api_url(self):
         """  Provides URL for Sentinel Hub Process API endpoint
@@ -268,7 +291,7 @@ class SHConfig:
         :return: An URL endpoint
         :rtype: str
         """
-        return '{}/api/v1/process'.format(self.sh_base_url)
+        return f'{self.sh_base_url}/api/v1/process'
 
     def get_sh_ogc_url(self):
         """ Provides URL for Sentinel Hub OGC endpoint
@@ -277,7 +300,7 @@ class SHConfig:
         :rtype: str
         """
         ogc_endpoint = 'v1' if self.has_eocloud_url() else 'ogc'
-        return '{}/{}'.format(self.sh_base_url, ogc_endpoint)
+        return f'{self.sh_base_url}/{ogc_endpoint}'
 
     def get_sh_rate_limit_url(self):
         """ Provides URL for Sentinel Hub rate limiting endpoint
@@ -285,7 +308,7 @@ class SHConfig:
         :return: An URL endpoint
         :rtype: str
         """
-        return '{}/aux/ratelimit'.format(self.sh_base_url)
+        return f'{self.sh_base_url}/aux/ratelimit'
 
     def raise_for_missing_instance_id(self):
         """ In case Sentinel Hub instance ID is missing it raises an informative error
@@ -296,3 +319,14 @@ class SHConfig:
             raise ValueError('Sentinel Hub instance ID is missing. '
                              'Either provide it with SHConfig object or save it into config.json configuration file. '
                              'Check http://sentinelhub-py.readthedocs.io/en/latest/configure.html for more info.')
+
+    def _mask_credentials(self, param, value):
+        """ In case a credentials parameter is given it will mask its value
+        """
+        if not (param in self._instance.CREDENTIALS and value):
+            return value
+        if not isinstance(value, str):
+            raise ValueError(f"Parameter '{param}' should be a string but {value} found")
+
+        hide_size = min(max(len(value) - 4, 10), len(value))
+        return '*' * hide_size + value[hide_size:]
