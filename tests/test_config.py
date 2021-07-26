@@ -9,6 +9,16 @@ import pytest
 from sentinelhub import SHConfig
 
 
+@pytest.fixture(name='restore_config')
+def restore_config_fixture():
+    """ A fixture that makes sure original config is restored after a test is executed. It restores the config even if
+    a test has failed.
+    """
+    original_config = SHConfig()
+    yield
+    original_config.save()
+
+
 def test_config_file():
     config = SHConfig()
 
@@ -46,9 +56,8 @@ def test_reset():
     assert config.instance_id == config._instance.CONFIG_PARAMS['instance_id'], 'Instance ID should reset'
 
 
-def test_save():
+def test_save(restore_config):
     config = SHConfig()
-    old_value = config.download_timeout_seconds
 
     config.download_timeout_seconds = 'abcd'
     with pytest.raises(ValueError):
@@ -59,9 +68,6 @@ def test_save():
     config.save()
     config = SHConfig()
     assert config.download_timeout_seconds == new_value, 'Saved value should have changed'
-
-    config.download_timeout_seconds = old_value
-    config.save()
 
 
 def test_raise_for_missing_instance_id():
