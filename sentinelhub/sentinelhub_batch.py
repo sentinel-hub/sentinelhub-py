@@ -1,6 +1,10 @@
 """
 Module implementing an interface with Sentinel Hub Batch service
 """
+import logging
+import time
+
+from tqdm.auto import tqdm
 
 from .config import SHConfig
 from .constants import RequestType
@@ -9,12 +13,16 @@ from .geometry import Geometry, BBox, CRS
 from .sentinelhub_request import SentinelHubRequest
 from .sh_utils import SentinelHubFeatureIterator, remove_undefined
 
+LOGGER = logging.getLogger(__name__)
+
 
 class SentinelHubBatch:
     """ An interface class for Sentinel Hub Batch API
 
     For more info check `Batch API reference <https://docs.sentinel-hub.com/api/latest/reference/#tag/batch_process>`__.
     """
+    # pylint: disable=too-many-public-methods
+
     _REPR_PARAM_NAMES = ['id', 'description', 'bucketName', 'created', 'status', 'userAction', 'valueEstimate',
                          'tileCount']
 
@@ -341,6 +349,22 @@ class SentinelHubBatch:
         """
         return self._call_job('restartpartial')
 
+    def raise_for_status(self, status='FAILED'):
+        """ Raises an error in case batch request has a given status
+
+        :param status: One or more status codes on which to raise an error. The default is `'FAILED'`.
+        :type status: str or list(str)
+        :raises: RuntimeError
+        """
+        if isinstance(status, str):
+            status = [status]
+        batch_status = self.info['status']
+        if batch_status in status:
+            error_message = self.info.get('error', '')
+            formatted_error_message = f' and error message: "{error_message}"' if error_message else ''
+            raise RuntimeError(f'Raised for batch request {self.request_id} with status {batch_status}'
+                               f'{formatted_error_message}')
+
     def iter_tiles(self, status=None, **kwargs):
         """ Iterate over info about batch request tiles
 
@@ -436,3 +460,84 @@ class SentinelHubBatch:
         """
         config = config or SHConfig()
         return f'{config.sh_base_url}/api/v1/batch'
+
+
+def get_batch_tiles_per_status(batch_request):
+    """ A helper function that queries information about batch tiles and returns information about tiles, grouped by
+    tile status.
+
+    :returns: A dictionary mapping a tile status to a list of tile payloads.
+    :rtype: dict(str, list(dict))
+    """
+    tiles_per_status = {}
+
+    for tile in batch_request.iter_tiles():
+        status = tile['status']
+        tiles_per_status[status] = tiles_per_status.get(status, [])
+        tiles_per_status[status].append(tile)
+
+    return tiles_per_status
+
+
+def monitor_batch_job(batch_request, sleep_time=120, analysis_sleep_time=5):
+    """ A utility function that keeps checking for number of processed tiles until the given batch request finishes.
+    During the process it shows a progress bar and at the end it reports information about finished and failed tiles.
+
+    Notes:
+
+      - Before calling this function make sure to start a batch job by calling `SentinelHubBatch.start_job` method. In
+        case a batch job is still being analysed this function will wait until the analysis ends.
+      - This function will be continuously collecting tile information from Sentinel Hub service. To avoid making too
+        many requests please make sure to adjust `sleep_time` parameter according to the size of your job. Larger jobs
+        don't need too frequent tile status updates.
+      - Some information about the progress of this function is reported to logging level INFO.
+
+    :param batch_request: A Sentinel Hub batch request object.
+    :type batch_request: SentinelHubBatch
+    :param sleep_time: Number of seconds to sleep between consecutive progress bar updates.
+    :type sleep_time: int
+    :param analysis_sleep_time: Number of seconds between consecutive status updates during analysis phase.
+    :type analysis_sleep_time: int
+    :returns: A dictionary mapping a tile status to a list of tile payloads.
+    :rtype: dict(str, list(dict))
+    """
+    batch_request.update_info()
+    status = batch_request.info['status']
+    while status in ['CREATED', 'ANALYSING', 'ANALYSIS_DONE']:
+        LOGGER.info('Batch job has a status %s, sleeping for %d seconds', status, analysis_sleep_time)
+        time.sleep(analysis_sleep_time)
+        batch_request.update_info()
+        status = batch_request.info['status']
+
+    batch_request.raise_for_status(status=['FAILED', 'CANCELED'])
+
+    if status == 'PROCESSING':
+        LOGGER.info('Batch job is running')
+    finished_count = 0
+    success_count = 0
+    total_tile_count = batch_request.info['tileCount']
+    with tqdm(total=total_tile_count, desc='Progress rate') as progress_bar, \
+            tqdm(total=finished_count, desc='Success rate') as success_bar:
+        while finished_count < total_tile_count:
+            tiles_per_status = get_batch_tiles_per_status(batch_request)
+            processed_tiles_num = len(tiles_per_status.get('PROCESSED', []))
+            failed_tiles_num = len(tiles_per_status.get('FAILED', []))
+
+            new_success_count = processed_tiles_num
+            new_finished_count = processed_tiles_num + failed_tiles_num
+
+            progress_bar.update(new_finished_count - finished_count)
+            if new_finished_count != finished_count:
+                success_bar.total = new_finished_count
+                success_bar.refresh()
+            success_bar.update(new_success_count - success_count)
+
+            finished_count = new_finished_count
+            success_count = new_success_count
+
+            if finished_count < total_tile_count:
+                time.sleep(sleep_time)
+
+    if failed_tiles_num:
+        LOGGER.info('Batch job failed for %d tiles', processed_tiles_num)
+    return tiles_per_status
