@@ -3,15 +3,22 @@ Module implementing an interface with Sentinel Hub Batch service
 """
 import logging
 import time
+import datetime as dt
+from dataclasses import field, dataclass
+from typing import Optional, Union
 
+from dataclasses_json import config as dataclass_config
+from dataclasses_json import dataclass_json, LetterCase, Undefined, CatchAll
 from tqdm.auto import tqdm
 
 from .config import SHConfig
 from .constants import RequestType
+from .data_collections import DataCollection
 from .download.sentinelhub_client import SentinelHubDownloadClient
 from .geometry import Geometry, BBox, CRS
 from .sentinelhub_request import SentinelHubRequest
 from .sh_utils import SentinelHubFeatureIterator, remove_undefined
+from .sentinelhub_byoc import datetime_config  # TODO
 
 LOGGER = logging.getLogger(__name__)
 
@@ -42,6 +49,8 @@ class SentinelHubBatch:
         self.request_id = request_id if request_id else request_info['id']
         self.config = config or SHConfig()
         self._request_info = request_info
+
+        self.client = SentinelHubDownloadClient(config=self.config)
 
     def __repr__(self):
         """ A representation that shows the basic parameters of a batch job
@@ -227,8 +236,7 @@ class SentinelHubBatch:
         :rtype: dict
         """
         url = self._get_process_url(self.config, request_id=self.request_id)
-        client = SentinelHubDownloadClient(config=self.config)
-        self._request_info = client.get_json(url, use_session=True)
+        self._request_info = self.client.get_json(url, use_session=True)
 
     @property
     def evalscript(self):
@@ -335,8 +343,8 @@ class SentinelHubBatch:
             **kwargs
         })
         url = self._get_process_url(self.config, request_id=self.request_id)
-        client = SentinelHubDownloadClient(config=self.config)
-        self._request_info = client.get_json(url, post_values=payload, request_type=RequestType.PUT, use_session=True)
+        self._request_info = self.client.get_json(url, post_values=payload, request_type=RequestType.PUT,
+                                                  use_session=True)
 
     def delete(self):
         """ Delete a batch job request
@@ -345,8 +353,7 @@ class SentinelHubBatch:
         <https://docs.sentinel-hub.com/api/latest/reference/#operation/deleteBatchProcessRequest>`__
         """
         url = self._get_process_url(self.config, request_id=self.request_id)
-        client = SentinelHubDownloadClient(config=self.config)
-        return client.get_json(url, request_type=RequestType.DELETE, use_session=True)
+        return self.client.get_json(url, request_type=RequestType.DELETE, use_session=True)
 
     def start_analysis(self):
         """ Starts analysis of a batch job request
@@ -405,15 +412,13 @@ class SentinelHubBatch:
         :return: An iterator over information about each tile
         :rtype: Iterator[dict]
         """
-        url = self._get_tiles_url()
-        params = remove_undefined({
-            'status': status,
-            **kwargs
-        })
         return SentinelHubFeatureIterator(
-            client=SentinelHubDownloadClient(config=self.config),
-            url=url,
-            params=params,
+            client=self.client,
+            url=self._get_tiles_url(),
+            params={
+                'status': status,
+                **kwargs
+            },
             exception_message='No tiles found, please run analysis on batch request before calling this method'
         )
 
@@ -428,8 +433,7 @@ class SentinelHubBatch:
         :rtype: dict
         """
         url = self._get_tiles_url(tile_id=tile_id)
-        client = SentinelHubDownloadClient(config=self.config)
-        return client.get_json(url, use_session=True)
+        return self.client.get_json(url, use_session=True)
 
     def reprocess_tile(self, tile_id):
         """ Reprocess a single failed tile
@@ -440,6 +444,99 @@ class SentinelHubBatch:
         :type tile_id: int or None
         """
         self._call_job(f'tiles/{tile_id}/restart')
+
+    @staticmethod
+    def iter_collections(search=None, config=None, **kwargs):
+        """ Iterate over batch collections
+
+        `Batch API reference <https://docs.sentinel-hub.com/api/latest/reference/#operation/getAllBatchCollections>`__
+
+        :param search: A search query to filter collections
+        :type search: str or None
+        :param config: A configuration object
+        :type config: SHConfig or None
+        :param kwargs: Any additional parameters to include in a request query
+        :return: An iterator over existing batch collections
+        :rtype: Iterator[dict]
+        """
+        return SentinelHubFeatureIterator(
+            client=SentinelHubDownloadClient(config=config),
+            url=SentinelHubBatch._get_collections_url(config),
+            params={
+                'search': search,
+                **kwargs
+            },
+            exception_message='Failed to obtain information about available Batch collections'
+        )
+
+    @staticmethod
+    def get_collection(collection_id, config=None):
+        """ Get batch collection by its id
+
+        `Batch API reference
+        <https://docs.sentinel-hub.com/api/latest/reference/#operation/getSingleBatchCollectionById>`__
+
+        :param collection_id: A batch collection id
+        :type collection_id: str
+        :param config: A configuration object
+        :type config: SHConfig or None
+        :return: A dictionary of the collection parameters
+        :rtype: dict
+        """
+        url = f'{SentinelHubBatch._get_collections_url(config)}/{collection_id}'
+        client = SentinelHubDownloadClient(config=config)
+        return client.get_json(url=url, use_session=True)['data']
+
+    @staticmethod
+    def create_collection(collection, config=None):
+        """ Create a new batch collection
+
+        `Batch API reference <https://docs.sentinel-hub.com/api/latest/reference/#operation/createNewBatchCollection>`__
+
+        :param collection: Batch collection definition
+        :type collection: BatchCollection or dict
+        :param config: A configuration object
+        :type config: SHConfig or None
+        :return: A dictionary of a newly created collection
+        :rtype: dict
+        """
+        url = SentinelHubBatch._get_collections_url(config)
+        client = SentinelHubDownloadClient(config=config)
+        collection_payload = SentinelHubBatch._to_dict(collection)
+        return client.get_json(url=url, post_values=collection_payload, use_session=True)['data']
+
+    @staticmethod
+    def update_collection(collection, config=None):
+        """ Update an existing batch collection
+
+        `Batch API reference <https://docs.sentinel-hub.com/api/latest/reference/#operation/updateBatchCollection>`__
+
+        :param collection: Batch collection definition
+        :type collection: BatchCollection or dict
+        :param config: A configuration object
+        :type config: SHConfig or None
+        """
+        collection_id = SentinelHubBatch._parse_collection_id(collection)
+        url = f'{SentinelHubBatch._get_collections_url(config)}/{collection_id}'
+        client = SentinelHubDownloadClient(config=config)
+        collection_payload = SentinelHubBatch._to_dict(collection)
+        return client.get_json(url, post_values=collection_payload, request_type=RequestType.PUT, use_session=True)
+
+    @staticmethod
+    def delete_collection(collection, config=None):
+        """ Delete an existing batch collection
+
+        `Batch API reference <https://docs.sentinel-hub.com/api/latest/reference/#operation/deleteBatchCollection>`__
+
+        :param collection: Batch collection id or object
+        :type collection: str or BatchCollection
+        :param config: A configuration object
+        :type config: SHConfig or None
+        """
+        collection_id = SentinelHubBatch._parse_collection_id(collection)
+        url = f'{SentinelHubBatch._get_collections_url(config)}/{collection_id}'
+        client = SentinelHubDownloadClient(config=config)
+        return client.get_json(url=url, request_type=RequestType.DELETE, use_session=True)
 
     def _parse_bounds_payload(self):
         """ Parses bbox, geometry and crs from batch request payload. If bbox or geometry don't exist it returns None
@@ -456,8 +553,7 @@ class SentinelHubBatch:
         process_url = self._get_process_url(request_id=self.request_id, config=self.config)
         url = f'{process_url}/{endpoint_name}'
 
-        client = SentinelHubDownloadClient(config=self.config)
-        return client.get_json(url, request_type=RequestType.POST, use_session=True)
+        return self.client.get_json(url, request_type=RequestType.POST, use_session=True)
 
     def _get_tiles_url(self, tile_id=None):
         """ Creates an URL for tiles endpoint
@@ -484,11 +580,84 @@ class SentinelHubBatch:
         return f'{SentinelHubBatch._get_batch_url(config=config)}/tilinggrids'
 
     @staticmethod
+    def _get_collections_url(config):
+        """ Creates an URL for batch collections endpoint
+        """
+        return f'{SentinelHubBatch._get_batch_url(config=config)}/collections'
+
+    @staticmethod
     def _get_batch_url(config=None):
         """ Creates an URL of the base batch service
         """
         config = config or SHConfig()
         return f'{config.sh_base_url}/api/v1/batch'
+
+    @staticmethod
+    def _parse_collection_id(data):
+        """ Parses batch collection id from multiple possible inputs
+        """
+        if isinstance(data, (BatchCollection, DataCollection)):
+            return data.collection_id
+        if isinstance(data, dict):
+            return data['id']
+        if isinstance(data, str):
+            return data
+        raise ValueError(f'Expected a BatchCollection dataclass, dictionary or a string, got {data}.')
+
+    @staticmethod
+    def _to_dict(data):
+        """ Constructs a dictionary from given object
+        """
+        if isinstance(data, BatchCollection):
+            return data.to_dict()
+        if isinstance(data, dict):
+            return data
+        raise ValueError(f'Expected either a BatchCollection or a dict, got {data}.')
+
+
+@dataclass_json(letter_case=LetterCase.CAMEL, undefined=Undefined.INCLUDE)
+@dataclass
+class BatchCollectionAdditionalData:
+    """ Dataclass to hold batch collection additionalData part of the payload
+    """
+    other_data: CatchAll
+    bands: Optional[dict] = None
+
+
+@dataclass_json(letter_case=LetterCase.CAMEL, undefined=Undefined.INCLUDE)
+@dataclass
+class BatchCollectionBatchData:
+    """ Dataclass to hold batch collection batchData part of the payload
+    """
+    other_data: CatchAll
+    tiling_grid_id: Optional[int] = None
+
+
+@dataclass_json(letter_case=LetterCase.CAMEL, undefined=Undefined.INCLUDE)
+@dataclass
+class BatchCollection:
+    """ Dataclass for batch collection parameters
+    """
+    name: str
+    s3_bucket: str
+    other_data: CatchAll
+    collection_id: Optional[str] = field(metadata=dataclass_config(field_name='id'), default=None)
+    user_id: Optional[str] = None
+    created: Optional[dt.datetime] = field(metadata=datetime_config, default=None)
+    no_data: Optional[Union[int, float]] = None
+    additional_data: Optional[BatchCollectionAdditionalData] = None
+    batch_data: Optional[BatchCollectionBatchData] = None
+
+    def to_data_collection(self):
+        """ Returns a DataCollection enum for this batch collection
+        """
+        # TODO: unify and check that collection id exists
+
+        if self.additional_data and self.additional_data.bands:
+            band_names = tuple(self.additional_data.bands)
+            return DataCollection.define_byoc(collection_id=self.collection_id, bands=band_names)
+
+        return DataCollection.define_byoc(collection_id=self.collection_id)
 
 
 def get_batch_tiles_per_status(batch_request):
