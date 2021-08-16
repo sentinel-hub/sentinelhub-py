@@ -51,7 +51,8 @@ class SentinelHubBatch:
         return f'{self.__class__.__name__}({{\n  {repr_params_str}\n  ...\n}})'
 
     @classmethod
-    def create(cls, sentinelhub_request, tiling_grid, output=None, bucket_name=None, description=None, config=None):
+    def create(cls, sentinelhub_request, tiling_grid, output=None, bucket_name=None, description=None, config=None,
+               **kwargs):
         """ Create a new batch request
 
         `Batch API reference
@@ -72,6 +73,9 @@ class SentinelHubBatch:
         :type description: str or None
         :param config: A configuration object
         :type config: SHConfig or None
+        :param kwargs: Any other arguments to be added to a dictionary of parameters.
+        :return: An instance of `SentinelHubBatch` object that represents a newly created batch request.
+        :rtype: SentinelHubBatch
         """
         if isinstance(sentinelhub_request, SentinelHubRequest):
             sentinelhub_request = sentinelhub_request.download_list[0].post_values
@@ -85,7 +89,8 @@ class SentinelHubBatch:
             'tilingGrid': tiling_grid,
             'output': output,
             'bucketName': bucket_name,
-            'description': description
+            'description': description,
+            **kwargs
         }
         payload = remove_undefined(payload)
 
@@ -309,6 +314,30 @@ class SentinelHubBatch:
         except StopIteration as exception:
             raise ValueError('No batch request is available') from exception
 
+    def update(self, output=None, description=None, **kwargs):
+        """ Update batch job request parameters
+
+        `Batch API reference
+        <https://docs.sentinel-hub.com/api/latest/reference/#operation/updateBatchProcessRequest>`__
+
+        Similarly to `update_info` method, this method also updates local information in the current instance of
+        `SentinelHubBatch`.
+
+        :param output: A dictionary with output parameters to be updated.
+        :type output: dict or None
+        :param description: A description of a batch request to be updated.
+        :type description: str or None
+        :param kwargs: Any other arguments to be added to a dictionary of parameters.
+        """
+        payload = remove_undefined({
+            'output': output,
+            'description': description,
+            **kwargs
+        })
+        url = self._get_process_url(self.config, request_id=self.request_id)
+        client = SentinelHubDownloadClient(config=self.config)
+        self._request_info = client.get_json(url, post_values=payload, request_type=RequestType.PUT, use_session=True)
+
     def delete(self):
         """ Delete a batch job request
 
@@ -466,7 +495,7 @@ def get_batch_tiles_per_status(batch_request):
     """ A helper function that queries information about batch tiles and returns information about tiles, grouped by
     tile status.
 
-    :returns: A dictionary mapping a tile status to a list of tile payloads.
+    :return: A dictionary mapping a tile status to a list of tile payloads.
     :rtype: dict(str, list(dict))
     """
     tiles_per_status = {}
@@ -498,7 +527,7 @@ def monitor_batch_job(batch_request, sleep_time=120, analysis_sleep_time=5):
     :type sleep_time: int
     :param analysis_sleep_time: Number of seconds between consecutive status updates during analysis phase.
     :type analysis_sleep_time: int
-    :returns: A dictionary mapping a tile status to a list of tile payloads.
+    :return: A dictionary mapping a tile status to a list of tile payloads.
     :rtype: dict(str, list(dict))
     """
     batch_request.update_info()
