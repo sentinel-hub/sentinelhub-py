@@ -2,9 +2,57 @@
 Module implementing some utility functions not suitable for other utility modules
 """
 from abc import ABC, abstractmethod
+from dataclasses import field, dataclass
+from datetime import datetime
+from typing import Optional, Union
 from urllib.parse import urlencode
 
+from dataclasses_json import config as dataclass_config
+from dataclasses_json import dataclass_json, LetterCase, Undefined, CatchAll
+
+from .data_collections import DataCollection
+from .geometry import Geometry
 from .exceptions import MissingDataInRequestException
+from .time_utils import parse_time, serialize_time
+
+
+datetime_config = dataclass_config(
+    encoder=lambda time: serialize_time(time, use_tz=True) if time else None,
+    decoder=lambda time: parse_time(time, force_datetime=True) if time else None,
+    letter_case=LetterCase.CAMEL
+)
+
+
+geometry_config = dataclass_config(encoder=Geometry.get_geojson,
+                                   decoder=lambda x: Geometry.from_geojson(x) if x else None,
+                                   exclude=lambda x: x is None, letter_case=LetterCase.CAMEL)
+
+
+@dataclass_json(letter_case=LetterCase.CAMEL, undefined=Undefined.INCLUDE)
+@dataclass
+class BaseCollection:
+    """ Dataclass to hold data about a collection
+    """
+    name: str
+    s3_bucket: str
+    other_data: CatchAll
+    collection_id: Optional[str] = field(metadata=dataclass_config(field_name='id'), default=None)
+    user_id: Optional[str] = None
+    created: Optional[datetime] = field(metadata=datetime_config, default=None)
+    no_data: Optional[Union[int, float]] = None
+
+    def to_data_collection(self):
+        """ Returns a DataCollection enum for this collection
+        """
+        if self.collection_id is None:
+            raise ValueError('This collection is missing a collection id')
+
+        if self.additional_data and self.additional_data.bands:
+            band_names = tuple(self.additional_data.bands)
+        else:
+            band_names = None
+
+        return DataCollection.define_byoc(collection_id=self.collection_id, bands=band_names)
 
 
 class FeatureIterator(ABC):

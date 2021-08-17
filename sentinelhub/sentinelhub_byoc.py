@@ -3,7 +3,7 @@ Module implementing an interface with Sentinel Hub Bring your own COG service
 """
 from dataclasses import field, dataclass
 from datetime import datetime
-from typing import Optional, Union
+from typing import Optional
 
 from dataclasses_json import config as dataclass_config
 from dataclasses_json import dataclass_json, LetterCase, Undefined, CatchAll
@@ -13,19 +13,7 @@ from .config import SHConfig
 from .constants import RequestType, MimeType
 from .download.sentinelhub_client import SentinelHubDownloadClient
 from .geometry import Geometry
-from .sh_utils import SentinelHubFeatureIterator, remove_undefined
-from .time_utils import parse_time, serialize_time
-
-
-datetime_config = dataclass_config(
-    encoder=lambda time: serialize_time(time, use_tz=True) if time else None,
-    decoder=lambda time: parse_time(time, force_datetime=True) if time else None,
-    letter_case=LetterCase.CAMEL
-)
-
-geometry_config = dataclass_config(encoder=Geometry.get_geojson,
-                                   decoder=lambda x: Geometry.from_geojson(x) if x else None,
-                                   exclude=lambda x: x is None, letter_case=LetterCase.CAMEL)
+from .sh_utils import SentinelHubFeatureIterator, BaseCollection, remove_undefined, datetime_config, geometry_config
 
 
 @dataclass_json(letter_case=LetterCase.CAMEL, undefined=Undefined.INCLUDE)
@@ -39,28 +27,10 @@ class ByocCollectionAdditionalData:
     max_meters_per_pixel_override: Optional[float] = None
 
 
-@dataclass_json(letter_case=LetterCase.CAMEL, undefined=Undefined.INCLUDE)
-@dataclass
-class ByocCollection:
+class ByocCollection(BaseCollection):
     """ Dataclass to hold BYOC collection data
     """
-    name: str
-    s3_bucket: str
-    other_data: CatchAll
-    collection_id: Optional[str] = field(metadata=dataclass_config(field_name='id'), default=None)
-    user_id: Optional[str] = None
-    created: Optional[datetime] = field(metadata=datetime_config, default=None)
     additional_data: Optional[ByocCollectionAdditionalData] = None
-    no_data: Optional[Union[int, float]] = None
-
-    def to_data_collection(self):
-        """ Returns a DataCollection enum for this BYOC collection
-        """
-        if self.additional_data and self.additional_data.bands:
-            band_names = tuple(self.additional_data.bands)
-            return DataCollection.define_byoc(collection_id=self.collection_id, bands=band_names)
-
-        return DataCollection.define_byoc(collection_id=self.collection_id)
 
 
 @dataclass_json(letter_case=LetterCase.CAMEL, undefined=Undefined.INCLUDE)

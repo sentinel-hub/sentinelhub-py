@@ -3,11 +3,9 @@ Module implementing an interface with Sentinel Hub Batch service
 """
 import logging
 import time
-import datetime as dt
-from dataclasses import field, dataclass
-from typing import Optional, Union
+from dataclasses import dataclass
+from typing import Optional
 
-from dataclasses_json import config as dataclass_config
 from dataclasses_json import dataclass_json, LetterCase, Undefined, CatchAll
 from tqdm.auto import tqdm
 
@@ -17,10 +15,34 @@ from .data_collections import DataCollection
 from .download.sentinelhub_client import SentinelHubDownloadClient
 from .geometry import Geometry, BBox, CRS
 from .sentinelhub_request import SentinelHubRequest
-from .sh_utils import SentinelHubFeatureIterator, remove_undefined
-from .sentinelhub_byoc import datetime_config  # TODO
+from .sh_utils import SentinelHubFeatureIterator, remove_undefined, BaseCollection
 
 LOGGER = logging.getLogger(__name__)
+
+
+@dataclass_json(letter_case=LetterCase.CAMEL, undefined=Undefined.INCLUDE)
+@dataclass
+class BatchCollectionAdditionalData:
+    """ Dataclass to hold batch collection additionalData part of the payload
+    """
+    other_data: CatchAll
+    bands: Optional[dict] = None
+
+
+@dataclass_json(letter_case=LetterCase.CAMEL, undefined=Undefined.INCLUDE)
+@dataclass
+class BatchCollectionBatchData:
+    """ Dataclass to hold batch collection batchData part of the payload
+    """
+    other_data: CatchAll
+    tiling_grid_id: Optional[int] = None
+
+
+class BatchCollection(BaseCollection):
+    """ Dataclass for batch collections
+    """
+    additional_data: Optional[BatchCollectionAdditionalData] = None
+    batch_data: Optional[BatchCollectionBatchData] = None
 
 
 class SentinelHubBatch:
@@ -613,51 +635,6 @@ class SentinelHubBatch:
         if isinstance(data, dict):
             return data
         raise ValueError(f'Expected either a BatchCollection or a dict, got {data}.')
-
-
-@dataclass_json(letter_case=LetterCase.CAMEL, undefined=Undefined.INCLUDE)
-@dataclass
-class BatchCollectionAdditionalData:
-    """ Dataclass to hold batch collection additionalData part of the payload
-    """
-    other_data: CatchAll
-    bands: Optional[dict] = None
-
-
-@dataclass_json(letter_case=LetterCase.CAMEL, undefined=Undefined.INCLUDE)
-@dataclass
-class BatchCollectionBatchData:
-    """ Dataclass to hold batch collection batchData part of the payload
-    """
-    other_data: CatchAll
-    tiling_grid_id: Optional[int] = None
-
-
-@dataclass_json(letter_case=LetterCase.CAMEL, undefined=Undefined.INCLUDE)
-@dataclass
-class BatchCollection:
-    """ Dataclass for batch collection parameters
-    """
-    name: str
-    s3_bucket: str
-    other_data: CatchAll
-    collection_id: Optional[str] = field(metadata=dataclass_config(field_name='id'), default=None)
-    user_id: Optional[str] = None
-    created: Optional[dt.datetime] = field(metadata=datetime_config, default=None)
-    no_data: Optional[Union[int, float]] = None
-    additional_data: Optional[BatchCollectionAdditionalData] = None
-    batch_data: Optional[BatchCollectionBatchData] = None
-
-    def to_data_collection(self):
-        """ Returns a DataCollection enum for this batch collection
-        """
-        # TODO: unify and check that collection id exists
-
-        if self.additional_data and self.additional_data.bands:
-            band_names = tuple(self.additional_data.bands)
-            return DataCollection.define_byoc(collection_id=self.collection_id, bands=band_names)
-
-        return DataCollection.define_byoc(collection_id=self.collection_id)
 
 
 def get_batch_tiles_per_status(batch_request):
