@@ -654,7 +654,11 @@ def get_batch_tiles_per_status(batch_request):
     return tiles_per_status
 
 
-def monitor_batch_job(batch_request, sleep_time=120, analysis_sleep_time=5):
+_MIN_SLEEP_TIME = 60
+_MIN_ANALYSIS_SLEEP_TIME = 5
+
+
+def monitor_batch_job(batch_request, sleep_time=120, analysis_sleep_time=10):
     """ A utility function that keeps checking for number of processed tiles until the given batch request finishes.
     During the process it shows a progress bar and at the end it reports information about finished and failed tiles.
 
@@ -676,6 +680,12 @@ def monitor_batch_job(batch_request, sleep_time=120, analysis_sleep_time=5):
     :return: A dictionary mapping a tile status to a list of tile payloads.
     :rtype: dict(str, list(dict))
     """
+    if sleep_time < _MIN_SLEEP_TIME:
+        raise ValueError(f'To avoid making too many service requests please set sleep_time>={_MIN_SLEEP_TIME}')
+    if analysis_sleep_time < _MIN_ANALYSIS_SLEEP_TIME:
+        raise ValueError('To avoid making too many service requests please set '
+                         f'analysis_sleep_time>={_MIN_ANALYSIS_SLEEP_TIME}')
+
     batch_request.update_info()
     status = batch_request.info['status']
     while status in ['CREATED', 'ANALYSING', 'ANALYSIS_DONE']:
