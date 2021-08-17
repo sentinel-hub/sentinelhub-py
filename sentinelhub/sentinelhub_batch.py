@@ -3,7 +3,9 @@ Module implementing an interface with Sentinel Hub Batch service
 """
 import logging
 import time
+from collections import defaultdict
 from dataclasses import dataclass
+from enum import Enum
 from typing import Optional
 
 from dataclasses_json import dataclass_json, LetterCase, Undefined, CatchAll
@@ -18,6 +20,30 @@ from .sentinelhub_request import SentinelHubRequest
 from .sh_utils import SentinelHubFeatureIterator, remove_undefined, BaseCollection
 
 LOGGER = logging.getLogger(__name__)
+
+
+class BatchRequestStatus(Enum):
+    """ An enum class with all possible batch request statuses
+    """
+    CREATED = 'CREATED'
+    ANALYSING = 'ANALYSING'
+    ANALYSIS_DONE = 'ANALYSIS_DONE'
+    PROCESSING = 'PROCESSING'
+    DONE = 'DONE'
+    FAILED = 'FAILED'
+    PARTIAL = 'PARTIAL'
+    CANCELED = 'CANCELED'
+
+
+class BatchTileStatus(Enum):
+    """ An enum class with all possible batch tile statuses
+    """
+    PENDING = 'PENDING'
+    SCHEDULED = 'SCHEDULED'
+    QUEUED = 'QUEUED'
+    PROCESSING = 'PROCESSING'
+    PROCESSED = 'PROCESSED'
+    FAILED = 'FAILED'
 
 
 @dataclass_json(letter_case=LetterCase.CAMEL, undefined=Undefined.INCLUDE)
@@ -407,20 +433,22 @@ class SentinelHubBatch:
         """
         return self._call_job('restartpartial')
 
-    def raise_for_status(self, status='FAILED'):
+    def raise_for_status(self, status=BatchRequestStatus.FAILED):
         """ Raises an error in case batch request has a given status
 
         :param status: One or more status codes on which to raise an error. The default is `'FAILED'`.
-        :type status: str or list(str)
+        :type status: str or list(str) or BatchRequestStatus or list(BatchRequestStatus)
         :raises: RuntimeError
         """
-        if isinstance(status, str):
+        if isinstance(status, (str, BatchRequestStatus)):
             status = [status]
-        batch_status = self.info['status']
-        if batch_status in status:
+        status_list = [BatchRequestStatus(_status) for _status in status]
+
+        batch_status = BatchRequestStatus(self.info['status'])
+        if batch_status in status_list:
             error_message = self.info.get('error', '')
             formatted_error_message = f' and error message: "{error_message}"' if error_message else ''
-            raise RuntimeError(f'Raised for batch request {self.request_id} with status {batch_status}'
+            raise RuntimeError(f'Raised for batch request {self.request_id} with status {batch_status.value}'
                                f'{formatted_error_message}')
 
     def iter_tiles(self, status=None, **kwargs):
@@ -642,13 +670,12 @@ def get_batch_tiles_per_status(batch_request):
     tile status.
 
     :return: A dictionary mapping a tile status to a list of tile payloads.
-    :rtype: dict(str, list(dict))
+    :rtype: defaultdict(str, list(dict))
     """
-    tiles_per_status = {}
+    tiles_per_status = defaultdict(list)
 
     for tile in batch_request.iter_tiles():
         status = tile['status']
-        tiles_per_status[status] = tiles_per_status.get(status, [])
         tiles_per_status[status].append(tile)
 
     return tiles_per_status
@@ -678,7 +705,7 @@ def monitor_batch_job(batch_request, sleep_time=120, analysis_sleep_time=10):
     :param analysis_sleep_time: Number of seconds between consecutive status updates during analysis phase.
     :type analysis_sleep_time: int
     :return: A dictionary mapping a tile status to a list of tile payloads.
-    :rtype: dict(str, list(dict))
+    :rtype: defaultdict(str, list(dict))
     """
     if sleep_time < _MIN_SLEEP_TIME:
         raise ValueError(f'To avoid making too many service requests please set sleep_time>={_MIN_SLEEP_TIME}')
@@ -687,16 +714,16 @@ def monitor_batch_job(batch_request, sleep_time=120, analysis_sleep_time=10):
                          f'analysis_sleep_time>={_MIN_ANALYSIS_SLEEP_TIME}')
 
     batch_request.update_info()
-    status = batch_request.info['status']
-    while status in ['CREATED', 'ANALYSING', 'ANALYSIS_DONE']:
+    status = BatchRequestStatus(batch_request.info['status'])
+    while status in [BatchRequestStatus.CREATED, BatchRequestStatus.ANALYSING, BatchRequestStatus.ANALYSIS_DONE]:
         LOGGER.info('Batch job has a status %s, sleeping for %d seconds', status, analysis_sleep_time)
         time.sleep(analysis_sleep_time)
         batch_request.update_info()
-        status = batch_request.info['status']
+        status = BatchRequestStatus(batch_request.info['status'])
 
-    batch_request.raise_for_status(status=['FAILED', 'CANCELED'])
+    batch_request.raise_for_status(status=[BatchRequestStatus.FAILED, BatchRequestStatus.CANCELED])
 
-    if status == 'PROCESSING':
+    if status is BatchRequestStatus.PROCESSING:
         LOGGER.info('Batch job is running')
     finished_count = 0
     success_count = 0
@@ -705,8 +732,8 @@ def monitor_batch_job(batch_request, sleep_time=120, analysis_sleep_time=10):
             tqdm(total=finished_count, desc='Success rate') as success_bar:
         while finished_count < total_tile_count:
             tiles_per_status = get_batch_tiles_per_status(batch_request)
-            processed_tiles_num = len(tiles_per_status.get('PROCESSED', []))
-            failed_tiles_num = len(tiles_per_status.get('FAILED', []))
+            processed_tiles_num = len(tiles_per_status[BatchTileStatus.PROCESSED.value])
+            failed_tiles_num = len(tiles_per_status[BatchTileStatus.FAILED.value])
 
             new_success_count = processed_tiles_num
             new_finished_count = processed_tiles_num + failed_tiles_num

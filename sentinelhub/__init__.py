@@ -37,7 +37,8 @@ from .time_utils import next_date, prev_date, get_current_date
 from .testing_utils import TestSentinelHub, TestCaseContainer
 
 from .sentinelhub_session import SentinelHubSession
-from .sentinelhub_batch import SentinelHubBatch, BatchCollection, get_batch_tiles_per_status, monitor_batch_job
+from .sentinelhub_batch import SentinelHubBatch, BatchCollection, get_batch_tiles_per_status, monitor_batch_job, \
+    BatchRequestStatus, BatchTileStatus
 from .sentinelhub_request import SentinelHubRequest
 from .sentinelhub_byoc import SentinelHubBYOC, ByocCollection, ByocCollectionAdditionalData, ByocTile
 from .sentinelhub_catalog import SentinelHubCatalog

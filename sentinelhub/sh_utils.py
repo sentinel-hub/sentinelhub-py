@@ -23,9 +23,12 @@ datetime_config = dataclass_config(
 )
 
 
-geometry_config = dataclass_config(encoder=Geometry.get_geojson,
-                                   decoder=lambda x: Geometry.from_geojson(x) if x else None,
-                                   exclude=lambda x: x is None, letter_case=LetterCase.CAMEL)
+geometry_config = dataclass_config(
+    encoder=Geometry.get_geojson,
+    decoder=lambda geojson: Geometry.from_geojson(geojson) if geojson else None,
+    exclude=lambda geojson: geojson is None,
+    letter_case=LetterCase.CAMEL
+)
 
 
 @dataclass_json(letter_case=LetterCase.CAMEL, undefined=Undefined.INCLUDE)
