@@ -22,12 +22,6 @@ class BaseGeometry(ABC):
         """
         self._crs = CRS(crs)
 
-    def _repr_svg_(self):
-        """ Using shapely's svg geometry visualization for Jupyter notebooks
-        """
-        # pylint: disable=protected-access
-        return self.geometry._repr_svg_()
-
     @property
     def crs(self):
         """ Returns the coordinate reference system (CRS)
@@ -411,7 +405,7 @@ class Geometry(BaseGeometry):
     def __repr__(self):
         """ Method for class representation
         """
-        return f'{self.__class__.__name__}({self.wkt}, crs={self.crs})'
+        return f'{self.__class__.__name__}({self.wkt}, crs={repr(self.crs)})'
 
     def __eq__(self, other):
         """ Method for comparing two Geometry classes
