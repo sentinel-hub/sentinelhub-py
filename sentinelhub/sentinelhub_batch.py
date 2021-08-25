@@ -665,7 +665,7 @@ class SentinelHubBatch:
         raise ValueError(f'Expected either a BatchCollection or a dict, got {data}.')
 
 
-def get_batch_tiles_per_status(batch_request):
+def _get_batch_tiles_per_status(batch_request):
     """ A helper function that queries information about batch tiles and returns information about tiles, grouped by
     tile status.
 
@@ -725,18 +725,20 @@ def monitor_batch_job(batch_request, sleep_time=120, analysis_sleep_time=10):
 
     if status is BatchRequestStatus.PROCESSING:
         LOGGER.info('Batch job is running')
-    finished_count = 0
-    success_count = 0
-    total_tile_count = batch_request.info['tileCount']
-    with tqdm(total=total_tile_count, desc='Progress rate') as progress_bar, \
-            tqdm(total=finished_count, desc='Success rate') as success_bar:
-        while finished_count < total_tile_count:
-            tiles_per_status = get_batch_tiles_per_status(batch_request)
-            processed_tiles_num = len(tiles_per_status[BatchTileStatus.PROCESSED.value])
-            failed_tiles_num = len(tiles_per_status[BatchTileStatus.FAILED.value])
 
-            new_success_count = processed_tiles_num
-            new_finished_count = processed_tiles_num + failed_tiles_num
+    total_tile_count = batch_request.info['tileCount']
+    tiles_per_status = _get_batch_tiles_per_status(batch_request)
+    success_count = len(tiles_per_status[BatchTileStatus.PROCESSED.value])
+    finished_count = success_count + len(tiles_per_status[BatchTileStatus.FAILED.value])
+
+    with tqdm(total=total_tile_count, initial=finished_count, desc='Progress rate') as progress_bar, \
+            tqdm(total=finished_count, initial=success_count, desc='Success rate') as success_bar:
+        while finished_count < total_tile_count:
+            time.sleep(sleep_time)
+
+            tiles_per_status = _get_batch_tiles_per_status(batch_request)
+            new_success_count = len(tiles_per_status[BatchTileStatus.PROCESSED.value])
+            new_finished_count = new_success_count + len(tiles_per_status[BatchTileStatus.FAILED.value])
 
             progress_bar.update(new_finished_count - finished_count)
             if new_finished_count != finished_count:
@@ -747,9 +749,7 @@ def monitor_batch_job(batch_request, sleep_time=120, analysis_sleep_time=10):
             finished_count = new_finished_count
             success_count = new_success_count
 
-            if finished_count < total_tile_count:
-                time.sleep(sleep_time)
-
+    failed_tiles_num = finished_count - success_count
     if failed_tiles_num:
-        LOGGER.info('Batch job failed for %d tiles', processed_tiles_num)
+        LOGGER.info('Batch job failed for %d tiles', failed_tiles_num)
     return tiles_per_status
