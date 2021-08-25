@@ -720,7 +720,10 @@ class BatchSplitter(AreaSplitter):
         """
         tile_info_list = list(self.batch_request.iter_tiles())
 
-        self.bbox_list = [shapely.geometry.shape(tile_info['geometry']) for tile_info in tile_info_list]
+        tile_geometries = [Geometry.from_geojson(tile_info['geometry']) for tile_info in tile_info_list]
+        original_crs_list = [CRS(tile_info['origin']['crs']['properties']['name']) for tile_info in tile_info_list]
+
+        self.bbox_list = [geometry.transform(crs).bbox for geometry, crs in zip(tile_geometries, original_crs_list)]
         self.info_list = [
             {key: value for key, value in tile_info.items() if key != 'geometry'} for tile_info in tile_info_list
         ]
