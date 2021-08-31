@@ -59,7 +59,7 @@ or set them up by configuring an instance of :class:`~sentinelhub.config.SHConfi
 
     config = SHConfig()
 
-    config.instance_id = '<your instance id>
+    config.instance_id = '<your instance id>'
     config.sh_client_id = '<your client id>'
     config.sh_client_secret = '<your client secret>'
 
