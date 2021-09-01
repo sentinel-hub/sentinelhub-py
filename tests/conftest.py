@@ -14,13 +14,14 @@ INPUT_FOLDER = get_input_folder(__file__)
 OUTPUT_FOLDER = get_output_folder(__file__)
 
 
-@pytest.fixture(name='config')
+@pytest.fixture(name='config', autouse=True, scope='package')
 def config_fixture():
     config = SHConfig()
     for param in config.get_params():
         env_variable = param.upper()
         if os.environ.get(env_variable):
             setattr(config, param, os.environ.get(env_variable))
+    config.save()
     return config
 
 

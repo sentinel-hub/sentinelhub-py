@@ -1,16 +1,10 @@
 """
 Utility tools for writing unit tests for packages which rely on `sentinelhub-py`
 """
-
 import os
-import shutil
-import logging
-import inspect
 
 import numpy as np
 from pytest import approx
-
-from .config import SHConfig
 
 
 def get_input_folder(current_file):
