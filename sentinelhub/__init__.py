@@ -34,8 +34,6 @@ from .geo_utils import bbox_to_dimensions, bbox_to_resolution, get_image_dimensi
     wgs84_to_utm, to_wgs84, utm_to_pixel, pixel_to_utm, wgs84_to_pixel, get_utm_crs, transform_point
 from .time_utils import next_date, prev_date, get_current_date
 
-from .testing_utils import TestSentinelHub, TestCaseContainer
-
 from .sentinelhub_session import SentinelHubSession
 from .sentinelhub_batch import SentinelHubBatch
 from .sentinelhub_request import SentinelHubRequest

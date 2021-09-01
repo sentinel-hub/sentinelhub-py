@@ -1,83 +1,59 @@
-import unittest
 import numpy as np
 
-from sentinelhub import AwsTileRequest, AwsProductRequest, DataCollection, TestSentinelHub
+from pytest import approx
+
+from sentinelhub import AwsTileRequest, AwsProductRequest, DataCollection
 
 
-class TestAwsTile(TestSentinelHub):
-    @classmethod
-    def setUpClass(cls):
-        super().setUpClass()
-
-        cls.request = AwsTileRequest(data_folder=cls.OUTPUT_FOLDER, bands='B01, B05',
-                                     metafiles='metadata,tileInfo,  productInfo, qi/MSK_TECQUA_B04,  auxiliary/ECMWFT ',
-                                     tile='10UEV', time='2016-01-09', aws_index=0,
-                                     data_collection=DataCollection.SENTINEL2_L1C)
-        cls.data = cls.request.get_data(redownload=True, data_filter=[0] + list(range(2, 7)))
-
-    def test_return_type(self):
-        self.assertTrue(isinstance(self.data, list), "Expected a list")
-        self.assertEqual(len(self.data), 6, "Expected a list of length 6")
-        self.assertAlmostEqual(np.mean(self.data[0]), 1357.99, delta=1e-1, msg="Image has incorrect values")
+def test_aws_tile(output_folder):
+    request = AwsTileRequest(
+        data_folder=output_folder, bands='B01, B05',
+        metafiles='metadata,tileInfo,  productInfo, qi/MSK_TECQUA_B04,  auxiliary/ECMWFT ',
+        tile='10UEV', time='2016-01-09', aws_index=0, data_collection=DataCollection.SENTINEL2_L1C
+    )
+    data = request.get_data(redownload=True, data_filter=[0] + list(range(2, 7)))
+    assert isinstance(data, list)
+    assert len(data) == 6
+    assert np.mean(data[0]) == approx(1357.99, abs=1e-1)
 
 
-class TestAwsProduct(TestSentinelHub):
-    @classmethod
-    def setUpClass(cls):
-        super().setUpClass()
+def test_aws_product(output_folder):
+    request = AwsProductRequest(
+        data_folder=output_folder, bands='B10', metafiles='metadata,tileInfo,productInfo, datastrip/*/metadata',
+        product_id='S2A_OPER_PRD_MSIL1C_PDMC_20160121T043931_R069_V20160103T171947_20160103T171947'
+    )
+    data = request.get_data(save_data=True, redownload=True, max_threads=100)
 
-        cls.request = AwsProductRequest(data_folder=cls.OUTPUT_FOLDER, bands='B10',
-                                        metafiles='metadata,tileInfo,productInfo, datastrip/*/metadata',
-                                        product_id='S2A_OPER_PRD_MSIL1C_PDMC_20160121T043931_R069_V20160103T171947_'
-                                                   '20160103T171947')
-        cls.data = cls.request.get_data(save_data=True, redownload=True, max_threads=100)
-
-    def test_return_type(self):
-        self.assertTrue(isinstance(self.data, list), "Expected a list")
-        self.assertEqual(len(self.data), 51, "Expected a list of length 51")
+    assert isinstance(data, list)
+    assert len(data) == 51
 
 
-class TestPartialAwsProduct(TestSentinelHub):
-    @classmethod
-    def setUpClass(cls):
-        super().setUpClass()
+def test_partial_aws_product(output_folder):
+    request = AwsProductRequest(
+        data_folder=output_folder, bands='B12', metafiles='manifest,preview/B02', tile_list=['1WCV'],
+        product_id='S2A_MSIL1C_20171010T003621_N0205_R002_T01WCV_20171010T003615'
+    )
+    data = request.get_data(save_data=True, redownload=True, data_filter=[1])
 
-        bands = 'B12'
-        metafiles = 'manifest,preview/B02'
-        tile = '1WCV'
-        cls.request = AwsProductRequest(data_folder=cls.OUTPUT_FOLDER, bands=bands,
-                                        metafiles=metafiles, tile_list=[tile],
-                                        product_id='S2A_MSIL1C_20171010T003621_N0205_R002_T01WCV_20171010T003615')
-        cls.data = cls.request.get_data(save_data=True, redownload=True, data_filter=[1])
+    download_list = request.get_url_list()
+    assert isinstance(download_list, list)
+    assert len(download_list) == 3
 
-    def test_return_type(self):
-        download_list = self.request.get_url_list()
-        self.assertTrue(isinstance(download_list, list), "Expected a list")
-        self.assertEqual(len(download_list), 3, "Expected a list of length 3")
-
-        self.assertTrue(isinstance(self.data, list), "Expected a list")
-        self.assertEqual(len(self.data), 1, "Expected a list of length 1")
+    assert isinstance(data, list)
+    assert len(data) == 1
 
 
-class TestL2AProduct(TestSentinelHub):
-    @classmethod
-    def setUpClass(cls):
-        super().setUpClass()
+def test_l2a_product(output_folder):
+    request = AwsProductRequest(
+        data_folder=output_folder, metafiles='metadata,tileInfo,productInfo, datastrip/*/metadata',
+        product_id='S2A_MSIL2A_20180402T151801_N0207_R068_T33XWJ_20180402T202222'
+    )
+    data = request.get_data(save_data=True, redownload=True, data_filter=[20])
 
-        cls.request = AwsProductRequest(data_folder=cls.OUTPUT_FOLDER,
-                                        metafiles='metadata,tileInfo,productInfo, datastrip/*/metadata',
-                                        product_id='S2A_MSIL2A_20180402T151801_N0207_R068_T33XWJ_20180402T202222')
-        cls.data = cls.request.get_data(save_data=True, redownload=True, data_filter=[20])
+    download_list = request.get_url_list()
+    assert isinstance(download_list, list)
+    assert len(download_list) == 41
 
-    def test_return_type(self):
-        download_list = self.request.get_url_list()
-        self.assertTrue(isinstance(download_list, list), "Expected a list")
-        self.assertEqual(len(download_list), 41, "Expected a list of length 41")
-
-        self.assertTrue(isinstance(self.data, list), "Expected a list")
-        self.assertEqual(len(self.data), 1, "Expected a list of length 1")
-        self.assertAlmostEqual(np.mean(self.data[0]), 16.91783, delta=1e-4, msg="Image has incorrect values")
-
-
-if __name__ == '__main__':
-    unittest.main()
+    assert isinstance(data, list)
+    assert len(data) == 1
+    assert np.mean(data[0]) == approx(16.91783, abs=1e-4)
