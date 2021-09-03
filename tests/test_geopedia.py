@@ -1,166 +1,141 @@
-import unittest
 import datetime
+from dataclasses import dataclass
+from typing import Optional
 
 import pytest
 import numpy as np
 
-from sentinelhub import GeopediaSession, GeopediaWmsRequest, GeopediaImageRequest, GeopediaFeatureIterator, \
-    CRS, MimeType, BBox, TestSentinelHub, TestCaseContainer
+from sentinelhub import (
+    GeopediaSession, GeopediaWmsRequest, GeopediaImageRequest, GeopediaFeatureIterator, CRS, MimeType, BBox
+)
+from sentinelhub.testing_utils import test_numpy_data
 
 
-class TestGeopediaSession(TestSentinelHub):
-    # When config.json could store Geopedia credentials add some login tests
+# When config.json could store Geopedia credentials add some login tests
 
-    def test_global_session(self):
-        session1 = GeopediaSession(is_global=True)
-        session2 = GeopediaSession(is_global=True)
-        session3 = GeopediaSession(is_global=False)
+def test_global_session():
+    session1 = GeopediaSession(is_global=True)
+    session2 = GeopediaSession(is_global=True)
+    session3 = GeopediaSession(is_global=False)
 
-        self.assertEqual(session1.session_id, session2.session_id, 'Global sessions should have the same session ID')
-        self.assertNotEqual(session1.session_id, session3.session_id,
-                            'Global and local sessions should not have the same session ID')
-
-    def test_session_update(self):
-        session = GeopediaSession()
-        initial_session_id = session.session_id
-
-        self.assertEqual(session.restart().session_id, initial_session_id, 'Session should be updated')
-
-        self.assertEqual(session.user_id, 'NO_USER', "Session user ID should be 'NO_USER'")
-
-    def test_session_timeout(self):
-        session = GeopediaSession()
-        session.SESSION_DURATION = datetime.timedelta(seconds=-1)
-        initial_session_id = session.session_id
-
-        self.assertEqual(session.session_id, initial_session_id, 'Session should timeout and be updated')
-
-    def test_false_initialization(self):
-        with self.assertRaises(ValueError):
-            GeopediaSession(username='some_user')
-        with self.assertRaises(ValueError):
-            GeopediaSession(password='some_password')
-        with self.assertRaises(ValueError):
-            GeopediaSession(username='some_user', password='some_password', password_md5='md5_encoded')
+    assert session1.session_id == session2.session_id, 'Global sessions should have the same session ID'
+    assert session1.session_id != session3.session_id, 'Global and local sessions should not have the same session ID'
 
 
-class TestGeopediaWms(TestSentinelHub):
+def test_session_update():
+    session = GeopediaSession()
+    initial_session_id = session.session_id
 
-    @classmethod
-    def setUpClass(cls):
-        super().setUpClass()
-
-        bbox = BBox(bbox=[(524358.0140363087, 6964349.630376049),
-                          (534141.9536568124, 6974133.5699965535)], crs=CRS.POP_WEB)
-
-        gpd_request = GeopediaWmsRequest(layer=1917, theme='ml_aws', bbox=bbox, width=50, height=50,
-                                         image_format=MimeType.PNG)
-
-        cls.data = gpd_request.get_data()
-
-    def test_return_type(self):
-        data_len = 1
-        self.assertTrue(isinstance(self.data, list), "Expected a list")
-        self.assertEqual(len(self.data), data_len,
-                         "Expected a list of length {}, got length {}".format(data_len, len(self.data)))
-
-    @pytest.mark.xfail
-    def test_stats(self):
-        self.test_numpy_data(np.array(self.data), exp_min=0, exp_max=255, exp_mean=150.9248, exp_median=255)
+    assert session.restart().session_id == initial_session_id, 'Session should be updated'
+    assert session.user_id == 'NO_USER', "Session user ID should be 'NO_USER'"
 
 
-class TestGeopediaImageService(TestSentinelHub):
+def test_session_timeout():
+    session = GeopediaSession()
+    session.SESSION_DURATION = datetime.timedelta(seconds=-1)
+    initial_session_id = session.session_id
 
-    @classmethod
-    def setUpClass(cls):
-        super().setUpClass()
-
-        bbox = BBox(bbox=[(13520759, 437326), (13522689, 438602)], crs=CRS.POP_WEB)
-        cls.image_field_name = 'Masks'
-
-        cls.gpd_request = GeopediaImageRequest(layer=1749, bbox=bbox, image_field_name=cls.image_field_name,
-                                               image_format=MimeType.PNG, data_folder=cls.OUTPUT_FOLDER,
-                                               gpd_session=GeopediaSession(is_global=True))
-        cls.image_list = cls.gpd_request.get_data(save_data=True)
-
-    def test_return_type(self):
-        self.assertTrue(isinstance(self.image_list, list), 'Expected a list, got {}'.format(type(self.image_list)))
-
-        expected_len = 5
-        self.assertEqual(len(self.image_list), expected_len,
-                         "Expected a list of length {}, got length {}".format(expected_len, len(self.image_list)))
-
-    def test_stats(self):
-        self.test_numpy_data(np.array(self.image_list), exp_min=0, exp_max=255, exp_mean=66.88769, exp_median=0)
-
-    def test_names(self):
-        filenames = self.gpd_request.get_filename_list()
-        image_stats = list(self.gpd_request.get_items())[0]['properties'][self.image_field_name]
-
-        for filename, image_stat in zip(filenames, image_stats):
-            self.assertEqual(filename, image_stat['niceName'], 'Filenames do not match')
+    assert session.session_id == initial_session_id, 'Session should timeout and be updated'
 
 
-class TestGeopediaFeatureIterator(TestSentinelHub):
-
-    @classmethod
-    def setUpClass(cls):
-        super().setUpClass()
-
-        bbox = BBox(bbox=[(2947363, 4629723), (3007595, 4669471)], crs=CRS.POP_WEB)
-        bbox = bbox.transform(CRS.WGS84)
-        query_filter1 = 'f12458==32632'
-        query_filter2 = 'f12458==32635'
-
-        cls.test_cases = [
-            TestCaseContainer('All features', dict(layer=1749, gpd_session=GeopediaSession()),
-                              min_features=100, min_size=1609),
-            TestCaseContainer('BBox filter', dict(layer='1749', bbox=bbox), min_features=21),
-            TestCaseContainer('Query Filter', dict(layer='ttl1749', query_filter=query_filter1),
-                              min_features=76),
-            TestCaseContainer('Both filters - No data',
-                              dict(layer=1749, bbox=bbox, query_filter=query_filter1), min_features=0),
-            TestCaseContainer('Both filters - Some data',
-                              dict(layer=1749, bbox=bbox, query_filter=query_filter2), min_features=21)
-        ]
-
-    def test_iterator(self):
-        for test_case in self.test_cases:
-            with self.subTest(msg='Test case {}'.format(test_case.name)):
-                params = test_case.request
-                gpd_iter = GeopediaFeatureIterator(**params)
-
-                for idx, feature in enumerate(gpd_iter):
-                    self.assertTrue(isinstance(feature, dict), 'Expected at dictionary, got {}'.format(type(feature)))
-
-                    if idx >= test_case.min_features - 1:
-                        break
-
-                self.assertEqual(gpd_iter.index, test_case.min_features,
-                                 'Expected at least {} features, got {}'.format(test_case.min_features, gpd_iter.index))
-
-                if test_case.min_size:
-                    self.assertTrue(test_case.min_size <= len(gpd_iter),
-                                    'There should be at least {} features available, '
-                                    'got {}'.format(test_case.min_size, gpd_iter.get_size()))
-
-    def test_size_before_iteration(self):
-        for test_case in self.test_cases:
-            if not test_case.min_features:
-                continue
-
-            with self.subTest(msg='Test case {}'.format(test_case.name)):
-                params = test_case.request
-
-                gpd_iter1 = GeopediaFeatureIterator(**params)
-                _ = gpd_iter1.get_size()
-                first_feature1 = next(gpd_iter1)
-
-                gpd_iter2 = GeopediaFeatureIterator(**params)
-                first_feature2 = next(gpd_iter2)
-
-                self.assertEqual(first_feature1, first_feature2)
+@pytest.mark.parametrize('bad_kwargs', [
+    dict(username='some_user'),
+    dict(password='some_password'),
+    dict(username='some_user', password='some_password', password_md5='md5_encoded'),
+])
+def test_false_initialization(bad_kwargs):
+    with pytest.raises(ValueError):
+        GeopediaSession(**bad_kwargs)
 
 
-if __name__ == '__main__':
-    unittest.main()
+@pytest.mark.xfail(run=True, reason='Geopedia sometimes returns numerically wrong data')
+def test_geopedia_wms():
+    bbox = BBox(bbox=[(524358.0140363087, 6964349.630376049), (534141.9536568124, 6974133.5699965535)], crs=CRS.POP_WEB)
+    gpd_request = GeopediaWmsRequest(layer=1917, theme='ml_aws', bbox=bbox, width=50, height=50,
+                                     image_format=MimeType.PNG)
+    data = gpd_request.get_data()
+
+    assert isinstance(data, list)
+    assert len(data) == 1
+
+    test_numpy_data(np.array(data), exp_min=0, exp_max=255, exp_mean=150.9248, exp_median=255)
+
+
+def test_geopedia_image_request(output_folder):
+    bbox = BBox(bbox=[(13520759, 437326), (13522689, 438602)], crs=CRS.POP_WEB)
+    image_field_name = 'Masks'
+
+    gpd_request = GeopediaImageRequest(
+        layer=1749, bbox=bbox, image_field_name=image_field_name, image_format=MimeType.PNG, data_folder=output_folder,
+        gpd_session=GeopediaSession(is_global=True)
+    )
+    image_list = gpd_request.get_data(save_data=True)
+
+    assert isinstance(image_list, list)
+    assert len(image_list) == 5
+
+    test_numpy_data(np.array(image_list), exp_min=0, exp_max=255, exp_mean=66.88769, exp_median=0)
+
+    filenames = gpd_request.get_filename_list()
+    image_stats = list(gpd_request.get_items())[0]['properties'][image_field_name]
+
+    for filename, image_stat in zip(filenames, image_stats):
+        assert filename == image_stat['niceName']
+
+
+@dataclass
+class GeopediaFeatureIteratorTestCase:
+    name: str
+    params: dict
+    min_features: int
+    min_size: Optional[int] = None
+
+
+BBOX = BBox(bbox=[(2947363, 4629723), (3007595, 4669471)], crs=CRS.POP_WEB).transform(CRS.WGS84)
+TEST_CASES = [
+    GeopediaFeatureIteratorTestCase(
+        'All features', dict(layer=1749, gpd_session=GeopediaSession()), min_features=100, min_size=1609
+    ),
+    GeopediaFeatureIteratorTestCase(
+        'BBox filter', dict(layer='1749', bbox=BBOX), min_features=21
+    ),
+    GeopediaFeatureIteratorTestCase(
+        'Query Filter', dict(layer='ttl1749', query_filter='f12458==32632'), min_features=76
+    ),
+    GeopediaFeatureIteratorTestCase(
+        'Both filters - No data', dict(layer=1749, bbox=BBOX, query_filter='f12458==32632'), min_features=0
+    ),
+    GeopediaFeatureIteratorTestCase(
+        'Both filters - Some data', dict(layer=1749, bbox=BBOX, query_filter='f12458==32635'), min_features=21
+    ),
+]
+
+
+@pytest.mark.parametrize('test_case', TEST_CASES)
+def test_iterator(test_case):
+    gpd_iter = GeopediaFeatureIterator(**test_case.params)
+
+    for idx, feature in enumerate(gpd_iter):
+        assert isinstance(feature, dict)
+        if idx >= test_case.min_features - 1:
+            break
+
+    assert gpd_iter.index == test_case.min_features
+
+    if test_case.min_size:
+        assert test_case.min_size <= len(gpd_iter)
+
+
+@pytest.mark.parametrize('test_case', TEST_CASES)
+def test_size_before_iteration(test_case):
+    if not test_case.min_features:
+        return
+
+    gpd_iter1 = GeopediaFeatureIterator(**test_case.params)
+    _ = gpd_iter1.get_size()
+    first_feature1 = next(gpd_iter1)
+
+    gpd_iter2 = GeopediaFeatureIterator(**test_case.params)
+    first_feature2 = next(gpd_iter2)
+
+    assert first_feature1 == first_feature2

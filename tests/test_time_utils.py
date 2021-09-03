@@ -101,7 +101,7 @@ def test_serialize_time(time_input, params, expected_output):
     (TEST_DATE, None, TEST_TIME_START),
     (TEST_DATE, dt.time(hour=12, minute=32, second=14), TEST_DATETIME)
 ])
-def test_date_to_datetime(input_date,input_time,expected_output):
+def test_date_to_datetime(input_date, input_time, expected_output):
     result_datetime = time_utils.date_to_datetime(input_date, time=input_time)
     assert result_datetime == expected_output
 

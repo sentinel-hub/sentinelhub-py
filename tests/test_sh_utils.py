@@ -27,7 +27,7 @@ class DummyIterator(FeatureIterator):
         start_interval = len(self.features)
         end_interval = min(start_interval + self.limit, self.total)
 
-        new_features = [idx for idx in range(start_interval, end_interval)]
+        new_features = list(range(start_interval, end_interval))
 
         if not new_features:
             self.finished = True

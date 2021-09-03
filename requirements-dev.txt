@@ -4,3 +4,4 @@ codecov
 pylint>=2.2.0
 twine
 requests-mock
+pillow<=8.3.1

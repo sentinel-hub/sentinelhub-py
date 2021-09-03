@@ -98,7 +98,7 @@ def test_get_tile(byoc, collection, tile):
 
 def test_create_collection(byoc, requests_mock):
     requests_mock.post('/oauth/token', real_http=True)
-    mocked_url = f'/api/v1/byoc/collections'
+    mocked_url = '/api/v1/byoc/collections'
 
     new_collection = ByocCollection(name='mocked collection', s3_bucket='mocked_bucket')
     requests_mock.post(mocked_url, json={'data': new_collection.to_dict()})
