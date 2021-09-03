@@ -24,7 +24,7 @@ BBOX_GRID = [BBox((x / 10, y / 100, (x + 1) / 10, (y + 1) / 100), CRS.WGS84)
     [UtmZoneSplitter, ([AREA], CRS.WGS84), dict(bbox_size=(1000, 1000)), 19],
     [UtmZoneSplitter, ([AREA], CRS.WGS84), dict(bbox_size=(1000, 1000), offset=(500, 500)), 21],
     [TileSplitter, ([AREA], CRS.WGS84, ('2017-10-01', '2018-03-01')),
-     dict(tile_split_shape=40,data_collection=DataCollection.SENTINEL2_L1C, reduce_bbox_sizes=True), 13],
+     dict(tile_split_shape=40, data_collection=DataCollection.SENTINEL2_L1C, reduce_bbox_sizes=True), 13],
 ])
 def test_return_type(constructor, args, kwargs, bbox_len):
     splitter = constructor(*args, **kwargs)

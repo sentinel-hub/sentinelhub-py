@@ -110,13 +110,13 @@ TRIAL_POLICY_BUCKETS = [
 ]
 
 SMALL_POLICY_BUCKETS = [
-    (PolicyType.REQUESTS, dict( capacity=5, samplingPeriod='PT1S', nanosBetweenRefills=200000000)),
-    (PolicyType.PROCESSING_UNITS, dict( capacity=10, samplingPeriod='PT1S', nanosBetweenRefills=100000000))
+    (PolicyType.REQUESTS, dict(capacity=5, samplingPeriod='PT1S', nanosBetweenRefills=200000000)),
+    (PolicyType.PROCESSING_UNITS, dict(capacity=10, samplingPeriod='PT1S', nanosBetweenRefills=100000000))
 ]
 
 
 FIXED_BUCKETS = [
-    (PolicyType.REQUESTS, dict( capacity=10, samplingPeriod='PT0S', nanosBetweenRefills=9223372036854775807))
+    (PolicyType.REQUESTS, dict(capacity=10, samplingPeriod='PT0S', nanosBetweenRefills=9223372036854775807))
 ]
 
 
@@ -201,7 +201,7 @@ class PolicyBucketTestCase:
 
 TEST_CASES = [
     PolicyBucketTestCase(
-        bucket_kind='REQUESTS', bucket_kwargs= dict(
+        bucket_kind='REQUESTS', bucket_kwargs=dict(
             capacity=30000, samplingPeriod='PT744H', nanosBetweenRefills=89280000000, niceSamplingPeriod='31 days'
         ),
         is_request_bucket=True, is_fixed=False, elapsed_time=10, new_content=20000, cost_per_second=1000.0112007,
