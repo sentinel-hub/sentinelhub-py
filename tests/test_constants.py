@@ -161,8 +161,6 @@ def test_request_type():
     with pytest.raises(ValueError):
         RequestType('get')
 
-    try:
-        RequestType('POST')
-        RequestType('GET')
-    except BaseException:
-        assert False, 'Could not instantiate enum'
+    # check that this goes through without errors
+    RequestType('POST')
+    RequestType('GET')

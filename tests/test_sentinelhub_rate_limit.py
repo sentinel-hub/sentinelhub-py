@@ -103,53 +103,25 @@ class DummyService:
 
 
 TRIAL_POLICY_BUCKETS = [
-    PolicyBucket(PolicyType.PROCESSING_UNITS, {
-        "capacity": 30000,
-        "samplingPeriod": "PT744H",
-        "nanosBetweenRefills": 89280000000
-    }),
-    PolicyBucket(PolicyType.PROCESSING_UNITS, {
-        "capacity": 300,
-        "samplingPeriod": "PT1M",
-        "nanosBetweenRefills": 200000000,
-    }),
-    PolicyBucket(PolicyType.REQUESTS, {
-        "capacity": 30000,
-        "samplingPeriod": "PT744H",
-        "nanosBetweenRefills": 89280000000,
-    }),
-    PolicyBucket(PolicyType.REQUESTS, {
-        "capacity": 300,
-        "samplingPeriod": "PT1M",
-        "nanosBetweenRefills": 200000000,
-    })
+    (PolicyType.PROCESSING_UNITS, dict(capacity=30000, samplingPeriod="PT744H", nanosBetweenRefills=89280000000)),
+    (PolicyType.PROCESSING_UNITS, dict(capacity=300, samplingPeriod='PT1M', nanosBetweenRefills=200000000)),
+    (PolicyType.REQUESTS, dict(capacity=30000, samplingPeriod='PT744H', nanosBetweenRefills=89280000000)),
+    (PolicyType.REQUESTS, dict(capacity=300, samplingPeriod='PT1M', nanosBetweenRefills=200000000)),
 ]
 
 SMALL_POLICY_BUCKETS = [
-    PolicyBucket(PolicyType.REQUESTS, {
-        "capacity": 5,
-        "samplingPeriod": "PT1S",
-        "nanosBetweenRefills": 200000000,
-    }),
-    PolicyBucket(PolicyType.PROCESSING_UNITS, {
-        "capacity": 10,
-        "samplingPeriod": "PT1S",
-        "nanosBetweenRefills": 100000000,
-    })
+    (PolicyType.REQUESTS, dict( capacity=5, samplingPeriod='PT1S', nanosBetweenRefills=200000000)),
+    (PolicyType.PROCESSING_UNITS, dict( capacity=10, samplingPeriod='PT1S', nanosBetweenRefills=100000000))
 ]
 
 
 FIXED_BUCKETS = [
-    PolicyBucket(PolicyType.REQUESTS, {
-        "capacity": 10,
-        "samplingPeriod": "PT0S",
-        "nanosBetweenRefills": 9223372036854775807,
-    })
+    (PolicyType.REQUESTS, dict( capacity=10, samplingPeriod='PT0S', nanosBetweenRefills=9223372036854775807))
 ]
 
 
 @pytest.mark.parametrize(
-    'buckets, process_num, units_per_request, process_time, request_num, max_elapsed_time, max_rate_limit_hits',
+    'bucket_defs, process_num, units_per_request, process_time, request_num, max_elapsed_time, max_rate_limit_hits',
     [
         (TRIAL_POLICY_BUCKETS, 5, 5, 0.5, 10, 6, 0),
         (TRIAL_POLICY_BUCKETS, 5, 5, 0.5, 14, 12, 10),
@@ -157,7 +129,7 @@ FIXED_BUCKETS = [
         (FIXED_BUCKETS, 2, 20, 0.0, 5, 0.6, 0),
     ]
 )
-def test_scenarios(logger, buckets, process_num, units_per_request, process_time, request_num, max_elapsed_time,
+def test_scenarios(logger, bucket_defs, process_num, units_per_request, process_time, request_num, max_elapsed_time,
                    max_rate_limit_hits):
     """ For each test case it simulates a parallel interaction between a service and multiple instances of
     rate-limiting object.
@@ -165,7 +137,7 @@ def test_scenarios(logger, buckets, process_num, units_per_request, process_time
     rate_limit_objects = [SentinelHubRateLimit(num_processes=process_num) for _ in range(process_num)]
 
     service = DummyService(
-        copy.deepcopy(buckets),
+        [PolicyBucket(kind, kwargs) for kind, kwargs in bucket_defs],
         units_per_request=units_per_request,
         process_time=process_time
     )
@@ -216,7 +188,8 @@ def run_interaction(logger, service, rate_limit, request_num, index):
 
 @dataclass
 class PolicyBucketTestCase:
-    bucket: PolicyBucket
+    bucket_kind: str
+    bucket_kwargs: dict
     is_request_bucket: bool
     is_fixed: bool
     elapsed_time: float
@@ -228,32 +201,24 @@ class PolicyBucketTestCase:
 
 TEST_CASES = [
     PolicyBucketTestCase(
-        bucket=PolicyBucket('REQUESTS', {
-            "capacity": 30000,
-            "samplingPeriod": "PT744H",
-            "nanosBetweenRefills": 89280000000,
-            "niceSamplingPeriod": "31 days"
-        }),
+        bucket_kind='REQUESTS', bucket_kwargs= dict(
+            capacity=30000, samplingPeriod='PT744H', nanosBetweenRefills=89280000000, niceSamplingPeriod='31 days'
+        ),
         is_request_bucket=True, is_fixed=False, elapsed_time=10, new_content=20000, cost_per_second=1000.0112007,
         requests_completed=3000, wait_time=937.44
     ),
     PolicyBucketTestCase(
-        bucket=PolicyBucket('PROCESSING_UNITS', {
-            "capacity": 300,
-            "samplingPeriod": "PT1M",
-            "nanosBetweenRefills": 200000000,
-            "niceSamplingPeriod": "1 minute"
-        }),
+        bucket_kind='PROCESSING_UNITS', bucket_kwargs=dict(
+            capacity=300, samplingPeriod='PT1M', nanosBetweenRefills=200000000, niceSamplingPeriod='1 minute'
+        ),
         is_request_bucket=False, is_fixed=False, elapsed_time=10, new_content=200, cost_per_second=15.0,
         requests_completed=50, wait_time=2.1
     ),
     PolicyBucketTestCase(
-        bucket=PolicyBucket('REQUESTS', {
-            "capacity": 10,
-            "samplingPeriod": "PT0S",
-            "nanosBetweenRefills": 9223372036854775807,
-            "niceSamplingPeriod": "Fixed amount of tokens"
-        }),
+        bucket_kind='REQUESTS', bucket_kwargs=dict(
+            capacity=10, samplingPeriod='PT0S', nanosBetweenRefills=9223372036854775807,
+            niceSamplingPeriod='Fixed amount of tokens'
+        ),
         is_request_bucket=True, is_fixed=True, elapsed_time=10, new_content=5, cost_per_second=0.5,
         requests_completed=10, wait_time=-1
     ),
@@ -262,7 +227,7 @@ TEST_CASES = [
 
 @pytest.mark.parametrize('test_case', TEST_CASES)
 def test_basic_bucket_methods(test_case):
-    bucket = test_case.bucket
+    bucket = PolicyBucket(test_case.bucket_kind, test_case.bucket_kwargs)
 
     assert bucket.is_request_bucket() == test_case.is_request_bucket
     assert bucket.is_fixed() == test_case.is_fixed
@@ -274,19 +239,13 @@ def test_basic_bucket_methods(test_case):
     bucket.content = original_content
     assert bucket.content == original_content
 
-
-@pytest.mark.parametrize('test_case', TEST_CASES)
-def test_cost_per_second(test_case):
-    real_cost_per_second = test_case.bucket.count_cost_per_second(
+    real_cost_per_second = bucket.count_cost_per_second(
         test_case.elapsed_time,
         test_case.new_content
     )
     assert real_cost_per_second == approx(test_case.cost_per_second, abs=1e-6)
 
-
-@pytest.mark.parametrize('test_case', TEST_CASES)
-def test_expected_wait_time(test_case):
-    wait_time = test_case.bucket.get_wait_time(
+    wait_time = bucket.get_wait_time(
         test_case.elapsed_time,
         process_num=2,
         cost_per_request=10,

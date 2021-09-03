@@ -1,6 +1,6 @@
 import datetime
 from dataclasses import dataclass
-from typing import Union, List, Optional
+from typing import Union, List, Optional, Type
 
 import numpy as np
 from numpy.testing import assert_array_equal
@@ -19,7 +19,8 @@ from sentinelhub.testing_utils import get_output_folder, test_numpy_data
 @dataclass
 class OgcTestCase:
     name: str
-    request: Union[OgcRequest, WcsRequest, WmsRequest]
+    constructor: Union[Type[OgcRequest], Type[WcsRequest], Type[WmsRequest]]
+    kwargs: dict
     result_len: int
     img_min: float
     img_max: float
@@ -30,11 +31,14 @@ class OgcTestCase:
     date_check: Optional[datetime.datetime] = None
     save_data: bool = False
 
-    def collect_data(self):
+    def initialize_request(self):
+        return self.constructor(**self.kwargs)
+
+    def collect_data(self, request):
         if self.save_data:
-            self.request.save_data(redownload=True, data_filter=self.data_filter)
-            return self.request.get_data(save_data=True, data_filter=self.data_filter)
-        return self.request.get_data(redownload=True, data_filter=self.data_filter)
+            request.save_data(redownload=True, data_filter=self.data_filter)
+            return request.get_data(save_data=True, data_filter=self.data_filter)
+        return request.get_data(redownload=True, data_filter=self.data_filter)
 
 
 wgs84_bbox = BBox(bbox=(-5.23, 48.0, -5.03, 48.17), crs=CRS.WGS84)
@@ -49,8 +53,8 @@ OUTPUT_FOLDER = get_output_folder(__file__)
 
 TEST_CASES = [
     OgcTestCase(
-        'generalWmsTest',
-        OgcRequest(
+        'generalWmsTest', OgcRequest,
+        dict(
             data_folder=OUTPUT_FOLDER, image_format=MimeType.TIFF, bbox=wgs84_bbox,
             data_collection=DataCollection.SENTINEL2_L1C, layer='BANDS-S2-L1C', maxcc=0.5, size_x=img_width,
             time=(datetime.date(year=2017, month=1, day=5), datetime.date(year=2017, month=12, day=16)),
@@ -60,8 +64,8 @@ TEST_CASES = [
         save_data=True, data_filter=[0, -2, 0]
     ),
     OgcTestCase(
-        'generalWcsTest',
-        OgcRequest(
+        'generalWcsTest', OgcRequest,
+        dict(
             data_folder=OUTPUT_FOLDER, image_format=MimeType.TIFF, bbox=wgs84_bbox,
             data_collection=DataCollection.SENTINEL2_L1C, layer='BANDS-S2-L1C', maxcc=0.6, size_x=resx, size_y=resy,
             time=(datetime.datetime(year=2017, month=10, day=7, hour=1),
@@ -73,8 +77,8 @@ TEST_CASES = [
     ),
     # CustomUrlParam tests:
     OgcTestCase(
-        'customUrlLogoQualitySampling',
-        WmsRequest(
+        'customUrlLogoQualitySampling', WmsRequest,
+        dict(
             data_folder=OUTPUT_FOLDER, image_format=MimeType.PNG, data_collection=DataCollection.SENTINEL2_L1C,
             layer='TRUE-COLOR-S2-L1C', width=img_width, bbox=wgs84_bbox, time=('2017-10-01', '2017-10-02'),
             custom_url_params={
@@ -87,8 +91,8 @@ TEST_CASES = [
         result_len=1, img_min=29, img_max=255, img_mean=198.6254375, img_median=206, tile_num=2, data_filter=[0, -1]
     ),
     OgcTestCase(
-        'customUrlPreview',
-        WmsRequest(
+        'customUrlPreview', WmsRequest,
+        dict(
             data_folder=OUTPUT_FOLDER, image_format=MimeType.PNG, data_collection=DataCollection.SENTINEL2_L1C,
             layer='TRUE-COLOR-S2-L1C', height=img_height, bbox=wgs84_bbox, time=('2017-10-01', '2017-10-02'),
             custom_url_params={CustomUrlParam.PREVIEW: 2}
@@ -96,8 +100,8 @@ TEST_CASES = [
         result_len=1, img_min=27, img_max=255, img_mean=195.385181, img_median=199, tile_num=2
     ),
     OgcTestCase(
-        'customUrlEvalscripturl',
-        WcsRequest(
+        'customUrlEvalscripturl', WcsRequest,
+        dict(
             data_folder=OUTPUT_FOLDER, image_format=MimeType.PNG, data_collection=DataCollection.SENTINEL2_L1C,
             layer='TRUE-COLOR-S2-L1C', resx=resx, resy=resy, bbox=pop_web_bbox, time=('2017-10-01', '2017-10-02'),
             custom_url_params={
@@ -108,8 +112,8 @@ TEST_CASES = [
         result_len=1, img_min=46, img_max=255, img_mean=231.051154, img_median=255, tile_num=3
     ),
     OgcTestCase(
-        'customUrlEvalscript,Geometry',
-        WcsRequest(
+        'customUrlEvalscript,Geometry', WcsRequest,
+        dict(
             data_folder=OUTPUT_FOLDER, image_format=MimeType.PNG, data_collection=DataCollection.SENTINEL2_L1C,
             layer='TRUE-COLOR-S2-L1C', resx=resx, resy=resy, bbox=wgs84_bbox, time=('2017-10-01', '2017-10-02'),
             custom_url_params={
@@ -119,8 +123,8 @@ TEST_CASES = [
         ),
         result_len=1, img_min=0, img_max=152, img_mean=24.5405, img_median=1.0, tile_num=2),
     OgcTestCase(
-        'FalseLogo,Geometry',
-        WmsRequest(
+        'FalseLogo,Geometry', WmsRequest,
+        dict(
             data_folder=OUTPUT_FOLDER, image_format=MimeType.PNG, data_collection=DataCollection.SENTINEL2_L1C,
             layer='TRUE-COLOR-S2-L1C', width=img_width, height=img_height, bbox=pop_web_bbox,
             time=('2017-10-01', '2017-10-02'), custom_url_params={
@@ -134,24 +138,24 @@ TEST_CASES = [
     ),
     # DataCollection tests:
     OgcTestCase(
-        'S2 L1C Test',
-        WmsRequest(
+        'S2 L1C Test', WmsRequest,
+        dict(
             data_collection=DataCollection.SENTINEL2_L1C, data_folder=OUTPUT_FOLDER, image_format=MimeType.TIFF,
             layer='BANDS-S2-L1C', width=img_width, height=img_height, bbox=wgs84_bbox, time=('2017-10-01', '2017-10-02')
         ),
         result_len=1, img_min=0.0009, img_max=1.0, img_mean=0.2917, img_median=0.2572, tile_num=2
     ),
     OgcTestCase(
-        'S2 L2A Test',
-        WmsRequest(
+        'S2 L2A Test', WmsRequest,
+        dict(
             data_collection=DataCollection.SENTINEL2_L2A, data_folder=OUTPUT_FOLDER, image_format=MimeType.TIFF,
             layer='BANDS-S2-L2A', width=img_width, height=img_height, bbox=wgs84_bbox, time=('2017-10-01', '2017-10-02')
         ),
         result_len=1, img_min=0.0, img_max=1.6167, img_mean=0.39534, img_median=0.3373, tile_num=2
     ),
     OgcTestCase(
-        'L8 Test',
-        WmsRequest(
+        'L8 Test', WmsRequest,
+        dict(
             data_collection=DataCollection.LANDSAT8_L1, data_folder=OUTPUT_FOLDER, image_format=MimeType.TIFF,
             layer='BANDS-L8', width=img_width, height=img_height, bbox=wgs84_bbox, time=('2017-10-05', '2017-10-10'),
             time_difference=datetime.timedelta(hours=1)
@@ -159,24 +163,24 @@ TEST_CASES = [
         result_len=1, img_min=0.0012, img_max=285.16916, img_mean=47.74750, img_median=0.5325, tile_num=2
     ),
     OgcTestCase(
-        'DEM Test',
-        WmsRequest(
+        'DEM Test', WmsRequest,
+        dict(
             data_collection=DataCollection.DEM, data_folder=OUTPUT_FOLDER, image_format=MimeType.TIFF, layer='DEM',
             width=img_width, height=img_height, bbox=wgs84_bbox
         ),
         result_len=1, img_min=-108.0, img_max=1, img_mean=-35.6049, img_median=-8.5
     ),
     OgcTestCase(
-        'MODIS Test',
-        WmsRequest(
+        'MODIS Test', WmsRequest,
+        dict(
             data_collection=DataCollection.MODIS, data_folder=OUTPUT_FOLDER, image_format=MimeType.TIFF,
             layer='BANDS-MODIS', width=img_width, height=img_height, bbox=wgs84_bbox, time='2017-10-01'
         ),
         result_len=1, img_min=0.0, img_max=3.2767, img_mean=0.2445, img_median=0.0030, tile_num=1
     ),
     OgcTestCase(
-        'S1 IW Test',
-        WmsRequest(
+        'S1 IW Test', WmsRequest,
+        dict(
             data_collection=DataCollection.SENTINEL1_IW, data_folder=OUTPUT_FOLDER, image_format=MimeType.TIFF,
             layer='BANDS-S1-IW', width=img_width, height=img_height, bbox=wgs84_bbox, time=('2017-10-01', '2017-10-02'),
             time_difference=datetime.timedelta(hours=1)
@@ -184,8 +188,8 @@ TEST_CASES = [
         result_len=1, img_min=0.0, img_max=1.0, img_mean=0.3508, img_median=0.07607, tile_num=2
     ),
     OgcTestCase(
-        'S1 EW Test',
-        WmsRequest(
+        'S1 EW Test', WmsRequest,
+        dict(
             data_collection=DataCollection.SENTINEL1_EW, data_folder=OUTPUT_FOLDER, image_format=MimeType.TIFF,
             layer='BANDS-S1-EW', width=img_width, height=img_height, bbox=wgs84_bbox_2, time=('2018-2-7', '2018-2-8'),
             time_difference=datetime.timedelta(hours=1)
@@ -193,8 +197,8 @@ TEST_CASES = [
         result_len=2, img_min=0.0, img_max=1.0, img_mean=0.24709, img_median=0.00322, tile_num=3
     ),
     OgcTestCase(
-        'S1 EW SH Test',
-        WmsRequest(
+        'S1 EW SH Test', WmsRequest,
+        dict(
             data_collection=DataCollection.SENTINEL1_EW_SH, data_folder=OUTPUT_FOLDER, image_format=MimeType.TIFF,
             layer='BANDS-S1-EW-SH', width=img_width, height=img_height, bbox=wgs84_bbox_3,
             time=('2018-2-6', '2018-2-8'), time_difference=datetime.timedelta(hours=1)
@@ -202,8 +206,8 @@ TEST_CASES = [
         result_len=1, img_min=0.00697, img_max=1.0, img_mean=0.5071, img_median=0.5276, tile_num=1
     ),
     OgcTestCase(
-        'S1 EW ASC Test',
-        WmsRequest(
+        'S1 EW ASC Test', WmsRequest,
+        dict(
             data_collection=DataCollection.SENTINEL1_EW_ASC, data_folder=OUTPUT_FOLDER, image_format=MimeType.TIFF,
             layer='BANDS-S1-EW', width=img_width, height=img_height, bbox=wgs84_bbox_2, time=('2018-2-7', '2018-2-8'),
             time_difference=datetime.timedelta(hours=1)
@@ -211,8 +215,8 @@ TEST_CASES = [
         result_len=1, img_min=0.0, img_max=1.0, img_mean=0.34803, img_median=0.02383, tile_num=2
     ),
     OgcTestCase(
-        'S1 IW DES Test',
-        WmsRequest(
+        'S1 IW DES Test', WmsRequest,
+        dict(
             data_collection=DataCollection.SENTINEL1_IW_DES, data_folder=OUTPUT_FOLDER, image_format=MimeType.TIFF,
             layer='BANDS-S1-IW', width=img_width, height=img_height, bbox=wgs84_bbox, time=('2017-10-01', '2017-10-05'),
             time_difference=datetime.timedelta(hours=1)
@@ -220,8 +224,8 @@ TEST_CASES = [
         result_len=1, img_min=0.0, img_max=1.0, img_mean=0.3474, img_median=0.04069, tile_num=1
     ),
     OgcTestCase(
-        'S3 OLCI Test',
-        WmsRequest(
+        'S3 OLCI Test', WmsRequest,
+        dict(
             data_collection=DataCollection.SENTINEL3_OLCI, data_folder=OUTPUT_FOLDER, image_format=MimeType.TIFF,
             layer='TRUE-COLOR-S3-OLCI', width=img_width, height=img_height, bbox=wgs84_bbox_4,
             time=('2020-2-5', '2020-2-10'), time_difference=datetime.timedelta(hours=1)
@@ -234,18 +238,19 @@ TEST_CASES = [
 @pytest.mark.parametrize('test_case', TEST_CASES)
 def test_wfs(test_case, output_folder):
     # Run data collection
-    data = test_case.collect_data()
+    request = test_case.initialize_request()
+    data = test_case.collect_data(request)
 
     assert isinstance(data, list)
     result_len = test_case.result_len if test_case.data_filter is None else len(test_case.data_filter)
     assert len(data) == result_len
 
-    tile_iter = test_case.request.get_tiles()
+    tile_iter = request.get_tiles()
     tile_n = len(list(tile_iter)) if tile_iter else None
     assert tile_n == test_case.tile_num
 
     if test_case.date_check is not None:
-        dates = OgcImageService().get_dates(test_case.request)
+        dates = OgcImageService().get_dates(request)
         assert len(dates) == test_case.result_len
         assert test_case.date_check == dates[0]
 
@@ -274,25 +279,21 @@ def test_too_large_request():
         request.get_data()
 
 
-@pytest.mark.parametrize('service, expected_len', [
+@pytest.mark.parametrize('args, kwargs, expected_len', [
     (
-        WebFeatureService(
-            BBox(bbox=(-5.23, 48.0, -5.03, 48.17), crs=CRS.WGS84),
-            (datetime.date(year=2017, month=1, day=5), datetime.date(year=2017, month=12, day=16)),
-            data_collection=DataCollection.SENTINEL2_L1C, maxcc=0.1
-        ),
+        [BBox(bbox=(-5.23, 48.0, -5.03, 48.17), crs=CRS.WGS84), (datetime.date(year=2017, month=1, day=5),
+         datetime.date(year=2017, month=12, day=16))],
+        dict(data_collection=DataCollection.SENTINEL2_L1C, maxcc=0.1),
         13
     ),
     (
-        WebFeatureService(
-            BBox(bbox=(-5.23, 48.0, -5.03, 48.17), crs=CRS.WGS84), 'latest',
-            data_collection=DataCollection.SENTINEL2_L2A
-        ),
+        [BBox(bbox=(-5.23, 48.0, -5.03, 48.17), crs=CRS.WGS84), 'latest'],
+        dict(data_collection=DataCollection.SENTINEL2_L2A),
         1
     ),
 ])
-def test_results(service, expected_len):
-    iterator = service
+def test_results(args, kwargs, expected_len):
+    iterator = WebFeatureService(*args, **kwargs)
     features = list(iterator)
     dates = iterator.get_dates()
     geometries = iterator.get_geometries()

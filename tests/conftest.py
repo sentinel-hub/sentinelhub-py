@@ -25,12 +25,7 @@ def pytest_configure(config):
 
 @pytest.fixture(name='config')
 def config_fixture():
-    config = SHConfig()
-    for param in config.get_params():
-        env_variable = param.upper()
-        if os.environ.get(env_variable):
-            setattr(config, param, os.environ.get(env_variable))
-    return config
+    return SHConfig()
 
 
 @pytest.fixture(name='input_folder')

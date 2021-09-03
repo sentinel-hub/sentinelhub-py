@@ -122,11 +122,10 @@ def test_sentinel1_checks():
     assert DataCollection.SENTINEL2_L2A.contains_orbit_direction('descending')
 
 
-def test_get_available_collections():
+def test_get_available_collections(config):
     collections = DataCollection.get_available_collections()
     assert helper_check_collection_list(collections)
 
-    config = SHConfig()
     config.sh_base_url = ServiceUrl.EOCLOUD
     eocloud_collections = DataCollection.get_available_collections(config=config)
     assert helper_check_collection_list(eocloud_collections)

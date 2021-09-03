@@ -1,7 +1,7 @@
 import ast
 import os
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, Type
 
 import pytest
 from shapely.geometry import Polygon
@@ -27,29 +27,30 @@ GEOMETRY2 = Geometry('POLYGON((-5.13 48, -5.23 48.09, -5.13 48.17, -5.03 48.08, 
 
 @dataclass
 class FisTestCase:
-    request: FisRequest
+    kwargs: dict
     name: str
     raw_result: Any
     result_length: int
     save_data: bool = False
 
     def collect_data(self):
+        request = FisRequest(**self.kwargs)
         if self.save_data:
-            self.request.save_data(redownload=True)
-            return self.request.get_data(save_data=True)
-        return self.request.get_data(redownload=True)
+            request.save_data(redownload=True)
+            return request.get_data(save_data=True)
+        return request.get_data(redownload=True)
 
 
 TEST_CASES = [
     FisTestCase(
-        FisRequest(
+        dict(
             data_collection=DataCollection.SENTINEL2_L1C, layer='TRUE-COLOR-S2-L1C', geometry_list=[GEOMETRY1],
             time=('2017-1-1', '2017-2-1'), resolution="50m", histogram_type=HistogramType.STREAMING, bins=5
         ),
         name='geometry', raw_result=RESULTS[0], result_length=1
     ),
     FisTestCase(
-        FisRequest(
+        dict(
             custom_url_params={CustomUrlParam.DOWNSAMPLING: "BICUBIC", CustomUrlParam.UPSAMPLING: "BICUBIC"},
             data_collection=DataCollection.SENTINEL2_L1C, layer='BANDS-S2-L1C', geometry_list=[BBOX], time='2017-1-1',
             resolution="50m", maxcc=0.2,
@@ -57,14 +58,14 @@ TEST_CASES = [
         name='bbox', raw_result=RESULTS[1], result_length=1
     ),
     FisTestCase(
-        FisRequest(
+        dict(
             data_collection=DataCollection.LANDSAT8_L1, layer='BANDS-L8', geometry_list=[BBOX, GEOMETRY1],
             time=('2017-1-1', '2017-1-10'), resolution="100m", bins=32, data_folder=OUTPUT_FOLDER
         ),
         name='list', raw_result=RESULTS[2], result_length=2, save_data=True
     ),
     FisTestCase(
-        FisRequest(
+        dict(
             data_collection=DataCollection.SENTINEL2_L1C, layer='TRUE-COLOR-S2-L1C', geometry_list=[GEOMETRY2],
             time=('2017-10-1', '2017-10-2'), resolution="60m", bins=11, histogram_type=HistogramType.EQUALFREQUENCY
         ),
