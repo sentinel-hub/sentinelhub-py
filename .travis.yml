@@ -11,21 +11,22 @@ python:
 - "3.6"
 - "3.7"
 - "3.8"
+- "3.9"
 
 before_install:
 - sudo apt-get install -y libopenjp2-7
 
 install:
-- if [ $TRAVIS_PYTHON_VERSION == '3.7' ]; then
+- if [ $TRAVIS_PYTHON_VERSION == '3.9' ]; then
     pip install -e .[DEV] --upgrade ;
   else
     pip install .[DEV] --upgrade ;
   fi
 
 script:
-- if [[ $TRAVIS_PYTHON_VERSION == '3.6' ]]; then pylint sentinelhub ; fi
+- if [[ $TRAVIS_PYTHON_VERSION == '3.8' ]]; then pylint sentinelhub ; fi
 - >
-  if [[ ("$TRAVIS_PULL_REQUEST" != "false") || ( $TRAVIS_PYTHON_VERSION != '3.7') ]] ;
+  if [[ ("$TRAVIS_PULL_REQUEST" != "false") || ( $TRAVIS_PYTHON_VERSION != '3.9') ]] ;
   then pytest --cov \
     --ignore tests/test_ogc.py \
     --ignore tests/test_sentinelhub_batch.py \
@@ -40,4 +41,4 @@ script:
   fi
 
 after_success:
-- if [ $TRAVIS_PYTHON_VERSION == '3.7' ] && [ "$TRAVIS_PULL_REQUEST" = "false" ]; then codecov; fi
+- if [ $TRAVIS_PYTHON_VERSION == '3.9' ] && [ "$TRAVIS_PULL_REQUEST" = "false" ]; then codecov; fi
