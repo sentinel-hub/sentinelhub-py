@@ -3,9 +3,9 @@ Unit tests for data_collections module
 """
 import pytest
 
-from sentinelhub import DataCollection, SHConfig
+from sentinelhub import DataCollection
 from sentinelhub.constants import ServiceUrl
-from sentinelhub.data_collections import DataCollectionDefinition
+from sentinelhub.data_collections import DataCollectionDefinition, _RENAMED_COLLECTIONS
 from sentinelhub.exceptions import SHDeprecationWarning
 
 
@@ -120,6 +120,16 @@ def test_sentinel1_checks():
     assert not DataCollection.SENTINEL1_IW_DES.contains_orbit_direction('ascending')
 
     assert DataCollection.SENTINEL2_L2A.contains_orbit_direction('descending')
+
+
+def test_renamed_collections():
+    """ Makes sure that for all renamed collections new names are correctly assigned and deprecation warning is raised.
+    """
+    for old_name, new_name in _RENAMED_COLLECTIONS.items():
+        with pytest.warns(SHDeprecationWarning):
+            collection = getattr(DataCollection, old_name)
+
+        assert collection.name == new_name
 
 
 def test_get_available_collections(config):

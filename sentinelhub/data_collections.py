@@ -21,11 +21,11 @@ class _CollectionType:
     SENTINEL2 = 'Sentinel-2'
     SENTINEL3 = 'Sentinel-3'
     SENTINEL5P = 'Sentinel-5P'
-    LANDSAT15 = 'Landsat 1-5'
-    LANDSAT45 = 'Landsat 4-5'
+    LANDSAT_MSS = 'Landsat 1-5 MSS'
+    LANDSAT_TM = 'Landsat 4-5 TM'
     LANDSAT5 = 'Landsat 5'
-    LANDSAT7 = 'Landsat 7'
-    LANDSAT8 = 'Landsat 8'
+    LANDSAT_ETM = 'Landsat 7 ETM+'
+    LANDSAT_OT = 'Landsat 8 OLI and TIRS'
     MODIS = 'MODIS'
     ENVISAT_MERIS = 'Envisat Meris'
     DEM = 'DEM'
@@ -113,12 +113,12 @@ class _Bands:
     SENTINEL5P = ('AER_AI_340_380', 'AER_AI_354_388', 'CLOUD_BASE_HEIGHT', 'CLOUD_BASE_PRESSURE', 'CLOUD_FRACTION',
                   'CLOUD_OPTICAL_THICKNESS', 'CLOUD_TOP_HEIGHT', 'CLOUD_TOP_PRESSURE', 'CO', 'HCHO', 'NO2', 'O3',
                   'SO2', 'CH4')
-    LANDSAT15 = ('B01', 'B02', 'B03', 'B04')
-    LANDSAT45 = ('B01', 'B02', 'B03', 'B04', 'B05', 'B06', 'B07')
-    LANDSAT7_L1 = ('B01', 'B02', 'B03', 'B04', 'B05', 'B06_VCID1', 'B06_VCID2', 'B07', 'B08')
-    LANDSAT7_L2 = ('B01', 'B02', 'B03', 'B04', 'B05', 'B06', 'B07')
-    LANDSAT8 = ('B01', 'B02', 'B03', 'B04', 'B05', 'B06', 'B07', 'B08', 'B09', 'B10', 'B11')
-    LANDSAT8_L2 = ('B01', 'B02', 'B03', 'B04', 'B05', 'B06', 'B07', 'B10')
+    LANDSAT_MSS = ('B01', 'B02', 'B03', 'B04')
+    LANDSAT_TM = ('B01', 'B02', 'B03', 'B04', 'B05', 'B06', 'B07')
+    LANDSAT_ETM_L1 = ('B01', 'B02', 'B03', 'B04', 'B05', 'B06_VCID1', 'B06_VCID2', 'B07', 'B08')
+    LANDSAT_ETM_L2 = ('B01', 'B02', 'B03', 'B04', 'B05', 'B06', 'B07')
+    LANDSAT_OT = ('B01', 'B02', 'B03', 'B04', 'B05', 'B06', 'B07', 'B08', 'B09', 'B10', 'B11')
+    LANDSAT_OT_L2 = ('B01', 'B02', 'B03', 'B04', 'B05', 'B06', 'B07', 'B10')
     DEM = ('DEM',)
     MODIS = ('B01', 'B02', 'B03', 'B04', 'B05', 'B06', 'B07')
 
@@ -126,8 +126,24 @@ class _Bands:
 class _DataCollectionMeta(EnumMeta):
     """ Meta class that builds DataCollection class enums
     """
+    def __getattribute__(cls, item, *args, **kwargs):
+        """ This is executed whenever `DataCollection.SOMETHING` is called
+
+        Extended method handles cases where a collection has been renamed. It provides a new collection and raises a
+        deprecation warning.
+        """
+        if item in _RENAMED_COLLECTIONS:
+            old_item = item
+            item = _RENAMED_COLLECTIONS[old_item]
+
+            message = f'DataCollection.{old_item} had been renamed into DataCollection.{item}. Please switch to the ' \
+                      'new name as the old one will soon be removed.'
+            warnings.warn(message, category=SHDeprecationWarning)
+
+        return super().__getattribute__(item, *args, **kwargs)
+
     def __call__(cls, value, *args, **kwargs):
-        """ This is executed whenever DataCollection('something') is called
+        """ This is executed whenever `DataCollection('something')` is called
 
         This implements a shortcut to create a BYOC data collection by calling DataCollection('<BYOC collection ID>')
         """
@@ -200,6 +216,18 @@ class DataCollectionDefinition:
             derived_params[name] = value
 
         return DataCollectionDefinition(**derived_params)
+
+
+_RENAMED_COLLECTIONS = {  # DataCollection renaming for backwards-compatibility
+    'LANDSAT15_L1': 'LANDSAT_MSS_L1',
+    'LANDSAT45_L1': 'LANDSAT_TM_L1',
+    'LANDSAT45_L2': 'LANDSAT_TM_L2',
+    'LANDSAT7_L1': 'LANDSAT_ETM_L1',
+    'LANDSAT7_L2': 'LANDSAT_ETM_L2',
+    'LANDSAT8': 'LANDSAT_OT_L1',
+    'LANDSAT8_L1': 'LANDSAT_OT_L1',
+    'LANDSAT8_L2': 'LANDSAT_OT_L2'
+}
 
 
 class DataCollection(Enum, metaclass=_DataCollectionMeta):
@@ -299,77 +327,72 @@ class DataCollection(Enum, metaclass=_DataCollectionMeta):
         bands=_Bands.MODIS
     )
 
-    LANDSAT15_L1 = DataCollectionDefinition(
+    LANDSAT_MSS_L1 = DataCollectionDefinition(
         api_id='landsat-mss-l1',
         catalog_id='landsat-mss-l1',
         wfs_id='DSS14',
         service_url=ServiceUrl.USWEST,
-        collection_type=_CollectionType.LANDSAT15,
+        collection_type=_CollectionType.LANDSAT_MSS,
         sensor_type=_SensorType.MSS,
         processing_level=_ProcessingLevel.L1,
-        bands=_Bands.LANDSAT15,
+        bands=_Bands.LANDSAT_MSS,
         has_cloud_coverage=True
     )
 
-    LANDSAT45_L1 = DataCollectionDefinition(
+    LANDSAT_TM_L1 = DataCollectionDefinition(
         api_id='landsat-tm-l1',
         catalog_id='landsat-tm-l1',
         wfs_id='DSS15',
         service_url=ServiceUrl.USWEST,
-        collection_type=_CollectionType.LANDSAT45,
+        collection_type=_CollectionType.LANDSAT_TM,
         sensor_type=_SensorType.TM,
         processing_level=_ProcessingLevel.L1,
-        bands=_Bands.LANDSAT45,
+        bands=_Bands.LANDSAT_TM,
         has_cloud_coverage=True
     )
-    LANDSAT45_L2 = LANDSAT45_L1.derive(
+    LANDSAT_TM_L2 = LANDSAT_TM_L1.derive(
         api_id='landsat-tm-l2',
         catalog_id='landsat-tm-l2',
         wfs_id='DSS16',
         processing_level=_ProcessingLevel.L2
     )
 
-    LANDSAT7_L1 = DataCollectionDefinition(
+    LANDSAT_ETM_L1 = DataCollectionDefinition(
         api_id='landsat-etm-l1',
         catalog_id='landsat-etm-l1',
         wfs_id='DSS17',
         service_url=ServiceUrl.USWEST,
-        collection_type=_CollectionType.LANDSAT7,
+        collection_type=_CollectionType.LANDSAT_ETM,
         sensor_type=_SensorType.ETM,
         processing_level=_ProcessingLevel.L1,
-        bands=_Bands.LANDSAT7_L1,
+        bands=_Bands.LANDSAT_ETM_L1,
         has_cloud_coverage=True
     )
-    LANDSAT7_L2 = LANDSAT7_L1.derive(
+    LANDSAT_ETM_L2 = LANDSAT_ETM_L1.derive(
         api_id='landsat-etm-l2',
         catalog_id='landsat-etm-l2',
         wfs_id='DSS18',
         processing_level=_ProcessingLevel.L2,
-        bands=_Bands.LANDSAT7_L2
+        bands=_Bands.LANDSAT_ETM_L2
     )
 
-    LANDSAT8 = DataCollectionDefinition(
-        api_id='landsat-8-l1c',
-        catalog_id='landsat-8-l1c',
-        wfs_id='DSS6',
-        service_url=ServiceUrl.USWEST,
-        collection_type=_CollectionType.LANDSAT8,
-        sensor_type=_SensorType.OLI_TIRS,
-        processing_level=_ProcessingLevel.L1,
-        bands=_Bands.LANDSAT8,
-        has_cloud_coverage=True
-    )
-    LANDSAT8_L1 = LANDSAT8.derive(
+    LANDSAT_OT_L1 = DataCollectionDefinition(
         api_id='landsat-ot-l1',
         catalog_id='landsat-ot-l1',
-        wfs_id='DSS12'
+        wfs_id='DSS12',
+        service_url=ServiceUrl.USWEST,
+        collection_type=_CollectionType.LANDSAT_OT,
+        sensor_type=_SensorType.OLI_TIRS,
+        processing_level=_ProcessingLevel.L1,
+        bands=_Bands.LANDSAT_OT,
+        has_cloud_coverage=True
     )
-    LANDSAT8_L2 = LANDSAT8.derive(
+    LANDSAT_OT_L2 = LANDSAT_OT_L1.derive(
         api_id='landsat-ot-l2',
         catalog_id='landsat-ot-l2',
         wfs_id='DSS13',
         processing_level=_ProcessingLevel.L2,
-        bands=_Bands.LANDSAT8_L2
+        bands=_Bands.LANDSAT_OT_L2
     )
 
     SENTINEL5P = DataCollectionDefinition(

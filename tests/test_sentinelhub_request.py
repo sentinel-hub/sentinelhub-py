@@ -436,7 +436,7 @@ def test_conflicting_service_url_restrictions(config):
         evalscript='',
         input_data=[
             SentinelHubRequest.input_data(
-                data_collection=DataCollection.LANDSAT8_L2
+                data_collection=DataCollection.LANDSAT_OT_L2
             ),
             SentinelHubRequest.input_data(
                 data_collection=DataCollection.SENTINEL3_OLCI
