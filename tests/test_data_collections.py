@@ -89,11 +89,6 @@ def test_define_byoc_and_batch():
         assert data_collection.api_id.endswith(byoc_id)
         assert data_collection.collection_id == byoc_id
 
-    with pytest.warns(SHDeprecationWarning):
-        byoc2 = DataCollection(byoc_id.replace('0', '1'))
-
-    assert byoc != byoc2
-
 
 def test_attributes():
     data_collection = DataCollection.SENTINEL3_OLCI

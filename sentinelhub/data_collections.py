@@ -145,22 +145,12 @@ class _DataCollectionMeta(EnumMeta):
     def __call__(cls, value, *args, **kwargs):
         """ This is executed whenever `DataCollection('something')` is called
 
-        This implements a shortcut to create a BYOC data collection by calling DataCollection('<BYOC collection ID>')
+        This solves a problem of pickling a custom DataCollection and unpickling it in another process
         """
-        # This solves a problem of pickling a custom DataCollection and unpickling it in another process
         if isinstance(value, DataCollectionDefinition) and value not in cls._value2member_map_ and value._name:
             cls._try_add_data_collection(value._name, value)
 
-        # pylint: disable=signature-differs
-        if not isinstance(value, str):
-            return super().__call__(value, *args, **kwargs)
-
-        byoc_data_collection = cls.define_byoc(value)
-        message = 'This way of defining a BYOC data collection is deprecated and will soon be removed. Please use ' \
-                  'DataCollection.define_byoc(collection_id) instead'
-        warnings.warn(message, category=SHDeprecationWarning)
-
-        return byoc_data_collection
+        return super().__call__(value, *args, **kwargs)
 
 
 @dataclass(frozen=True)
