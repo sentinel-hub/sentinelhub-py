@@ -128,6 +128,7 @@ def test_search_geometry_and_iterator_methods(catalog):
 
 @pytest.mark.parametrize('data_collection,feature_id', [
     (DataCollection.SENTINEL2_L1C, 'S2A_MSIL1C_20210113T071211_N0209_R020_T38LPH_20210113T075941'),
+    ('sentinel-2-l1c', 'S2A_MSIL1C_20210113T071211_N0209_R020_T38LPH_20210113T075941'),
     (DataCollection.SENTINEL2_L2A, 'S2A_MSIL2A_20210113T071211_N0214_R020_T38LPH_20210113T083244'),
     (DataCollection.SENTINEL1_IW, 'S1A_IW_GRDH_1SDV_20210113T022710_20210113T022735_036113_043BC9_2981'),
     (DataCollection.LANDSAT8_L1, 'LC08_L1TP_160071_20210113_20210308_02_T1'),
@@ -143,7 +144,8 @@ def test_search_for_data_collection(config, data_collection, feature_id):
     """ Tests search functionality for each data collection to confirm compatibility between DataCollection parameters
     and Catalog API
     """
-    catalog = SentinelHubCatalog(base_url=data_collection.service_url, config=config)
+    base_url = data_collection.service_url if isinstance(data_collection, DataCollection) else None
+    catalog = SentinelHubCatalog(base_url=base_url, config=config)
 
     search_iterator = catalog.search(
         collection=data_collection,

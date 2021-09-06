@@ -173,6 +173,9 @@ class SentinelHubCatalog:
         """
         filters = {}
 
+        if isinstance(data_collection, str):
+            return filters
+
         if data_collection.swath_mode:
             filters['sar:instrument_mode'] = {'eq': data_collection.swath_mode.upper()}
 
