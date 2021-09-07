@@ -82,7 +82,7 @@ def read_tar(filename):
     """ Read a tar from file
     """
     with open(filename, 'rb') as file:
-        return decode_tar(file.read())
+        return decode_tar(file)
 
 
 def read_tiff_image(filename):

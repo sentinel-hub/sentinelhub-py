@@ -86,12 +86,16 @@ def decode_tar(data):
     """ A decoder to convert response bytes into a dictionary of {filename: value}
 
     :param data: Data to decode
-    :type data: bytes
+    :type data: bytes or IOBase
     :return: A dictionary of decoded files from a tar file
     :rtype: dict(str: object)
     """
-    with tarfile.open(fileobj=BytesIO(data)) as tar:
-        itr = ((member.name, get_data_format(member.name), tar.extractfile(member)) for member in tar.getmembers())
+    if isinstance(data, bytes):
+        data = BytesIO(data)
+
+    with tarfile.open(fileobj=data) as tar:
+        file_members = (member for member in tar.getmembers() if member.isfile())
+        itr = ((member.name, get_data_format(member.name), tar.extractfile(member)) for member in file_members)
         return {filename: decode_data(file.read(), file_type) for filename, file_type, file in itr}
 
 
