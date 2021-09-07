@@ -149,7 +149,7 @@ def test_update_tile(byoc, collection, tile, requests_mock):
     mocked_url = f'/api/v1/byoc/collections/{collection["id"]}/tiles/{tile["id"]}'
 
     updated_tile = dict(tile)
-    updated_tile['sensingTime']: datetime.now().isoformat()
+    updated_tile['sensingTime'] = datetime.now().isoformat()
 
     requests_mock.put(mocked_url, content=None)
 

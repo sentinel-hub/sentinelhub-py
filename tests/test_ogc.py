@@ -156,7 +156,7 @@ TEST_CASES = [
     OgcTestCase(
         'L8 Test', WmsRequest,
         dict(
-            data_collection=DataCollection.LANDSAT8_L1, data_folder=OUTPUT_FOLDER, image_format=MimeType.TIFF,
+            data_collection=DataCollection.LANDSAT_OT_L1, data_folder=OUTPUT_FOLDER, image_format=MimeType.TIFF,
             layer='BANDS-L8', width=img_width, height=img_height, bbox=wgs84_bbox, time=('2017-10-05', '2017-10-10'),
             time_difference=datetime.timedelta(hours=1)
         ),

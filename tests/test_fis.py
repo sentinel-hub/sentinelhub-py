@@ -59,7 +59,7 @@ TEST_CASES = [
     ),
     FisTestCase(
         dict(
-            data_collection=DataCollection.LANDSAT8_L1, layer='BANDS-L8', geometry_list=[BBOX, GEOMETRY1],
+            data_collection=DataCollection.LANDSAT_OT_L1, layer='BANDS-L8', geometry_list=[BBOX, GEOMETRY1],
             time=('2017-1-1', '2017-1-10'), resolution="100m", bins=32, data_folder=OUTPUT_FOLDER
         ),
         name='list', raw_result=RESULTS[2], result_length=2, save_data=True
