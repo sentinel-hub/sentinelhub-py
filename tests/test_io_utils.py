@@ -32,3 +32,10 @@ def test_img_read(input_folder, output_folder, filename, mean, shape):
 
     if not filename.endswith('jpg'):
         assert np.array_equal(img, new_img), 'Original and saved image are not the same'
+
+
+def test_read_tar_with_folder(input_folder):
+    path = os.path.join(input_folder, 'tar-folder.tar')
+    data = read_data(path)
+
+    assert data == {'tar-folder/simple.json': {'message': 'test'}}

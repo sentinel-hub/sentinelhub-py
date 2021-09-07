@@ -44,13 +44,12 @@ def decode_data(response_content, data_type):
 
     try:
         return {
-            MimeType.TAR: decode_tar,
             MimeType.RAW: response_content,
             MimeType.TXT: response_content,
             MimeType.ZIP: BytesIO(response_content)
         }[data_type]
     except KeyError as exception:
-        raise ValueError('Unknown response data type {}'.format(data_type)) from exception
+        raise ValueError(f'Decoding data format {data_type} is not supported') from exception
 
 
 def decode_image(data, image_type):
@@ -87,12 +86,16 @@ def decode_tar(data):
     """ A decoder to convert response bytes into a dictionary of {filename: value}
 
     :param data: Data to decode
-    :type data: bytes
+    :type data: bytes or IOBase
     :return: A dictionary of decoded files from a tar file
     :rtype: dict(str: object)
     """
-    with tarfile.open(fileobj=BytesIO(data)) as tar:
-        itr = ((member.name, get_data_format(member.name), tar.extractfile(member)) for member in tar.getmembers())
+    if isinstance(data, bytes):
+        data = BytesIO(data)
+
+    with tarfile.open(fileobj=data) as tar:
+        file_members = (member for member in tar.getmembers() if member.isfile())
+        itr = ((member.name, get_data_format(member.name), tar.extractfile(member)) for member in file_members)
         return {filename: decode_data(file.read(), file_type) for filename, file_type, file in itr}
 
 
@@ -156,8 +159,8 @@ def fix_jp2_image(image, bit_depth):
             raise IOError('Failed to read JPEG 2000 image correctly. Most likely reason is that Pillow did not '
                           'install OpenJPEG library correctly. Try reinstalling Pillow from a wheel') from exception
 
-    raise ValueError('Bit depth {} of jp2 image is currently not supported. '
-                     'Please raise an issue on package Github page'.format(bit_depth))
+    raise ValueError(f'Bit depth {bit_depth} of jp2 image is currently not supported. '
+                     'Please raise an issue on package Github page')
 
 
 def get_data_format(filename):
