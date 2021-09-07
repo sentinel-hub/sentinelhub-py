@@ -12,14 +12,14 @@
 
 The **sentinelhub** Python package is the official Python interface for [Sentinel Hub services](https://www.sentinel-hub.com/). It supports most of the services described in the [Sentinel Hub documentation](https://docs.sentinel-hub.com/api/latest/) and any type of [satellite data collections](https://docs.sentinel-hub.com/api/latest/data/), including Sentinel, Landsat, MODIS, DEM, and custom collections produced by users.
 
-The package is also a collection of basic tools and utilities for working with geospatial and satellite data. It builds on top of well known packages such as `numpy`, `shapely`, `pyproj`, etc. On the other hand, it serves as a core dependency of [`eo-learn`](https://github.com/sentinel-hub/eo-learn) Python package for creating geospatial data-processing workflows.
+The package also provides a collection of basic tools and utilities for working with geospatial and satellite data. It builds on top of well known packages such as `numpy`, `shapely`, `pyproj`, etc. It is also a core dependency of [`eo-learn`](https://github.com/sentinel-hub/eo-learn) Python package for creating geospatial data-processing workflows.
 
-The main package resources are [GitHub repository](https://github.com/sentinel-hub/sentinelhub-py), [documentation page](https://sentinelhub-py.readthedocs.io/en/latest/) and [Sentinel Hub forum](https://forum.sentinel-hub.com/).
+The main package resources are [GitHub repository](https://github.com/sentinel-hub/sentinelhub-py), [documentation page](https://sentinelhub-py.readthedocs.io/en/latest/), and [Sentinel Hub forum](https://forum.sentinel-hub.com/).
 
 
 ## Installation
 
-The package requires a Python version >= 3.6 and installed C/C++ compiler. The package is available at
+The package requires a Python version >= 3.6 and an installed C/C++ compiler. The package is available at
 the PyPI package index and can be installed with
 
 ```
@@ -38,7 +38,7 @@ To install the package manually, clone the repository and run
 $ pip install .
 ```
 
-Before installing `sentinelhub` on **Windows** it is recommended to install package `shapely` from
+Before installing `sentinelhub` on **Windows** it is recommended to install `shapely` package from
 [Unofficial Windows wheels repository](https://www.lfd.uci.edu/~gohlke/pythonlibs/)
 
 Once installed the package can be configured according to [configuration instructions](http://sentinelhub-py.readthedocs.io/en/latest/configure.html) in documentation.
@@ -89,7 +89,7 @@ Additionally, some examples are explained in Sentinel Hub webinar videos:
 
 ## Blog posts
 
-The package has been used in the background of many projects and use cases described at [Sentinel Hub blog](https://medium.com/sentinel-hub). The following blog posts are about the package itself:
+The package played a key role in many projects and use cases described at [Sentinel Hub blog](https://medium.com/sentinel-hub). The following blog posts are about the package itself:
 
  * [Upgrading the sentinelhub Python package](https://medium.com/sentinel-hub/upgrading-the-sentinelhub-python-package-2665f9c10df)
  * [Release of sentinelhub Python Package 2.0](https://medium.com/sentinel-hub/release-of-sentinelhub-python-package-2-0-a3d47709f8fd)
