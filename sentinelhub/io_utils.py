@@ -39,33 +39,43 @@ def read_data(filename, data_format=None):
     :raises: exception if filename does not exist
     """
     if not os.path.exists(filename):
-        raise ValueError('Filename {} does not exist'.format(filename))
+        raise FileNotFoundError(f'Filename {filename} does not exist')
 
     if not isinstance(data_format, MimeType):
         data_format = get_data_format(filename)
 
-    if data_format is MimeType.RAW:
-        with open(filename, 'rb') as file:
-            return file.read()
+    reader = _get_reader(data_format)
 
+    try:
+        return reader(filename)
+    except BaseException as exception:
+        # In case a procedure would read a lot of files and one would be corrupt this helps us figure out which one
+        LOGGER.debug('Failed to read from file: %s', filename)
+        raise exception
+
+
+def _get_reader(data_format):
+    """ Provides a function for reading data in a given data format
+    """
     if data_format is MimeType.TIFF:
-        return read_tiff_image(filename)
+        return read_tiff_image
     if data_format is MimeType.JP2:
-        return read_jp2_image(filename)
+        return read_jp2_image
     if data_format.is_image_format():
-        return read_image(filename)
+        return read_image
     try:
         return {
             MimeType.TAR: read_tar,
             MimeType.TXT: read_text,
+            MimeType.RAW: _read_binary,
             MimeType.CSV: read_csv,
             MimeType.JSON: read_json,
             MimeType.XML: read_xml,
             MimeType.GML: read_xml,
             MimeType.SAFE: read_xml
-        }[data_format](filename)
+        }[data_format]
     except KeyError as exception:
-        raise ValueError('Reading data format .{} is not supported'.format(data_format.value)) from exception
+        raise ValueError(f'Reading data format {data_format} is not supported') from exception
 
 
 def read_tar(filename):
@@ -120,7 +130,14 @@ def read_text(filename):
     :return: data stored in text file
     """
     with open(filename, 'r') as file:
-        return file.read()   # file.readline() for reading 1 line
+        return file.read()
+
+
+def _read_binary(filename):
+    """ Reads data in bytes
+    """
+    with open(filename, 'rb') as file:
+        return file.read()
 
 
 def read_csv(filename, delimiter=CSV_DELIMITER):
@@ -143,7 +160,7 @@ def read_json(filename):
     :type filename: str
     :return: data stored in JSON file
     """
-    with open(filename, 'r') as file:
+    with open(filename, 'rb') as file:
         return json.load(file)
 
 
@@ -207,7 +224,7 @@ def write_data(filename, data, data_format=None, compress=False, add=False):
             MimeType.GML: write_xml
         }[data_format](filename, data)
     except KeyError as exception:
-        raise ValueError('Writing data format .{} is not supported'.format(data_format.value)) from exception
+        raise ValueError(f'Writing data format {data_format} is not supported') from exception
 
 
 def write_tiff_image(filename, image, compress=False):
@@ -221,7 +238,7 @@ def write_tiff_image(filename, image, compress=False):
     :type compress: bool
     """
     if compress:
-        return tiff.imsave(filename, image, compress='lzma')  # loseless compression, works very well on masks
+        return tiff.imsave(filename, image, compress='lzma')  # lossless compression, works very well on masks
     return tiff.imsave(filename, image)
 
 
