@@ -54,7 +54,8 @@ extensions = [
     'nbsphinx',
     'sphinx.ext.mathjax',
     'sphinx.ext.viewcode',
-    'sphinx.ext.githubpages'
+    'sphinx.ext.githubpages',
+    'm2r2'
 ]
 
 # Both the class’ and the __init__ method’s docstring are concatenated and inserted.
@@ -220,3 +221,37 @@ try:
     shutil.copytree('../../examples', './examples')
 except FileExistsError:
     pass
+
+
+MARKDOWNS_FOLDER = './markdowns'
+shutil.rmtree(MARKDOWNS_FOLDER, ignore_errors=True)
+os.mkdir(MARKDOWNS_FOLDER)
+
+
+def process_readme():
+    """ Function which will process README.md file and create INTRO.md
+    """
+    with open('../../README.md', 'r') as file:
+        readme = file.read()
+
+    readme = readme.replace('[`', '[').replace('`]', ']')
+
+    chapters = [[]]
+    for line in readme.split('\n'):
+        if line.strip().startswith('## '):
+            chapters.append([])
+        if line.startswith('<img'):
+            line = '<p></p>'
+
+        chapters[-1].append(line)
+
+    chapters = ['\n'.join(chapter) for chapter in chapters]
+
+    intro = '\n'.join([chapter for chapter in chapters if not (chapter.startswith('## Install') or
+                                                               chapter.startswith('## Documentation'))])
+
+    with open(os.path.join(MARKDOWNS_FOLDER, 'INTRO.md'), 'w') as file:
+        file.write(intro)
+
+
+process_readme()

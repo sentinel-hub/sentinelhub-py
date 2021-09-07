@@ -8,20 +8,19 @@
 [![](https://img.shields.io/pypi/l/sentinelhub.svg)](https://github.com/sentinel-hub/sentinelhub-py/blob/master/LICENSE.md)
 [![Code coverage](https://codecov.io/gh/sentinel-hub/sentinelhub-py/branch/master/graph/badge.svg)](https://codecov.io/gh/sentinel-hub/sentinelhub-py)
 
-# Description
+## Introduction
 
-The **sentinelhub** Python package allows users to make OGC (WMS and WCS)
-web requests to download and process satellite images within your Python
-scripts. It supports Sentinel-2 L1C and L2A, Sentinel-1, Landsat 8, MODIS and DEM data source.
+The **sentinelhub** Python package is the official Python interface for [Sentinel Hub services](https://www.sentinel-hub.com/). It supports most of the services described in the [Sentinel Hub documentation](https://docs.sentinel-hub.com/api/latest/) and any type of [satellite data collections](https://docs.sentinel-hub.com/api/latest/data/), including Sentinel, Landsat, MODIS, DEM, and custom collections produced by users.
 
-The package also supports obtaining data from Amazon Web Service. It can either provide data from public bucket with
-Sentinel-2 L1C imagery or requester pays bucket with Sentinel-2 L2A imagery. If specified the downloaded data can be
-stored in ESA .SAFE format (all types of .SAFE format are supported).
+The package also provides a collection of basic tools and utilities for working with geospatial and satellite data. It builds on top of well known packages such as `numpy`, `shapely`, `pyproj`, etc. It is also a core dependency of [`eo-learn`](https://github.com/sentinel-hub/eo-learn) Python package for creating geospatial data-processing workflows.
 
-# Installation
+The main package resources are [GitHub repository](https://github.com/sentinel-hub/sentinelhub-py), [documentation page](https://sentinelhub-py.readthedocs.io/en/latest/), and [Sentinel Hub forum](https://forum.sentinel-hub.com/).
 
-The package requires a Python version >= 3.6 and installed C/C++ compiler. The package is available on
-the PyPI package manager and can be installed with
+
+## Installation
+
+The package requires a Python version >= 3.6 and an installed C/C++ compiler. The package is available at
+the PyPI package index and can be installed with
 
 ```
 $ pip install sentinelhub --upgrade
@@ -30,85 +29,79 @@ $ pip install sentinelhub --upgrade
 Alternatively, the package can be installed with Conda from `conda-forge` channel
 
 ```
-conda install -c conda-forge sentinelhub 
+$ conda install -c conda-forge sentinelhub 
 ```
 
-To install the package manually, clone the repository and
+To install the package manually, clone the repository and run
+
 ```
-$ python setup.py build
-$ python setup.py install
+$ pip install .
 ```
 
-Before installing `sentinelhub-py` on **Windows** it is recommended to install package `shapely` from
+Before installing `sentinelhub` on **Windows** it is recommended to install `shapely` package from
 [Unofficial Windows wheels repository](https://www.lfd.uci.edu/~gohlke/pythonlibs/)
 
-Once installed or updated the package can be configured according to [instructions in documentation](http://sentinelhub-py.readthedocs.io/en/latest/configure.html).
-
-# Content
-
-### OGC web service
-
-Some of the major features are linked to one's [Sentinel Hub account](https://www.sentinel-hub.com/trial):
- * support for Web Map Service (WMS) and Web Coverage Service (WCS) requests using your Sentinel Hub account;
- * support for standard and custom multi-spectra layers, such as unprocessed
- bands, true color imagery, or NDVI;
- * support for multi-temporal requests;
- * support for cloud coverage filtering;
- * support for different Coordinate Reference Systems;
- * support to read and write downloaded data to disk in the most common
- image and data formats;
- * support for various data sources:
-   * Sentinel-2 L1C,
-   * Sentinel-2 L2A,
-   * Sentinel-1,
-   * Landsat 8,
-   * MODIS,
-   * DEM.
+Once installed the package can be configured according to [configuration instructions](http://sentinelhub-py.readthedocs.io/en/latest/configure.html) in documentation.
 
 
-### AWS data download
+## Content
 
-The package allows to download Sentinel-2 data from Sentinel-2 on AWS
-and reconstruct data into ESA .SAFE format.
+A high-level overview of the main functionalities:
 
-The following are implemented:
- * support for Sentinel-2 L1C and Sentinel-2 L2A data;
- * support of old and new (i.e. compact) .SAFE format;
- * support for downloading of either entire product, or a map of the .SAFE
- structure only;
- * support of command lines entries;
- * adjustable threaded downloads, and optional redownloads of existing data (not default);
- * requires either S-2 product ID, or tile name and date of a product.
+- Sentinel Hub services
+  * [Process API](https://docs.sentinel-hub.com/api/latest/api/process/),
+  * [Catalog API](https://docs.sentinel-hub.com/api/latest/api/catalog/),
+  * [Batch Processing API](https://docs.sentinel-hub.com/api/latest/api/batch/),
+  * [BYOC API](https://docs.sentinel-hub.com/api/latest/api/byoc/),
+  * [Statistical API](https://docs.sentinel-hub.com/api/latest/api/statistical/),
+  * [OGC services (WMS/WCS/WFS)](https://docs.sentinel-hub.com/api/latest/api/ogc/),
+  * [FIS](https://www.sentinel-hub.com/develop/api/ogc/fis-request/),
+  * authentication and rate-limit handling,
 
-In case of Sentinel-2 L2A data AWS access key is required.
+- geospatial utilities
+  * interface for geospatial objects and transformations,
+  * large area splitting,
+  * data collection objects,
+  * IO tools,
+
+- download Sentinel-2 data from public [AWS S3 buckets](https://registry.opendata.aws/sentinel-2/)
+  * restoration of .SAFE format,
+  * L1C and L2A data,
+  * command line interface,
+
+- [Geopedia](http://portal.geopedia.world/) WMS and REST API.
 
 
-### Documentation
+## Documentation
 
 For more information on the package and to access the documentation, visit [readthedocs](http://sentinelhub-py.readthedocs.io/).
 
 
-# Examples
+## Examples
 
-Jupyter notebooks on how to use the modules to execute OGC requests, or
-download raw data from AWS in .SAFE format can be found in the [examples](https://github.com/sentinel-hub/sentinelhub-py/tree/master/examples/)
-folder, or viewed in the [docs](http://sentinelhub-py.readthedocs.io/):
- * Using OGC web services ([link](http://sentinelhub-py.readthedocs.io/en/latest/examples/ogc_request.html))
- * Using utilities for large geographical areas ([link](http://sentinelhub-py.readthedocs.io/en/latest/examples/large_area_utilities.html))
- * AWS data download ([link](http://sentinelhub-py.readthedocs.io/en/latest/examples/aws_request.html))
- * AWS data download from command line in .SAFE format ([link](http://sentinelhub-py.readthedocs.io/en/latest/aws_cli.html))
+The package has a collection of Jupyter notebooks with examples. They are available in the [examples folder](https://github.com/sentinel-hub/sentinelhub-py/tree/master/examples) on GitHub and converted into documentation under [Examples section](https://sentinelhub-py.readthedocs.io/en/latest/examples.html).
 
-# Blog posts
+Additionally, some examples are explained in Sentinel Hub webinar videos:
+
+- [Process API in Python](https://www.youtube.com/watch?v=sX3w3Wd3FBw&list=PL46vEE2ks3tn8NGesSFllgJW5MSYRi4od&index=10&t=2220s)
+- [OGC API in Python](https://www.youtube.com/watch?v=CBIlTOl2po4&list=PL46vEE2ks3tn8NGesSFllgJW5MSYRi4od&index=4&t=1766s)
+
+
+## Blog posts
+
+The package played a key role in many projects and use cases described at [Sentinel Hub blog](https://medium.com/sentinel-hub). The following blog posts are about the package itself:
 
  * [Upgrading the sentinelhub Python package](https://medium.com/sentinel-hub/upgrading-the-sentinelhub-python-package-2665f9c10df)
  * [Release of sentinelhub Python Package 2.0](https://medium.com/sentinel-hub/release-of-sentinelhub-python-package-2-0-a3d47709f8fd)
 
-# Questions and Issues
+
+## Questions and Issues
 
 Feel free to ask questions about the package and its use cases at [Sentinel Hub forum](https://forum.sentinel-hub.com/) or raise an issue on [GitHub](https://github.com/sentinel-hub/sentinelhub-py/issues).
 
-You are welcome to send your feedback to the package authors, Sentinel Hub research team, through any of [Sentinel Hub communication channel](https://sentinel-hub.com/develop/communication-channels).
+You are welcome to send your feedback to the package authors, Sentinel Hub research team, through any of [Sentinel Hub communication channels](https://sentinel-hub.com/develop/communication-channels).
 
-# License
+
+## License
 
 See [LICENSE](https://github.com/sentinel-hub/sentinelhub-py/blob/master/LICENSE.md).
