@@ -19,6 +19,7 @@ The code is available on `GitHub <https://github.com/sentinel-hub/sentinelhub-py
 
     install
     configure
+    logging
     examples
     docs
 

@@ -83,9 +83,8 @@ class PolicyBucket:
     def __repr__(self):
         """ Representation of the bucket content
         """
-        return '{}(policy_type={}, content={}/{}, refill_period={}, refill_per_second={})' \
-               ''.format(self.__class__.__name__, self.policy_type, self.content, self.capacity, self.refill_period,
-                         self.refill_per_second)
+        return (f'{self.__class__.__name__}(policy_type={self.policy_type}, content={self.content}/{self.capacity}, '
+                f'refill_period={self.refill_period}, refill_per_second={self.refill_per_second})')
 
     @property
     def content(self):

@@ -1,6 +1,7 @@
 """
 Download process for Sentinel Hub Statistical API
 """
+import logging
 import copy
 import os
 import concurrent.futures
@@ -9,6 +10,9 @@ from .sentinelhub_client import SentinelHubDownloadClient
 from ..constants import MimeType
 from ..decoding import decode_data as decode_data_function
 from ..io_utils import read_data, write_data
+
+
+LOGGER = logging.getLogger(__name__)
 
 
 class SentinelHubStatisticalDownloadClient(SentinelHubDownloadClient):
@@ -37,6 +41,7 @@ class SentinelHubStatisticalDownloadClient(SentinelHubDownloadClient):
         """
         request.raise_if_invalid()
         if not (request.save_response or request.return_data):
+            LOGGER.debug('No need to download data')
             return None
 
         request_path, response_path = request.get_storage_paths()
@@ -46,6 +51,7 @@ class SentinelHubStatisticalDownloadClient(SentinelHubDownloadClient):
             response_content = self._execute_download(request)
             stats_response = decode_data_function(response_content, request.data_type)
         else:
+            LOGGER.debug('No need to download data, reading stored data from %s', response_path)
             stats_response = read_data(response_path, data_format=request.data_type)
 
         failed_time_intervals = {}
@@ -55,6 +61,7 @@ class SentinelHubStatisticalDownloadClient(SentinelHubDownloadClient):
 
         n_succeeded_intervals = 0
         if failed_time_intervals:
+            LOGGER.debug('Failed for %s intervals, retrying by downloading per interval', len(failed_time_intervals))
             retried_responses = self._download_per_interval(request, failed_time_intervals)
             n_succeeded_intervals = sum('error' not in stat_info for stat_info in retried_responses.values())
 
@@ -65,9 +72,11 @@ class SentinelHubStatisticalDownloadClient(SentinelHubDownloadClient):
         if request_path and request.save_response and (self.redownload or not os.path.exists(request_path)):
             request_info = request.get_request_params(include_metadata=True)
             write_data(request_path, request_info, data_format=MimeType.JSON)
+            LOGGER.debug('Saved request info to %s', request_path)
 
         if request.save_response and (download_required or n_succeeded_intervals > 0):
             write_data(response_path, stats_response, data_format=request.data_type)
+            LOGGER.debug('Saved data to %s', response_path)
 
         if request.return_data:
             return stats_response
@@ -98,7 +107,7 @@ class SentinelHubStatisticalDownloadClient(SentinelHubDownloadClient):
             if not self._has_retriable_error(stat_info) or retry_count == self.n_interval_retries - 1:
                 return stat_info
 
-        raise ValueError('No retries done')
+        raise ValueError('No more retries available, download unsuccessful')
 
     def _has_retriable_error(self, stat_info):
         """ Checks if a dictionary of Stat API info for a single time interval has an error that can fixed by retrying

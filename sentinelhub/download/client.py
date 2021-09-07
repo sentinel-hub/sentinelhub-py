@@ -14,7 +14,7 @@ from ..constants import RequestType, MimeType
 from ..decoding import decode_data as decode_data_function
 from ..exceptions import DownloadFailedException, SHRuntimeWarning, SHDeprecationWarning
 from ..io_utils import read_data, write_data
-from .handlers import fail_user_errors, retry_temporal_errors
+from .handlers import fail_user_errors, retry_temporary_errors
 from .request import DownloadRequest
 
 
@@ -79,7 +79,9 @@ class DownloadClient:
                     traceback = sys.exc_info()[2]
                     raise download_exception.with_traceback(traceback)
 
+                LOGGER.warning(str(download_exception))
                 warnings.warn(str(download_exception), category=SHRuntimeWarning)
+
                 data_list.append(None)
 
         if is_single_request:
@@ -94,7 +96,9 @@ class DownloadClient:
         request_path, response_path = request.get_storage_paths()
 
         if not self._is_download_required(request, response_path):
+            LOGGER.debug('No need to download data')
             if request.return_data:
+                LOGGER.debug('Reading stored data from %s', response_path)
                 return read_data(response_path, data_format=request.data_type if decode_data else MimeType.RAW)
             return None
 
@@ -115,11 +119,14 @@ class DownloadClient:
             return response_content
         return None
 
-    @retry_temporal_errors
+    @retry_temporary_errors
     @fail_user_errors
     def _execute_download(self, request):
         """ A default way of executing a single download request
         """
+        LOGGER.debug('Sending %s request to %s with values %s',
+                     request.request_type.value, request.url, request.post_values)
+
         response = requests.request(
             request.request_type.value,
             url=request.url,
@@ -129,7 +136,7 @@ class DownloadClient:
         )
 
         response.raise_for_status()
-        LOGGER.debug('Successful download from %s', request.url)
+        LOGGER.debug('Successful %s request to %s', request.request_type.value, request.url)
 
         return response.content
 
