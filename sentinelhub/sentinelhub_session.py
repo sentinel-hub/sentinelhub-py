@@ -9,7 +9,7 @@ from requests_oauthlib import OAuth2Session
 
 from .config import SHConfig
 from .download.request import DownloadRequest
-from .download.handlers import retry_temporal_errors, fail_user_errors
+from .download.handlers import retry_temporary_errors, fail_user_errors
 
 
 LOGGER = logging.getLogger(__name__)
@@ -64,7 +64,7 @@ class SentinelHubSession:
             'Authorization': 'Bearer {}'.format(self.token['access_token'])
         }
 
-    @retry_temporal_errors
+    @retry_temporary_errors
     @fail_user_errors
     def _fetch_token(self, request):
         """ Collects a new token from Sentinel Hub service

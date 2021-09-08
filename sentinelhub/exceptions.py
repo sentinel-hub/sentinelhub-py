@@ -46,10 +46,16 @@ class SHUserWarning(UserWarning):
 
 
 class SHRuntimeWarning(RuntimeWarning):
-    """ A custom runtime warning for sentinelhub-py package, it should be
+    """ A custom runtime warning for sentinelhub-py package
+    """
+
+
+class SHRateLimitWarning(SHRuntimeWarning):
+    """ A custom runtime warning in case user hit the rate limit for downloads
     """
 
 
 warnings.simplefilter('default', SHDeprecationWarning)
 warnings.simplefilter('default', SHUserWarning)
 warnings.simplefilter('always', SHRuntimeWarning)
+warnings.simplefilter('always', SHRateLimitWarning)

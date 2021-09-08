@@ -9,5 +9,6 @@ Documentation of `sentinelhub` Python package
 
     install
     configure
+    logging
     examples
     docs

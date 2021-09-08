@@ -2,15 +2,17 @@
 Module implementing a rate-limited multi-threaded download client for downloading from Sentinel Hub service
 """
 import logging
+import warnings
 import time
-from threading import Lock, currentThread
+from threading import Lock
 
 import requests
 
-from .handlers import fail_user_errors, retry_temporal_errors
+from .handlers import fail_user_errors, retry_temporary_errors
 from .client import DownloadClient
 from ..sentinelhub_session import SentinelHubSession
 from ..sentinelhub_rate_limit import SentinelHubRateLimit
+from ..exceptions import SHRateLimitWarning
 
 
 LOGGER = logging.getLogger(__name__)
@@ -50,29 +52,32 @@ class SentinelHubDownloadClient(DownloadClient):
         finally:
             self.lock = None
 
-    @retry_temporal_errors
+    @retry_temporary_errors
     @fail_user_errors
     def _execute_download(self, request):
         """ Executes the download with a single thread and uses a rate limit object, which is shared between all threads
         """
-        thread_name = currentThread().getName()
-
         while True:
             sleep_time = self._execute_thread_safe(self.rate_limit.register_next)
 
             if sleep_time == 0:
+                LOGGER.debug('Sending %s request to %s with values %s',
+                             request.request_type.value, request.url, request.post_values)
                 response = self._do_download(request)
 
                 self._execute_thread_safe(self.rate_limit.update, response.headers)
 
-                if response.status_code != requests.status_codes.codes.TOO_MANY_REQUESTS:
-                    response.raise_for_status()
+                if response.status_code == requests.status_codes.codes.TOO_MANY_REQUESTS:
+                    warnings.warn('Download rate limit hit', category=SHRateLimitWarning)
+                    continue
 
-                    LOGGER.debug('%s: Successful download from %s', thread_name, request.url)
-                    return response.content
-            else:
-                LOGGER.debug('%s: Sleeping for %0.2f', thread_name, sleep_time)
-                time.sleep(sleep_time)
+                response.raise_for_status()
+
+                LOGGER.debug('Successful %s request to %s', request.request_type.value, request.url)
+                return response.content
+
+            LOGGER.debug('Request needs to wait. Sleeping for %0.2f', sleep_time)
+            time.sleep(sleep_time)
 
     def _execute_thread_safe(self, thread_unsafe_function, *args, **kwargs):
         """ Executes a function inside a thread lock and handles potential errors
@@ -80,12 +85,8 @@ class SentinelHubDownloadClient(DownloadClient):
         if self.lock is None:
             return thread_unsafe_function(*args, **kwargs)
 
-        # pylint: disable=consider-using-with
-        self.lock.acquire()
-        try:
+        with self.lock:
             return thread_unsafe_function(*args, **kwargs)
-        finally:
-            self.lock.release()
 
     def _do_download(self, request):
         """ Runs the download

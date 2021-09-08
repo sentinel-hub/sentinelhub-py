@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 
-def plot_image(image, factor=1.0, clip_range = None, **kwargs):
+def plot_image(image, factor=1.0, clip_range=None, **kwargs):
     """
     Utility function for plotting RGB images.
     """
