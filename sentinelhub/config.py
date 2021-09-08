@@ -29,7 +29,8 @@ class SHConfig:
         - `max_wfs_records_per_query`: Maximum number of records returned for each WFS query.
         - `max_opensearch_records_per_query`: Maximum number of records returned for each Opensearch query.
         - `max_download_attempts`: Maximum number of download attempts from a single URL until an error will be raised.
-        - `download_sleep_time`: Number of seconds between the failed download attempt and the next attempt.
+        - `download_sleep_time`: Number of seconds to sleep between the first failed attempt and the next. Every next
+          attempt this number exponentially increases with factor `3`.
         - `download_timeout_seconds`: Maximum number of seconds before download attempt is canceled.
         - `number_of_download_processes`: Number of download processes, used to calculate rate-limit sleep time.
 

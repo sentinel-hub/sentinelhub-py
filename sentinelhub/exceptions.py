@@ -46,7 +46,7 @@ class SHUserWarning(UserWarning):
 
 
 class SHRuntimeWarning(RuntimeWarning):
-    """ A custom runtime warning for sentinelhub-py package, it should be
+    """ A custom runtime warning for sentinelhub-py package
     """
 
 
