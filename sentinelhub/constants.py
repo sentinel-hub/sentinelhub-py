@@ -342,15 +342,22 @@ class MimeType(Enum):
         :return: A mime type enum
         :rtype: MimeType
         """
+        if '/' in mime_type_str:
+            # handles strings of shape 'image/jpeg'
+            mime_type_str = mime_type_str.split('/')[-1]
+
         if MimeType.has_value(mime_type_str):
             return MimeType(mime_type_str)
 
         try:
             return {
                 'tif': MimeType.TIFF,
+                'plain': MimeType.TXT,
                 'jpeg': MimeType.JPG,
                 'jpg': MimeType.JPG,
+                'x-tar': MimeType.TAR,
                 'hdf5': MimeType.HDF,
+                'x-hdf': MimeType.HDF,
                 'h5': MimeType.HDF
             }[mime_type_str]
         except KeyError as exception:
