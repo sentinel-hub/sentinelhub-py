@@ -1,6 +1,6 @@
-*************
+*******
 Logging
-*************
+*******
 
 The package provides runtime information through the use of logging. To enable basic logs provided by ``sentinelhub`` enable logging on the ``DEBUG`` level.
 
@@ -11,7 +11,17 @@ The package provides runtime information through the use of logging. To enable b
     logging.basicConfig(level=logging.DEBUG)
 
 
-Because ``sentinelhub`` is using other packages for communication, one can gain more precise information by configuring their logging as well.
+One can also redirect all warnings that occur during evaluation to the logger.
+
+.. code-block:: python
+
+    import logging
+
+    logging.basicConfig(level=logging.DEBUG)
+    logging.captureWarnings(True)
+
+
+The ``sentinelhub`` package is using ``requests`` package for HTTP communication. In case standard logs are not detailed enough, it is possible to obtain full information about HTTP requests by propagating low-level ``urllib3`` logs.
 
 .. code-block:: python
 
@@ -26,7 +36,7 @@ Because ``sentinelhub`` is using other packages for communication, one can gain 
     requests_log.propagate = True
 
 
-Downloading is multi-threaded with the use of the standard `threading`_ library. This allows the user to also keep track of the thread that logged each message. The simplest way is to configure the logging format to display the name of the thread.
+Downloading is multi-threaded with the use of the standard `threading`_ library. The simplest way to keep track, which log comes from which thread, is to add thread names into logging formatting.
 
 .. code-block:: python
 

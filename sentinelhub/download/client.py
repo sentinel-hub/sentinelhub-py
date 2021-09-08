@@ -79,7 +79,6 @@ class DownloadClient:
                     traceback = sys.exc_info()[2]
                     raise download_exception.with_traceback(traceback)
 
-                LOGGER.warning(str(download_exception))
                 warnings.warn(str(download_exception), category=SHRuntimeWarning)
 
                 data_list.append(None)
@@ -96,9 +95,8 @@ class DownloadClient:
         request_path, response_path = request.get_storage_paths()
 
         if not self._is_download_required(request, response_path):
-            LOGGER.debug('No need to download data')
             if request.return_data:
-                LOGGER.debug('Reading stored data from %s', response_path)
+                LOGGER.debug('Reading locally stored data from %s instead of downloading', response_path)
                 return read_data(response_path, data_format=request.data_type if decode_data else MimeType.RAW)
             return None
 

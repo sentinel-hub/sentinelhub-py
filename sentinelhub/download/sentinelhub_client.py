@@ -12,7 +12,7 @@ from .handlers import fail_user_errors, retry_temporary_errors
 from .client import DownloadClient
 from ..sentinelhub_session import SentinelHubSession
 from ..sentinelhub_rate_limit import SentinelHubRateLimit
-from ..exceptions import SHRuntimeWarning
+from ..exceptions import SHRateLimitWarning
 
 
 LOGGER = logging.getLogger(__name__)
@@ -67,15 +67,17 @@ class SentinelHubDownloadClient(DownloadClient):
 
                 self._execute_thread_safe(self.rate_limit.update, response.headers)
 
-                if response.status_code != requests.status_codes.codes.TOO_MANY_REQUESTS:
-                    response.raise_for_status()
+                if response.status_code == requests.status_codes.codes.TOO_MANY_REQUESTS:
+                    warnings.warn('Download rate limit hit', category=SHRateLimitWarning)
+                    continue
 
-                    LOGGER.debug('Successful %s request to %s', request.request_type.value, request.url)
-                    return response.content
-            else:
-                LOGGER.warning('Rate limit hit. Sleeping for %0.2f', sleep_time)
-                warnings.warn(f'Rate limit hit. Sleeping for {sleep_time:0.2f}', category=SHRuntimeWarning)
-                time.sleep(sleep_time)
+                response.raise_for_status()
+
+                LOGGER.debug('Successful %s request to %s', request.request_type.value, request.url)
+                return response.content
+
+            LOGGER.debug('Request needs to wait. Sleeping for %0.2f', sleep_time)
+            time.sleep(sleep_time)
 
     def _execute_thread_safe(self, thread_unsafe_function, *args, **kwargs):
         """ Executes a function inside a thread lock and handles potential errors

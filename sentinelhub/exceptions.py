@@ -50,6 +50,12 @@ class SHRuntimeWarning(RuntimeWarning):
     """
 
 
+class SHRateLimitWarning(SHRuntimeWarning):
+    """ A custom runtime warning in case user hit the rate limit for downloads
+    """
+
+
 warnings.simplefilter('default', SHDeprecationWarning)
 warnings.simplefilter('default', SHUserWarning)
 warnings.simplefilter('always', SHRuntimeWarning)
+warnings.simplefilter('always', SHRateLimitWarning)

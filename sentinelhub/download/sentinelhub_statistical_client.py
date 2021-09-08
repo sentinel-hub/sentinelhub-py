@@ -41,7 +41,6 @@ class SentinelHubStatisticalDownloadClient(SentinelHubDownloadClient):
         """
         request.raise_if_invalid()
         if not (request.save_response or request.return_data):
-            LOGGER.debug('No need to download data')
             return None
 
         request_path, response_path = request.get_storage_paths()
@@ -51,7 +50,7 @@ class SentinelHubStatisticalDownloadClient(SentinelHubDownloadClient):
             response_content = self._execute_download(request)
             stats_response = decode_data_function(response_content, request.data_type)
         else:
-            LOGGER.debug('No need to download data, reading stored data from %s', response_path)
+            LOGGER.debug('Reading locally stored data from %s instead of downloading', response_path)
             stats_response = read_data(response_path, data_format=request.data_type)
 
         failed_time_intervals = {}
