@@ -342,9 +342,8 @@ class MimeType(Enum):
         :return: A mime type enum
         :rtype: MimeType
         """
-        if '/' in mime_type_str:
-            # handles strings of shape 'image/jpeg'
-            mime_type_str = mime_type_str.split('/')[-1]
+        guessed_extension = mimetypes.guess_extension(mime_type_str)
+        mime_type_str = guessed_extension.strip('.') if guessed_extension else mime_type_str
 
         if MimeType.has_value(mime_type_str):
             return MimeType(mime_type_str)
@@ -352,24 +351,12 @@ class MimeType(Enum):
         try:
             return {
                 'tif': MimeType.TIFF,
-                'plain': MimeType.TXT,
                 'jpeg': MimeType.JPG,
-                'jpg': MimeType.JPG,
-                'x-tar': MimeType.TAR,
                 'hdf5': MimeType.HDF,
-                'x-hdf': MimeType.HDF,
                 'h5': MimeType.HDF
             }[mime_type_str]
         except KeyError as exception:
             raise ValueError(f'Data format .{mime_type_str} is not supported') from exception
-
-    @staticmethod
-    def canonical_extension(fmt_ext):
-        """ A deprecated method, use MimeType.from_string().extension instead
-        """
-        warnings.warn('This method is deprecated and will soon be removed, use MimeType.from_string().extension '
-                      'instead', category=SHDeprecationWarning)
-        return MimeType.from_string(fmt_ext).extension
 
     def is_image_format(self):
         """ Checks whether file format is an image format
@@ -414,6 +401,8 @@ class MimeType(Enum):
             return 'application/json'
         if self is MimeType.JP2:
             return 'image/jpeg2000'
+        if self is MimeType.XML:
+            return 'text/xml'
         if self is MimeType.RAW:
             return self.value
         return mimetypes.types_map['.' + self.value]
