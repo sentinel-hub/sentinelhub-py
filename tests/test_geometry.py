@@ -10,13 +10,7 @@ WKT_STRING = (
     'MULTIPOLYGON (((40 40, 20 45, 45 30, 40 40)), ((20 35, 10 30, 10 10, 30 5, 45 20, 20 35), '
     '(30 20, 20 15, 20 25, 30 20)))'
 )
-polygon = shapely.geometry.Polygon([
-    (465888.8773268595, 5079639.43613863),
-    (465885.3413983975, 5079641.52461826),
-    (465882.9542217017, 5079647.16604353),
-    (465888.8780175466, 5079668.70367663),
-    (465888.877326859, 5079639.436138632),
-])
+polygon = shapely.geometry.Polygon([(0, 0), (0, 1), (1, 1), (1, 0), (0, 0)])
 GEOMETRY1 = Geometry(polygon, CRS(32633))
 GEOMETRY2 = Geometry(WKT_STRING, CRS.WGS84)
 BBOX = BBox(bbox=[14.00, 45.00, 14.03, 45.03], crs=CRS.WGS84)
@@ -187,6 +181,21 @@ def test_transform_geometry(geometry):
 def test_geojson(geometry):
     assert geometry == Geometry(geometry.geojson, geometry.crs), \
         'Transforming geometry to geojson and back should preserve it'
+    assert geometry == Geometry.from_geojson(geometry.geojson)
+    assert geometry == Geometry.from_geojson(geometry.get_geojson())
+
+
+def test_geojson_parameter_with_crs():
+    expected_without_crs = {
+        'type': 'Polygon',
+        'coordinates': (((0.0, 0.0), (0.0, 1.0), (1.0, 1.0), (1.0, 0.0), (0.0, 0.0)),)
+    }
+    expected_with_crs = {
+        'crs': {'type': 'name', 'properties': {'name': 'urn:ogc:def:crs:EPSG::32633'}},
+        **expected_without_crs
+    }
+    assert GEOMETRY1.get_geojson(with_crs=False) == expected_without_crs
+    assert GEOMETRY1.get_geojson(with_crs=True) == expected_with_crs
 
 
 def test_wkt():

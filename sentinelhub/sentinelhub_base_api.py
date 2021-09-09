@@ -108,7 +108,7 @@ class SentinelHubBaseApiRequest(DataRequest):
             request_bounds['bbox'] = list(bbox)
 
         if geometry:
-            request_bounds['geometry'] = geometry.geojson
+            request_bounds['geometry'] = geometry.get_geojson(with_crs=False)
 
         if other_args:
             _update_other_args(request_bounds, other_args)

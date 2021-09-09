@@ -45,18 +45,24 @@ class BaseGeometry(ABC):
         :return: A dictionary in GeoJSON format
         :rtype: dict
         """
-        return {
-            **self._crs_to_geojson(),
-            **shapely.geometry.mapping(self.geometry)
-        }
+        return self.get_geojson(with_crs=True)
 
-    def get_geojson(self):
+    def get_geojson(self, with_crs=True):
         """ Returns representation in a GeoJSON format. Use json.dump for writing it to file.
 
+        :param with_crs: A flag indicating if GeoJSON dictionary should contain CRS part
+        :type with_crs: bool
         :return: A dictionary in GeoJSON format
         :rtype: dict
         """
-        return self.geojson
+        geometry_geojson = shapely.geometry.mapping(self.geometry)
+
+        if with_crs:
+            return {
+                **self._crs_to_geojson(),
+                **geometry_geojson
+            }
+        return geometry_geojson
 
     def _crs_to_geojson(self):
         """ Helper method which generates part of GeoJSON format related to CRS
