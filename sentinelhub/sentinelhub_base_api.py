@@ -32,12 +32,16 @@ class SentinelHubBaseApiRequest(DataRequest):
         )]
 
     @staticmethod
-    def input_data(data_collection, *, time_interval=None, maxcc=None, mosaicking_order=None, upsampling=None,
-                   downsampling=None, other_args=None):
+    def input_data(data_collection, *, identifier=None, time_interval=None, maxcc=None, mosaicking_order=None,
+                   upsampling=None, downsampling=None, other_args=None):
         """ Generate the `input data` part of the request body
 
         :param data_collection: One of supported Process API data collections.
         :type data_collection: DataCollection
+        :param identifier: A collection identifier that can be referred to in the evalscript. Parameter is referenced
+            as `"id"` in service documentation. To learn more check
+            `data fusion documentation <https://docs.sentinel-hub.com/api/latest/data/data-fusion>`__.
+        :type identifier: str or None
         :param time_interval: A time interval with start and end date of the form YYYY-MM-DDThh:mm:ss or YYYY-MM-DD or
             a datetime object
         :type time_interval: (str, str) or (datetime, datetime)
@@ -58,6 +62,8 @@ class SentinelHubBaseApiRequest(DataRequest):
         input_data_dict = {
             'type': data_collection.api_id,
         }
+        if identifier:
+            input_data_dict['id'] = identifier
 
         data_filters = _get_data_filters(data_collection, time_interval, maxcc, mosaicking_order)
         if data_filters:
