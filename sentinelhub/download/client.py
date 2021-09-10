@@ -12,7 +12,7 @@ import requests
 from ..config import SHConfig
 from ..constants import RequestType, MimeType
 from ..decoding import decode_data as decode_data_function
-from ..exceptions import DownloadFailedException, SHRuntimeWarning, SHDeprecationWarning
+from ..exceptions import DownloadFailedException, SHRuntimeWarning
 from ..io_utils import read_data, write_data
 from .handlers import fail_user_errors, retry_temporary_errors
 from .request import DownloadRequest
@@ -187,50 +187,3 @@ class DownloadClient:
         """
         request = DownloadRequest(url=url, data_type=MimeType.XML, **kwargs)
         return self._single_download(request, decode_data=True)
-
-
-def get_json(url, post_values=None, headers=None, request_type=None, download_client_class=DownloadClient, **kwargs):
-    """ Download request as JSON data type
-
-    :param url: An URL from where the data will be downloaded
-    :type url: str
-    :param post_values: A dictionary of parameters for a POST request
-    :type post_values: dict or None
-    :param headers: A dictionary of additional request headers
-    :type headers: dict
-    :param request_type: A type of HTTP request to make. If not specified, then it will be a GET request if
-        `post_values=None` and a POST request otherwise
-    :type request_type: RequestType or None
-    :param download_client_class: A class that implements a download client
-    :type download_client_class: object
-    :param kwargs: Parameters that are passed to a DownloadRequest class
-    :return: JSON data parsed into Python objects
-    :rtype: object or None
-    """
-    warnings.warn('Function get_json is deprecated and will soon be removed, please use DownloadClient.get_json '
-                  'instead', category=SHDeprecationWarning)
-
-    return download_client_class().get_json(
-        url=url,
-        post_values=post_values,
-        headers=headers,
-        request_type=request_type,
-        **kwargs
-    )
-
-
-def get_xml(url, download_client_class=DownloadClient):
-    """ Download request as XML data type
-
-    :param url: url to Sentinel Hub's services or other sources from where the data is downloaded
-    :type url: str
-    :return: request response as XML instance
-    :rtype: XML instance or None
-    :param download_client_class: A class that implements a download client
-    :type download_client_class: object
-    :raises: RunTimeError
-    """
-    warnings.warn('Function get_xml is deprecated and will soon be removed, please use DownloadClient.get_xml '
-                  'instead', category=SHDeprecationWarning)
-
-    return download_client_class().get_xml(url)
