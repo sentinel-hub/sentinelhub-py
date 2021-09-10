@@ -1,6 +1,7 @@
 """
 Module implementing some utility functions not suitable for other utility modules
 """
+import warnings
 from abc import ABC, abstractmethod
 from dataclasses import field, dataclass
 from datetime import datetime
@@ -10,9 +11,11 @@ from urllib.parse import urlencode
 from dataclasses_json import config as dataclass_config
 from dataclasses_json import dataclass_json, LetterCase, Undefined, CatchAll
 
+from .config import SHConfig
 from .data_collections import DataCollection
+from .download.sentinelhub_client import SentinelHubDownloadClient
 from .geometry import Geometry
-from .exceptions import MissingDataInRequestException
+from .exceptions import MissingDataInRequestException, SHDeprecationWarning
 from .time_utils import parse_time, serialize_time
 
 
@@ -29,6 +32,17 @@ geometry_config = dataclass_config(
     exclude=lambda geojson: geojson is None,
     letter_case=LetterCase.CAMEL
 )
+
+
+def enum_config(enum_class):
+    """ Given an Enum class it provide an object for serialization/deserialization
+    """
+    return dataclass_config(
+        encoder=lambda enum_item: enum_item.value,
+        decoder=lambda item: enum_class(item) if item else None,
+        exclude=lambda item: item is None,
+        letter_case=LetterCase.CAMEL
+    )
 
 
 @dataclass_json(letter_case=LetterCase.CAMEL, undefined=Undefined.INCLUDE)
@@ -56,6 +70,38 @@ class BaseCollection:
             band_names = None
 
         return DataCollection.define_byoc(collection_id=self.collection_id, bands=band_names)
+
+
+class SentinelHubService:
+    """ A base class for classes interacting with different Sentinel Hub APIs
+    """
+    def __init__(self, config=None, base_url=None):
+        """
+        :param config: A configuration object with required parameters `sh_client_id`, `sh_client_secret`, and
+            `sh_auth_base_url` which is used for authentication and `sh_base_url` which defines the service
+            deployment that will be used.
+        :type config: SHConfig or None
+        :param base_url: A deprecated parameter. Use `config` instead.
+        :type base_url: str or None
+        """
+        self.config = config or SHConfig()
+
+        if base_url:
+            warnings.warn('Parameter base_url is deprecated and will soon be removed. Instead set '
+                          'config.sh_base_url = base_url and provide it with config parameter',
+                          category=SHDeprecationWarning)
+
+        base_url = base_url or self.config.sh_base_url
+        base_url = base_url.rstrip('/')
+        self.service_url = self._get_service_url(base_url)
+
+        self.client = SentinelHubDownloadClient(config=self.config)
+
+    @staticmethod
+    def _get_service_url(base_url):
+        """ Provides the URL to a specific service
+        """
+        raise NotImplementedError
 
 
 class FeatureIterator(ABC):

@@ -18,6 +18,8 @@ class SHConfig:
         - `sh_client_secret`: User's OAuth client secret for Sentinel Hub service
         - `sh_base_url`: There exist multiple deployed instances of Sentinel Hub service, this parameter defines the
           location of a specific service instance.
+        - `sh_auth_base_url`: Base url for Sentinel Hub Authentication service. Authentication is typically sent to the
+          main service deployment even if `sh_base_url` points to another deployment.
         - `geopedia_wms_url`: Base url for Geopedia WMS services.
         - `geopedia_rest_url`: Base url for Geopedia REST services.
         - `aws_access_key_id`: Access key for AWS Requester Pays buckets.
@@ -48,6 +50,7 @@ class SHConfig:
             'sh_client_id': '',
             'sh_client_secret': '',
             'sh_base_url': 'https://services.sentinel-hub.com',
+            'sh_auth_base_url': 'https://services.sentinel-hub.com',
             'geopedia_wms_url': 'https://service.geopedia.world',
             'geopedia_rest_url': 'https://www.geopedia.world/rest',
             'aws_access_key_id': '',
@@ -78,9 +81,9 @@ class SHConfig:
         def _parse_configuration(self, config):
             """ Checks if configuration file contains all keys and parses values
             """
-            for param in self.CONFIG_PARAMS:
+            for param, default_value in self.CONFIG_PARAMS.items():
                 if param not in config:
-                    raise ValueError("Configuration file does not contain '%s' parameter." % param)
+                    config[param] = default_value
 
             for param, default_param in self.CONFIG_PARAMS.items():
                 param_type = type(default_param)
@@ -134,9 +137,10 @@ class SHConfig:
             :return: A dictionary
             :rtype: dict
             """
-            config = {prop: getattr(self, prop) for prop in self.CONFIG_PARAMS}
-            if config['instance_id'] is None:
-                config['instance_id'] = ''
+            config = {item: getattr(self, item) for item in self.CONFIG_PARAMS}
+            for item, default_value in self.CONFIG_PARAMS.items():
+                if config[item] is None:
+                    config[item] = default_value
             return config
 
         def save_configuration(self):
@@ -284,7 +288,7 @@ class SHConfig:
         :return: An URL endpoint
         :rtype: str
         """
-        return f'{self.sh_base_url}/oauth/token'
+        return f'{self.sh_auth_base_url}/oauth/token'
 
     def get_sh_process_api_url(self):
         """  Provides URL for Sentinel Hub Process API endpoint
@@ -309,7 +313,7 @@ class SHConfig:
         :return: An URL endpoint
         :rtype: str
         """
-        return f'{self.sh_base_url}/aux/ratelimit'
+        return f'{self.sh_auth_base_url}/aux/ratelimit'
 
     def raise_for_missing_instance_id(self):
         """ In case Sentinel Hub instance ID is missing it raises an informative error

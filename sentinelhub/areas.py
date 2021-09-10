@@ -699,14 +699,17 @@ class BatchSplitter(AreaSplitter):
         :param request_id: An ID of a batch request
         :type request_id: str or None
         :param batch_request: A batch request object. It is an alternative to the `request_id` parameter
-        :type batch_request: SentinelHubBatch or None
-        :param config: A configuration object
+        :type batch_request: BatchRequest or None
+        :param config: A configuration object with credentials and information about which service deployment to
+            use.
         :type config: SHConfig or None
         """
+        self.batch_client = SentinelHubBatch(config=config)
+
         if not (request_id or batch_request):
             raise ValueError('One of the parameters request_id and batch_request has to be given')
         if batch_request is None:
-            batch_request = SentinelHubBatch(request_id, config=config)
+            batch_request = self.batch_client.get_request(request_id)
 
         self.batch_request = batch_request
 
@@ -718,7 +721,7 @@ class BatchSplitter(AreaSplitter):
     def _make_split(self):
         """ This method actually loads bounding boxes from the service and prepares the lists
         """
-        tile_info_list = list(self.batch_request.iter_tiles())
+        tile_info_list = list(self.batch_client.iter_tiles(self.batch_request))
 
         tile_geometries = [Geometry.from_geojson(tile_info['geometry']) for tile_info in tile_info_list]
         original_crs_list = [CRS(tile_info['origin']['crs']['properties']['name']) for tile_info in tile_info_list]

@@ -26,12 +26,12 @@ def catalog_fixture(config):
 def test_info_with_different_deployments(config, data_collection):
     """ Test if basic interaction works with different data collections on different deployments
     """
-    catalog = SentinelHubCatalog(base_url=data_collection.service_url, config=config)
+    config.sh_base_url = data_collection.service_url or config.sh_base_url
+    catalog = SentinelHubCatalog(config=config)
     info = catalog.get_info()
 
     assert isinstance(info, dict)
-    expected_url = data_collection.service_url or config.sh_base_url
-    assert all(link['href'].startswith(expected_url) for link in info['links'])
+    assert all(link['href'].startswith(config.sh_base_url) for link in info['links'])
 
 
 def test_conformance(catalog):
@@ -144,8 +144,9 @@ def test_search_for_data_collection(config, data_collection, feature_id):
     """ Tests search functionality for each data collection to confirm compatibility between DataCollection parameters
     and Catalog API
     """
-    base_url = data_collection.service_url if isinstance(data_collection, DataCollection) else None
-    catalog = SentinelHubCatalog(base_url=base_url, config=config)
+    collection_base_url = data_collection.service_url if isinstance(data_collection, DataCollection) else None
+    config.sh_base_url = collection_base_url or config.sh_base_url
+    catalog = SentinelHubCatalog(config=config)
 
     search_iterator = catalog.search(
         collection=data_collection,

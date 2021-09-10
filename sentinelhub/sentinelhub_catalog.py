@@ -1,37 +1,23 @@
 """
 A client interface for Sentinel Hub Catalog API
 """
-from .config import SHConfig
 from .data_collections import DataCollection, OrbitDirection
 from .geometry import Geometry, CRS
-from .download.sentinelhub_client import SentinelHubDownloadClient
-from .sh_utils import FeatureIterator, remove_undefined
+from .sh_utils import SentinelHubService, FeatureIterator, remove_undefined
 from .time_utils import parse_time_interval, serialize_time, parse_time
 
 
-class SentinelHubCatalog:
+class SentinelHubCatalog(SentinelHubService):
     """ The main class for interacting with Sentinel Hub Catalog API
 
     For more details about certain endpoints and parameters check
     `Catalog API documentation <https://docs.sentinel-hub.com/api/latest/api/catalog>`_.
     """
-
-    def __init__(self, base_url=None, config=None):
+    @staticmethod
+    def _get_service_url(base_url):
+        """ Provides URL to Catalog API
         """
-        :param base_url: A base URL of Sentinel Hub service specifying which service deployment to use. By default the
-            one in config object will be used.
-        :type base_url: str or None
-        :param config: A configuration object with required parameters `sh_client_id`, `sh_client_secret`, and
-            `sh_base_url` which will be used of authentication.
-        :type config: SHConfig or None
-        """
-        self.config = config or SHConfig()
-
-        base_url = base_url or self.config.sh_base_url
-        base_url = base_url.rstrip('/')
-        self.catalog_url = f'{base_url}/api/v1/catalog'
-
-        self.client = SentinelHubDownloadClient(config=self.config)
+        return f'{base_url}/api/v1/catalog'
 
     def get_info(self):
         """ Provides the main information that define Sentinel Hub Catalog API
@@ -41,7 +27,7 @@ class SentinelHubCatalog:
         :return: A service payload with information
         :rtype: dict
         """
-        return self.client.get_json(self.catalog_url)
+        return self.client.get_json(self.service_url)
 
     def get_conformance(self):
         """ Get information about specifications that this API conforms to
@@ -52,7 +38,7 @@ class SentinelHubCatalog:
         :return: A service payload with information
         :rtype: dict
         """
-        url = f'{self.catalog_url}/conformance'
+        url = f'{self.service_url}/conformance'
         return self.client.get_json(url)
 
     def get_collections(self):
@@ -63,7 +49,7 @@ class SentinelHubCatalog:
         :return: A list of collections with information
         :rtype: list(dict)
         """
-        url = f'{self.catalog_url}/collections'
+        url = f'{self.service_url}/collections'
         return self.client.get_json(url, use_session=True)['collections']
 
     def get_collection(self, collection):
@@ -77,7 +63,7 @@ class SentinelHubCatalog:
         :rtype: dict
         """
         collection_id = self._parse_collection_id(collection)
-        url = f'{self.catalog_url}/collections/{collection_id}'
+        url = f'{self.service_url}/collections/{collection_id}'
         return self.client.get_json(url, use_session=True)
 
     def get_feature(self, collection, feature_id):
@@ -93,7 +79,7 @@ class SentinelHubCatalog:
         :rtype: dict
         """
         collection_id = self._parse_collection_id(collection)
-        url = f'{self.catalog_url}/collections/{collection_id}/items/{feature_id}'
+        url = f'{self.service_url}/collections/{collection_id}/items/{feature_id}'
         return self.client.get_json(url, use_session=True)
 
     def search(self, collection, *, time, bbox=None, geometry=None, ids=None, query=None, fields=None, distinct=None,
@@ -128,7 +114,7 @@ class SentinelHubCatalog:
         :type limit: int
         :param kwargs: Any other parameters that will be passed directly to the service
         """
-        url = f'{self.catalog_url}/search'
+        url = f'{self.service_url}/search'
 
         collection_id = self._parse_collection_id(collection)
         start_time, end_time = serialize_time(parse_time_interval(time, allow_undefined=True), use_tz=True)

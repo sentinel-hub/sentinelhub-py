@@ -34,7 +34,8 @@ from .geo_utils import bbox_to_dimensions, bbox_to_resolution, get_image_dimensi
     wgs84_to_utm, to_wgs84, utm_to_pixel, pixel_to_utm, wgs84_to_pixel, get_utm_crs, transform_point
 
 from .sentinelhub_session import SentinelHubSession
-from .sentinelhub_batch import SentinelHubBatch, BatchCollection, monitor_batch_job, BatchRequestStatus, BatchTileStatus
+from .sentinelhub_batch import SentinelHubBatch, BatchRequest, BatchCollection, monitor_batch_job, BatchRequestStatus, \
+    BatchTileStatus, BatchUserAction
 from .sentinelhub_request import SentinelHubRequest
 from .sentinelhub_byoc import SentinelHubBYOC, ByocCollection, ByocCollectionAdditionalData, ByocTile
 from .sentinelhub_catalog import SentinelHubCatalog
