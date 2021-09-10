@@ -150,10 +150,10 @@ class DownloadClient:
         """ Ensures that the cached request matches the current one. Serves as protection against hash collisions
         """
         cached_request_info = read_data(request_path, MimeType.JSON)
-        current_request_info = request.get_request_params(include_metadata=True)
+        current_request_info = request.get_request_params(include_metadata=False)
         # Timestamps are allowed to differ
         del cached_request_info['timestamp']
-        del current_request_info['timestamp']
+        del cached_request_info['headers']
 
         if cached_request_info != current_request_info:
             raise HashedNameCollisionException(
