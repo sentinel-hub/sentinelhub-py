@@ -12,7 +12,7 @@ import utm
 import pyproj
 from aenum import extend_enum
 
-from .exceptions import SHDeprecationWarning, SHUserWarning
+from .exceptions import SHUserWarning
 from ._version import __version__
 
 
@@ -342,8 +342,18 @@ class MimeType(Enum):
         :return: A mime type enum
         :rtype: MimeType
         """
+
+        # These two cases are handled seperately due to issues with python 3.6
+        if mime_type_str == 'image/jpeg':
+            return MimeType.JPG
+        if mime_type_str == 'text/plain':
+            return MimeType.TXT
+
         guessed_extension = mimetypes.guess_extension(mime_type_str)
-        mime_type_str = guessed_extension.strip('.') if guessed_extension else mime_type_str
+        if guessed_extension:
+            mime_type_str = guessed_extension.strip('.')
+        else:
+            mime_type_str = mime_type_str.split('/')[-1]
 
         if MimeType.has_value(mime_type_str):
             return MimeType(mime_type_str)
@@ -356,7 +366,7 @@ class MimeType(Enum):
                 'h5': MimeType.HDF
             }[mime_type_str]
         except KeyError as exception:
-            raise ValueError(f'Data format .{mime_type_str} is not supported') from exception
+            raise ValueError(f'Data format {mime_type_str} is not supported') from exception
 
     def is_image_format(self):
         """ Checks whether file format is an image format
