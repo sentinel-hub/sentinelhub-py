@@ -144,6 +144,7 @@ def test_is_image_format(ext):
 ])
 def test_get_string(mime_type, expected_string):
     assert MimeType.get_string(mime_type) == expected_string
+    assert MimeType.from_string(expected_string) == mime_type, 'Result of `get_string` not accepted by `from_string`'
 
 
 def test_get_expected_max_value():

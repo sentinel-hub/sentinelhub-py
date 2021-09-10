@@ -146,7 +146,7 @@ class SentinelHubCatalog:
             'collections': [collection_id],
             'datetime': f'{start_time}/{end_time}' if time else None,
             'bbox': list(bbox) if bbox else None,
-            'intersects': geometry.geojson if geometry else None,
+            'intersects': geometry.get_geojson(with_crs=False) if geometry else None,
             'ids': ids,
             'query': _query,
             'fields': fields,

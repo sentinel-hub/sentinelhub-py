@@ -6,7 +6,6 @@ import datetime
 import os
 import logging
 import copy
-import warnings
 from abc import ABC, abstractmethod
 
 from .config import SHConfig
@@ -17,7 +16,6 @@ from .aws import AwsProduct, AwsTile
 from .aws_safe import SafeProduct, SafeTile
 from .data_collections import handle_deprecated_data_source
 from .download import DownloadRequest, DownloadClient, AwsDownloadClient, SentinelHubDownloadClient
-from .exceptions import SHDeprecationWarning
 from .os_utils import make_folder
 from .constants import MimeType, CustomUrlParam, ServiceType, CRS, HistogramType
 from .data_collections import DataCollection
@@ -31,7 +29,7 @@ class DataRequest(ABC):
     Every data request type can write the fetched data to disk and then read it again (and hence avoid the need to
     download the same data again).
     """
-    def __init__(self, download_client_class, *, data_folder=None, config=None, instance_id=None):
+    def __init__(self, download_client_class, *, data_folder=None, config=None):
         """
         :param download_client_class: A class implementing a download client
         :type download_client_class: type
@@ -43,11 +41,6 @@ class DataRequest(ABC):
         self.download_client_class = download_client_class
         self.data_folder = data_folder
         self.config = config or SHConfig()
-
-        if instance_id is not None:
-            warnings.warn("Parameter 'instance_id' is deprecated and will soon removed. Use parameter 'config' instead",
-                          category=SHDeprecationWarning)
-            self.config.instance_id = instance_id
 
         self.download_list = []
         self.folder_list = []
