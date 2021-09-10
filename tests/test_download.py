@@ -7,7 +7,7 @@ import os
 import pytest
 
 from sentinelhub import DownloadRequest, MimeType, DownloadClient
-from sentinelhub.exceptions import SHRuntimeWarning
+from sentinelhub.exceptions import SHRuntimeWarning, HashedNameCollisionException
 
 
 def test_general():
@@ -98,3 +98,20 @@ def test_multiple_downloads(download_request, show_progress):
     assert isinstance(results, list)
     assert len(results) == 3
     assert results[1] is None and results[2] is None
+
+
+def test_hash_collision(download_request):
+    client = DownloadClient()
+
+    # Give all requests same hash
+    download_request.get_hashed_name = lambda: 'same_hash'
+
+    request2 = copy.deepcopy(download_request)
+    request3 = copy.deepcopy(download_request)
+    request3.post_values = {'zero': 0}
+
+    client.download(download_request)
+    client.download(request2)
+
+    with pytest.raises(HashedNameCollisionException):
+        client.download(request3)

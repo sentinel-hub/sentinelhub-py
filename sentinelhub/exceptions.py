@@ -35,6 +35,11 @@ class MissingDataInRequestException(BaseSentinelHubException):
     """
 
 
+class HashedNameCollisionException(BaseSentinelHubException):
+    """This exception is raised when two different requests are assigned the same hashed name.
+    """
+
+
 class SHDeprecationWarning(DeprecationWarning):
     """ A custom deprecation warning for sentinelhub-py package
     """

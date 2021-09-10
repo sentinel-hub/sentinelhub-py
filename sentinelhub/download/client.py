@@ -13,7 +13,7 @@ from tqdm.auto import tqdm
 from ..config import SHConfig
 from ..constants import RequestType, MimeType
 from ..decoding import decode_data as decode_data_function
-from ..exceptions import DownloadFailedException, SHRuntimeWarning
+from ..exceptions import DownloadFailedException, SHRuntimeWarning, HashedNameCollisionException
 from ..io_utils import read_data, write_data
 from .handlers import fail_user_errors, retry_temporary_errors
 from .request import DownloadRequest
@@ -112,6 +112,7 @@ class DownloadClient:
         if not self._is_download_required(request, response_path):
             if request.return_data:
                 LOGGER.debug('Reading locally stored data from %s instead of downloading', response_path)
+                self._check_cached_request_is_matching(request, request_path)
                 return read_data(response_path, data_format=request.data_type if decode_data else MimeType.RAW)
             return None
 
@@ -137,8 +138,8 @@ class DownloadClient:
     def _execute_download(self, request):
         """ A default way of executing a single download request
         """
-        LOGGER.debug('Sending %s request to %s with values %s',
-                     request.request_type.value, request.url, request.post_values)
+        LOGGER.debug('Sending %s request to %s. Hash of sent request is %s',
+                     request.request_type.value, request.url, request.get_hashed_name())
 
         response = requests.request(
             request.request_type.value,
@@ -158,6 +159,22 @@ class DownloadClient:
         """
         return (request.save_response or request.return_data) and \
                (self.redownload or response_path is None or not os.path.exists(response_path))
+
+    @staticmethod
+    def _check_cached_request_is_matching(request, request_path):
+        """ Ensures that the cached request matches the current one. Serves as protection against hash collisions
+        """
+        cached_request_info = read_data(request_path, MimeType.JSON)
+        current_request_info = request.get_request_params(include_metadata=False)
+        # Timestamps are allowed to differ
+        del cached_request_info['timestamp']
+        del cached_request_info['headers']
+
+        if cached_request_info != current_request_info:
+            raise HashedNameCollisionException(
+                f'Request has hashed name {request.get_hashed_name()}, which matches request saved at {request_path}, '
+                f'but the requests are different. Possible hash collision'
+            )
 
     def get_json(self, url, post_values=None, headers=None, request_type=None, **kwargs):
         """ Download request as JSON data type

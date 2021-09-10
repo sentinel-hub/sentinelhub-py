@@ -51,6 +51,7 @@ class SentinelHubStatisticalDownloadClient(SentinelHubDownloadClient):
             stats_response = decode_data_function(response_content, request.data_type)
         else:
             LOGGER.debug('Reading locally stored data from %s instead of downloading', response_path)
+            self._check_cached_request_is_matching(request, request_path)
             stats_response = read_data(response_path, data_format=request.data_type)
 
         failed_time_intervals = {}
