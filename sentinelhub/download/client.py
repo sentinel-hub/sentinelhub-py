@@ -49,7 +49,7 @@ class DownloadClient:
 
         self.config = config or SHConfig()
 
-    def download(self, download_requests, max_threads=None, decode_data=True, progress_bar=False):
+    def download(self, download_requests, max_threads=None, decode_data=True, show_progress=False):
         """ Download one or multiple requests, provided as a request list.
 
         :param download_requests: A list of requests or a single request to be executed.
@@ -59,8 +59,8 @@ class DownloadClient:
         :type max_threads: int or None
         :param decode_data: If `True` it will decode data otherwise it will return it in binary format.
         :type decode_data: bool
-        :param progress_bar: Whether a progress bar should be displayed while downloading
-        :type progress_bar: bool
+        :param show_progress: Whether a progress bar should be displayed while downloading
+        :type show_progress: bool
         :return: A list of results or a single result, depending on input parameter `download_requests`
         :rtype: list(object) or object
         """
@@ -76,7 +76,7 @@ class DownloadClient:
 
         data_list = [None] * len(download_list)
         # Consider using tqdm.contrib.concurrent.thread_map in the future
-        if progress_bar:
+        if show_progress:
             with tqdm(total=len(download_list)) as pbar:
                 for future in as_completed(download_list):
                     data_list[future_order[future]] = self._process_download_future(future)
