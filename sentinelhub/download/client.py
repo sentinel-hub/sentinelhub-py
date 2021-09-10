@@ -8,7 +8,7 @@ import sys
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 import requests
-from tqdm import tqdm
+from tqdm.auto import tqdm
 
 from ..config import SHConfig
 from ..constants import RequestType, MimeType

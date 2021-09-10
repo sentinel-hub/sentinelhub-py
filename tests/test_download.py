@@ -81,7 +81,8 @@ def test_single_download(download_request):
     assert os.path.isfile(response_path)
 
 
-def test_multiple_downloads(download_request):
+@pytest.mark.parametrize('progress_bar', [True, False])
+def test_multiple_downloads(download_request, progress_bar):
     client = DownloadClient(redownload=True, raise_download_errors=False)
 
     request2 = copy.deepcopy(download_request)
@@ -92,7 +93,7 @@ def test_multiple_downloads(download_request):
     request3.url += 'invalid'
 
     with pytest.warns(SHRuntimeWarning):
-        results = client.download([download_request, request2, request3])
+        results = client.download([download_request, request2, request3], progress_bar=progress_bar)
 
     assert isinstance(results, list)
     assert len(results) == 3
