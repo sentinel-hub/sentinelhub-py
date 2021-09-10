@@ -19,10 +19,10 @@ class SentinelHubBaseApiRequest(DataRequest):
         """ Prepares a download request
         """
         headers = {'content-type': MimeType.JSON.get_string(), 'accept': self.mime_type.get_string()}
-
+        base_url = self._get_base_url()
         self.download_list = [DownloadRequest(
             request_type=RequestType.POST,
-            url=self._get_request_url(),
+            url=f'{base_url}/api/v1/{self._SERVICE_ENDPOINT}',
             post_values=self.payload,
             data_folder=self.data_folder,
             save_response=bool(self.data_folder),
@@ -121,20 +121,29 @@ class SentinelHubBaseApiRequest(DataRequest):
 
         return request_bounds
 
-    def _get_request_url(self):
-        """ It decides which service URL to query. Restrictions from data collection definitions overrule the
-        settings from config object.
+    def _get_base_url(self):
+        """ It decides which base URL to use. Restrictions from data collection definitions overrule the
+        settings from config object. In case different collections have different restrictions then
+        `SHConfig.sh_base_url` breaks the tie in case it matches one of the data collection URLs.
         """
         data_collection_urls = tuple({
-            input_data_dict.service_url for input_data_dict in self.payload['input']['data']
+            input_data_dict.service_url.rstrip('/') for input_data_dict in self.payload['input']['data']
             if isinstance(input_data_dict, InputDataDict) and input_data_dict.service_url is not None
         })
-        if len(data_collection_urls) > 1:
-            raise ValueError(f'Given data collections are restricted to different services: {data_collection_urls}\n'
-                             f'Try defining data collections without these restrictions')
+        config_base_url = self.config.sh_base_url.rstrip('/')
 
-        base_url = data_collection_urls[0] if data_collection_urls else self.config.sh_base_url
-        return f'{base_url}/api/v1/{self._SERVICE_ENDPOINT}'
+        if not data_collection_urls:
+            return config_base_url
+
+        if len(data_collection_urls) == 1:
+            return data_collection_urls[0]
+
+        if config_base_url in data_collection_urls:
+            return config_base_url
+
+        raise ValueError(f'Given data collections are restricted to different services: {data_collection_urls}\n'
+                         'Configuration parameter sh_base_url cannot break the tie because it is set to a different'
+                         f'service: {config_base_url}')
 
 
 class InputDataDict(dict):
