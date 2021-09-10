@@ -8,7 +8,7 @@ from shapely.geometry import Polygon
 from oauthlib.oauth2.rfc6749.errors import CustomOAuth2Error
 
 from sentinelhub import (
-    SentinelHubRequest, CRS, BBox, DataCollection, MimeType, bbox_to_dimensions, Geometry, SHConfig
+    SentinelHubRequest, CRS, BBox, DataCollection, MimeType, bbox_to_dimensions, Geometry, SHConfig, ServiceUrl
 )
 from sentinelhub.sentinelhub_base_api import InputDataDict
 from sentinelhub.testing_utils import test_numpy_data
@@ -431,7 +431,75 @@ def test_bad_credentials():
         request.get_data()
 
 
+def test_data_fusion(config):
+    evalscript = """
+    //VERSION=3
+    function setup() {
+      return {
+        input: [{
+            datasource: "ls8",
+            bands: ["B02", "B03", "B04", "B05", "B08"]
+          },
+          {
+            datasource: "l2a",
+            bands: ["B02", "B03", "B04", "B08", "B11"]
+          }
+        ],
+        output: [{
+          bands: 3
+        }]
+      }
+    }
+    let minVal = 0.0
+    let maxVal = 0.4
+    let viz = new DefaultVisualizer(minVal, maxVal)
+
+    function evaluatePixel(samples, inputData, inputMetadata, customData, outputMetadata) {
+      var sample = samples.ls8[0]
+      var sample2 = samples.l2a[0]
+      // Use weighted arithmetic average of S2.B02 - S2.B04 for pan-sharpening
+      let sudoPanW3 = (sample.B04 + sample.B03 + sample.B02) / 3
+      let s2PanR3 = (sample2.B04 + sample2.B03 + sample2.B02) / 3
+      let s2ratioWR3 = s2PanR3 / sudoPanW3
+      let val = [sample.B04 * s2ratioWR3, sample.B03 * s2ratioWR3, sample.B02 * s2ratioWR3]
+      return viz.processList(val)
+    }
+    """
+    config.sh_base_url = ServiceUrl.MAIN
+    request = SentinelHubRequest(
+        evalscript=evalscript,
+        input_data=[
+            SentinelHubRequest.input_data(
+                data_collection=DataCollection.LANDSAT_OT_L1,
+                identifier='ls8',
+                time_interval=('2020-05-21', '2020-05-23')
+            ),
+            SentinelHubRequest.input_data(
+                data_collection=DataCollection.SENTINEL2_L2A,
+                identifier='l2a',
+                time_interval=('2020-05-21', '2020-05-23'),
+            )
+        ],
+        responses=[
+            SentinelHubRequest.output_response('default', MimeType.TIFF)
+        ],
+        bbox=BBox((2.195, 41.395, 2.20, 41.40), CRS.WGS84),
+        size=(100, 100),
+        config=config
+    )
+    image = request.get_data()[0]
+
+    assert image.shape == (100, 100, 3)
+    test_numpy_data(image, exp_min=23, exp_max=255, exp_mean=98.128)
+
+    assert request.download_list[0].url == f'{ServiceUrl.MAIN}/api/v1/process'
+
+
 def test_conflicting_service_url_restrictions(config):
+    """ This data fusion attempt is expected to raise an error because config URL is not one of the URLs of data
+    collections.
+    """
+    config.sh_base_url = ServiceUrl.MAIN
     request_params = dict(
         evalscript='',
         input_data=[
