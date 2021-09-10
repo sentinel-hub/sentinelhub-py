@@ -32,7 +32,8 @@ class SentinelHubSession:
 
         if not (self.config.sh_client_id and self.config.sh_client_secret):
             raise ValueError("Configuration parameters 'sh_client_id' and 'sh_client_secret' have to be set in order "
-                             "to authenticate with Sentinel Hub service")
+                             "to authenticate with Sentinel Hub service. Check "
+                             "http://sentinelhub-py.readthedocs.io/en/latest/configure.html for more info.")
 
         self._token = None
         _ = self.token
@@ -61,7 +62,7 @@ class SentinelHubSession:
         :rtype: dict
         """
         return {
-            'Authorization': 'Bearer {}'.format(self.token['access_token'])
+            'Authorization': f'Bearer {self.token["access_token"]}'
         }
 
     @retry_temporary_errors

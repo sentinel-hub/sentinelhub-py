@@ -9,11 +9,11 @@ from dataclasses_json import config as dataclass_config
 from dataclasses_json import dataclass_json, LetterCase, Undefined, CatchAll
 
 from .data_collections import DataCollection
-from .config import SHConfig
 from .constants import RequestType, MimeType
-from .download.sentinelhub_client import SentinelHubDownloadClient
 from .geometry import Geometry
-from .sh_utils import SentinelHubFeatureIterator, BaseCollection, remove_undefined, datetime_config, geometry_config
+from .sh_utils import (
+    SentinelHubService, SentinelHubFeatureIterator, BaseCollection, remove_undefined,datetime_config, geometry_config
+)
 
 
 @dataclass_json(letter_case=LetterCase.CAMEL, undefined=Undefined.INCLUDE)
@@ -49,19 +49,17 @@ class ByocTile:
     additional_data: Optional[dict] = None
 
 
-class SentinelHubBYOC:
+class SentinelHubBYOC(SentinelHubService):
     """ An interface class for Sentinel Hub Bring your own COG (BYOC) API
 
     For more info check `BYOC API reference
     <https://docs.sentinel-hub.com/api/latest/reference/#tag/byoc_collection>`__.
     """
-    def __init__(self, base_url=None, config=None):
-        self.config = config or SHConfig()
-
-        base_url = base_url or self.config.sh_base_url
-        self.byoc_url = f'{base_url.rstrip("/")}/api/v1/byoc'
-
-        self.client = SentinelHubDownloadClient(config=self.config)
+    @staticmethod
+    def _get_service_url(base_url):
+        """ Provides URL to Catalog API
+        """
+        return f'{base_url}/api/v1/byoc'
 
     def iter_collections(self, search=None, **kwargs):
         """ Retrieve collections
@@ -74,7 +72,7 @@ class SentinelHubBYOC:
         """
         return SentinelHubFeatureIterator(
             client=self.client,
-            url=f'{self.byoc_url}/collections',
+            url=f'{self.service_url}/collections',
             params={
                 'search': search,
                 **kwargs
@@ -91,7 +89,7 @@ class SentinelHubBYOC:
         :return: dictionary of the collection
         :rtype: dict
         """
-        url = f'{self.byoc_url}/collections/{self._parse_id(collection)}'
+        url = f'{self.service_url}/collections/{self._parse_id(collection)}'
         return self.client.get_json(url=url, use_session=True)['data']
 
     def create_collection(self, collection):
@@ -104,7 +102,7 @@ class SentinelHubBYOC:
         :rtype: dict
         """
         coll = self._to_dict(collection)
-        url = f'{self.byoc_url}/collections'
+        url = f'{self.service_url}/collections'
         return self.client.get_json(url=url, post_values=coll, use_session=True)['data']
 
     def update_collection(self, collection):
@@ -115,7 +113,7 @@ class SentinelHubBYOC:
         :param collection: ByocCollection object or a dictionary
         """
         coll = self._to_dict(collection)
-        url = f'{self.byoc_url}/collections/{self._parse_id(coll)}'
+        url = f'{self.service_url}/collections/{self._parse_id(coll)}'
         headers = {'Content-Type': MimeType.JSON.get_string()}
         return self.client.get_json(url=url, request_type=RequestType.PUT, post_values=coll,
                                     headers=headers, use_session=True)
@@ -127,7 +125,7 @@ class SentinelHubBYOC:
 
         :param collection: a ByocCollection, dict or collection id string
         """
-        url = f'{self.byoc_url}/collections/{self._parse_id(collection)}'
+        url = f'{self.service_url}/collections/{self._parse_id(collection)}'
         return self.client.get_json(url=url, request_type=RequestType.DELETE, use_session=True)
 
     def copy_tiles(self, from_collection, to_collection):
@@ -138,7 +136,7 @@ class SentinelHubBYOC:
         :param from_collection: a ByocCollection, dict or collection id string
         :param to_collection: a ByocCollection, dict or collection id string
         """
-        url = f'{self.byoc_url}/collections/{self._parse_id(from_collection)}' \
+        url = f'{self.service_url}/collections/{self._parse_id(from_collection)}' \
               f'/copyTiles?toCollection={self._parse_id(to_collection)}'
         return self.client.get_json(url=url, request_type=RequestType.POST, use_session=True)
 
@@ -156,7 +154,7 @@ class SentinelHubBYOC:
         collection_id = self._parse_id(collection)
         return SentinelHubFeatureIterator(
             client=self.client,
-            url=f'{self.byoc_url}/collections/{collection_id}/tiles',
+            url=f'{self.service_url}/collections/{collection_id}/tiles',
             params={
                 'sort': sort,
                 'path': path,
@@ -175,7 +173,7 @@ class SentinelHubBYOC:
         :return: dictionary of the tile
         :rtype: dict
         """
-        url = f'{self.byoc_url}/collections/{self._parse_id(collection)}/tiles/{self._parse_id(tile)}'
+        url = f'{self.service_url}/collections/{self._parse_id(collection)}/tiles/{self._parse_id(tile)}'
         return self.client.get_json(url=url, use_session=True)['data']
 
     def create_tile(self, collection, tile):
@@ -189,7 +187,7 @@ class SentinelHubBYOC:
         :rtype: dict
         """
         _tile = self._to_dict(tile)
-        url = f'{self.byoc_url}/collections/{self._parse_id(collection)}/tiles'
+        url = f'{self.service_url}/collections/{self._parse_id(collection)}/tiles'
         return self.client.get_json(url=url, post_values=_tile, use_session=True)['data']
 
     def update_tile(self, collection, tile):
@@ -201,7 +199,7 @@ class SentinelHubBYOC:
         :param collection: a ByocCollection, dict or collection id string
         :param tile: a ByocTile or dict
         """
-        url = f'{self.byoc_url}/collections/{self._parse_id(collection)}/tiles/{self._parse_id(tile)}'
+        url = f'{self.service_url}/collections/{self._parse_id(collection)}/tiles/{self._parse_id(tile)}'
         headers = {'Content-Type': MimeType.JSON.get_string()}
 
         _tile = self._to_dict(tile)
@@ -223,7 +221,7 @@ class SentinelHubBYOC:
         :param collection: a ByocCollection, dict or collection id string
         :param tile: a ByocTile, dict or tile id string
         """
-        url = f'{self.byoc_url}/collections/{self._parse_id(collection)}/tiles/{self._parse_id(tile)}'
+        url = f'{self.service_url}/collections/{self._parse_id(collection)}/tiles/{self._parse_id(tile)}'
         return self.client.get_json(url=url, request_type=RequestType.DELETE, use_session=True)
 
     @staticmethod
