@@ -61,8 +61,8 @@ class SentinelHubDownloadClient(DownloadClient):
             sleep_time = self._execute_thread_safe(self.rate_limit.register_next)
 
             if sleep_time == 0:
-                LOGGER.debug('Sending %s request to %s with values %s',
-                             request.request_type.value, request.url, request.post_values)
+                LOGGER.debug('Sending %s request to %s. Hash of sent request is %s',
+                             request.request_type.value, request.url, request.get_hashed_name())
                 response = self._do_download(request)
 
                 self._execute_thread_safe(self.rate_limit.update, response.headers)
