@@ -4,6 +4,7 @@ Utility tools for writing unit tests for packages which rely on `sentinelhub-py`
 import os
 
 import numpy as np
+from numpy.lib.nanfunctions import nanvar
 from pytest import approx
 
 
@@ -20,7 +21,7 @@ def get_output_folder(current_file):
 
 
 def test_numpy_data(data=None, exp_shape=None, exp_dtype=None, exp_min=None, exp_max=None, exp_mean=None,
-                    exp_median=None, delta=None):
+                    exp_median=None, exp_std=-1, delta=None):
     """ Validates basic statistics of data array
 
     :param data: Data array
@@ -37,6 +38,8 @@ def test_numpy_data(data=None, exp_shape=None, exp_dtype=None, exp_min=None, exp
     :type exp_mean: float
     :param exp_median: Expected median value
     :type exp_median: float
+    :param exp_std: Expected standard deviation value
+    :type exp_std: float
     :param delta: Precision of validation. If not set, it will be set automatically
     :type delta: float
     """
@@ -45,15 +48,22 @@ def test_numpy_data(data=None, exp_shape=None, exp_dtype=None, exp_min=None, exp
     if delta is None:
         delta = 1e-1 if np.issubdtype(data.dtype, np.integer) else 1e-4
 
-    for exp_stat, stat_val, stat_name in [(exp_shape, data.shape, 'shape'), (exp_dtype, data.dtype, 'dtype')]:
-        if exp_stat is not None:
-            assert stat_val == exp_stat, f'Expected {stat_name} {exp_stat}, got {stat_val}'
+    stats_suite = {
+        'shape': (lambda data: data.shape, exp_shape),
+        'dtype': (lambda data: data.dtype, exp_dtype),
+        'min': (np.nanmin, exp_min),
+        'max': (np.nanmax, exp_max),
+        'mean': (np.nanmean, exp_mean),
+        'median': (np.nanmedian, exp_median),
+        'std': (np.nanstd, exp_std),
+    }
 
-    data = data[~np.isnan(data)]
-    for exp_stat, stat_func, stat_name in [
-        (exp_min, np.amin, 'min'), (exp_max, np.amax, 'max'),
-        (exp_mean, np.mean, 'mean'), (exp_median, np.median, 'median')
-    ]:
-        if exp_stat is not None:
-            stat_val = stat_func(data)
-            assert stat_val == approx(exp_stat, abs=delta), f'Expected {stat_name} {exp_stat}, got {stat_val}'
+    data_stats, exp_stats = {}, {}
+    for name, (func, expected) in stats_suite.items():
+        if expected is not None:
+            data_stats[name] = func(data)
+            exp_stats[name] = expected
+
+    for name in data_stats:
+        assert data_stats[name] == approx(exp_stats[name], abs=delta), \
+            f'Statistic `{name}` does not approximately match when comparing {data_stats} with expectations {exp_stats}'
