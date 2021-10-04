@@ -15,12 +15,13 @@ URL = 'http://roda.sentinel-hub.com/sentinel-s2-l1c/tiles/54/H/VH/2017/4/14/0/me
 
 
 @pytest.mark.parametrize('command', [
-    f'sentinelhub.aws --product {COMPACT_PRODUCT_ID} -ri -b B8A',
-    f'sentinelhub.aws --product {OLD_PRODUCT_ID} -i',
-    f'sentinelhub.aws --product {L2A_PRODUCT_ID} -i',
-    f'sentinelhub.aws --tile {L1C_TILE} -rei --bands B01,B10',
-    f'sentinelhub.aws --tile {L2A_TILE} --l2a -f {OUTPUT_FOLDER}',
-    f'sentinelhub.download {URL} {os.path.join(OUTPUT_FOLDER, "example.xml")} -r',
+    pytest.param(f'sentinelhub.aws --product {COMPACT_PRODUCT_ID} -ri -b B8A', marks=pytest.mark.aws_integration),
+    pytest.param(f'sentinelhub.aws --product {OLD_PRODUCT_ID} -i', marks=pytest.mark.aws_integration),
+    pytest.param(f'sentinelhub.aws --product {L2A_PRODUCT_ID} -i', marks=pytest.mark.aws_integration),
+    pytest.param(f'sentinelhub.aws --tile {L1C_TILE} -rei --bands B01,B10', marks=pytest.mark.aws_integration),
+    pytest.param(f'sentinelhub.aws --tile {L2A_TILE} --l2a -f {OUTPUT_FOLDER}', marks=pytest.mark.aws_integration),
+    pytest.param(f'sentinelhub.download {URL} {os.path.join(OUTPUT_FOLDER, "example.xml")} -r',
+                 marks=pytest.mark.sh_integration),
     'sentinelhub.config --show',
     'sentinelhub --help',
     'sentinelhub.aws --help',

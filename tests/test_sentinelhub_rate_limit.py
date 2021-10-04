@@ -1,7 +1,6 @@
 """
 Tests for utilities that implement rate-limiting in the package
 """
-import copy
 import concurrent.futures
 import itertools as it
 import time

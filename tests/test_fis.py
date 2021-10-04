@@ -1,7 +1,7 @@
 import ast
 import os
 from dataclasses import dataclass
-from typing import Any, Type
+from typing import Any
 
 import pytest
 from shapely.geometry import Polygon
@@ -74,6 +74,7 @@ TEST_CASES = [
 ]
 
 
+@pytest.mark.sh_integration
 @pytest.mark.parametrize('test_case', TEST_CASES)
 def test_fis(output_folder, test_case):
     data = test_case.collect_data()

@@ -12,6 +12,8 @@ from sentinelhub.sentinelhub_catalog import CatalogSearchIterator
 
 TEST_BBOX = BBox([46.16, -16.15, 46.51, -15.58], CRS.WGS84)
 
+pytestmark = pytest.mark.sh_integration
+
 
 @pytest.fixture(name='catalog')
 def catalog_fixture(config):
@@ -126,7 +128,7 @@ def test_search_geometry_and_iterator_methods(catalog):
     assert geometries[0].geometry.intersects(search_geometry.geometry)
 
 
-@pytest.mark.parametrize('data_collection,feature_id', [
+@pytest.mark.parametrize('data_collection, feature_id', [
     (DataCollection.SENTINEL2_L1C, 'S2A_MSIL1C_20210113T071211_N0209_R020_T38LPH_20210113T075941'),
     ('sentinel-2-l1c', 'S2A_MSIL1C_20210113T071211_N0209_R020_T38LPH_20210113T075941'),
     (DataCollection.SENTINEL2_L2A, 'S2A_MSIL2A_20210113T071211_N0214_R020_T38LPH_20210113T083244'),
@@ -135,9 +137,9 @@ def test_search_geometry_and_iterator_methods(catalog):
     (DataCollection.LANDSAT_OT_L2, 'LC08_L2SP_160071_20210113_20210308_02_T1'),
     (DataCollection.MODIS, 'MCD43A4.006/22/10/2021014/MCD43A4.A2021014.h22v10.006.2021025214119'),
     (DataCollection.SENTINEL3_OLCI,
-     'S3A_OL_1_EFR____20210114T063914_20210114T064214_20210114T081357_0179_067_191_3240_LN1_O_NR_002.SEN3'),
+     'S3A_OL_1_EFR____20210114T063914_20210114T064214_20210115T095516_0179_067_191_3240_LN1_O_NT_002.SEN3'),
     (DataCollection.SENTINEL3_SLSTR,
-     'S3A_SL_1_RBT____20210114T190809_20210114T191109_20210114T202622_0179_067_198_5760_LN2_O_NR_004.SEN3'),
+     'S3A_SL_1_RBT____20210114T190809_20210114T191109_20210116T001252_0179_067_198_5760_LN2_O_NT_004.SEN3'),
     (DataCollection.SENTINEL5P, 'S5P_NRTI_L2__AER_AI_20210114T100354_20210114T100854_16869_01_010400_20210114T104450')
 ])
 def test_search_for_data_collection(config, data_collection, feature_id):

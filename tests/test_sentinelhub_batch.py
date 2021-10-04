@@ -9,6 +9,8 @@ import pytest
 from sentinelhub import SentinelHubBatch, BatchRequest, SentinelHubRequest, DataCollection, BBox, CRS, MimeType
 from sentinelhub.constants import ServiceUrl
 
+pytestmark = pytest.mark.sh_integration
+
 
 @pytest.fixture(name='batch_client')
 def batch_client_fixture(config):

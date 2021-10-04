@@ -9,6 +9,8 @@ import pytest
 
 from sentinelhub import SentinelHubBYOC, ByocCollection, ByocTile, SHConfig, DownloadFailedException
 
+pytestmark = pytest.mark.sh_integration
+
 
 @pytest.fixture(name='config')
 def config_fixture():

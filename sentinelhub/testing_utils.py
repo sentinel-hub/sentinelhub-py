@@ -4,7 +4,6 @@ Utility tools for writing unit tests for packages which rely on `sentinelhub-py`
 import os
 
 import numpy as np
-from numpy.lib.nanfunctions import nanvar
 from pytest import approx
 
 
@@ -21,7 +20,7 @@ def get_output_folder(current_file):
 
 
 def test_numpy_data(data=None, exp_shape=None, exp_dtype=None, exp_min=None, exp_max=None, exp_mean=None,
-                    exp_median=None, exp_std=-1, delta=None):
+                    exp_median=None, exp_std=None, delta=None):
     """ Validates basic statistics of data array
 
     :param data: Data array
@@ -40,13 +39,12 @@ def test_numpy_data(data=None, exp_shape=None, exp_dtype=None, exp_min=None, exp
     :type exp_median: float
     :param exp_std: Expected standard deviation value
     :type exp_std: float
-    :param delta: Precision of validation. If not set, it will be set automatically
+    :param delta: Precision of validation (relative). If not set, it will be set automatically
     :type delta: float
     """
     if data is None:
         return
-    if delta is None:
-        delta = 1e-1 if np.issubdtype(data.dtype, np.integer) else 1e-4
+    delta = delta if delta is not None else 1e-4
 
     stats_suite = {
         'shape': (lambda data: data.shape, exp_shape),
@@ -58,12 +56,12 @@ def test_numpy_data(data=None, exp_shape=None, exp_dtype=None, exp_min=None, exp
         'std': (np.nanstd, exp_std),
     }
 
+    is_precise = {'shape', 'dtype'}
+
     data_stats, exp_stats = {}, {}
     for name, (func, expected) in stats_suite.items():
         if expected is not None:
             data_stats[name] = func(data)
-            exp_stats[name] = expected
+            exp_stats[name] = expected if name in is_precise else approx(expected, rel=delta)
 
-    for name in data_stats:
-        assert data_stats[name] == approx(exp_stats[name], abs=delta), \
-            f'Statistic `{name}` does not approximately match when comparing {data_stats} with expectations {exp_stats}'
+    assert data_stats == exp_stats, 'Statistics differ from expected values'

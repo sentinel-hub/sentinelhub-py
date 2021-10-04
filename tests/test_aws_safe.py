@@ -132,7 +132,7 @@ TEST_CASES = [
 # for test_case in TEST_CASES:
 #     test_case.save_test_case()
 
-
+@pytest.mark.aws_integration
 @pytest.mark.parametrize('test_case', TEST_CASES)
 def test_safe_struct(test_case):
     true_safe = test_case.load_truth()

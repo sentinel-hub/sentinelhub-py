@@ -4,6 +4,8 @@ import pytest
 
 from sentinelhub import WcsRequest, AwsProductRequest, DataCollection, BBox, CRS, get_file_list, get_folder_list
 
+pytestmark = pytest.mark.sh_integration
+
 
 @pytest.fixture(name='wcs_request')
 def wcs_request_fixture(output_folder):

@@ -69,6 +69,7 @@ def download_request_fixture(output_folder):
     )
 
 
+@pytest.mark.sh_integration
 def test_single_download(download_request):
     client = DownloadClient(redownload=False)
 
@@ -81,6 +82,7 @@ def test_single_download(download_request):
     assert os.path.isfile(response_path)
 
 
+@pytest.mark.sh_integration
 @pytest.mark.parametrize('show_progress', [True, False])
 def test_multiple_downloads(download_request, show_progress):
     client = DownloadClient(redownload=True, raise_download_errors=False)
@@ -100,6 +102,7 @@ def test_multiple_downloads(download_request, show_progress):
     assert results[1] is None and results[2] is None
 
 
+@pytest.mark.sh_integration
 def test_hash_collision(download_request):
     client = DownloadClient()
 
