@@ -73,9 +73,9 @@ class AwsDownloadClient(DownloadClient):
                 '$ sentinelhub.config --aws_access_key_id <your AWS key> --aws_secret_access_key '
                 '<your AWS secret key>') from exception
         except s3_client.exceptions.NoSuchKey as exception:
-            raise AwsDownloadFailedException('File in location %s is missing' % request.url) from exception
+            raise AwsDownloadFailedException(f'File in location {request.url} is missing') from exception
         except s3_client.exceptions.NoSuchBucket as exception:
-            raise ValueError('Aws bucket %s does not exist' % bucket_name) from exception
+            raise ValueError(f'Aws bucket {bucket_name} does not exist') from exception
 
     @staticmethod
     def is_s3_request(request):

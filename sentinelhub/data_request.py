@@ -312,7 +312,7 @@ class OgcRequest(DataRequest):
         """
         for param in self.custom_url_params:
             if param not in CustomUrlParam:
-                raise ValueError('Parameter %s is not a valid custom url parameter. Please check and fix.' % param)
+                raise ValueError(f'Parameter {param} is not a valid custom url parameter. Please check and fix.')
 
         if self.service_type is ServiceType.FIS and CustomUrlParam.GEOMETRY in self.custom_url_params:
             raise ValueError(f'{CustomUrlParam.GEOMETRY} should not be a custom url parameter of a FIS request')
