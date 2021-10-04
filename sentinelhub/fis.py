@@ -38,7 +38,7 @@ class FisService(OgcImageService):
         post_data = {**self._get_common_url_parameters(request), **self._get_fis_parameters(request, geometry)}
         post_data = {k.lower(): v for k, v in post_data.items()}  # lowercase required on SH service
 
-        return DownloadRequest(url='{}/{}'.format(url, self.config.instance_id),
+        return DownloadRequest(url=f'{url}/{self.config.instance_id}',
                                post_values=post_data,
                                data_type=MimeType.JSON, headers=headers,
                                request_type=RequestType.POST)

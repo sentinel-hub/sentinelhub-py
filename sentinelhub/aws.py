@@ -82,7 +82,7 @@ class AwsService(ABC):
         band_list = [band.strip().split('.')[0] for band in band_list]
         band_list = [band for band in band_list if band != '']
         if not set(band_list) <= set(all_bands):
-            raise ValueError('bands {} must be a subset of {}'.format(band_list, all_bands))
+            raise ValueError(f'bands {band_list} must be a subset of {all_bands}')
         return band_list
 
     def _parse_metafiles(self, metafile_input):
@@ -111,7 +111,7 @@ class AwsService(ABC):
         metafile_list = [metafile.strip().split('.')[0] for metafile in metafile_list]
         metafile_list = [metafile for metafile in metafile_list if metafile != '']
         if not set(metafile_list) <= set(all_metafiles):
-            raise ValueError('metadata files {} must be a subset of {}'.format(metafile_list, all_metafiles))
+            raise ValueError(f'metadata files {metafile_list} must be a subset of {all_metafiles}')
         return metafile_list
 
     def get_base_url(self, force_http=False):
@@ -126,7 +126,7 @@ class AwsService(ABC):
         aws_bucket = self.config.aws_s3_l1c_bucket if self.data_collection is DataCollection.SENTINEL2_L1C else \
             self.config.aws_s3_l2a_bucket
 
-        return '{}{}{}'.format(base_url, '' if base_url.endswith('/') else '/', aws_bucket)
+        return base_url + ('' if base_url.endswith('/') else '/') + aws_bucket
 
     def get_safe_type(self):
         """ Determines the type of ESA product.
@@ -143,7 +143,7 @@ class AwsService(ABC):
             return EsaSafeType.COMPACT_TYPE
         if product_type in ['OPER', 'USER']:
             return EsaSafeType.OLD_TYPE
-        raise ValueError('Unrecognized product type of product id {}'.format(self.product_id))
+        raise ValueError(f'Unrecognized product type of product id {self.product_id}')
 
     def get_baseline(self):
         """ Determines the baseline number (i.e. version) of ESA .SAFE product
@@ -155,14 +155,15 @@ class AwsService(ABC):
         if self.safe_type is EsaSafeType.COMPACT_TYPE:
             baseline = self.product_id.split('_')[3].lstrip('N')
             if len(baseline) != 4:
-                raise ValueError('Unable to recognize baseline number from the product id {}'.format(self.product_id))
-            baseline = '{}.{}'.format(baseline[:2], baseline[2:])
+                raise ValueError(f'Unable to recognize baseline number from the product id {self.product_id}')
+            baseline = f'{baseline[:2]}.{baseline[2:]}'
 
             if baseline > MAX_SUPPORTED_BASELINES[self.data_collection]:
-                message = 'Products with baseline {} are not officially supported in sentinelhub-py. If you notice ' \
-                          'any errors in naming structure of downloaded data please report an issue at ' \
-                          'https://github.com/sentinel-hub/sentinelhub-py/issues. Pull requests are also very ' \
-                          'appreciated'.format(baseline)
+                message = (
+                    f'Products with baseline {baseline} are not officially supported in sentinelhub-py. If you notice '
+                    'any errors in naming structure of downloaded data please report an issue at '
+                    'https://github.com/sentinel-hub/sentinelhub-py/issues. Pull requests are also very appreciated'
+                )
                 warnings.warn(message, category=SHUserWarning)
 
             return baseline
@@ -280,7 +281,7 @@ class AwsService(ABC):
             filename = filename.replace('*', '0')
         if data_format is MimeType.RAW:
             return filename
-        return '{}.{}'.format(filename.replace('*', ''), data_format.value)
+        return f"{filename.replace('*', '')}.{data_format.value}"
 
     def has_reports(self):
         """ Products created with baseline 2.06 and greater (and some products with baseline 2.05) should have quality
@@ -393,7 +394,7 @@ class AwsProduct(AwsService):
             return DataCollection.SENTINEL2_L1C
         if product_type.endswith('L2A') or product_type == 'USER':
             return DataCollection.SENTINEL2_L2A
-        raise ValueError('Unknown data collection of product {}'.format(self.product_id))
+        raise ValueError(f'Unknown data collection of product {self.product_id}')
 
     def get_date(self):
         """ Collects sensing date of the product.
@@ -425,7 +426,7 @@ class AwsProduct(AwsService):
         force_http = filename in [AwsConstants.PRODUCT_INFO, AwsConstants.METADATA]
         if product_url is None or force_http:
             product_url = self.get_product_url(force_http=force_http)
-        return '{}/{}'.format(product_url, self.add_file_extension(filename, data_format))
+        return f'{product_url}/{self.add_file_extension(filename, data_format)}'
 
     def get_product_url(self, force_http=False):
         """ Creates base url of product location on AWS.
@@ -446,7 +447,7 @@ class AwsProduct(AwsService):
         :return: url of tile location
         :rtype: str
         """
-        return '{}/{}'.format(self.base_url, tile_info['path'])
+        return f"{self.base_url}/{tile_info['path']}"
 
     def get_filepath(self, filename):
         """ Creates file path for the file.
@@ -522,7 +523,7 @@ class AwsTile(AwsService):
         if len(tile_name) == 4:
             tile_name = '0' + tile_name
         if len(tile_name) != 5:
-            raise ValueError('Invalid tile name {}'.format(name))
+            raise ValueError(f'Invalid tile name {name}')
         return tile_name
 
     def get_requests(self):
@@ -612,7 +613,7 @@ class AwsTile(AwsService):
         force_http = filename in [AwsConstants.TILE_INFO, AwsConstants.PRODUCT_INFO, AwsConstants.METADATA]
         if tile_url is None or force_http:
             tile_url = self.get_tile_url(force_http=force_http)
-        return '{}/{}'.format(tile_url, self.add_file_extension(filename))
+        return f'{tile_url}/{self.add_file_extension(filename)}'
 
     def get_tile_url(self, force_http=False):
         """
@@ -637,7 +638,7 @@ class AwsTile(AwsService):
         :return: url location of metadata product at AWS
         :rtype: str
         """
-        return '{}/qi/{}'.format(self.tile_url, metafile)
+        return f'{self.tile_url}/qi/{metafile}'
 
     def get_gml_url(self, qi_type, band='B00'):
         """
@@ -649,7 +650,7 @@ class AwsTile(AwsService):
         :rtype: str
         """
         band = band.split('/')[-1]
-        return self.get_qi_url('MSK_{}_{}.gml'.format(qi_type, band))
+        return self.get_qi_url(f'MSK_{qi_type}_{band}.gml')
 
     def get_preview_url(self, data_type='L1C'):
         """Returns url location of full resolution L1C preview
@@ -657,7 +658,7 @@ class AwsTile(AwsService):
         """
         if self.data_collection is DataCollection.SENTINEL2_L1C or self.safe_type is EsaSafeType.OLD_TYPE:
             return self.get_url(AwsConstants.PREVIEW_JP2)
-        return self.get_qi_url('{}_PVI.jp2'.format(data_type))
+        return self.get_qi_url(f'{data_type}_PVI.jp2')
 
     def get_filepath(self, filename):
         """

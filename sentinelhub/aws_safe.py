@@ -50,11 +50,12 @@ class SafeProduct(AwsProduct):
                 for metafile in AwsConstants.QUALITY_REPORTS:
                     metafile_name = self.add_file_extension(metafile)
                     safe[main_folder][AwsConstants.DATASTRIP][datastrip_folder][AwsConstants.QI_DATA][
-                        metafile_name] = '{}/qi/{}'.format(datastrip_url, metafile_name)
+                        metafile_name] = f'{datastrip_url}/qi/{metafile_name}'
 
-            safe[main_folder][AwsConstants.DATASTRIP][datastrip_folder][
-                self.get_datastrip_metadata_name(datastrip_folder)] = '{}/{}'.format(
-                    datastrip_url, self.add_file_extension(AwsConstants.METADATA))
+            data_strip_name = self.get_datastrip_metadata_name(datastrip_folder)
+            safe[main_folder][AwsConstants.DATASTRIP][datastrip_folder][data_strip_name] = (
+                f'{datastrip_url}/{self.add_file_extension(AwsConstants.METADATA)}'
+            )
 
         safe[main_folder][AwsConstants.GRANULE] = {}
 
@@ -87,7 +88,7 @@ class SafeProduct(AwsProduct):
         :return: name of main folder
         :rtype: str
         """
-        return '{}.SAFE'.format(self.product_id)
+        return f'{self.product_id}.SAFE'
 
     def get_datastrip_list(self):
         """
@@ -95,7 +96,7 @@ class SafeProduct(AwsProduct):
         :rtype: list((str, str))
         """
         datastrips = self.product_info['datastrips']
-        return [(self.get_datastrip_name(datastrip['id']), '{}/{}'.format(self.base_url, datastrip['path']))
+        return [(self.get_datastrip_name(datastrip['id']), f'{self.base_url}/{datastrip["path"]}')
                 for datastrip in datastrips]
 
     def get_datastrip_name(self, datastrip):
@@ -120,7 +121,7 @@ class SafeProduct(AwsProduct):
             name = _edit_name(datastrip_folder, 'MTD', delete_end=True)
         else:
             name = 'MTD_DS'
-        return '{}.{}'.format(name, MimeType.XML.value)
+        return f'{name}.{MimeType.XML.value}'
 
     def get_product_metadata_name(self):
         """
@@ -130,15 +131,15 @@ class SafeProduct(AwsProduct):
         if self.safe_type == EsaSafeType.OLD_TYPE:
             name = _edit_name(self.product_id, 'MTD', 'SAFL1C')
         else:
-            name = 'MTD_{}'.format(self.product_id.split('_')[1])
-        return '{}.{}'.format(name, MimeType.XML.value)
+            name = f'MTD_{self.product_id.split("_")[1]}'
+        return f'{name}.{MimeType.XML.value}'
 
     def get_report_name(self):
         """
         :return: name of the report file of L2A products
         :rtype: str
         """
-        return '{}_{}_report.{}'.format(self.product_id, self.get_report_time(), MimeType.XML.value)
+        return f'{self.product_id}_{self.get_report_time()}_report.{MimeType.XML.value}'
 
     def get_report_time(self):
         """ Returns time when the L2A processing started and reports was created.
@@ -240,9 +241,9 @@ class SafeTile(AwsTile):
                     if '00.01' < self.baseline <= '02.06':
                         mask_name = self.get_img_name(mask, resolution)
                     else:
-                        mask_name = self.get_qi_name('{}PRB'.format(mask), resolution.lstrip('R'), MimeType.JP2)
+                        mask_name = self.get_qi_name(f'{mask}PRB', resolution.lstrip('R'), MimeType.JP2)
                     safe[main_folder][AwsConstants.QI_DATA][mask_name] =\
-                        self.get_qi_url('{}_{}.jp2'.format(mask, resolution.lstrip('R')))
+                        self.get_qi_url(f'{mask}_{resolution.lstrip("R")}.jp2')
 
         if self.is_early_compact_l2a():
             safe[main_folder][AwsConstants.QI_DATA][self.get_img_name(AwsConstants.PVI)] = self.get_preview_url('L2A')
@@ -319,7 +320,7 @@ class SafeTile(AwsTile):
             name = _edit_name(self.tile_id, 'MTD', delete_end=True)
         else:
             name = 'MTD_TL'
-        return '{}.xml'.format(name)
+        return f'{name}.xml'
 
     def get_aux_data_name(self):
         """
@@ -347,10 +348,10 @@ class SafeTile(AwsTile):
         else:
             name = '_'.join([self.tile_id.split('_')[1], self.get_datatake_time(), band])
         if self.data_collection is DataCollection.SENTINEL2_L2A and resolution is not None:
-            name = '{}_{}'.format(name, resolution.lstrip('R'))
+            name = f'{name}_{resolution.lstrip("R")}'
         if self.data_collection is DataCollection.SENTINEL2_L2A and '00.01' < self.baseline <= '02.06':
-            name = 'L2A_{}'.format(name)
-        return '{}.jp2'.format(name)
+            name = f'L2A_{name}'
+        return f'{name}.jp2'
 
     def get_qi_name(self, qi_type, band='B00', data_format=MimeType.GML):
         """
@@ -366,12 +367,12 @@ class SafeTile(AwsTile):
         band = band.split('/')[-1]
         if self.safe_type == EsaSafeType.OLD_TYPE:
             name = _edit_name(self.tile_id, 'MSK', delete_end=True)
-            collection_param = '{}_TL'.format('L1C' if self.data_collection is DataCollection.SENTINEL2_L1C else 'L2A')
+            collection_param = f"{'L1C' if self.data_collection is DataCollection.SENTINEL2_L1C else 'L2A'}_TL"
             name = name.replace(collection_param, qi_type)
-            name = '{}_{}_MSIL1C'.format(name, band)
+            name = f'{name}_{band}_MSIL1C'
         else:
-            name = 'MSK_{}_{}'.format(qi_type, band)
-        return '{}.{}'.format(name, data_format.value)
+            name = f'MSK_{qi_type}_{band}'
+        return f'{name}.{data_format.value}'
 
     def get_preview_name(self):
         """ Returns .SAFE name of full resolution L1C preview
@@ -382,7 +383,7 @@ class SafeTile(AwsTile):
             name = _edit_name(self.tile_id, AwsConstants.PVI, delete_end=True)
         else:
             name = '_'.join([self.tile_id.split('_')[1], self.get_datatake_time(), AwsConstants.PVI])
-        return '{}.jp2'.format(name)
+        return f'{name}.jp2'
 
 
 def _edit_name(name, code, add_code=None, delete_end=False):

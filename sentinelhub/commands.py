@@ -71,8 +71,7 @@ def _config_options(func):
     """ A helper function which joins click.option functions of each parameter from config.json
     """
     for param in SHConfig().get_params()[-1::-1]:
-        func = click.option('--{}'.format(param), param,
-                            help='Set new values to configuration parameter "{}"'.format(param))(func)
+        func = click.option(f'--{param}', param, help=f'Set new values to configuration parameter "{param}"')(func)
     return func
 
 
@@ -113,12 +112,12 @@ def config(show, reset, **params):
         if sh_config[param] != old_config[param]:
             value = sh_config[param]
             if isinstance(value, str):
-                value = "'{}'".format(value)
-            click.echo("The value of parameter '{}' was updated to {}".format(param, value))
+                value = f"'{value}'"
+            click.echo(f"The value of parameter '{param}' was updated to {value}")
 
     if show:
         click.echo(str(sh_config))
-        click.echo('Configuration file location: {}'.format(sh_config.get_config_location()))
+        click.echo(f'Configuration file location: {sh_config.get_config_location()}')
 
 
 @click.command()
