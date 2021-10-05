@@ -47,8 +47,8 @@ def test_numpy_data(data=None, exp_shape=None, exp_dtype=None, exp_min=None, exp
     delta = delta if delta is not None else 1e-4
 
     stats_suite = {
-        'shape': (lambda data: data.shape, exp_shape),
-        'dtype': (lambda data: data.dtype, exp_dtype),
+        'shape': (lambda array: array.shape, exp_shape),
+        'dtype': (lambda array: array.dtype, exp_dtype),
         'min': (np.nanmin, exp_min),
         'max': (np.nanmax, exp_max),
         'mean': (np.nanmean, exp_mean),

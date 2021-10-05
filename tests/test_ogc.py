@@ -242,7 +242,7 @@ TEST_CASES = [
 
 
 @pytest.mark.parametrize('test_case', TEST_CASES)
-def test_wfs(test_case, output_folder):
+def test_ogc(test_case, output_folder):
     # Run data collection
     request = test_case.initialize_request()
     data = test_case.collect_data(request)
@@ -298,7 +298,7 @@ def test_too_large_request():
         1
     ),
 ])
-def test_results(args, kwargs, expected_len):
+def test_wfs(args, kwargs, expected_len):
     iterator = WebFeatureService(*args, **kwargs)
     features = list(iterator)
     dates = iterator.get_dates()
