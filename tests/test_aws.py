@@ -1,8 +1,10 @@
 import numpy as np
-
+import pytest
 from pytest import approx
 
 from sentinelhub import AwsTileRequest, AwsProductRequest, DataCollection
+
+pytestmark = pytest.mark.aws_integration
 
 
 def test_aws_tile(output_folder):

@@ -82,7 +82,7 @@ class OgcImageService:
         elif request.service_type is ServiceType.FIS:
             params = {**params, **self._get_fis_parameters(request, geometry)}
 
-        return '{}/{}?{}'.format(url, authority, urlencode(params))
+        return f'{url}/{authority}?{urlencode(params)}'
 
     def get_base_url(self, request):
         """ Creates base url string.
@@ -92,7 +92,7 @@ class OgcImageService:
         :return: base string for url to Sentinel Hub's OGC service for this product.
         :rtype: str
         """
-        url = '{}/{}'.format(self._base_url, request.service_type.value)
+        url = f'{self._base_url}/{request.service_type.value}'
 
         if hasattr(request, 'data_collection') and request.data_collection.service_url:
             url = url.replace(self.config.sh_base_url, request.data_collection.service_url)
@@ -232,8 +232,8 @@ class OgcImageService:
         }
 
         if not isinstance(geometry, (BBox, Geometry)):
-            raise ValueError('Each geometry must be an instance of sentinelhub.{} or sentinelhub.{} but {} '
-                             'found'.format(BBox.__name__, Geometry.__name__, geometry))
+            raise ValueError(f'Each geometry must be an instance of sentinelhub.{BBox.__name__} or '
+                             f'sentinelhub.{Geometry.__name__} but {geometry} found')
         if geometry.crs is CRS.WGS84:
             geometry = geometry.reverse()
         if isinstance(geometry, Geometry):

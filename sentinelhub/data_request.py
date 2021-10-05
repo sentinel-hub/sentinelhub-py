@@ -312,10 +312,10 @@ class OgcRequest(DataRequest):
         """
         for param in self.custom_url_params:
             if param not in CustomUrlParam:
-                raise ValueError('Parameter %s is not a valid custom url parameter. Please check and fix.' % param)
+                raise ValueError(f'Parameter {param} is not a valid custom url parameter. Please check and fix.')
 
         if self.service_type is ServiceType.FIS and CustomUrlParam.GEOMETRY in self.custom_url_params:
-            raise ValueError('{} should not be a custom url parameter of a FIS request'.format(CustomUrlParam.GEOMETRY))
+            raise ValueError(f'{CustomUrlParam.GEOMETRY} should not be a custom url parameter of a FIS request')
 
     def create_request(self, reset_wfs_iterator=False):
         """ Set download requests
@@ -611,7 +611,7 @@ class GeopediaRequest(DataRequest):
         self.bbox = bbox
         if bbox.crs is not CRS.POP_WEB:
             raise ValueError('Geopedia Request at the moment supports only bounding boxes with coordinates in '
-                             '{}'.format(CRS.POP_WEB))
+                             f'{CRS.POP_WEB}')
 
         self.theme = theme
         self.image_format = MimeType(image_format)

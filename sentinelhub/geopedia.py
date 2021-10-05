@@ -35,7 +35,7 @@ def _parse_geopedia_layer(layer, return_wms_name=False):
     instead 'ttl', therefore anything else is also allowed.) Otherwise it will parse it into a number.
     """
     if not isinstance(layer, (int, str)):
-        raise ValueError("Parameter 'layer' should be an integer or a string, but {} found".format(type(layer)))
+        raise ValueError(f"Parameter 'layer' should be an integer or a string, but {type(layer)} found")
 
     if return_wms_name:
         if isinstance(layer, int) or layer.isdigit():
@@ -45,7 +45,7 @@ def _parse_geopedia_layer(layer, return_wms_name=False):
     if isinstance(layer, str):
         stripped_layer = layer.lstrip('tl')
         if not stripped_layer.isdigit():
-            raise ValueError("Parameter 'layer' has unsupported value {}, expected an integer".format(layer))
+            raise ValueError(f"Parameter 'layer' has unsupported value {layer}, expected an integer")
         layer = stripped_layer
 
     return int(layer)
@@ -178,7 +178,7 @@ class GeopediaSession(GeopediaService):
         self._session_start = datetime.datetime.now()
 
         session_id = self._parse_session_id(self._session_info) if self._session_info else ''
-        session_url = '{}/data/v1/session/create?locale=en&sid={}'.format(self._base_url, session_id)
+        session_url = f'{self._base_url}/data/v1/session/create?locale=en&sid={session_id}'
 
         client = DownloadClient(config=self.config)
         self._session_info = client.get_json(session_url)
@@ -193,9 +193,10 @@ class GeopediaSession(GeopediaService):
     def _make_login(self):
         """ Private method that makes login
         """
-        login_url = '{}/data/v1/session/login?user={}&pass={}&sid={}'.format(self._base_url, self.username,
-                                                                             self.password,
-                                                                             self._parse_session_id(self._session_info))
+        login_url = (
+            f'{self._base_url}/data/v1/session/login?user={self.username}&pass={self.password}'
+            f'&sid={self._parse_session_id(self._session_info)}'
+        )
         client = DownloadClient(config=self.config)
         self._session_info = client.get_json(login_url)
 

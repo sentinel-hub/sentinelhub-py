@@ -10,6 +10,8 @@ from sentinelhub import (
 )
 from sentinelhub.testing_utils import test_numpy_data
 
+pytestmark = pytest.mark.geopedia_integration
+
 
 # When config.json could store Geopedia credentials add some login tests
 

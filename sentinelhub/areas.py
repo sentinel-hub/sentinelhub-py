@@ -641,7 +641,7 @@ class UtmGridSplitter(BaseUtmSplitter):
         utm_grid_filename = os.path.join(os.path.dirname(__file__), '.utmzones.geojson')
 
         if not os.path.isfile(utm_grid_filename):
-            raise IOError('UTM grid definition file does not exist: %s' % os.path.abspath(utm_grid_filename))
+            raise IOError(f'UTM grid definition file does not exist: {os.path.abspath(utm_grid_filename)}')
 
         with open(utm_grid_filename) as utm_grid_file:
             utm_grid = json.load(utm_grid_file)['features']

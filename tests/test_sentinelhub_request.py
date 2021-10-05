@@ -13,6 +13,8 @@ from sentinelhub import (
 from sentinelhub.sentinelhub_base_api import InputDataDict
 from sentinelhub.testing_utils import test_numpy_data
 
+pytestmark = pytest.mark.sh_integration
+
 
 def test_single_jpg():
     """ Test downloading three bands of L1C
@@ -55,8 +57,8 @@ def test_single_jpg():
 
     img = request.get_data(max_threads=3)[0]
 
-    assert img.shape == (856, 512, 3)
-    test_numpy_data(img, exp_min=0, exp_max=255, exp_mean=74.898)
+    test_numpy_data(img, exp_shape=(856, 512, 3), exp_min=0, exp_max=255, exp_mean=74.898, exp_median=69,
+                    exp_std=28.04676)
 
 
 def test_other_args(config, output_folder):
@@ -105,8 +107,8 @@ def test_other_args(config, output_folder):
 
     img = request.get_data(max_threads=3)[0]
 
-    assert img.shape == (856, 512, 3)
-    test_numpy_data(img, exp_min=0, exp_max=255, exp_mean=74.92)
+    test_numpy_data(img, exp_shape=(856, 512, 3), exp_min=0, exp_max=255, exp_mean=74.92, exp_median=69,
+                    exp_std=28.141225755093437)
 
 
 def test_preview_mode():
@@ -160,8 +162,8 @@ def test_preview_mode():
 
     img = request.get_data(max_threads=3)[0]
 
-    assert img.shape == (6, 6, 3)
-    test_numpy_data(img, exp_min=330, exp_max=3128, exp_mean=1787.5185)
+    test_numpy_data(img, exp_shape=(6, 6, 3), exp_min=330, exp_max=3128, exp_mean=1787.5185, exp_median=1880.5,
+                    exp_std=593.3735)
 
 
 def test_resolution_parameter():
@@ -210,8 +212,8 @@ def test_resolution_parameter():
 
     img = request.get_data(max_threads=3)[0]
 
-    assert img.shape == (153, 160, 3)
-    test_numpy_data(img, exp_min=670, exp_max=6105, exp_mean=1848.7660)
+    test_numpy_data(img, exp_shape=(153, 160, 3), exp_min=670, exp_max=6105, exp_mean=1848.7660, exp_median=1895,
+                    exp_std=612.048)
 
 
 def test_multipart_tar():
@@ -266,8 +268,8 @@ def test_multipart_tar():
 
     img_data = tar['default.tif']
 
-    assert img_data.shape == (856, 512, 3)
-    test_numpy_data(img_data, exp_min=0, exp_max=8073, exp_mean=1176.32)
+    test_numpy_data(img_data, exp_shape=(856, 512, 3), exp_min=0, exp_max=8073, exp_mean=1176.32, exp_median=1086,
+                    exp_std=449.4658)
 
     json_data = tar['userdata.json']
 
@@ -373,8 +375,8 @@ def test_multipart_geometry():
 
     img = tar['default.tif']
 
-    assert img.shape == (382, 181, 3)
-    test_numpy_data(img, exp_min=25, exp_max=255, exp_mean=144.89)
+    test_numpy_data(img, exp_shape=(382, 181, 3), exp_min=25, exp_max=255, exp_mean=144.89, exp_median=79,
+                    exp_std=95.578)
 
     json_data = tar['userdata.json']
 
@@ -489,8 +491,8 @@ def test_data_fusion(config):
     )
     image = request.get_data()[0]
 
-    assert image.shape == (100, 100, 3)
-    test_numpy_data(image, exp_min=23, exp_max=255, exp_mean=98.128)
+    test_numpy_data(image, exp_shape=(100, 100, 3), exp_min=23, exp_max=255, exp_mean=98.128, exp_median=92,
+                    exp_std=37.487)
 
     assert request.download_list[0].url == f'{ServiceUrl.MAIN}/api/v1/process'
 
@@ -569,8 +571,8 @@ def test_bbox_geometry():
 
     img = request.get_data(max_threads=3)[0]
 
-    assert img.shape == (856, 512, 3)
-    test_numpy_data(img, exp_min=0, exp_max=255, exp_mean=22.625)
+    test_numpy_data(img, exp_shape=(856, 512, 3), exp_min=0, exp_max=255, exp_mean=22.625, exp_median=0,
+                    exp_std=39.0612)
 
 
 def test_basic_functionalities():

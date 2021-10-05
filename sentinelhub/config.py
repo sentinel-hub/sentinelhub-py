@@ -194,7 +194,7 @@ class SHConfig:
         repr_list = [f'{self.__class__.__name__}(']
 
         for key, value in self.get_config_dict().items():
-            repr_list.append('%s=%r,' % (key, value))
+            repr_list.append(f'{key}={repr(value)},')
 
         return '\n  '.join(repr_list).strip(',') + '\n)'
 

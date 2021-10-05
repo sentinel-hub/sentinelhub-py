@@ -12,7 +12,7 @@ from .data_collections import DataCollection
 from .constants import RequestType, MimeType
 from .geometry import Geometry
 from .sh_utils import (
-    SentinelHubService, SentinelHubFeatureIterator, BaseCollection, remove_undefined,datetime_config, geometry_config
+    SentinelHubService, SentinelHubFeatureIterator, BaseCollection, remove_undefined, datetime_config, geometry_config
 )
 
 

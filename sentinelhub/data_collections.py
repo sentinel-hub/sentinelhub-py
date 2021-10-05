@@ -693,7 +693,7 @@ def _raise_invalid_id(collection_id):
     collection_id_pattern = '.{8}-.{4}-.{4}-.{4}-.{12}'
 
     if not re.compile(collection_id_pattern).match(collection_id):
-        raise ValueError("Given collection id does not match the expected format {}".format(collection_id_pattern))
+        raise ValueError(f'Given collection id does not match the expected format {collection_id_pattern}')
 
 
 DataSource = DataCollection

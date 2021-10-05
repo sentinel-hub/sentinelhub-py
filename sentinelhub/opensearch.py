@@ -166,7 +166,7 @@ def search_iter(tile_id=None, bbox=None, start_date=None, end_date=None, absolut
     while True:
         url_params['index'] = start_index
 
-        url = '{}/search.json?{}'.format(config.opensearch_url, urlencode(url_params))
+        url = f'{config.opensearch_url}/search.json?{urlencode(url_params)}'
         LOGGER.debug("URL=%s", url)
 
         response = client.get_json(url)

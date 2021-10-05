@@ -1,6 +1,8 @@
+import pytest
 from sentinelhub import SentinelHubSession
 
 
+@pytest.mark.sh_integration
 def test_session():
 
     session = SentinelHubSession()

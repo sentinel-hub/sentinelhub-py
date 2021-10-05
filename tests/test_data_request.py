@@ -16,6 +16,7 @@ def wcs_request_fixture(output_folder):
     )
 
 
+@pytest.mark.sh_integration
 def test_init(output_folder, wcs_request):
     wcs_request.create_request(reset_wfs_iterator=True)  # This method is used by s2cloudless, don't rename it
 
@@ -32,6 +33,7 @@ def test_init(output_folder, wcs_request):
     assert wcs_request.is_valid_request()
 
 
+@pytest.mark.sh_integration
 def test_encoded_latest_result(wcs_request):
     result_list = wcs_request.get_data(decode_data=False, save_data=True)
 
@@ -43,6 +45,7 @@ def test_encoded_latest_result(wcs_request):
     assert result_list == cached_result_list
 
 
+@pytest.mark.aws_integration
 def test_saving_responses(output_folder):
     product_id = 'S2A_MSIL1C_20180113T001101_N0206_R073_T55KGP_20180113T013328.SAFE'
     metafiles = 'inspire '
