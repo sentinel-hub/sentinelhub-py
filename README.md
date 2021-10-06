@@ -1,7 +1,7 @@
 [![Package version](https://badge.fury.io/py/sentinelhub.svg)](https://pypi.org/project/sentinelhub/)
 [![Conda version](https://img.shields.io/conda/vn/conda-forge/sentinelhub.svg)](https://anaconda.org/conda-forge/sentinelhub)
 [![Supported Python versions](https://img.shields.io/pypi/pyversions/sentinelhub.svg?style=flat-square)](https://pypi.org/project/sentinelhub/)
-[![Build status](https://www.travis-ci.com/sentinel-hub/sentinelhub-py.svg?branch=master)](https://travis-ci.com/github/sentinel-hub/sentinelhub-py/builds)
+[![Build Status](https://github.com/sentinel-hub/sentinelhub-py/actions/workflows/ci_action.yml/badge.svg?branch=master)](https://github.com/sentinel-hub/sentinelhub-py/actions)
 [![Docs status](https://readthedocs.org/projects/sentinelhub-py/badge/?version=latest)](http://sentinelhub-py.readthedocs.io/en/latest/)
 [![Overall downloads](https://pepy.tech/badge/sentinelhub)](https://pepy.tech/project/sentinelhub)
 [![Last month downloads](https://pepy.tech/badge/sentinelhub/month)](https://pepy.tech/project/sentinelhub)
