@@ -236,7 +236,7 @@ TEST_CASES = [
             layer='TRUE-COLOR-S3-OLCI', width=img_width, height=img_height, bbox=wgs84_bbox_4,
             time=('2020-2-5', '2020-2-10'), time_difference=datetime.timedelta(hours=1)
         ),
-        result_len=11, img_min=243, img_max=255, img_mean=248.80765, img_median=248.0, img_std=3.82325, tile_num=17
+        result_len=11, img_min=243, img_max=255, img_mean=248.80765, img_median=248.0, img_std=3.8225, tile_num=17
     ),
 ]
 
