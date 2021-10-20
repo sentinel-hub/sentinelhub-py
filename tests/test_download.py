@@ -6,7 +6,7 @@ import os
 
 import pytest
 
-from sentinelhub import DownloadRequest, MimeType, DownloadClient
+from sentinelhub import DownloadRequest, MimeType, DownloadClient, write_data
 from sentinelhub.exceptions import SHRuntimeWarning, HashedNameCollisionException
 
 
@@ -115,3 +115,14 @@ def test_hash_collision(download_request):
 
     with pytest.raises(HashedNameCollisionException):
         client.download(request3)
+
+    # Check that there are no issues with re-loading
+    request4 = copy.deepcopy(download_request)
+    request4.post_values = {'transformed-when-saved': [(1, 2)]}
+
+    request_path, _ = request4.get_storage_paths()
+    request_info = request4.get_request_params(include_metadata=True)
+    write_data(request_path, request_info, data_format=MimeType.JSON)  # Copied from download client
+
+    # pylint: disable=protected-access
+    client._check_cached_request_is_matching(request4, request_path)

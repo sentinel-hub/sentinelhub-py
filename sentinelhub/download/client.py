@@ -5,6 +5,7 @@ import logging
 import warnings
 import os
 import sys
+import json
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 import requests
@@ -169,8 +170,10 @@ class DownloadClient:
         # Timestamps are allowed to differ
         del cached_request_info['timestamp']
         del cached_request_info['headers']
+        # Saved request was jsonified
+        current_request_info_json = json.loads(json.dumps(current_request_info))
 
-        if cached_request_info != current_request_info:
+        if cached_request_info != current_request_info_json:
             raise HashedNameCollisionException(
                 f'Request has hashed name {request.get_hashed_name()}, which matches request saved at {request_path}, '
                 f'but the requests are different. Possible hash collision'
