@@ -159,3 +159,19 @@ def test_search_for_data_collection(config, data_collection, feature_id):
     result = next(search_iterator)
     assert isinstance(result, dict)
     assert result['id'] == feature_id
+
+
+def test_search_with_ids(config):
+    """ Tests a search without time and bbox parameters
+    """
+    tile_id = 'LE07_L1TP_160071_20170110_20201008_02_T1'
+    config.sh_base_url = DataCollection.LANDSAT_ETM_L1.service_url
+    catalog = SentinelHubCatalog(config=config)
+
+    search_iterator = catalog.search(
+        collection=DataCollection.LANDSAT_ETM_L1,
+        ids=[tile_id]
+    )
+    results = list(search_iterator)
+    assert len(results) == 1
+    assert results[0]['id'] == tile_id

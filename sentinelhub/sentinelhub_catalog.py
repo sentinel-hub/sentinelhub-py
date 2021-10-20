@@ -82,8 +82,8 @@ class SentinelHubCatalog(SentinelHubService):
         url = f'{self.service_url}/collections/{collection_id}/items/{feature_id}'
         return self.client.get_json(url, use_session=True)
 
-    def search(self, collection, *, time, bbox=None, geometry=None, ids=None, query=None, fields=None, distinct=None,
-               limit=100, **kwargs):
+    def search(self, collection, *, time=None, bbox=None, geometry=None, ids=None, query=None, fields=None,
+               distinct=None, limit=100, **kwargs):
         """ Catalog STAC search
 
         `Catalog API reference <https://docs.sentinel-hub.com/api/latest/reference/#operation/postSearchSTAC>`__
@@ -92,7 +92,7 @@ class SentinelHubCatalog(SentinelHubService):
         :type collection: DataCollection or str
         :param time: A time interval or a single time. It can either be a string in form  YYYY-MM-DDThh:mm:ss or
             YYYY-MM-DD or a datetime object
-        :type time: (str, str) or (datetime, datetime) or str or datetime
+        :type time: (str, str) or (datetime, datetime) or str or datetime or None
         :param bbox: A search bounding box, it will always be reprojected to WGS 84 before being sent to the service.
             Re-projection will be done with BBox.transform_bounds method which can produce a slightly larger bounding
             box. If that is a problem then transform a BBox object into a Geometry object and search with geometry
