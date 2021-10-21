@@ -92,6 +92,8 @@ class SentinelHubService:
                           category=SHDeprecationWarning)
 
         base_url = base_url or self.config.sh_base_url
+        if not isinstance(base_url, str):
+            raise ValueError(f'Sentinel Hub base URL parameter should be a string but got {base_url}')
         base_url = base_url.rstrip('/')
         self.service_url = self._get_service_url(base_url)
 

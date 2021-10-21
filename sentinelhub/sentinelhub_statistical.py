@@ -62,7 +62,7 @@ class SentinelHubStatistical(SentinelHubBaseApiRequest):
         :type calculations: dict
         :param other_args: Additional dictionary of arguments. If provided, the resulting dictionary will get updated
             by it.
-        :param other_args: dict
+        :type other_args: dict
         :returns: Request payload dictionary
         :rtype: dict
         """
@@ -108,7 +108,7 @@ class SentinelHubStatistical(SentinelHubBaseApiRequest):
         :type resolution: (float, float) or (int, int) or None
         :param other_args: Additional dictionary of arguments. If provided, the resulting dictionary will get updated
             by it.
-        :param other_args: dict
+        :type other_args: dict
         :returns: Aggregation payload dictionary
         :rtype: dict
         """

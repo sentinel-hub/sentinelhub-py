@@ -55,7 +55,7 @@ class SentinelHubBaseApiRequest(DataRequest):
         :type downsampling: str
         :param other_args: Additional dictionary of arguments. If provided, the resulting dictionary will get updated
             by it.
-        :param other_args: dict
+        :type other_args: dict
         :return: A dictionary-like object that also contains additional attributes
         :rtype: InputDataDict
         """
@@ -88,7 +88,7 @@ class SentinelHubBaseApiRequest(DataRequest):
         :type geometry: sentinelhub.Geometry
         :param other_args: Additional dictionary of arguments. If provided, the resulting dictionary will get updated
             by it.
-        :param other_args: dict
+        :type other_args: dict
         """
         if bbox is None and geometry is None:
             raise ValueError("'bbox' and/or 'geometry' have to be provided.")

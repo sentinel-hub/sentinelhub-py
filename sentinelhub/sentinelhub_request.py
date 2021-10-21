@@ -71,7 +71,7 @@ class SentinelHubRequest(SentinelHubBaseApiRequest):
         :type request_output: dict
         :param other_args: Additional dictionary of arguments. If provided, the resulting dictionary will get updated
             by it.
-        :param other_args: dict
+        :type other_args: dict
         """
         request_body = {
             'input': {
@@ -99,7 +99,7 @@ class SentinelHubRequest(SentinelHubBaseApiRequest):
         :type response_format: str or sentinelhub.MimeType
         :param other_args: Additional dictionary of arguments. If provided, the resulting dictionary will get updated
             by it.
-        :param other_args: dict
+        :type other_args: dict
         """
         output_response = {
             'identifier': identifier,
@@ -125,7 +125,7 @@ class SentinelHubRequest(SentinelHubBaseApiRequest):
         :type resolution: Tuple[float, float]
         :param other_args: Additional dictionary of arguments. If provided, the resulting dictionary will get updated
             by it.
-        :param other_args: dict
+        :type other_args: dict
         """
         if size and resolution:
             raise ValueError('Either size or resolution argument should be given, not both.')
