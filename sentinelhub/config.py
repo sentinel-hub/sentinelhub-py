@@ -2,9 +2,10 @@
 Module for managing configuration data from `config.json`
 """
 
-import os
+import copy
 import json
 import numbers
+import os
 
 
 class SHConfig:
@@ -75,7 +76,6 @@ class SHConfig:
         }
 
         def __init__(self):
-            self.instance_id = ''
             self.load_configuration()
 
         def _parse_configuration(self, config):
@@ -214,6 +214,11 @@ class SHConfig:
                 setattr(self._instance, prop, getattr(self, prop))
         if is_changed:
             self._instance.save_configuration()
+
+    def copy(self):
+        """ Makes a copy of an instance of `SHConfig`
+        """
+        return copy.copy(self)
 
     def reset(self, params=...):
         """ Resets configuration class to initial values. Use `SHConfig.save()` method in order to save this change.
