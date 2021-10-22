@@ -169,3 +169,13 @@ def test_delete_tile(byoc, collection, tile, requests_mock):
     response = byoc.delete_tile(collection=collection, tile=tile)
 
     assert response == ''
+
+
+def test_reingest_tile(byoc, collection, tile, requests_mock):
+    requests_mock.post('/oauth/token', real_http=True)
+    mocked_url = f'/api/v1/byoc/collections/{collection["id"]}/tiles/{tile["id"]}/reingest'
+
+    requests_mock.post(mocked_url, content=None)
+
+    response = byoc.reingest_tile(collection=collection, tile=tile)
+    assert response == ''
