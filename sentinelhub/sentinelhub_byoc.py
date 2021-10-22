@@ -224,6 +224,18 @@ class SentinelHubBYOC(SentinelHubService):
         url = f'{self.service_url}/collections/{self._parse_id(collection)}/tiles/{self._parse_id(tile)}'
         return self.client.get_json(url=url, request_type=RequestType.DELETE, use_session=True)
 
+    def reingest_tile(self, collection, tile):
+        """ Re-ingests a tile into a collection
+
+        `BYOC API reference
+        <https://docs.sentinel-hub.com/api/latest/reference/#operation/reingestByocCollectionTileById>`__
+
+        :param collection: a ByocCollection, dict or collection id string
+        :param tile: a ByocTile, dict or tile id string
+        """
+        url = f'{self.service_url}/collections/{self._parse_id(collection)}/tiles/{self._parse_id(tile)}/reingest'
+        return self.client.get_json(url=url, request_type=RequestType.POST, use_session=True)
+
     @staticmethod
     def _parse_id(data):
         if isinstance(data, (ByocCollection, DataCollection)):
