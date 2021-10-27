@@ -1,7 +1,7 @@
+jupyter_core == 4.8.2
 sphinx
 sphinx_rtd_theme
 nbsphinx
 matplotlib
 ipython
 m2r2
-jupyter_core == 4.8.2
