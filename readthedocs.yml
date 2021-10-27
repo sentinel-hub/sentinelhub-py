@@ -7,3 +7,5 @@ python:
   version: 3.8
   install:
   - requirements: requirements-docs.txt
+  - method: pip
+    path: .
