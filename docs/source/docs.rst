@@ -14,6 +14,7 @@ Modules
     config
     constants
     data_collections
+    data_collections_bands
     data_request
     download.aws_client
     download.client
