@@ -15,8 +15,6 @@
 import os
 import shutil
 
-import sphinx.ext.autodoc
-
 # -- Project information -----------------------------------------------------
 
 # General information about the project.
@@ -100,7 +98,7 @@ pygments_style = 'sphinx'
 todo_include_todos = True
 
 # Mock modules
-# autodoc_mock_imports = ["sentinelhub"]
+autodoc_mock_imports = ["sentinelhub"]
 
 # -- Options for HTML output ----------------------------------------------
 
