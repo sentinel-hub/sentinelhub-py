@@ -7,6 +7,7 @@ from abc import ABC, abstractmethod
 import json
 import math
 
+import shapely
 import shapely.ops
 import shapely.geometry
 from shapely.geometry import Polygon, MultiPolygon, GeometryCollection
@@ -101,7 +102,9 @@ class AreaSplitter(ABC):
         :return: A multipolygon which is a union of shapes in given list
         :rtype: shapely.geometry.multipolygon.MultiPolygon
         """
-        return shapely.ops.unary_union(shape_list)
+        if shapely.__version__ >= '1.8.0':
+            return shapely.ops.unary_union(shape_list)
+        return shapely.ops.cascaded_union(shape_list)
 
     @abstractmethod
     def _make_split(self):
