@@ -13,11 +13,10 @@ from shapely.geometry import Polygon, MultiPolygon, GeometryCollection
 
 from .config import SHConfig
 from .constants import CRS
-from .data_collections import DataCollection, handle_deprecated_data_source
 from .geometry import BBox, BBoxCollection, BaseGeometry, Geometry
 from .geo_utils import transform_point
-from .ogc import WebFeatureService
 from .sentinelhub_batch import SentinelHubBatch
+from .sentinelhub_catalog import SentinelHubCatalog
 
 
 class AreaSplitter(ABC):
@@ -348,14 +347,22 @@ class OsmSplitter(AreaSplitter):
 
 
 class TileSplitter(AreaSplitter):
-    """ A tool that splits the given area into smaller parts. Given the area, time interval and data collection it
-    collects info from Sentinel Hub WFS service about all satellite tiles intersecting the area. For each of them
-    it calculates bounding box and if specified it splits these bounding boxes into smaller bounding boxes. Then
-    it filters out the ones that do not intersect the area. If specified by user it can also reduce the sizes of
-    the remaining bounding boxes to best fit the area.
+    """ A splitter that uses Sentinel Hub Catalog API to obtain geometries of the original tiling grid of a given
+    data collection. Additionally, it can further split these geometries into smaller parts.
     """
-    def __init__(self, shape_list, crs, time_interval, tile_split_shape=1, data_collection=None,
-                 config=None, data_source=None, **kwargs):
+
+    _CATALOG_FILTER = {
+        'include': [
+            'id',
+            'geometry',
+            'properties.datetime',
+            'properties.proj:bbox',
+            'properties.proj:epsg'
+        ],
+        'exclude': []
+    }
+
+    def __init__(self, shape_list, crs, time_interval, data_collection, tile_split_shape=1, config=None, **kwargs):
         """
         :param shape_list: A list of geometrical shapes describing the area of interest
         :type shape_list: list(shapely.geometry.multipolygon.MultiPolygon or shapely.geometry.polygon.Polygon)
@@ -363,83 +370,82 @@ class TileSplitter(AreaSplitter):
         :type crs: CRS
         :param time_interval: Interval with start and end date of the form YYYY-MM-DDThh:mm:ss or YYYY-MM-DD
         :type time_interval: (str, str)
+        :param data_collection: A satellite data collection
+        :type data_collection: DataCollection
         :param tile_split_shape: Parameter that describes the shape in which the satellite tile bounding boxes will be
             split. It can be a tuple of the form `(n, m)` which means the tile bounding boxes will be
             split into `n` columns and `m` rows. It can also be a single integer `n` which is the same
             as `(n, n)`.
         :type split_shape: int or (int, int)
-        :param data_collection: A satellite data collection
-        :type data_collection: DataCollection
         :param config: A custom instance of config class to override parameters from the saved configuration.
         :type config: SHConfig or None
-        :param reduce_bbox_sizes: If `True` it will reduce the sizes of bounding boxes so that they will tightly fit
-            the given area geometry from `shape_list`.
-        :type reduce_bbox_sizes: bool
-        :param data_source: A deprecated alternative of data_collection
-        :type data_source: DataCollection
+        :param kwargs: Parameters that are propagated to the base `AreaSplitter` class
         """
         super().__init__(shape_list, crs, **kwargs)
-
-        data_collection = DataCollection(handle_deprecated_data_source(data_collection, data_source,
-                                                                       default=DataCollection.SENTINEL2_L1C))
-        if data_collection is DataCollection.DEM:
-            raise ValueError('This splitter does not support splitting area by DEM tiles. Please specify some other '
-                             'DataCollection')
 
         self.time_interval = time_interval
         self.tile_split_shape = tile_split_shape
         self.data_collection = data_collection
-        self.config = config or SHConfig()
 
-        self.tile_dict = None
+        config = config or SHConfig()
+        if data_collection.service_url:
+            config = config.copy()
+            config.sh_base_url = data_collection.service_url
+        self.catalog = SentinelHubCatalog(config=config)
 
         self._make_split()
 
     def _make_split(self):
         """ This method makes the split
         """
-        self.tile_dict = {}
+        tile_dict = {}
 
-        wfs = WebFeatureService(self.area_bbox, self.time_interval, data_collection=self.data_collection,
-                                config=self.config)
-        date_list = wfs.get_dates()
-        geometry_list = wfs.get_geometries()
-        for tile_info, (date, geometry) in zip(wfs, zip(date_list, geometry_list)):
-            tile_name = ''.join(tile_info['properties']['path'].split('/')[4:7])
-            if tile_name not in self.tile_dict:
-                self.tile_dict[tile_name] = {'bbox': BBox(tile_info['properties']['mbr'],
-                                                          crs=tile_info['properties']['crs']),
-                                             'times': [],
-                                             'geometries': []}
-            self.tile_dict[tile_name]['times'].append(date)
-            self.tile_dict[tile_name]['geometries'].append(geometry)
+        search_iterator = self.catalog.search(
+            self.data_collection,
+            time=self.time_interval,
+            bbox=self.area_bbox,
+            fields=self._CATALOG_FILTER
+        )
 
-        self.tile_dict = {tile_name: tile_props for tile_name, tile_props in self.tile_dict.items() if
-                          self._intersects_area(tile_props['bbox'])}
+        timestamps = search_iterator.get_timestamps()
+        geometry_list = search_iterator.get_geometries()
+        for tile_info, (timestamp, geometry) in zip(search_iterator, zip(timestamps, geometry_list)):
+            tile_properties = tile_info['properties']
+            bbox = BBox(tile_properties['proj:bbox'], crs=tile_properties['proj:epsg'])
+            bbox_hash = tuple(bbox), bbox.crs.epsg
+
+            if bbox_hash not in tile_dict:
+                tile_dict[bbox_hash] = {
+                    'bbox': bbox,
+                    'timestamps': [],
+                    'ids': [],
+                    'geometries': []
+                }
+            tile_dict[bbox_hash]['timestamps'].append(timestamp)
+            tile_dict[bbox_hash]['ids'].append(tile_info['id'])
+            tile_dict[bbox_hash]['geometries'].append(geometry)
 
         self.bbox_list = []
         self.info_list = []
 
-        for tile_name, tile_info in self.tile_dict.items():
+        for tile_info in tile_dict.values():
+            if not self._intersects_area(tile_info['bbox']):
+                continue
+
             tile_bbox = tile_info['bbox']
-            bbox_splitter = BBoxSplitter([tile_bbox.geometry], tile_bbox.crs,
-                                         split_shape=self.tile_split_shape)
+            bbox_splitter = BBoxSplitter(
+                [tile_bbox.geometry],
+                tile_bbox.crs,
+                split_shape=self.tile_split_shape
+            )
 
             for bbox, info in zip(bbox_splitter.get_bbox_list(), bbox_splitter.get_info_list()):
                 if self._intersects_area(bbox):
-                    info['tile'] = tile_name
-
                     self.bbox_list.append(bbox)
+
+                    info['ids'] = tile_info['ids']
+                    info['timestamps'] = tile_info['timestamps']
                     self.info_list.append(info)
-
-    def get_tile_dict(self):
-        """ Returns the dictionary of satellite tiles intersecting the area geometry. For each tile they contain info
-        about their bounding box and lists of acquisitions and geometries
-
-        :return: Dictionary containing info about tiles intersecting the area
-        :rtype: dict
-        """
-        return self.tile_dict
 
 
 class CustomGridSplitter(AreaSplitter):
