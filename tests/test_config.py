@@ -70,6 +70,19 @@ def test_save(restore_config):
     assert config.download_timeout_seconds == new_value, 'Saved value should have changed'
 
 
+def test_copy():
+    config = SHConfig(hide_credentials=True)
+    config.instance_id = 'a'
+
+    copied_config = config.copy()
+    assert copied_config._hide_credentials
+    assert copied_config._instance is config._instance
+    assert copied_config.instance_id == config.instance_id
+
+    copied_config.instance_id = 'b'
+    assert config.instance_id == 'a'
+
+
 def test_raise_for_missing_instance_id():
     config = SHConfig()
 

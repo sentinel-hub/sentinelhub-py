@@ -28,6 +28,11 @@ BBOX_GRID = [BBox((x / 10, y / 100, (x + 1) / 10, (y + 1) / 100), CRS.WGS84)
         dict(tile_split_shape=40, data_collection=DataCollection.SENTINEL2_L1C, reduce_bbox_sizes=True), 13,
         marks=pytest.mark.sh_integration
     ),
+    pytest.param(
+        TileSplitter, ([AREA], CRS.WGS84, ('2020-10-01', '2020-10-05')),
+        dict(tile_split_shape=10, data_collection=DataCollection.LANDSAT_OT_L2, reduce_bbox_sizes=True), 3,
+        marks=pytest.mark.sh_integration
+    ),
 ])
 def test_return_type(constructor, args, kwargs, bbox_len):
     splitter = constructor(*args, **kwargs)
