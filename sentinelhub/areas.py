@@ -101,7 +101,7 @@ class AreaSplitter(ABC):
         :return: A multipolygon which is a union of shapes in given list
         :rtype: shapely.geometry.multipolygon.MultiPolygon
         """
-        return shapely.ops.cascaded_union(shape_list)
+        return shapely.ops.unary_union(shape_list)
 
     @abstractmethod
     def _make_split(self):
