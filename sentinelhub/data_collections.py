@@ -608,9 +608,12 @@ class DataCollection(Enum, metaclass=_DataCollectionMeta):
         :rtype: str
         :raises: ValueError
         """
-        if self.value.catalog_id is None:
-            raise ValueError(f'Data collection {self.name} is missing a Sentinel Hub Catalog API identifier')
-        return self.value.catalog_id
+        if self.value.catalog_id is not None:
+            return self.value.catalog_id
+        if self.value.api_id is not None:
+            # A fallback because Process API and Catalog API IDs should now be unified
+            return self.value.api_id
+        raise ValueError(f'Data collection {self.name} is missing a Sentinel Hub Catalog API identifier')
 
     @property
     def wfs_id(self):
