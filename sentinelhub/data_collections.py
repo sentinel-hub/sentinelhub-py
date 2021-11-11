@@ -1,17 +1,17 @@
 """
 Module defining data collections
 """
-import re
 import warnings
 from enum import Enum, EnumMeta
-from typing import Tuple
-from dataclasses import dataclass, asdict, field
+from typing import Tuple, Optional
+from dataclasses import dataclass, field, fields
 
 from aenum import extend_enum
 
 from .config import SHConfig
 from .constants import ServiceUrl
 from .exceptions import SHDeprecationWarning
+from .data_collections_bands import Band, Bands, MetaBands
 
 
 class _CollectionType:
@@ -100,27 +100,10 @@ class OrbitDirection:
     BOTH = 'BOTH'
 
 
-class _Bands:
-    """ Different collections of bands
-    """
-    SENTINEL1_IW = ('VV', 'VH')
-    SENTINEL1_EW = ('HH', 'HV')
-    SENTINEL1_EW_SH = ('HH',)
-    SENTINEL2_L1C = ('B01', 'B02', 'B03', 'B04', 'B05', 'B06', 'B07', 'B08', 'B8A', 'B09', 'B10', 'B11', 'B12')
-    SENTINEL2_L2A = ('B01', 'B02', 'B03', 'B04', 'B05', 'B06', 'B07', 'B08', 'B8A', 'B09', 'B11', 'B12')
-    SENTINEL3_OLCI = tuple(f'B{str(index).zfill(2)}' for index in range(1, 22))
-    SENTINEL3_SLSTR = ('S1', 'S2', 'S3', 'S4', 'S5', 'S6', 'S7', 'S8', 'S9', 'F1', 'F2')
-    SENTINEL5P = ('AER_AI_340_380', 'AER_AI_354_388', 'CLOUD_BASE_HEIGHT', 'CLOUD_BASE_PRESSURE', 'CLOUD_FRACTION',
-                  'CLOUD_OPTICAL_THICKNESS', 'CLOUD_TOP_HEIGHT', 'CLOUD_TOP_PRESSURE', 'CO', 'HCHO', 'NO2', 'O3',
-                  'SO2', 'CH4')
-    LANDSAT_MSS = ('B01', 'B02', 'B03', 'B04')
-    LANDSAT_TM = ('B01', 'B02', 'B03', 'B04', 'B05', 'B06', 'B07')
-    LANDSAT_ETM_L1 = ('B01', 'B02', 'B03', 'B04', 'B05', 'B06_VCID1', 'B06_VCID2', 'B07', 'B08')
-    LANDSAT_ETM_L2 = ('B01', 'B02', 'B03', 'B04', 'B05', 'B06', 'B07')
-    LANDSAT_OT = ('B01', 'B02', 'B03', 'B04', 'B05', 'B06', 'B07', 'B08', 'B09', 'B10', 'B11')
-    LANDSAT_OT_L2 = ('B01', 'B02', 'B03', 'B04', 'B05', 'B06', 'B07', 'B10')
-    DEM = ('DEM',)
-    MODIS = ('B01', 'B02', 'B03', 'B04', 'B05', 'B06', 'B07')
+def _shallow_asdict(dataclass_instance):
+    """ Returns a dictionary of fields and values, but is not recursive and does not deepcopy like `asdict` """
+    # This definition needs to be above the class definitions in the file
+    return {field.name: getattr(dataclass_instance, field.name) for field in fields(dataclass_instance)}
 
 
 class _DataCollectionMeta(EnumMeta):
@@ -160,36 +143,39 @@ class DataCollectionDefinition:
     Check `DataCollection.define` for more info about attributes of this class
     """
     # pylint: disable=too-many-instance-attributes
-    api_id: str = None
-    catalog_id: str = None
-    wfs_id: str = None
-    service_url: str = None
-    collection_type: str = None
-    sensor_type: str = None
-    processing_level: str = None
-    swath_mode: str = None
-    polarization: str = None
-    resolution: str = None
-    orbit_direction: str = None
-    timeliness: str = None
-    bands: Tuple[str, ...] = None
-    collection_id: str = None
+    api_id: Optional[str] = None
+    catalog_id: Optional[str] = None
+    wfs_id: Optional[str] = None
+    service_url: Optional[str] = None
+    collection_type: Optional[str] = None
+    sensor_type: Optional[str] = None
+    processing_level: Optional[str] = None
+    swath_mode: Optional[str] = None
+    polarization: Optional[str] = None
+    resolution: Optional[str] = None
+    orbit_direction: Optional[str] = None
+    timeliness: Optional[str] = None
+    bands: Optional[Tuple[Band, ...]] = None
+    metabands: Optional[Tuple[Band, ...]] = None
+    collection_id: Optional[str] = None
     is_timeless: bool = False
     has_cloud_coverage: bool = False
-    dem_instance: str = None
+    dem_instance: Optional[str] = None
     # The following parameter is used to preserve custom DataCollection name during pickling and unpickling process:
-    _name: str = field(default=None, compare=False)
+    _name: Optional[str] = field(default=None, compare=False)
 
     def __post_init__(self):
-        """ In case a list of bands has been given this makes sure to cast it into a tuple
+        """ In case a list of bands or metabands has been given this makes sure to cast it into a tuple
         """
         if isinstance(self.bands, list):
             object.__setattr__(self, 'bands', tuple(self.bands))
+        if isinstance(self.metabands, list):
+            object.__setattr__(self, 'metabands', tuple(self.metabands))
 
     def __repr__(self):
         """ A nicer representation of parameters that define a data collection
         """
-        valid_params = {name: value for name, value in asdict(self).items() if value is not None}
+        valid_params = {name: value for name, value in _shallow_asdict(self).items() if value is not None}
         params_repr = '\n  '.join(f'{name}: {value}' for name, value in valid_params.items() if name != '_name')
         return f'{self.__class__.__name__}(\n  {params_repr}\n)'
 
@@ -201,9 +187,8 @@ class DataCollectionDefinition:
         :return: A new data collection definition
         :rtype: DataCollectionDefinition
         """
-        derived_params = asdict(self)
-        for name, value in params.items():
-            derived_params[name] = value
+        derived_params = _shallow_asdict(self)
+        derived_params.update(params)
 
         return DataCollectionDefinition(**derived_params)
 
@@ -235,8 +220,9 @@ class DataCollection(Enum, metaclass=_DataCollectionMeta):
         collection_type=_CollectionType.SENTINEL2,
         sensor_type=_SensorType.MSI,
         processing_level=_ProcessingLevel.L1C,
-        bands=_Bands.SENTINEL2_L1C,
-        has_cloud_coverage=True
+        bands=Bands.SENTINEL2_L1C,
+        metabands=MetaBands.SENTINEL2_L1C,
+        has_cloud_coverage=True,
     )
     SENTINEL2_L2A = DataCollectionDefinition(
         api_id='sentinel-2-l2a',
@@ -246,8 +232,9 @@ class DataCollection(Enum, metaclass=_DataCollectionMeta):
         collection_type=_CollectionType.SENTINEL2,
         sensor_type=_SensorType.MSI,
         processing_level=_ProcessingLevel.L2A,
-        bands=_Bands.SENTINEL2_L2A,
-        has_cloud_coverage=True
+        bands=Bands.SENTINEL2_L2A,
+        metabands=MetaBands.SENTINEL2_L2A,
+        has_cloud_coverage=True,
     )
 
     SENTINEL1 = DataCollectionDefinition(
@@ -258,58 +245,60 @@ class DataCollection(Enum, metaclass=_DataCollectionMeta):
         collection_type=_CollectionType.SENTINEL1,
         sensor_type=_SensorType.C_SAR,
         processing_level=_ProcessingLevel.GRD,
-        orbit_direction=OrbitDirection.BOTH
+        orbit_direction=OrbitDirection.BOTH,
+        metabands=MetaBands.SENTINEL1,
     )
     SENTINEL1_IW = SENTINEL1.derive(
         swath_mode=_SwathMode.IW,
         polarization=_Polarization.DV,
         resolution=_Resolution.HIGH,
-        bands=_Bands.SENTINEL1_IW
+        bands=Bands.SENTINEL1_IW,
     )
     SENTINEL1_IW_ASC = SENTINEL1_IW.derive(
-        orbit_direction=OrbitDirection.ASCENDING
+        orbit_direction=OrbitDirection.ASCENDING,
     )
     SENTINEL1_IW_DES = SENTINEL1_IW.derive(
-        orbit_direction=OrbitDirection.DESCENDING
+        orbit_direction=OrbitDirection.DESCENDING,
     )
     SENTINEL1_EW = SENTINEL1.derive(
         swath_mode=_SwathMode.EW,
         polarization=_Polarization.DH,
         resolution=_Resolution.MEDIUM,
-        bands=_Bands.SENTINEL1_EW
+        bands=Bands.SENTINEL1_EW,
     )
     SENTINEL1_EW_ASC = SENTINEL1_EW.derive(
-        orbit_direction=OrbitDirection.ASCENDING
+        orbit_direction=OrbitDirection.ASCENDING,
     )
     SENTINEL1_EW_DES = SENTINEL1_EW.derive(
-        orbit_direction=OrbitDirection.DESCENDING
+        orbit_direction=OrbitDirection.DESCENDING,
     )
     SENTINEL1_EW_SH = SENTINEL1_EW.derive(
         polarization=_Polarization.SH,
-        bands=_Bands.SENTINEL1_EW_SH
+        bands=Bands.SENTINEL1_EW_SH,
     )
     SENTINEL1_EW_SH_ASC = SENTINEL1_EW_SH.derive(
-        orbit_direction=OrbitDirection.ASCENDING
+        orbit_direction=OrbitDirection.ASCENDING,
     )
     SENTINEL1_EW_SH_DES = SENTINEL1_EW_SH.derive(
-        orbit_direction=OrbitDirection.DESCENDING
+        orbit_direction=OrbitDirection.DESCENDING,
     )
 
     DEM = DataCollectionDefinition(
         api_id='dem',
         service_url=ServiceUrl.MAIN,
         collection_type=_CollectionType.DEM,
-        bands=_Bands.DEM,
-        is_timeless=True
+        bands=Bands.DEM,
+        metabands=MetaBands.DEM,
+        is_timeless=True,
     )
     DEM_MAPZEN = DEM.derive(
-        dem_instance='MAPZEN'
+        dem_instance='MAPZEN',
     )
     DEM_COPERNICUS_30 = DEM.derive(
-        dem_instance='COPERNICUS_30'
+        dem_instance='COPERNICUS_30',
     )
     DEM_COPERNICUS_90 = DEM.derive(
-        dem_instance='COPERNICUS_90'
+        dem_instance='COPERNICUS_90',
     )
 
     MODIS = DataCollectionDefinition(
@@ -318,7 +307,8 @@ class DataCollection(Enum, metaclass=_DataCollectionMeta):
         wfs_id='DSS5',
         service_url=ServiceUrl.USWEST,
         collection_type=_CollectionType.MODIS,
-        bands=_Bands.MODIS
+        bands=Bands.MODIS,
+        metabands=MetaBands.MODIS,
     )
 
     LANDSAT_MSS_L1 = DataCollectionDefinition(
@@ -329,8 +319,9 @@ class DataCollection(Enum, metaclass=_DataCollectionMeta):
         collection_type=_CollectionType.LANDSAT_MSS,
         sensor_type=_SensorType.MSS,
         processing_level=_ProcessingLevel.L1,
-        bands=_Bands.LANDSAT_MSS,
-        has_cloud_coverage=True
+        bands=Bands.LANDSAT_MSS_L1,
+        metabands=MetaBands.LANDSAT_MSS_L1,
+        has_cloud_coverage=True,
     )
 
     LANDSAT_TM_L1 = DataCollectionDefinition(
@@ -341,14 +332,17 @@ class DataCollection(Enum, metaclass=_DataCollectionMeta):
         collection_type=_CollectionType.LANDSAT_TM,
         sensor_type=_SensorType.TM,
         processing_level=_ProcessingLevel.L1,
-        bands=_Bands.LANDSAT_TM,
-        has_cloud_coverage=True
+        bands=Bands.LANDSAT_TM_L1,
+        metabands=MetaBands.LANDSAT_TM_L1,
+        has_cloud_coverage=True,
     )
     LANDSAT_TM_L2 = LANDSAT_TM_L1.derive(
         api_id='landsat-tm-l2',
         catalog_id='landsat-tm-l2',
         wfs_id='DSS16',
-        processing_level=_ProcessingLevel.L2
+        processing_level=_ProcessingLevel.L2,
+        bands=Bands.LANDSAT_TM_L2,
+        metabands=MetaBands.LANDSAT_TM_L2,
     )
 
     LANDSAT_ETM_L1 = DataCollectionDefinition(
@@ -359,15 +353,17 @@ class DataCollection(Enum, metaclass=_DataCollectionMeta):
         collection_type=_CollectionType.LANDSAT_ETM,
         sensor_type=_SensorType.ETM,
         processing_level=_ProcessingLevel.L1,
-        bands=_Bands.LANDSAT_ETM_L1,
-        has_cloud_coverage=True
+        bands=Bands.LANDSAT_ETM_L1,
+        metabands=MetaBands.LANDSAT_ETM_L1,
+        has_cloud_coverage=True,
     )
     LANDSAT_ETM_L2 = LANDSAT_ETM_L1.derive(
         api_id='landsat-etm-l2',
         catalog_id='landsat-etm-l2',
         wfs_id='DSS18',
         processing_level=_ProcessingLevel.L2,
-        bands=_Bands.LANDSAT_ETM_L2
+        bands=Bands.LANDSAT_ETM_L2,
+        metabands=MetaBands.LANDSAT_ETM_L2,
     )
 
     LANDSAT_OT_L1 = DataCollectionDefinition(
@@ -378,15 +374,17 @@ class DataCollection(Enum, metaclass=_DataCollectionMeta):
         collection_type=_CollectionType.LANDSAT_OT,
         sensor_type=_SensorType.OLI_TIRS,
         processing_level=_ProcessingLevel.L1,
-        bands=_Bands.LANDSAT_OT,
-        has_cloud_coverage=True
+        bands=Bands.LANDSAT_OT_L1,
+        metabands=MetaBands.LANDSAT_OT_L1,
+        has_cloud_coverage=True,
     )
     LANDSAT_OT_L2 = LANDSAT_OT_L1.derive(
         api_id='landsat-ot-l2',
         catalog_id='landsat-ot-l2',
         wfs_id='DSS13',
         processing_level=_ProcessingLevel.L2,
-        bands=_Bands.LANDSAT_OT_L2
+        bands=Bands.LANDSAT_OT_L2,
+        metabands=MetaBands.LANDSAT_OT_L2,
     )
 
     SENTINEL5P = DataCollectionDefinition(
@@ -397,7 +395,8 @@ class DataCollection(Enum, metaclass=_DataCollectionMeta):
         collection_type=_CollectionType.SENTINEL5P,
         sensor_type=_SensorType.TROPOMI,
         processing_level=_ProcessingLevel.L2,
-        bands=_Bands.SENTINEL5P
+        bands=Bands.SENTINEL5P,
+        metabands=MetaBands.SENTINEL5P,
     )
     SENTINEL3_OLCI = DataCollectionDefinition(
         api_id='sentinel-3-olci',
@@ -407,7 +406,8 @@ class DataCollection(Enum, metaclass=_DataCollectionMeta):
         collection_type=_CollectionType.SENTINEL3,
         sensor_type=_SensorType.OLCI,
         processing_level=_ProcessingLevel.L1B,
-        bands=_Bands.SENTINEL3_OLCI
+        bands=Bands.SENTINEL3_OLCI,
+        metabands=MetaBands.SENTINEL3_OLCI,
     )
     SENTINEL3_SLSTR = DataCollectionDefinition(
         api_id='sentinel-3-slstr',
@@ -417,31 +417,33 @@ class DataCollection(Enum, metaclass=_DataCollectionMeta):
         collection_type=_CollectionType.SENTINEL3,
         sensor_type=_SensorType.SLSTR,
         processing_level=_ProcessingLevel.L1B,
-        bands=_Bands.SENTINEL3_SLSTR,
-        has_cloud_coverage=True
+        bands=Bands.SENTINEL3_SLSTR,
+        metabands=MetaBands.SENTINEL3_SLSTR,
+        has_cloud_coverage=True,
     )
 
     # EOCloud collections (which are only available on a development eocloud service):
     LANDSAT5 = DataCollectionDefinition(
         wfs_id='L5.TILE',
         service_url=ServiceUrl.EOCLOUD,
-        processing_level=_ProcessingLevel.GRD
+        processing_level=_ProcessingLevel.GRD,
     )
     LANDSAT7 = DataCollectionDefinition(
         wfs_id='L7.TILE',
         service_url=ServiceUrl.EOCLOUD,
-        processing_level=_ProcessingLevel.GRD
+        processing_level=_ProcessingLevel.GRD,
     )
     ENVISAT_MERIS = DataCollectionDefinition(
         wfs_id='ENV.TILE',
         service_url=ServiceUrl.EOCLOUD,
-        collection_type=_CollectionType.ENVISAT_MERIS
+        collection_type=_CollectionType.ENVISAT_MERIS,
     )
 
+    # pylint: disable=too-many-locals
     @classmethod
     def define(cls, name, *, api_id=None, catalog_id=None, wfs_id=None, service_url=None, collection_type=None,
                sensor_type=None, processing_level=None, swath_mode=None, polarization=None, resolution=None,
-               orbit_direction=None, timeliness=None, bands=None, collection_id=None, is_timeless=False,
+               orbit_direction=None, timeliness=None, bands=None, metabands=None, collection_id=None, is_timeless=False,
                has_cloud_coverage=False, dem_instance=None):
         """ Define a new data collection
 
@@ -475,8 +477,10 @@ class DataCollection(Enum, metaclass=_DataCollectionMeta):
         :type orbit_direction: str or None
         :param timeliness: A timeliness of data
         :type timeliness: str or None
-        :param bands: Names of data collection bands
-        :type bands: tuple(str) or None
+        :param bands: Information about data collection bands
+        :type bands: tuple(Band) or None
+        :param metabands: Information about data collection metabands
+        :type metabands: tuple(Band) or None
         :param collection_id: An ID of a BYOC or BATCH collection
         :type collection_id: str or None
         :param is_timeless: `True` if a data collection can be filtered by time dimension and `False` otherwise
@@ -504,6 +508,7 @@ class DataCollection(Enum, metaclass=_DataCollectionMeta):
             orbit_direction=orbit_direction,
             timeliness=timeliness,
             bands=bands,
+            metabands=metabands,
             collection_id=collection_id,
             is_timeless=is_timeless,
             has_cloud_coverage=has_cloud_coverage,
@@ -629,9 +634,9 @@ class DataCollection(Enum, metaclass=_DataCollectionMeta):
 
     @property
     def bands(self):
-        """ Provides band names available for the data collection
+        """ Provides band information available for the data collection
 
-        :return: A tuple of band names
+        :return: A tuple of band info
         :rtype: tuple(str)
         :raises: ValueError
         """
@@ -639,12 +644,24 @@ class DataCollection(Enum, metaclass=_DataCollectionMeta):
             raise ValueError(f'Data collection {self.name} does not define bands')
         return self.value.bands
 
+    @property
+    def metabands(self):
+        """ Provides metaband information available for the data collection
+
+        :return: A tuple of metaband info
+        :rtype: tuple(str)
+        :raises: ValueError
+        """
+        if self.value.metabands is None:
+            raise ValueError(f'Data collection {self.name} does not define metabands')
+        return self.value.metabands
+
     def __getattr__(self, item, *args, **kwargs):
         """ The following insures that any attribute from DataCollectionDefinition, which is already not a
         property or an attribute of DataCollection, becomes an attribute of DataCollection
         """
         if not item.startswith('_') and hasattr(self, 'value') and isinstance(self.value, DataCollectionDefinition):
-            definition_dict = asdict(self.value)
+            definition_dict = _shallow_asdict(self.value)
             if item in definition_dict:
                 return definition_dict[item]
 
@@ -660,6 +677,24 @@ class DataCollection(Enum, metaclass=_DataCollectionMeta):
         :rtype: bool
         """
         return self.collection_type == _CollectionType.SENTINEL1
+
+    @property
+    def is_byoc(self):
+        """ Checks if data collection is a BYOC collection type
+
+        :return: `True` if collection is a BYOC collection type and `False` otherwise
+        :rtype: bool
+        """
+        return self.collection_type == _CollectionType.BYOC
+
+    @property
+    def is_batch(self):
+        """ Checks if data collection is a batch collection type
+
+        :return: `True` if collection is a batch collection type and `False` otherwise
+        :rtype: bool
+        """
+        return self.collection_type == _CollectionType.BATCH
 
     def contains_orbit_direction(self, orbit_direction):
         """ Checks if a data collection contains given orbit direction
@@ -688,15 +723,6 @@ class DataCollection(Enum, metaclass=_DataCollectionMeta):
 
         return [data_collection for data_collection in cls
                 if (data_collection.service_url == ServiceUrl.EOCLOUD) == is_eocloud]
-
-
-def _raise_invalid_id(collection_id):
-    """ Checks if a given collection ID conforms to an expected pattern and raises an error if it doesn't
-    """
-    collection_id_pattern = '.{8}-.{4}-.{4}-.{4}-.{12}'
-
-    if not re.compile(collection_id_pattern).match(collection_id):
-        raise ValueError(f'Given collection id does not match the expected format {collection_id_pattern}')
 
 
 DataSource = DataCollection

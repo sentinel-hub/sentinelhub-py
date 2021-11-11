@@ -29,13 +29,23 @@ def byoc_fixture(config):
 
 @pytest.fixture(name='collection')
 def collection_fixture():
-    return {'id': '7453e962-0ee5-4f74-8227-89759fbe9ba9',
-            'userId': '1b639ce6-eb3e-494c-9cb4-2eab3569b121',
-            'name': 'SI LULC Reference',
-            's3Bucket': 'eo-learn.sentinel-hub.com',
-            'additionalData': {'bands': {'lulc_reference': {'bitDepth': 8}},
-                               'maxMetersPerPixel': 800.0},
-            'created': '2020-06-22T12:30:22.814Z'}
+    return {
+        'id': '7453e962-0ee5-4f74-8227-89759fbe9ba9',
+        'userId': '1b639ce6-eb3e-494c-9cb4-2eab3569b121',
+        'name': 'SI LULC Reference',
+        's3Bucket': 'eo-learn.sentinel-hub.com',
+        'additionalData': {
+            'bands': {
+                'lulc_reference': {
+                    'bitDepth': 8,
+                    'source': 'lulc_reference',
+                    'bandIndex': 1
+                }
+            },
+            'maxMetersPerPixel': 800.0,
+            },
+        'created': '2020-06-22T12:30:22.814Z'
+    }
 
 
 @pytest.fixture(name='tile')
@@ -75,6 +85,8 @@ def test_get_collection(byoc, collection):
     sh_collection = byoc.get_collection(collection)
 
     assert isinstance(sh_collection, dict)
+    print(sh_collection)
+    print(collection)
     assert ByocCollection.from_dict(sh_collection) == ByocCollection.from_dict(collection)
 
 
@@ -168,4 +180,14 @@ def test_delete_tile(byoc, collection, tile, requests_mock):
 
     response = byoc.delete_tile(collection=collection, tile=tile)
 
+    assert response == ''
+
+
+def test_reingest_tile(byoc, collection, tile, requests_mock):
+    requests_mock.post('/oauth/token', real_http=True)
+    mocked_url = f'/api/v1/byoc/collections/{collection["id"]}/tiles/{tile["id"]}/reingest'
+
+    requests_mock.post(mocked_url, content=None)
+
+    response = byoc.reingest_tile(collection=collection, tile=tile)
     assert response == ''

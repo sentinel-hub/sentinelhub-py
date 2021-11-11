@@ -18,6 +18,7 @@ from .geometry import BBox, Geometry, BBoxCollection
 from .constants import CustomUrlParam, CRS, MimeType, SHConstants, AwsConstants, ServiceType, ServiceUrl, \
     HistogramType
 from .data_collections import DataCollection, DataSource
+from .data_collections_bands import Band, Unit
 
 from .config import SHConfig
 
