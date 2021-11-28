@@ -182,7 +182,7 @@ TEST_CASES = [
             data_collection=DataCollection.MODIS, data_folder=OUTPUT_FOLDER, image_format=MimeType.TIFF,
             layer='BANDS-MODIS', width=img_width, height=img_height, bbox=wgs84_bbox, time='2017-10-01'
         ),
-        result_len=1, img_min=0.0, img_max=3.2767, img_mean=0.2445, img_median=0.0030, img_std=0.663638, tile_num=1
+        result_len=1, img_min=0.0, img_max=3.2767, img_mean=0.21029216, img_median=0.0027, img_std=0.6494421, tile_num=1
     ),
     OgcTestCase(
         'S1 IW Test', WmsRequest,
