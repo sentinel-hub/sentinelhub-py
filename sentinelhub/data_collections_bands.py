@@ -14,6 +14,7 @@ class Unit(Enum):
     KELVIN = 'KELVIN'
     METERS = 'METERS'
     MOL_M2 = 'MOL_M2'
+    KG_M2 = 'KG_M2'
     DEGREES = 'DEGREES'
     PASCALS = 'PASCALS'
     PERCENT = 'PERCENT'
@@ -24,6 +25,7 @@ class Unit(Enum):
     LINEAR_POWER = 'LINEAR_POWER'
     OPTICAL_DEPTH = 'OPTICAL_DEPTH'
     BRIGHTNESS_TEMPERATURE = 'BRIGHTNESS_TEMPERATURE'
+    HECTOPASCALS = 'HECTOPASCALS'
 
 
 @dataclass(frozen=True)
@@ -131,15 +133,18 @@ class MetaBands:
         *(Band(name, (Unit.DEGREES,), (np.float32,)) for name in [
             'sunAzimuthAngles', 'viewAzimuthMean', 'sunZenithAngles', 'viewZenithMean'
         ]),
-        *(Band(name, (Unit.PERCENT,), (np.uint8,)) for name in ['SCL', 'SNW']),
-        *(Band(name, (Unit.DN,), (np.uint8,)) for name in ['CLD', 'CLP', 'CLM']),
+        *(Band(name, (Unit.PERCENT,), (np.uint8,)) for name in ['SNW', 'CLD']),
+        *(Band(name, (Unit.DN,), (np.uint8,)) for name in ['SCL', 'CLP', 'CLM']),
         Band('dataMask', (Unit.DN,), (bool,)),
     )
-    SENTINEL3_OLCI = (Band('dataMask', (Unit.DN,), (bool,)),)
-    SENTINEL3_SLSTR = (
+    SENTINEL3_OLCI = (
         *(Band(name, (Unit.DEGREES,), (np.float32,)) for name in ['VAA', 'VZA', 'SAA', 'SZA']),
+        Band('HUMIDITY', (Unit.PERCENT,), (np.float32,)),
+        Band('SEA_LEVEL_PRESSURE', (Unit.HECTOPASCALS,), (np.float32,)),
+        *(Band(name, (Unit.KG_M2,), (np.float32,)) for name in ['TOTAL_COLUMN_OZONE', 'TOTAL_COLUMN_WATER_VAPOUR']),
         Band('dataMask', (Unit.DN,), (bool,)),
     )
+    SENTINEL3_SLSTR = (Band('dataMask', (Unit.DN,), (bool,)),)
     SENTINEL5P = (Band('dataMask', (Unit.DN,), (bool,)),)
     LANDSAT_OT_L1 = (
         *(Band(name, (Unit.DN,), (np.uint16,)) for name in ['BQA', 'QA_RADSAT']),
