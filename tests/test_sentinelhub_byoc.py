@@ -43,8 +43,17 @@ def collection_fixture():
                 }
             },
             'maxMetersPerPixel': 800.0,
+            'hasSensingTimes': 'NO',
+            'extent': {
+                'type': 'Polygon',
+                'coordinates': [
+                    [[13.293347498, 45.366449953], [13.293347498, 46.897693758], [16.575424424, 46.897693758],
+                    [16.575424424, 45.366449953], [13.293347498, 45.366449953]]
+                ]
             },
-        'created': '2020-06-22T12:30:22.814Z'
+        },
+        'created': '2020-06-22T12:30:22.814Z',
+        'requiresMetadataUpdate': False
     }
 
 
