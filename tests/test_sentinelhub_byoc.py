@@ -39,7 +39,8 @@ def collection_fixture():
                 'lulc_reference': {
                     'bitDepth': 8,
                     'source': 'lulc_reference',
-                    'bandIndex': 1
+                    'bandIndex': 1,
+                    'sampleFormat': 'UINT'
                 }
             },
             'maxMetersPerPixel': 800.0,
