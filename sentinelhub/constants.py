@@ -342,13 +342,6 @@ class MimeType(Enum):
         :return: A mime type enum
         :rtype: MimeType
         """
-
-        # These two cases are handled seperately due to issues with python 3.6
-        if mime_type_str == 'image/jpeg':
-            return MimeType.JPG
-        if mime_type_str == 'text/plain':
-            return MimeType.TXT
-
         guessed_extension = mimetypes.guess_extension(mime_type_str)
         if guessed_extension:
             mime_type_str = guessed_extension.strip('.')
