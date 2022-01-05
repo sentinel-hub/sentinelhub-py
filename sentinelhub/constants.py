@@ -323,6 +323,11 @@ class MimeType(Enum):
     TAR = 'tar'
     RAW = 'raw'
     SAFE = 'safe'
+    PICKLE = 'pkl'
+    NPY = 'npy'
+    GPKG = 'gpkg'
+    GEOJSON = 'geojson'
+    GZIP = 'gz'
 
     @property
     def extension(self):
@@ -398,10 +403,6 @@ class MimeType(Enum):
         :return: String describing the file format
         :rtype: str
         """
-        if self is MimeType.TAR:
-            return 'application/x-tar'
-        if self is MimeType.JSON:
-            return 'application/json'
         if self is MimeType.JP2:
             return 'image/jpeg2000'
         if self is MimeType.XML:
@@ -409,6 +410,14 @@ class MimeType(Enum):
         if self is MimeType.RAW:
             return self.value
         return mimetypes.types_map['.' + self.value]
+
+    def is_extension_of(self, path: str) -> bool:
+        """ Checks if mime type enum is used as the last file extension in given file path.
+
+        :param path: Path that might have an extension at the end.
+        :return: A boolean value indicating if the file path ends with the expected extension.
+        """
+        return path.endswith(f'.{self.extension}')
 
     def get_expected_max_value(self):
         """ Returns max value of image `MimeType` format and raises an error if it is not an image format
