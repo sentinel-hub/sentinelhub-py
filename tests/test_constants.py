@@ -151,8 +151,8 @@ def test_get_string(mime_type, expected_string):
     (MimeType.NPY, 'some/path/file.npy', True),
     (MimeType.GPKG, 'file.gpkg.gz', False)
 ])
-def test_is_extension_of(mime_type, path, expected_answer):
-    assert mime_type.is_extension_of(path) == expected_answer
+def test_matches_extension(mime_type, path, expected_answer):
+    assert mime_type.matches_extension(path) == expected_answer
 
 
 def test_get_expected_max_value():

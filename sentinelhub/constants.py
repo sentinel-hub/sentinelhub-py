@@ -411,7 +411,7 @@ class MimeType(Enum):
             return self.value
         return mimetypes.types_map['.' + self.value]
 
-    def is_extension_of(self, path: str) -> bool:
+    def matches_extension(self, path: str) -> bool:
         """ Checks if mime type enum is used as the last file extension in given file path.
 
         :param path: Path that might have an extension at the end.
