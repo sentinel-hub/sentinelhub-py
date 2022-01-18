@@ -56,6 +56,7 @@ class SHConfig:
             'geopedia_rest_url': 'https://www.geopedia.world/rest',
             'aws_access_key_id': '',
             'aws_secret_access_key': '',
+            'aws_session_token': '',
             'aws_metadata_url': 'https://roda.sentinel-hub.com',
             'aws_s3_l1c_bucket': 'sentinel-s2-l1c',
             'aws_s3_l2a_bucket': 'sentinel-s2-l2a',
@@ -72,7 +73,8 @@ class SHConfig:
             'sh_client_id',
             'sh_client_secret',
             'aws_access_key_id',
-            'aws_secret_access_key'
+            'aws_secret_access_key',
+            'aws_session_token'
         }
 
         def __init__(self):
