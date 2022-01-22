@@ -11,8 +11,7 @@ import os
 class SHConfig:
     """ A sentinelhub-py package configuration class.
 
-    The class reads during its first initialization the configurable settings from
-    ``./config.json`` file:
+    The class reads during its first initialization the configurable settings from ``./config.json`` file:
 
         - `instance_id`: An instance ID for Sentinel Hub service used for OGC requests.
         - `sh_client_id`: User's OAuth client ID for Sentinel Hub service
@@ -25,6 +24,8 @@ class SHConfig:
         - `geopedia_rest_url`: Base url for Geopedia REST services.
         - `aws_access_key_id`: Access key for AWS Requester Pays buckets.
         - `aws_secret_access_key`: Secret access key for AWS Requester Pays buckets.
+        - `aws_session_token`: A session token for your AWS account. It is only needed when you are using temporary
+          credentials.
         - `aws_metadata_url`: Base url for publicly available metadata files
         - `aws_s3_l1c_bucket`: Name of Sentinel-2 L1C bucket at AWS s3 service.
         - `aws_s3_l2a_bucket`: Name of Sentinel-2 L2A bucket at AWS s3 service.

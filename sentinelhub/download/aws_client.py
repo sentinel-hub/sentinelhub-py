@@ -38,17 +38,14 @@ class AwsDownloadClient(DownloadClient):
     def _get_s3_client(self):
         """ Provides a s3 client object
         """
-        key_args = {}
-        if self.config.aws_access_key_id and self.config.aws_secret_access_key:
-            key_args = {
-                'aws_access_key_id': self.config.aws_access_key_id,
-                'aws_secret_access_key': self.config.aws_secret_access_key,
-                'aws_session_token': self.config.aws_session_token
-            }
-
         warnings.filterwarnings('ignore', category=ResourceWarning, message='unclosed.*<ssl.SSLSocket.*>')
         try:
-            s3_client = boto3.Session().client('s3', **key_args)
+            s3_client = boto3.Session().client(
+                's3',
+                aws_access_key_id=self.config.aws_access_key_id or None,
+                aws_secret_access_key=self.config.aws_secret_access_key or None,
+                aws_session_token=self.config.aws_session_token or None
+            )
             AwsDownloadClient.GLOBAL_S3_CLIENT = s3_client
         except KeyError as exception:  # Sometimes creation of client fails and we use the global client if it exists
             if AwsDownloadClient.GLOBAL_S3_CLIENT is None:
