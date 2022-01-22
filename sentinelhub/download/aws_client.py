@@ -42,7 +42,8 @@ class AwsDownloadClient(DownloadClient):
         if self.config.aws_access_key_id and self.config.aws_secret_access_key:
             key_args = {
                 'aws_access_key_id': self.config.aws_access_key_id,
-                'aws_secret_access_key': self.config.aws_secret_access_key
+                'aws_secret_access_key': self.config.aws_secret_access_key,
+                'aws_session_token': self.config.aws_session_token
             }
 
         warnings.filterwarnings('ignore', category=ResourceWarning, message='unclosed.*<ssl.SSLSocket.*>')
