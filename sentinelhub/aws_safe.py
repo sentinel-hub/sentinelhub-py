@@ -219,12 +219,22 @@ class SafeTile(AwsTile):
                     safe[main_folder][AwsConstants.IMG_DATA][resolution][self.get_img_name(band, resolution)] =\
                         self.get_url(band_name)
 
+        # account for changes in data format and naming in S2 v04.00 (20220125)
+        if self.baseline >= '04.00':
+            qi_list = AwsConstants.QI_LIST_v4
+            qi_data_format = MimeType.JP2
+        else:
+            qi_list = AwsConstants.QI_LIST
+            qi_data_format = MimeType.GML
+
         safe[main_folder][AwsConstants.QI_DATA] = {}
-        safe[main_folder][AwsConstants.QI_DATA][self.get_qi_name('CLOUDS')] = self.get_gml_url('CLOUDS')
-        for qi_type in AwsConstants.QI_LIST:
+        safe[main_folder][AwsConstants.QI_DATA][self.get_qi_name('CLOUDS', data_format=qi_data_format)] = \
+            self.get_gml_url('CLOUDS', data_format=qi_data_format)
+
+        for qi_type in qi_list:
             for band in AwsConstants.S2_L1C_BANDS:
-                safe[main_folder][AwsConstants.QI_DATA][self.get_qi_name(qi_type, band)] = self.get_gml_url(qi_type,
-                                                                                                            band)
+                safe[main_folder][AwsConstants.QI_DATA][self.get_qi_name(qi_type, band, data_format=qi_data_format)] = \
+                    self.get_gml_url(qi_type, band, data_format=qi_data_format)
 
         if self.has_reports():
             for metafile in AwsConstants.QUALITY_REPORTS:
