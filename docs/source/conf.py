@@ -137,6 +137,11 @@ html_logo = './sentinel-hub-by_sinergise-dark_background.png'
 #    ]
 # }
 
+# analytics 
+html_js_files = [
+    ('https://cdn.usefathom.com/script.js', {'data-site': 'BILSIGFB', 'defer':'defer'})
+]
+
 
 # -- Options for HTMLHelp output ------------------------------------------
 
