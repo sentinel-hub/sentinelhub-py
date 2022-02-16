@@ -19,9 +19,9 @@ class FisService(OgcImageService):
     """
 
     def __init__(self, *args, **kwargs):
-        message = f'Fis service is being deprecated in favour of SentinelHubStatistical. ' \
-                  f'Although no immediate action is needed as FIS is still supported, consider switching to ' \
-                  f'Statistical API because it provides additional functionalities.'
+        message = 'Fis service is being deprecated in favour of SentinelHubStatistical. ' \
+                  'Although no immediate action is needed as FIS is still supported, consider switching to ' \
+                  'Statistical API because it provides additional functionalities.'
         warnings.warn(message, category=SHDeprecationWarning)
 
         super().__init__(*args, **kwargs)
