@@ -2,9 +2,11 @@
 Module for working with Sentinel Hub FIS service
 """
 import logging
+import warnings
 
 from .download import DownloadRequest
 from .constants import MimeType, SHConstants, RequestType
+from .exceptions import SHDeprecationWarning
 from .ogc import OgcImageService
 
 LOGGER = logging.getLogger(__name__)
@@ -15,6 +17,15 @@ class FisService(OgcImageService):
 
     Intermediate layer between FIS requests and the Sentinel Hub FIS services.
     """
+
+    def __init__(self, *args, **kwargs):
+        message = f'Fis service is being deprecated in favour of SentinelHubStatistical. ' \
+                  f'Although no immediate action is needed as FIS is still supported, consider switching to ' \
+                  f'Statistical API because it provides additional functionalities.'
+        warnings.warn(message, category=SHDeprecationWarning)
+
+        super().__init__(*args, **kwargs)
+
     def get_request(self, request):
         """ Get download requests
 
@@ -30,7 +41,6 @@ class FisService(OgcImageService):
         return [self._create_request(request=request, geometry=geometry) for geometry in request.geometry_list]
 
     def _create_request(self, request, geometry):
-
         url = self.get_base_url(request)
 
         headers = {'Content-Type': MimeType.JSON.get_string(), **SHConstants.HEADERS}
