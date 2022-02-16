@@ -25,6 +25,7 @@ class Unit(Enum):
     LINEAR_POWER = 'LINEAR_POWER'
     OPTICAL_DEPTH = 'OPTICAL_DEPTH'
     BRIGHTNESS_TEMPERATURE = 'BRIGHTNESS_TEMPERATURE'
+    SURFACE_TEMPERATURE = 'SURFACE_TEMPERATURE'
     HECTOPASCALS = 'HECTOPASCALS'
 
 
@@ -86,7 +87,7 @@ class Bands:
     )
     LANDSAT_OT_L2 = (
         *(Band(f'B0{index}', (Unit.REFLECTANCE,), (np.float32,)) for index in range(1, 8)),
-        Band('B10', (Unit.KELVIN,), (np.float32,))
+        Band('B10', (Unit.SURFACE_TEMPERATURE,), (np.float32,))
     )
     LANDSAT_ETM_L1 = (
         *(Band(f'B0{index}', (Unit.REFLECTANCE,), (np.float32,)) for index in range(1, 6)),
@@ -95,7 +96,7 @@ class Bands:
     )
     LANDSAT_ETM_L2 = (
         *(Band(f'B0{index}', (Unit.REFLECTANCE,), (np.float32,)) for index in range(1, 6)),
-        Band('B06', (Unit.KELVIN,), (np.float32,)), Band('B07', (Unit.REFLECTANCE,), (np.float32,))
+        Band('B06', (Unit.SURFACE_TEMPERATURE,), (np.float32,)), Band('B07', (Unit.REFLECTANCE,), (np.float32,))
     )
     LANDSAT_TM_L1 = (
         *(Band(f'B0{index}', (Unit.REFLECTANCE,), (np.float32,)) for index in range(1, 6)),
@@ -103,7 +104,7 @@ class Bands:
     )
     LANDSAT_TM_L2 = (
         *(Band(f'B0{index}', (Unit.REFLECTANCE,), (np.float32,)) for index in range(1, 6)),
-        Band('B06', (Unit.KELVIN,), (np.float32,)), Band('B07', (Unit.REFLECTANCE,), (np.float32,))
+        Band('B06', (Unit.SURFACE_TEMPERATURE,), (np.float32,)), Band('B07', (Unit.REFLECTANCE,), (np.float32,))
     )
     LANDSAT_MSS_L1 = tuple(
         Band(f'B0{index}', (Unit.REFLECTANCE,), (np.float32,)) for index in range(1, 5)
