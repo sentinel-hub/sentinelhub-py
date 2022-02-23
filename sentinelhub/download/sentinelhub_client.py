@@ -56,7 +56,9 @@ class SentinelHubDownloadClient(DownloadClient):
     @retry_temporary_errors
     @fail_user_errors
     def _execute_download(self, request):
-        """Executes the download with a single thread and uses a rate limit object, which is shared between all threads"""
+        """
+        Executes the download with a single thread and uses a rate limit object, which is shared between all threads
+        """
         while True:
             sleep_time = self._execute_thread_safe(self.rate_limit.register_next)
 

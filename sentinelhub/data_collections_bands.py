@@ -44,7 +44,9 @@ class Band:
 
 
 class Bands:
-    """Different collections of bands taken from `Sentinel Hub docs <https://docs.sentinel-hub.com/api/latest/data/>`__"""
+    """
+    Different collections of bands taken from `Sentinel Hub docs <https://docs.sentinel-hub.com/api/latest/data/>`__
+    """
 
     SENTINEL1_IW = (
         Band("VV", (Unit.LINEAR_POWER,), (np.float32,)),
@@ -113,7 +115,9 @@ class Bands:
 
 
 class MetaBands:
-    """Different collections of bands taken from `Sentinel Hub docs <https://docs.sentinel-hub.com/api/latest/data/>`__"""
+    """
+    Different collections of bands taken from `Sentinel Hub docs <https://docs.sentinel-hub.com/api/latest/data/>`__
+    """
 
     SENTINEL1 = (
         *(Band(name, (Unit.DN,), (np.float32,)) for name in ["localIncidenceAngle", "scatteringArea"]),
