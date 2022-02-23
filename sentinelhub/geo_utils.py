@@ -12,7 +12,7 @@ ERR = 0.1
 
 
 def bbox_to_dimensions(bbox, resolution):
-    """ Calculates width and height in pixels for a given bbox of a given pixel resolution (in meters). The result is
+    """Calculates width and height in pixels for a given bbox of a given pixel resolution (in meters). The result is
     rounded to nearest integers
 
     :param bbox: bounding box
@@ -33,7 +33,7 @@ def bbox_to_dimensions(bbox, resolution):
 
 
 def bbox_to_resolution(bbox, width, height, meters=True):
-    """ Calculates pixel resolution for a given bbox of a given width and height. By default it returns result in
+    """Calculates pixel resolution for a given bbox of a given width and height. By default it returns result in
     meters.
 
     :param bbox: bounding box
@@ -56,7 +56,7 @@ def bbox_to_resolution(bbox, width, height, meters=True):
 
 
 def get_image_dimension(bbox, width=None, height=None):
-    """ Given bounding box and one of the parameters width or height it will return the other parameter that will best
+    """Given bounding box and one of the parameters width or height it will return the other parameter that will best
     fit the bounding box dimensions
 
     :param bbox: bounding box
@@ -77,7 +77,7 @@ def get_image_dimension(bbox, width=None, height=None):
 
 
 def to_utm_bbox(bbox):
-    """ Transform bbox into UTM CRS
+    """Transform bbox into UTM CRS
 
     :param bbox: bounding box
     :type bbox: geometry.BBox
@@ -92,7 +92,7 @@ def to_utm_bbox(bbox):
 
 
 def get_utm_bbox(img_bbox, transform):
-    """ Get UTM coordinates given a bounding box in pixels and a transform
+    """Get UTM coordinates given a bounding box in pixels and a transform
 
     :param img_bbox: boundaries of bounding box in pixels as `[row1, col1, row2, col2]`
     :type img_bbox: list
@@ -107,7 +107,7 @@ def get_utm_bbox(img_bbox, transform):
 
 
 def wgs84_to_utm(lng, lat, utm_crs=None):
-    """ Convert WGS84 coordinates to UTM. If UTM CRS is not set it will be calculated automatically.
+    """Convert WGS84 coordinates to UTM. If UTM CRS is not set it will be calculated automatically.
 
     :param lng: longitude in WGS84 system
     :type lng: float
@@ -124,7 +124,7 @@ def wgs84_to_utm(lng, lat, utm_crs=None):
 
 
 def to_wgs84(east, north, crs):
-    """ Convert any CRS with (east, north) coordinates to WGS84
+    """Convert any CRS with (east, north) coordinates to WGS84
 
     :param east: east coordinate
     :type east: float
@@ -139,7 +139,7 @@ def to_wgs84(east, north, crs):
 
 
 def utm_to_pixel(east, north, transform, truncate=True):
-    """ Convert UTM coordinate to image coordinate given a transform
+    """Convert UTM coordinate to image coordinate given a transform
 
     :param east: east coordinate of point
     :type east: float
@@ -160,7 +160,7 @@ def utm_to_pixel(east, north, transform, truncate=True):
 
 
 def pixel_to_utm(row, column, transform):
-    """ Convert pixel coordinate to UTM coordinate given a transform
+    """Convert pixel coordinate to UTM coordinate given a transform
 
     :param row: row pixel coordinate
     :type row: int or float
@@ -177,7 +177,7 @@ def pixel_to_utm(row, column, transform):
 
 
 def wgs84_to_pixel(lng, lat, transform, utm_epsg=None, truncate=True):
-    """ Convert WGS84 coordinates to pixel image coordinates given transform and UTM CRS. If no CRS is given it will be
+    """Convert WGS84 coordinates to pixel image coordinates given transform and UTM CRS. If no CRS is given it will be
     calculated it automatically.
 
     :param lng: longitude of point
@@ -199,7 +199,7 @@ def wgs84_to_pixel(lng, lat, transform, utm_epsg=None, truncate=True):
 
 
 def get_utm_crs(lng, lat, source_crs=CRS.WGS84):
-    """ Get CRS for UTM zone in which (lat, lng) is contained.
+    """Get CRS for UTM zone in which (lat, lng) is contained.
 
     :param lng: longitude
     :type lng: float
@@ -216,7 +216,7 @@ def get_utm_crs(lng, lat, source_crs=CRS.WGS84):
 
 
 def transform_point(point, source_crs, target_crs, always_xy=True):
-    """ Maps point form src_crs to tgt_crs
+    """Maps point form src_crs to tgt_crs
 
     :param point: a tuple `(x, y)`
     :type point: (float, float)

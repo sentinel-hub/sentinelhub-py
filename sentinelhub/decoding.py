@@ -16,11 +16,11 @@ from .constants import MimeType
 from .exceptions import ImageDecodingError
 
 
-warnings.simplefilter('ignore', Image.DecompressionBombWarning)
+warnings.simplefilter("ignore", Image.DecompressionBombWarning)
 
 
 def decode_data(response_content, data_type):
-    """ Interprets downloaded data and returns it.
+    """Interprets downloaded data and returns it.
 
     :param response_content: downloaded data (i.e. json, png, tiff, xml, zip, ... file)
     :type response_content: bytes
@@ -31,7 +31,7 @@ def decode_data(response_content, data_type):
     :raises: ValueError
     """
     if data_type is MimeType.JSON:
-        response_text = response_content.decode('utf-8')
+        response_text = response_content.decode("utf-8")
         if not response_text:
             return response_text
         return json.loads(response_text)
@@ -46,14 +46,14 @@ def decode_data(response_content, data_type):
         return {
             MimeType.RAW: response_content,
             MimeType.TXT: response_content,
-            MimeType.ZIP: BytesIO(response_content)
+            MimeType.ZIP: BytesIO(response_content),
         }[data_type]
     except KeyError as exception:
-        raise ValueError(f'Decoding data format {data_type} is not supported') from exception
+        raise ValueError(f"Decoding data format {data_type} is not supported") from exception
 
 
 def decode_image(data, image_type):
-    """ Decodes the image provided in various formats, i.e. png, 16-bit float tiff, 32-bit float tiff, jp2
+    """Decodes the image provided in various formats, i.e. png, 16-bit float tiff, 32-bit float tiff, jp2
     and returns it as an numpy array
 
     :param data: image in its original format
@@ -78,12 +78,12 @@ def decode_image(data, image_type):
                 pass
 
     if image is None:
-        raise ImageDecodingError('Unable to decode image')
+        raise ImageDecodingError("Unable to decode image")
     return image
 
 
 def decode_tar(data):
-    """ A decoder to convert response bytes into a dictionary of {filename: value}
+    """A decoder to convert response bytes into a dictionary of {filename: value}
 
     :param data: Data to decode
     :type data: bytes or IOBase
@@ -100,7 +100,7 @@ def decode_tar(data):
 
 
 def decode_sentinelhub_err_msg(response):
-    """ Decodes error message from Sentinel Hub service
+    """Decodes error message from Sentinel Hub service
 
     :param response: Sentinel Hub service response
     :type response: requests.Response
@@ -110,15 +110,15 @@ def decode_sentinelhub_err_msg(response):
     try:
         server_message = []
         for elem in decode_data(response.content, MimeType.XML):
-            if 'ServiceException' in elem.tag or 'Message' in elem.tag:
-                server_message.append(elem.text.strip('\n\t '))
-        return ''.join(server_message)
+            if "ServiceException" in elem.tag or "Message" in elem.tag:
+                server_message.append(elem.text.strip("\n\t "))
+        return "".join(server_message)
     except ElementTree.ParseError:
         return response.text
 
 
 def get_jp2_bit_depth(stream):
-    """ Reads bit encoding depth of jpeg2000 file in binary stream format
+    """Reads bit encoding depth of jpeg2000 file in binary stream format
 
     :param stream: binary stream format
     :type stream: Binary I/O (e.g. io.BytesIO, io.BufferedReader, ...)
@@ -129,18 +129,18 @@ def get_jp2_bit_depth(stream):
     while True:
         read_buffer = stream.read(8)
         if len(read_buffer) < 8:
-            raise ValueError('Image Header Box not found in Jpeg2000 file')
+            raise ValueError("Image Header Box not found in Jpeg2000 file")
 
-        _, box_id = struct.unpack('>I4s', read_buffer)
+        _, box_id = struct.unpack(">I4s", read_buffer)
 
-        if box_id == b'ihdr':
+        if box_id == b"ihdr":
             read_buffer = stream.read(14)
-            params = struct.unpack('>IIHBBBB', read_buffer)
-            return (params[3] & 0x7f) + 1
+            params = struct.unpack(">IIHBBBB", read_buffer)
+            return (params[3] & 0x7F) + 1
 
 
 def fix_jp2_image(image, bit_depth):
-    """ Because Pillow library incorrectly reads JPEG 2000 images with 15-bit encoding this function corrects the
+    """Because Pillow library incorrectly reads JPEG 2000 images with 15-bit encoding this function corrects the
     values in image.
 
     :param image: image read by opencv library
@@ -156,20 +156,23 @@ def fix_jp2_image(image, bit_depth):
         try:
             return image >> 1
         except TypeError as exception:
-            raise IOError('Failed to read JPEG 2000 image correctly. Most likely reason is that Pillow did not '
-                          'install OpenJPEG library correctly. Try reinstalling Pillow from a wheel') from exception
+            raise IOError(
+                "Failed to read JPEG 2000 image correctly. Most likely reason is that Pillow did not "
+                "install OpenJPEG library correctly. Try reinstalling Pillow from a wheel"
+            ) from exception
 
-    raise ValueError(f'Bit depth {bit_depth} of jp2 image is currently not supported. '
-                     'Please raise an issue on package Github page')
+    raise ValueError(
+        f"Bit depth {bit_depth} of jp2 image is currently not supported. Please raise an issue on package Github page"
+    )
 
 
 def get_data_format(filename):
-    """ Util function to guess format from filename extension
+    """Util function to guess format from filename extension
 
     :param filename: name of file
     :type filename: str
     :return: file extension
     :rtype: MimeType
     """
-    fmt_ext = filename.split('.')[-1]
+    fmt_ext = filename.split(".")[-1]
     return MimeType.from_string(fmt_ext)

@@ -24,11 +24,12 @@ LOGGER = logging.getLogger(__name__)
 
 
 class DataRequest(ABC):
-    """ Abstract class for all Sentinel Hub data requests.
+    """Abstract class for all Sentinel Hub data requests.
 
     Every data request type can write the fetched data to disk and then read it again (and hence avoid the need to
     download the same data again).
     """
+
     def __init__(self, download_client_class, *, data_folder=None, config=None):
         """
         :param download_client_class: A class implementing a download client
@@ -48,8 +49,7 @@ class DataRequest(ABC):
 
     @abstractmethod
     def create_request(self):
-        """ An abstract method for logic of creating download requests
-        """
+        """An abstract method for logic of creating download requests"""
         raise NotImplementedError
 
     def get_download_list(self):
@@ -62,7 +62,7 @@ class DataRequest(ABC):
         return self.download_list
 
     def get_filename_list(self):
-        """ Returns a list of file names (or paths relative to `data_folder`) where the requested data will be saved
+        """Returns a list of file names (or paths relative to `data_folder`) where the requested data will be saved
         or read from, if it has already been downloaded and saved.
 
         :return: A list of filenames
@@ -80,17 +80,26 @@ class DataRequest(ABC):
         return [request.url for request in self.download_list]
 
     def is_valid_request(self):
-        """ Checks if initialized class instance successfully prepared a list of items to download
+        """Checks if initialized class instance successfully prepared a list of items to download
 
         :return: `True` if request is valid and `False` otherwise
         :rtype: bool
         """
-        return isinstance(self.download_list, list) and \
-            all(isinstance(request, DownloadRequest) for request in self.download_list)
+        return isinstance(self.download_list, list) and all(
+            isinstance(request, DownloadRequest) for request in self.download_list
+        )
 
-    def get_data(self, *, save_data=False, redownload=False, data_filter=None, max_threads=None,
-                 decode_data=True, raise_download_errors=True):
-        """ Get requested data either by downloading it or by reading it from the disk (if it
+    def get_data(
+        self,
+        *,
+        save_data=False,
+        redownload=False,
+        data_filter=None,
+        max_threads=None,
+        decode_data=True,
+        raise_download_errors=True,
+    ):
+        """Get requested data either by downloading it or by reading it from the disk (if it
         was previously downloaded and saved).
 
         :param save_data: flag to turn on/off saving of data to disk. Default is `False`.
@@ -116,11 +125,12 @@ class DataRequest(ABC):
         :rtype: list of numpy arrays
         """
         self._preprocess_request(save_data, True)
-        return self._execute_data_download(data_filter, redownload, max_threads, raise_download_errors,
-                                           decode_data=decode_data)
+        return self._execute_data_download(
+            data_filter, redownload, max_threads, raise_download_errors, decode_data=decode_data
+        )
 
     def save_data(self, *, data_filter=None, redownload=False, max_threads=None, raise_download_errors=False):
-        """ Saves data to disk. If ``redownload=True`` then the data is redownloaded using ``max_threads`` workers.
+        """Saves data to disk. If ``redownload=True`` then the data is redownloaded using ``max_threads`` workers.
 
         :param data_filter: Used to specify which items will be returned by the method and in which order. E.g. with
             `data_filter=[0, 2, -1]` the method will return only 1st, 3rd and last item. Default filter is `None`.
@@ -138,7 +148,7 @@ class DataRequest(ABC):
         self._execute_data_download(data_filter, redownload, max_threads, raise_download_errors)
 
     def _execute_data_download(self, data_filter, redownload, max_threads, raise_download_errors, decode_data=True):
-        """ Calls download module and executes the download process
+        """Calls download module and executes the download process
 
         :param data_filter: Used to specify which items will be returned by the method and in which order. E.g. with
             `data_filter=[0, 2, -1]` the method will return only 1st, 3rd and last item. Default filter is `None`.
@@ -164,17 +174,15 @@ class DataRequest(ABC):
             try:
                 filtered_download_list = [self.download_list[index] for index in data_filter]
             except IndexError as exception:
-                raise IndexError('Indices of data_filter are out of range') from exception
+                raise IndexError("Indices of data_filter are out of range") from exception
 
             filtered_download_list, mapping_list = self._filter_repeating_items(filtered_download_list)
             is_repeating_filter = len(filtered_download_list) < len(mapping_list)
         else:
-            raise ValueError('data_filter parameter must be a list of indices')
+            raise ValueError("data_filter parameter must be a list of indices")
 
         client = self.download_client_class(
-            redownload=redownload,
-            raise_download_errors=raise_download_errors,
-            config=self.config
+            redownload=redownload, raise_download_errors=raise_download_errors, config=self.config
         )
         data_list = client.download(filtered_download_list, max_threads=max_threads, decode_data=decode_data)
 
@@ -185,7 +193,7 @@ class DataRequest(ABC):
 
     @staticmethod
     def _filter_repeating_items(download_list):
-        """ Because of data_filter some requests in download list might be the same. In order not to download them again
+        """Because of data_filter some requests in download list might be the same. In order not to download them again
         this method will reduce the list of requests. It will also return a mapping list which can be used to
         reconstruct the previous list of download requests.
 
@@ -205,7 +213,7 @@ class DataRequest(ABC):
         return unique_download_list, mapping_list
 
     def _preprocess_request(self, save_data, return_data):
-        """ Prepares requests for download and creates empty folders
+        """Prepares requests for download and creates empty folders
 
         :param save_data: Tells whether to save data or not
         :type save_data: bool
@@ -213,11 +221,13 @@ class DataRequest(ABC):
         :type return_data: bool
         """
         if not self.is_valid_request():
-            raise ValueError('Cannot obtain data because request is invalid')
+            raise ValueError("Cannot obtain data because request is invalid")
 
         if save_data and self.data_folder is None:
-            raise ValueError('Request parameter `data_folder` is not specified. '
-                             'In order to save data please set `data_folder` to location on your disk.')
+            raise ValueError(
+                "Request parameter `data_folder` is not specified. "
+                "In order to save data please set `data_folder` to location on your disk."
+            )
 
         for download_request in self.download_list:
             download_request.save_response = save_data
@@ -230,11 +240,25 @@ class DataRequest(ABC):
 
 
 class OgcRequest(DataRequest):
-    """ The base class for OGC-type requests (WMS and WCS) where all common parameters are defined
-    """
-    def __init__(self, layer, bbox, *, time='latest', service_type=None, data_collection=None,
-                 size_x=None, size_y=None, maxcc=1.0, image_format=MimeType.PNG, custom_url_params=None,
-                 time_difference=datetime.timedelta(seconds=-1), data_source=None, **kwargs):
+    """The base class for OGC-type requests (WMS and WCS) where all common parameters are defined"""
+
+    def __init__(
+        self,
+        layer,
+        bbox,
+        *,
+        time="latest",
+        service_type=None,
+        data_collection=None,
+        size_x=None,
+        size_y=None,
+        maxcc=1.0,
+        image_format=MimeType.PNG,
+        custom_url_params=None,
+        time_difference=datetime.timedelta(seconds=-1),
+        data_source=None,
+        **kwargs,
+    ):
         """
         :param layer: An ID of a layer configured in Sentinel Hub Dashboard. It has to be configured for the same
             instance ID which will be used for this request. Also the satellite collection of the layer in Dashboard
@@ -288,8 +312,9 @@ class OgcRequest(DataRequest):
         self.layer = layer
         self.bbox = bbox
         self.time = time
-        self.data_collection = DataCollection(handle_deprecated_data_source(data_collection, data_source,
-                                                                            default=DataCollection.SENTINEL2_L1C))
+        self.data_collection = DataCollection(
+            handle_deprecated_data_source(data_collection, data_source, default=DataCollection.SENTINEL2_L1C)
+        )
         self.maxcc = maxcc
         self.image_format = MimeType(image_format)
         self.service_type = service_type
@@ -306,19 +331,19 @@ class OgcRequest(DataRequest):
         super().__init__(SentinelHubDownloadClient, **kwargs)
 
     def _check_custom_url_parameters(self):
-        """ Checks if custom url parameters are valid parameters.
+        """Checks if custom url parameters are valid parameters.
 
         Throws ValueError if the provided parameter is not a valid parameter.
         """
         for param in self.custom_url_params:
             if param not in CustomUrlParam:
-                raise ValueError(f'Parameter {param} is not a valid custom url parameter. Please check and fix.')
+                raise ValueError(f"Parameter {param} is not a valid custom url parameter. Please check and fix.")
 
         if self.service_type is ServiceType.FIS and CustomUrlParam.GEOMETRY in self.custom_url_params:
-            raise ValueError(f'{CustomUrlParam.GEOMETRY} should not be a custom url parameter of a FIS request')
+            raise ValueError(f"{CustomUrlParam.GEOMETRY} should not be a custom url parameter of a FIS request")
 
     def create_request(self, reset_wfs_iterator=False):
-        """ Set download requests
+        """Set download requests
 
         Create a list of DownloadRequests for all Sentinel-2 acquisitions within request's time interval and
         acceptable cloud coverage.
@@ -336,7 +361,7 @@ class OgcRequest(DataRequest):
         self.wfs_iterator = ogc_service.get_wfs_iterator()
 
     def get_dates(self):
-        """ Get list of dates
+        """Get list of dates
 
         List of all available Sentinel-2 acquisitions for given bbox with max cloud coverage and the specified
         time interval. When a single time is specified the request will return that specific date, if it exists.
@@ -350,7 +375,7 @@ class OgcRequest(DataRequest):
         return OgcImageService(config=self.config).get_dates(self)
 
     def get_tiles(self):
-        """ Returns iterator over info about all satellite tiles used for the OgcRequest
+        """Returns iterator over info about all satellite tiles used for the OgcRequest
 
         :return: Iterator of dictionaries containing info about all satellite tiles used in the request. In case of
                  DataCollection.DEM it returns None.
@@ -360,7 +385,7 @@ class OgcRequest(DataRequest):
 
 
 class WmsRequest(OgcRequest):
-    """ Web Map Service request class
+    """Web Map Service request class
 
     Creates an instance of Sentinel Hub WMS (Web Map Service) GetMap request,
     which provides access to Sentinel-2's unprocessed bands (B01, B02, ..., B08, B8A, ..., B12)
@@ -374,6 +399,7 @@ class WmsRequest(OgcRequest):
     More info available at:
     https://www.sentinel-hub.com/develop/documentation/api/ogc_api/wms-parameters
     """
+
     def __init__(self, *, width=None, height=None, **kwargs):
         """
         :param width: width (number of columns) of the returned image (array)
@@ -431,7 +457,7 @@ class WmsRequest(OgcRequest):
 
 
 class WcsRequest(OgcRequest):
-    """ Web Coverage Service request class
+    """Web Coverage Service request class
 
     Creates an instance of Sentinel Hub WCS (Web Coverage Service) GetCoverage request,
     which provides access to Sentinel-2's unprocessed bands (B01, B02, ..., B08, B8A, ..., B12)
@@ -442,7 +468,8 @@ class WcsRequest(OgcRequest):
     More info available at:
     https://www.sentinel-hub.com/develop/documentation/api/ogc_api/wcs-request
     """
-    def __init__(self, *, resx='10m', resy='10m', **kwargs):
+
+    def __init__(self, *, resx="10m", resy="10m", **kwargs):
         """
         :param resx: resolution in x (resolution of a column) given in meters in the format (examples ``10m``,
             ``20m``, ...). Default is ``10m``, which is the best native resolution of some Sentinel-2 bands.
@@ -502,7 +529,7 @@ class WcsRequest(OgcRequest):
 
 
 class FisRequest(OgcRequest):
-    """ The Statistical info (or feature info service, abbreviated FIS) request class
+    """The Statistical info (or feature info service, abbreviated FIS) request class
 
     The Statistical info (or feature info service, abbreviated FIS), performs elementary statistical
     computations---such as mean, standard deviation, and histogram approximating the distribution of reflectance
@@ -515,7 +542,8 @@ class FisRequest(OgcRequest):
     More info available at:
     https://www.sentinel-hub.com/develop/documentation/api/ogc_api/wcs-request
     """
-    def __init__(self, layer, time, geometry_list, *, resolution='10m', bins=None, histogram_type=None, **kwargs):
+
+    def __init__(self, layer, time, geometry_list, *, resolution="10m", bins=None, histogram_type=None, **kwargs):
         """
         :param layer: An ID of a layer configured in Sentinel Hub Dashboard. It has to be configured for the same
             instance ID which will be used for this request. Also the satellite collection of the layer in Dashboard
@@ -565,7 +593,7 @@ class FisRequest(OgcRequest):
         super().__init__(bbox=None, layer=layer, time=time, service_type=ServiceType.FIS, **kwargs)
 
     def create_request(self):
-        """ Set download requests
+        """Set download requests
 
         Create a list of DownloadRequests for all Sentinel-2 acquisitions within request's time interval and
         acceptable cloud coverage.
@@ -574,19 +602,17 @@ class FisRequest(OgcRequest):
         self.download_list = fis_service.get_request(self)
 
     def get_dates(self):
-        """ This method is not supported for FIS request
-        """
+        """This method is not supported for FIS request"""
         raise NotImplementedError
 
     def get_tiles(self):
-        """ This method is not supported for FIS request
-        """
+        """This method is not supported for FIS request"""
         raise NotImplementedError
 
 
 class GeopediaRequest(DataRequest):
-    """ The base class for Geopedia requests where all common parameters are defined.
-    """
+    """The base class for Geopedia requests where all common parameters are defined."""
+
     def __init__(self, layer, service_type, *, bbox=None, theme=None, image_format=MimeType.PNG, **kwargs):
         """
         :param layer: Geopedia layer which contains requested data
@@ -610,8 +636,9 @@ class GeopediaRequest(DataRequest):
 
         self.bbox = bbox
         if bbox.crs is not CRS.POP_WEB:
-            raise ValueError('Geopedia Request at the moment supports only bounding boxes with coordinates in '
-                             f'{CRS.POP_WEB}')
+            raise ValueError(
+                f"Geopedia Request at the moment supports only bounding boxes with coordinates in {CRS.POP_WEB}"
+            )
 
         self.theme = theme
         self.image_format = MimeType(image_format)
@@ -624,11 +651,12 @@ class GeopediaRequest(DataRequest):
 
 
 class GeopediaWmsRequest(GeopediaRequest):
-    """ Web Map Service request class for Geopedia
+    """Web Map Service request class for Geopedia
 
     Creates an instance of Geopedia's WMS (Web Map Service) GetMap request, which provides access to WMS layers in
     Geopedia.
     """
+
     def __init__(self, layer, theme, bbox, *, width=None, height=None, **kwargs):
         """
         :param layer: Geopedia layer which contains requested data
@@ -655,7 +683,7 @@ class GeopediaWmsRequest(GeopediaRequest):
         super().__init__(layer=layer, theme=theme, bbox=bbox, service_type=ServiceType.WMS, **kwargs)
 
     def create_request(self):
-        """ Set download requests
+        """Set download requests
 
         Create a list of DownloadRequests for all Sentinel-2 acquisitions within request's time interval and
         acceptable cloud coverage.
@@ -665,8 +693,8 @@ class GeopediaWmsRequest(GeopediaRequest):
 
 
 class GeopediaImageRequest(GeopediaRequest):
-    """ Request to access data in a Geopedia vector / raster layer.
-    """
+    """Request to access data in a Geopedia vector / raster layer."""
+
     def __init__(self, *, image_field_name, keep_image_names=True, gpd_session=None, **kwargs):
         """
         :param image_field_name: Name of the field in the data table which holds images
@@ -700,7 +728,7 @@ class GeopediaImageRequest(GeopediaRequest):
         super().__init__(service_type=ServiceType.IMAGE, **kwargs)
 
     def create_request(self, reset_gpd_iterator=False):
-        """ Set a list of download requests
+        """Set a list of download requests
 
         Set a list of DownloadRequests for all images that are under the
         given property of the Geopedia's Vector layer.
@@ -718,7 +746,7 @@ class GeopediaImageRequest(GeopediaRequest):
         self.gpd_iterator = gpd_service.get_gpd_iterator()
 
     def get_items(self):
-        """ Returns iterator over info about data used for this request
+        """Returns iterator over info about data used for this request
 
         :return: Iterator of dictionaries containing info about data used in
                  this request.
@@ -728,13 +756,14 @@ class GeopediaImageRequest(GeopediaRequest):
 
 
 class AwsRequest(DataRequest):
-    """ The base class for Amazon Web Service request classes. Common parameters are defined here.
+    """The base class for Amazon Web Service request classes. Common parameters are defined here.
 
     Collects and provides data from AWS.
 
     AWS database is available at:
     http://sentinel-s2-l1c.s3-website.eu-central-1.amazonaws.com/
     """
+
     def __init__(self, *, bands=None, metafiles=None, safe_format=False, **kwargs):
         """
         :param bands: List of Sentinel-2 bands for request. If `None` all bands will be obtained
@@ -770,11 +799,12 @@ class AwsRequest(DataRequest):
 
 
 class AwsProductRequest(AwsRequest):
-    """ AWS Service request class for an ESA product
+    """AWS Service request class for an ESA product
 
     List of available products:
     http://sentinel-s2-l1c.s3-website.eu-central-1.amazonaws.com/#products/
     """
+
     def __init__(self, product_id, *, tile_list=None, **kwargs):
         """
         :param product_id: original ESA product identification string
@@ -803,21 +833,32 @@ class AwsProductRequest(AwsRequest):
 
     def create_request(self):
         if self.safe_format:
-            self.aws_service = SafeProduct(self.product_id, tile_list=self.tile_list, bands=self.bands,
-                                           metafiles=self.metafiles, config=self.config)
+            self.aws_service = SafeProduct(
+                self.product_id,
+                tile_list=self.tile_list,
+                bands=self.bands,
+                metafiles=self.metafiles,
+                config=self.config,
+            )
         else:
-            self.aws_service = AwsProduct(self.product_id, tile_list=self.tile_list, bands=self.bands,
-                                          metafiles=self.metafiles, config=self.config)
+            self.aws_service = AwsProduct(
+                self.product_id,
+                tile_list=self.tile_list,
+                bands=self.bands,
+                metafiles=self.metafiles,
+                config=self.config,
+            )
 
         self.download_list, self.folder_list = self.aws_service.get_requests()
 
 
 class AwsTileRequest(AwsRequest):
-    """ AWS Service request class for an ESA tile
+    """AWS Service request class for an ESA tile
 
     List of available products:
     http://sentinel-s2-l1c.s3-website.eu-central-1.amazonaws.com/#tiles/
     """
+
     def __init__(self, *, tile=None, time=None, aws_index=None, data_collection=None, data_source=None, **kwargs):
         """
         :param tile: tile name (e.g. ``'T10UEV'``)
@@ -850,27 +891,41 @@ class AwsTileRequest(AwsRequest):
         self.tile = tile
         self.time = time
         self.aws_index = aws_index
-        self.data_collection = DataCollection(handle_deprecated_data_source(data_collection, data_source,
-                                                                            default=DataCollection.SENTINEL2_L1C))
+        self.data_collection = DataCollection(
+            handle_deprecated_data_source(data_collection, data_source, default=DataCollection.SENTINEL2_L1C)
+        )
 
         super().__init__(**kwargs)
 
     def create_request(self):
         if self.safe_format:
-            self.aws_service = SafeTile(self.tile, self.time, self.aws_index, bands=self.bands,
-                                        metafiles=self.metafiles, data_collection=self.data_collection,
-                                        config=self.config)
+            self.aws_service = SafeTile(
+                self.tile,
+                self.time,
+                self.aws_index,
+                bands=self.bands,
+                metafiles=self.metafiles,
+                data_collection=self.data_collection,
+                config=self.config,
+            )
         else:
-            self.aws_service = AwsTile(self.tile, self.time, self.aws_index, bands=self.bands,
-                                       metafiles=self.metafiles, data_collection=self.data_collection,
-                                       config=self.config)
+            self.aws_service = AwsTile(
+                self.tile,
+                self.time,
+                self.aws_index,
+                bands=self.bands,
+                metafiles=self.metafiles,
+                data_collection=self.data_collection,
+                config=self.config,
+            )
 
         self.download_list, self.folder_list = self.aws_service.get_requests()
 
 
-def get_safe_format(product_id=None, tile=None, entire_product=False, bands=None,
-                    data_collection=None, data_source=None):
-    """ Returns .SAFE format structure in form of nested dictionaries. Either ``product_id`` or ``tile`` must be
+def get_safe_format(
+    product_id=None, tile=None, entire_product=False, bands=None, data_collection=None, data_source=None
+):
+    """Returns .SAFE format structure in form of nested dictionaries. Either ``product_id`` or ``tile`` must be
     specified.
 
     :param product_id: original ESA product identification string. Default is `None`
@@ -898,15 +953,26 @@ def get_safe_format(product_id=None, tile=None, entire_product=False, bands=None
             return safe_tile.get_safe_struct()
         product_id = safe_tile.get_product_id()
     if product_id is None:
-        raise ValueError('Either product_id or tile must be specified')
-    safe_product = SafeProduct(product_id, tile_list=[tile[0]], bands=bands) if entire_product else \
-        SafeProduct(product_id, bands=bands)
+        raise ValueError("Either product_id or tile must be specified")
+    safe_product = (
+        SafeProduct(product_id, tile_list=[tile[0]], bands=bands)
+        if entire_product
+        else SafeProduct(product_id, bands=bands)
+    )
     return safe_product.get_safe_struct()
 
 
-def download_safe_format(product_id=None, tile=None, folder='.', redownload=False, entire_product=False, bands=None,
-                         data_collection=None, data_source=None):
-    """ Downloads .SAFE format structure in form of nested dictionaries. Either ``product_id`` or ``tile`` must
+def download_safe_format(
+    product_id=None,
+    tile=None,
+    folder=".",
+    redownload=False,
+    entire_product=False,
+    bands=None,
+    data_collection=None,
+    data_source=None,
+):
+    """Downloads .SAFE format structure in form of nested dictionaries. Either ``product_id`` or ``tile`` must
     be specified.
 
     :param product_id: original ESA product identification string. Default is `None`
@@ -934,14 +1000,22 @@ def download_safe_format(product_id=None, tile=None, folder='.', redownload=Fals
 
     entire_product = entire_product and product_id is None
     if tile is not None:
-        safe_request = AwsTileRequest(tile=tile[0], time=tile[1], data_folder=folder, bands=bands,
-                                      safe_format=True, data_collection=data_collection)
+        safe_request = AwsTileRequest(
+            tile=tile[0],
+            time=tile[1],
+            data_folder=folder,
+            bands=bands,
+            safe_format=True,
+            data_collection=data_collection,
+        )
         if entire_product:
             safe_tile = safe_request.get_aws_service()
             product_id = safe_tile.get_product_id()
     if product_id is not None:
-        safe_request = AwsProductRequest(product_id, tile_list=[tile[0]], data_folder=folder, bands=bands,
-                                         safe_format=True) if entire_product else \
-            AwsProductRequest(product_id, data_folder=folder, bands=bands, safe_format=True)
+        safe_request = (
+            AwsProductRequest(product_id, tile_list=[tile[0]], data_folder=folder, bands=bands, safe_format=True)
+            if entire_product
+            else AwsProductRequest(product_id, data_folder=folder, bands=bands, safe_format=True)
+        )
 
     safe_request.save_data(redownload=redownload)

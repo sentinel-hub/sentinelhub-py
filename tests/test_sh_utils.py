@@ -10,8 +10,8 @@ from sentinelhub.sh_utils import FeatureIterator
 
 
 class DummyIterator(FeatureIterator):
-    """ As features it generates integer values
-    """
+    """As features it generates integer values"""
+
     def __init__(self, total, limit):
         """
         :param total: Number of features in total
@@ -21,7 +21,7 @@ class DummyIterator(FeatureIterator):
         self.limit = limit
 
         self.feature_fetch_count = 0
-        super().__init__(client=DownloadClient(), url='')
+        super().__init__(client=DownloadClient(), url="")
 
     def _fetch_features(self):
         start_interval = len(self.features)
@@ -37,12 +37,7 @@ class DummyIterator(FeatureIterator):
         return new_features
 
 
-@pytest.mark.parametrize('total,limit', [
-    (100, 1000),
-    (100, 10),
-    (100, 7),
-    (100, 1)
-])
+@pytest.mark.parametrize("total,limit", [(100, 1000), (100, 10), (100, 7), (100, 1)])
 def test_feature_iterator(total, limit):
     iterator = DummyIterator(total, limit)
 

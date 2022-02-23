@@ -27,14 +27,14 @@ def main_help():
 
 
 @click.command()
-@click.option('--product', help='Product ID input')
-@click.option('--tile', nargs=2, help='Tile name and date input')
-@click.option('-f', '--folder', default='.', help='Set download location')
-@click.option('-r', '--redownload', is_flag=True, default=False, help='Redownload existing files')
-@click.option('-i', '--info', is_flag=True, default=False, help='Return safe format structure')
-@click.option('-e', '--entire', is_flag=True, default=False, help='Get entire product of specified tile')
-@click.option('-b', '--bands', default=None, help='Comma separated list (no spaces) of bands to retrieve')
-@click.option('--l2a', is_flag=True, default=False, help='In case of tile request this flag specifies L2A products')
+@click.option("--product", help="Product ID input")
+@click.option("--tile", nargs=2, help="Tile name and date input")
+@click.option("-f", "--folder", default=".", help="Set download location")
+@click.option("-r", "--redownload", is_flag=True, default=False, help="Redownload existing files")
+@click.option("-i", "--info", is_flag=True, default=False, help="Return safe format structure")
+@click.option("-e", "--entire", is_flag=True, default=False, help="Get entire product of specified tile")
+@click.option("-b", "--bands", default=None, help="Comma separated list (no spaces) of bands to retrieve")
+@click.option("--l2a", is_flag=True, default=False, help="In case of tile request this flag specifies L2A products")
 def aws(product, tile, folder, redownload, info, entire, bands, l2a):
     """Download Sentinel-2 data from Sentinel-2 on AWS to ESA SAFE format. Download uses multiple threads.
 
@@ -52,7 +52,7 @@ def aws(product, tile, folder, redownload, info, entire, bands, l2a):
       sentinelhub.aws --product S2A_MSIL2A_20180402T151801_N0207_R068_T33XWJ_20180402T202222
       sentinelhub.aws --tile T33XWJ 2018-04-02 --l2a
     """
-    band_list = None if bands is None else bands.split(',')
+    band_list = None if bands is None else bands.split(",")
     data_collection = DataCollection.SENTINEL2_L2A if l2a else DataCollection.SENTINEL2_L1C
     if info:
         if product is None:
@@ -61,23 +61,28 @@ def aws(product, tile, folder, redownload, info, entire, bands, l2a):
             click.echo(get_safe_format(product_id=product))
     else:
         if product is None:
-            download_safe_format(tile=tile, folder=folder, redownload=redownload, entire_product=entire,
-                                 bands=band_list, data_collection=data_collection)
+            download_safe_format(
+                tile=tile,
+                folder=folder,
+                redownload=redownload,
+                entire_product=entire,
+                bands=band_list,
+                data_collection=data_collection,
+            )
         else:
             download_safe_format(product_id=product, folder=folder, redownload=redownload, bands=band_list)
 
 
 def _config_options(func):
-    """ A helper function which joins click.option functions of each parameter from config.json
-    """
+    """A helper function which joins click.option functions of each parameter from config.json"""
     for param in SHConfig().get_params()[-1::-1]:
-        func = click.option(f'--{param}', param, help=f'Set new values to configuration parameter "{param}"')(func)
+        func = click.option(f"--{param}", param, help=f'Set new values to configuration parameter "{param}"')(func)
     return func
 
 
 @click.command()
-@click.option('--show', is_flag=True, default=False, help='Show current configuration')
-@click.option('--reset', is_flag=True, default=False, help='Reset configuration to initial state')
+@click.option("--show", is_flag=True, default=False, help="Show current configuration")
+@click.option("--reset", is_flag=True, default=False, help="Reset configuration to initial state")
 @_config_options
 def config(show, reset, **params):
     """Inspect and configure parameters in your local sentinelhub configuration file
@@ -98,9 +103,9 @@ def config(show, reset, **params):
             try:
                 value = int(value)
             except ValueError:
-                if value.lower() == 'true':
+                if value.lower() == "true":
                     value = True
-                elif value.lower() == 'false':
+                elif value.lower() == "false":
                     value = False
             if getattr(sh_config, param) != value:
                 setattr(sh_config, param, value)
@@ -117,13 +122,13 @@ def config(show, reset, **params):
 
     if show:
         click.echo(str(sh_config))
-        click.echo(f'Configuration file location: {sh_config.get_config_location()}')
+        click.echo(f"Configuration file location: {sh_config.get_config_location()}")
 
 
 @click.command()
-@click.argument('url')
-@click.argument('filename', type=click.Path())
-@click.option('-r', '--redownload', is_flag=True, default=False, help='Redownload existing files')
+@click.argument("url")
+@click.argument("filename", type=click.Path())
+@click.option("-r", "--redownload", is_flag=True, default=False, help="Redownload existing files")
 def download(url, filename, redownload):
     """Download from custom created URL into custom created file path
 
@@ -131,7 +136,8 @@ def download(url, filename, redownload):
     Example:
     sentinelhub.download http://sentinel-s2-l1c.s3.amazonaws.com/tiles/54/H/VH/2017/4/14/0/metadata.xml home/example.xml
     """
-    data_folder, filename = filename.rsplit('/', 1)
-    download_list = [DownloadRequest(url=url, data_folder=data_folder, filename=filename, save_response=True,
-                                     return_data=False)]
+    data_folder, filename = filename.rsplit("/", 1)
+    download_list = [
+        DownloadRequest(url=url, data_folder=data_folder, filename=filename, save_response=True, return_data=False)
+    ]
     DownloadClient(redownload=redownload).download(download_list)

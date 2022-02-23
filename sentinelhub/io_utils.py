@@ -18,14 +18,14 @@ from .constants import MimeType
 from .os_utils import create_parent_folder
 
 
-warnings.simplefilter('ignore', Image.DecompressionBombWarning)
+warnings.simplefilter("ignore", Image.DecompressionBombWarning)
 LOGGER = logging.getLogger(__name__)
 
-CSV_DELIMITER = ';'
+CSV_DELIMITER = ";"
 
 
 def read_data(filename, data_format=None):
-    """ Read image data from file
+    """Read image data from file
 
     This function reads input data from file. The format of the file
     can be specified in ``data_format``. If not specified, the format is
@@ -39,7 +39,7 @@ def read_data(filename, data_format=None):
     :raises: exception if filename does not exist
     """
     if not os.path.exists(filename):
-        raise FileNotFoundError(f'Filename {filename} does not exist')
+        raise FileNotFoundError(f"Filename {filename} does not exist")
 
     if not isinstance(data_format, MimeType):
         data_format = get_data_format(filename)
@@ -50,13 +50,12 @@ def read_data(filename, data_format=None):
         return reader(filename)
     except BaseException as exception:
         # In case a procedure would read a lot of files and one would be corrupt this helps us figure out which one
-        LOGGER.debug('Failed to read from file: %s', filename)
+        LOGGER.debug("Failed to read from file: %s", filename)
         raise exception
 
 
 def _get_reader(data_format):
-    """ Provides a function for reading data in a given data format
-    """
+    """Provides a function for reading data in a given data format"""
     if data_format is MimeType.TIFF:
         return read_tiff_image
     if data_format is MimeType.JP2:
@@ -72,21 +71,20 @@ def _get_reader(data_format):
             MimeType.JSON: read_json,
             MimeType.XML: read_xml,
             MimeType.GML: read_xml,
-            MimeType.SAFE: read_xml
+            MimeType.SAFE: read_xml,
         }[data_format]
     except KeyError as exception:
-        raise ValueError(f'Reading data format {data_format} is not supported') from exception
+        raise ValueError(f"Reading data format {data_format} is not supported") from exception
 
 
 def read_tar(filename):
-    """ Read a tar from file
-    """
-    with open(filename, 'rb') as file:
+    """Read a tar from file"""
+    with open(filename, "rb") as file:
         return decode_tar(file)
 
 
 def read_tiff_image(filename):
-    """ Read data from TIFF file
+    """Read data from TIFF file
 
     :param filename: name of TIFF file to be read
     :type filename: str
@@ -96,7 +94,7 @@ def read_tiff_image(filename):
 
 
 def read_jp2_image(filename):
-    """ Read data from JPEG2000 file
+    """Read data from JPEG2000 file
 
     :param filename: name of JPEG2000 file to be read
     :type filename: str
@@ -106,14 +104,14 @@ def read_jp2_image(filename):
     # return glymur.Jp2k(filename)[:]
     image = read_image(filename)
 
-    with open(filename, 'rb') as file:
+    with open(filename, "rb") as file:
         bit_depth = get_jp2_bit_depth(file)
 
     return fix_jp2_image(image, bit_depth)
 
 
 def read_image(filename):
-    """ Read data from PNG or JPG file
+    """Read data from PNG or JPG file
 
     :param filename: name of PNG or JPG file to be read
     :type filename: str
@@ -123,25 +121,24 @@ def read_image(filename):
 
 
 def read_text(filename):
-    """ Read data from text file
+    """Read data from text file
 
     :param filename: name of text file to be read
     :type filename: str
     :return: data stored in text file
     """
-    with open(filename, 'r') as file:
+    with open(filename, "r") as file:
         return file.read()
 
 
 def _read_binary(filename):
-    """ Reads data in bytes
-    """
-    with open(filename, 'rb') as file:
+    """Reads data in bytes"""
+    with open(filename, "rb") as file:
         return file.read()
 
 
 def read_csv(filename, delimiter=CSV_DELIMITER):
-    """ Read data from CSV file
+    """Read data from CSV file
 
     :param filename: name of CSV file to be read
     :type filename: str
@@ -149,23 +146,23 @@ def read_csv(filename, delimiter=CSV_DELIMITER):
     :type delimiter: str
     :return: data stored in CSV file as list
     """
-    with open(filename, 'r') as file:
+    with open(filename, "r") as file:
         return list(csv.reader(file, delimiter=delimiter))
 
 
 def read_json(filename):
-    """ Read data from JSON file
+    """Read data from JSON file
 
     :param filename: name of JSON file to be read
     :type filename: str
     :return: data stored in JSON file
     """
-    with open(filename, 'rb') as file:
+    with open(filename, "rb") as file:
         return json.load(file)
 
 
 def read_xml(filename):
-    """ Read data from XML or GML file
+    """Read data from XML or GML file
 
     :param filename: name of XML or GML file to be read
     :type filename: str
@@ -175,7 +172,7 @@ def read_xml(filename):
 
 
 def read_numpy(filename):
-    """ Read data from numpy file
+    """Read data from numpy file
 
     :param filename: name of numpy file to be read
     :type filename: str
@@ -185,7 +182,7 @@ def read_numpy(filename):
 
 
 def write_data(filename, data, data_format=None, compress=False, add=False):
-    """ Write image data to file
+    """Write image data to file
 
     Function to write image data to specified file. If file format is not provided
     explicitly, it is guessed from the filename extension. If format is TIFF, geo
@@ -221,14 +218,14 @@ def write_data(filename, data, data_format=None, compress=False, add=False):
             MimeType.CSV: write_csv,
             MimeType.JSON: write_json,
             MimeType.XML: write_xml,
-            MimeType.GML: write_xml
+            MimeType.GML: write_xml,
         }[data_format](filename, data)
     except KeyError as exception:
-        raise ValueError(f'Writing data format {data_format} is not supported') from exception
+        raise ValueError(f"Writing data format {data_format} is not supported") from exception
 
 
 def write_tiff_image(filename, image, compress=False):
-    """ Write image data to TIFF file
+    """Write image data to TIFF file
 
     :param filename: name of file to write data to
     :type filename: str
@@ -238,12 +235,12 @@ def write_tiff_image(filename, image, compress=False):
     :type compress: bool
     """
     if compress:
-        return tiff.imsave(filename, image, compress='lzma')  # lossless compression, works very well on masks
+        return tiff.imsave(filename, image, compress="lzma")  # lossless compression, works very well on masks
     return tiff.imsave(filename, image)
 
 
 def write_jp2_image(filename, image):
-    """ Write image data to JPEG2000 file
+    """Write image data to JPEG2000 file
 
     :param filename: name of JPEG2000 file to write data to
     :type filename: str
@@ -258,7 +255,7 @@ def write_jp2_image(filename, image):
 
 
 def write_image(filename, image):
-    """ Write image data to PNG, JPG file
+    """Write image data to PNG, JPG file
 
     :param filename: name of PNG or JPG file to write data to
     :type filename: str
@@ -267,12 +264,12 @@ def write_image(filename, image):
     """
     data_format = get_data_format(filename)
     if data_format is MimeType.JPG:
-        LOGGER.warning('Warning: jpeg is a lossy format therefore saved data will be modified.')
+        LOGGER.warning("Warning: jpeg is a lossy format therefore saved data will be modified.")
     return Image.fromarray(image).save(filename)
 
 
 def write_text(filename, data, add=False):
-    """ Write image data to text file
+    """Write image data to text file
 
     :param filename: name of text file to write data to
     :type filename: str
@@ -281,13 +278,13 @@ def write_text(filename, data, add=False):
     :param add: whether to append to existing file or not. Default is `False`
     :type add: bool
     """
-    write_type = 'a' if add else 'w'
+    write_type = "a" if add else "w"
     with open(filename, write_type) as file:
-        print(data, end='', file=file)
+        print(data, end="", file=file)
 
 
 def write_csv(filename, data, delimiter=CSV_DELIMITER):
-    """ Write image data to CSV file
+    """Write image data to CSV file
 
     :param filename: name of CSV file to write data to
     :type filename: str
@@ -296,26 +293,26 @@ def write_csv(filename, data, delimiter=CSV_DELIMITER):
     :param delimiter: delimiter used in CSV file. Default is ``;``
     :type delimiter: str
     """
-    with open(filename, 'w') as file:
+    with open(filename, "w") as file:
         csv_writer = csv.writer(file, delimiter=delimiter)
         for line in data:
             csv_writer.writerow(line)
 
 
 def write_json(filename, data):
-    """ Write data to JSON file
+    """Write data to JSON file
 
     :param filename: name of JSON file to write data to
     :type filename: str
     :param data: data to write to JSON file
     :type data: list, tuple
     """
-    with open(filename, 'w') as file:
+    with open(filename, "w") as file:
         json.dump(data, file, indent=4, sort_keys=True)
 
 
 def write_xml(filename, element_tree):
-    """ Write data to XML or GML file
+    """Write data to XML or GML file
 
     :param filename: name of XML or GML file to write data to
     :type filename: str
@@ -328,7 +325,7 @@ def write_xml(filename, element_tree):
 
 
 def write_numpy(filename, data):
-    """ Write data as numpy file
+    """Write data as numpy file
 
     :param filename: name of numpy file to write data to
     :type filename: str
@@ -339,11 +336,11 @@ def write_numpy(filename, data):
 
 
 def write_bytes(filename, data):
-    """ Write binary data into a file
+    """Write binary data into a file
 
     :param filename:
     :param data:
     :return:
     """
-    with open(filename, 'wb') as file:
+    with open(filename, "wb") as file:
         file.write(data)

@@ -13,14 +13,27 @@ from ..os_utils import sys_is_windows
 
 
 class DownloadRequest:
-    """ A class defining a single download request.
+    """A class defining a single download request.
 
     The class is a container with all parameters needed to execute a single download request and save or return
     downloaded data.
     """
-    def __init__(self, *, url=None, headers=None, request_type=RequestType.GET, post_values=None, use_session=False,
-                 data_type=MimeType.RAW, save_response=False, data_folder=None, filename=None, return_data=True,
-                 **properties):
+
+    def __init__(
+        self,
+        *,
+        url=None,
+        headers=None,
+        request_type=RequestType.GET,
+        post_values=None,
+        use_session=False,
+        data_type=MimeType.RAW,
+        save_response=False,
+        data_folder=None,
+        filename=None,
+        return_data=True,
+        **properties,
+    ):
         """
         :param url: An URL from where to download
         :type url: str or None
@@ -62,16 +75,17 @@ class DownloadRequest:
         self.properties = properties
 
     def raise_if_invalid(self):
-        """ Method that raises an error if something is wrong with request parameters
+        """Method that raises an error if something is wrong with request parameters
 
         :raises: ValueError
         """
         if self.save_response and self.data_folder is None:
-            raise ValueError('Data folder is not specified. '
-                             'Please give a data folder name in the initialization of your request.')
+            raise ValueError(
+                "Data folder is not specified. Please give a data folder name in the initialization of your request."
+            )
 
     def get_request_params(self, include_metadata=False):
-        """ Provides parameters that define the request in form of a dictionary
+        """Provides parameters that define the request in form of a dictionary
 
         :param include_metadata: A flag defining if also metadata parameters should be included, such as headers and
             current time
@@ -79,20 +93,13 @@ class DownloadRequest:
         :return: A dictionary of parameters
         :rtype: dict
         """
-        params = {
-            'url': self.url,
-            'payload': self.post_values
-        }
+        params = {"url": self.url, "payload": self.post_values}
         if include_metadata:
-            params = {
-                **params,
-                'headers': self.headers,
-                'timestamp': dt.datetime.now().isoformat()
-            }
+            params = {**params, "headers": self.headers, "timestamp": dt.datetime.now().isoformat()}
         return params
 
     def get_hashed_name(self):
-        """ It takes request url and payload and calculates a unique hashed string from them.
+        """It takes request url and payload and calculates a unique hashed string from them.
 
         :return: A hashed string
         :rtype: str
@@ -100,10 +107,10 @@ class DownloadRequest:
         params = self.get_request_params(include_metadata=False)
         hashable = json.dumps(params)
 
-        return hashlib.md5(hashable.encode('utf-8')).hexdigest()
+        return hashlib.md5(hashable.encode("utf-8")).hexdigest()
 
     def get_relative_paths(self):
-        """ A method that calculates file paths relative to `data_folder`
+        """A method that calculates file paths relative to `data_folder`
 
         :return: Returns a pair of file paths, a request payload path and a response path. If request path is not
             defined it returns `None`.
@@ -115,13 +122,13 @@ class DownloadRequest:
 
         hashed_name = self.get_hashed_name()
 
-        request_path = os.path.join(hashed_name, 'request.json')
-        response_path = os.path.join(hashed_name, f'response.{self.data_type.extension}')
+        request_path = os.path.join(hashed_name, "request.json")
+        response_path = os.path.join(hashed_name, f"response.{self.data_type.extension}")
 
         return request_path, response_path
 
     def get_storage_paths(self):
-        """ A method that calculates file paths where request payload and response will be saved.
+        """A method that calculates file paths where request payload and response will be saved.
 
         :return: Returns a pair of file paths, a request payload path and a response path. Each of them can also be
             `None` if it is not defined.
@@ -141,17 +148,16 @@ class DownloadRequest:
 
     @staticmethod
     def _check_path(file_path):
-        """ Checks file path and warns about potential problems during saving
-        """
+        """Checks file path and warns about potential problems during saving"""
         message_problem = None
         if len(file_path) > 255 and sys_is_windows():
-            message_problem = 'File path'
+            message_problem = "File path"
         elif len(os.path.basename(file_path)) > 255:
-            message_problem = 'Filename of'
+            message_problem = "Filename of"
 
         if message_problem:
             message = (
-                f'{message_problem} {file_path} is longer than 255 character which might cause an error while '
-                'saving on disk'
+                f"{message_problem} {file_path} is longer than 255 character which might cause an error while "
+                "saving on disk"
             )
             warnings.warn(message, category=SHRuntimeWarning)

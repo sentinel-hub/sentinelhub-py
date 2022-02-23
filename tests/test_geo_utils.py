@@ -29,10 +29,7 @@ def test_bbox_to_resolution():
     assert (resx, resy) == pytest.approx((12.0207, 7.1474), rel=1e-4)
 
 
-@pytest.mark.parametrize('resolution, expected_dimensions', [
-    (10, (615, 366)),
-    ((20, 50), (308, 73))
-])
+@pytest.mark.parametrize("resolution, expected_dimensions", [(10, (615, 366)), ((20, 50), (308, 73))])
 def test_bbox_to_dimensions(resolution, expected_dimensions):
     bbox = BBox(((111.644, 8.655), (111.7, 8.688)), CRS.WGS84)
     dimensions = geo_utils.bbox_to_dimensions(bbox, resolution)
@@ -58,13 +55,16 @@ def test_bbox_transform():
     assert new_bbox.crs is expected_bbox.crs
 
 
-@pytest.mark.parametrize('point, source_crs, target_crs, target_point', [
-    ((111.644, 8.655), CRS.WGS84, CRS.POP_WEB, (12428153.23, 967155.41)),
-    ((360000.0, 4635040.0), CRS.UTM_31N, CRS.WGS84, (1.313392213, 41.854888581)),
-    ((360000.0, 4635040.0), CRS.UTM_31N, CRS.UTM_30N, (858072.82713, 4642667.30545)),
-    ((1475000.0, 5100000.0), CRS(2193), CRS.WGS84, (171.43450808, -44.24250942)),
-    ((543569.807, 6062625.7678), CRS(3346), CRS.UTM_35N, (350231.496834, 6063682.846723))
-])
+@pytest.mark.parametrize(
+    "point, source_crs, target_crs, target_point",
+    [
+        ((111.644, 8.655), CRS.WGS84, CRS.POP_WEB, (12428153.23, 967155.41)),
+        ((360000.0, 4635040.0), CRS.UTM_31N, CRS.WGS84, (1.313392213, 41.854888581)),
+        ((360000.0, 4635040.0), CRS.UTM_31N, CRS.UTM_30N, (858072.82713, 4642667.30545)),
+        ((1475000.0, 5100000.0), CRS(2193), CRS.WGS84, (171.43450808, -44.24250942)),
+        ((543569.807, 6062625.7678), CRS(3346), CRS.UTM_35N, (350231.496834, 6063682.846723)),
+    ],
+)
 def test_transform_point(point, source_crs, target_crs, target_point):
     new_point = geo_utils.transform_point(point, source_crs, target_crs)
     new_source_point = geo_utils.transform_point(new_point, target_crs, source_crs)

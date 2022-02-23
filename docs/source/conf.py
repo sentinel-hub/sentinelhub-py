@@ -18,21 +18,21 @@ import shutil
 # -- Project information -----------------------------------------------------
 
 # General information about the project.
-project = 'Sentinel Hub'
-project_copyright = '2018, Sentinel Hub'
-author = 'Sinergise EO research team'
-doc_title = 'sentinelhub Documentation'
+project = "Sentinel Hub"
+project_copyright = "2018, Sentinel Hub"
+author = "Sinergise EO research team"
+doc_title = "sentinelhub Documentation"
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
 # built documents.
 #
 # The release is read from __init__ file and version is shortened release string.
-for line in open(os.path.join(os.path.dirname(__file__), '../../sentinelhub/_version.py')):
+for line in open(os.path.join(os.path.dirname(__file__), "../../sentinelhub/_version.py")):
     if line.find("__version__") >= 0:
         release = line.split("=")[1].strip()
         release = release.strip('"').strip("'")
-version = release.rsplit('.', 1)[0]
+version = release.rsplit(".", 1)[0]
 
 # -- General configuration ------------------------------------------------
 
@@ -44,37 +44,37 @@ version = release.rsplit('.', 1)[0]
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
-    'sphinx.ext.autodoc',
-    'sphinx.ext.doctest',
-    'sphinx.ext.intersphinx',
-    'sphinx.ext.autosummary',
-    'sphinx.ext.viewcode',
-    'sphinx.ext.todo',
-    'sphinx.ext.coverage',
-    'nbsphinx',
-    'sphinx.ext.mathjax',
-    'sphinx.ext.viewcode',
-    'sphinx.ext.githubpages',
-    'm2r2'
+    "sphinx.ext.autodoc",
+    "sphinx.ext.doctest",
+    "sphinx.ext.intersphinx",
+    "sphinx.ext.autosummary",
+    "sphinx.ext.viewcode",
+    "sphinx.ext.todo",
+    "sphinx.ext.coverage",
+    "nbsphinx",
+    "sphinx.ext.mathjax",
+    "sphinx.ext.viewcode",
+    "sphinx.ext.githubpages",
+    "m2r2",
 ]
 
 # Both the class’ and the __init__ method’s docstring are concatenated and inserted.
-autoclass_content = 'both'
+autoclass_content = "both"
 
 # Content is in the same order as in module
-autodoc_member_order = 'bysource'
+autodoc_member_order = "bysource"
 
 # Add any paths that contain templates here, relative to this directory.
-templates_path = ['_templates']
+templates_path = ["_templates"]
 
 # The suffix(es) of source filenames.
 # You can specify multiple suffix as a list of string:
 #
 # source_suffix = ['.rst', '.md']
-source_suffix = '.rst'
+source_suffix = ".rst"
 
 # The master toctree document.
-master_doc = 'index'
+master_doc = "index"
 
 # General information about the project.
 
@@ -89,10 +89,10 @@ language = None
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This patterns also effect to html_static_path and html_extra_path
-exclude_patterns = ['**.ipynb_checkpoints']
+exclude_patterns = ["**.ipynb_checkpoints"]
 
 # The name of the Pygments (syntax highlighting) style to use.
-pygments_style = 'sphinx'
+pygments_style = "sphinx"
 
 # If true, `todo` and `todoList` produce output, else they produce nothing.
 todo_include_todos = True
@@ -105,9 +105,9 @@ autodoc_mock_imports = ["sentinelhub"]
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
-html_theme = 'sphinx_rtd_theme'
+html_theme = "sphinx_rtd_theme"
 
-html_logo = './sentinel-hub-by_sinergise-dark_background.png'
+html_logo = "./sentinel-hub-by_sinergise-dark_background.png"
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
@@ -137,16 +137,14 @@ html_logo = './sentinel-hub-by_sinergise-dark_background.png'
 #    ]
 # }
 
-# analytics 
-html_js_files = [
-    ('https://cdn.usefathom.com/script.js', {'data-site': 'BILSIGFB', 'defer':'defer'})
-]
+# analytics
+html_js_files = [("https://cdn.usefathom.com/script.js", {"data-site": "BILSIGFB", "defer": "defer"})]
 
 
 # -- Options for HTMLHelp output ------------------------------------------
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = 'sentinelhub_doc'
+htmlhelp_basename = "sentinelhub_doc"
 # show/hide links for source
 html_show_sourcelink = False
 
@@ -156,15 +154,12 @@ latex_elements = {
     # The paper size ('letterpaper' or 'a4paper').
     #
     # 'papersize': 'letterpaper',
-
     # The font size ('10pt', '11pt' or '12pt').
     #
     # 'pointsize': '10pt',
-
     # Additional stuff for the LaTeX preamble.
     #
     # 'preamble': '',
-
     # Latex figure (float) alignment
     #
     # 'figure_align': 'htbp',
@@ -174,18 +169,14 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-    (master_doc, 'sentinelhub.tex', doc_title,
-     author, 'manual'),
+    (master_doc, "sentinelhub.tex", doc_title, author, "manual"),
 ]
 
 # -- Options for manual page output ---------------------------------------
 
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
-man_pages = [
-    (master_doc, 'sentinelhub', doc_title,
-     [author], 1)
-]
+man_pages = [(master_doc, "sentinelhub", doc_title, [author], 1)]
 
 # -- Options for Texinfo output -------------------------------------------
 
@@ -193,9 +184,7 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-    (master_doc, 'sentinelhub', doc_title,
-     author, 'sentinelhub', 'One line description of project.',
-     'Miscellaneous'),
+    (master_doc, "sentinelhub", doc_title, author, "sentinelhub", "One line description of project.", "Miscellaneous"),
 ]
 
 # -- Options for Epub output ----------------------------------------------
@@ -216,46 +205,50 @@ epub_copyright = project_copyright
 # epub_uid = ''
 
 # A list of files that should not be packed into the epub file.
-epub_exclude_files = ['search.html']
+epub_exclude_files = ["search.html"]
 
 # Example configuration for intersphinx: refer to the Python standard library.
-intersphinx_mapping = {'https://docs.python.org/3.8/': None}
+intersphinx_mapping = {"https://docs.python.org/3.8/": None}
 
 # copy examples
 try:
-    shutil.copytree('../../examples', './examples')
+    shutil.copytree("../../examples", "./examples")
 except FileExistsError:
     pass
 
 
-MARKDOWNS_FOLDER = './markdowns'
+MARKDOWNS_FOLDER = "./markdowns"
 shutil.rmtree(MARKDOWNS_FOLDER, ignore_errors=True)
 os.mkdir(MARKDOWNS_FOLDER)
 
 
 def process_readme():
-    """ Function which will process README.md file and create INTRO.md
-    """
-    with open('../../README.md', 'r') as file:
+    """Function which will process README.md file and create INTRO.md"""
+    with open("../../README.md", "r") as file:
         readme = file.read()
 
-    readme = readme.replace('[`', '[').replace('`]', ']')
+    readme = readme.replace("[`", "[").replace("`]", "]")
 
     chapters = [[]]
-    for line in readme.split('\n'):
-        if line.strip().startswith('## '):
+    for line in readme.split("\n"):
+        if line.strip().startswith("## "):
             chapters.append([])
-        if line.startswith('<img'):
-            line = '<p></p>'
+        if line.startswith("<img"):
+            line = "<p></p>"
 
         chapters[-1].append(line)
 
-    chapters = ['\n'.join(chapter) for chapter in chapters]
+    chapters = ["\n".join(chapter) for chapter in chapters]
 
-    intro = '\n'.join([chapter for chapter in chapters if not (chapter.startswith('## Install') or
-                                                               chapter.startswith('## Documentation'))])
+    intro = "\n".join(
+        [
+            chapter
+            for chapter in chapters
+            if not (chapter.startswith("## Install") or chapter.startswith("## Documentation"))
+        ]
+    )
 
-    with open(os.path.join(MARKDOWNS_FOLDER, 'INTRO.md'), 'w') as file:
+    with open(os.path.join(MARKDOWNS_FOLDER, "INTRO.md"), "w") as file:
         file.write(intro)
 
 

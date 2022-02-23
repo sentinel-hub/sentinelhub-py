@@ -9,7 +9,7 @@ import os
 
 
 class SHConfig:
-    """ A sentinelhub-py package configuration class.
+    """A sentinelhub-py package configuration class.
 
     The class reads during its first initialization the configurable settings from ``./config.json`` file:
 
@@ -44,46 +44,46 @@ class SHConfig:
         * ``SHConfig().instance_id``
 
     """
+
     class _SHConfig:
-        """ Internal class holding configuration parameters
-        """
+        """Internal class holding configuration parameters"""
+
         CONFIG_PARAMS = {
-            'instance_id': '',
-            'sh_client_id': '',
-            'sh_client_secret': '',
-            'sh_base_url': 'https://services.sentinel-hub.com',
-            'sh_auth_base_url': 'https://services.sentinel-hub.com',
-            'geopedia_wms_url': 'https://service.geopedia.world',
-            'geopedia_rest_url': 'https://www.geopedia.world/rest',
-            'aws_access_key_id': '',
-            'aws_secret_access_key': '',
-            'aws_session_token': '',
-            'aws_metadata_url': 'https://roda.sentinel-hub.com',
-            'aws_s3_l1c_bucket': 'sentinel-s2-l1c',
-            'aws_s3_l2a_bucket': 'sentinel-s2-l2a',
-            'opensearch_url': 'http://opensearch.sentinel-hub.com/resto/api/collections/Sentinel2',
-            'max_wfs_records_per_query': 100,
-            'max_opensearch_records_per_query': 500,
-            'max_download_attempts': 4,
-            'download_sleep_time': 5.0,
-            'download_timeout_seconds': 120.0,
-            'number_of_download_processes': 1
+            "instance_id": "",
+            "sh_client_id": "",
+            "sh_client_secret": "",
+            "sh_base_url": "https://services.sentinel-hub.com",
+            "sh_auth_base_url": "https://services.sentinel-hub.com",
+            "geopedia_wms_url": "https://service.geopedia.world",
+            "geopedia_rest_url": "https://www.geopedia.world/rest",
+            "aws_access_key_id": "",
+            "aws_secret_access_key": "",
+            "aws_session_token": "",
+            "aws_metadata_url": "https://roda.sentinel-hub.com",
+            "aws_s3_l1c_bucket": "sentinel-s2-l1c",
+            "aws_s3_l2a_bucket": "sentinel-s2-l2a",
+            "opensearch_url": "http://opensearch.sentinel-hub.com/resto/api/collections/Sentinel2",
+            "max_wfs_records_per_query": 100,
+            "max_opensearch_records_per_query": 500,
+            "max_download_attempts": 4,
+            "download_sleep_time": 5.0,
+            "download_timeout_seconds": 120.0,
+            "number_of_download_processes": 1,
         }
         CREDENTIALS = {
-            'instance_id',
-            'sh_client_id',
-            'sh_client_secret',
-            'aws_access_key_id',
-            'aws_secret_access_key',
-            'aws_session_token'
+            "instance_id",
+            "sh_client_id",
+            "sh_client_secret",
+            "aws_access_key_id",
+            "aws_secret_access_key",
+            "aws_session_token",
         }
 
         def __init__(self):
             self.load_configuration()
 
         def _parse_configuration(self, config):
-            """ Checks if configuration file contains all keys and parses values
-            """
+            """Checks if configuration file contains all keys and parses values"""
             for param, default_value in self.CONFIG_PARAMS.items():
                 if param not in config:
                     config[param] = default_value
@@ -95,37 +95,36 @@ class SHConfig:
                 if not isinstance(config[param], param_type):
                     raise ValueError(f"Value of parameter '{param}' must be of type {param_type.__name__}")
 
-            if config['max_wfs_records_per_query'] > 100:
+            if config["max_wfs_records_per_query"] > 100:
                 raise ValueError("Value of config parameter 'max_wfs_records_per_query' must be at most 100")
-            if config['max_opensearch_records_per_query'] > 500:
+            if config["max_opensearch_records_per_query"] > 500:
                 raise ValueError("Value of config parameter 'max_opensearch_records_per_query' must be at most 500")
 
             # The following enables that url parameters can be written with or without / at the end
             for param, value in config.items():
-                if isinstance(value, str) and value.startswith('http'):
-                    config[param] = value.rstrip('/')
+                if isinstance(value, str) and value.startswith("http"):
+                    config[param] = value.rstrip("/")
 
             return config
 
         def get_config_file(self):
-            """ Checks if configuration file exists and returns its file path.
+            """Checks if configuration file exists and returns its file path.
             If file doesn't exist it creates a default configurations file.
 
             :return: location of configuration file
             :rtype: str
             """
-            config_file = os.path.join(os.path.dirname(__file__), 'config.json')
+            config_file = os.path.join(os.path.dirname(__file__), "config.json")
 
             if not os.path.isfile(config_file):
-                with open(config_file, 'w') as cfg_file:
+                with open(config_file, "w") as cfg_file:
                     json.dump(self.CONFIG_PARAMS, cfg_file, indent=2)
 
             return config_file
 
         def load_configuration(self):
-            """ Method reads and loads the configuration file.
-            """
-            with open(self.get_config_file(), 'r') as cfg_file:
+            """Method reads and loads the configuration file."""
+            with open(self.get_config_file(), "r") as cfg_file:
                 config = json.load(cfg_file)
 
             config = self._parse_configuration(config)
@@ -135,7 +134,7 @@ class SHConfig:
                     setattr(self, prop, config[prop])
 
         def get_config(self):
-            """ Returns a dictionary with configuration parameters
+            """Returns a dictionary with configuration parameters
 
             :return: A dictionary
             :rtype: dict
@@ -147,13 +146,12 @@ class SHConfig:
             return config
 
         def save_configuration(self):
-            """ Method saves changed parameter values to the configuration file.
-            """
+            """Method saves changed parameter values to the configuration file."""
             config = self.get_config()
 
             self._parse_configuration(config)
 
-            with open(self.get_config_file(), 'w') as cfg_file:
+            with open(self.get_config_file(), "w") as cfg_file:
                 json.dump(config, cfg_file, indent=2)
 
     _instance = None
@@ -174,8 +172,7 @@ class SHConfig:
             setattr(self, prop, getattr(self._instance, prop))
 
     def __getattr__(self, name):
-        """ This is called only if the class doesn't have the attribute itself
-        """
+        """This is called only if the class doesn't have the attribute itself"""
         return getattr(self._instance, name)
 
     def __getitem__(self, name):
@@ -185,24 +182,24 @@ class SHConfig:
         return sorted(list(dir(super())) + list(self._instance.CONFIG_PARAMS))
 
     def __str__(self):
-        """ Content of SHConfig in json schema. If `hide_credentials` is set to `True` then credentials will be
+        """Content of SHConfig in json schema. If `hide_credentials` is set to `True` then credentials will be
         masked.
         """
         return json.dumps(self.get_config_dict(), indent=2)
 
     def __repr__(self):
-        """ Representation of SHConfig parameters. If `hide_credentials` is set to `True` then credentials will be
+        """Representation of SHConfig parameters. If `hide_credentials` is set to `True` then credentials will be
         masked.
         """
-        repr_list = [f'{self.__class__.__name__}(']
+        repr_list = [f"{self.__class__.__name__}("]
 
         for key, value in self.get_config_dict().items():
-            repr_list.append(f'{key}={repr(value)},')
+            repr_list.append(f"{key}={repr(value)},")
 
-        return '\n  '.join(repr_list).strip(',') + '\n)'
+        return "\n  ".join(repr_list).strip(",") + "\n)"
 
     def save(self):
-        """ Method that saves configuration parameter changes from instance of SHConfig class to global config class and
+        """Method that saves configuration parameter changes from instance of SHConfig class to global config class and
         to `config.json` file.
 
         :Example:
@@ -219,12 +216,11 @@ class SHConfig:
             self._instance.save_configuration()
 
     def copy(self):
-        """ Makes a copy of an instance of `SHConfig`
-        """
+        """Makes a copy of an instance of `SHConfig`"""
         return copy.copy(self)
 
     def reset(self, params=...):
-        """ Resets configuration class to initial values. Use `SHConfig.save()` method in order to save this change.
+        """Resets configuration class to initial values. Use `SHConfig.save()` method in order to save this change.
 
         :param params: Parameters which will be reset. Parameters can be specified with a list of names, e.g.
             ``['instance_id', 'aws_access_key_id', 'aws_secret_access_key']``, or as a single name, e.g.
@@ -239,11 +235,12 @@ class SHConfig:
             for param in params:
                 self._reset_param(param)
         else:
-            raise ValueError('Parameters must be specified in form of a list of strings or as a single string, instead '
-                             f'got {params}')
+            raise ValueError(
+                f"Parameters must be specified in form of a list of strings or as a single string, instead got {params}"
+            )
 
     def _reset_param(self, param):
-        """ Resets a single parameter
+        """Resets a single parameter
 
         :param param: A configuration parameter
         :type param: str
@@ -253,7 +250,7 @@ class SHConfig:
         setattr(self, param, self._instance.CONFIG_PARAMS[param])
 
     def get_params(self):
-        """ Returns a list of parameter names
+        """Returns a list of parameter names
 
         :return: List of parameter names
         :rtype: list(str)
@@ -261,7 +258,7 @@ class SHConfig:
         return list(self._instance.CONFIG_PARAMS)
 
     def get_config_dict(self):
-        """ Get a dictionary representation of `SHConfig` class. If `hide_credentials` is set to `True` then
+        """Get a dictionary representation of `SHConfig` class. If `hide_credentials` is set to `True` then
         credentials will be masked.
 
         :return: A dictionary with configuration parameters
@@ -275,7 +272,7 @@ class SHConfig:
         return config_params
 
     def get_config_location(self):
-        """ Returns location of configuration file on disk
+        """Returns location of configuration file on disk
 
         :return: File path of `config.json` file
         :rtype: str
@@ -283,63 +280,64 @@ class SHConfig:
         return self._instance.get_config_file()
 
     def has_eocloud_url(self):
-        """ Checks if base Sentinel Hub URL is set to eocloud URL
+        """Checks if base Sentinel Hub URL is set to eocloud URL
 
         :return: `True` if 'eocloud' string is in base OGC URL else `False`
         :rtype: bool
         """
-        return 'eocloud' in self.sh_base_url
+        return "eocloud" in self.sh_base_url
 
     def get_sh_oauth_url(self):
-        """ Provides URL for Sentinel Hub authentication endpoint
+        """Provides URL for Sentinel Hub authentication endpoint
 
         :return: An URL endpoint
         :rtype: str
         """
-        return f'{self.sh_auth_base_url}/oauth/token'
+        return f"{self.sh_auth_base_url}/oauth/token"
 
     def get_sh_process_api_url(self):
-        """  Provides URL for Sentinel Hub Process API endpoint
+        """Provides URL for Sentinel Hub Process API endpoint
 
         :return: An URL endpoint
         :rtype: str
         """
-        return f'{self.sh_base_url}/api/v1/process'
+        return f"{self.sh_base_url}/api/v1/process"
 
     def get_sh_ogc_url(self):
-        """ Provides URL for Sentinel Hub OGC endpoint
+        """Provides URL for Sentinel Hub OGC endpoint
 
         :return: An URL endpoint
         :rtype: str
         """
-        ogc_endpoint = 'v1' if self.has_eocloud_url() else 'ogc'
-        return f'{self.sh_base_url}/{ogc_endpoint}'
+        ogc_endpoint = "v1" if self.has_eocloud_url() else "ogc"
+        return f"{self.sh_base_url}/{ogc_endpoint}"
 
     def get_sh_rate_limit_url(self):
-        """ Provides URL for Sentinel Hub rate limiting endpoint
+        """Provides URL for Sentinel Hub rate limiting endpoint
 
         :return: An URL endpoint
         :rtype: str
         """
-        return f'{self.sh_auth_base_url}/aux/ratelimit'
+        return f"{self.sh_auth_base_url}/aux/ratelimit"
 
     def raise_for_missing_instance_id(self):
-        """ In case Sentinel Hub instance ID is missing it raises an informative error
+        """In case Sentinel Hub instance ID is missing it raises an informative error
 
         :raises: ValueError
         """
         if not self.instance_id:
-            raise ValueError('Sentinel Hub instance ID is missing. '
-                             'Either provide it with SHConfig object or save it into config.json configuration file. '
-                             'Check http://sentinelhub-py.readthedocs.io/en/latest/configure.html for more info.')
+            raise ValueError(
+                "Sentinel Hub instance ID is missing. "
+                "Either provide it with SHConfig object or save it into config.json configuration file. "
+                "Check http://sentinelhub-py.readthedocs.io/en/latest/configure.html for more info."
+            )
 
     def _mask_credentials(self, param, value):
-        """ In case a credentials parameter is given it will mask its value
-        """
+        """In case a credentials parameter is given it will mask its value"""
         if not (param in self._instance.CREDENTIALS and value):
             return value
         if not isinstance(value, str):
             raise ValueError(f"Parameter '{param}' should be a string but {value} found")
 
         hide_size = min(max(len(value) - 4, 10), len(value))
-        return '*' * hide_size + value[hide_size:]
+        return "*" * hide_size + value[hide_size:]
