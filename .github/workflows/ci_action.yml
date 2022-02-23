@@ -7,7 +7,7 @@ on:
 
 jobs:
 
-    check-code-black:
+  check-code-black:
     runs-on: ubuntu-latest
     steps:
       - name: Check out current branch
