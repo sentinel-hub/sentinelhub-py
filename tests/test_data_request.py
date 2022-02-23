@@ -2,7 +2,7 @@ import os
 
 import pytest
 
-from sentinelhub import WcsRequest, AwsProductRequest, DataCollection, BBox, CRS, get_file_list, get_folder_list
+from sentinelhub import CRS, AwsProductRequest, BBox, DataCollection, WcsRequest, get_file_list, get_folder_list
 
 
 @pytest.fixture(name="wcs_request")

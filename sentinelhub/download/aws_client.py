@@ -11,7 +11,6 @@ from ..exceptions import AwsDownloadFailedException
 from .client import DownloadClient
 from .handlers import fail_missing_file
 
-
 LOGGER = logging.getLogger(__name__)
 
 

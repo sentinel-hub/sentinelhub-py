@@ -2,23 +2,22 @@
 Main module for collecting data
 """
 
-import datetime
-import os
-import logging
 import copy
+import datetime
+import logging
+import os
 from abc import ABC, abstractmethod
 
-from .config import SHConfig
-from .ogc import OgcImageService
-from .fis import FisService
-from .geopedia import GeopediaWmsService, GeopediaImageService
 from .aws import AwsProduct, AwsTile
 from .aws_safe import SafeProduct, SafeTile
-from .data_collections import handle_deprecated_data_source
-from .download import DownloadRequest, DownloadClient, AwsDownloadClient, SentinelHubDownloadClient
+from .config import SHConfig
+from .constants import CRS, CustomUrlParam, HistogramType, MimeType, ServiceType
+from .data_collections import DataCollection, handle_deprecated_data_source
+from .download import AwsDownloadClient, DownloadClient, DownloadRequest, SentinelHubDownloadClient
+from .fis import FisService
+from .geopedia import GeopediaImageService, GeopediaWmsService
+from .ogc import OgcImageService
 from .os_utils import make_folder
-from .constants import MimeType, CustomUrlParam, ServiceType, CRS, HistogramType
-from .data_collections import DataCollection
 
 LOGGER = logging.getLogger(__name__)
 

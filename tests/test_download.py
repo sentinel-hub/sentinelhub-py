@@ -6,8 +6,8 @@ import os
 
 import pytest
 
-from sentinelhub import DownloadRequest, MimeType, DownloadClient, write_data
-from sentinelhub.exceptions import SHRuntimeWarning, HashedNameCollisionException
+from sentinelhub import DownloadClient, DownloadRequest, MimeType, write_data
+from sentinelhub.exceptions import HashedNameCollisionException, SHRuntimeWarning
 
 
 def test_general():

@@ -1,23 +1,24 @@
 """
 Module implementing an interface with Sentinel Hub Bring your own COG service
 """
-from dataclasses import field, dataclass
+from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Optional
 
+from dataclasses_json import CatchAll, LetterCase, Undefined
 from dataclasses_json import config as dataclass_config
-from dataclasses_json import dataclass_json, LetterCase, Undefined, CatchAll
+from dataclasses_json import dataclass_json
 
+from .constants import MimeType, RequestType
 from .data_collections import DataCollection
-from .constants import RequestType, MimeType
 from .geometry import Geometry
 from .sh_utils import (
-    SentinelHubService,
-    SentinelHubFeatureIterator,
     BaseCollection,
-    remove_undefined,
+    SentinelHubFeatureIterator,
+    SentinelHubService,
     datetime_config,
     geometry_config,
+    remove_undefined,
 )
 
 

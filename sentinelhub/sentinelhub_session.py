@@ -8,9 +8,8 @@ from oauthlib.oauth2 import BackendApplicationClient
 from requests_oauthlib import OAuth2Session
 
 from .config import SHConfig
+from .download.handlers import fail_user_errors, retry_temporary_errors
 from .download.request import DownloadRequest
-from .download.handlers import retry_temporary_errors, fail_user_errors
-
 
 LOGGER = logging.getLogger(__name__)
 

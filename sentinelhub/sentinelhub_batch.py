@@ -1,29 +1,30 @@
 """
 Module implementing an interface with Sentinel Hub Batch service
 """
+import datetime as dt
 import logging
 import time
-import datetime as dt
 from collections import defaultdict
-from dataclasses import field, dataclass
+from dataclasses import dataclass, field
 from enum import Enum
 from typing import Optional
 
+from dataclasses_json import CatchAll, LetterCase, Undefined
 from dataclasses_json import config as dataclass_config
-from dataclasses_json import dataclass_json, LetterCase, Undefined, CatchAll
+from dataclasses_json import dataclass_json
 from tqdm.auto import tqdm
 
 from .constants import RequestType
 from .data_collections import DataCollection
-from .geometry import Geometry, BBox, CRS
+from .geometry import CRS, BBox, Geometry
 from .sentinelhub_request import SentinelHubRequest
 from .sh_utils import (
-    SentinelHubService,
-    SentinelHubFeatureIterator,
-    remove_undefined,
     BaseCollection,
+    SentinelHubFeatureIterator,
+    SentinelHubService,
     datetime_config,
     enum_config,
+    remove_undefined,
 )
 
 LOGGER = logging.getLogger(__name__)

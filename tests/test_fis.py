@@ -6,7 +6,7 @@ from typing import Any
 import pytest
 from shapely.geometry import Polygon
 
-from sentinelhub import CRS, DataCollection, BBox, Geometry, CustomUrlParam, FisRequest, HistogramType
+from sentinelhub import CRS, BBox, CustomUrlParam, DataCollection, FisRequest, Geometry, HistogramType
 from sentinelhub.testing_utils import get_input_folder, get_output_folder
 
 with open(os.path.join(get_input_folder(__file__), "test_fis_results.txt"), "r") as file:

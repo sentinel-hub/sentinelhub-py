@@ -4,13 +4,13 @@ Tests for utilities that implement rate-limiting in the package
 import concurrent.futures
 import itertools as it
 import time
-from threading import Lock
 from dataclasses import dataclass
+from threading import Lock
 
 import pytest
 from pytest import approx
 
-from sentinelhub.sentinelhub_rate_limit import SentinelHubRateLimit, PolicyBucket, PolicyType
+from sentinelhub.sentinelhub_rate_limit import PolicyBucket, PolicyType, SentinelHubRateLimit
 
 
 class DummyService:

@@ -5,7 +5,7 @@ import pytest
 
 from sentinelhub import DataCollection
 from sentinelhub.constants import ServiceUrl
-from sentinelhub.data_collections import DataCollectionDefinition, _RENAMED_COLLECTIONS
+from sentinelhub.data_collections import _RENAMED_COLLECTIONS, DataCollectionDefinition
 from sentinelhub.exceptions import SHDeprecationWarning
 
 

@@ -1,16 +1,15 @@
 """
 Download process for Sentinel Hub Statistical API
 """
-import logging
-import copy
-import os
 import concurrent.futures
+import copy
+import logging
+import os
 
-from .sentinelhub_client import SentinelHubDownloadClient
 from ..constants import MimeType
 from ..decoding import decode_data as decode_data_function
 from ..io_utils import read_data, write_data
-
+from .sentinelhub_client import SentinelHubDownloadClient
 
 LOGGER = logging.getLogger(__name__)
 

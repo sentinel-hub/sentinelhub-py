@@ -6,8 +6,8 @@ import click
 
 from .config import SHConfig
 from .data_collections import DataCollection
-from .data_request import get_safe_format, download_safe_format
-from .download import DownloadRequest, DownloadClient
+from .data_request import download_safe_format, get_safe_format
+from .download import DownloadClient, DownloadRequest
 
 
 @click.command()

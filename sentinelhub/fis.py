@@ -4,8 +4,8 @@ Module for working with Sentinel Hub FIS service
 import logging
 import warnings
 
+from .constants import MimeType, RequestType, SHConstants
 from .download import DownloadRequest
-from .constants import MimeType, SHConstants, RequestType
 from .exceptions import SHDeprecationWarning
 from .ogc import OgcImageService
 

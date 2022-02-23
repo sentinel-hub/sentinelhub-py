@@ -4,8 +4,8 @@ Utility functions to read/write image data from/to file
 
 import csv
 import json
-import os
 import logging
+import os
 import warnings
 from xml.etree import ElementTree
 
@@ -13,10 +13,9 @@ import numpy as np
 import tifffile as tiff
 from PIL import Image
 
-from .decoding import decode_tar, get_data_format, fix_jp2_image, get_jp2_bit_depth
 from .constants import MimeType
+from .decoding import decode_tar, fix_jp2_image, get_data_format, get_jp2_bit_depth
 from .os_utils import create_parent_folder
-
 
 warnings.simplefilter("ignore", Image.DecompressionBombWarning)
 LOGGER = logging.getLogger(__name__)

@@ -9,7 +9,6 @@ import requests
 from ..decoding import decode_sentinelhub_err_msg
 from ..exceptions import DownloadFailedException
 
-
 LOGGER = logging.getLogger(__name__)
 
 

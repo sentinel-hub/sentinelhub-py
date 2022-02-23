@@ -3,20 +3,20 @@
 import json
 
 import pytest
+from oauthlib.oauth2.rfc6749.errors import CustomOAuth2Error
 from pytest import approx
 from shapely.geometry import Polygon
-from oauthlib.oauth2.rfc6749.errors import CustomOAuth2Error
 
 from sentinelhub import (
-    SentinelHubRequest,
     CRS,
     BBox,
     DataCollection,
-    MimeType,
-    bbox_to_dimensions,
     Geometry,
-    SHConfig,
+    MimeType,
+    SentinelHubRequest,
     ServiceUrl,
+    SHConfig,
+    bbox_to_dimensions,
 )
 from sentinelhub.sentinelhub_base_api import InputDataDict
 from sentinelhub.testing_utils import test_numpy_data

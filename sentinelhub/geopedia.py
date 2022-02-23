@@ -2,16 +2,16 @@
 Module for working with Geopedia
 """
 
-import logging
 import datetime
 import hashlib
+import logging
 
 from shapely.geometry import shape as geo_shape
 
-from .ogc import OgcImageService, MimeType
 from .config import SHConfig
-from .download import DownloadRequest, DownloadClient
 from .constants import CRS
+from .download import DownloadClient, DownloadRequest
+from .ogc import MimeType, OgcImageService
 from .sh_utils import FeatureIterator
 
 LOGGER = logging.getLogger(__name__)

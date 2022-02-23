@@ -3,11 +3,10 @@ Unit tests for time utility functions
 """
 import datetime as dt
 
-import pytest
 import dateutil.tz
+import pytest
 
 from sentinelhub import time_utils
-
 
 TEST_DATE = dt.date(year=2015, month=4, day=12)
 TEST_DATETIME = dt.datetime(year=2015, month=4, day=12, hour=12, minute=32, second=14)

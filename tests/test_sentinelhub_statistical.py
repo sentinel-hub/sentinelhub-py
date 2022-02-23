@@ -3,8 +3,7 @@ Tests for the module with Statistical API
 """
 import pytest
 
-from sentinelhub import BBox, Geometry, CRS, DataCollection, SentinelHubStatistical
-
+from sentinelhub import CRS, BBox, DataCollection, Geometry, SentinelHubStatistical
 
 EVALSCRIPT = """
 //VERSION=3

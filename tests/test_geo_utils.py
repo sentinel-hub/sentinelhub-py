@@ -3,7 +3,7 @@ Test for geo_utils module and correctness of geographical transformations
 """
 import pytest
 
-from sentinelhub import geo_utils, CRS, BBox
+from sentinelhub import CRS, BBox, geo_utils
 
 
 def test_wgs84_to_utm():

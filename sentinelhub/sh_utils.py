@@ -3,21 +3,21 @@ Module implementing some utility functions not suitable for other utility module
 """
 import warnings
 from abc import ABC, abstractmethod
-from dataclasses import field, dataclass
+from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Optional, Union
 from urllib.parse import urlencode
 
+from dataclasses_json import CatchAll, LetterCase, Undefined
 from dataclasses_json import config as dataclass_config
-from dataclasses_json import dataclass_json, LetterCase, Undefined, CatchAll
+from dataclasses_json import dataclass_json
 
 from .config import SHConfig
 from .data_collections import DataCollection
 from .download.sentinelhub_client import SentinelHubDownloadClient
-from .geometry import Geometry
 from .exceptions import MissingDataInRequestException, SHDeprecationWarning
+from .geometry import Geometry
 from .time_utils import parse_time, serialize_time
-
 
 datetime_config = dataclass_config(
     encoder=lambda time: serialize_time(time, use_tz=True) if time else None,

@@ -5,7 +5,6 @@ import logging
 
 from .constants import CRS
 
-
 LOGGER = logging.getLogger(__name__)
 
 ERR = 0.1

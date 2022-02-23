@@ -2,10 +2,10 @@
 Module for obtaining data from Amazon Web Service
 """
 
+import datetime as dt
 import logging
 import os
 import warnings
-import datetime as dt
 from abc import ABC, abstractmethod
 
 from .config import SHConfig
@@ -16,7 +16,6 @@ from .download.aws_client import AwsDownloadClient
 from .exceptions import AwsDownloadFailedException, SHUserWarning
 from .opensearch import get_tile_info, get_tile_info_id
 from .time_utils import parse_time
-
 
 LOGGER = logging.getLogger(__name__)
 

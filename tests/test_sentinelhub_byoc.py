@@ -7,7 +7,7 @@ from datetime import datetime
 import dateutil.tz
 import pytest
 
-from sentinelhub import SentinelHubBYOC, ByocCollection, ByocTile, SHConfig, DownloadFailedException
+from sentinelhub import ByocCollection, ByocTile, DownloadFailedException, SentinelHubBYOC, SHConfig
 
 pytestmark = pytest.mark.sh_integration
 

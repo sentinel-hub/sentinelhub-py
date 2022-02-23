@@ -1,23 +1,23 @@
 import datetime
 from dataclasses import dataclass
-from typing import Union, List, Optional, Type
+from typing import List, Optional, Type, Union
 
 import numpy as np
-from numpy.testing import assert_array_equal
 import pytest
+from numpy.testing import assert_array_equal
 from shapely.geometry import MultiPolygon
 
 from sentinelhub import (
-    WmsRequest,
-    WcsRequest,
     CRS,
-    MimeType,
-    CustomUrlParam,
-    ServiceType,
-    DataCollection,
     BBox,
-    WebFeatureService,
+    CustomUrlParam,
+    DataCollection,
     DownloadFailedException,
+    MimeType,
+    ServiceType,
+    WcsRequest,
+    WebFeatureService,
+    WmsRequest,
 )
 from sentinelhub.data_request import OgcRequest
 from sentinelhub.ogc import OgcImageService

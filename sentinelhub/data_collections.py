@@ -2,16 +2,16 @@
 Module defining data collections
 """
 import warnings
-from enum import Enum, EnumMeta
-from typing import Tuple, Optional
 from dataclasses import dataclass, field, fields
+from enum import Enum, EnumMeta
+from typing import Optional, Tuple
 
 from aenum import extend_enum
 
 from .config import SHConfig
 from .constants import ServiceUrl
-from .exceptions import SHDeprecationWarning
 from .data_collections_bands import Band, Bands, MetaBands
+from .exceptions import SHDeprecationWarning
 
 
 class _CollectionType:

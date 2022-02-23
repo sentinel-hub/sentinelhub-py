@@ -2,10 +2,10 @@
 Implementation of Sentinel Hub Process API interface
 """
 from .constants import MimeType, RequestType
-from .download import DownloadRequest
 from .data_collections import OrbitDirection
 from .data_request import DataRequest
-from .geometry import Geometry, BBox
+from .download import DownloadRequest
+from .geometry import BBox, Geometry
 from .sh_utils import _update_other_args
 from .time_utils import parse_time_interval, serialize_time
 

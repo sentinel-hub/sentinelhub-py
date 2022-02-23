@@ -2,18 +2,17 @@
 Module implementing a rate-limited multi-threaded download client for downloading from Sentinel Hub service
 """
 import logging
-import warnings
 import time
+import warnings
 from threading import Lock
 
 import requests
 
-from .handlers import fail_user_errors, retry_temporary_errors
-from .client import DownloadClient
-from ..sentinelhub_session import SentinelHubSession
-from ..sentinelhub_rate_limit import SentinelHubRateLimit
 from ..exceptions import SHRateLimitWarning
-
+from ..sentinelhub_rate_limit import SentinelHubRateLimit
+from ..sentinelhub_session import SentinelHubSession
+from .client import DownloadClient
+from .handlers import fail_user_errors, retry_temporary_errors
 
 LOGGER = logging.getLogger(__name__)
 

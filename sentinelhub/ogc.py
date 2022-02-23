@@ -1,21 +1,21 @@
 """
 Module for working with Sentinel Hub OGC services
 """
-import logging
 import datetime
+import logging
 from base64 import b64encode
 from urllib.parse import urlencode
 
 import shapely.geometry
 
-from .constants import ServiceType, MimeType, CRS, SHConstants, CustomUrlParam
 from .config import SHConfig
+from .constants import CRS, CustomUrlParam, MimeType, ServiceType, SHConstants
 from .data_collections import DataCollection, handle_deprecated_data_source
+from .download import DownloadRequest, SentinelHubDownloadClient
 from .geo_utils import get_image_dimension
 from .geometry import BBox, Geometry
-from .download import DownloadRequest, SentinelHubDownloadClient
 from .sh_utils import FeatureIterator
-from .time_utils import parse_time, parse_time_interval, serialize_time, filter_times
+from .time_utils import filter_times, parse_time, parse_time_interval, serialize_time
 
 LOGGER = logging.getLogger(__name__)
 

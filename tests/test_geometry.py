@@ -1,10 +1,10 @@
 import copy
 
-import shapely.geometry
 import pytest
+import shapely.geometry
 from pytest import approx
 
-from sentinelhub import BBox, Geometry, BBoxCollection, CRS, get_utm_crs
+from sentinelhub import CRS, BBox, BBoxCollection, Geometry, get_utm_crs
 
 WKT_STRING = (
     "MULTIPOLYGON (((40 40, 20 45, 45 30, 40 40)), ((20 35, 10 30, 10 10, 30 5, 45 20, 20 35), "

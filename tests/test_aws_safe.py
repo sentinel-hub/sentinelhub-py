@@ -1,10 +1,10 @@
 import os
 from dataclasses import dataclass
-from typing import Union, Type
+from typing import Type, Union
 
 import pytest
 
-from sentinelhub import AwsTileRequest, AwsProductRequest, read_data, write_data, DataCollection, AwsConstants
+from sentinelhub import AwsConstants, AwsProductRequest, AwsTileRequest, DataCollection, read_data, write_data
 from sentinelhub.testing_utils import get_input_folder
 
 INPUT_FOLDER = get_input_folder(__file__)

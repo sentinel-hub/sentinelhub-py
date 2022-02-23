@@ -8,12 +8,12 @@ import re
 import warnings
 from enum import Enum, EnumMeta
 
-import utm
 import pyproj
+import utm
 from aenum import extend_enum
 
-from .exceptions import SHUserWarning
 from ._version import __version__
+from .exceptions import SHUserWarning
 
 
 class PackageProps:

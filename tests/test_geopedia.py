@@ -2,17 +2,17 @@ import datetime
 from dataclasses import dataclass
 from typing import Optional
 
-import pytest
 import numpy as np
+import pytest
 
 from sentinelhub import (
+    CRS,
+    BBox,
+    GeopediaFeatureIterator,
+    GeopediaImageRequest,
     GeopediaSession,
     GeopediaWmsRequest,
-    GeopediaImageRequest,
-    GeopediaFeatureIterator,
-    CRS,
     MimeType,
-    BBox,
 )
 from sentinelhub.testing_utils import test_numpy_data
 

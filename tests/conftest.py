@@ -1,9 +1,9 @@
 """
 Module with global fixtures
 """
+import logging
 import os
 import shutil
-import logging
 
 import pytest
 

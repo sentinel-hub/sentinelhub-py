@@ -1,4 +1,4 @@
-from sentinelhub import get_tile_info, get_area_dates, BBox, CRS
+from sentinelhub import CRS, BBox, get_area_dates, get_tile_info
 
 
 def test_get_tile_info():

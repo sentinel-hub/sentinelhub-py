@@ -1,11 +1,11 @@
 """
 Module implementing DownloadRequest class
 """
+import datetime as dt
 import hashlib
 import json
 import os
 import warnings
-import datetime as dt
 
 from ..constants import MimeType, RequestType
 from ..exceptions import SHRuntimeWarning

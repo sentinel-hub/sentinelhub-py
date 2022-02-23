@@ -2,8 +2,8 @@
 Module for managing files and folders
 """
 
-import os
 import errno
+import os
 from sys import platform
 
 

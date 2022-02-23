@@ -1,20 +1,20 @@
-import os
 import itertools
+import os
 
 import pytest
 import shapely.geometry
 
 from sentinelhub import (
+    CRS,
+    BBox,
     BBoxSplitter,
+    CustomGridSplitter,
+    DataCollection,
     OsmSplitter,
     TileSplitter,
-    CustomGridSplitter,
-    BBox,
-    read_data,
-    CRS,
-    DataCollection,
     UtmGridSplitter,
     UtmZoneSplitter,
+    read_data,
 )
 from sentinelhub.testing_utils import get_input_folder
 

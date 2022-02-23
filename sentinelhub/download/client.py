@@ -1,24 +1,23 @@
 """
 Module implementing the main download client class
 """
+import json
 import logging
-import warnings
 import os
 import sys
-import json
+import warnings
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 import requests
 from tqdm.auto import tqdm
 
 from ..config import SHConfig
-from ..constants import RequestType, MimeType
+from ..constants import MimeType, RequestType
 from ..decoding import decode_data as decode_data_function
-from ..exceptions import DownloadFailedException, SHRuntimeWarning, HashedNameCollisionException
+from ..exceptions import DownloadFailedException, HashedNameCollisionException, SHRuntimeWarning
 from ..io_utils import read_data, write_data
 from .handlers import fail_user_errors, retry_temporary_errors
 from .request import DownloadRequest
-
 
 LOGGER = logging.getLogger(__name__)
 

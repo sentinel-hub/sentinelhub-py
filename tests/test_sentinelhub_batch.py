@@ -6,7 +6,7 @@ import itertools as it
 
 import pytest
 
-from sentinelhub import SentinelHubBatch, BatchRequest, SentinelHubRequest, DataCollection, BBox, CRS, MimeType
+from sentinelhub import CRS, BatchRequest, BBox, DataCollection, MimeType, SentinelHubBatch, SentinelHubRequest
 from sentinelhub.constants import ServiceUrl
 
 pytestmark = pytest.mark.sh_integration

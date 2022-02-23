@@ -1,21 +1,21 @@
 """
 Module for working with large geographical areas
 """
-import os
 import itertools
-from abc import ABC, abstractmethod
 import json
 import math
+import os
+from abc import ABC, abstractmethod
 
 import shapely
-import shapely.ops
 import shapely.geometry
-from shapely.geometry import Polygon, MultiPolygon, GeometryCollection
+import shapely.ops
+from shapely.geometry import GeometryCollection, MultiPolygon, Polygon
 
 from .config import SHConfig
 from .constants import CRS
-from .geometry import BBox, BBoxCollection, BaseGeometry, Geometry
 from .geo_utils import transform_point
+from .geometry import BaseGeometry, BBox, BBoxCollection, Geometry
 from .sentinelhub_batch import SentinelHubBatch
 from .sentinelhub_catalog import SentinelHubCatalog
 

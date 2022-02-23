@@ -2,9 +2,9 @@
 A client interface for Sentinel Hub Catalog API
 """
 from .data_collections import DataCollection, OrbitDirection
-from .geometry import Geometry, CRS
-from .sh_utils import SentinelHubService, FeatureIterator, remove_undefined
-from .time_utils import parse_time_interval, serialize_time, parse_time
+from .geometry import CRS, Geometry
+from .sh_utils import FeatureIterator, SentinelHubService, remove_undefined
+from .time_utils import parse_time, parse_time_interval, serialize_time
 
 
 class SentinelHubCatalog(SentinelHubService):

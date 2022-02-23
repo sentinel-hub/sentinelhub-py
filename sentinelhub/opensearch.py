@@ -6,11 +6,10 @@ For more search parameters check: http://opensearch.sentinel-hub.com/resto/api/c
 import logging
 from urllib.parse import urlencode
 
-from .constants import CRS
 from .config import SHConfig
+from .constants import CRS
 from .download import DownloadClient
-from .time_utils import parse_time_interval, parse_time, serialize_time
-
+from .time_utils import parse_time, parse_time_interval, serialize_time
 
 LOGGER = logging.getLogger(__name__)
 

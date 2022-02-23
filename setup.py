@@ -1,6 +1,7 @@
 import io
 import os
-from setuptools import setup, find_packages
+
+from setuptools import find_packages, setup
 
 
 def parse_requirements(file):
@@ -31,8 +32,8 @@ def update_package_config():
     """
     try:
         import importlib
-        import sys
         import json
+        import sys
 
         path = importlib.machinery.PathFinder().find_spec("sentinelhub", sys.path[1:]).submodule_search_locations[0]
         old_config_filename = os.path.join(path, "config.json")

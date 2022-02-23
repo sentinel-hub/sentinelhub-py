@@ -15,7 +15,6 @@ from PIL import Image
 from .constants import MimeType
 from .exceptions import ImageDecodingError
 
-
 warnings.simplefilter("ignore", Image.DecompressionBombWarning)
 
 
