@@ -147,6 +147,14 @@ def test_get_string(mime_type, expected_string):
     assert MimeType.from_string(expected_string) == mime_type, 'Result of `get_string` not accepted by `from_string`'
 
 
+@pytest.mark.parametrize('mime_type, path, expected_answer', [
+    (MimeType.NPY, 'some/path/file.npy', True),
+    (MimeType.GPKG, 'file.gpkg.gz', False)
+])
+def test_matches_extension(mime_type, path, expected_answer):
+    assert mime_type.matches_extension(path) == expected_answer
+
+
 def test_get_expected_max_value():
     assert MimeType.TIFF.get_expected_max_value() == 65535
     assert MimeType.PNG.get_expected_max_value() == 255

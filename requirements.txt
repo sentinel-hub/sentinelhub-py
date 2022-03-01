@@ -1,9 +1,8 @@
-wheel
 requests>=2.5.0
 click
 numpy
 tifffile
-pillow>=8.3.2
+pillow>=8.3.2,<=8.4.0
 python-dateutil
 utm
 shapely

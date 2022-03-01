@@ -156,7 +156,7 @@ TEST_CASES = [
             data_collection=DataCollection.SENTINEL2_L2A, data_folder=OUTPUT_FOLDER, image_format=MimeType.TIFF,
             layer='BANDS-S2-L2A', width=img_width, height=img_height, bbox=wgs84_bbox, time=('2017-10-01', '2017-10-02')
         ),
-        result_len=1, img_min=0.0, img_max=1.6167, img_mean=0.39534, img_median=0.3373, img_std=0.227519, tile_num=2
+        result_len=1, img_min=0.0, img_max=1.6167, img_mean=0.39445, img_median=0.3353, img_std=0.226799, tile_num=2
     ),
     OgcTestCase(
         'L8 Test', WmsRequest,

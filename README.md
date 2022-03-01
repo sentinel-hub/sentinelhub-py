@@ -19,7 +19,7 @@ The main package resources are [GitHub repository](https://github.com/sentinel-h
 
 ## Installation
 
-The package requires a Python version >= 3.6 and an installed C/C++ compiler. The package is available at
+The package requires a Python version >= 3.7 and an installed C/C++ compiler. The package is available at
 the PyPI package index and can be installed with
 
 ```

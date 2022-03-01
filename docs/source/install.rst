@@ -2,7 +2,7 @@
 Installation
 ************
 
-This package requires Python >=3.6 and can be installed with PyPI package manager::
+This package requires Python >=3.7 and can be installed with PyPI package manager::
 
 $ pip install sentinelhub --upgrade
 
