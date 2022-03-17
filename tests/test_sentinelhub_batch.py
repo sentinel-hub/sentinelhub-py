@@ -6,21 +6,18 @@ import itertools as it
 
 import pytest
 
-from sentinelhub import SentinelHubBatch, BatchRequest, SentinelHubRequest, DataCollection, BBox, CRS, MimeType
+from sentinelhub import CRS, BatchRequest, BBox, DataCollection, MimeType, SentinelHubBatch, SentinelHubRequest
 from sentinelhub.constants import ServiceUrl
 
 pytestmark = pytest.mark.sh_integration
 
 
-@pytest.fixture(name='batch_client')
+@pytest.fixture(name="batch_client")
 def batch_client_fixture(config):
     return SentinelHubBatch(config=config)
 
 
-@pytest.mark.parametrize('base_url', [
-    ServiceUrl.MAIN,
-    ServiceUrl.USWEST
-])
+@pytest.mark.parametrize("base_url", [ServiceUrl.MAIN, ServiceUrl.USWEST])
 def test_iter_tiling_grids(base_url, config):
     config.sh_base_url = base_url
     batch_client = SentinelHubBatch(config=config)
@@ -37,9 +34,8 @@ def test_single_tiling_grid(batch_client):
 
 
 def test_create_and_run_batch_request(batch_client, requests_mock):
-    """ A test that mocks creation and execution of a new batch request
-    """
-    evalscript = 'some evalscript'
+    """A test that mocks creation and execution of a new batch request"""
+    evalscript = "some evalscript"
     time_interval = dt.date(year=2020, month=6, day=1), dt.date(year=2020, month=6, day=10)
     bbox = BBox([14.0, 45.8, 14.2, 46.0], crs=CRS.WGS84)
     sentinelhub_request = SentinelHubRequest(
@@ -51,38 +47,37 @@ def test_create_and_run_batch_request(batch_client, requests_mock):
             )
         ],
         responses=[
-            SentinelHubRequest.output_response('B02', MimeType.TIFF),
+            SentinelHubRequest.output_response("B02", MimeType.TIFF),
         ],
-        bbox=bbox
+        bbox=bbox,
     )
 
-    requests_mock.post('/oauth/token', real_http=True)
-    request_id = 'mocked-id'
-    requests_mock.post('/api/v1/batch/process', [{
-        'json': {
-            'id': request_id,
-            'processRequest': {
-                'input': {
-                    'bounds': {
-                        'bbox': list(bbox),
-                        'properties': {
-                            'crs': 'http://www.opengis.net/def/crs/OGC/1.3/CRS84'
+    requests_mock.post("/oauth/token", real_http=True)
+    request_id = "mocked-id"
+    requests_mock.post(
+        "/api/v1/batch/process",
+        [
+            {
+                "json": {
+                    "id": request_id,
+                    "processRequest": {
+                        "input": {
+                            "bounds": {
+                                "bbox": list(bbox),
+                                "properties": {"crs": "http://www.opengis.net/def/crs/OGC/1.3/CRS84"},
+                            }
                         }
-                    }
+                    },
                 }
             }
-        }
-    }])
+        ],
+    )
 
     batch_request = batch_client.create(
         sentinelhub_request,
-        tiling_grid=batch_client.tiling_grid(
-            grid_id=1000,
-            resolution=10,
-            buffer=(50, 50)
-        ),
-        bucket_name='test',
-        description='Test batch job',
+        tiling_grid=batch_client.tiling_grid(grid_id=1000, resolution=10, buffer=(50, 50)),
+        bucket_name="test",
+        description="Test batch job",
     )
 
     assert isinstance(batch_request, BatchRequest)
@@ -90,16 +85,16 @@ def test_create_and_run_batch_request(batch_client, requests_mock):
     assert request_id in repr(batch_request)
     assert batch_request.bbox == bbox
 
-    delete_endpoint = f'/api/v1/batch/process/{request_id}'
-    requests_mock.delete(delete_endpoint, [{'json': ''}])
+    delete_endpoint = f"/api/v1/batch/process/{request_id}"
+    requests_mock.delete(delete_endpoint, [{"json": ""}])
 
     batch_client.delete_request(batch_request)
     requests_mock.request_history[-1].url.endswith(delete_endpoint)
 
-    endpoints = ['analyse', 'start', 'cancel', 'restartpartial']
-    full_endpoints = [f'/api/v1/batch/process/{request_id}/{endpoint}' for endpoint in endpoints]
+    endpoints = ["analyse", "start", "cancel", "restartpartial"]
+    full_endpoints = [f"/api/v1/batch/process/{request_id}/{endpoint}" for endpoint in endpoints]
     for full_endpoint in full_endpoints:
-        requests_mock.post(full_endpoint, [{'json': ''}])
+        requests_mock.post(full_endpoint, [{"json": ""}])
 
     batch_client.start_analysis(batch_request)
     batch_client.start_job(batch_request)

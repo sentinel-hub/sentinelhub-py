@@ -2,25 +2,25 @@
 A client interface for Sentinel Hub Catalog API
 """
 from .data_collections import DataCollection, OrbitDirection
-from .geometry import Geometry, CRS
-from .sh_utils import SentinelHubService, FeatureIterator, remove_undefined
-from .time_utils import parse_time_interval, serialize_time, parse_time
+from .geometry import CRS, Geometry
+from .sh_utils import FeatureIterator, SentinelHubService, remove_undefined
+from .time_utils import parse_time, parse_time_interval, serialize_time
 
 
 class SentinelHubCatalog(SentinelHubService):
-    """ The main class for interacting with Sentinel Hub Catalog API
+    """The main class for interacting with Sentinel Hub Catalog API
 
     For more details about certain endpoints and parameters check
     `Catalog API documentation <https://docs.sentinel-hub.com/api/latest/api/catalog>`_.
     """
+
     @staticmethod
     def _get_service_url(base_url):
-        """ Provides URL to Catalog API
-        """
-        return f'{base_url}/api/v1/catalog'
+        """Provides URL to Catalog API"""
+        return f"{base_url}/api/v1/catalog"
 
     def get_info(self):
-        """ Provides the main information that define Sentinel Hub Catalog API
+        """Provides the main information that define Sentinel Hub Catalog API
 
         `Catalog API reference <https://docs.sentinel-hub.com/api/latest/reference/#operation/getLandingPage>`__
 
@@ -30,7 +30,7 @@ class SentinelHubCatalog(SentinelHubService):
         return self.client.get_json(self.service_url)
 
     def get_conformance(self):
-        """ Get information about specifications that this API conforms to
+        """Get information about specifications that this API conforms to
 
         `Catalog API reference
         <https://docs.sentinel-hub.com/api/latest/reference/#operation/getConformanceDeclaration>`__
@@ -38,22 +38,22 @@ class SentinelHubCatalog(SentinelHubService):
         :return: A service payload with information
         :rtype: dict
         """
-        url = f'{self.service_url}/conformance'
+        url = f"{self.service_url}/conformance"
         return self.client.get_json(url)
 
     def get_collections(self):
-        """ Provides a list of collections that are available to a user
+        """Provides a list of collections that are available to a user
 
         `Catalog API reference <https://docs.sentinel-hub.com/api/latest/reference/#operation/getCollections>`__
 
         :return: A list of collections with information
         :rtype: list(dict)
         """
-        url = f'{self.service_url}/collections'
-        return self.client.get_json(url, use_session=True)['collections']
+        url = f"{self.service_url}/collections"
+        return self.client.get_json(url, use_session=True)["collections"]
 
     def get_collection(self, collection):
-        """ Provides information about given collection
+        """Provides information about given collection
 
         `Catalog API reference <https://docs.sentinel-hub.com/api/latest/reference/#operation/describeCollection>`__
 
@@ -63,11 +63,11 @@ class SentinelHubCatalog(SentinelHubService):
         :rtype: dict
         """
         collection_id = self._parse_collection_id(collection)
-        url = f'{self.service_url}/collections/{collection_id}'
+        url = f"{self.service_url}/collections/{collection_id}"
         return self.client.get_json(url, use_session=True)
 
     def get_feature(self, collection, feature_id):
-        """ Provides information about a single feature in a collection
+        """Provides information about a single feature in a collection
 
         `Catalog API reference <https://docs.sentinel-hub.com/api/latest/reference/#operation/getFeature>`__
 
@@ -79,12 +79,24 @@ class SentinelHubCatalog(SentinelHubService):
         :rtype: dict
         """
         collection_id = self._parse_collection_id(collection)
-        url = f'{self.service_url}/collections/{collection_id}/items/{feature_id}'
+        url = f"{self.service_url}/collections/{collection_id}/items/{feature_id}"
         return self.client.get_json(url, use_session=True)
 
-    def search(self, collection, *, time=None, bbox=None, geometry=None, ids=None, query=None, fields=None,
-               distinct=None, limit=100, **kwargs):
-        """ Catalog STAC search
+    def search(
+        self,
+        collection,
+        *,
+        time=None,
+        bbox=None,
+        geometry=None,
+        ids=None,
+        query=None,
+        fields=None,
+        distinct=None,
+        limit=100,
+        **kwargs,
+    ):
+        """Catalog STAC search
 
         `Catalog API reference <https://docs.sentinel-hub.com/api/latest/reference/#operation/postSearchSTAC>`__
 
@@ -114,7 +126,7 @@ class SentinelHubCatalog(SentinelHubService):
         :type limit: int
         :param kwargs: Any other parameters that will be passed directly to the service
         """
-        url = f'{self.service_url}/search'
+        url = f"{self.service_url}/search"
 
         collection_id = self._parse_collection_id(collection)
         start_time, end_time = serialize_time(parse_time_interval(time, allow_undefined=True), use_tz=True)
@@ -128,98 +140,93 @@ class SentinelHubCatalog(SentinelHubService):
         if query:
             _query.update(query)
 
-        payload = remove_undefined({
-            'collections': [collection_id],
-            'datetime': f'{start_time}/{end_time}' if time else None,
-            'bbox': list(bbox) if bbox else None,
-            'intersects': geometry.get_geojson(with_crs=False) if geometry else None,
-            'ids': ids,
-            'query': _query,
-            'fields': fields,
-            'distinct': distinct,
-            'limit': limit,
-            **kwargs
-        })
+        payload = remove_undefined(
+            {
+                "collections": [collection_id],
+                "datetime": f"{start_time}/{end_time}" if time else None,
+                "bbox": list(bbox) if bbox else None,
+                "intersects": geometry.get_geojson(with_crs=False) if geometry else None,
+                "ids": ids,
+                "query": _query,
+                "fields": fields,
+                "distinct": distinct,
+                "limit": limit,
+                **kwargs,
+            }
+        )
 
         return CatalogSearchIterator(self.client, url, payload)
 
     @staticmethod
     def _parse_collection_id(collection):
-        """ Extracts catalog collection id from an object defining a collection
-        """
+        """Extracts catalog collection id from an object defining a collection"""
         if isinstance(collection, DataCollection):
             return collection.catalog_id
         if isinstance(collection, str):
             return collection
-        raise ValueError(f'Expected either a DataCollection object or a collection id string, got {collection}')
+        raise ValueError(f"Expected either a DataCollection object or a collection id string, got {collection}")
 
     @staticmethod
     def _get_data_collection_filters(data_collection):
-        """ Builds a dictionary of query filters for catalog API from a data collection definition
-        """
+        """Builds a dictionary of query filters for catalog API from a data collection definition"""
         filters = {}
 
         if isinstance(data_collection, str):
             return filters
 
         if data_collection.swath_mode:
-            filters['sar:instrument_mode'] = {'eq': data_collection.swath_mode.upper()}
+            filters["sar:instrument_mode"] = {"eq": data_collection.swath_mode.upper()}
 
         if data_collection.polarization:
-            filters['polarization'] = {'eq': data_collection.polarization.upper()}
+            filters["polarization"] = {"eq": data_collection.polarization.upper()}
 
         if data_collection.resolution:
-            filters['resolution'] = {'eq': data_collection.resolution.upper()}
+            filters["resolution"] = {"eq": data_collection.resolution.upper()}
 
         if data_collection.orbit_direction and data_collection.orbit_direction.upper() != OrbitDirection.BOTH:
-            filters['sat:orbit_state'] = {'eq': data_collection.orbit_direction.lower()}
+            filters["sat:orbit_state"] = {"eq": data_collection.orbit_direction.lower()}
 
         if data_collection.timeliness:
-            filters['timeliness'] = {'eq': data_collection.timeliness}
+            filters["timeliness"] = {"eq": data_collection.timeliness}
 
         return filters
 
 
 class CatalogSearchIterator(FeatureIterator):
-    """ Searches a catalog with a given query and provides results
-    """
+    """Searches a catalog with a given query and provides results"""
 
     def _fetch_features(self):
-        """ Collects more results from the service
-        """
-        payload = remove_undefined({
-            **self.params,
-            'next': self.next
-        })
+        """Collects more results from the service"""
+        payload = remove_undefined({**self.params, "next": self.next})
 
         results = self.client.get_json(self.url, post_values=payload, use_session=True)
 
-        self.next = results['context'].get('next')
-        new_features = results['features']
+        self.next = results["context"].get("next")
+        new_features = results["features"]
         self.finished = self.next is None or not new_features
 
         return new_features
 
     def get_timestamps(self):
-        """ Provides features timestamps
+        """Provides features timestamps
 
         :return: A list of sensing times
         :rtype: list(datetime.datetime)
         """
-        return [parse_time(feature['properties']['datetime']) for feature in self]
+        return [parse_time(feature["properties"]["datetime"]) for feature in self]
 
     def get_geometries(self):
-        """ Provides features geometries
+        """Provides features geometries
 
         :return: A list of geometry objects with CRS
         :rtype: list(Geometry)
         """
-        return [Geometry.from_geojson(feature['geometry']) for feature in self]
+        return [Geometry.from_geojson(feature["geometry"]) for feature in self]
 
     def get_ids(self):
-        """ Provides features IDs
+        """Provides features IDs
 
         :return: A list of IDs
         :rtype: list(str)
         """
-        return [feature['id'] for feature in self]
+        return [feature["id"] for feature in self]

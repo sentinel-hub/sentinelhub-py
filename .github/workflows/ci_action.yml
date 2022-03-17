@@ -6,6 +6,33 @@ on:
     - cron: '0 0 * * *'
 
 jobs:
+
+  check-code-black:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out current branch
+        if: github.event_name == 'push'
+        uses: actions/checkout@v2
+
+      - name: Check code compliance with black
+        if: github.event_name == 'push'
+        run: |
+          pip install black[jupyter]
+          black . --check --diff
+
+  check-code-isort:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out current branch
+        if: github.event_name == 'push'
+        uses: actions/checkout@v2
+
+      - name: Check code compliance with isort
+        if: github.event_name == 'push'
+        run: |
+          pip install isort
+          isort **/*.py --check --diff
+
   test-on-github:
     runs-on: ubuntu-latest
     strategy:

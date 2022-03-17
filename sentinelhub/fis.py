@@ -4,8 +4,8 @@ Module for working with Sentinel Hub FIS service
 import logging
 import warnings
 
+from .constants import MimeType, RequestType, SHConstants
 from .download import DownloadRequest
-from .constants import MimeType, SHConstants, RequestType
 from .exceptions import SHDeprecationWarning
 from .ogc import OgcImageService
 
@@ -13,21 +13,23 @@ LOGGER = logging.getLogger(__name__)
 
 
 class FisService(OgcImageService):
-    """ Sentinel Hub OGC services class for providing FIS data
+    """Sentinel Hub OGC services class for providing FIS data
 
     Intermediate layer between FIS requests and the Sentinel Hub FIS services.
     """
 
     def __init__(self, *args, **kwargs):
-        message = 'Fis service is being deprecated in favour of SentinelHubStatistical. ' \
-                  'Although no immediate action is needed as FIS is still supported, consider switching to ' \
-                  'Statistical API because it provides additional functionalities.'
+        message = (
+            "Fis service is being deprecated in favour of SentinelHubStatistical. "
+            "Although no immediate action is needed as FIS is still supported, consider switching to "
+            "Statistical API because it provides additional functionalities."
+        )
         warnings.warn(message, category=SHDeprecationWarning)
 
         super().__init__(*args, **kwargs)
 
     def get_request(self, request):
-        """ Get download requests
+        """Get download requests
 
         Create a list of DownloadRequests for all Sentinel-2 acquisitions within request's time interval and
         acceptable cloud coverage.
@@ -43,12 +45,15 @@ class FisService(OgcImageService):
     def _create_request(self, request, geometry):
         url = self.get_base_url(request)
 
-        headers = {'Content-Type': MimeType.JSON.get_string(), **SHConstants.HEADERS}
+        headers = {"Content-Type": MimeType.JSON.get_string(), **SHConstants.HEADERS}
 
         post_data = {**self._get_common_url_parameters(request), **self._get_fis_parameters(request, geometry)}
         post_data = {k.lower(): v for k, v in post_data.items()}  # lowercase required on SH service
 
-        return DownloadRequest(url=f'{url}/{self.config.instance_id}',
-                               post_values=post_data,
-                               data_type=MimeType.JSON, headers=headers,
-                               request_type=RequestType.POST)
+        return DownloadRequest(
+            url=f"{url}/{self.config.instance_id}",
+            post_values=post_data,
+            data_type=MimeType.JSON,
+            headers=headers,
+            request_type=RequestType.POST,
+        )
