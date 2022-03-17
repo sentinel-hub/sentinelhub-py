@@ -468,6 +468,7 @@ class AwsConstants:
     PREVIEW = "preview"
     PREVIEW_JP2 = "preview*"
     QI_LIST = ["DEFECT", "DETFOO", "NODATA", "SATURA", "TECQUA"]
+    QI_LIST_v4 = ["DETFOO", "QUALIT"]
     QI_MSK_CLOUD = "qi/MSK_CLOUDS_B00"
     AUX_DATA = "AUX_DATA"
     DATASTRIP = "DATASTRIP"
@@ -518,6 +519,7 @@ class AwsConstants:
         + [f"{preview}/{band}" for preview, band in it.zip_longest([], S2_L1C_BANDS, fillvalue=PREVIEW)]
         + [QI_MSK_CLOUD]
         + [f"qi/MSK_{qi}_{band}" for qi, band in it.product(QI_LIST, S2_L1C_BANDS)]
+        + [f"qi/{qi}_{band}" for qi, band in it.product(QI_LIST_v4, S2_L1C_BANDS)]
         + [f"qi/{qi_report}" for qi_report in [FORMAT_CORRECTNESS, GENERAL_QUALITY, GEOMETRIC_QUALITY, SENSOR_QUALITY]]
         + [ECMWFT]
     )
@@ -532,6 +534,7 @@ class AwsConstants:
         + [f"qi/{source_id}_PVI" for source_id in SOURCE_ID_LIST]
         + [f'qi/{mask}_{res.lstrip("R")}' for mask, res in it.product(CLASS_MASKS, [R20m, R60m])]
         + [f"qi/MSK_{qi}_{band}" for qi, band in it.product(QI_LIST, S2_L1C_BANDS)]
+        + [f"qi/{qi}_{band}" for qi, band in it.product(QI_LIST_v4, S2_L1C_BANDS)]
         + [QI_MSK_CLOUD]
         + [f"qi/{qi_report}" for qi_report in QUALITY_REPORTS]
         + [ECMWFT, AUX_ECMWFT, GIPP]

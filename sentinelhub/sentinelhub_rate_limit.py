@@ -73,7 +73,7 @@ class PolicyBucket:
         self.refill_period = policy_payload["samplingPeriod"]
 
         # The following is the same as if we would interpret samplingPeriod string
-        self.refill_per_second = 10**9 / policy_payload["nanosBetweenRefills"]
+        self.refill_per_second = 10 ** 9 / policy_payload["nanosBetweenRefills"]
 
         self._content = self.capacity
 

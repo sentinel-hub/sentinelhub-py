@@ -677,7 +677,7 @@ class AwsTile(AwsService):
         """
         return f"{self.tile_url}/qi/{metafile}"
 
-    def get_gml_url(self, qi_type, band="B00"):
+    def get_gml_url(self, qi_type, band="B00", data_format=MimeType.GML):
         """
         :param qi_type: type of quality indicator
         :type qi_type: str
@@ -687,7 +687,9 @@ class AwsTile(AwsService):
         :rtype: str
         """
         band = band.split("/")[-1]
-        return self.get_qi_url(f"MSK_{qi_type}_{band}.gml")
+        if data_format == MimeType.JP2:
+            return self.get_qi_url(f"{qi_type}_{band}.{data_format.value}")
+        return self.get_qi_url(f"MSK_{qi_type}_{band}.{data_format.value}")
 
     def get_preview_url(self, data_type="L1C"):
         """Returns url location of full resolution L1C preview
