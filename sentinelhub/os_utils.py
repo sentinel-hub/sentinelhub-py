@@ -2,13 +2,13 @@
 Module for managing files and folders
 """
 
-import os
 import errno
+import os
 from sys import platform
 
 
-def get_content_list(folder='.'):
-    """ Get list of contents in input folder
+def get_content_list(folder="."):
+    """Get list of contents in input folder
 
     :param folder: input folder to list contents. Default is ``'.'``
     :type folder: str
@@ -18,8 +18,8 @@ def get_content_list(folder='.'):
     return os.listdir(folder)
 
 
-def get_folder_list(folder='.'):
-    """ Get list of sub-folders contained in input folder
+def get_folder_list(folder="."):
+    """Get list of sub-folders contained in input folder
 
     :param folder: input folder to list sub-folders. Default is ``'.'``
     :type folder: str
@@ -30,8 +30,8 @@ def get_folder_list(folder='.'):
     return [f for f in dir_list if not os.path.isfile(os.path.join(folder, f))]
 
 
-def get_file_list(folder='.'):
-    """ Get list of files contained in input folder
+def get_file_list(folder="."):
+    """Get list of files contained in input folder
 
     :param folder: input folder to list files only. Default is ``'.'``
     :type folder: str
@@ -43,19 +43,19 @@ def get_file_list(folder='.'):
 
 
 def create_parent_folder(filename):
-    """ Create parent folder for input filename recursively
+    """Create parent folder for input filename recursively
 
     :param filename: input filename
     :type filename: str
     :raises: error if folder cannot be created
     """
     path = os.path.dirname(filename)
-    if path != '':
+    if path != "":
         make_folder(path)
 
 
 def make_folder(path):
-    """ Create folder at input path recursively
+    """Create folder at input path recursively
 
     Create a folder specified by input path if one
     does not exist already
@@ -69,12 +69,13 @@ def make_folder(path):
             os.makedirs(path)
         except OSError as exception:
             if exception.errno != errno.EEXIST:
-                raise ValueError(f'Specified folder is not writable: {path}'
-                                 '\nPlease check permissions or set a new valid folder.') from exception
+                raise ValueError(
+                    f"Specified folder is not writable: {path}\nPlease check permissions or set a new valid folder."
+                ) from exception
 
 
 def rename(old_path, new_path, edit_folders=True):
-    """ Rename files or folders
+    """Rename files or folders
 
     :param old_path: name of file or folder to rename
     :param new_path: name of new file or folder
@@ -90,7 +91,7 @@ def rename(old_path, new_path, edit_folders=True):
 
 
 def size(pathname):
-    """ Returns size of a file or folder in Bytes
+    """Returns size of a file or folder in Bytes
 
     :param pathname: path to file or folder to be sized
     :type pathname: str
@@ -100,13 +101,13 @@ def size(pathname):
     """
     if os.path.isfile(pathname):
         return os.path.getsize(pathname)
-    return sum([size(f'{pathname}/{name}') for name in get_content_list(pathname)])
+    return sum([size(f"{pathname}/{name}") for name in get_content_list(pathname)])
 
 
 def sys_is_windows():
-    """ Check if user is running the code on Windows machine
+    """Check if user is running the code on Windows machine
 
     :return: `True` if OS is Windows and `False` otherwise
     :rtype: bool
     """
-    return platform.lower().startswith('win')
+    return platform.lower().startswith("win")

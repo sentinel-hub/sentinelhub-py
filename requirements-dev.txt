@@ -4,3 +4,5 @@ codecov
 pylint>=2.2.0
 twine
 requests-mock
+black[jupyter]>=22.1.0
+isort

@@ -2,17 +2,14 @@ import os
 
 import pytest
 
-from sentinelhub import WcsRequest, AwsProductRequest, DataCollection, BBox, CRS, get_file_list, get_folder_list
+from sentinelhub import CRS, AwsProductRequest, BBox, DataCollection, WcsRequest, get_file_list, get_folder_list
 
 
-@pytest.fixture(name='wcs_request')
+@pytest.fixture(name="wcs_request")
 def wcs_request_fixture(output_folder):
     bbox = BBox((111.7, 8.655, 111.6, 8.688), crs=CRS.WGS84)
     return WcsRequest(
-        data_folder=output_folder,
-        bbox=bbox,
-        data_collection=DataCollection.SENTINEL2_L1C,
-        layer='TRUE-COLOR-S2-L1C'
+        data_folder=output_folder, bbox=bbox, data_collection=DataCollection.SENTINEL2_L1C, layer="TRUE-COLOR-S2-L1C"
     )
 
 
@@ -47,16 +44,16 @@ def test_encoded_latest_result(wcs_request):
 
 @pytest.mark.aws_integration
 def test_saving_responses(output_folder):
-    product_id = 'S2A_MSIL1C_20180113T001101_N0206_R073_T55KGP_20180113T013328.SAFE'
-    metafiles = 'inspire '
+    product_id = "S2A_MSIL1C_20180113T001101_N0206_R073_T55KGP_20180113T013328.SAFE"
+    metafiles = "inspire "
 
-    aws_request = AwsProductRequest(bands='', metafiles=metafiles, safe_format=True, product_id=product_id)
+    aws_request = AwsProductRequest(bands="", metafiles=metafiles, safe_format=True, product_id=product_id)
     try:
         data = aws_request.get_data()
         assert isinstance(data, list)
         assert len(data) == 1
     except ValueError:
-        assert False, 'get_data method with save_data=False should work without specifying data_folder'
+        assert False, "get_data method with save_data=False should work without specifying data_folder"
 
     with pytest.raises(ValueError):
         aws_request.get_data(save_data=True, redownload=True)
@@ -64,7 +61,7 @@ def test_saving_responses(output_folder):
         aws_request.save_data()
 
     aws_request = AwsProductRequest(
-        data_folder=output_folder, bands='', metafiles=metafiles, safe_format=True, product_id=product_id
+        data_folder=output_folder, bands="", metafiles=metafiles, safe_format=True, product_id=product_id
     )
     try:
         data = aws_request.get_data(save_data=True)
@@ -74,4 +71,4 @@ def test_saving_responses(output_folder):
         assert len(get_folder_list(product_folder)) == 5
         assert len(get_file_list(product_folder)) == 1
     except ValueError:
-        assert False, 'Expected to obtain and save data'
+        assert False, "Expected to obtain and save data"
