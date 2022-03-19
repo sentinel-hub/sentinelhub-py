@@ -44,13 +44,21 @@ class SafeProduct(AwsProduct):
         for datastrip_folder, datastrip_url in datastrip_list:
             safe[main_folder][AwsConstants.DATASTRIP][datastrip_folder] = {}
             safe[main_folder][AwsConstants.DATASTRIP][datastrip_folder][AwsConstants.QI_DATA] = {}
-            # S-2 L1C reports are on AWS only stored with tiles and without RADIOMETRIC_QUALITY
-            if self.has_reports() and self.data_collection is DataCollection.SENTINEL2_L2A:
+
+            if self.has_reports():
                 for metafile in AwsConstants.QUALITY_REPORTS:
                     metafile_name = self.add_file_extension(metafile)
+
+                    # S-2 L1C reports are available on S3 under modified names
+                    metafile_s3_name = (
+                        metafile_name.replace(".xml", "_report.xml")
+                        if self.data_collection is DataCollection.SENTINEL2_L1C
+                        else metafile_name
+                    )
+
                     safe[main_folder][AwsConstants.DATASTRIP][datastrip_folder][AwsConstants.QI_DATA][
                         metafile_name
-                    ] = f"{datastrip_url}/qi/{metafile_name}"
+                    ] = f"{datastrip_url}/qi/{metafile_s3_name}"
 
             data_strip_name = self.get_datastrip_metadata_name(datastrip_folder)
             safe[main_folder][AwsConstants.DATASTRIP][datastrip_folder][
@@ -209,6 +217,15 @@ class SafeTile(AwsTile):
                 else AwsConstants.AUX_ECMWFT
             )
             safe[main_folder][AwsConstants.AUX_DATA][self.get_aux_data_name()] = self.get_url(ecmwft_file)
+
+            if self.baseline >= "04.00":
+                camsfo_file = (
+                    AwsConstants.CAMSFO
+                    if self.data_collection is DataCollection.SENTINEL2_L1C
+                    else AwsConstants.AUX_CAMSFO
+                )
+                safe[main_folder][AwsConstants.AUX_DATA]["AUX_CAMSFO"] = self.get_url(camsfo_file)
+
         # Old products also have DEM and MSI in aux folder
 
         if self.is_early_compact_l2a():
@@ -234,18 +251,19 @@ class SafeTile(AwsTile):
                         self.get_img_name(band, resolution)
                     ] = self.get_url(band_name)
 
-        # account for changes in data format and naming in S2 v04.00 (20220125)
         if self.baseline >= "04.00":
-            qi_list = AwsConstants.QI_LIST_v4
+            qi_list = AwsConstants.QI_LIST_V4
             qi_data_format = MimeType.JP2
+            clouds_qi_name = "CLASSI"
         else:
             qi_list = AwsConstants.QI_LIST
             qi_data_format = MimeType.GML
+            clouds_qi_name = "CLOUDS"
 
         safe[main_folder][AwsConstants.QI_DATA] = {}
         safe[main_folder][AwsConstants.QI_DATA][
-            self.get_qi_name("CLOUDS", data_format=qi_data_format)
-        ] = self.get_gml_url("CLOUDS", data_format=qi_data_format)
+            self.get_qi_name(clouds_qi_name, data_format=qi_data_format)
+        ] = self.get_gml_url(clouds_qi_name, data_format=qi_data_format)
 
         for qi_type in qi_list:
             for band in AwsConstants.S2_L1C_BANDS:
@@ -254,11 +272,15 @@ class SafeTile(AwsTile):
                 ] = self.get_gml_url(qi_type, band, data_format=qi_data_format)
 
         if self.has_reports():
-            for metafile in AwsConstants.QUALITY_REPORTS:
+            reports = AwsConstants.QUALITY_REPORTS
+            if self.data_collection is DataCollection.SENTINEL2_L2A and self.baseline >= "04.00":
+                reports = reports + [AwsConstants.L2A_QUALITY]
+
+            for metafile in reports:
                 if (
                     metafile == AwsConstants.RADIOMETRIC_QUALITY
                     and self.data_collection is DataCollection.SENTINEL2_L2A
-                    and self.baseline <= "02.07"
+                    and (self.baseline <= "02.07" or self.baseline >= "04.00")
                 ):
                     continue
 

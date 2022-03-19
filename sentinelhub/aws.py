@@ -19,7 +19,10 @@ from .time_utils import parse_time
 
 LOGGER = logging.getLogger(__name__)
 
-MAX_SUPPORTED_BASELINES = {DataCollection.SENTINEL2_L1C: "02.07", DataCollection.SENTINEL2_L2A: "02.11"}
+MAX_SUPPORTED_BASELINES = {
+    DataCollection.SENTINEL2_L1C: "04.00",
+    DataCollection.SENTINEL2_L2A: "04.00",
+}
 
 
 class AwsService(ABC):
@@ -724,8 +727,13 @@ class AwsTile(AwsService):
         if self.data_collection is DataCollection.SENTINEL2_L1C:
             return True
         resolution, band = band_name.split("/")
+
+        if band == "B01" and resolution == AwsConstants.R20m and self.baseline < "04.00":
+            return False
+
         if self.safe_type is EsaSafeType.COMPACT_TYPE:
-            return not ((self.baseline >= "02.07" or self.baseline == "00.01") and band.endswith(AwsConstants.VIS))
+            return not (band == AwsConstants.VIS and (self.baseline >= "02.07" or self.baseline == "00.01"))
+
         return band != AwsConstants.TCI and not (band == AwsConstants.SCL and resolution == AwsConstants.R60m)
 
     @staticmethod

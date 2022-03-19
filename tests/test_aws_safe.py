@@ -34,7 +34,6 @@ class SafeTestCase:
         """Use this method only to create new tests"""
         request, request_data = self.get_request_data(return_request=True)
         write_data(self.get_filename(), request_data)
-        request.save_data()
 
 
 TEST_CASES = [
@@ -102,13 +101,43 @@ TEST_CASES = [
     SafeTestCase(
         "L1C_02.07",
         AwsProductRequest,
-        ["S2A_MSIL1C_20181119T031011_N0207_R075_T50TLK_20181119T061056"],
+        ["S2A_MSIL1C_20190129T143751_N0207_R096_T20LLK_20190225T132350"],
         dict(safe_format=True, data_folder=INPUT_FOLDER),
     ),
     SafeTestCase(
-        "L1C_02.07_2",
+        "L1C_02.08",
         AwsProductRequest,
-        ["S2A_MSIL1C_20190129T143751_N0207_R096_T20LLK_20190225T132350"],
+        ["S2B_MSIL1C_20200101T235239_N0208_R130_T57KUR_20200102T010610"],
+        dict(safe_format=True, data_folder=INPUT_FOLDER),
+    ),
+    SafeTestCase(
+        "L1C_02.09",
+        AwsProductRequest,
+        ["S2B_MSIL1C_20200318T231549_N0209_R087_T60UWB_20200319T005909"],
+        dict(safe_format=True, data_folder=INPUT_FOLDER),
+    ),
+    SafeTestCase(
+        "L1C_03.00",
+        AwsProductRequest,
+        ["S2A_MSIL1C_20210501T093031_N0300_R136_T35TLM_20210502T130645"],
+        dict(safe_format=True, data_folder=INPUT_FOLDER),
+    ),
+    SafeTestCase(
+        "L1C_03.01",
+        AwsProductRequest,
+        ["S2B_MSIL1C_20210918T235129_N0301_R073_T59UPT_20210919T010528"],
+        dict(safe_format=True, data_folder=INPUT_FOLDER),
+    ),
+    SafeTestCase(
+        "L1C_04.00",
+        AwsProductRequest,
+        ["S2A_MSIL1C_20220317T074651_N0400_R135_T36MZB_20220317T091114"],
+        dict(safe_format=True, data_folder=INPUT_FOLDER),
+    ),
+    SafeTestCase(
+        "L2A_00.01",  # Reprocessed by Sentinel Hub
+        AwsProductRequest,
+        ["S2A_MSIL2A_20170414T101021_N0001_R022_T33UUQ_20190508T121145"],
         dict(safe_format=True, data_folder=INPUT_FOLDER),
     ),
     SafeTestCase(
@@ -160,9 +189,39 @@ TEST_CASES = [
         dict(safe_format=True, data_folder=INPUT_FOLDER),
     ),
     SafeTestCase(
-        "L2A_00.01",
+        "L2A_02.12",
         AwsProductRequest,
-        ["S2A_MSIL2A_20170414T101021_N0001_R022_T33UUQ_20190508T121145"],
+        ["S2B_MSIL2A_20190601T133729_N0212_R067_T30XWK_20190603T172501"],
+        dict(safe_format=True, data_folder=INPUT_FOLDER),
+    ),
+    SafeTestCase(
+        "L2A_02.13",
+        AwsProductRequest,
+        ["S2B_MSIL2A_20200101T235239_N0213_R130_T56GMT_20200102T014048"],
+        dict(safe_format=True, data_folder=INPUT_FOLDER),
+    ),
+    SafeTestCase(
+        "L2A_02.14",
+        AwsProductRequest,
+        ["S2A_MSIL2A_20200318T190111_N0214_R013_T19XEH_20200318T231533"],
+        dict(safe_format=True, data_folder=INPUT_FOLDER),
+    ),
+    SafeTestCase(
+        "L2A_03.00",
+        AwsProductRequest,
+        ["S2B_MSIL2A_20210501T083559_N0300_R064_T35QQE_20210502T160359"],
+        dict(safe_format=True, data_folder=INPUT_FOLDER),
+    ),
+    SafeTestCase(
+        "L2A_03.01",
+        AwsProductRequest,
+        ["S2B_MSIL2A_20210918T234619_N0301_R073_T59VPG_20210919T012911"],
+        dict(safe_format=True, data_folder=INPUT_FOLDER),
+    ),
+    SafeTestCase(
+        "L2A_04.00",
+        AwsProductRequest,
+        ["S2B_MSIL2A_20220126T084129_N0400_R064_T36RUT_20220201T122115"],
         dict(safe_format=True, data_folder=INPUT_FOLDER),
     ),
 ]
