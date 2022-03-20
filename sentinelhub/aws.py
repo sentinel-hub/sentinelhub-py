@@ -680,7 +680,7 @@ class AwsTile(AwsService):
         """
         return f"{self.tile_url}/qi/{metafile}"
 
-    def get_gml_url(self, qi_type, band="B00", data_format=MimeType.GML):
+    def get_band_qi_url(self, qi_type, band="B00", data_format=MimeType.GML):
         """
         :param qi_type: type of quality indicator
         :type qi_type: str

@@ -33,17 +33,37 @@ class SafeProduct(AwsProduct):
         :return: nested dictionaries representing .SAFE structure
         :rtype: dict
         """
-        safe = {}
         main_folder = self.get_main_folder()
-        safe[main_folder] = {}
+        safe = {
+            main_folder: {
+                AwsConstants.AUX_DATA: {},
+                AwsConstants.DATASTRIP: self._get_datastrip_substruct(),
+                AwsConstants.GRANULE: self._get_granule_substruct(),
+                self.get_product_metadata_name(): self.get_url(AwsConstants.METADATA),
+                "INSPIRE.xml": self.get_url(AwsConstants.INSPIRE),
+                self.add_file_extension(AwsConstants.MANIFEST): self.get_url(AwsConstants.MANIFEST),
+                AwsConstants.HTML: {},  # AWS doesn't have this data
+                AwsConstants.INFO: {},  # AWS doesn't have this data
+            }
+        }
 
-        safe[main_folder][AwsConstants.AUX_DATA] = {}
+        if self.is_early_compact_l2a():
+            safe[main_folder]["L2A_Manifest.xml"] = self.get_url(AwsConstants.L2A_MANIFEST)
+            safe[main_folder][self.get_report_name()] = self.get_url(AwsConstants.REPORT)
 
-        safe[main_folder][AwsConstants.DATASTRIP] = {}
+        if self.safe_type == EsaSafeType.OLD_TYPE and self.baseline != "02.02":
+            safe[main_folder][_edit_name(self.product_id, "BWI") + ".png"] = self.get_url(
+                AwsConstants.PREVIEW, MimeType.PNG
+            )
+        return safe
+
+    def _get_datastrip_substruct(self):
+        """Builds a datastrip subfolder structure of .SAFE format."""
+        datastrip_safe = {}
         datastrip_list = self.get_datastrip_list()
         for datastrip_folder, datastrip_url in datastrip_list:
-            safe[main_folder][AwsConstants.DATASTRIP][datastrip_folder] = {}
-            safe[main_folder][AwsConstants.DATASTRIP][datastrip_folder][AwsConstants.QI_DATA] = {}
+            datastrip_safe[datastrip_folder] = {}
+            datastrip_safe[datastrip_folder][AwsConstants.QI_DATA] = {}
 
             if self.has_reports():
                 for metafile in AwsConstants.QUALITY_REPORTS:
@@ -56,19 +76,23 @@ class SafeProduct(AwsProduct):
                         else metafile_name
                     )
 
-                    safe[main_folder][AwsConstants.DATASTRIP][datastrip_folder][AwsConstants.QI_DATA][
+                    datastrip_safe[datastrip_folder][AwsConstants.QI_DATA][
                         metafile_name
                     ] = f"{datastrip_url}/qi/{metafile_s3_name}"
 
             data_strip_name = self.get_datastrip_metadata_name(datastrip_folder)
-            safe[main_folder][AwsConstants.DATASTRIP][datastrip_folder][
+            datastrip_safe[datastrip_folder][
                 data_strip_name
             ] = f"{datastrip_url}/{self.add_file_extension(AwsConstants.METADATA)}"
 
-        safe[main_folder][AwsConstants.GRANULE] = {}
+        return datastrip_safe
 
+    def _get_granule_substruct(self):
+        """Builds a granule subfolder structure of .SAFE format."""
+        granule_safe = {}
         for tile_info in self.product_info["tiles"]:
             tile_name, date, aws_index = self.url_to_tile(self.get_tile_url(tile_info))
+
             if self.tile_list is None or AwsTile.parse_tile_name(tile_name) in self.tile_list:
                 tile_struct = SafeTile(
                     tile_name,
@@ -79,25 +103,11 @@ class SafeProduct(AwsProduct):
                     metafiles=self.metafiles,
                     data_collection=self.data_collection,
                 ).get_safe_struct()
+
                 for tile_name, safe_struct in tile_struct.items():
-                    safe[main_folder][AwsConstants.GRANULE][tile_name] = safe_struct
+                    granule_safe[tile_name] = safe_struct
 
-        safe[main_folder][AwsConstants.HTML] = {}  # AWS doesn't have this data
-        safe[main_folder][AwsConstants.INFO] = {}  # AWS doesn't have this data
-
-        safe[main_folder][self.get_product_metadata_name()] = self.get_url(AwsConstants.METADATA)
-        safe[main_folder]["INSPIRE.xml"] = self.get_url(AwsConstants.INSPIRE)
-        safe[main_folder][self.add_file_extension(AwsConstants.MANIFEST)] = self.get_url(AwsConstants.MANIFEST)
-
-        if self.is_early_compact_l2a():
-            safe[main_folder]["L2A_Manifest.xml"] = self.get_url(AwsConstants.L2A_MANIFEST)
-            safe[main_folder][self.get_report_name()] = self.get_url(AwsConstants.REPORT)
-
-        if self.safe_type == EsaSafeType.OLD_TYPE and self.baseline != "02.02":
-            safe[main_folder][_edit_name(self.product_id, "BWI") + ".png"] = self.get_url(
-                AwsConstants.PREVIEW, MimeType.PNG
-            )
-        return safe
+        return granule_safe
 
     def get_main_folder(self):
         """
@@ -203,20 +213,30 @@ class SafeTile(AwsTile):
         :return: nested dictionaries representing .SAFE structure
         :rtype: dict
         """
-        # pylint: disable=too-many-branches
-        safe = {}
-        main_folder = self.get_main_folder()
-        safe[main_folder] = {}
+        return {
+            self.get_main_folder(): {
+                AwsConstants.AUX_DATA: self._get_aux_substruct(),
+                AwsConstants.IMG_DATA: self._get_imamge_substruct(),
+                AwsConstants.QI_DATA: self._get_qi_substruct(),
+                self.get_tile_metadata_name(): self.get_url(AwsConstants.METADATA),
+            }
+        }
 
-        safe[main_folder][AwsConstants.AUX_DATA] = {}
+    def _get_aux_substruct(self):
+        """Builds a auxiliary data subfolder structure of .SAFE format.
+
+        Note: Old products also have DEM and MSI in aux folder which are not reconstructed here.
+        """
+        aux_safe = {}
+
         # Not sure if 2nd condition of the following is correct:
-        if self.data_collection is not DataCollection.SENTINEL2_L1C or self.baseline != "02.04":
+        if self.data_collection is DataCollection.SENTINEL2_L2A or self.baseline != "02.04":
             ecmwft_file = (
                 AwsConstants.ECMWFT
                 if self.data_collection is DataCollection.SENTINEL2_L1C or self.safe_type is EsaSafeType.OLD_TYPE
                 else AwsConstants.AUX_ECMWFT
             )
-            safe[main_folder][AwsConstants.AUX_DATA][self.get_aux_data_name()] = self.get_url(ecmwft_file)
+            aux_safe[self.get_aux_data_name()] = self.get_url(ecmwft_file)
 
             if self.baseline >= "04.00":
                 camsfo_file = (
@@ -224,32 +244,40 @@ class SafeTile(AwsTile):
                     if self.data_collection is DataCollection.SENTINEL2_L1C
                     else AwsConstants.AUX_CAMSFO
                 )
-                safe[main_folder][AwsConstants.AUX_DATA]["AUX_CAMSFO"] = self.get_url(camsfo_file)
-
-        # Old products also have DEM and MSI in aux folder
+                aux_safe["AUX_CAMSFO"] = self.get_url(camsfo_file)
 
         if self.is_early_compact_l2a():
-            safe[main_folder][AwsConstants.AUX_DATA][
-                self.add_file_extension(AwsConstants.GIPP, remove_path=True)
-            ] = self.get_url(AwsConstants.GIPP)
+            gipp_filename = self.add_file_extension(AwsConstants.GIPP, remove_path=True)
+            aux_safe[gipp_filename] = self.get_url(AwsConstants.GIPP)
 
-        safe[main_folder][AwsConstants.IMG_DATA] = {}
+        return aux_safe
+
+    def _get_imamge_substruct(self):
+        """Builds the part of structure of .SAFE format that contains satellite imagery."""
+        img_safe = {}
+
         if self.data_collection is DataCollection.SENTINEL2_L1C:
             for band in self.bands:
-                safe[main_folder][AwsConstants.IMG_DATA][self.get_img_name(band)] = self.get_url(band)
+                img_safe[self.get_img_name(band)] = self.get_url(band)
+
             if self.safe_type == EsaSafeType.COMPACT_TYPE:
-                safe[main_folder][AwsConstants.IMG_DATA][self.get_img_name(AwsConstants.TCI)] = self.get_url(
-                    AwsConstants.TCI
-                )
-        else:
-            for resolution in AwsConstants.RESOLUTIONS:
-                safe[main_folder][AwsConstants.IMG_DATA][resolution] = {}
-            for band_name in self.bands:
-                resolution, band = band_name.split("/")
-                if self._band_exists(band_name):
-                    safe[main_folder][AwsConstants.IMG_DATA][resolution][
-                        self.get_img_name(band, resolution)
-                    ] = self.get_url(band_name)
+                img_safe[self.get_img_name(AwsConstants.TCI)] = self.get_url(AwsConstants.TCI)
+
+            return img_safe
+
+        for resolution in AwsConstants.RESOLUTIONS:
+            img_safe[resolution] = {}
+
+        for band_name in self.bands:
+            resolution, band = band_name.split("/")
+            if self._band_exists(band_name):
+                img_safe[resolution][self.get_img_name(band, resolution)] = self.get_url(band_name)
+
+        return img_safe
+
+    def _get_qi_substruct(self):
+        """Builds a quality indicators data subfolder structure of .SAFE format."""
+        qi_safe = self._get_reports_substruct()
 
         if self.baseline >= "04.00":
             qi_list = AwsConstants.QI_LIST_V4
@@ -260,32 +288,13 @@ class SafeTile(AwsTile):
             qi_data_format = MimeType.GML
             clouds_qi_name = "CLOUDS"
 
-        safe[main_folder][AwsConstants.QI_DATA] = {}
-        safe[main_folder][AwsConstants.QI_DATA][
-            self.get_qi_name(clouds_qi_name, data_format=qi_data_format)
-        ] = self.get_gml_url(clouds_qi_name, data_format=qi_data_format)
+        clouds_qi_filename = self.get_qi_name(clouds_qi_name, data_format=qi_data_format)
+        qi_safe[clouds_qi_filename] = self.get_band_qi_url(clouds_qi_name, data_format=qi_data_format)
 
         for qi_type in qi_list:
             for band in AwsConstants.S2_L1C_BANDS:
-                safe[main_folder][AwsConstants.QI_DATA][
-                    self.get_qi_name(qi_type, band, data_format=qi_data_format)
-                ] = self.get_gml_url(qi_type, band, data_format=qi_data_format)
-
-        if self.has_reports():
-            reports = AwsConstants.QUALITY_REPORTS
-            if self.data_collection is DataCollection.SENTINEL2_L2A and self.baseline >= "04.00":
-                reports = reports + [AwsConstants.L2A_QUALITY]
-
-            for metafile in reports:
-                if (
-                    metafile == AwsConstants.RADIOMETRIC_QUALITY
-                    and self.data_collection is DataCollection.SENTINEL2_L2A
-                    and (self.baseline <= "02.07" or self.baseline >= "04.00")
-                ):
-                    continue
-
-                metafile_name = self.add_file_extension(metafile, remove_path=True)
-                safe[main_folder][AwsConstants.QI_DATA][metafile_name] = self.get_qi_url(metafile_name)
+                band_qi_filename = self.get_qi_name(qi_type, band, data_format=qi_data_format)
+                qi_safe[band_qi_filename] = self.get_band_qi_url(qi_type, band, data_format=qi_data_format)
 
         if self.data_collection is DataCollection.SENTINEL2_L2A:
             for mask in AwsConstants.CLASS_MASKS:
@@ -294,26 +303,41 @@ class SafeTile(AwsTile):
                         mask_name = self.get_img_name(mask, resolution)
                     else:
                         mask_name = self.get_qi_name(f"{mask}PRB", resolution.lstrip("R"), MimeType.JP2)
-                    safe[main_folder][AwsConstants.QI_DATA][mask_name] = self.get_qi_url(
-                        f'{mask}_{resolution.lstrip("R")}.jp2'
-                    )
+                    qi_safe[mask_name] = self.get_qi_url(f'{mask}_{resolution.lstrip("R")}.jp2')
 
         if self.is_early_compact_l2a():
-            safe[main_folder][AwsConstants.QI_DATA][self.get_img_name(AwsConstants.PVI)] = self.get_preview_url("L2A")
+            qi_safe[self.get_img_name(AwsConstants.PVI)] = self.get_preview_url("L2A")
 
-        preview_type = (
-            "L2A"
-            if (
-                self.data_collection is DataCollection.SENTINEL2_L2A
-                and (self.baseline >= "02.07" or self.baseline == "00.01")
-            )
-            else "L1C"
+        is_newer_l2a_version = self.data_collection is DataCollection.SENTINEL2_L2A and (
+            self.baseline >= "02.07" or self.baseline == "00.01"
         )
-        safe[main_folder][AwsConstants.QI_DATA][self.get_preview_name()] = self.get_preview_url(preview_type)
+        preview_type = "L2A" if is_newer_l2a_version else "L1C"
+        qi_safe[self.get_preview_name()] = self.get_preview_url(preview_type)
 
-        safe[main_folder][self.get_tile_metadata_name()] = self.get_url(AwsConstants.METADATA)
+        return qi_safe
 
-        return safe
+    def _get_reports_substruct(self):
+        """Builds a substructure of .SAFE format with reports."""
+        reports_safe = {}
+        if not self.has_reports():
+            return reports_safe
+
+        reports = AwsConstants.QUALITY_REPORTS
+        if self.data_collection is DataCollection.SENTINEL2_L2A and self.baseline >= "04.00":
+            reports = reports + [AwsConstants.L2A_QUALITY]
+
+        for metafile in reports:
+            if (
+                metafile == AwsConstants.RADIOMETRIC_QUALITY
+                and self.data_collection is DataCollection.SENTINEL2_L2A
+                and (self.baseline <= "02.07" or self.baseline >= "04.00")
+            ):
+                continue
+
+            metafile_name = self.add_file_extension(metafile, remove_path=True)
+            reports_safe[metafile_name] = self.get_qi_url(metafile_name)
+
+        return reports_safe
 
     def get_tile_id(self):
         """Creates ESA tile ID
