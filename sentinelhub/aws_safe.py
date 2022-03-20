@@ -360,7 +360,8 @@ class SafeTile(AwsTile):
         info = tile_id.split("_")
 
         if (self.data_collection is DataCollection.SENTINEL2_L1C and self.baseline >= "02.07") or (
-            self.data_collection is DataCollection.SENTINEL2_L2A and self.baseline >= "02.10"
+            self.data_collection is DataCollection.SENTINEL2_L2A
+            and (self.baseline >= "02.10" or self.baseline == "00.01")
         ):
             tile_id_time = self.get_datastrip_time()
         else:
