@@ -9,7 +9,7 @@ assignees: ''
 
 **Resources**
 
-Before opening an issue for help/support, make sure you have consulted our extensive [documentation](https://eo-learn.readthedocs.io/en/latest/), our [existing issues](https://github.com/sentinel-hub/eo-learn/issues), and the Sentinel-Hub [forum](https://forum.sentinel-hub.com/).
+Before opening an issue for help/support, make sure you have consulted our extensive [documentation](https://sentinelhub-py.readthedocs.io/en/latest/), our [existing issues](https://github.com/sentinel-hub/sentinelhub-py/issues), and the Sentinel Hub [forum](https://forum.sentinel-hub.com/).
 
 **Question**
 
