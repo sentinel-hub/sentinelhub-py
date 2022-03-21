@@ -30,7 +30,7 @@ def config_fixture():
     return SHConfig()
 
 
-@pytest.fixture(name="input_folder")
+@pytest.fixture(name="input_folder", scope="session")
 def input_folder_fixture():
     return INPUT_FOLDER
 

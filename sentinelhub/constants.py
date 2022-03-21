@@ -468,7 +468,8 @@ class AwsConstants:
     PREVIEW = "preview"
     PREVIEW_JP2 = "preview*"
     QI_LIST = ["DEFECT", "DETFOO", "NODATA", "SATURA", "TECQUA"]
-    QI_LIST_v4 = ["DETFOO", "QUALIT"]
+    QI_LIST_V4 = ["DETFOO", "QUALIT"]
+    QI_MSK_CLASSI = "qi/CLASSI_B00"
     QI_MSK_CLOUD = "qi/MSK_CLOUDS_B00"
     AUX_DATA = "AUX_DATA"
     DATASTRIP = "DATASTRIP"
@@ -481,6 +482,8 @@ class AwsConstants:
     MANIFEST = "manifest"
     TCI = "TCI"
     PVI = "PVI"
+    CAMSFO = "auxiliary/CAMSFO"
+    AUX_CAMSFO = "auxiliary/AUX_CAMSFO"
     ECMWFT = "auxiliary/ECMWFT"
     AUX_ECMWFT = "auxiliary/AUX_ECMWFT"
     DATASTRIP_METADATA = "datastrip/*/metadata"
@@ -498,6 +501,7 @@ class AwsConstants:
     GEOMETRIC_QUALITY = "GEOMETRIC_QUALITY"
     RADIOMETRIC_QUALITY = "RADIOMETRIC_QUALITY"
     SENSOR_QUALITY = "SENSOR_QUALITY"
+    L2A_QUALITY = "L2A_QUALITY"
     QUALITY_REPORTS = [FORMAT_CORRECTNESS, GENERAL_QUALITY, GEOMETRIC_QUALITY, RADIOMETRIC_QUALITY, SENSOR_QUALITY]
     CLASS_MASKS = ["SNW", "CLD"]
     R10m = "R10m"
@@ -506,7 +510,7 @@ class AwsConstants:
     RESOLUTIONS = [R10m, R20m, R60m]
     S2_L2A_BAND_MAP = {
         R10m: ["B02", "B03", "B04", "B08", AOT, TCI, WVP],
-        R20m: ["B02", "B03", "B04", "B05", "B06", "B07", "B8A", "B11", "B12", AOT, SCL, TCI, VIS, WVP],
+        R20m: ["B01", "B02", "B03", "B04", "B05", "B06", "B07", "B8A", "B11", "B12", AOT, SCL, TCI, VIS, WVP],
         R60m: ["B01", "B02", "B03", "B04", "B05", "B06", "B07", "B8A", "B09", "B11", "B12", AOT, SCL, TCI, WVP],
     }
 
@@ -515,13 +519,14 @@ class AwsConstants:
     S2_L1C_BANDS = ["B01", "B02", "B03", "B04", "B05", "B06", "B07", "B08", "B8A", "B09", "B10", "B11", "B12"]
     S2_L1C_METAFILES = (
         [PRODUCT_INFO, TILE_INFO, METADATA, INSPIRE, MANIFEST, DATASTRIP_METADATA]
+        + [f"datastrip/*/qi/{qi_report}_report" for qi_report in QUALITY_REPORTS]
         + [PREVIEW, PREVIEW_JP2, TCI]
         + [f"{preview}/{band}" for preview, band in it.zip_longest([], S2_L1C_BANDS, fillvalue=PREVIEW)]
-        + [QI_MSK_CLOUD]
+        + [QI_MSK_CLASSI, QI_MSK_CLOUD]
         + [f"qi/MSK_{qi}_{band}" for qi, band in it.product(QI_LIST, S2_L1C_BANDS)]
-        + [f"qi/{qi}_{band}" for qi, band in it.product(QI_LIST_v4, S2_L1C_BANDS)]
+        + [f"qi/{qi}_{band}" for qi, band in it.product(QI_LIST_V4, S2_L1C_BANDS)]
         + [f"qi/{qi_report}" for qi_report in [FORMAT_CORRECTNESS, GENERAL_QUALITY, GEOMETRIC_QUALITY, SENSOR_QUALITY]]
-        + [ECMWFT]
+        + [CAMSFO, ECMWFT]
     )
 
     # Sentinel-2 L2A products:
@@ -534,10 +539,10 @@ class AwsConstants:
         + [f"qi/{source_id}_PVI" for source_id in SOURCE_ID_LIST]
         + [f'qi/{mask}_{res.lstrip("R")}' for mask, res in it.product(CLASS_MASKS, [R20m, R60m])]
         + [f"qi/MSK_{qi}_{band}" for qi, band in it.product(QI_LIST, S2_L1C_BANDS)]
-        + [f"qi/{qi}_{band}" for qi, band in it.product(QI_LIST_v4, S2_L1C_BANDS)]
-        + [QI_MSK_CLOUD]
-        + [f"qi/{qi_report}" for qi_report in QUALITY_REPORTS]
-        + [ECMWFT, AUX_ECMWFT, GIPP]
+        + [f"qi/{qi}_{band}" for qi, band in it.product(QI_LIST_V4, S2_L1C_BANDS)]
+        + [QI_MSK_CLASSI, QI_MSK_CLOUD]
+        + [f"qi/{qi_report}" for qi_report in QUALITY_REPORTS + [L2A_QUALITY]]
+        + [AUX_CAMSFO, ECMWFT, AUX_ECMWFT, GIPP]
     )
 
     # Product files with formats:
@@ -562,12 +567,15 @@ class AwsConstants:
             PREVIEW: MimeType.JPG,
             PREVIEW_JP2: MimeType.JP2,
             TCI: MimeType.JP2,
+            QI_MSK_CLASSI: MimeType.JP2,
             QI_MSK_CLOUD: MimeType.GML,
+            CAMSFO: MimeType.RAW,
+            AUX_CAMSFO: MimeType.RAW,
             ECMWFT: MimeType.RAW,
             AUX_ECMWFT: MimeType.RAW,
             GIPP: MimeType.XML,
         },
-        **{f"qi/{qi_report}": MimeType.XML for qi_report in QUALITY_REPORTS},
+        **{f"qi/{qi_report}": MimeType.XML for qi_report in QUALITY_REPORTS + [L2A_QUALITY]},
         **{f"{preview}/{band}": MimeType.JP2 for preview, band in it.zip_longest([], S2_L1C_BANDS, fillvalue=PREVIEW)},
         **{f"qi/MSK_{qi}_{band}": MimeType.GML for qi, band in it.product(QI_LIST, S2_L1C_BANDS)},
         **{band: MimeType.JP2 for band in S2_L1C_BANDS},
