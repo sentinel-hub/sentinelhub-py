@@ -438,7 +438,7 @@ class AwsProduct(AwsService):
         :return: Sensing date
         :rtype: datetime.date
         """
-        if self.safe_type == EsaSafeType.OLD_TYPE:
+        if self.safe_type is EsaSafeType.OLD_TYPE:
             name = self.product_id.split("_")[-2]
             date = [name[1:5], name[5:7], name[7:9]]
         else:

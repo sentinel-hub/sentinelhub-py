@@ -51,7 +51,7 @@ class SafeProduct(AwsProduct):
             safe[main_folder]["L2A_Manifest.xml"] = self.get_url(AwsConstants.L2A_MANIFEST)
             safe[main_folder][self.get_report_name()] = self.get_url(AwsConstants.REPORT)
 
-        if self.safe_type == EsaSafeType.OLD_TYPE and self.baseline != "02.02":
+        if self.safe_type is EsaSafeType.OLD_TYPE and self.baseline != "02.02":
             safe[main_folder][_edit_name(self.product_id, "BWI") + ".png"] = self.get_url(
                 AwsConstants.PREVIEW, MimeType.PNG
             )
@@ -128,7 +128,7 @@ class SafeProduct(AwsProduct):
         :return: name of datastrip folder
         :rtype: str
         """
-        if self.safe_type == EsaSafeType.OLD_TYPE:
+        if self.safe_type is EsaSafeType.OLD_TYPE:
             return datastrip
         return "_".join(datastrip.split("_")[4:-1])
 
@@ -139,7 +139,7 @@ class SafeProduct(AwsProduct):
         :return: name of datastrip metadata file
         :rtype: str
         """
-        if self.safe_type == EsaSafeType.OLD_TYPE:
+        if self.safe_type is EsaSafeType.OLD_TYPE:
             name = _edit_name(datastrip_folder, "MTD", delete_end=True)
         else:
             name = "MTD_DS"
@@ -150,7 +150,7 @@ class SafeProduct(AwsProduct):
         :return: name of product metadata file
         :rtype: str
         """
-        if self.safe_type == EsaSafeType.OLD_TYPE:
+        if self.safe_type is EsaSafeType.OLD_TYPE:
             name = _edit_name(self.product_id, "MTD", "SAFL1C")
         else:
             name = f'MTD_{self.product_id.split("_")[1]}'
@@ -254,7 +254,7 @@ class SafeTile(AwsTile):
             for band in self.bands:
                 img_safe[self.get_img_name(band)] = self.get_url(band)
 
-            if self.safe_type == EsaSafeType.COMPACT_TYPE:
+            if self.safe_type is EsaSafeType.COMPACT_TYPE:
                 img_safe[self.get_img_name(AwsConstants.TCI)] = self.get_url(AwsConstants.TCI)
 
             return img_safe
@@ -354,7 +354,8 @@ class SafeTile(AwsTile):
         info = tile_id.split("_")
 
         if (self.data_collection is DataCollection.SENTINEL2_L1C and self.baseline >= "02.07") or (
-            self.data_collection is DataCollection.SENTINEL2_L2A and self.baseline >= "02.10"
+            self.data_collection is DataCollection.SENTINEL2_L2A
+            and (self.baseline >= "02.10" or self.baseline == "00.01")
         ):
             tile_id_time = self.get_datastrip_time()
         else:
@@ -397,7 +398,7 @@ class SafeTile(AwsTile):
         :return: name of tile metadata file
         :rtype: str
         """
-        if self.safe_type == EsaSafeType.OLD_TYPE:
+        if self.safe_type is EsaSafeType.OLD_TYPE:
             name = _edit_name(self.tile_id, "MTD", delete_end=True)
         else:
             name = "MTD_TL"
@@ -408,7 +409,7 @@ class SafeTile(AwsTile):
         :return: name of auxiliary data file
         :rtype: str
         """
-        if self.safe_type == EsaSafeType.OLD_TYPE:
+        if self.safe_type is EsaSafeType.OLD_TYPE:
             # this is not correct, but we cannot reconstruct last two timestamps in auxiliary data file name
             # e.g. S2A_OPER_AUX_ECMWFT_EPA__20160120T231011_V20160103T150000_20160104T030000
             return "AUX_ECMWFT"
@@ -446,7 +447,7 @@ class SafeTile(AwsTile):
         :rtype: str
         """
         band = band.split("/")[-1]
-        if self.safe_type == EsaSafeType.OLD_TYPE:
+        if self.safe_type is EsaSafeType.OLD_TYPE:
             name = _edit_name(self.tile_id, "MSK", delete_end=True)
             collection_param = f"{'L1C' if self.data_collection is DataCollection.SENTINEL2_L1C else 'L2A'}_TL"
             name = name.replace(collection_param, qi_type)
@@ -460,7 +461,7 @@ class SafeTile(AwsTile):
         :return: name of preview file
         :rtype: str
         """
-        if self.safe_type == EsaSafeType.OLD_TYPE:
+        if self.safe_type is EsaSafeType.OLD_TYPE:
             name = _edit_name(self.tile_id, AwsConstants.PVI, delete_end=True)
         else:
             name = "_".join([self.tile_id.split("_")[1], self.get_datatake_time(), AwsConstants.PVI])
