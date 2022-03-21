@@ -62,28 +62,23 @@ class SafeProduct(AwsProduct):
         datastrip_safe = {}
         datastrip_list = self.get_datastrip_list()
         for datastrip_folder, datastrip_url in datastrip_list:
-            datastrip_safe[datastrip_folder] = {}
-            datastrip_safe[datastrip_folder][AwsConstants.QI_DATA] = {}
+            datastrip_safe[datastrip_folder] = {AwsConstants.QI_DATA: {}}
 
             if self.has_reports():
                 for metafile in AwsConstants.QUALITY_REPORTS:
                     metafile_name = self.add_file_extension(metafile)
 
+                    metafile_s3_name = metafile_name
                     # S-2 L1C reports are available on S3 under modified names
-                    metafile_s3_name = (
-                        metafile_name.replace(".xml", "_report.xml")
-                        if self.data_collection is DataCollection.SENTINEL2_L1C
-                        else metafile_name
-                    )
+                    if self.data_collection is DataCollection.SENTINEL2_L1C:
+                        metafile_s3_name = metafile_s3_name.replace(".xml", "_report.xml")
 
-                    datastrip_safe[datastrip_folder][AwsConstants.QI_DATA][
-                        metafile_name
-                    ] = f"{datastrip_url}/qi/{metafile_s3_name}"
+                    metafile_url = f"{datastrip_url}/qi/{metafile_s3_name}"
+                    datastrip_safe[datastrip_folder][AwsConstants.QI_DATA][metafile_name] = metafile_url
 
-            data_strip_name = self.get_datastrip_metadata_name(datastrip_folder)
-            datastrip_safe[datastrip_folder][
-                data_strip_name
-            ] = f"{datastrip_url}/{self.add_file_extension(AwsConstants.METADATA)}"
+            datastrip_name = self.get_datastrip_metadata_name(datastrip_folder)
+            datastrip_url = f"{datastrip_url}/{self.add_file_extension(AwsConstants.METADATA)}"
+            datastrip_safe[datastrip_folder][datastrip_name] = datastrip_url
 
         return datastrip_safe
 
@@ -104,8 +99,7 @@ class SafeProduct(AwsProduct):
                     data_collection=self.data_collection,
                 ).get_safe_struct()
 
-                for tile_name, safe_struct in tile_struct.items():
-                    granule_safe[tile_name] = safe_struct
+                granule_safe.update(tile_struct)
 
         return granule_safe
 
