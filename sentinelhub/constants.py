@@ -8,6 +8,7 @@ import re
 import warnings
 from enum import Enum, EnumMeta
 
+import numpy as np
 import pyproj
 import utm
 from aenum import extend_enum
@@ -109,7 +110,7 @@ class CRSMeta(EnumMeta):
                 error_message = f"{error_message}\nIt might be EPSG {maybe_epsg} but pyproj is not confident enough."
             raise ValueError(error_message)
 
-        if isinstance(value, int):
+        if isinstance(value, (int, np.integer)):
             return str(value)
         if isinstance(value, str):
             if "urn:ogc:def:crs" in value.lower():

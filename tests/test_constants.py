@@ -1,5 +1,6 @@
 import warnings
 
+import numpy as np
 import pyproj
 import pytest
 
@@ -28,6 +29,8 @@ def test_utm(lng, lat, epsg):
     "parse_value, expected",
     [
         (4326, CRS.WGS84),
+        (np.int64(4326), CRS.WGS84),
+        (np.uint16(4326), CRS.WGS84),
         ("4326", CRS.WGS84),
         ("EPSG:3857", CRS.POP_WEB),
         ({"init": "EPSG:32638"}, CRS.UTM_38N),
