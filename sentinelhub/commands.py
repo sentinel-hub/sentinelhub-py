@@ -4,9 +4,9 @@ Module that implements command line interface for the package
 
 import click
 
+from .aws.data_request import download_safe_format, get_safe_format
 from .config import SHConfig
 from .data_collections import DataCollection
-from .data_request import download_safe_format, get_safe_format
 from .download import DownloadClient, DownloadRequest
 
 

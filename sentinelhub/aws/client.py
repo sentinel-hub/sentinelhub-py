@@ -4,12 +4,17 @@ Module implementing download client that is adjusted to download from AWS
 import logging
 import warnings
 
-import boto3
-from botocore.exceptions import NoCredentialsError
+try:
+    import boto3
+    from botocore.exceptions import NoCredentialsError
+except ImportError as import_exception:
+    raise ImportError(
+        "To use AWS functionalities of this package you have to install sentinelhub[AWS] package extension"
+    ) from import_exception
 
+from ..download.client import DownloadClient
+from ..download.handlers import fail_missing_file
 from ..exceptions import AwsDownloadFailedException
-from .client import DownloadClient
-from .handlers import fail_missing_file
 
 LOGGER = logging.getLogger(__name__)
 

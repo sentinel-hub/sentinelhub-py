@@ -6,8 +6,6 @@ pillow>=8.3.2,<=8.4.0
 python-dateutil
 utm
 shapely
-boto3
-botocore
 pyproj>=2.2.0
 oauthlib
 requests_oauthlib

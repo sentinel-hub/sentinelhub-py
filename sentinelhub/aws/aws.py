@@ -3,21 +3,19 @@ Module for obtaining data from Amazon Web Service
 """
 
 import datetime as dt
-import logging
 import os
 import warnings
 from abc import ABC, abstractmethod
 
-from .config import SHConfig
-from .constants import AwsConstants, EsaSafeType, MimeType
-from .data_collections import DataCollection
-from .download import DownloadRequest
-from .download.aws_client import AwsDownloadClient
-from .exceptions import AwsDownloadFailedException, SHUserWarning
-from .opensearch import get_tile_info, get_tile_info_id
-from .time_utils import parse_time
-
-LOGGER = logging.getLogger(__name__)
+from ..config import SHConfig
+from ..constants import MimeType
+from ..data_collections import DataCollection
+from ..download import DownloadRequest
+from ..exceptions import AwsDownloadFailedException, SHUserWarning
+from ..opensearch import get_tile_info, get_tile_info_id
+from ..time_utils import parse_time
+from .client import AwsDownloadClient
+from .constants import AwsConstants, EsaSafeType
 
 MAX_SUPPORTED_BASELINES = {
     DataCollection.SENTINEL2_L1C: "04.00",

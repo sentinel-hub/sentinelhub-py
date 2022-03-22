@@ -82,6 +82,7 @@ setup(
     include_package_data=True,
     install_requires=parse_requirements("requirements.txt"),
     extras_require={
+        "AWS": parse_requirements("requirements-aws.txt"),
         "DEV": parse_requirements("requirements-dev.txt"),
         "DOCS": parse_requirements("requirements-docs.txt"),
     },

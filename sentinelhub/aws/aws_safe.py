@@ -4,11 +4,12 @@ Module for creating .SAFE structure with data from AWS
 
 import warnings
 
+from ..constants import MimeType
+from ..data_collections import DataCollection
+from ..exceptions import SHRuntimeWarning
 from .aws import AwsProduct, AwsTile
-from .constants import AwsConstants, EsaSafeType, MimeType
-from .data_collections import DataCollection
-from .download.aws_client import AwsDownloadClient
-from .exceptions import SHRuntimeWarning
+from .client import AwsDownloadClient
+from .constants import AwsConstants, EsaSafeType
 
 
 class SafeProduct(AwsProduct):
