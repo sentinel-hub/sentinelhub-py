@@ -1,6 +1,6 @@
-aws_safe
+aws.data
 ========
 
-.. automodule:: sentinelhub.aws_safe
+.. automodule:: sentinelhub.aws.data
     :members:
     :show-inheritance:
