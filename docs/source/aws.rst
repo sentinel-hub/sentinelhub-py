@@ -6,7 +6,7 @@ aws
     :undoc-members:
     :show-inheritance:
 
-Content of the **sentinelhub.aws** package extension:
+Modules:
 
 .. toctree::
     aws.client

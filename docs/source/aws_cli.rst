@@ -3,7 +3,7 @@ Downloading satellite data from AWS with command line
 =====================================================
 
 The following examples show how to download Sentinel-2 data from AWS S3 storage bucket and store them into original
-`ESA .SAFE format`_. Before testing any of the examples below please check
+`ESA .SAFE format`_. Before testing the examples below make sure to install the package with `[AWS]` extension dependencies please check
 `Configuration paragraph <configure.html#amazon-s3-capabilities>`_ for details about configuring AWS credentials
 and information about charges.
 

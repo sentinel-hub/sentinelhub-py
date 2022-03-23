@@ -1,5 +1,11 @@
 """
-The part of the package for interacting with Amazon Web Services (AWS)
+The part of the package for interacting with Amazon Web Services (AWS). It requires additional package dependencies
+which can be installed with:
+
+.. code-block::
+
+    pip install sentinelhub[AWS]
+
 """
 
 from .client import AwsDownloadClient
