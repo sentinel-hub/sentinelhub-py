@@ -288,7 +288,7 @@ class OgcRequest(DataRequest):
         :type image_format: constants.MimeType
         :param custom_url_params: A dictionary of CustomUrlParameters and their values supported by Sentinel Hub's WMS
             and WCS services. All available parameters are described at
-            http://www.sentinel-hub.com/develop/documentation/api/custom-url-parameters. Note: in case of
+            https://www.sentinel-hub.com/develop/api/ogc/custom-parameters/. Note: in case of
             `CustomUrlParam.EVALSCRIPT` the dictionary value must be a string of Javascript code that is not
             encoded into base64.
         :type custom_url_params: Dict[CustomUrlParameter, object]
@@ -388,7 +388,7 @@ class WmsRequest(OgcRequest):
     no matter the bounding box ratio.
 
     More info available at:
-    https://www.sentinel-hub.com/develop/documentation/api/ogc_api/wms-parameters
+    https://www.sentinel-hub.com/develop/api/ogc/standard-parameters/wms/
     """
 
     def __init__(self, *, width=None, height=None, **kwargs):
@@ -428,7 +428,7 @@ class WmsRequest(OgcRequest):
         :type image_format: constants.MimeType
         :param custom_url_params: A dictionary of CustomUrlParameters and their values supported by Sentinel Hub's WMS
             and WCS services. All available parameters are described at
-            http://www.sentinel-hub.com/develop/documentation/api/custom-url-parameters. Note: in case of
+            https://www.sentinel-hub.com/develop/api/ogc/custom-parameters/. Note: in case of
             `CustomUrlParam.EVALSCRIPT` the dictionary value must be a string of Javascript code that is not
             encoded into base64.
         :type custom_url_params: Dict[CustomUrlParameter, object]
@@ -455,7 +455,7 @@ class WcsRequest(OgcRequest):
     resolution of the image instead of its size.
 
     More info available at:
-    https://www.sentinel-hub.com/develop/documentation/api/ogc_api/wcs-request
+    https://www.sentinel-hub.com/develop/api/ogc/standard-parameters/wcs/
     """
 
     def __init__(self, *, resx="10m", resy="10m", **kwargs):
@@ -498,7 +498,7 @@ class WcsRequest(OgcRequest):
         :type image_format: constants.MimeType
         :param custom_url_params: A dictionary of CustomUrlParameters and their values supported by Sentinel Hub's WMS
             and WCS services. All available parameters are described at
-            http://www.sentinel-hub.com/develop/documentation/api/custom-url-parameters. Note: in case of
+            https://www.sentinel-hub.com/develop/api/ogc/custom-parameters/. Note: in case of
             `CustomUrlParam.EVALSCRIPT` the dictionary value must be a string of Javascript code that is not
             encoded into base64.
         :type custom_url_params: Dict[CustomUrlParameter, object]
@@ -527,7 +527,7 @@ class FisRequest(OgcRequest):
     values for a polygon representing an agricultural unit over a time range.
 
     More info available at:
-    https://www.sentinel-hub.com/develop/documentation/api/ogc_api/wcs-request
+    https://www.sentinel-hub.com/develop/api/ogc/standard-parameters/wcs/
     """
 
     def __init__(self, layer, time, geometry_list, *, resolution="10m", bins=None, histogram_type=None, **kwargs):
@@ -561,7 +561,7 @@ class FisRequest(OgcRequest):
         :type maxcc: float
         :param custom_url_params: Dictionary of CustomUrlParameters and their values supported by Sentinel Hub's WMS
             and WCS services. All available parameters are described at
-            http://www.sentinel-hub.com/develop/documentation/api/custom-url-parameters. Note: in
+            https://www.sentinel-hub.com/develop/api/ogc/custom-parameters/. Note: in
             case of constants.CustomUrlParam.EVALSCRIPT the dictionary value must be a string
             of Javascript code that is not encoded into base64.
         :type custom_url_params: Dict[CustomUrlParameter, object]
