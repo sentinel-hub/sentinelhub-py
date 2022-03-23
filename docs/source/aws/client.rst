@@ -1,5 +1,5 @@
-aws.client
-==========
+client
+======
 
 .. automodule:: sentinelhub.aws.client
     :members:

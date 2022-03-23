@@ -1,5 +1,5 @@
-download.request
-================
+request
+=======
 
 .. automodule:: sentinelhub.download.request
     :members:

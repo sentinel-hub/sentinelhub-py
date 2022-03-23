@@ -9,7 +9,7 @@ download
 Modules:
 
 .. toctree::
-    download.client
-    download.request
-    download.sentinelhub_client
-    download.sentinelhub_statistical_client
+    ./download/client
+    ./download/request
+    ./download/sentinelhub_client
+    ./download/sentinelhub_statistical_client

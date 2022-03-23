@@ -9,8 +9,8 @@ aws
 Modules:
 
 .. toctree::
-    aws.client
-    aws.constants
-    aws.data
-    aws.data_safe
-    aws.request
+    ./aws/client
+    ./aws/constants
+    ./aws/data
+    ./aws/data_safe
+    ./aws/request

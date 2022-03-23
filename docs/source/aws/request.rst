@@ -1,5 +1,5 @@
-aws.request
-===========
+request
+=======
 
 .. automodule:: sentinelhub.aws.request
     :members:

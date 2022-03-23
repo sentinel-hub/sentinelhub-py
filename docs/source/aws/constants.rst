@@ -1,5 +1,5 @@
-aws.constants
-=============
+constants
+=========
 
 .. automodule:: sentinelhub.aws.constants
     :members:

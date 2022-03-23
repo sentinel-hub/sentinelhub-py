@@ -1,5 +1,5 @@
-aws.data
-========
+data
+====
 
 .. automodule:: sentinelhub.aws.data
     :members:

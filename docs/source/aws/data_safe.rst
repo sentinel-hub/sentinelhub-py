@@ -1,5 +1,5 @@
-aws.data_safe
-=============
+data_safe
+=========
 
 .. automodule:: sentinelhub.aws.data_safe
     :members:
