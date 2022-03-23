@@ -10,7 +10,6 @@ from abc import ABC, abstractmethod
 
 from .config import SHConfig
 from .constants import CRS, CustomUrlParam, HistogramType, MimeType, ServiceType
-from .data_collections import DataCollection, handle_deprecated_data_source
 from .download import DownloadClient, DownloadRequest, SentinelHubDownloadClient
 from .fis import FisService
 from .geopedia import GeopediaImageService, GeopediaWmsService
@@ -244,16 +243,15 @@ class OgcRequest(DataRequest):
         layer,
         bbox,
         *,
+        data_collection,
         time="latest",
         service_type=None,
-        data_collection=None,
         size_x=None,
         size_y=None,
         maxcc=1.0,
         image_format=MimeType.PNG,
         custom_url_params=None,
         time_difference=datetime.timedelta(seconds=-1),
-        data_source=None,
         **kwargs,
     ):
         """
@@ -264,6 +262,9 @@ class OgcRequest(DataRequest):
         :param bbox: Bounding box of the requested image. Coordinates must be in the specified coordinate reference
             system.
         :type bbox: geometry.BBox
+        :param data_collection: A collection of requested satellite data. It has to be the same as defined in
+            Sentinel Hub Dashboard for the given layer.
+        :type data_collection: DataCollection
         :param time: time or time range for which to return the results, in ISO8601 format
             (year-month-date, for example: ``2016-01-01``, or year-month-dateThours:minutes:seconds format,
             i.e. ``2016-01-01T16:31:21``). When a single time is specified the request will return data for that
@@ -275,9 +276,6 @@ class OgcRequest(DataRequest):
             (datetime.datetime, datetime.datetime)
         :param service_type: type of OGC service (WMS or WCS)
         :type service_type: constants.ServiceType
-        :param data_collection: A collection of requested satellite data. It has to be the same as defined in
-            Sentinel Hub Dashboard for the given layer.
-        :type data_collection: DataCollection
         :param size_x: number of pixels in x or resolution in x (i.e. ``512`` or ``10m``)
         :type size_x: int or str
         :param size_y: number of pixels in x or resolution in y (i.e. ``512`` or ``10m``)
@@ -295,7 +293,7 @@ class OgcRequest(DataRequest):
             encoded into base64.
         :type custom_url_params: Dict[CustomUrlParameter, object]
         :param time_difference: The time difference below which dates are deemed equal. That is, if for the given set
-            of OGC parameters the images are available at datestimes `d1<=d2<=...<=dn` then only those with
+            of OGC parameters the images are available at datetimes `d1<=d2<=...<=dn` then only those with
             `dk-dj>time_difference` will be considered. The default time difference is negative (`-1s`), meaning
             that all dates are considered by default.
         :type time_difference: datetime.timedelta
@@ -303,15 +301,11 @@ class OgcRequest(DataRequest):
         :type data_folder: str
         :param config: A custom instance of config class to override parameters from the saved configuration.
         :type config: SHConfig or None
-        :param data_source: A deprecated alternative to data_collection
-        :type data_source: DataCollection
         """
         self.layer = layer
         self.bbox = bbox
         self.time = time
-        self.data_collection = DataCollection(
-            handle_deprecated_data_source(data_collection, data_source, default=DataCollection.SENTINEL2_L1C)
-        )
+        self.data_collection = data_collection
         self.maxcc = maxcc
         self.image_format = MimeType(image_format)
         self.service_type = service_type
@@ -439,7 +433,7 @@ class WmsRequest(OgcRequest):
             encoded into base64.
         :type custom_url_params: Dict[CustomUrlParameter, object]
         :param time_difference: The time difference below which dates are deemed equal. That is, if for the given set
-            of OGC parameters the images are available at datestimes `d1<=d2<=...<=dn` then only those with
+            of OGC parameters the images are available at datetimes `d1<=d2<=...<=dn` then only those with
             `dk-dj>time_difference` will be considered. The default time difference is negative (`-1s`), meaning
             that all dates are considered by default.
         :type time_difference: datetime.timedelta
@@ -447,8 +441,6 @@ class WmsRequest(OgcRequest):
         :type data_folder: str
         :param config: A custom instance of config class to override parameters from the saved configuration.
         :type config: SHConfig or None
-        :param data_source: A deprecated alternative to data_collection
-        :type data_source: DataCollection
         """
         super().__init__(service_type=ServiceType.WMS, size_x=width, size_y=height, **kwargs)
 
@@ -511,7 +503,7 @@ class WcsRequest(OgcRequest):
             encoded into base64.
         :type custom_url_params: Dict[CustomUrlParameter, object]
         :param time_difference: The time difference below which dates are deemed equal. That is, if for the given set
-            of OGC parameters the images are available at datestimes `d1<=d2<=...<=dn` then only those with
+            of OGC parameters the images are available at datetimes `d1<=d2<=...<=dn` then only those with
             `dk-dj>time_difference` will be considered. The default time difference is negative (`-1s`), meaning
             that all dates are considered by default.
         :type time_difference: datetime.timedelta
@@ -519,8 +511,6 @@ class WcsRequest(OgcRequest):
         :type data_folder: str
         :param config: A custom instance of config class to override parameters from the saved configuration.
         :type config: SHConfig or None
-        :param data_source: A deprecated alternative to data_collection
-        :type data_source: DataCollection
         """
         super().__init__(service_type=ServiceType.WCS, size_x=resx, size_y=resy, **kwargs)
 
@@ -579,8 +569,6 @@ class FisRequest(OgcRequest):
         :type data_folder: str
         :param config: A custom instance of config class to override parameters from the saved configuration.
         :type config: SHConfig or None
-        :param data_source: A deprecated alternative to data_collection
-        :type data_source: DataCollection
         """
         self.geometry_list = geometry_list
         self.resolution = resolution

@@ -3,7 +3,6 @@ Data request interface for downloading satellite data from AWS
 """
 from abc import abstractmethod
 
-from ..data_collections import DataCollection, handle_deprecated_data_source
 from ..data_request import DataRequest
 from .client import AwsDownloadClient
 from .data import AwsProduct, AwsTile
@@ -105,8 +104,11 @@ class AwsProductRequest(AwsRequest):
 class AwsTileRequest(AwsRequest):
     """AWS Service request class for an ESA tile."""
 
-    def __init__(self, *, tile=None, time=None, aws_index=None, data_collection=None, data_source=None, **kwargs):
+    def __init__(self, *, data_collection, tile=None, time=None, aws_index=None, **kwargs):
         """
+        :param data_collection: A collection of requested AWS data. Supported collections are Sentinel-2 L1C and
+            Sentinel-2 L2A.
+        :type data_collection: DataCollection
         :param tile: tile name (e.g. ``'T10UEV'``)
         :type tile: str
         :param time: tile sensing time in ISO8601 format
@@ -116,9 +118,6 @@ class AwsTileRequest(AwsRequest):
             will try to find the index automatically. If there will be multiple choices it will choose the
             lowest index and inform the user.
         :type aws_index: int or None
-        :param data_collection: A collection of requested AWS data. Supported collections are Sentinel-2 L1C and
-            Sentinel-2 L2A.
-        :type data_collection: DataCollection
         :param bands: List of Sentinel-2 bands for request. If `None` all bands will be obtained
         :type bands: list(str) or None
         :param metafiles: list of additional metafiles available on AWS
@@ -131,15 +130,11 @@ class AwsTileRequest(AwsRequest):
         :type data_folder: str
         :param config: A custom instance of config class to override parameters from the saved configuration.
         :type config: SHConfig or None
-        :param data_source: A deprecated alternative to data_collection
-        :type data_source: DataCollection
         """
+        self.data_collection = data_collection
         self.tile = tile
         self.time = time
         self.aws_index = aws_index
-        self.data_collection = DataCollection(
-            handle_deprecated_data_source(data_collection, data_source, default=DataCollection.SENTINEL2_L1C)
-        )
 
         super().__init__(**kwargs)
 
@@ -169,7 +164,7 @@ class AwsTileRequest(AwsRequest):
 
 
 def get_safe_format(
-    product_id=None, tile=None, entire_product=False, bands=None, data_collection=None, data_source=None
+    product_id=None, tile=None, entire_product=False, bands=None, data_collection=None
 ):
     """Returns .SAFE format structure in form of nested dictionaries. Either ``product_id`` or ``tile`` must be
     specified.
@@ -185,13 +180,9 @@ def get_safe_format(
     :type bands: list(str) or None
     :param data_collection: In case of tile request the collection of satellite data has to be specified.
     :type data_collection: DataCollection
-    :param data_source: A deprecated alternative to data_collection
-    :type data_source: DataCollection
     :return: Nested dictionaries representing .SAFE structure.
     :rtype: dict
     """
-    data_collection = handle_deprecated_data_source(data_collection, data_source)
-
     entire_product = entire_product and product_id is None
     if tile is not None:
         safe_tile = SafeTile(tile_name=tile[0], time=tile[1], bands=bands, data_collection=data_collection)
@@ -215,8 +206,7 @@ def download_safe_format(
     redownload=False,
     entire_product=False,
     bands=None,
-    data_collection=None,
-    data_source=None,
+    data_collection=None
 ):
     """Downloads .SAFE format structure in form of nested dictionaries. Either ``product_id`` or ``tile`` must
     be specified.
@@ -237,13 +227,9 @@ def download_safe_format(
     :type bands: list(str) or None
     :param data_collection: In case of tile request the collection of satellite data has to be specified.
     :type data_collection: DataCollection
-    :param data_source: A deprecated alternative to data_collection
-    :type data_source: DataCollection
     :return: Nested dictionaries representing .SAFE structure.
     :rtype: dict
     """
-    data_collection = handle_deprecated_data_source(data_collection, data_source)
-
     safe_request = None
     entire_product = entire_product and product_id is None
     if tile is not None:

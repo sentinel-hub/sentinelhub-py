@@ -7,6 +7,7 @@ import pytest
 from shapely.geometry import Polygon
 
 from sentinelhub import CRS, BBox, CustomUrlParam, DataCollection, FisRequest, Geometry, HistogramType
+from sentinelhub.exceptions import SHDeprecationWarning
 from sentinelhub.testing_utils import get_input_folder, get_output_folder
 
 with open(os.path.join(get_input_folder(__file__), "test_fis_results.txt"), "r") as file:
@@ -109,6 +110,7 @@ TEST_CASES = [
 @pytest.mark.sh_integration
 @pytest.mark.parametrize("test_case", TEST_CASES)
 def test_fis(output_folder, test_case):
-    data = test_case.collect_data()
+    with pytest.warns(SHDeprecationWarning):
+        data = test_case.collect_data()
     assert len(data) == test_case.result_length
     assert data == test_case.raw_result

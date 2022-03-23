@@ -10,7 +10,6 @@ import shapely.geometry
 
 from .config import SHConfig
 from .constants import CRS, CustomUrlParam, MimeType, ServiceType, SHConstants
-from .data_collections import DataCollection, handle_deprecated_data_source
 from .download import DownloadRequest, SentinelHubDownloadClient
 from .geo_utils import get_image_dimension
 from .geometry import BBox, Geometry
@@ -319,7 +318,7 @@ class WebFeatureService(FeatureIterator):
     The data is in the order returned by Sentinel Hub WFS service.
     """
 
-    def __init__(self, bbox, time_interval, *, data_collection=None, maxcc=1.0, data_source=None, config=None):
+    def __init__(self, bbox, time_interval, *, data_collection, maxcc=1.0, config=None):
         """
         :param bbox: Bounding box of the requested image. Coordinates must be in the specified coordinate reference
             system.
@@ -332,8 +331,6 @@ class WebFeatureService(FeatureIterator):
         :type maxcc: float
         :param config: A custom instance of config class to override parameters from the saved configuration.
         :type config: SHConfig or None
-        :param data_source: A deprecated alternative to data_collection
-        :type data_source: DataCollection
         """
         self.config = config or SHConfig()
         self.config.raise_for_missing_instance_id()
@@ -346,9 +343,7 @@ class WebFeatureService(FeatureIterator):
         else:
             self.time_interval = parse_time_interval(time_interval)
 
-        self.data_collection = DataCollection(
-            handle_deprecated_data_source(data_collection, data_source, default=DataCollection.SENTINEL2_L1C)
-        )
+        self.data_collection = data_collection
         self.maxcc = maxcc
         self.max_features_per_request = 1 if self.latest_time_only else self.config.max_wfs_records_per_query
 
