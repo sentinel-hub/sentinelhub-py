@@ -329,7 +329,7 @@ class SHConfig:
             raise ValueError(
                 "Sentinel Hub instance ID is missing. "
                 "Either provide it with SHConfig object or save it into config.json configuration file. "
-                "Check http://sentinelhub-py.readthedocs.io/en/latest/configure.html for more info."
+                "Check https://sentinelhub-py.readthedocs.io/en/latest/configure.html for more info."
             )
 
     def _mask_credentials(self, param, value):

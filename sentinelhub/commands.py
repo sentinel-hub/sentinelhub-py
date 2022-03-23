@@ -85,7 +85,8 @@ def download(url, filename, redownload):
 
     \b
     Example:
-    sentinelhub.download http://sentinel-s2-l1c.s3.amazonaws.com/tiles/54/H/VH/2017/4/14/0/metadata.xml home/example.xml
+    sentinelhub.download https://roda.sentinel-hub.com/sentinel-s2-l1c/tiles/36/M/ZB/2022/3/17/0/metadata.xml \
+./data/example.xml
     """
     data_folder, filename = filename.rsplit("/", 1)
     download_list = [

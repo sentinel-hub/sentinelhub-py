@@ -11,7 +11,7 @@ OLD_PRODUCT_ID = "S2A_OPER_PRD_MSIL1C_PDMC_20160121T043931_R069_V20160103T171947
 L2A_PRODUCT_ID = "S2A_MSIL2A_20180402T151801_N0207_R068_T33XWJ_20180402T202222"
 L1C_TILE = "T38TML 2015-12-19"
 L2A_TILE = "T33XWJ 2018-04-02"
-URL = "http://roda.sentinel-hub.com/sentinel-s2-l1c/tiles/54/H/VH/2017/4/14/0/metadata.xml"
+URL = "https://roda.sentinel-hub.com/sentinel-s2-l1c/tiles/54/H/VH/2017/4/14/0/metadata.xml"
 
 
 @pytest.mark.parametrize(

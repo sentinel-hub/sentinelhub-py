@@ -2,7 +2,7 @@
 [![Conda version](https://img.shields.io/conda/vn/conda-forge/sentinelhub.svg)](https://anaconda.org/conda-forge/sentinelhub)
 [![Supported Python versions](https://img.shields.io/pypi/pyversions/sentinelhub.svg?style=flat-square)](https://pypi.org/project/sentinelhub/)
 [![Build Status](https://github.com/sentinel-hub/sentinelhub-py/actions/workflows/ci_action.yml/badge.svg?branch=master)](https://github.com/sentinel-hub/sentinelhub-py/actions)
-[![Docs status](https://readthedocs.org/projects/sentinelhub-py/badge/?version=latest)](http://sentinelhub-py.readthedocs.io/en/latest/)
+[![Docs status](https://readthedocs.org/projects/sentinelhub-py/badge/?version=latest)](https://sentinelhub-py.readthedocs.io/en/latest/)
 [![Overall downloads](https://pepy.tech/badge/sentinelhub)](https://pepy.tech/project/sentinelhub)
 [![Last month downloads](https://pepy.tech/badge/sentinelhub/month)](https://pepy.tech/project/sentinelhub)
 [![](https://img.shields.io/pypi/l/sentinelhub.svg)](https://github.com/sentinel-hub/sentinelhub-py/blob/master/LICENSE.md)
@@ -47,7 +47,7 @@ $ pip install .
 Before installing `sentinelhub` on **Windows** it is recommended to install `shapely` package from
 [Unofficial Windows wheels repository](https://www.lfd.uci.edu/~gohlke/pythonlibs/)
 
-Once installed the package can be configured according to [configuration instructions](http://sentinelhub-py.readthedocs.io/en/latest/configure.html) in documentation.
+Once installed the package can be configured according to [configuration instructions](https://sentinelhub-py.readthedocs.io/en/latest/configure.html) in documentation.
 
 
 ## Content
@@ -75,12 +75,12 @@ A high-level overview of the main functionalities:
   * L1C and L2A data,
   * command line interface,
 
-- [Geopedia](http://portal.geopedia.world/) WMS and REST API.
+- [Geopedia](https://portal.geopedia.world/) WMS and REST API.
 
 
 ## Documentation
 
-For more information on the package and to access the documentation, visit [readthedocs](http://sentinelhub-py.readthedocs.io/).
+For more information on the package and to access the documentation, visit [readthedocs](https://sentinelhub-py.readthedocs.io/).
 
 
 ## Examples

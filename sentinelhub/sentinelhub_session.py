@@ -34,7 +34,7 @@ class SentinelHubSession:
             raise ValueError(
                 "Configuration parameters 'sh_client_id' and 'sh_client_secret' have to be set in order "
                 "to authenticate with Sentinel Hub service. Check "
-                "http://sentinelhub-py.readthedocs.io/en/latest/configure.html for more info."
+                "https://sentinelhub-py.readthedocs.io/en/latest/configure.html for more info."
             )
 
         self._token = None
