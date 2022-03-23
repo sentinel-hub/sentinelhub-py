@@ -23,7 +23,13 @@ The package requires a Python version >= 3.7 and an installed C/C++ compiler. Th
 the PyPI package index and can be installed with
 
 ```
-$ pip install sentinelhub --upgrade
+$ pip install sentinelhub
+```
+
+or with an extension tag for additional functionalities
+
+```
+$ pip install sentinelhub[AWS]  # extra dependencies for interacting with Amazon Web Services
 ```
 
 Alternatively, the package can be installed with Conda from `conda-forge` channel
@@ -64,7 +70,7 @@ A high-level overview of the main functionalities:
   * data collection objects,
   * IO tools,
 
-- download Sentinel-2 data from public [AWS S3 buckets](https://registry.opendata.aws/sentinel-2/)
+- download Sentinel-2 data from public [AWS S3 buckets](https://registry.opendata.aws/sentinel-2/) (required `[AWS]` package extension)
   * restoration of .SAFE format,
   * L1C and L2A data,
   * command line interface,

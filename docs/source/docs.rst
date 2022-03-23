@@ -10,17 +10,12 @@ Modules
 .. toctree::
     areas
     aws
-    aws_safe
     config
     constants
     data_collections
     data_collections_bands
     data_request
-    download.aws_client
-    download.client
-    download.request
-    download.sentinelhub_client
-    download.sentinelhub_statistical_client
+    download
     fis
     geo_utils
     geometry

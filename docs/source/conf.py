@@ -97,8 +97,8 @@ pygments_style = "sphinx"
 # If true, `todo` and `todoList` produce output, else they produce nothing.
 todo_include_todos = True
 
-# Mock modules
-autodoc_mock_imports = ["sentinelhub"]
+# Mock imports that won't and don't have to be installed in ReadTheDocs environment
+autodoc_mock_imports = ["boto3", "botocore"]
 
 # -- Options for HTML output ----------------------------------------------
 

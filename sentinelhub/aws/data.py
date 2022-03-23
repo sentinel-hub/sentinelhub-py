@@ -1,23 +1,21 @@
 """
-Module for obtaining data from Amazon Web Service
+Module for defining how satellite data will be collected from AWS and where it will be saved.
 """
 
 import datetime as dt
-import logging
 import os
 import warnings
 from abc import ABC, abstractmethod
 
-from .config import SHConfig
-from .constants import AwsConstants, EsaSafeType, MimeType
-from .data_collections import DataCollection
-from .download import DownloadRequest
-from .download.aws_client import AwsDownloadClient
-from .exceptions import AwsDownloadFailedException, SHUserWarning
-from .opensearch import get_tile_info, get_tile_info_id
-from .time_utils import parse_time
-
-LOGGER = logging.getLogger(__name__)
+from ..config import SHConfig
+from ..constants import MimeType
+from ..data_collections import DataCollection
+from ..download import DownloadRequest
+from ..exceptions import AwsDownloadFailedException, SHUserWarning
+from ..opensearch import get_tile_info, get_tile_info_id
+from ..time_utils import parse_time
+from .client import AwsDownloadClient
+from .constants import AwsConstants, EsaSafeType
 
 MAX_SUPPORTED_BASELINES = {
     DataCollection.SENTINEL2_L1C: "04.00",
@@ -25,8 +23,8 @@ MAX_SUPPORTED_BASELINES = {
 }
 
 
-class AwsService(ABC):
-    """Amazon Web Service (AWS) base class"""
+class AwsData(ABC):
+    """A base class for collecting satellite data from AWS."""
 
     def __init__(self, parent_folder="", bands=None, metafiles=None, config=None):
         """
@@ -327,8 +325,8 @@ class AwsService(ABC):
         )
 
 
-class AwsProduct(AwsService):
-    """Service class for Sentinel-2 product on AWS"""
+class AwsProduct(AwsData):
+    """Class for collecting Sentinel-2 products data from AWS."""
 
     def __init__(self, product_id, tile_list=None, **kwargs):
         """
@@ -496,8 +494,8 @@ class AwsProduct(AwsService):
         return os.path.join(self.parent_folder, self.product_id, self.add_file_extension(filename)).replace(":", ".")
 
 
-class AwsTile(AwsService):
-    """Service class for Sentinel-2 product on AWS"""
+class AwsTile(AwsData):
+    """Class for collecting Sentinel-2 tiles data from AWS."""
 
     def __init__(self, tile_name, time, aws_index=None, data_collection=DataCollection.SENTINEL2_L1C, **kwargs):
         """
@@ -749,4 +747,4 @@ class AwsTile(AwsService):
             raise ValueError("Transformation from tile ID to tile works currently only for Sentinel-2 L1C products")
 
         tile_info = get_tile_info_id(tile_id)
-        return AwsService.url_to_tile(tile_info["properties"]["s3Path"])
+        return AwsData.url_to_tile(tile_info["properties"]["s3Path"])

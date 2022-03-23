@@ -2,7 +2,6 @@
 A download part of the package
 """
 
-from .aws_client import AwsDownloadClient
 from .client import DownloadClient
 from .request import DownloadRequest
 from .sentinelhub_client import SentinelHubDownloadClient

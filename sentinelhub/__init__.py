@@ -12,30 +12,12 @@ from .areas import (
     UtmGridSplitter,
     UtmZoneSplitter,
 )
-from .aws import AwsProduct, AwsTile
-from .aws_safe import SafeProduct, SafeTile
 from .config import SHConfig
-from .constants import CRS, AwsConstants, CustomUrlParam, HistogramType, MimeType, ServiceType, ServiceUrl, SHConstants
+from .constants import CRS, CustomUrlParam, HistogramType, MimeType, ServiceType, ServiceUrl, SHConstants
 from .data_collections import DataCollection, DataSource
 from .data_collections_bands import Band, Unit
-from .data_request import (
-    AwsProductRequest,
-    AwsTileRequest,
-    FisRequest,
-    GeopediaImageRequest,
-    GeopediaWmsRequest,
-    WcsRequest,
-    WmsRequest,
-    download_safe_format,
-    get_safe_format,
-)
-from .download import (
-    AwsDownloadClient,
-    DownloadClient,
-    DownloadRequest,
-    SentinelHubDownloadClient,
-    SentinelHubStatisticalDownloadClient,
-)
+from .data_request import FisRequest, GeopediaImageRequest, GeopediaWmsRequest, WcsRequest, WmsRequest
+from .download import DownloadClient, DownloadRequest, SentinelHubDownloadClient, SentinelHubStatisticalDownloadClient
 from .exceptions import AwsDownloadFailedException, DownloadFailedException
 from .geo_utils import (
     bbox_to_dimensions,

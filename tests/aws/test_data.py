@@ -2,7 +2,8 @@ import numpy as np
 import pytest
 from pytest import approx
 
-from sentinelhub import AwsProductRequest, AwsTileRequest, DataCollection
+from sentinelhub import DataCollection
+from sentinelhub.aws import AwsProductRequest, AwsTileRequest
 
 pytestmark = pytest.mark.aws_integration
 

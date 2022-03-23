@@ -1,5 +1,5 @@
-download.client
-===============
+client
+======
 
 .. automodule:: sentinelhub.download.client
     :members:

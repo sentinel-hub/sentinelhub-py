@@ -10,5 +10,5 @@ run_sh_integration_tests:
     - apt-get update
     - apt-get install -y libopenjp2-7
   script:
-    - pip install -e .[DEV]
+    - pip install -e .[AWS,DEV]
     - pytest -m "sh_integration"

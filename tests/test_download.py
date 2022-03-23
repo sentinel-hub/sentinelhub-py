@@ -77,6 +77,22 @@ def test_single_download(download_request):
     assert os.path.isfile(response_path)
 
 
+def test_download_with_custom_filename(download_request):
+    """Making sure that caching works correctly in this case because request dictionary isn't saved."""
+    custom_filename = "tile.json"
+    download_request.filename = custom_filename
+
+    client = DownloadClient(redownload=False)
+
+    for _ in range(3):
+        client.download(download_request)
+
+    request_path, response_path = download_request.get_storage_paths()
+    assert request_path is None
+    assert response_path.endswith(custom_filename)
+    assert os.path.isfile(response_path)
+
+
 @pytest.mark.parametrize("show_progress", [True, False])
 def test_multiple_downloads(download_request, show_progress):
     client = DownloadClient(redownload=True, raise_download_errors=False)

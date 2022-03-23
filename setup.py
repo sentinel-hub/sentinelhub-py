@@ -82,6 +82,7 @@ setup(
     include_package_data=True,
     install_requires=parse_requirements("requirements.txt"),
     extras_require={
+        "AWS": parse_requirements("requirements-aws.txt"),
         "DEV": parse_requirements("requirements-dev.txt"),
         "DOCS": parse_requirements("requirements-docs.txt"),
     },
@@ -89,7 +90,7 @@ setup(
     entry_points={
         "console_scripts": [
             "sentinelhub=sentinelhub.commands:main_help",
-            "sentinelhub.aws=sentinelhub.commands:aws",
+            "sentinelhub.aws=sentinelhub.aws.commands:aws",
             "sentinelhub.config=sentinelhub.commands:config",
             "sentinelhub.download=sentinelhub.commands:download",
         ]

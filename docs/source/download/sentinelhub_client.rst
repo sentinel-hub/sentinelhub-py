@@ -1,5 +1,5 @@
-download.sentinelhub_client
-===========================
+sentinelhub_client
+==================
 
 .. automodule:: sentinelhub.download.sentinelhub_client
     :members:

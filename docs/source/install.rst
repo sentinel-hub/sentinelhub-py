@@ -4,7 +4,11 @@ Installation
 
 This package requires Python >=3.7 and can be installed with PyPI package manager::
 
-$ pip install sentinelhub --upgrade
+$ pip install sentinelhub
+
+or with an extension tag for additional functionalities::
+
+$ pip install sentinelhub[AWS]  # extra dependencies for interacting with Amazon Web Services
 
 Alternatively, the package can be installed with Conda from `conda-forge` channel::
 
