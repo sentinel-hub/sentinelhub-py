@@ -5,9 +5,9 @@ from abc import abstractmethod
 
 from ..data_collections import DataCollection, handle_deprecated_data_source
 from ..data_request import DataRequest
-from .aws import AwsProduct, AwsTile
-from .aws_safe import SafeProduct, SafeTile
 from .client import AwsDownloadClient
+from .data import AwsProduct, AwsTile
+from .data_safe import SafeProduct, SafeTile
 
 
 class AwsRequest(DataRequest):

@@ -7,9 +7,9 @@ import warnings
 from ..constants import MimeType
 from ..data_collections import DataCollection
 from ..exceptions import SHRuntimeWarning
-from .aws import AwsProduct, AwsTile
 from .client import AwsDownloadClient
 from .constants import AwsConstants, EsaSafeType
+from .data import AwsProduct, AwsTile
 
 
 class SafeProduct(AwsProduct):

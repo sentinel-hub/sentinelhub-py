@@ -23,7 +23,7 @@ MAX_SUPPORTED_BASELINES = {
 }
 
 
-class AwsService(ABC):
+class AwsData(ABC):
     """Amazon Web Service (AWS) base class"""
 
     def __init__(self, parent_folder="", bands=None, metafiles=None, config=None):
@@ -325,7 +325,7 @@ class AwsService(ABC):
         )
 
 
-class AwsProduct(AwsService):
+class AwsProduct(AwsData):
     """Service class for Sentinel-2 product on AWS"""
 
     def __init__(self, product_id, tile_list=None, **kwargs):
@@ -494,7 +494,7 @@ class AwsProduct(AwsService):
         return os.path.join(self.parent_folder, self.product_id, self.add_file_extension(filename)).replace(":", ".")
 
 
-class AwsTile(AwsService):
+class AwsTile(AwsData):
     """Service class for Sentinel-2 product on AWS"""
 
     def __init__(self, tile_name, time, aws_index=None, data_collection=DataCollection.SENTINEL2_L1C, **kwargs):
@@ -747,4 +747,4 @@ class AwsTile(AwsService):
             raise ValueError("Transformation from tile ID to tile works currently only for Sentinel-2 L1C products")
 
         tile_info = get_tile_info_id(tile_id)
-        return AwsService.url_to_tile(tile_info["properties"]["s3Path"])
+        return AwsData.url_to_tile(tile_info["properties"]["s3Path"])
