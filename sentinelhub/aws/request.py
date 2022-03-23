@@ -15,8 +15,7 @@ class AwsRequest(DataRequest):
 
     Collects and provides data from AWS.
 
-    AWS database is available at:
-    http://sentinel-s2-l1c.s3-website.eu-central-1.amazonaws.com/
+    More information about Sentinel-2 AWS registry: https://registry.opendata.aws/sentinel-2/
     """
 
     def __init__(self, *, bands=None, metafiles=None, safe_format=False, **kwargs):
@@ -54,11 +53,7 @@ class AwsRequest(DataRequest):
 
 
 class AwsProductRequest(AwsRequest):
-    """AWS Service request class for an ESA product
-
-    List of available products:
-    http://sentinel-s2-l1c.s3-website.eu-central-1.amazonaws.com/#products/
-    """
+    """AWS Service request class for an ESA product."""
 
     def __init__(self, product_id, *, tile_list=None, **kwargs):
         """
@@ -108,11 +103,7 @@ class AwsProductRequest(AwsRequest):
 
 
 class AwsTileRequest(AwsRequest):
-    """AWS Service request class for an ESA tile
-
-    List of available products:
-    http://sentinel-s2-l1c.s3-website.eu-central-1.amazonaws.com/#tiles/
-    """
+    """AWS Service request class for an ESA tile."""
 
     def __init__(self, *, tile=None, time=None, aws_index=None, data_collection=None, data_source=None, **kwargs):
         """
@@ -253,6 +244,7 @@ def download_safe_format(
     """
     data_collection = handle_deprecated_data_source(data_collection, data_source)
 
+    safe_request = None
     entire_product = entire_product and product_id is None
     if tile is not None:
         safe_request = AwsTileRequest(
@@ -272,5 +264,8 @@ def download_safe_format(
             if entire_product
             else AwsProductRequest(product_id, data_folder=folder, bands=bands, safe_format=True)
         )
+
+    if safe_request is None:
+        raise ValueError("Either 'product_id' or 'tile' has to be defined")
 
     safe_request.save_data(redownload=redownload)

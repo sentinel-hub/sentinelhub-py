@@ -1,5 +1,5 @@
 """
-The part of the package that implements AWS functionalities
+The part of the package for interacting with Amazon Web Services (AWS)
 """
 
 from .client import AwsDownloadClient

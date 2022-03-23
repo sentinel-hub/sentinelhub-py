@@ -1,5 +1,5 @@
 """
-Module for obtaining data from Amazon Web Service
+Module for defining how satellite data will be collected from AWS and where it will be saved.
 """
 
 import datetime as dt
@@ -24,7 +24,7 @@ MAX_SUPPORTED_BASELINES = {
 
 
 class AwsData(ABC):
-    """Amazon Web Service (AWS) base class"""
+    """A base class for collecting satellite data from AWS."""
 
     def __init__(self, parent_folder="", bands=None, metafiles=None, config=None):
         """
@@ -326,7 +326,7 @@ class AwsData(ABC):
 
 
 class AwsProduct(AwsData):
-    """Service class for Sentinel-2 product on AWS"""
+    """Class for collecting Sentinel-2 products data from AWS."""
 
     def __init__(self, product_id, tile_list=None, **kwargs):
         """
@@ -495,7 +495,7 @@ class AwsProduct(AwsData):
 
 
 class AwsTile(AwsData):
-    """Service class for Sentinel-2 product on AWS"""
+    """Class for collecting Sentinel-2 tiles data from AWS."""
 
     def __init__(self, tile_name, time, aws_index=None, data_collection=DataCollection.SENTINEL2_L1C, **kwargs):
         """

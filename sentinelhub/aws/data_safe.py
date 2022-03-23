@@ -1,5 +1,5 @@
 """
-Module for creating .SAFE structure with data from AWS
+Module for creating .SAFE structure with data collected from AWS
 """
 
 import warnings
@@ -13,7 +13,7 @@ from .data import AwsProduct, AwsTile
 
 
 class SafeProduct(AwsProduct):
-    """Class implementing transformation of satellite products from AWS into .SAFE structure"""
+    """Class implementing transformation of Sentinel-2 satellite products from AWS into .SAFE structure"""
 
     def get_requests(self):
         """Creates product structure and returns list of files for download
@@ -181,7 +181,7 @@ class SafeProduct(AwsProduct):
 
 
 class SafeTile(AwsTile):
-    """Class implementing transformation of satellite tiles from AWS into .SAFE structure"""
+    """Class implementing transformation of Sentinel-2 satellite tiles from AWS into .SAFE structure"""
 
     def __init__(self, *args, **kwargs):
         """Initialization parameters are inherited from parent class"""

@@ -1,5 +1,5 @@
 """
-Module implementing download client that is adjusted to download from AWS
+Module implementing a download client that is adjusted to download from AWS
 """
 import logging
 import warnings

@@ -90,7 +90,7 @@ setup(
     entry_points={
         "console_scripts": [
             "sentinelhub=sentinelhub.commands:main_help",
-            "sentinelhub.aws=sentinelhub.commands:aws",
+            "sentinelhub.aws=sentinelhub.aws.commands:aws",
             "sentinelhub.config=sentinelhub.commands:config",
             "sentinelhub.download=sentinelhub.commands:download",
         ]
