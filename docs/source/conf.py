@@ -98,7 +98,7 @@ pygments_style = "sphinx"
 todo_include_todos = True
 
 # Mock modules
-autodoc_mock_imports = ["sentinelhub"]
+autodoc_mock_imports = []
 
 # -- Options for HTML output ----------------------------------------------
 
