@@ -163,9 +163,7 @@ class AwsTileRequest(AwsRequest):
         self.download_list, self.folder_list = self.aws_service.get_requests()
 
 
-def get_safe_format(
-    product_id=None, tile=None, entire_product=False, bands=None, data_collection=None
-):
+def get_safe_format(product_id=None, tile=None, entire_product=False, bands=None, data_collection=None):
     """Returns .SAFE format structure in form of nested dictionaries. Either ``product_id`` or ``tile`` must be
     specified.
 
@@ -200,13 +198,7 @@ def get_safe_format(
 
 
 def download_safe_format(
-    product_id=None,
-    tile=None,
-    folder=".",
-    redownload=False,
-    entire_product=False,
-    bands=None,
-    data_collection=None
+    product_id=None, tile=None, folder=".", redownload=False, entire_product=False, bands=None, data_collection=None
 ):
     """Downloads .SAFE format structure in form of nested dictionaries. Either ``product_id`` or ``tile`` must
     be specified.
