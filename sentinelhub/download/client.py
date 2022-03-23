@@ -165,6 +165,9 @@ class DownloadClient:
     @staticmethod
     def _check_cached_request_is_matching(request, request_path):
         """Ensures that the cached request matches the current one. Serves as protection against hash collisions"""
+        if not request_path:
+            return
+
         cached_request_info = read_data(request_path, MimeType.JSON)
         current_request_info = request.get_request_params(include_metadata=False)
         # Timestamps are allowed to differ
