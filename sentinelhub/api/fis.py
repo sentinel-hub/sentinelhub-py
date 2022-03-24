@@ -10,17 +10,9 @@ from .ogc import OgcImageService, OgcRequest
 
 
 class FisRequest(OgcRequest):
-    """**Deprecated - use Statistical API (`SentinelHubStatistical`) instead!**
+    """``Deprecated - use Statistical API instead!``
 
-    The Statistical info (or feature info service, abbreviated FIS) request class
-
-    The Statistical info (or feature info service, abbreviated FIS), performs elementary statistical
-    computations---such as mean, standard deviation, and histogram approximating the distribution of reflectance
-    values---on remotely sensed data for a region specified in a given spatial reference system across different
-    bands and time ranges.
-
-    A quintessential usage example would be querying the service for basic statistics and the distribution of NDVI
-    values for a polygon representing an agricultural unit over a time range.
+    The class for interacting with Feature Info Service.
 
     For more info check `FIS documentation <https://www.sentinel-hub.com/develop/api/ogc/fis-request/>`__.
     """
@@ -55,8 +47,8 @@ class FisRequest(OgcRequest):
         :param maxcc: maximum accepted cloud coverage of an image. Float between 0.0 and 1.0. Default is ``1.0``.
         :type maxcc: float
         :param custom_url_params: Dictionary of CustomUrlParameters and their values supported by Sentinel Hub's WMS
-            and WCS services. All available parameters are described at
-            https://www.sentinel-hub.com/develop/api/ogc/custom-parameters/. Note: in
+            and WCS services. All available parameters are described in
+            `documentation <https://www.sentinel-hub.com/develop/api/ogc/custom-parameters/>`__. Note: in
             case of constants.CustomUrlParam.EVALSCRIPT the dictionary value must be a string
             of Javascript code that is not encoded into base64.
         :type custom_url_params: Dict[CustomUrlParameter, object]
@@ -78,7 +70,7 @@ class FisRequest(OgcRequest):
         Create a list of DownloadRequests for all Sentinel-2 acquisitions within request's time interval and
         acceptable cloud coverage.
         """
-        fis_service = FisService(config=self.config)
+        fis_service = _FisService(config=self.config)
         self.download_list = fis_service.get_request(self)
 
     def get_dates(self):
@@ -90,7 +82,7 @@ class FisRequest(OgcRequest):
         raise NotImplementedError
 
 
-class FisService(OgcImageService):
+class _FisService(OgcImageService):
     """Sentinel Hub OGC services class for providing FIS data
 
     Intermediate layer between FIS requests and the Sentinel Hub FIS services.

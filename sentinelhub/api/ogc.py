@@ -1,5 +1,6 @@
 """
 Module for working with Sentinel Hub OGC services
+`Sentinel Hub OGC services <https://www.sentinel-hub.com/develop/api/ogc/standard-parameters/>`__.
 """
 import datetime
 import logging
@@ -70,8 +71,8 @@ class OgcRequest(DataRequest):
                             Default is ``constants.MimeType.PNG``.
         :type image_format: constants.MimeType
         :param custom_url_params: A dictionary of CustomUrlParameters and their values supported by Sentinel Hub's WMS
-            and WCS services. All available parameters are described at
-            https://www.sentinel-hub.com/develop/api/ogc/custom-parameters/. Note: in case of
+            and WCS services. All available parameters are described in
+            `documentation <https://www.sentinel-hub.com/develop/api/ogc/custom-parameters/>`__. Note: in case of
             `CustomUrlParam.EVALSCRIPT` the dictionary value must be a string of Javascript code that is not
             encoded into base64.
         :type custom_url_params: Dict[CustomUrlParameter, object]
@@ -209,8 +210,8 @@ class WmsRequest(OgcRequest):
                             Default is ``constants.MimeType.PNG``.
         :type image_format: constants.MimeType
         :param custom_url_params: A dictionary of CustomUrlParameters and their values supported by Sentinel Hub's WMS
-            and WCS services. All available parameters are described at
-            https://www.sentinel-hub.com/develop/api/ogc/custom-parameters/. Note: in case of
+            and WCS services. All available parameters are described in
+            `documentation <https://www.sentinel-hub.com/develop/api/ogc/custom-parameters/>`__. Note: in case of
             `CustomUrlParam.EVALSCRIPT` the dictionary value must be a string of Javascript code that is not
             encoded into base64.
         :type custom_url_params: Dict[CustomUrlParameter, object]
@@ -278,8 +279,8 @@ class WcsRequest(OgcRequest):
                             Default is ``constants.MimeType.PNG``.
         :type image_format: constants.MimeType
         :param custom_url_params: A dictionary of CustomUrlParameters and their values supported by Sentinel Hub's WMS
-            and WCS services. All available parameters are described at
-            https://www.sentinel-hub.com/develop/api/ogc/custom-parameters/. Note: in case of
+            and WCS services. All available parameters are described in
+            `documentation <https://www.sentinel-hub.com/develop/api/ogc/custom-parameters/>`__. Note: in case of
             `CustomUrlParam.EVALSCRIPT` the dictionary value must be a string of Javascript code that is not
             encoded into base64.
         :type custom_url_params: Dict[CustomUrlParameter, object]

@@ -256,7 +256,7 @@ class CustomUrlParam(Enum):
     Supported parameters are `SHOWLOGO`, `EVALSCRIPT`, `EVALSCRIPTURL`, `PREVIEW`, `QUALITY`, `UPSAMPLING`,
     `DOWNSAMPLING`, `GEOMETRY` and `WARNINGS`.
 
-    See https://www.sentinel-hub.com/develop/api/ogc/custom-parameters/ for more information.
+    See `documentation <https://www.sentinel-hub.com/develop/api/ogc/custom-parameters/>`__ for more information.
     """
 
     SHOWLOGO = "ShowLogo"

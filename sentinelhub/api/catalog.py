@@ -1,5 +1,5 @@
 """
-A client interface for Sentinel Hub Catalog API
+A client interface for `Sentinel Hub Catalog API <https://docs.sentinel-hub.com/api/latest/api/catalog>`__.
 """
 from ..base import FeatureIterator
 from ..data_collections import DataCollection, OrbitDirection
@@ -13,7 +13,7 @@ class SentinelHubCatalog(SentinelHubService):
     """The main class for interacting with Sentinel Hub Catalog API
 
     For more details about certain endpoints and parameters check
-    `Catalog API documentation <https://docs.sentinel-hub.com/api/latest/api/catalog>`_.
+    `Catalog API documentation <https://docs.sentinel-hub.com/api/latest/api/catalog>`__.
     """
 
     @staticmethod

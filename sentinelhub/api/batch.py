@@ -1,5 +1,6 @@
 """
-Module implementing an interface with Sentinel Hub Batch service
+Module implementing an interface with
+`Sentinel Hub Batch Processing API <https://docs.sentinel-hub.com/api/latest/api/batch/>`__.
 """
 import datetime as dt
 import logging

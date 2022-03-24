@@ -1,7 +1,8 @@
 """
-Module for communication with http://opensearch.sentinel-hub.com/resto/api
+Module for communication with Sentinel Hub Opensearch service.
 
-For more search parameters check: http://opensearch.sentinel-hub.com/resto/api/collections/Sentinel2/describe.xml
+For more search parameters check
+`service description <http://opensearch.sentinel-hub.com/resto/api/collections/Sentinel2/describe.xml>`__.
 """
 import logging
 from urllib.parse import urlencode

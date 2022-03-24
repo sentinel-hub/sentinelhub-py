@@ -1,5 +1,6 @@
 """
-Module implementing an interface with Sentinel Hub Bring your own COG service
+Module implementing an interface with
+`Sentinel Hub Bring Your Own COG API <https://docs.sentinel-hub.com/api/latest/api/byoc/>`__.
 """
 from dataclasses import dataclass, field
 from datetime import datetime

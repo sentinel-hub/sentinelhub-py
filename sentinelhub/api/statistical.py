@@ -1,5 +1,6 @@
 """
-Implementation of Sentinel Hub Statistical API interface
+Implementation of
+`Sentinel Hub Statistical API interface <https://docs.sentinel-hub.com/api/latest/api/statistical/>`__.
 """
 from ..constants import MimeType
 from ..download.sentinelhub_statistical_client import SentinelHubStatisticalDownloadClient

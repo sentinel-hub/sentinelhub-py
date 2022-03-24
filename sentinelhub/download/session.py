@@ -19,6 +19,9 @@ class SentinelHubSession:
 
     The class will do OAuth2 authentication with Sentinel Hub service and store the token. It will make sure that the
     token is never expired by automatically refreshing it if expiry time is close.
+
+    For more info about Sentinel Hub authentication check
+    `service documentation <https://docs.sentinel-hub.com/api/latest/api/overview/authentication/>`__.
     """
 
     SECONDS_BEFORE_EXPIRY = 60

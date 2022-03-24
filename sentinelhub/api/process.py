@@ -1,5 +1,5 @@
 """
-Implementation of Sentinel Hub Process API interface
+Implementation of `Sentinel Hub Process API interface <https://docs.sentinel-hub.com/api/latest/api/process/>`__.
 """
 from ..constants import MimeType
 from ..download import SentinelHubDownloadClient

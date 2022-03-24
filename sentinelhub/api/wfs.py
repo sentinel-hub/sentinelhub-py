@@ -1,5 +1,6 @@
 """
-Interface of Sentinel Hub Web Feature Service (WFS).
+Interface of
+`Sentinel Hub Web Feature Service (WFS) <https://www.sentinel-hub.com/develop/api/ogc/standard-parameters/wfs/>`__.
 """
 import datetime
 from urllib.parse import urlencode
