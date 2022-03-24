@@ -8,7 +8,7 @@ run_sh_integration_tests:
   when: always
   before_script:
     - apt-get update
-    - apt-get install -y libopenjp2-7
+    - apt-get install -y build-essential libgdal-dev proj-bin gcc libproj-dev libspatialindex-dev libopenjp2-7
   script:
     - pip install -e .[AWS,DEV]
     - pytest -m "sh_integration"
