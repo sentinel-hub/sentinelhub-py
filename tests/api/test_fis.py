@@ -8,13 +8,11 @@ from shapely.geometry import Polygon
 
 from sentinelhub import CRS, BBox, CustomUrlParam, DataCollection, FisRequest, Geometry, HistogramType
 from sentinelhub.exceptions import SHDeprecationWarning
-from sentinelhub.testing_utils import get_output_folder
 
 EXPECTED_RESULTS_PATH = os.path.join(os.path.dirname(__file__), "..", "TestInputs", "test_fis_results.txt")
 with open(EXPECTED_RESULTS_PATH, "r") as file:
     RESULTS = [ast.literal_eval(line.strip()) for line in file]
 
-OUTPUT_FOLDER = get_output_folder(__file__)
 BBOX = BBox([14.00, 45.00, 14.03, 45.03], crs=CRS.WGS84)
 GEOMETRY1 = Geometry(
     Polygon(
@@ -39,8 +37,8 @@ class FisTestCase:
     result_length: int
     save_data: bool = False
 
-    def collect_data(self):
-        request = FisRequest(**self.kwargs)
+    def collect_data(self, output_folder):
+        request = FisRequest(**self.kwargs, data_folder=output_folder)
         if self.save_data:
             request.save_data(redownload=True)
             return request.get_data(save_data=True)
@@ -84,7 +82,6 @@ TEST_CASES = [
             time=("2017-1-1", "2017-1-10"),
             resolution="100m",
             bins=32,
-            data_folder=OUTPUT_FOLDER,
         ),
         name="list",
         raw_result=RESULTS[2],
@@ -112,6 +109,6 @@ TEST_CASES = [
 @pytest.mark.parametrize("test_case", TEST_CASES)
 def test_fis(output_folder, test_case):
     with pytest.warns(SHDeprecationWarning):
-        data = test_case.collect_data()
+        data = test_case.collect_data(output_folder)
     assert len(data) == test_case.result_length
     assert data == test_case.raw_result

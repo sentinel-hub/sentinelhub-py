@@ -18,7 +18,7 @@ from sentinelhub import (
     WmsRequest,
 )
 from sentinelhub.api.ogc import OgcImageService, OgcRequest
-from sentinelhub.testing_utils import get_output_folder, test_numpy_data
+from sentinelhub.testing_utils import test_numpy_data
 
 pytestmark = pytest.mark.sh_integration
 
@@ -39,8 +39,8 @@ class OgcTestCase:
     date_check: Optional[datetime.datetime] = None
     save_data: bool = False
 
-    def initialize_request(self):
-        return self.constructor(**self.kwargs)
+    def initialize_request(self, output_folder):
+        return self.constructor(**self.kwargs, data_folder=output_folder)
 
     def collect_data(self, request):
         if self.save_data:
@@ -57,14 +57,12 @@ pop_web_bbox = BBox(bbox=(1292344.0, 5195920.0, 1310615.0, 5214191.0), crs=CRS.P
 img_width, img_height = 100, 100
 resx, resy = "53m", "78m"
 
-OUTPUT_FOLDER = get_output_folder(__file__)
 
 TEST_CASES = [
     OgcTestCase(
         "generalWmsTest",
         OgcRequest,
         dict(
-            data_folder=OUTPUT_FOLDER,
             image_format=MimeType.TIFF,
             bbox=wgs84_bbox,
             data_collection=DataCollection.SENTINEL2_L1C,
@@ -90,7 +88,6 @@ TEST_CASES = [
         "generalWcsTest",
         OgcRequest,
         dict(
-            data_folder=OUTPUT_FOLDER,
             image_format=MimeType.TIFF,
             bbox=wgs84_bbox,
             data_collection=DataCollection.SENTINEL2_L1C,
@@ -121,7 +118,6 @@ TEST_CASES = [
         "customUrlLogoQualitySampling",
         WmsRequest,
         dict(
-            data_folder=OUTPUT_FOLDER,
             image_format=MimeType.PNG,
             data_collection=DataCollection.SENTINEL2_L1C,
             layer="TRUE-COLOR-S2-L1C",
@@ -148,7 +144,6 @@ TEST_CASES = [
         "customUrlPreview",
         WmsRequest,
         dict(
-            data_folder=OUTPUT_FOLDER,
             image_format=MimeType.PNG,
             data_collection=DataCollection.SENTINEL2_L1C,
             layer="TRUE-COLOR-S2-L1C",
@@ -169,7 +164,6 @@ TEST_CASES = [
         "customUrlEvalscripturl",
         WcsRequest,
         dict(
-            data_folder=OUTPUT_FOLDER,
             image_format=MimeType.PNG,
             data_collection=DataCollection.SENTINEL2_L1C,
             layer="TRUE-COLOR-S2-L1C",
@@ -196,7 +190,6 @@ TEST_CASES = [
         "customUrlEvalscript,Geometry",
         WcsRequest,
         dict(
-            data_folder=OUTPUT_FOLDER,
             image_format=MimeType.PNG,
             data_collection=DataCollection.SENTINEL2_L1C,
             layer="TRUE-COLOR-S2-L1C",
@@ -221,7 +214,6 @@ TEST_CASES = [
         "FalseLogo,Geometry",
         WmsRequest,
         dict(
-            data_folder=OUTPUT_FOLDER,
             image_format=MimeType.PNG,
             data_collection=DataCollection.SENTINEL2_L1C,
             layer="TRUE-COLOR-S2-L1C",
@@ -251,7 +243,6 @@ TEST_CASES = [
         WmsRequest,
         dict(
             data_collection=DataCollection.SENTINEL2_L1C,
-            data_folder=OUTPUT_FOLDER,
             image_format=MimeType.TIFF,
             layer="BANDS-S2-L1C",
             width=img_width,
@@ -272,7 +263,6 @@ TEST_CASES = [
         WmsRequest,
         dict(
             data_collection=DataCollection.SENTINEL2_L2A,
-            data_folder=OUTPUT_FOLDER,
             image_format=MimeType.TIFF,
             layer="BANDS-S2-L2A",
             width=img_width,
@@ -293,7 +283,6 @@ TEST_CASES = [
         WmsRequest,
         dict(
             data_collection=DataCollection.LANDSAT_OT_L1,
-            data_folder=OUTPUT_FOLDER,
             image_format=MimeType.TIFF,
             layer="BANDS-L8",
             width=img_width,
@@ -315,7 +304,6 @@ TEST_CASES = [
         WmsRequest,
         dict(
             data_collection=DataCollection.DEM,
-            data_folder=OUTPUT_FOLDER,
             image_format=MimeType.TIFF,
             layer="DEM",
             width=img_width,
@@ -334,7 +322,6 @@ TEST_CASES = [
         WmsRequest,
         dict(
             data_collection=DataCollection.MODIS,
-            data_folder=OUTPUT_FOLDER,
             image_format=MimeType.TIFF,
             layer="BANDS-MODIS",
             width=img_width,
@@ -355,7 +342,6 @@ TEST_CASES = [
         WmsRequest,
         dict(
             data_collection=DataCollection.SENTINEL1_IW,
-            data_folder=OUTPUT_FOLDER,
             image_format=MimeType.TIFF,
             layer="BANDS-S1-IW",
             width=img_width,
@@ -377,7 +363,6 @@ TEST_CASES = [
         WmsRequest,
         dict(
             data_collection=DataCollection.SENTINEL1_EW,
-            data_folder=OUTPUT_FOLDER,
             image_format=MimeType.TIFF,
             layer="BANDS-S1-EW",
             width=img_width,
@@ -399,7 +384,6 @@ TEST_CASES = [
         WmsRequest,
         dict(
             data_collection=DataCollection.SENTINEL1_EW_SH,
-            data_folder=OUTPUT_FOLDER,
             image_format=MimeType.TIFF,
             layer="BANDS-S1-EW-SH",
             width=img_width,
@@ -421,7 +405,6 @@ TEST_CASES = [
         WmsRequest,
         dict(
             data_collection=DataCollection.SENTINEL1_EW_ASC,
-            data_folder=OUTPUT_FOLDER,
             image_format=MimeType.TIFF,
             layer="BANDS-S1-EW",
             width=img_width,
@@ -443,7 +426,6 @@ TEST_CASES = [
         WmsRequest,
         dict(
             data_collection=DataCollection.SENTINEL1_IW_DES,
-            data_folder=OUTPUT_FOLDER,
             image_format=MimeType.TIFF,
             layer="BANDS-S1-IW",
             width=img_width,
@@ -465,7 +447,6 @@ TEST_CASES = [
         WmsRequest,
         dict(
             data_collection=DataCollection.SENTINEL3_OLCI,
-            data_folder=OUTPUT_FOLDER,
             image_format=MimeType.TIFF,
             layer="TRUE-COLOR-S3-OLCI",
             width=img_width,
@@ -488,7 +469,7 @@ TEST_CASES = [
 @pytest.mark.parametrize("test_case", TEST_CASES)
 def test_ogc(test_case, output_folder):
     # Run data collection
-    request = test_case.initialize_request()
+    request = test_case.initialize_request(output_folder)
     data = test_case.collect_data(request)
 
     assert isinstance(data, list)
