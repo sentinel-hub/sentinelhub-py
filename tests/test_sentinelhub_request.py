@@ -63,7 +63,7 @@ def test_single_jpg():
     img = request.get_data(max_threads=3)[0]
 
     test_numpy_data(
-        img, exp_shape=(856, 512, 3), exp_min=0, exp_max=255, exp_mean=74.898, exp_median=69, exp_std=28.04676
+        img, exp_shape=(856, 512, 3), exp_min=2, exp_max=255, exp_mean=74.898, exp_median=69, exp_std=27.89786
     )
 
 
@@ -577,7 +577,7 @@ def test_bbox_geometry():
     img = request.get_data(max_threads=3)[0]
 
     test_numpy_data(
-        img, exp_shape=(856, 512, 3), exp_min=0, exp_max=255, exp_mean=22.625, exp_median=0, exp_std=39.0612
+        img, exp_shape=(856, 512, 3), exp_min=0, exp_max=255, exp_mean=22.625, exp_median=0, exp_std=39.02901
     )
 
 

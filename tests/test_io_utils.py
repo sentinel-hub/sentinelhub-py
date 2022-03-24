@@ -12,7 +12,7 @@ from sentinelhub import read_data, write_data
     "filename, mean, shape",
     [
         ("img.tif", 13577.494856, (2048, 2048, 3)),
-        ("img.jpg", 52.41194, (2048, 2048, 3)),
+        ("img.jpg", 52.412425, (2048, 2048, 3)),
         ("img.png", 52.33736, (2048, 2048, 3)),
         ("img-8bit.jp2", 47.09060, (343, 343, 3)),
         ("img-15bit.jp2", 0.3041897, (1830, 1830)),

@@ -14,7 +14,7 @@ import tifffile as tiff
 from PIL import Image
 
 from .constants import MimeType
-from .decoding import decode_tar, fix_jp2_image, get_data_format, get_jp2_bit_depth
+from .decoding import decode_jp2_image, decode_tar, get_data_format
 from .os_utils import create_parent_folder
 
 warnings.simplefilter("ignore", Image.DecompressionBombWarning)
@@ -99,14 +99,8 @@ def read_jp2_image(filename):
     :type filename: str
     :return: data stored in JPEG2000 file
     """
-    # Other option:
-    # return glymur.Jp2k(filename)[:]
-    image = read_image(filename)
-
     with open(filename, "rb") as file:
-        bit_depth = get_jp2_bit_depth(file)
-
-    return fix_jp2_image(image, bit_depth)
+        return decode_jp2_image(file)
 
 
 def read_image(filename):
