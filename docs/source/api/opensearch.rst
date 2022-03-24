@@ -1,6 +1,6 @@
 opensearch
 ==========
 
-.. automodule:: sentinelhub.opensearch
+.. automodule:: sentinelhub.api.opensearch
     :members:
     :show-inheritance:

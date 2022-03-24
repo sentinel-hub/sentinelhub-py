@@ -1,7 +1,7 @@
-sh_utils
-========
+base
+====
 
-.. automodule:: sentinelhub.sh_utils
+.. automodule:: sentinelhub.api.base
     :members:
     :inherited-members:
     :show-inheritance:

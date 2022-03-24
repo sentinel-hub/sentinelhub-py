@@ -1,7 +1,7 @@
-ogc
-===
+batch
+=====
 
-.. automodule:: sentinelhub.ogc
+.. automodule:: sentinelhub.api.batch
     :members:
     :inherited-members:
     :show-inheritance:
