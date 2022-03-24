@@ -1,7 +1,7 @@
-request
+session
 =======
 
-.. automodule:: sentinelhub.aws.request
+.. automodule:: sentinelhub.download.session
     :members:
     :inherited-members:
     :show-inheritance:

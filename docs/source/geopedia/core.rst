@@ -1,7 +1,7 @@
-request
-=======
+core
+====
 
-.. automodule:: sentinelhub.aws.request
+.. automodule:: sentinelhub.geopedia.core
     :members:
     :inherited-members:
     :show-inheritance:

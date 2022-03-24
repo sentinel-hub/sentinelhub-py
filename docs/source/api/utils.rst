@@ -1,7 +1,7 @@
-request
-=======
+utils
+=====
 
-.. automodule:: sentinelhub.aws.request
+.. automodule:: sentinelhub.api.utils
     :members:
     :inherited-members:
     :show-inheritance:

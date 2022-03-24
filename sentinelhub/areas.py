@@ -12,12 +12,11 @@ import shapely.geometry
 import shapely.ops
 from shapely.geometry import GeometryCollection, MultiPolygon, Polygon
 
+from .api import SentinelHubBatch, SentinelHubCatalog
 from .config import SHConfig
 from .constants import CRS
 from .geo_utils import transform_point
 from .geometry import BaseGeometry, BBox, BBoxCollection, Geometry
-from .sentinelhub_batch import SentinelHubBatch
-from .sentinelhub_catalog import SentinelHubCatalog
 
 
 class AreaSplitter(ABC):

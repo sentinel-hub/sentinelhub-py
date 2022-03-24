@@ -1,7 +1,7 @@
-request
-=======
+batch
+=====
 
-.. automodule:: sentinelhub.aws.request
+.. automodule:: sentinelhub.api.batch
     :members:
     :inherited-members:
     :show-inheritance:

@@ -1,7 +1,7 @@
-request
+catalog
 =======
 
-.. automodule:: sentinelhub.aws.request
+.. automodule:: sentinelhub.api.catalog
     :members:
     :inherited-members:
     :show-inheritance:

@@ -1,7 +1,7 @@
-request
-=======
+ogc
+===
 
-.. automodule:: sentinelhub.aws.request
+.. automodule:: sentinelhub.api.ogc
     :members:
     :inherited-members:
     :show-inheritance:

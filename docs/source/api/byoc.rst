@@ -1,7 +1,7 @@
-request
-=======
+byoc
+====
 
-.. automodule:: sentinelhub.aws.request
+.. automodule:: sentinelhub.api.byoc
     :members:
     :inherited-members:
     :show-inheritance:

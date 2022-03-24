@@ -3,5 +3,11 @@ geopedia
 
 .. automodule:: sentinelhub.geopedia
     :members:
-    :inherited-members:
+    :undoc-members:
     :show-inheritance:
+
+Modules:
+
+.. toctree::
+    ./geopedia/core
+    ./geopedia/request

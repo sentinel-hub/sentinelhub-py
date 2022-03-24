@@ -1,7 +1,7 @@
-request
-=======
+fis
+===
 
-.. automodule:: sentinelhub.aws.request
+.. automodule:: sentinelhub.api.fis
     :members:
     :inherited-members:
     :show-inheritance:

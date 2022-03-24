@@ -1,7 +1,7 @@
-request
+process
 =======
 
-.. automodule:: sentinelhub.aws.request
+.. automodule:: sentinelhub.api.process
     :members:
     :inherited-members:
     :show-inheritance:

@@ -9,10 +9,10 @@ from threading import Lock
 import requests
 
 from ..exceptions import SHRateLimitWarning
-from ..sentinelhub_rate_limit import SentinelHubRateLimit
-from ..sentinelhub_session import SentinelHubSession
 from .client import DownloadClient
 from .handlers import fail_user_errors, retry_temporary_errors
+from .rate_limit import SentinelHubRateLimit
+from .session import SentinelHubSession
 
 LOGGER = logging.getLogger(__name__)
 
