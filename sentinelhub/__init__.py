@@ -16,7 +16,7 @@ from .config import SHConfig
 from .constants import CRS, CustomUrlParam, HistogramType, MimeType, ServiceType, ServiceUrl, SHConstants
 from .data_collections import DataCollection, DataSource
 from .data_collections_bands import Band, Unit
-from .data_request import FisRequest, GeopediaImageRequest, GeopediaWmsRequest, WcsRequest, WmsRequest
+from .data_request import FisRequest, WcsRequest, WmsRequest
 from .download import DownloadClient, DownloadRequest, SentinelHubDownloadClient, SentinelHubStatisticalDownloadClient
 from .exceptions import AwsDownloadFailedException, DownloadFailedException
 from .geo_utils import (
@@ -34,7 +34,7 @@ from .geo_utils import (
     wgs84_to_utm,
 )
 from .geometry import BBox, BBoxCollection, Geometry
-from .geopedia import GeopediaFeatureIterator, GeopediaSession
+from .geopedia import GeopediaFeatureIterator, GeopediaImageRequest, GeopediaSession, GeopediaWmsRequest
 from .io_utils import read_data, write_data
 from .ogc import WebFeatureService
 from .opensearch import get_area_dates, get_area_info, get_tile_info, get_tile_info_id

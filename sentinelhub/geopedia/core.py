@@ -1,20 +1,17 @@
 """
-Module for working with Geopedia
+The core module for Geopedia interactions
 """
 
 import datetime
 import hashlib
-import logging
 
 from shapely.geometry import shape as geo_shape
 
-from .config import SHConfig
-from .constants import CRS
-from .download import DownloadClient, DownloadRequest
-from .ogc import MimeType, OgcImageService
-from .sh_utils import FeatureIterator
-
-LOGGER = logging.getLogger(__name__)
+from ..config import SHConfig
+from ..constants import CRS
+from ..download import DownloadClient, DownloadRequest
+from ..ogc import MimeType, OgcImageService
+from ..sh_utils import FeatureIterator
 
 
 class GeopediaService:

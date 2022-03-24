@@ -19,9 +19,6 @@ from sentinelhub.testing_utils import test_numpy_data
 pytestmark = pytest.mark.geopedia_integration
 
 
-# When config.json could store Geopedia credentials add some login tests
-
-
 def test_global_session():
     session1 = GeopediaSession(is_global=True)
     session2 = GeopediaSession(is_global=True)
