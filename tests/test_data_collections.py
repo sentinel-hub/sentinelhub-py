@@ -100,7 +100,8 @@ def test_sentinel1_checks():
 
 
 def test_renamed_collections():
-    """Makes sure that for all renamed collections new names are correctly assigned and deprecation warning is raised."""
+    """Makes sure that for all renamed collections new names are correctly assigned and deprecation warning is
+    raised."""
     for old_name, new_name in _RENAMED_COLLECTIONS.items():
         with pytest.warns(SHDeprecationWarning):
             collection = getattr(DataCollection, old_name)

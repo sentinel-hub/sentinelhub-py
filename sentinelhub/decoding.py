@@ -5,17 +5,17 @@ import json
 import struct
 import tarfile
 import warnings
-from io import BytesIO
+from io import BytesIO, IOBase
+from typing import Union
 from xml.etree import ElementTree
 
 import numpy as np
+import PIL
 import tifffile as tiff
 from PIL import Image
 
 from .constants import MimeType
-from .exceptions import ImageDecodingError
-
-warnings.simplefilter("ignore", Image.DecompressionBombWarning)
+from .exceptions import ImageDecodingError, SHUserWarning
 
 
 def decode_data(response_content, data_type):
@@ -53,7 +53,7 @@ def decode_data(response_content, data_type):
 
 def decode_image(data, image_type):
     """Decodes the image provided in various formats, i.e. png, 16-bit float tiff, 32-bit float tiff, jp2
-    and returns it as an numpy array
+    and returns it as a numpy array
 
     :param data: image in its original format
     :type data: any of possible image types
@@ -66,19 +66,62 @@ def decode_image(data, image_type):
     bytes_data = BytesIO(data)
     if image_type is MimeType.TIFF:
         image = tiff.imread(bytes_data)
+    elif image_type is MimeType.JP2:
+        image = decode_jp2_image(bytes_data)
     else:
-        image = np.array(Image.open(bytes_data))
-
-        if image_type is MimeType.JP2:
-            try:
-                bit_depth = get_jp2_bit_depth(bytes_data)
-                image = fix_jp2_image(image, bit_depth)
-            except ValueError:
-                pass
+        image = decode_image_with_pillow(bytes_data)
 
     if image is None:
         raise ImageDecodingError("Unable to decode image")
     return image
+
+
+def decode_image_with_pillow(stream: Union[IOBase, str]) -> np.ndarray:
+    """Decodes an image using `Pillow` package and handles potential warnings.
+
+    :param stream: A binary stream format or a filename.
+    :return: A numpy array representing an image of shape (height, width) or (height, width, channels).
+    """
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", Image.DecompressionBombWarning)
+        return np.array(Image.open(stream))
+
+
+def decode_jp2_image(stream: IOBase) -> np.ndarray:
+    """Tries to decode a JPEG2000 image either using `rasterio` or `Pillow` package.
+
+    :param stream: A binary stream format.
+    :return: A numpy array representing an image of shape (height, width) or (height, width, channels).
+    """
+    try:
+        # pylint: disable=import-outside-toplevel
+        import rasterio
+        from rasterio.errors import NotGeoreferencedWarning
+
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", NotGeoreferencedWarning)
+            with rasterio.open(stream) as file:
+                image = np.array(file.read())
+
+        image = np.moveaxis(image, 0, -1)
+        if image.shape[-1] == 1:
+            image = np.squeeze(image, axis=-1)
+
+        return image
+    except ImportError:
+        pass
+
+    image = decode_image_with_pillow(stream)
+    bit_depth = get_jp2_bit_depth(stream)
+
+    if PIL.__version__ >= "9.0.0" and bit_depth == 15:
+        warnings.warn(
+            f"Pillow {PIL.__version__} probably incorrectly decoded 15-bit JPEG2000 image. To decode it correctly "
+            "install rasterio package and run this code again.",
+            category=SHUserWarning,
+        )
+
+    return fix_jp2_image(image, bit_depth)
 
 
 def decode_tar(data):
@@ -128,7 +171,7 @@ def get_jp2_bit_depth(stream):
     while True:
         read_buffer = stream.read(8)
         if len(read_buffer) < 8:
-            raise ValueError("Image Header Box not found in Jpeg2000 file")
+            raise ValueError("Image Header Box not found in JPEG2000 file")
 
         _, box_id = struct.unpack(">I4s", read_buffer)
 
@@ -156,7 +199,7 @@ def fix_jp2_image(image, bit_depth):
             return image >> 1
         except TypeError as exception:
             raise IOError(
-                "Failed to read JPEG 2000 image correctly. Most likely reason is that Pillow did not "
+                "Failed to read JPEG2000 image correctly. Most likely reason is that Pillow did not "
                 "install OpenJPEG library correctly. Try reinstalling Pillow from a wheel"
             ) from exception
 

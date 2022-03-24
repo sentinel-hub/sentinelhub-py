@@ -14,10 +14,10 @@ import tifffile as tiff
 from PIL import Image
 
 from .constants import MimeType
-from .decoding import decode_tar, fix_jp2_image, get_data_format, get_jp2_bit_depth
+from .decoding import decode_image_with_pillow, decode_jp2_image, decode_tar, get_data_format
+from .exceptions import SHUserWarning
 from .os_utils import create_parent_folder
 
-warnings.simplefilter("ignore", Image.DecompressionBombWarning)
 LOGGER = logging.getLogger(__name__)
 
 CSV_DELIMITER = ";"
@@ -99,14 +99,8 @@ def read_jp2_image(filename):
     :type filename: str
     :return: data stored in JPEG2000 file
     """
-    # Other option:
-    # return glymur.Jp2k(filename)[:]
-    image = read_image(filename)
-
     with open(filename, "rb") as file:
-        bit_depth = get_jp2_bit_depth(file)
-
-    return fix_jp2_image(image, bit_depth)
+        return decode_jp2_image(file)
 
 
 def read_image(filename):
@@ -116,7 +110,7 @@ def read_image(filename):
     :type filename: str
     :return: data stored in JPG file
     """
-    return np.array(Image.open(filename))
+    return decode_image_with_pillow(filename)
 
 
 def read_text(filename):
@@ -234,8 +228,8 @@ def write_tiff_image(filename, image, compress=False):
     :type compress: bool
     """
     if compress:
-        return tiff.imsave(filename, image, compress="lzma")  # lossless compression, works very well on masks
-    return tiff.imsave(filename, image)
+        return tiff.imwrite(filename, image, compression="lzma")  # lossless compression, works very well on masks
+    return tiff.imwrite(filename, image)
 
 
 def write_jp2_image(filename, image):
@@ -263,7 +257,7 @@ def write_image(filename, image):
     """
     data_format = get_data_format(filename)
     if data_format is MimeType.JPG:
-        LOGGER.warning("Warning: jpeg is a lossy format therefore saved data will be modified.")
+        warnings.warn("JPEG is a lossy format therefore saved data will be modified.", category=SHUserWarning)
     return Image.fromarray(image).save(filename)
 
 

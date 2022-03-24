@@ -62,7 +62,7 @@ jobs:
       - name: Install packages
         run: |
           sudo apt-get update
-          sudo apt-get install -y libopenjp2-7
+          sudo apt-get install -y build-essential libgdal-dev proj-bin gcc libproj-dev libspatialindex-dev libopenjp2-7
           pip install -e .[AWS,DEV]
 
       - name: Run full tests and code coverage
@@ -74,7 +74,7 @@ jobs:
             --instance_id "${{ secrets.INSTANCE_ID }}" \
             --aws_access_key_id "${{ secrets.AWS_ACCESS_KEY_ID }}" \
             --aws_secret_access_key "${{ secrets.AWS_SECRET_ACCESS_KEY }}"
-          pytest --cov -c=.coveragerc --cov-report=term --cov-report=xml
+          pytest --cov --cov-report=term --cov-report=xml
 
       - name: Run pylint and reduced tests
         if: matrix.python-version != '3.8'

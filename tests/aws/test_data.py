@@ -1,3 +1,5 @@
+import sys
+
 import numpy as np
 import pytest
 from pytest import approx
@@ -6,8 +8,13 @@ from sentinelhub import DataCollection
 from sentinelhub.aws import AwsProductRequest, AwsTileRequest
 
 pytestmark = pytest.mark.aws_integration
+skip_python310 = pytest.mark.skipif(
+    sys.version_info >= (3, 10),
+    reason="Rasterio doesn't support Python 3.10 yet, therefore JPEG2000 images would not be decoded correctly.",
+)
 
 
+@skip_python310
 def test_aws_tile(output_folder):
     request = AwsTileRequest(
         data_folder=output_folder,
@@ -55,6 +62,7 @@ def test_partial_aws_product(output_folder):
     assert len(data) == 1
 
 
+@skip_python310
 def test_l2a_product(output_folder):
     request = AwsProductRequest(
         data_folder=output_folder,
