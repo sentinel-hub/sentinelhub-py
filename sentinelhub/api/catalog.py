@@ -1,10 +1,12 @@
 """
 A client interface for Sentinel Hub Catalog API
 """
-from .data_collections import DataCollection, OrbitDirection
-from .geometry import CRS, Geometry
-from .sh_utils import FeatureIterator, SentinelHubService, remove_undefined
-from .time_utils import parse_time, parse_time_interval, serialize_time
+from ..base import FeatureIterator
+from ..data_collections import DataCollection, OrbitDirection
+from ..geometry import CRS, Geometry
+from ..time_utils import parse_time, parse_time_interval, serialize_time
+from .base import SentinelHubService
+from .utils import remove_undefined
 
 
 class SentinelHubCatalog(SentinelHubService):

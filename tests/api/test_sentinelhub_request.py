@@ -18,7 +18,7 @@ from sentinelhub import (
     SHConfig,
     bbox_to_dimensions,
 )
-from sentinelhub.sentinelhub_base_api import InputDataDict
+from sentinelhub.api.base_request import InputDataDict
 from sentinelhub.testing_utils import test_numpy_data
 
 pytestmark = pytest.mark.sh_integration

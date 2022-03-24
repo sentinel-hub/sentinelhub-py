@@ -1,19 +1,21 @@
 """
-Implementation of Sentinel Hub Process API interface
+Implementation of base Sentinel Hub interfaces
 """
-from .constants import MimeType, RequestType
-from .data_collections import OrbitDirection
-from .data_request import DataRequest
-from .download import DownloadRequest
-from .geometry import BBox, Geometry
-from .sh_utils import _update_other_args
-from .time_utils import parse_time_interval, serialize_time
+from ..base import DataRequest
+from ..constants import MimeType, RequestType
+from ..data_collections import OrbitDirection
+from ..download import DownloadRequest
+from ..geometry import BBox, Geometry
+from ..time_utils import parse_time_interval, serialize_time
+from .utils import _update_other_args
 
 
 class SentinelHubBaseApiRequest(DataRequest):
     """A base class for Sentinel Hub interfaces"""
 
     _SERVICE_ENDPOINT = ""
+    payload = {}
+    mime_type = None
 
     def create_request(self):
         """Prepares a download request"""

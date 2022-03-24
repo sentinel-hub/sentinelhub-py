@@ -10,7 +10,7 @@ from threading import Lock
 import pytest
 from pytest import approx
 
-from sentinelhub.sentinelhub_rate_limit import PolicyBucket, PolicyType, SentinelHubRateLimit
+from sentinelhub.download.rate_limit import PolicyBucket, PolicyType, SentinelHubRateLimit
 
 
 class DummyService:

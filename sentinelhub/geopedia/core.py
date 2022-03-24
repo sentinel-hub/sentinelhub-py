@@ -7,11 +7,11 @@ import hashlib
 
 from shapely.geometry import shape as geo_shape
 
+from ..api.ogc import OgcImageService
+from ..base import FeatureIterator
 from ..config import SHConfig
-from ..constants import CRS
+from ..constants import CRS, MimeType
 from ..download import DownloadClient, DownloadRequest
-from ..ogc import MimeType, OgcImageService
-from ..sh_utils import FeatureIterator
 
 
 class GeopediaService:

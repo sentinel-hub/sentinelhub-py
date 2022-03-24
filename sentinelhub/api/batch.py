@@ -14,18 +14,12 @@ from dataclasses_json import config as dataclass_config
 from dataclasses_json import dataclass_json
 from tqdm.auto import tqdm
 
-from .constants import RequestType
-from .data_collections import DataCollection
-from .geometry import CRS, BBox, Geometry
-from .sentinelhub_request import SentinelHubRequest
-from .sh_utils import (
-    BaseCollection,
-    SentinelHubFeatureIterator,
-    SentinelHubService,
-    datetime_config,
-    enum_config,
-    remove_undefined,
-)
+from ..constants import RequestType
+from ..data_collections import DataCollection
+from ..geometry import CRS, BBox, Geometry
+from .base import BaseCollection, SentinelHubFeatureIterator, SentinelHubService
+from .process import SentinelHubRequest
+from .utils import datetime_config, enum_config, remove_undefined
 
 LOGGER = logging.getLogger(__name__)
 

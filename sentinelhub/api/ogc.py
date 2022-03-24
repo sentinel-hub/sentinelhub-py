@@ -1,237 +1,21 @@
 """
-Main module for collecting data
+Module for working with Sentinel Hub OGC services
 """
-
-import copy
 import datetime
 import logging
-import os
-from abc import ABC, abstractmethod
+from base64 import b64encode
+from urllib.parse import urlencode
 
-from .config import SHConfig
-from .constants import CustomUrlParam, HistogramType, MimeType, ServiceType
-from .download import DownloadRequest, SentinelHubDownloadClient
-from .fis import FisService
-from .ogc import OgcImageService
-from .os_utils import make_folder
+from ..base import DataRequest
+from ..config import SHConfig
+from ..constants import CRS, CustomUrlParam, MimeType, ServiceType, SHConstants
+from ..download import DownloadRequest, SentinelHubDownloadClient
+from ..geo_utils import get_image_dimension
+from ..geometry import BBox, Geometry
+from ..time_utils import filter_times, parse_time_interval, serialize_time
+from .wfs import WebFeatureService
 
 LOGGER = logging.getLogger(__name__)
-
-
-class DataRequest(ABC):
-    """Abstract class for all Sentinel Hub data requests.
-
-    Every data request type can write the fetched data to disk and then read it again (and hence avoid the need to
-    download the same data again).
-    """
-
-    def __init__(self, download_client_class, *, data_folder=None, config=None):
-        """
-        :param download_client_class: A class implementing a download client
-        :type download_client_class: type
-        :param data_folder: location of the directory where the fetched data will be saved.
-        :type data_folder: str
-        :param config: A custom instance of config class to override parameters from the saved configuration.
-        :type config: SHConfig or None
-        """
-        self.download_client_class = download_client_class
-        self.data_folder = data_folder
-        self.config = config or SHConfig()
-
-        self.download_list = []
-        self.folder_list = []
-        self.create_request()
-
-    @abstractmethod
-    def create_request(self):
-        """An abstract method for logic of creating download requests"""
-        raise NotImplementedError
-
-    def get_download_list(self):
-        """
-        Returns a list of download requests for requested data.
-
-        :return: List of data to be downloaded
-        :rtype: list(sentinelhub.DownloadRequest)
-        """
-        return self.download_list
-
-    def get_filename_list(self):
-        """Returns a list of file names (or paths relative to `data_folder`) where the requested data will be saved
-        or read from, if it has already been downloaded and saved.
-
-        :return: A list of filenames
-        :rtype: list(str)
-        """
-        return [request.get_relative_paths()[1] for request in self.download_list]
-
-    def get_url_list(self):
-        """
-        Returns a list of urls for requested data.
-
-        :return: List of URLs from where data will be downloaded.
-        :rtype: list(str)
-        """
-        return [request.url for request in self.download_list]
-
-    def is_valid_request(self):
-        """Checks if initialized class instance successfully prepared a list of items to download
-
-        :return: `True` if request is valid and `False` otherwise
-        :rtype: bool
-        """
-        return isinstance(self.download_list, list) and all(
-            isinstance(request, DownloadRequest) for request in self.download_list
-        )
-
-    def get_data(
-        self,
-        *,
-        save_data=False,
-        redownload=False,
-        data_filter=None,
-        max_threads=None,
-        decode_data=True,
-        raise_download_errors=True,
-    ):
-        """Get requested data either by downloading it or by reading it from the disk (if it
-        was previously downloaded and saved).
-
-        :param save_data: flag to turn on/off saving of data to disk. Default is `False`.
-        :type save_data: bool
-        :param redownload: if `True`, download again the requested data even though it's already saved to disk.
-                            Default is `False`, do not download if data is already available on disk.
-        :type redownload: bool
-        :param data_filter: Used to specify which items will be returned by the method and in which order. E.g. with
-            ``data_filter=[0, 2, -1]`` the method will return only 1st, 3rd and last item. Default filter is `None`.
-        :type data_filter: list(int) or None
-        :param max_threads: Maximum number of threads to be used for download in parallel. The default is
-            `max_threads=None` which will use the number of processors on the system multiplied by 5.
-        :type max_threads: int or None
-        :param decode_data: If `True` (default) it decodes data (e.g., returns image as an array of numbers);
-            if `False` it returns binary data.
-        :type decode_data: bool
-        :param raise_download_errors: If `True` any error in download process should be raised as
-            ``DownloadFailedException``. If `False` failed downloads will only raise warnings and the method will
-            return list with `None` values in places where the results of failed download requests should be.
-        :type raise_download_errors: bool
-        :return: requested images as numpy arrays, where each array corresponds to a single acquisition and has
-                    shape ``[height, width, channels]``.
-        :rtype: list of numpy arrays
-        """
-        self._preprocess_request(save_data, True)
-        return self._execute_data_download(
-            data_filter, redownload, max_threads, raise_download_errors, decode_data=decode_data
-        )
-
-    def save_data(self, *, data_filter=None, redownload=False, max_threads=None, raise_download_errors=False):
-        """Saves data to disk. If ``redownload=True`` then the data is redownloaded using ``max_threads`` workers.
-
-        :param data_filter: Used to specify which items will be returned by the method and in which order. E.g. with
-            `data_filter=[0, 2, -1]` the method will return only 1st, 3rd and last item. Default filter is `None`.
-        :type data_filter: list(int) or None
-        :param redownload: data is redownloaded if ``redownload=True``. Default is `False`
-        :type redownload: bool
-        :param max_threads: Maximum number of threads to be used for download in parallel. The default is
-            `max_threads=None` which will use the number of processors on the system multiplied by 5.
-        :type max_threads: int or None
-        :param raise_download_errors: If `True` any error in download process should be raised as
-            ``DownloadFailedException``. If `False` failed downloads will only raise warnings.
-        :type raise_download_errors: bool
-        """
-        self._preprocess_request(True, False)
-        self._execute_data_download(data_filter, redownload, max_threads, raise_download_errors)
-
-    def _execute_data_download(self, data_filter, redownload, max_threads, raise_download_errors, decode_data=True):
-        """Calls download module and executes the download process
-
-        :param data_filter: Used to specify which items will be returned by the method and in which order. E.g. with
-            `data_filter=[0, 2, -1]` the method will return only 1st, 3rd and last item. Default filter is `None`.
-        :type data_filter: list(int) or None
-        :param redownload: data is redownloaded if ``redownload=True``. Default is `False`
-        :type redownload: bool
-        :param max_threads: Maximum number of threads to be used for download in parallel. The default is
-            `max_threads=None` which will use the number of processors on the system multiplied by 5.
-        :type max_threads: int or None
-        :param raise_download_errors: If `True` any error in download process should be raised as
-            ``DownloadFailedException``. If `False` failed downloads will only raise warnings.
-        :type raise_download_errors: bool
-        :param decode_data: If `True` (default) it decodes data (e.g., returns image as an array of numbers);
-            if `False` it returns binary data.
-        :type decode_data: bool
-        :return: List of data obtained from download
-        :rtype: list
-        """
-        is_repeating_filter = False
-        if data_filter is None:
-            filtered_download_list = self.download_list
-        elif isinstance(data_filter, (list, tuple)):
-            try:
-                filtered_download_list = [self.download_list[index] for index in data_filter]
-            except IndexError as exception:
-                raise IndexError("Indices of data_filter are out of range") from exception
-
-            filtered_download_list, mapping_list = self._filter_repeating_items(filtered_download_list)
-            is_repeating_filter = len(filtered_download_list) < len(mapping_list)
-        else:
-            raise ValueError("data_filter parameter must be a list of indices")
-
-        client = self.download_client_class(
-            redownload=redownload, raise_download_errors=raise_download_errors, config=self.config
-        )
-        data_list = client.download(filtered_download_list, max_threads=max_threads, decode_data=decode_data)
-
-        if is_repeating_filter:
-            data_list = [copy.deepcopy(data_list[index]) for index in mapping_list]
-
-        return data_list
-
-    @staticmethod
-    def _filter_repeating_items(download_list):
-        """Because of data_filter some requests in download list might be the same. In order not to download them again
-        this method will reduce the list of requests. It will also return a mapping list which can be used to
-        reconstruct the previous list of download requests.
-
-        :param download_list: List of download requests
-        :type download_list: list(sentinelhub.DownloadRequest)
-        :return: reduced download list with unique requests and mapping list
-        :rtype: (list(sentinelhub.DownloadRequest), list(int))
-        """
-        unique_requests_map = {}
-        mapping_list = []
-        unique_download_list = []
-        for download_request in download_list:
-            if download_request not in unique_requests_map:
-                unique_requests_map[download_request] = len(unique_download_list)
-                unique_download_list.append(download_request)
-            mapping_list.append(unique_requests_map[download_request])
-        return unique_download_list, mapping_list
-
-    def _preprocess_request(self, save_data, return_data):
-        """Prepares requests for download and creates empty folders
-
-        :param save_data: Tells whether to save data or not
-        :type save_data: bool
-        :param return_data: Tells whether to return data or not
-        :type return_data: bool
-        """
-        if not self.is_valid_request():
-            raise ValueError("Cannot obtain data because request is invalid")
-
-        if save_data and self.data_folder is None:
-            raise ValueError(
-                "Request parameter `data_folder` is not specified. "
-                "In order to save data please set `data_folder` to location on your disk."
-            )
-
-        for download_request in self.download_list:
-            download_request.save_response = save_data
-            download_request.return_data = return_data
-            download_request.data_folder = self.data_folder
-
-        if save_data:
-            for folder in self.folder_list:
-                make_folder(os.path.join(self.data_folder, folder))
 
 
 class OgcRequest(DataRequest):
@@ -383,11 +167,10 @@ class WmsRequest(OgcRequest):
     the case of WMS request the user specifies the desired image size instead of its resolution.
 
     It is required to specify at least one of `width` and `height` parameters. If only one of them is specified the
-    the other one will be calculated to best fit the bounding box ratio. If both of them are specified they will be used
+    other one will be calculated to best fit the bounding box ratio. If both of them are specified they will be used
     no matter the bounding box ratio.
 
-    More info available at:
-    https://www.sentinel-hub.com/develop/api/ogc/standard-parameters/wms/
+    For more info check `WMS documentation <https://www.sentinel-hub.com/develop/api/ogc/standard-parameters/wms/>`__.
     """
 
     def __init__(self, *, width=None, height=None, **kwargs):
@@ -453,8 +236,7 @@ class WcsRequest(OgcRequest):
     only difference is that in the case of WCS request the user specifies the desired
     resolution of the image instead of its size.
 
-    More info available at:
-    https://www.sentinel-hub.com/develop/api/ogc/standard-parameters/wcs/
+    For more info check `WCS documentation <https://www.sentinel-hub.com/develop/api/ogc/standard-parameters/wcs/>`__.
     """
 
     def __init__(self, *, resx="10m", resy="10m", **kwargs):
@@ -514,81 +296,292 @@ class WcsRequest(OgcRequest):
         super().__init__(service_type=ServiceType.WCS, size_x=resx, size_y=resy, **kwargs)
 
 
-class FisRequest(OgcRequest):
-    """The Statistical info (or feature info service, abbreviated FIS) request class
+class OgcImageService:
+    """Sentinel Hub OGC services class for providing image data
 
-    The Statistical info (or feature info service, abbreviated FIS), performs elementary statistical
-    computations---such as mean, standard deviation, and histogram approximating the distribution of reflectance
-    values---on remotely sensed data for a region specified in a given spatial reference system across different
-    bands and time ranges.
-
-    A quintessential usage example would be querying the service for basic statistics and the distribution of NDVI
-    values for a polygon representing an agricultural unit over a time range.
-
-    More info available at:
-    https://www.sentinel-hub.com/develop/api/ogc/standard-parameters/wcs/
+    Intermediate layer between QGC-type requests (WmsRequest and WcsRequest) and the Sentinel Hub OGC (WMS and WCS)
+    services.
     """
 
-    def __init__(self, layer, time, geometry_list, *, resolution="10m", bins=None, histogram_type=None, **kwargs):
+    def __init__(self, config=None):
         """
-        :param layer: An ID of a layer configured in Sentinel Hub Dashboard. It has to be configured for the same
-            instance ID which will be used for this request. Also the satellite collection of the layer in Dashboard
-            must match the one given by `data_collection` parameter
-        :type layer: str
-        :param time: time or time range for which to return the results, in ISO8601 format
-            (year-month-date, for example: ``2016-01-01``, or year-month-dateThours:minutes:seconds format,
-            i.e. ``2016-01-01T16:31:21``). Examples: ``'2016-01-01'``, or ``('2016-01-01', ' 2016-01-31')``
-        :type time: str or (str, str) or datetime.date or (datetime.date, datetime.date) or datetime.datetime or
-            (datetime.datetime, datetime.datetime)
-        :param geometry_list: A WKT representation of a geometry describing the region of interest.
-            Note that WCS 1.1.1 standard is used here, so for EPSG:4326 coordinates should be in latitude/longitude
-            order.
-        :type geometry_list: list, [geometry.Geometry or geometry.Bbox]
-        :param resolution: Specifies the spatial resolution, in meters per pixel, of the image from which the statistics
-            are to be estimated. When using CRS=EPSG:4326 one has to add the "m" suffix to
-            enforce resolution in meters per pixel (e.g. RESOLUTION=10m).
-        :type resolution: str
-        :param bins: The number of bins (a positive integer) in the histogram. If this parameter is absent no histogram
-            is computed.
-        :type bins: str
-        :param histogram_type: type of histogram
-        :type histogram_type: HistogramType
-        :param data_collection: A collection of requested satellite data. It has to be the same as defined in Sentinel
-            Hub Dashboard for the given layer. Default is Sentinel-2 L1C.
-        :type data_collection: DataCollection
-        :param maxcc: maximum accepted cloud coverage of an image. Float between 0.0 and 1.0. Default is ``1.0``.
-        :type maxcc: float
-        :param custom_url_params: Dictionary of CustomUrlParameters and their values supported by Sentinel Hub's WMS
-            and WCS services. All available parameters are described at
-            https://www.sentinel-hub.com/develop/api/ogc/custom-parameters/. Note: in
-            case of constants.CustomUrlParam.EVALSCRIPT the dictionary value must be a string
-            of Javascript code that is not encoded into base64.
-        :type custom_url_params: Dict[CustomUrlParameter, object]
-        :param data_folder: location of the directory where the fetched data will be saved.
-        :type data_folder: str
         :param config: A custom instance of config class to override parameters from the saved configuration.
         :type config: SHConfig or None
         """
-        self.geometry_list = geometry_list
-        self.resolution = resolution
-        self.bins = bins
-        self.histogram_type = HistogramType(histogram_type) if histogram_type else None
+        self.config = config or SHConfig()
+        self.config.raise_for_missing_instance_id()
 
-        super().__init__(bbox=None, layer=layer, time=time, service_type=ServiceType.FIS, **kwargs)
+        self._base_url = self.config.get_sh_ogc_url()
+        self.wfs_iterator = None
 
-    def create_request(self):
-        """Set download requests
+    def get_request(self, request):
+        """Get download requests
 
         Create a list of DownloadRequests for all Sentinel-2 acquisitions within request's time interval and
         acceptable cloud coverage.
+
+        :param request: QGC-type request with specified bounding box, time interval, and cloud coverage for specific
+                        product.
+        :type request: OgcRequest or GeopediaRequest
+        :return: list of DownloadRequests
         """
-        fis_service = FisService(config=self.config)
-        self.download_list = fis_service.get_request(self)
+        size_x, size_y = self.get_image_dimensions(request)
+        return [
+            DownloadRequest(
+                url=self.get_url(request=request, date=date, size_x=size_x, size_y=size_y),
+                data_type=request.image_format,
+                headers=SHConstants.HEADERS,
+            )
+            for date in self.get_dates(request)
+        ]
 
-    def get_dates(self):
-        """This method is not supported for FIS request"""
-        raise NotImplementedError
+    def get_url(self, request, *, date=None, size_x=None, size_y=None, geometry=None):
+        """Returns url to Sentinel Hub's OGC service for the product specified by the OgcRequest and date.
 
-    def get_tiles(self):
-        """This method is not supported for FIS request"""
-        raise NotImplementedError
+        :param request: OGC-type request with specified bounding box, cloud coverage for specific product.
+        :type request: OgcRequest or GeopediaRequest
+        :param date: acquisition date or None
+        :type date: datetime.datetime or None
+        :param size_x: horizontal image dimension
+        :type size_x: int or str
+        :param size_y: vertical image dimension
+        :type size_y: int or str
+        :type geometry: list of BBox or Geometry
+        :return:  dictionary with parameters
+        :return: url to Sentinel Hub's OGC service for this product.
+        :rtype: str
+        """
+        url = self.get_base_url(request)
+        authority = request.theme if hasattr(request, "theme") else self.config.instance_id
+
+        params = self._get_common_url_parameters(request)
+        if request.service_type in (ServiceType.WMS, ServiceType.WCS):
+            params = {**params, **self._get_wms_wcs_url_parameters(request, date)}
+        if request.service_type is ServiceType.WMS:
+            params = {**params, **self._get_wms_url_parameters(request, size_x, size_y)}
+        elif request.service_type is ServiceType.WCS:
+            params = {**params, **self._get_wcs_url_parameters(request, size_x, size_y)}
+        elif request.service_type is ServiceType.FIS:
+            params = {**params, **self._get_fis_parameters(request, geometry)}
+
+        return f"{url}/{authority}?{urlencode(params)}"
+
+    def get_base_url(self, request):
+        """Creates base url string.
+
+        :param request: OGC-type request with specified bounding box, cloud coverage for specific product.
+        :type request: OgcRequest or GeopediaRequest
+        :return: base string for url to Sentinel Hub's OGC service for this product.
+        :rtype: str
+        """
+        url = f"{self._base_url}/{request.service_type.value}"
+
+        if hasattr(request, "data_collection") and request.data_collection.service_url:
+            url = url.replace(self.config.sh_base_url, request.data_collection.service_url)
+
+        return url
+
+    @staticmethod
+    def _get_common_url_parameters(request):
+        """Returns parameters common dictionary for WMS, WCS and FIS request.
+
+        :param request: OGC-type request with specified bounding box, cloud coverage for specific product.
+        :type request: OgcRequest or GeopediaRequest
+        :return:  dictionary with parameters
+        :rtype: dict
+        """
+        params = {"SERVICE": request.service_type.value, "WARNINGS": False}
+
+        if hasattr(request, "maxcc"):
+            params["MAXCC"] = 100.0 * request.maxcc
+
+        if hasattr(request, "custom_url_params") and request.custom_url_params is not None:
+            params = {**params, **{k.value: str(v) for k, v in request.custom_url_params.items()}}
+
+            if CustomUrlParam.EVALSCRIPT.value in params:
+                evalscript = params[CustomUrlParam.EVALSCRIPT.value]
+                params[CustomUrlParam.EVALSCRIPT.value] = b64encode(evalscript.encode()).decode()
+
+            if CustomUrlParam.GEOMETRY.value in params:
+                geometry = params[CustomUrlParam.GEOMETRY.value]
+                crs = request.bbox.crs
+
+                if isinstance(geometry, Geometry):
+                    if geometry.crs is not crs:
+                        raise ValueError("Geometry object in custom_url_params should have the same CRS as given BBox")
+                else:
+                    geometry = Geometry(geometry, crs)
+
+                if geometry.crs is CRS.WGS84:
+                    geometry = geometry.reverse()
+
+                params[CustomUrlParam.GEOMETRY.value] = geometry.wkt
+
+        return params
+
+    @staticmethod
+    def _get_wms_wcs_url_parameters(request, date):
+        """Returns parameters common dictionary for WMS and WCS request.
+
+        :param request: OGC-type request with specified bounding box, cloud coverage for specific product.
+        :type request: OgcRequest or GeopediaRequest
+        :param date: acquisition date or None
+        :type date: datetime.datetime or None
+        :return:  dictionary with parameters
+        :rtype: dict
+        """
+        params = {
+            "BBOX": str(request.bbox.reverse()) if request.bbox.crs is CRS.WGS84 else str(request.bbox),
+            "FORMAT": MimeType.get_string(request.image_format),
+            "CRS": CRS.ogc_string(request.bbox.crs),
+        }
+
+        if date is not None:
+            start_date = (
+                date if request.time_difference < datetime.timedelta(seconds=0) else date - request.time_difference
+            )
+            end_date = (
+                date if request.time_difference < datetime.timedelta(seconds=0) else date + request.time_difference
+            )
+
+            start_date, end_date = serialize_time((start_date, end_date), use_tz=True)
+            params["TIME"] = f"{start_date}/{end_date}"
+
+        return params
+
+    @staticmethod
+    def _get_wms_url_parameters(request, size_x, size_y):
+        """Returns parameters dictionary for WMS request.
+
+        :param request: OGC-type request with specified bounding box, cloud coverage for specific product.
+        :type request: OgcRequest or GeopediaRequest
+        :param size_x: horizontal image dimension
+        :type size_x: int or str
+        :param size_y: vertical image dimension
+        :type size_y: int or str
+        :return:  dictionary with parameters
+        :rtype: dict
+        """
+        return {"WIDTH": size_x, "HEIGHT": size_y, "LAYERS": request.layer, "REQUEST": "GetMap", "VERSION": "1.3.0"}
+
+    @staticmethod
+    def _get_wcs_url_parameters(request, size_x, size_y):
+        """Returns parameters dictionary for WCS request.
+
+        :param request: OGC-type request with specified bounding box, cloud coverage for specific product.
+        :type request: OgcRequest or GeopediaRequest
+        :param size_x: horizontal image dimension
+        :type size_x: int or str
+        :param size_y: vertical image dimension
+        :type size_y: int or str
+        :return:  dictionary with parameters
+        :rtype: dict
+        """
+        return {"RESX": size_x, "RESY": size_y, "COVERAGE": request.layer, "REQUEST": "GetCoverage", "VERSION": "1.1.2"}
+
+    @staticmethod
+    def _get_fis_parameters(request, geometry):
+        """Returns parameters dictionary for FIS request.
+
+        :param request: OGC-type request with specified bounding box, cloud coverage for specific product.
+        :type request: OgcRequest or GeopediaRequest
+        :param geometry: list of bounding boxes or geometries
+        :type geometry: list of BBox or Geometry
+        :return:  dictionary with parameters
+        :rtype: dict
+        """
+        start_time, end_time = serialize_time(parse_time_interval(request.time), use_tz=True)
+
+        params = {
+            "CRS": CRS.ogc_string(geometry.crs),
+            "LAYER": request.layer,
+            "RESOLUTION": request.resolution,
+            "TIME": f"{start_time}/{end_time}",
+        }
+
+        if not isinstance(geometry, (BBox, Geometry)):
+            raise ValueError(
+                f"Each geometry must be an instance of sentinelhub.{BBox.__name__} or "
+                f"sentinelhub.{Geometry.__name__} but {geometry} found"
+            )
+        if geometry.crs is CRS.WGS84:
+            geometry = geometry.reverse()
+        if isinstance(geometry, Geometry):
+            params["GEOMETRY"] = geometry.wkt
+        else:
+            params["BBOX"] = str(geometry)
+
+        if request.bins:
+            params["BINS"] = request.bins
+
+        if request.histogram_type:
+            params["TYPE"] = request.histogram_type.value
+
+        return params
+
+    def get_dates(self, request):
+        """Get available Sentinel-2 acquisitions at least time_difference apart
+
+        List of all available Sentinel-2 acquisitions for given bbox with max cloud coverage and the specified
+        time interval. When a single time is specified the request will return that specific date, if it exists.
+        If a time range is specified the result is a list of all scenes between the specified dates conforming to
+        the cloud coverage criteria. Most recent acquisition being first in the list.
+
+        When a time_difference threshold is set to a positive value, the function filters out all datetimes which
+        are within the time difference. The oldest datetime is preserved, all others all deleted.
+
+        :param request: OGC-type request
+        :type request: WmsRequest or WcsRequest
+        :return: List of dates of existing acquisitions for the given request
+        :rtype: list(datetime.datetime) or [None]
+        """
+        if request.data_collection.is_timeless:
+            return [None]
+
+        if request.wfs_iterator is None:
+            self.wfs_iterator = WebFeatureService(
+                request.bbox,
+                request.time,
+                data_collection=request.data_collection,
+                maxcc=request.maxcc,
+                config=self.config,
+            )
+        else:
+            self.wfs_iterator = request.wfs_iterator
+
+        dates = self.wfs_iterator.get_dates()
+        dates = filter_times(dates, request.time_difference)
+
+        LOGGER.debug("Initializing requests for dates: %s", dates)
+        return dates
+
+    @staticmethod
+    def get_image_dimensions(request):
+        """Verifies or calculates image dimensions.
+
+        :param request: OGC-type request
+        :type request: WmsRequest or WcsRequest
+        :return: horizontal and vertical dimensions of requested image
+        :rtype: (int or str, int or str)
+        """
+        if request.service_type is ServiceType.WCS or (
+            isinstance(request.size_x, int) and isinstance(request.size_y, int)
+        ):
+            return request.size_x, request.size_y
+        if not isinstance(request.size_x, int) and not isinstance(request.size_y, int):
+            raise ValueError("At least one of parameters 'width' and 'height' must have an integer value")
+        missing_dimension = get_image_dimension(request.bbox, width=request.size_x, height=request.size_y)
+        if request.size_x is None:
+            return missing_dimension, request.size_y
+        if request.size_y is None:
+            return request.size_x, missing_dimension
+        raise ValueError("Parameters 'width' and 'height' must be integers or None")
+
+    def get_wfs_iterator(self):
+        """Returns iterator over info about all satellite tiles used for the request
+
+        :return: Iterator of dictionaries containing info about all satellite tiles used in the request. In case of
+                 DataCollection.DEM it returns None.
+        :rtype: Iterator[dict] or None
+        """
+        return self.wfs_iterator

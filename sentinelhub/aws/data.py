@@ -7,12 +7,12 @@ import os
 import warnings
 from abc import ABC, abstractmethod
 
+from ..api.opensearch import get_tile_info, get_tile_info_id
 from ..config import SHConfig
 from ..constants import MimeType
 from ..data_collections import DataCollection
 from ..download import DownloadRequest
 from ..exceptions import AwsDownloadFailedException, SHUserWarning
-from ..opensearch import get_tile_info, get_tile_info_id
 from ..time_utils import parse_time
 from .client import AwsDownloadClient
 from .constants import AwsConstants, EsaSafeType

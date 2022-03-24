@@ -4,8 +4,8 @@ Data request interface for Geopedia services
 
 from abc import abstractmethod
 
+from ..base import DataRequest
 from ..constants import CRS, MimeType, ServiceType
-from ..data_request import DataRequest
 from ..download import DownloadClient
 from .core import GeopediaImageService, GeopediaWmsService
 

@@ -9,17 +9,11 @@ from dataclasses_json import CatchAll, LetterCase, Undefined
 from dataclasses_json import config as dataclass_config
 from dataclasses_json import dataclass_json
 
-from .constants import MimeType, RequestType
-from .data_collections import DataCollection
-from .geometry import Geometry
-from .sh_utils import (
-    BaseCollection,
-    SentinelHubFeatureIterator,
-    SentinelHubService,
-    datetime_config,
-    geometry_config,
-    remove_undefined,
-)
+from ..constants import MimeType, RequestType
+from ..data_collections import DataCollection
+from ..geometry import Geometry
+from .base import BaseCollection, SentinelHubFeatureIterator, SentinelHubService
+from .utils import datetime_config, geometry_config, remove_undefined
 
 
 @dataclass_json(letter_case=LetterCase.CAMEL, undefined=Undefined.INCLUDE)

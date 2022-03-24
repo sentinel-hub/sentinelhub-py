@@ -7,9 +7,9 @@ import time
 from oauthlib.oauth2 import BackendApplicationClient
 from requests_oauthlib import OAuth2Session
 
-from .config import SHConfig
-from .download.handlers import fail_user_errors, retry_temporary_errors
-from .download.request import DownloadRequest
+from ..config import SHConfig
+from ..download.handlers import fail_user_errors, retry_temporary_errors
+from ..download.request import DownloadRequest
 
 LOGGER = logging.getLogger(__name__)
 

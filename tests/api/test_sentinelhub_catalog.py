@@ -7,7 +7,7 @@ import dateutil.tz
 import pytest
 
 from sentinelhub import CRS, BBox, DataCollection, Geometry, SentinelHubCatalog
-from sentinelhub.sentinelhub_catalog import CatalogSearchIterator
+from sentinelhub.api.catalog import CatalogSearchIterator
 
 TEST_BBOX = BBox([46.16, -16.15, 46.51, -15.58], CRS.WGS84)
 

@@ -3,7 +3,7 @@ Data request interface for downloading satellite data from AWS
 """
 from abc import abstractmethod
 
-from ..data_request import DataRequest
+from ..base import DataRequest
 from .client import AwsDownloadClient
 from .data import AwsProduct, AwsTile
 from .data_safe import SafeProduct, SafeTile

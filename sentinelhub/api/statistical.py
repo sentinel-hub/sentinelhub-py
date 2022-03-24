@@ -1,11 +1,11 @@
 """
 Implementation of Sentinel Hub Statistical API interface
 """
-from .constants import MimeType
-from .download.sentinelhub_statistical_client import SentinelHubStatisticalDownloadClient
-from .sentinelhub_base_api import SentinelHubBaseApiRequest
-from .sh_utils import _update_other_args
-from .time_utils import parse_time_interval, serialize_time
+from ..constants import MimeType
+from ..download.sentinelhub_statistical_client import SentinelHubStatisticalDownloadClient
+from ..time_utils import parse_time_interval, serialize_time
+from .base_request import SentinelHubBaseApiRequest
+from .utils import _update_other_args
 
 
 class SentinelHubStatistical(SentinelHubBaseApiRequest):
@@ -39,7 +39,6 @@ class SentinelHubStatistical(SentinelHubBaseApiRequest):
         :type config: SHConfig or None
         """
         self.mime_type = MimeType.JSON
-
         self.payload = self.body(
             request_bounds=self.bounds(bbox=bbox, geometry=geometry),
             request_data=input_data,

@@ -8,9 +8,10 @@ from shapely.geometry import Polygon
 
 from sentinelhub import CRS, BBox, CustomUrlParam, DataCollection, FisRequest, Geometry, HistogramType
 from sentinelhub.exceptions import SHDeprecationWarning
-from sentinelhub.testing_utils import get_input_folder, get_output_folder
+from sentinelhub.testing_utils import get_output_folder
 
-with open(os.path.join(get_input_folder(__file__), "test_fis_results.txt"), "r") as file:
+EXPECTED_RESULTS_PATH = os.path.join(os.path.dirname(__file__), "..", "TestInputs", "test_fis_results.txt")
+with open(EXPECTED_RESULTS_PATH, "r") as file:
     RESULTS = [ast.literal_eval(line.strip()) for line in file]
 
 OUTPUT_FOLDER = get_output_folder(__file__)

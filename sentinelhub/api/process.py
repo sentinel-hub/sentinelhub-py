@@ -1,17 +1,17 @@
 """
 Implementation of Sentinel Hub Process API interface
 """
-from .constants import MimeType
-from .download import SentinelHubDownloadClient
-from .sentinelhub_base_api import SentinelHubBaseApiRequest
-from .sh_utils import _update_other_args
+from ..constants import MimeType
+from ..download import SentinelHubDownloadClient
+from .base_request import SentinelHubBaseApiRequest
+from .utils import _update_other_args
 
 
 class SentinelHubRequest(SentinelHubBaseApiRequest):
     """Sentinel Hub Process API interface
 
     For more information check
-    `Statistical API documentation <https://docs.sentinel-hub.com/api/latest/api/process/>`__.
+    `Process API documentation <https://docs.sentinel-hub.com/api/latest/api/process/>`__.
     """
 
     _SERVICE_ENDPOINT = "process"

@@ -6,7 +6,7 @@ import math
 import pytest
 
 from sentinelhub import DownloadClient
-from sentinelhub.sh_utils import FeatureIterator
+from sentinelhub.base import FeatureIterator
 
 
 class DummyIterator(FeatureIterator):
