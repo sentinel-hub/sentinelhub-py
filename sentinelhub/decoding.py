@@ -6,6 +6,7 @@ import struct
 import tarfile
 import warnings
 from io import BytesIO, IOBase
+from typing import Union
 from xml.etree import ElementTree
 
 import numpy as np
@@ -15,8 +16,6 @@ from PIL import Image
 
 from .constants import MimeType
 from .exceptions import ImageDecodingError, SHUserWarning
-
-warnings.simplefilter("ignore", Image.DecompressionBombWarning)
 
 
 def decode_data(response_content, data_type):
@@ -70,25 +69,39 @@ def decode_image(data, image_type):
     elif image_type is MimeType.JP2:
         image = decode_jp2_image(bytes_data)
     else:
-        image = np.array(Image.open(bytes_data))
+        image = decode_image_with_pillow(bytes_data)
 
     if image is None:
         raise ImageDecodingError("Unable to decode image")
     return image
 
 
+def decode_image_with_pillow(stream: Union[IOBase, str]) -> np.ndarray:
+    """Decodes an image using `Pillow` package and handles potential warnings.
+
+    :param stream: A binary stream format or a filename.
+    :return: A numpy array representing an image of shape (height, width) or (height, width, channels).
+    """
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", Image.DecompressionBombWarning)
+        return np.array(Image.open(stream))
+
+
 def decode_jp2_image(stream: IOBase) -> np.ndarray:
     """Tries to decode a JPEG2000 image either using `rasterio` or `Pillow` package.
 
-    :param stream: binary stream format
+    :param stream: A binary stream format.
     :return: A numpy array representing an image of shape (height, width) or (height, width, channels).
     """
     try:
         # pylint: disable=import-outside-toplevel
         import rasterio
+        from rasterio.errors import NotGeoreferencedWarning
 
-        with rasterio.open(stream) as file:
-            image = np.array(file.read())
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", NotGeoreferencedWarning)
+            with rasterio.open(stream) as file:
+                image = np.array(file.read())
 
         image = np.moveaxis(image, 0, -1)
         if image.shape[-1] == 1:
@@ -98,7 +111,7 @@ def decode_jp2_image(stream: IOBase) -> np.ndarray:
     except ImportError:
         pass
 
-    image = np.array(Image.open(stream))
+    image = decode_image_with_pillow(stream)
     bit_depth = get_jp2_bit_depth(stream)
 
     if PIL.__version__ >= "9.0.0" and bit_depth == 15:

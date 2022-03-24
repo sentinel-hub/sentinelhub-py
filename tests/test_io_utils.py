@@ -6,6 +6,7 @@ import pytest
 from pytest import approx
 
 from sentinelhub import read_data, write_data
+from sentinelhub.exceptions import SHUserWarning
 
 
 @pytest.mark.parametrize(
@@ -20,20 +21,26 @@ from sentinelhub import read_data, write_data
     ],
 )
 def test_img_read(input_folder, output_folder, filename, mean, shape):
+    is_jpeg = filename.endswith("jpg")
     img = read_data(os.path.join(input_folder, filename))
 
     assert img.shape == shape
 
-    if filename != "img.jpg" or python_implementation() != "PyPy":
+    if is_jpeg or python_implementation() != "PyPy":
         assert np.mean(img) == approx(mean, abs=1e-4)
 
     assert img.flags["WRITEABLE"], "Obtained numpy array is not writeable"
 
     file_path = os.path.join(output_folder, filename)
-    write_data(file_path, img)
+
+    if is_jpeg:
+        with pytest.warns(SHUserWarning):
+            write_data(file_path, img)
+    else:
+        write_data(file_path, img)
     new_img = read_data(file_path)
 
-    if not filename.endswith("jpg"):
+    if not is_jpeg:
         assert np.array_equal(img, new_img), "Original and saved image are not the same"
 
 

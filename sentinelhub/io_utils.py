@@ -14,10 +14,10 @@ import tifffile as tiff
 from PIL import Image
 
 from .constants import MimeType
-from .decoding import decode_jp2_image, decode_tar, get_data_format
+from .decoding import decode_image_with_pillow, decode_jp2_image, decode_tar, get_data_format
+from .exceptions import SHUserWarning
 from .os_utils import create_parent_folder
 
-warnings.simplefilter("ignore", Image.DecompressionBombWarning)
 LOGGER = logging.getLogger(__name__)
 
 CSV_DELIMITER = ";"
@@ -110,7 +110,7 @@ def read_image(filename):
     :type filename: str
     :return: data stored in JPG file
     """
-    return np.array(Image.open(filename))
+    return decode_image_with_pillow(filename)
 
 
 def read_text(filename):
@@ -257,7 +257,7 @@ def write_image(filename, image):
     """
     data_format = get_data_format(filename)
     if data_format is MimeType.JPG:
-        LOGGER.warning("Warning: jpeg is a lossy format therefore saved data will be modified.")
+        warnings.warn("JPEG is a lossy format therefore saved data will be modified.", category=SHUserWarning)
     return Image.fromarray(image).save(filename)
 
 
