@@ -1,7 +1,7 @@
 requests>=2.5.0
 click
 numpy
-tifffile
+tifffile>=2020.9.30
 pillow
 python-dateutil
 utm

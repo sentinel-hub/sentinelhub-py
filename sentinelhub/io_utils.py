@@ -228,8 +228,8 @@ def write_tiff_image(filename, image, compress=False):
     :type compress: bool
     """
     if compress:
-        return tiff.imsave(filename, image, compress="lzma")  # lossless compression, works very well on masks
-    return tiff.imsave(filename, image)
+        return tiff.imwrite(filename, image, compression="lzma")  # lossless compression, works very well on masks
+    return tiff.imwrite(filename, image)
 
 
 def write_jp2_image(filename, image):
