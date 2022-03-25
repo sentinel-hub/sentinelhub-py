@@ -224,7 +224,7 @@ class SHConfig:
 
         :param params: Parameters which will be reset. Parameters can be specified with a list of names, e.g.
             ``['instance_id', 'aws_access_key_id', 'aws_secret_access_key']``, or as a single name, e.g.
-            ``'sh_base_url'``. By default all parameters will be reset and default value is ``Ellipsis``.
+            ``'sh_base_url'``. By default, all parameters will be reset and default value is ``Ellipsis``.
         :type params: Ellipsis or list(str) or str
         """
         if params is ...:
