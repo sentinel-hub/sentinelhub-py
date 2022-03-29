@@ -69,22 +69,23 @@ class DownloadClient:
         if is_single_request:
             download_requests = [download_requests]
 
+        data_list = [None] * len(download_requests)
+
         with ThreadPoolExecutor(max_workers=max_threads) as executor:
             download_list = [
                 executor.submit(self._single_download, request, decode_data) for request in download_requests
             ]
             future_order = {future: i for i, future in enumerate(download_list)}
 
-        data_list = [None] * len(download_list)
-        # Consider using tqdm.contrib.concurrent.thread_map in the future
-        if show_progress:
-            with tqdm(total=len(download_list)) as pbar:
+            # Consider using tqdm.contrib.concurrent.thread_map in the future
+            if show_progress:
+                with tqdm(total=len(download_list)) as pbar:
+                    for future in as_completed(download_list):
+                        data_list[future_order[future]] = self._process_download_future(future)
+                        pbar.update(1)
+            else:
                 for future in as_completed(download_list):
                     data_list[future_order[future]] = self._process_download_future(future)
-                    pbar.update(1)
-        else:
-            for future in as_completed(download_list):
-                data_list[future_order[future]] = self._process_download_future(future)
 
         if is_single_request:
             return data_list[0]
