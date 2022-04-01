@@ -189,31 +189,37 @@ class CRS(Enum, metaclass=CRSMeta):
         """
         return self.name.startswith("UTM")
 
-    @functools.lru_cache(maxsize=5)
+    @functools.lru_cache(maxsize=100)
     def projection(self):
-        """Returns a projection in form of pyproj class. For better time performance it will cache results of
-        5 most recently used CRS classes.
+        """Returns a projection in form of pyproj class.
+
+        For better time performance this method will cache `100` most recent results. Cache can be released with
+        `CRS.projection.cache_clear()`.
 
         :return: pyproj projection class
         :rtype: pyproj.Proj
         """
         return pyproj.Proj(self._get_pyproj_projection_def(), preserve_units=True)
 
-    @functools.lru_cache(maxsize=5)
+    @functools.lru_cache(maxsize=100)
     def pyproj_crs(self):
-        """Returns a pyproj CRS class. For better time performance it will cache results of
-        5 most recently used CRS classes.
+        """Returns a pyproj CRS class.
+
+        For better time performance this method will cache `100` most recent results. Cache can be released with
+        `CRS.pyproj_crs.cache_clear()`.
 
         :return: pyproj CRS class
         :rtype: pyproj.CRS
         """
         return pyproj.CRS(self._get_pyproj_projection_def())
 
-    @functools.lru_cache(maxsize=10)
+    @functools.lru_cache(maxsize=10 ** 4)
     def get_transform_function(self, other, always_xy=True):
         """Returns a function for transforming geometrical objects from one CRS to another. The function will support
         transformations between any objects that pyproj supports.
-        For better time performance this method will cache results of 10 most recently used pairs of CRS classes.
+
+        For better time performance this method will cache results. Cache can be released with
+        `CRS.get_transform_function.cache_clear()`.
 
         :param self: Initial CRS
         :type self: CRS
