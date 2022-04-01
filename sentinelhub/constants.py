@@ -213,7 +213,7 @@ class CRS(Enum, metaclass=CRSMeta):
         """
         return pyproj.CRS(self._get_pyproj_projection_def())
 
-    @functools.lru_cache(maxsize=10 ** 4)
+    @functools.lru_cache(maxsize=10**4)
     def get_transform_function(self, other, always_xy=True):
         """Returns a function for transforming geometrical objects from one CRS to another. The function will support
         transformations between any objects that pyproj supports.
