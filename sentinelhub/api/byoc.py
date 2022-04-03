@@ -4,7 +4,7 @@ Module implementing an interface with
 """
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Dict, Optional, Literal
+from typing import Dict, Optional
 
 from dataclasses_json import CatchAll, LetterCase, Undefined
 from dataclasses_json import config as dataclass_config
@@ -25,8 +25,8 @@ class ByocCollectionBand:
     other_data: CatchAll
     source: Optional[str] = None
     band_index: Optional[int] = None
-    bit_depth: Literal[8, 16, 32] = 8
-    sample_format: Literal["UINT", "INT", "FLOAT"] = "UINT"
+    bit_depth: int = 8
+    sample_format: str = "UINT"
     no_data: Optional[float] = None
 
 
