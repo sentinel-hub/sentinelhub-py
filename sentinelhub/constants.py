@@ -193,7 +193,7 @@ class CRS(Enum, metaclass=CRSMeta):
     def projection(self):
         """Returns a projection in form of pyproj class.
 
-        For better time performance this method will cache `100` most recent results. Cache can be released with
+        For better time performance this method will cache `128` most recent results. Cache can be released with
         `CRS.projection.cache_clear()`.
 
         :return: pyproj projection class
@@ -205,7 +205,7 @@ class CRS(Enum, metaclass=CRSMeta):
     def pyproj_crs(self):
         """Returns a pyproj CRS class.
 
-        For better time performance this method will cache `100` most recent results. Cache can be released with
+        For better time performance this method will cache `128` most recent results. Cache can be released with
         `CRS.pyproj_crs.cache_clear()`.
 
         :return: pyproj CRS class
