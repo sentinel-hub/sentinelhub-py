@@ -21,6 +21,7 @@ from .api import (
     WcsRequest,
     WebFeatureService,
     WmsRequest,
+    monitor_batch_analysis,
     monitor_batch_job,
     opensearch,
 )
