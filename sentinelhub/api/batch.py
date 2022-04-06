@@ -675,10 +675,14 @@ class BatchCollection(BaseCollection):
 
 
 _MIN_SLEEP_TIME = 60
+_DEFAULT_SLEEP_TIME = 120
 _MIN_ANALYSIS_SLEEP_TIME = 5
+_DEFAULT_ANALYSIS_SLEEP_TIME = 10
 
 
-def monitor_batch_job(batch_request, config, sleep_time=120, analysis_sleep_time=10):
+def monitor_batch_job(
+    batch_request, config, sleep_time=_DEFAULT_SLEEP_TIME, analysis_sleep_time=_DEFAULT_ANALYSIS_SLEEP_TIME
+):
     """A utility function that keeps checking for number of processed tiles until the given batch request finishes.
     During the process it shows a progress bar and at the end it reports information about finished and failed tiles.
 
@@ -707,26 +711,12 @@ def monitor_batch_job(batch_request, config, sleep_time=120, analysis_sleep_time
     """
     if sleep_time < _MIN_SLEEP_TIME:
         raise ValueError(f"To avoid making too many service requests please set sleep_time>={_MIN_SLEEP_TIME}")
-    if analysis_sleep_time < _MIN_ANALYSIS_SLEEP_TIME:
-        raise ValueError(
-            f"To avoid making too many service requests please set analysis_sleep_time>={_MIN_ANALYSIS_SLEEP_TIME}"
-        )
 
-    batch_client = SentinelHubBatch(config=config)
-
-    batch_request = batch_client.get_request(batch_request)
-    while batch_request.status in [BatchRequestStatus.CREATED, BatchRequestStatus.ANALYSING]:
-        LOGGER.info(
-            "Batch job has a status %s, sleeping for %d seconds", batch_request.status.value, analysis_sleep_time
-        )
-        time.sleep(analysis_sleep_time)
-
-        batch_request = batch_client.get_request(batch_request)
-
-    batch_request.raise_for_status(status=[BatchRequestStatus.FAILED, BatchRequestStatus.CANCELED])
-
+    batch_request = monitor_batch_analysis(batch_request, config, sleep_time=analysis_sleep_time)
     if batch_request.status is BatchRequestStatus.PROCESSING:
         LOGGER.info("Batch job is running")
+
+    batch_client = SentinelHubBatch(config=config)
 
     tiles_per_status = _get_batch_tiles_per_status(batch_request, batch_client)
     success_count = len(tiles_per_status[BatchTileStatus.PROCESSED])
@@ -755,6 +745,39 @@ def monitor_batch_job(batch_request, config, sleep_time=120, analysis_sleep_time
     if failed_tiles_num:
         LOGGER.info("Batch job failed for %d tiles", failed_tiles_num)
     return tiles_per_status
+
+
+def monitor_batch_analysis(batch_request, config, sleep_time=_DEFAULT_ANALYSIS_SLEEP_TIME):
+    """A utility function that is waiting until analysis phase of a batch job finishes and regularly checks its status.
+    In case analysis phase failed it raises an error at the end.
+
+    :param batch_request: An object with information about a batch request. Alternatively, it could only be a batch
+        request id or a payload.
+    :type batch_request: BatchRequest or dict or str
+    :param config: A configuration object with required parameters `sh_client_id`, `sh_client_secret`, and
+        `sh_auth_base_url` which is used for authentication and `sh_base_url` which defines the service deployment
+        where Batch API will be called.
+    :type config: SHConfig
+    :param sleep_time: Number of seconds between consecutive status updates during analysis phase.
+    :type sleep_time: int
+    :return: Batch request info
+    :rtype: BatchRequest
+    """
+    if sleep_time < _MIN_ANALYSIS_SLEEP_TIME:
+        raise ValueError(
+            f"To avoid making too many service requests please set analysis sleep time >={_MIN_ANALYSIS_SLEEP_TIME}"
+        )
+
+    batch_client = SentinelHubBatch(config=config)
+
+    batch_request = batch_client.get_request(batch_request)
+    while batch_request.status in [BatchRequestStatus.CREATED, BatchRequestStatus.ANALYSING]:
+        LOGGER.info("Batch job has a status %s, sleeping for %d seconds", batch_request.status.value, sleep_time)
+        time.sleep(sleep_time)
+        batch_request = batch_client.get_request(batch_request)
+
+    batch_request.raise_for_status(status=[BatchRequestStatus.FAILED, BatchRequestStatus.CANCELED])
+    return batch_request
 
 
 def _get_batch_tiles_per_status(batch_request, batch_client):
