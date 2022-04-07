@@ -1,6 +1,8 @@
 """
 Module implementing Sentinel Hub session object
 """
+import base64
+import json
 import logging
 import time
 
@@ -58,6 +60,14 @@ class SentinelHubSession:
         self._token = self._fetch_token(request)
 
         return self._token
+
+    def info(self):
+        """Decode token to get token info"""
+
+        token = self.token["access_token"].split(".")[1]
+        padded = token + "=" * divmod(len(token), 4)[1]
+        decoded_string = base64.b64decode(padded).decode()
+        return json.loads(decoded_string)
 
     @property
     def session_headers(self):
