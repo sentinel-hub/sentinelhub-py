@@ -6,8 +6,6 @@ from sentinelhub import SentinelHubSession
 @pytest.fixture(name="session", scope="module")
 def session_fixture():
     session = SentinelHubSession()
-    # pre-fetch token
-    session.token
     return session
 
 
