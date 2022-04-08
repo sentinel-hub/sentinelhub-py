@@ -3,7 +3,7 @@ import pytest
 from sentinelhub import SentinelHubSession
 
 
-@pytest.fixture(name="session")
+@pytest.fixture(name="session", scope="module")
 def session_fixture():
     session = SentinelHubSession()
     # pre-fetch token
