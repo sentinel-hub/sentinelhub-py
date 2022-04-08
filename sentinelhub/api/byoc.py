@@ -36,7 +36,7 @@ class ByocCollectionAdditionalData:
     """Dataclass to hold BYOC collection additional data"""
 
     other_data: CatchAll
-    bands: Dict[str, ByocCollectionBand] = None
+    bands: Optional[Dict[str, ByocCollectionBand]] = None
     max_meters_per_pixel: Optional[float] = None
     max_meters_per_pixel_override: Optional[float] = None
 
