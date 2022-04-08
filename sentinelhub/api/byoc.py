@@ -4,7 +4,7 @@ Module implementing an interface with
 """
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Optional
+from typing import Dict, Optional
 
 from dataclasses_json import CatchAll, LetterCase, Undefined
 from dataclasses_json import config as dataclass_config
@@ -19,15 +19,30 @@ from .utils import datetime_config, geometry_config, remove_undefined
 
 @dataclass_json(letter_case=LetterCase.CAMEL, undefined=Undefined.INCLUDE)
 @dataclass
+class ByocCollectionBand:
+    """Dataclass to hold BYOC collection band specification"""
+
+    other_data: CatchAll
+    source: Optional[str] = None
+    band_index: Optional[int] = None
+    bit_depth: int = 8
+    sample_format: str = "UINT"
+    no_data: Optional[float] = None
+
+
+@dataclass_json(letter_case=LetterCase.CAMEL, undefined=Undefined.INCLUDE)
+@dataclass
 class ByocCollectionAdditionalData:
     """Dataclass to hold BYOC collection additional data"""
 
     other_data: CatchAll
-    bands: Optional[dict] = None
+    bands: Optional[Dict[str, ByocCollectionBand]] = None
     max_meters_per_pixel: Optional[float] = None
     max_meters_per_pixel_override: Optional[float] = None
 
 
+@dataclass_json(letter_case=LetterCase.CAMEL, undefined=Undefined.INCLUDE)
+@dataclass
 class ByocCollection(BaseCollection):
     """Dataclass to hold BYOC collection data"""
 
@@ -251,8 +266,8 @@ class SentinelHubBYOC(SentinelHubService):
     @staticmethod
     def _to_dict(data):
         """Constructs dict from an object (either dataclass or dict)"""
-        if isinstance(data, (ByocCollection, ByocTile, ByocCollectionAdditionalData)):
+        if isinstance(data, (ByocCollection, ByocTile, ByocCollectionAdditionalData, ByocCollectionBand)):
             return data.to_dict()
         if isinstance(data, dict):
             return data
-        raise ValueError(f"Expected either a data class (e.g., ByocCollection, ByocTile) or a dict, got {data}.")
+        raise ValueError(f"Expected either a data class (e.g., ByocCollection and similar) or a dict, got {data}.")

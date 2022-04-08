@@ -12,7 +12,7 @@ from .batch import (
     monitor_batch_analysis,
     monitor_batch_job,
 )
-from .byoc import ByocCollection, ByocCollectionAdditionalData, ByocTile, SentinelHubBYOC
+from .byoc import ByocCollection, ByocCollectionAdditionalData, ByocCollectionBand, ByocTile, SentinelHubBYOC
 from .catalog import SentinelHubCatalog
 from .fis import FisRequest
 from .ogc import WcsRequest, WmsRequest

@@ -11,6 +11,7 @@ from .api import (
     BatchUserAction,
     ByocCollection,
     ByocCollectionAdditionalData,
+    ByocCollectionBand,
     ByocTile,
     FisRequest,
     SentinelHubBatch,
