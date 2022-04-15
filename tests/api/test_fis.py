@@ -6,7 +6,7 @@ from typing import Any
 import pytest
 from shapely.geometry import Polygon
 
-from sentinelhub import CRS, BBox, CustomUrlParam, DataCollection, FisRequest, Geometry, HistogramType
+from sentinelhub import CRS, BBox, CustomUrlParam, DataCollection, FisRequest, Geometry, HistogramType, ResamplingType
 from sentinelhub.exceptions import SHDeprecationWarning
 
 EXPECTED_RESULTS_PATH = os.path.join(os.path.dirname(__file__), "..", "TestInputs", "test_fis_results.txt")
@@ -62,7 +62,10 @@ TEST_CASES = [
     ),
     FisTestCase(
         dict(
-            custom_url_params={CustomUrlParam.DOWNSAMPLING: "BICUBIC", CustomUrlParam.UPSAMPLING: "BICUBIC"},
+            custom_url_params={
+                CustomUrlParam.DOWNSAMPLING: ResamplingType.BICUBIC,
+                CustomUrlParam.UPSAMPLING: ResamplingType.BICUBIC,
+            },
             data_collection=DataCollection.SENTINEL2_L1C,
             layer="BANDS-S2-L1C",
             geometry_list=[BBOX],
