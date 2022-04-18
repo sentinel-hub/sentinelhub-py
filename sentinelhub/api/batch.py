@@ -554,20 +554,20 @@ class BatchRequest:
 
     request_id: str = field(metadata=dataclass_config(field_name="id"))
     process_request: dict
+    tile_count: int
+    status: BatchRequestStatus = field(metadata=enum_config(BatchRequestStatus))
     other_data: CatchAll
     user_id: Optional[str] = None
     created: Optional[dt.datetime] = field(metadata=datetime_config, default=None)
-    tiling_grid: Optional[dict] = None
-    output: Optional[dict] = None
+    tiling_grid: dict = field(default_factory=dict)
+    output: dict = field(default_factory=dict)
     bucket_name: Optional[str] = None
     description: Optional[str] = None
     value_estimate: Optional[float] = None
-    tile_count: Optional[int] = None
     tile_width_px: Optional[int] = None
     tile_height_px: Optional[int] = None
     user_action: Optional[BatchUserAction] = field(metadata=enum_config(BatchUserAction), default=None)
     user_action_updated: Optional[str] = field(metadata=datetime_config, default=None)
-    status: Optional[BatchRequestStatus] = field(metadata=enum_config(BatchRequestStatus), default=None)
     error: Optional[str] = None
 
     _REPR_PARAM_NAMES = [
