@@ -68,6 +68,8 @@ def test_create_and_run_batch_request(batch_client, requests_mock):
                             }
                         }
                     },
+                    "tileCount": 42,
+                    "status": "CREATED",
                 }
             }
         ],
