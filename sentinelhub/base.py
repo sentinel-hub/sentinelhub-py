@@ -241,7 +241,7 @@ class FeatureIterator(ABC):
         """
         :param client: An instance of a download client object
         :type client: DownloadClient
-        :param url: An URL where requests will be made
+        :param url: A URL where requests will be made
         :type url: str
         :param params: Parameters to be sent with each request
         :type params: dict or None

@@ -1,5 +1,5 @@
 """
-Module implementing a rate-limited multi-threaded download client for downloading from Sentinel Hub service
+Module implementing a rate-limited multithreaded download client for downloading from Sentinel Hub service
 """
 import logging
 import time
@@ -43,8 +43,8 @@ class SentinelHubDownloadClient(DownloadClient):
     def download(self, *args, **kwargs):
         """The main download method
 
-        :param args: Passed to DownloadClient.download
-        :param kwargs: Passed to DownloadClient.download
+        :param args: Passed to `DownloadClient.download`
+        :param kwargs: Passed to `DownloadClient.download`
         """
         # Because the Lock object cannot be pickled we create it only here and remove it afterward
         self.lock = Lock()

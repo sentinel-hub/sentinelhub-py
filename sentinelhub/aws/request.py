@@ -113,7 +113,7 @@ class AwsTileRequest(AwsRequest):
         :type tile: str
         :param time: tile sensing time in ISO8601 format
         :type time: str
-        :param aws_index: there exist Sentinel-2 tiles with the same tile and time parameter. Therefore each tile on
+        :param aws_index: there exist Sentinel-2 tiles with the same tile and time parameter. Therefore, each tile on
             AWS also has an index which is visible in their url path. If aws_index is set to `None` the class
             will try to find the index automatically. If there will be multiple choices it will choose the
             lowest index and inform the user.

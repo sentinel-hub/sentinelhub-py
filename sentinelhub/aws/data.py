@@ -136,7 +136,7 @@ class AwsData(ABC):
     def get_safe_type(self):
         """Determines the type of ESA product.
 
-        In 2016 ESA changed structure and naming of data. Therefore the class must
+        In 2016 ESA changed structure and naming of data. Therefore, the class must
         distinguish between old product type and compact (new) product type.
 
         :return: type of ESA product
@@ -204,7 +204,7 @@ class AwsData(ABC):
     def sort_download_list(self):
         """Method for sorting the list of download requests. Band images have priority before metadata files. If bands
         images or metadata files are specified with a list they will be sorted in the same order as in the list.
-        Otherwise they will be sorted alphabetically (band B8A will be between B08 and B09).
+        Otherwise, they will be sorted alphabetically (band B8A will be between B08 and B09).
         """
 
         def aws_sort_function(download_request):
@@ -503,8 +503,8 @@ class AwsTile(AwsData):
         :type tile: str
         :param time: Tile sensing time in ISO8601 format
         :type time: str
-        :param aws_index: There exist Sentinel-2 tiles with the same tile and time parameter. Therefore each tile on AWS
-            also has an index which is visible in their url path. If ``aws_index`` is set to `None` the
+        :param aws_index: There exist Sentinel-2 tiles with the same tile and time parameter. Therefore, each tile
+            on AWS also has an index which is visible in their url path. If `aws_index` is set to `None` the
             class will try to find the index automatically. If there will be multiple choices it will choose
             the lowest index and inform the user.
         :type aws_index: int or None
@@ -607,7 +607,7 @@ class AwsTile(AwsData):
 
     @staticmethod
     def _parse_aws_index(tile_info):
-        """Parses AWS index from tile info
+        """Parses an AWS index from tile info
 
         :param tile_info: dictionary with information about tile
         :type tile_info: dict

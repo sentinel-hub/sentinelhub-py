@@ -17,7 +17,7 @@ from .exceptions import SHUserWarning
 
 
 class PackageProps:
-    """Class for obtaining package properties. Currently it supports obtaining package version."""
+    """Class for obtaining package properties. Currently, it supports obtaining package version."""
 
     @staticmethod
     def get_version():
@@ -172,9 +172,9 @@ class CRS(Enum, metaclass=CRSMeta):
 
     @property
     def opengis_string(self):
-        """Returns an URL to OGC webpage where the CRS is defined
+        """Returns a URL to OGC webpage where the CRS is defined
 
-        :return: An URL with CRS definition
+        :return: A URL with CRS definition
         :rtype: str
         """
         return f"http://www.opengis.net/def/crs/EPSG/0/{self.epsg}"

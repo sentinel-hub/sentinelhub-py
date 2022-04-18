@@ -35,7 +35,7 @@ class DownloadClient:
 
     def __init__(self, *, redownload=False, raise_download_errors=True, config=None):
         """
-        :param redownload: If `True` the data will always be downloaded again. By default this is set to `False` and
+        :param redownload: If `True` the data will always be downloaded again. By default, this is set to `False` and
             the data that has already been downloaded and saved to an expected location will be read from the
             location instead of being downloaded again.
         :type redownload: bool
@@ -186,7 +186,7 @@ class DownloadClient:
     def get_json(self, url, post_values=None, headers=None, request_type=None, **kwargs):
         """Download request as JSON data type
 
-        :param url: An URL from where the data will be downloaded
+        :param url: A URL from where the data will be downloaded
         :type url: str
         :param post_values: A dictionary of parameters for a POST request
         :type post_values: dict or None

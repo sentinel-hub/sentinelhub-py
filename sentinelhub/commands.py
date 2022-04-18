@@ -16,7 +16,7 @@ def main_help():
     \b
     There are multiple modules with command line functionality:\n
        - sentinelhub.aws \n
-       - senitnelhub.config \n
+       - sentinelhub.config \n
        - sentinelhub.download \n
 
     To check more about certain module command use: \n

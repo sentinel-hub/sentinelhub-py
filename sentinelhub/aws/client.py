@@ -48,7 +48,7 @@ class AwsDownloadClient(DownloadClient):
                 aws_session_token=self.config.aws_session_token or None,
             )
             AwsDownloadClient.GLOBAL_S3_CLIENT = s3_client
-        except KeyError as exception:  # Sometimes creation of client fails and we use the global client if it exists
+        except KeyError as exception:  # Sometimes creation of client fails, and we use the global client if it exists
             if AwsDownloadClient.GLOBAL_S3_CLIENT is None:
                 raise ValueError("Failed to create a client for download from AWS") from exception
             s3_client = AwsDownloadClient.GLOBAL_S3_CLIENT

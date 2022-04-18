@@ -40,8 +40,8 @@ class OgcRequest(DataRequest):
     ):
         """
         :param layer: An ID of a layer configured in Sentinel Hub Dashboard. It has to be configured for the same
-            instance ID which will be used for this request. Also the satellite collection of the layer in Dashboard
-            must match the one given by `data_collection` parameter
+            instance ID which will be used for this request. The satellite collection of the layer in Dashboard
+            must also match the one given by `data_collection` parameter
         :type layer: str
         :param bbox: Bounding box of the requested image. Coordinates must be in the specified coordinate reference
             system.
@@ -144,7 +144,7 @@ class OgcRequest(DataRequest):
         the cloud coverage criteria. Most recent acquisition being first in the list.
 
         :return: list of all available Sentinel-2 acquisition times within request's time interval and
-                acceptable cloud coverage.
+            acceptable cloud coverage.
         :rtype: list(datetime.datetime) or [None]
         """
         return OgcImageService(config=self.config).get_dates(self)
@@ -153,7 +153,7 @@ class OgcRequest(DataRequest):
         """Returns iterator over info about all satellite tiles used for the OgcRequest
 
         :return: Iterator of dictionaries containing info about all satellite tiles used in the request. In case of
-                 DataCollection.DEM it returns None.
+            `DataCollection.DEM` it returns None.
         :rtype: Iterator[dict] or None
         """
         return self.wfs_iterator
@@ -181,8 +181,8 @@ class WmsRequest(OgcRequest):
         :param height: height (number of rows) of the returned image (array)
         :type height: int or None
         :param layer: An ID of a layer configured in Sentinel Hub Dashboard. It has to be configured for the same
-            instance ID which will be used for this request. Also the satellite collection of the layer in Dashboard
-            must match the one given by `data_collection` parameter
+            instance ID which will be used for this request. The satellite collection of the layer in Dashboard
+            must also match the one given by `data_collection` parameter
         :type layer: str
         :param bbox: Bounding box of the requested image. Coordinates must be in the specified coordinate reference
             system.
@@ -250,8 +250,8 @@ class WcsRequest(OgcRequest):
             Sentinel-2 bands.
         :type resy: str
         :param layer: An ID of a layer configured in Sentinel Hub Dashboard. It has to be configured for the same
-            instance ID which will be used for this request. Also the satellite collection of the layer in Dashboard
-            must match the one given by `data_collection` parameter
+            instance ID which will be used for this request. The satellite collection of the layer in Dashboard
+            must also match the one given by `data_collection` parameter
         :type layer: str
         :param bbox: Bounding box of the requested image. Coordinates must be in the specified coordinate reference
             system.
@@ -582,7 +582,7 @@ class OgcImageService:
         """Returns iterator over info about all satellite tiles used for the request
 
         :return: Iterator of dictionaries containing info about all satellite tiles used in the request. In case of
-                 DataCollection.DEM it returns None.
+            `DataCollection.DEM` it returns `None`.
         :rtype: Iterator[dict] or None
         """
         return self.wfs_iterator

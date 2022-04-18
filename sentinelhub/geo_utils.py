@@ -8,7 +8,7 @@ ERR = 0.1
 
 def bbox_to_dimensions(bbox, resolution):
     """Calculates width and height in pixels for a given bbox of a given pixel resolution (in meters). The result is
-    rounded to nearest integers
+    rounded to the nearest integers.
 
     :param bbox: bounding box
     :type bbox: geometry.BBox
@@ -28,7 +28,7 @@ def bbox_to_dimensions(bbox, resolution):
 
 
 def bbox_to_resolution(bbox, width, height, meters=True):
-    """Calculates pixel resolution for a given bbox of a given width and height. By default it returns result in
+    """Calculates pixel resolution for a given bbox of a given width and height. By default, it returns result in
     meters.
 
     :param bbox: bounding box
@@ -134,7 +134,7 @@ def to_wgs84(east, north, crs):
 
 
 def utm_to_pixel(east, north, transform, truncate=True):
-    """Convert UTM coordinate to image coordinate given a transform
+    """Convert a UTM coordinate to image coordinate given a transform
 
     :param east: east coordinate of point
     :type east: float

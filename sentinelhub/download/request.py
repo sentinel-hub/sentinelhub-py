@@ -35,9 +35,9 @@ class DownloadRequest:
         **properties,
     ):
         """
-        :param url: An URL from where to download
+        :param url: A URL from where to download
         :type url: str or None
-        :param headers: Headers of a HTTP request
+        :param headers: Headers of an HTTP request
         :type headers: dict or None
         :param request_type: Type of request, either GET or POST. Default is `RequestType.GET`
         :type request_type: str or RequestType
@@ -51,7 +51,7 @@ class DownloadRequest:
         :type save_response: bool
         :param data_folder: A folder path where the fetched data will be (or already is) saved. Default is `None`
         :type data_folder: str or None
-        :param filename: A custom filename where the data will be saved. By default data will be saved in a folder
+        :param filename: A custom filename where the data will be saved. By default, data will be saved in a folder
             which name are hashed request parameters.
         :type filename: str or None
         :param return_data: A flag defining if the downloaded data will be returned as an output of download procedure.

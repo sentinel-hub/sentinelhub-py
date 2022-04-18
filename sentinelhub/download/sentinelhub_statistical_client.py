@@ -20,7 +20,7 @@ class SentinelHubStatisticalDownloadClient(SentinelHubDownloadClient):
     Besides a normal download from Sentinel Hub services it implements an additional process of retrying and caching
     """
 
-    _RETIRABLE_ERRORS = ["EXECUTION_ERROR", "TIMEOUT"]
+    _RETRIABLE_ERRORS = ["EXECUTION_ERROR", "TIMEOUT"]
 
     def __init__(self, *args, n_interval_retries=1, max_retry_threads=5, **kwargs):
         """
@@ -111,4 +111,4 @@ class SentinelHubStatisticalDownloadClient(SentinelHubDownloadClient):
         a request
         """
         error_type = stat_info.get("error", {}).get("type")
-        return error_type in self._RETIRABLE_ERRORS
+        return error_type in self._RETRIABLE_ERRORS
