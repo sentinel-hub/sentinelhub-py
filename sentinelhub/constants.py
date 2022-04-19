@@ -54,6 +54,32 @@ class ServiceType(Enum):
     PROCESSING_API = "processing"
 
 
+class ResamplingTypeMeta(EnumMeta):
+    """Metaclass for ResamplingType so that it is not case sensitive."""
+
+    def __call__(cls, value, *args, **kwargs):
+        if isinstance(value, str):
+            value = value.upper()
+
+        return super().__call__(value, *args, **kwargs)
+
+
+class ResamplingType(Enum, metaclass=ResamplingTypeMeta):
+    """Enum constant class for type of resampling."""
+
+    NEAREST = "NEAREST"
+    BILINEAR = "BILINEAR"
+    BICUBIC = "BICUBIC"
+
+
+class MosaickingOrder(Enum):
+    """Enum constant class for type of mosaicking order."""
+
+    MOST_RECENT = "mostRecent"
+    LEAST_RECENT = "leastRecent"
+    LEAST_CC = "leastCC"
+
+
 class CRSMeta(EnumMeta):
     """Metaclass used for building CRS Enum class"""
 

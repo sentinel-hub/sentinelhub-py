@@ -13,6 +13,8 @@ from sentinelhub import (
     DataCollection,
     Geometry,
     MimeType,
+    MosaickingOrder,
+    ResamplingType,
     SentinelHubRequest,
     ServiceUrl,
     SHConfig,
@@ -92,8 +94,8 @@ def test_other_args(config, output_folder):
                 data_collection=DataCollection.SENTINEL2_L1C,
                 time_interval=("2017-12-15T07:12:03", "2017-12-15T07:12:04"),
                 maxcc=0.8,
-                upsampling="NEAREST",
-                downsampling="NEAREST",
+                upsampling=ResamplingType.NEAREST,
+                downsampling=ResamplingType.NEAREST,
                 other_args={"processing": {"atmosphericCorrection": "NONE"}},
             )
         ],
@@ -140,7 +142,7 @@ def test_preview_mode():
             SentinelHubRequest.input_data(
                 data_collection=DataCollection.SENTINEL2_L1C,
                 time_interval=("2017-10-14T00:12:03", "2017-12-15T23:12:04"),
-                mosaicking_order="leastCC",
+                mosaicking_order=MosaickingOrder.LEAST_CC,
                 other_args={"dataFilter": {"previewMode": "PREVIEW"}},
             )
         ],
@@ -185,7 +187,7 @@ def test_resolution_parameter():
             SentinelHubRequest.input_data(
                 data_collection=DataCollection.SENTINEL2_L1C,
                 time_interval=("2017-10-14T00:12:03", "2017-12-15T23:12:04"),
-                mosaicking_order="leastCC",
+                mosaicking_order=MosaickingOrder.LEAST_CC,
             )
         ],
         responses=[SentinelHubRequest.output_response("default", MimeType.TIFF)],

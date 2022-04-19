@@ -9,7 +9,7 @@ from urllib.parse import urlencode
 
 from ..base import DataRequest
 from ..config import SHConfig
-from ..constants import CRS, CustomUrlParam, MimeType, ServiceType, SHConstants
+from ..constants import CRS, CustomUrlParam, MimeType, ResamplingType, ServiceType, SHConstants
 from ..download import DownloadRequest, SentinelHubDownloadClient
 from ..geo_utils import get_image_dimension
 from ..geometry import BBox, Geometry
@@ -397,14 +397,14 @@ class OgcImageService:
             params["MAXCC"] = 100.0 * request.maxcc
 
         if hasattr(request, "custom_url_params") and request.custom_url_params is not None:
-            params = {**params, **{k.value: str(v) for k, v in request.custom_url_params.items()}}
+            custom_params = request.custom_url_params
 
-            if CustomUrlParam.EVALSCRIPT.value in params:
-                evalscript = params[CustomUrlParam.EVALSCRIPT.value]
-                params[CustomUrlParam.EVALSCRIPT.value] = b64encode(evalscript.encode()).decode()
+            if CustomUrlParam.EVALSCRIPT in custom_params:
+                evalscript = custom_params[CustomUrlParam.EVALSCRIPT]
+                custom_params[CustomUrlParam.EVALSCRIPT] = b64encode(evalscript.encode()).decode()
 
-            if CustomUrlParam.GEOMETRY.value in params:
-                geometry = params[CustomUrlParam.GEOMETRY.value]
+            if CustomUrlParam.GEOMETRY in custom_params:
+                geometry = custom_params[CustomUrlParam.GEOMETRY]
                 crs = request.bbox.crs
 
                 if isinstance(geometry, Geometry):
@@ -416,7 +416,13 @@ class OgcImageService:
                 if geometry.crs is CRS.WGS84:
                     geometry = geometry.reverse()
 
-                params[CustomUrlParam.GEOMETRY.value] = geometry.wkt
+                custom_params[CustomUrlParam.GEOMETRY] = geometry.wkt
+
+            for resampling in (CustomUrlParam.DOWNSAMPLING, CustomUrlParam.UPSAMPLING):
+                if resampling in custom_params:
+                    custom_params[resampling] = ResamplingType(custom_params[resampling]).value
+
+            params.update({k.value: str(v) for k, v in custom_params.items()})
 
         return params
 

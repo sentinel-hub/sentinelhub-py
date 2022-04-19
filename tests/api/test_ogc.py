@@ -13,6 +13,7 @@ from sentinelhub import (
     DataCollection,
     DownloadFailedException,
     MimeType,
+    ResamplingType,
     ServiceType,
     WcsRequest,
     WmsRequest,
@@ -127,8 +128,8 @@ TEST_CASES = [
             custom_url_params={
                 CustomUrlParam.SHOWLOGO: True,
                 CustomUrlParam.QUALITY: 100,
-                CustomUrlParam.DOWNSAMPLING: "BICUBIC",
-                CustomUrlParam.UPSAMPLING: "BICUBIC",
+                CustomUrlParam.DOWNSAMPLING: ResamplingType.BICUBIC,
+                CustomUrlParam.UPSAMPLING: ResamplingType.BICUBIC,
             },
         ),
         result_len=1,

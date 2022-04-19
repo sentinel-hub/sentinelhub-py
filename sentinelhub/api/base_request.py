@@ -2,7 +2,7 @@
 Implementation of base Sentinel Hub interfaces
 """
 from ..base import DataRequest
-from ..constants import MimeType, RequestType
+from ..constants import MimeType, MosaickingOrder, RequestType, ResamplingType
 from ..data_collections import OrbitDirection
 from ..download import DownloadRequest
 from ..geometry import BBox, Geometry
@@ -60,11 +60,11 @@ class SentinelHubBaseApiRequest(DataRequest):
         :param maxcc: Maximum accepted cloud coverage of an image. Float between 0.0 and 1.0. Default is 1.0.
         :type maxcc: float or None
         :param mosaicking_order: Mosaicking order, which has to be either 'mostRecent', 'leastRecent' or 'leastCC'.
-        :type mosaicking_order: str or None
+        :type mosaicking_order: MosaickingOrder or str or None
         :param upsampling: A type of upsampling to apply on data
-        :type upsampling: str
+        :type upsampling: ResamplingType or str
         :param downsampling: A type of downsampling to apply on data
-        :type downsampling: str
+        :type downsampling: ResamplingType or str
         :param other_args: Additional dictionary of arguments. If provided, the resulting dictionary will get updated
             by it.
         :type other_args: dict
@@ -193,15 +193,7 @@ def _get_data_filters(data_collection, time_interval, maxcc, mosaicking_order):
         data_filter["maxCloudCoverage"] = int(maxcc * 100)
 
     if mosaicking_order:
-        mosaic_order_params = ["mostRecent", "leastRecent", "leastCC"]
-
-        if mosaicking_order not in mosaic_order_params:
-            raise ValueError(
-                f"{mosaicking_order} is not a valid mosaickingOrder parameter, it should be one "
-                f"of: {mosaic_order_params}"
-            )
-
-        data_filter["mosaickingOrder"] = mosaicking_order
+        data_filter["mosaickingOrder"] = MosaickingOrder(mosaicking_order).value
 
     return {**data_filter, **_get_data_collection_filters(data_collection)}
 
@@ -236,9 +228,9 @@ def _get_processing_params(upsampling, downsampling):
     processing_params = {}
 
     if upsampling:
-        processing_params["upsampling"] = upsampling
+        processing_params["upsampling"] = ResamplingType(upsampling).value
 
     if downsampling:
-        processing_params["downsampling"] = downsampling
+        processing_params["downsampling"] = ResamplingType(downsampling).value
 
     return processing_params

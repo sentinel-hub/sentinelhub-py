@@ -37,7 +37,17 @@ from .areas import (
     UtmZoneSplitter,
 )
 from .config import SHConfig
-from .constants import CRS, CustomUrlParam, HistogramType, MimeType, ServiceType, ServiceUrl, SHConstants
+from .constants import (
+    CRS,
+    CustomUrlParam,
+    HistogramType,
+    MimeType,
+    MosaickingOrder,
+    ResamplingType,
+    ServiceType,
+    ServiceUrl,
+    SHConstants,
+)
 from .data_collections import DataCollection, DataSource
 from .data_collections_bands import Band, Unit
 from .download import (
