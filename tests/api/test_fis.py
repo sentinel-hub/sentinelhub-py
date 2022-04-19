@@ -64,7 +64,7 @@ TEST_CASES = [
         dict(
             custom_url_params={
                 CustomUrlParam.DOWNSAMPLING: ResamplingType.BICUBIC,
-                CustomUrlParam.UPSAMPLING: ResamplingType.BICUBIC,
+                CustomUrlParam.UPSAMPLING: "bicubic",
             },
             data_collection=DataCollection.SENTINEL2_L1C,
             layer="BANDS-S2-L1C",

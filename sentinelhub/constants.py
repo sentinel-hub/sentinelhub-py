@@ -54,7 +54,17 @@ class ServiceType(Enum):
     PROCESSING_API = "processing"
 
 
-class ResamplingType(Enum):
+class ResamplingTypeMeta(EnumMeta):
+    """Metaclass for ResamplingType so that it is not case sensitive."""
+
+    def __call__(cls, value, *args, **kwargs):
+        if isinstance(value, str):
+            value = value.upper()
+
+        return super().__call__(value, *args, **kwargs)
+
+
+class ResamplingType(Enum, metaclass=ResamplingTypeMeta):
     """Enum constant class for type of resampling."""
 
     NEAREST = "NEAREST"
