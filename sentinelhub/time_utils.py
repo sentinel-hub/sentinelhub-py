@@ -28,7 +28,7 @@ def parse_time(time_input, *, force_datetime=False, allow_undefined=False, **kwa
     :param time_input: time/date to parse
     :type time_input: str or datetime.date or datetime.datetime
     :param force_datetime: If True it will always return datetime.datetime object, if False it can also return only
-        datetime.date object if only date is provided as input.
+        `datetime.date` object if only date is provided as input.
     :type force_datetime: bool
     :param allow_undefined: Flag to allow parsing None or '..' into None
     :param allow_undefined: bool (default is False)
@@ -50,7 +50,7 @@ def parse_time(time_input, *, force_datetime=False, allow_undefined=False, **kwa
         return time_input
 
     time = dateutil.parser.parse(time_input, **kwargs)
-    if force_datetime or len(time_input) > 10:  # This check is not very accurate but it works for iso format
+    if force_datetime or len(time_input) > 10:  # This check is not very accurate, but it works for ISO format
         return time
     return time.date()
 

@@ -29,7 +29,7 @@ class GeopediaService:
 def _parse_geopedia_layer(layer, return_wms_name=False):
     """Helper function for parsing Geopedia layer name. If WMS name is required and wrong form is given it will
     return a string with 'ttl' at the beginning. (WMS name can also start with something else, e.g. only 't'
-    instead 'ttl', therefore anything else is also allowed.) Otherwise it will parse it into a number.
+    instead 'ttl', therefore anything else is also allowed.) Otherwise, it will parse it into a number.
     """
     if not isinstance(layer, (int, str)):
         raise ValueError(f"Parameter 'layer' should be an integer or a string, but {type(layer)} found")
@@ -152,7 +152,7 @@ class GeopediaSession(GeopediaService):
     def provide_session(self, start_new=False):
         """Makes sure that session is still valid and provides session info
 
-        :param start_new: If `True` it will always create a new session. Otherwise it will create a new
+        :param start_new: If `True` it will always create a new session. Otherwise, it will create a new
             session only if no session exists or the previous session timed out.
         :type start_new: bool
         :return: Current session info
@@ -338,7 +338,7 @@ class GeopediaFeatureIterator(FeatureIterator):
         :param offset: Offset of resulting features
         :type offset: int
         :param gpd_session: Optional parameter for specifying a custom Geopedia session, which can also contain login
-            credentials. This can be used for accessing private Geopedia layers. By default it is set to `None` and a
+            credentials. This can be used for accessing private Geopedia layers. By default, it is set to `None` and a
             basic Geopedia session without credentials will be created.
         :type gpd_session: GeopediaSession or None
         :param config: A custom instance of config class to override parameters from the saved configuration.

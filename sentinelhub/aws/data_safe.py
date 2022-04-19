@@ -211,14 +211,14 @@ class SafeTile(AwsTile):
         return {
             self.get_main_folder(): {
                 AwsConstants.AUX_DATA: self._get_aux_substruct(),
-                AwsConstants.IMG_DATA: self._get_imamge_substruct(),
+                AwsConstants.IMG_DATA: self._get_image_substruct(),
                 AwsConstants.QI_DATA: self._get_qi_substruct(),
                 self.get_tile_metadata_name(): self.get_url(AwsConstants.METADATA),
             }
         }
 
     def _get_aux_substruct(self):
-        """Builds a auxiliary data subfolder structure of .SAFE format.
+        """Builds an auxiliary data subfolder structure of .SAFE format.
 
         Note: Old products also have DEM and MSI in aux folder which are not reconstructed here.
         """
@@ -247,7 +247,7 @@ class SafeTile(AwsTile):
 
         return aux_safe
 
-    def _get_imamge_substruct(self):
+    def _get_image_substruct(self):
         """Builds the part of structure of .SAFE format that contains satellite imagery."""
         img_safe = {}
 
@@ -271,7 +271,7 @@ class SafeTile(AwsTile):
         return img_safe
 
     def _get_qi_substruct(self):
-        """Builds a quality indicators data subfolder structure of .SAFE format."""
+        """Builds a quality-indicators data subfolder structure of .SAFE format."""
         qi_safe = self._get_reports_substruct()
 
         if self.baseline >= "04.00":

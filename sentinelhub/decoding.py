@@ -160,7 +160,7 @@ def decode_sentinelhub_err_msg(response):
 
 
 def get_jp2_bit_depth(stream):
-    """Reads bit encoding depth of jpeg2000 file in binary stream format
+    """Reads a bit encoding depth of jpeg2000 file in binary stream format
 
     :param stream: binary stream format
     :type stream: Binary I/O (e.g. io.BytesIO, io.BufferedReader, ...)
@@ -187,7 +187,7 @@ def fix_jp2_image(image, bit_depth):
 
     :param image: image read by opencv library
     :type image: numpy array
-    :param bit_depth: bit depth of jp2 image encoding
+    :param bit_depth: A bit depth of jp2 image encoding
     :type bit_depth: int
     :return: corrected image
     :rtype: numpy array

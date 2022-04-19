@@ -34,12 +34,12 @@ class BaseGeometry(ABC):
     @property
     @abstractmethod
     def geometry(self):
-        """An abstract property - ever subclass must implement geometry property"""
+        """An abstract property - every subclass must implement geometry property"""
         raise NotImplementedError
 
     @property
     def geojson(self):
-        """Returns representation in a GeoJSON format. Use json.dump for writing it to file.
+        """Returns representation in a GeoJSON format. Use `json.dump` for writing it to file.
 
         :return: A dictionary in GeoJSON format
         :rtype: dict
@@ -47,7 +47,7 @@ class BaseGeometry(ABC):
         return self.get_geojson(with_crs=True)
 
     def get_geojson(self, with_crs=True):
-        """Returns representation in a GeoJSON format. Use json.dump for writing it to file.
+        """Returns representation in a GeoJSON format. Use `json.dump` for writing it to file.
 
         :param with_crs: A flag indicating if GeoJSON dictionary should contain CRS part
         :type with_crs: bool
@@ -92,9 +92,9 @@ class BBox(BaseGeometry):
 
     Note that BBox coordinate system depends on ``crs`` parameter:
 
-    - In case of ``constants.CRS.WGS84`` axis x represents longitude and axis y represents latitude
-    - In case of ``constants.CRS.POP_WEB`` axis x represents easting and axis y represents northing
-    - In case of ``constants.CRS.UTM_*`` axis x represents easting and axis y represents northing
+    - In case of ``constants.CRS.WGS84`` axis x represents longitude and axis y represents latitude.
+    - In case of ``constants.CRS.POP_WEB`` axis x represents easting and axis y represents northing.
+    - In case of ``constants.CRS.UTM_*`` axis x represents easting and axis y represents northing.
     """
 
     def __init__(self, bbox, crs):
@@ -207,7 +207,7 @@ class BBox(BaseGeometry):
 
         This transformation will transform the bounding box geometry to another CRS as a geometric object, and then
         define a new bounding box from boundaries of that geometry. The resulting bounding box might be larger than
-        original bounding box but it will always completely cover it.
+        original bounding box, but it will always completely cover it.
 
         :param crs: target CRS
         :type crs: constants.CRS
@@ -407,7 +407,7 @@ class Geometry(BaseGeometry):
     """A class that combines shapely geometry with coordinate reference system. It currently supports polygons and
     multipolygons.
 
-    It can be initialize with any of the following geometry representations:
+    It can be initialized with any of the following geometry representations:
     - `shapely.geometry.Polygon` or `shapely.geometry.MultiPolygon`
     - A GeoJSON dictionary with (multi)polygon coordinates
     - A WKT string with (multi)polygon coordinates

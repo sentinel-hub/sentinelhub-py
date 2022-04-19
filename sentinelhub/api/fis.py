@@ -20,8 +20,8 @@ class FisRequest(OgcRequest):
     def __init__(self, layer, time, geometry_list, *, resolution="10m", bins=None, histogram_type=None, **kwargs):
         """
         :param layer: An ID of a layer configured in Sentinel Hub Dashboard. It has to be configured for the same
-            instance ID which will be used for this request. Also the satellite collection of the layer in Dashboard
-            must match the one given by `data_collection` parameter
+            instance ID which will be used for this request. The satellite collection of the layer in Dashboard
+            must also match the one given by `data_collection` parameter.
         :type layer: str
         :param time: time or time range for which to return the results, in ISO8601 format
             (year-month-date, for example: ``2016-01-01``, or year-month-dateThours:minutes:seconds format,

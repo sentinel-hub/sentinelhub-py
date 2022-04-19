@@ -60,7 +60,7 @@ class SentinelHubFeatureIterator(FeatureIterator):
     def __init__(self, *args, exception_message=None, **kwargs):
         """
         :param args: Arguments passed to FeatureIterator
-        :param exception_message: A message to be raise if no feature are found
+        :param exception_message: A message to be raised if no features are found
         :type exception_message: str
         :param kwargs: Keyword arguments passed to FeatureIterator
         """

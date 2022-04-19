@@ -111,7 +111,7 @@ class GeopediaImageRequest(GeopediaRequest):
             ``constants.MimeType.PNG``.
         :type image_format: constants.MimeType
         :param gpd_session: Optional parameter for specifying a custom Geopedia session, which can also contain login
-            credentials. This can be used for accessing private Geopedia layers. By default it is set to `None` and a
+            credentials. This can be used for accessing private Geopedia layers. By default, it is set to `None` and a
             basic Geopedia session without credentials will be created.
         :type gpd_session: GeopediaSession or None
         :param data_folder: Location of the directory where the fetched data will be saved.

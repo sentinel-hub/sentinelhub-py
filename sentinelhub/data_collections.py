@@ -107,7 +107,7 @@ def _shallow_asdict(dataclass_instance):
 
 
 class _DataCollectionMeta(EnumMeta):
-    """Meta class that builds DataCollection class enums"""
+    """Metaclass that builds DataCollection class enums"""
 
     def __getattribute__(cls, item, *args, **kwargs):
         """This is executed whenever `DataCollection.SOMETHING` is called
@@ -210,7 +210,7 @@ class DataCollection(Enum, metaclass=_DataCollectionMeta):
     """An enum class for data collections
 
     It contains a number of predefined data collections, which are the most commonly used with Sentinel Hub service.
-    Additionally it also allows defining new data collections by specifying data collection parameters relevant for
+    Additionally, it also allows defining new data collections by specifying data collection parameters relevant for
     the service. Check `DataCollection.define` and similar methods for more.
     """
 

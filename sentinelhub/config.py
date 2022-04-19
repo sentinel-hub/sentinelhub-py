@@ -290,7 +290,7 @@ class SHConfig:
     def get_sh_oauth_url(self):
         """Provides URL for Sentinel Hub authentication endpoint
 
-        :return: An URL endpoint
+        :return: A URL endpoint
         :rtype: str
         """
         return f"{self.sh_auth_base_url}/oauth/token"
@@ -298,7 +298,7 @@ class SHConfig:
     def get_sh_process_api_url(self):
         """Provides URL for Sentinel Hub Process API endpoint
 
-        :return: An URL endpoint
+        :return: A URL endpoint
         :rtype: str
         """
         return f"{self.sh_base_url}/api/v1/process"
@@ -306,7 +306,7 @@ class SHConfig:
     def get_sh_ogc_url(self):
         """Provides URL for Sentinel Hub OGC endpoint
 
-        :return: An URL endpoint
+        :return: A URL endpoint
         :rtype: str
         """
         ogc_endpoint = "v1" if self.has_eocloud_url() else "ogc"
@@ -315,7 +315,7 @@ class SHConfig:
     def get_sh_rate_limit_url(self):
         """Provides URL for Sentinel Hub rate limiting endpoint
 
-        :return: An URL endpoint
+        :return: A URL endpoint
         :rtype: str
         """
         return f"{self.sh_auth_base_url}/aux/ratelimit"

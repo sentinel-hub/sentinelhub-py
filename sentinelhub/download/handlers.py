@@ -103,7 +103,7 @@ def _create_download_failed_message(exception, url):
 
     :param exception: Exception raised during download
     :type exception: Exception
-    :param url: An URL from where download was attempted
+    :param url: A URL from where download was attempted
     :type url: str
     :return: Error message
     :rtype: str

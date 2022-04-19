@@ -51,7 +51,7 @@ class SentinelHubBatch(SentinelHubService):
         :param output: A dictionary with output parameters. It can be built with `output` method. Alternatively, one
             can set `bucket_name` parameter instead.
         :type output: dict or None
-        :param bucket_name: A name of an s3 bucket where to save data. Alternatively, one can set `output` parameter
+        :param bucket_name: A name of an S3 bucket where to save data. Alternatively, one can set `output` parameter
             to specify more output parameters.
         :type bucket_name: str or None
         :param description: A description of a batch request
@@ -455,28 +455,28 @@ class SentinelHubBatch(SentinelHubService):
         return self.client.get_json(url=job_url, request_type=RequestType.POST, use_session=True)
 
     def _get_process_url(self, request_id=None):
-        """Creates an URL for process endpoint"""
+        """Creates a URL for process endpoint"""
         url = f"{self.service_url}/process"
         if request_id:
             return f"{url}/{request_id}"
         return url
 
     def _get_tiles_url(self, request_id, tile_id=None):
-        """Creates an URL for tiles endpoint"""
+        """Creates a URL for tiles endpoint"""
         url = f"{self._get_process_url(request_id)}/tiles"
         if tile_id:
             return f"{url}/{tile_id}"
         return url
 
     def _get_tiling_grids_url(self, grid_id=None):
-        """Creates an URL for tiling grids endpoint"""
+        """Creates a URL for tiling grids endpoint"""
         url = f"{self.service_url}/tilinggrids"
         if grid_id:
             return f"{url}/{grid_id}"
         return url
 
     def _get_collections_url(self, collection_id=None):
-        """Creates an URL for batch collections endpoint"""
+        """Creates a URL for batch collections endpoint"""
         url = f"{self.service_url}/collections"
         if collection_id:
             return f"{url}/{collection_id}"
@@ -554,20 +554,20 @@ class BatchRequest:
 
     request_id: str = field(metadata=dataclass_config(field_name="id"))
     process_request: dict
+    tile_count: int
+    status: BatchRequestStatus = field(metadata=enum_config(BatchRequestStatus))
     other_data: CatchAll
     user_id: Optional[str] = None
     created: Optional[dt.datetime] = field(metadata=datetime_config, default=None)
-    tiling_grid: Optional[dict] = None
-    output: Optional[dict] = None
+    tiling_grid: dict = field(default_factory=dict)
+    output: dict = field(default_factory=dict)
     bucket_name: Optional[str] = None
     description: Optional[str] = None
     value_estimate: Optional[float] = None
-    tile_count: Optional[int] = None
     tile_width_px: Optional[int] = None
     tile_height_px: Optional[int] = None
     user_action: Optional[BatchUserAction] = field(metadata=enum_config(BatchUserAction), default=None)
     user_action_updated: Optional[str] = field(metadata=datetime_config, default=None)
-    status: Optional[BatchRequestStatus] = field(metadata=enum_config(BatchRequestStatus), default=None)
     error: Optional[str] = None
 
     _REPR_PARAM_NAMES = [
@@ -692,7 +692,7 @@ def monitor_batch_job(
         case a batch job is still being analysed this function will wait until the analysis ends.
       - This function will be continuously collecting tile information from Sentinel Hub service. To avoid making too
         many requests please make sure to adjust `sleep_time` parameter according to the size of your job. Larger jobs
-        don't need too frequent tile status updates.
+        don't need very frequent tile status updates.
       - Some information about the progress of this function is reported to logging level INFO.
 
     :param batch_request: An object with information about a batch request. Alternatively, it could only be a batch

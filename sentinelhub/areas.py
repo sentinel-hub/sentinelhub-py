@@ -179,11 +179,11 @@ class AreaSplitter(ABC):
         :rtype: BBox
         """
         bbox_list = [BBox(shape.bounds, crs=self.crs) for shape in self.shape_list]
-        area_minx = min([bbox.lower_left[0] for bbox in bbox_list])
-        area_miny = min([bbox.lower_left[1] for bbox in bbox_list])
-        area_maxx = max([bbox.upper_right[0] for bbox in bbox_list])
-        area_maxy = max([bbox.upper_right[1] for bbox in bbox_list])
-        bbox = BBox([area_minx, area_miny, area_maxx, area_maxy], crs=self.crs)
+        area_min_x = min([bbox.lower_left[0] for bbox in bbox_list])
+        area_min_y = min([bbox.lower_left[1] for bbox in bbox_list])
+        area_max_x = max([bbox.upper_right[0] for bbox in bbox_list])
+        area_max_y = max([bbox.upper_right[1] for bbox in bbox_list])
+        bbox = BBox([area_min_x, area_min_y, area_max_x, area_max_y], crs=self.crs)
         if crs is None:
             return bbox
         return bbox.transform(crs)
@@ -661,7 +661,7 @@ class UtmZoneSplitter(BaseUtmSplitter):
     def _get_utm_polygons(self):
         """Find UTM zones overlapping with input area shape
 
-        The returned geometry corresponds to the a triangle ranging from the equator to the north/south pole
+        The returned geometry corresponds to a triangle ranging from the equator to the North/South Pole
 
         :return: List of geometries and properties of UTM zones overlapping with input area shape
         :rtype: list

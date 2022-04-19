@@ -8,7 +8,7 @@ from sentinelhub.aws import AwsConstants, AwsProductRequest, AwsTileRequest
 
 @pytest.fixture(name="safe_folder", scope="session")
 def safe_folder_fixture(input_folder):
-    """Provides a folder each file contains a definition of a .SAFE structure on how it will be reconstructred from
+    """Provides a folder each file contains a definition of a .SAFE structure on how it will be reconstructed from
     files from AWS S3 buckets."""
     return os.path.join(input_folder, "aws_safe")
 
