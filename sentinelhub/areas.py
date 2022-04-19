@@ -123,7 +123,7 @@ class AreaSplitter(ABC):
             be the default CRS of the splitter.
         :type crs: CRS or None
         :param buffer: A percentage of each BBox size increase. This will cause neighbouring bounding boxes to overlap.
-        :type buffer: float or None
+        :type buffer: (float, float) or float or None
         :param reduce_bbox_sizes: If `True` it will reduce the sizes of bounding boxes so that they will tightly
             fit the given geometry in `shape_list`. This overrides the same parameter from constructor
         :type reduce_bbox_sizes: bool
@@ -132,7 +132,7 @@ class AreaSplitter(ABC):
         """
         bbox_list = self.bbox_list
         if buffer:
-            bbox_list = [bbox.buffer(buffer) for bbox in bbox_list]
+            bbox_list = [bbox.buffer(relative=buffer) for bbox in bbox_list]
 
         if reduce_bbox_sizes is None:
             reduce_bbox_sizes = self.reduce_bbox_sizes
@@ -614,7 +614,7 @@ class BaseUtmSplitter(AreaSplitter):
         bounding boxes
 
         :param buffer: A percentage of each BBox size increase. This will cause neighbouring bounding boxes to overlap.
-        :type buffer: float or None
+        :type buffer: (float, float) or float or None
         :return: List of bounding boxes
         :rtype: list(BBox)
         """
