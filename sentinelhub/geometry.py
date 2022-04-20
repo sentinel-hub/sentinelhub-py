@@ -221,25 +221,45 @@ class BBox(BaseGeometry):
         bbox_geometry = bbox_geometry.transform(crs, always_xy=always_xy)
         return bbox_geometry.bbox
 
-    def buffer(self, buffer):
-        """Changes both BBox dimensions (width and height) by a percentage of size of each dimension. If number is
-        negative, the size will decrease. Returns a new instance of BBox object.
+    def buffer(self, buffer, *, relative=True):
+        """Provides a new bounding box with a size that is changed either by a relative or an absolute buffer.
 
-        :param buffer: A percentage of BBox size change
-        :type buffer: float
-        :return: A new bounding box of buffered size
+        :param buffer: The buffer can be provided either as a single number or a tuple of 2 numbers, one for buffer in
+            horizontal direction and one for buffer in vertical direction. The buffer can also be negative as long as
+            this doesn't reduce the bounding box into nothing.
+        :type buffer: (float, float) or float or None
+        :param relative: If `True` the given buffer values will be interpreted as a percentage of distance between
+            bounding box center point and its side edge (not to distance between opposite sides!). If `False` the given
+            buffer will be interpreted as an absolute buffer measured in bounding box coordinate units.
+        :type relative: bool
+        :return: A new bounding box of buffered size.
         :rtype: BBox
         """
-        if buffer < -1:
-            raise ValueError("Cannot reduce the bounding box to nothing, buffer must be >= -1.0")
-        ratio = 1 + buffer
-        mid_x, mid_y = self.middle
+        if isinstance(buffer, tuple):
+            buffer_x, buffer_y = buffer
+        elif isinstance(buffer, (int, float)):
+            buffer_x, buffer_y = buffer, buffer
+        else:
+            raise ValueError(f"Buffer should be a number or a tuple of 2 numbers, got {type(buffer)}")
+
+        size_x, size_y = self.max_x - self.min_x, self.max_y - self.min_y
+
+        if relative:
+            buffer_x = buffer_x * size_x / 2
+            buffer_y = buffer_y * size_y / 2
+
+        for absolute_buffer, size, direction in [(buffer_x, size_x, "horizontal"), (buffer_y, size_y, "vertical")]:
+            if 2 * absolute_buffer + size <= 0:
+                raise ValueError(
+                    f"Negative buffer is too large, cannot reduce the bounding box to nothing in {direction} direction"
+                )
+
         return BBox(
             (
-                mid_x - (mid_x - self.min_x) * ratio,
-                mid_y - (mid_y - self.min_y) * ratio,
-                mid_x + (self.max_x - mid_x) * ratio,
-                mid_y + (self.max_y - mid_y) * ratio,
+                self.min_x - buffer_x,
+                self.min_y - buffer_y,
+                self.max_x + buffer_x,
+                self.max_y + buffer_y,
             ),
             self.crs,
         )
