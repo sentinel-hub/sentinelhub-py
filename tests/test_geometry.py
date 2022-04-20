@@ -154,22 +154,20 @@ def test_geometry():
 def test_buffer():
     bbox = BBox([46.07, 13.23, 46.24, 13.57], CRS.WGS84)
 
-    assert bbox != bbox.buffer(relative=42)
-    assert bbox == bbox.buffer(relative=0)
-    assert bbox == bbox.buffer(relative=1).buffer(relative=-0.5)
-    assert bbox == bbox.buffer(relative=(10, -0.1)).buffer(relative=(-10 / 11, 1 / 9))
+    assert bbox != bbox.buffer(42)
+    assert bbox == bbox.buffer(0)
+    assert bbox == bbox.buffer(1).buffer(-0.5, relative=True)
+    assert bbox == bbox.buffer((10, -0.1)).buffer((-10 / 11, 1 / 9))
 
-    assert bbox != bbox.buffer(absolute=42)
-    assert bbox == bbox.buffer(absolute=0)
-    assert bbox == bbox.buffer(absolute=3).buffer(absolute=-3)
-    assert bbox == bbox.buffer(absolute=(-0.01, 0.2)).buffer(absolute=(0.01, -0.2))
+    assert bbox != bbox.buffer(42, relative=False)
+    assert bbox == bbox.buffer(0, relative=False)
+    assert bbox == bbox.buffer(3, relative=False).buffer(-3, relative=False)
+    assert bbox == bbox.buffer((-0.01, 0.2), relative=False).buffer((0.01, -0.2), relative=False)
 
     with pytest.raises(ValueError):
-        bbox.buffer(relative=2, absolute=3)
+        bbox.buffer(-1)
     with pytest.raises(ValueError):
-        bbox.buffer(relative=-1)
-    with pytest.raises(ValueError):
-        bbox.buffer(absolute=(1, -1))
+        bbox.buffer((1, -0.5), relative=False)
 
 
 @pytest.mark.parametrize("geometry", GEOMETRY_LIST)

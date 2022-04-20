@@ -221,43 +221,35 @@ class BBox(BaseGeometry):
         bbox_geometry = bbox_geometry.transform(crs, always_xy=always_xy)
         return bbox_geometry.bbox
 
-    def buffer(self, relative=None, absolute=None):
+    def buffer(self, buffer, *, relative=True):
         """Provides a new bounding box with a size that is changed either by a relative or an absolute buffer.
 
-        The buffer can be provided either as a single number or a tuple of 2 numbers, one for buffer in horizontal
-        direction and one for buffer in vertical direction. The buffer can also be negative as long as this doesn't
-        reduce the bounding box into nothing.
-
-        :param relative: A relative size by which to change a bounding box in each direction. The size is relative to
-            the distance between bounding box center point and its side edge (not to distance between opposite sides!).
-        :type relative: (float, float) or float or None
-        :param absolute: An absolute size by which to change a bounding box in each direction. The size is measured in
-            bounding box coordinate units.
-        :type absolute: (float, float) or float or None
+        :param buffer: The buffer can be provided either as a single number or a tuple of 2 numbers, one for buffer in
+            horizontal direction and one for buffer in vertical direction. The buffer can also be negative as long as
+            this doesn't reduce the bounding box into nothing.
+        :type buffer: (float, float) or float or None
+        :param relative: If `True` the given buffer values will be interpreted as a percentage of distance between
+            bounding box center point and its side edge (not to distance between opposite sides!). If `False` the given
+            buffer will be interpreted as an absolute buffer measured in bounding box coordinate units.
+        :type relative: bool
         :return: A new bounding box of buffered size.
         :rtype: BBox
         """
-        if (relative is None) is (absolute is None):
-            raise ValueError("Exactly one of the parameters 'relative' and 'absolute' can be given")
+        if isinstance(buffer, tuple):
+            buffer_x, buffer_y = buffer
+        elif isinstance(buffer, (int, float)):
+            buffer_x, buffer_y = buffer, buffer
+        else:
+            raise ValueError(f"Buffer should be a number or a tuple of 2 numbers, got {type(buffer)}")
 
         size_x, size_y = self.max_x - self.min_x, self.max_y - self.min_y
 
-        if relative is None:
-            if isinstance(absolute, tuple):
-                buffer_x, buffer_y = absolute
-            else:
-                buffer_x, buffer_y = absolute, absolute
-        else:
-            if isinstance(relative, tuple):
-                relative_buffer_x, relative_buffer_y = relative
-            else:
-                relative_buffer_x, relative_buffer_y = relative, relative
+        if relative:
+            buffer_x = buffer_x * size_x / 2
+            buffer_y = buffer_y * size_y / 2
 
-            buffer_x = relative_buffer_x * size_x / 2
-            buffer_y = relative_buffer_y * size_y / 2
-
-        for buffer, size, direction in [(buffer_x, size_x, "horizontal"), (buffer_y, size_y, "vertical")]:
-            if 2 * buffer + size <= 0:
+        for absolute_buffer, size, direction in [(buffer_x, size_x, "horizontal"), (buffer_y, size_y, "vertical")]:
+            if 2 * absolute_buffer + size <= 0:
                 raise ValueError(
                     f"Negative buffer is too large, cannot reduce the bounding box to nothing in {direction} direction"
                 )

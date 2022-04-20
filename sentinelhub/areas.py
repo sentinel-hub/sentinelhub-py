@@ -132,7 +132,7 @@ class AreaSplitter(ABC):
         """
         bbox_list = self.bbox_list
         if buffer:
-            bbox_list = [bbox.buffer(relative=buffer) for bbox in bbox_list]
+            bbox_list = [bbox.buffer(buffer, relative=True) for bbox in bbox_list]
 
         if reduce_bbox_sizes is None:
             reduce_bbox_sizes = self.reduce_bbox_sizes
