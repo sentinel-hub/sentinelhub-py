@@ -25,3 +25,21 @@ omit = [
     "config.json",
     ".utmzones.geojson"
 ]
+
+[tool.mypy]
+follow_imports = "normal"
+ignore_missing_imports = true
+show_column_numbers = true
+show_error_codes = true
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+# disallow_untyped_defs = true
+# disallow_untyped_decorators = true
+warn_unreachable = true
+strict_equality = true
+# these ones are really strict, maybe later
+# no_implicit_reexport = true  # this one has issues with eolearn not specifying __all__ when reexporting
+# disallow_untyped_calls = true
+# disallow_any_generics = true
+# warn_return_any = true
