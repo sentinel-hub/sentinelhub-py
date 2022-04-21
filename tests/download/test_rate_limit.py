@@ -124,7 +124,7 @@ FIXED_BUCKETS = [
     [
         (TRIAL_POLICY_BUCKETS, 5, 5, 0.5, 10, 6, 0),
         (TRIAL_POLICY_BUCKETS, 5, 5, 0.5, 14, 12, 10),
-        (SMALL_POLICY_BUCKETS, 3, 2, 0.1, 5, 3, 17),
+        (SMALL_POLICY_BUCKETS, 3, 2, 0.1, 5, 3, 18),
         (FIXED_BUCKETS, 2, 20, 0.0, 5, 0.6, 0),
     ],
 )
