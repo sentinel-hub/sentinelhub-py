@@ -1,4 +1,6 @@
-import warnings
+"""
+Tests for constants.py module
+"""
 
 import numpy as np
 import pyproj
@@ -35,6 +37,7 @@ def test_utm(lng, lat, epsg):
         ("EPSG:3857", CRS.POP_WEB),
         ({"init": "EPSG:32638"}, CRS.UTM_38N),
         (pyproj.CRS("+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs"), CRS.WGS84),
+        (pyproj.CRS(CRS.WGS84.pyproj_crs().to_wkt()), CRS.WGS84),
         ("urn:ogc:def:crs:epsg::32631", CRS.UTM_31N),
         ("urn:ogc:def:crs:OGC::CRS84", CRS.WGS84),
         (pyproj.CRS(3857), CRS.POP_WEB),
@@ -50,15 +53,6 @@ def test_crs_parsing_warn(parse_value, expected, warning):
     with pytest.warns(warning):
         parsed_result = CRS(parse_value)
         assert parsed_result == expected
-
-
-def test_failed_crs_parsing():
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore")
-        wgs84_with_init = pyproj.CRS({"init": "epsg:4326"})
-
-    with pytest.raises(ValueError):
-        CRS(wgs84_with_init)
 
 
 @pytest.mark.parametrize(
