@@ -6,27 +6,25 @@ import struct
 import tarfile
 import warnings
 from io import BytesIO, IOBase
-from typing import Union
+from typing import Any, Dict, Union
 from xml.etree import ElementTree
 
 import numpy as np
 import PIL
 import tifffile as tiff
 from PIL import Image
+from requests import Response
 
 from .constants import MimeType
 from .exceptions import ImageDecodingError, SHUserWarning
 
 
-def decode_data(response_content, data_type):
+def decode_data(response_content: bytes, data_type: MimeType) -> Any:
     """Interprets downloaded data and returns it.
 
     :param response_content: downloaded data (i.e. json, png, tiff, xml, zip, ... file)
-    :type response_content: bytes
     :param data_type: expected downloaded data type
-    :type data_type: constants.MimeType
     :return: downloaded data
-    :rtype: numpy array in case of image data type, or other possible data type
     :raises: ValueError
     """
     if data_type is MimeType.JSON:
@@ -51,16 +49,13 @@ def decode_data(response_content, data_type):
         raise ValueError(f"Decoding data format {data_type} is not supported") from exception
 
 
-def decode_image(data, image_type):
+def decode_image(data: bytes, image_type: MimeType) -> np.ndarray:
     """Decodes the image provided in various formats, i.e. png, 16-bit float tiff, 32-bit float tiff, jp2
     and returns it as a numpy array
 
     :param data: image in its original format
-    :type data: any of possible image types
     :param image_type: expected image format
-    :type image_type: constants.MimeType
     :return: image as numpy array
-    :rtype: numpy array
     :raises: ImageDecodingError
     """
     bytes_data = BytesIO(data)
@@ -124,30 +119,30 @@ def decode_jp2_image(stream: IOBase) -> np.ndarray:
     return fix_jp2_image(image, bit_depth)
 
 
-def decode_tar(data):
+def decode_tar(data: Union[bytes, BytesIO]) -> Dict[str, object]:
     """A decoder to convert response bytes into a dictionary of {filename: value}
 
     :param data: Data to decode
-    :type data: bytes or IOBase
     :return: A dictionary of decoded files from a tar file
-    :rtype: dict(str: object)
     """
     if isinstance(data, bytes):
         data = BytesIO(data)
 
     with tarfile.open(fileobj=data) as tar:
-        file_members = (member for member in tar.getmembers() if member.isfile())
-        itr = ((member.name, get_data_format(member.name), tar.extractfile(member)) for member in file_members)
-        return {filename: decode_data(file.read(), file_type) for filename, file_type, file in itr}
+        decoded_files = {}
+        for member in tar.getmembers():
+            file = tar.extractfile(member)
+            if file is not None:
+                decoded_files[member.name] = decode_data(file.read(), get_data_format(member.name))
+
+        return decoded_files
 
 
-def decode_sentinelhub_err_msg(response):
+def decode_sentinelhub_err_msg(response: Response) -> str:
     """Decodes error message from Sentinel Hub service
 
     :param response: Sentinel Hub service response
-    :type response: requests.Response
     :return: An error message
-    :rtype: str
     """
     try:
         server_message = []
@@ -159,13 +154,11 @@ def decode_sentinelhub_err_msg(response):
         return response.text
 
 
-def get_jp2_bit_depth(stream):
+def get_jp2_bit_depth(stream: IOBase) -> int:
     """Reads a bit encoding depth of jpeg2000 file in binary stream format
 
     :param stream: binary stream format
-    :type stream: Binary I/O (e.g. io.BytesIO, io.BufferedReader, ...)
     :return: bit depth
-    :rtype: int
     """
     stream.seek(0)
     while True:
@@ -181,16 +174,13 @@ def get_jp2_bit_depth(stream):
             return (params[3] & 0x7F) + 1
 
 
-def fix_jp2_image(image, bit_depth):
+def fix_jp2_image(image: np.ndarray, bit_depth: int) -> np.ndarray:
     """Because Pillow library incorrectly reads JPEG 2000 images with 15-bit encoding this function corrects the
     values in image.
 
     :param image: image read by opencv library
-    :type image: numpy array
     :param bit_depth: A bit depth of jp2 image encoding
-    :type bit_depth: int
     :return: corrected image
-    :rtype: numpy array
     """
     if bit_depth in [8, 16]:
         return image
@@ -208,13 +198,11 @@ def fix_jp2_image(image, bit_depth):
     )
 
 
-def get_data_format(filename):
+def get_data_format(filename: str) -> MimeType:
     """Util function to guess format from filename extension
 
     :param filename: name of file
-    :type filename: str
     :return: file extension
-    :rtype: MimeType
     """
     fmt_ext = filename.split(".")[-1]
     return MimeType.from_string(fmt_ext)
