@@ -2,52 +2,44 @@
 Utility tools for writing unit tests for packages which rely on `sentinelhub-py`
 """
 import os
+from typing import Optional, Tuple
 
 import numpy as np
 from pytest import approx
 
 
-def get_input_folder(current_file):
+def get_input_folder(current_file: str) -> str:
     """Use fixtures if possible. This is meant only for test cases"""
     return os.path.join(os.path.dirname(os.path.realpath(current_file)), "TestInputs")
 
 
-def get_output_folder(current_file):
+def get_output_folder(current_file: str) -> str:
     """Use fixtures if possible. This is meant only for test cases"""
     return os.path.join(os.path.dirname(os.path.realpath(current_file)), "TestOutputs")
 
 
 def test_numpy_data(
-    data=None,
-    exp_shape=None,
-    exp_dtype=None,
-    exp_min=None,
-    exp_max=None,
-    exp_mean=None,
-    exp_median=None,
-    exp_std=None,
-    delta=None,
-):
+    data: Optional[np.ndarray] = None,
+    exp_shape: Optional[Tuple[int, ...]] = None,
+    exp_dtype: Optional[np.dtype] = None,
+    exp_min: Optional[float] = None,
+    exp_max: Optional[float] = None,
+    exp_mean: Optional[float] = None,
+    exp_median: Optional[float] = None,
+    exp_std: Optional[float] = None,
+    delta: Optional[float] = None,
+) -> None:
     """Validates basic statistics of data array
 
     :param data: Data array
-    :type data: numpy.ndarray
     :param exp_shape: Expected shape
-    :type exp_shape: tuple(int)
     :param exp_dtype: Expected dtype
-    :type exp_dtype: numpy.dtype
     :param exp_min: Expected minimal value
-    :type exp_min: float
     :param exp_max: Expected maximal value
-    :type exp_max: float
     :param exp_mean: Expected mean value
-    :type exp_mean: float
     :param exp_median: Expected median value
-    :type exp_median: float
     :param exp_std: Expected standard deviation value
-    :type exp_std: float
     :param delta: Precision of validation (relative). If not set, it will be set automatically
-    :type delta: float
     """
     if data is None:
         return
@@ -68,7 +60,7 @@ def test_numpy_data(
     data_stats, exp_stats = {}, {}
     for name, (func, expected) in stats_suite.items():
         if expected is not None:
-            data_stats[name] = func(data)
+            data_stats[name] = func(data)  # type: ignore # unknown function
             exp_stats[name] = expected if name in is_precise else approx(expected, rel=delta)
 
     assert data_stats == exp_stats, "Statistics differ from expected values"

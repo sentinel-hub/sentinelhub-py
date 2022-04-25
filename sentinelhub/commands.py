@@ -2,14 +2,18 @@
 Module that implements command line interface for the package
 """
 
+from typing import Any, Callable, TypeVar
+
 import click
 
 from .config import SHConfig
 from .download import DownloadClient, DownloadRequest
 
+FC = TypeVar("FC", bound=Callable[..., Any])
+
 
 @click.command()
-def main_help():
+def main_help() -> None:
     """
     Welcome to sentinelhub Python library command line help.
 
@@ -24,7 +28,7 @@ def main_help():
     """
 
 
-def _config_options(func):
+def _config_options(func: FC) -> FC:
     """A helper function which joins click.option functions of each parameter from config.json"""
     for param in SHConfig().get_params()[-1::-1]:
         func = click.option(f"--{param}", param, help=f'Set new values to configuration parameter "{param}"')(func)
@@ -35,7 +39,7 @@ def _config_options(func):
 @click.option("--show", is_flag=True, default=False, help="Show current configuration")
 @click.option("--reset", is_flag=True, default=False, help="Reset configuration to initial state")
 @_config_options
-def config(show, reset, **params):
+def config(show: bool, reset: bool, **params: Any) -> None:
     """Inspect and configure parameters in your local sentinelhub configuration file
 
     \b
@@ -80,7 +84,7 @@ def config(show, reset, **params):
 @click.argument("url")
 @click.argument("filename", type=click.Path())
 @click.option("-r", "--redownload", is_flag=True, default=False, help="Redownload existing files")
-def download(url, filename, redownload):
+def download(url: str, filename: str, redownload: bool) -> None:
     """Download from custom created URL into custom created file path
 
     \b

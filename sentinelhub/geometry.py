@@ -1,58 +1,55 @@
 """
 Module implementing geometry classes
 """
-from abc import ABC, abstractmethod
+from abc import ABCMeta, abstractmethod
 from math import ceil
+from typing import Iterator, List, Optional, Tuple, Union
 
 import shapely.geometry
 import shapely.ops
 import shapely.wkt
+from shapely.geometry import MultiPolygon, Polygon
+from shapely.geometry.base import BaseGeometry
 
 from .constants import CRS
 from .geo_utils import transform_point
 
 
-class BaseGeometry(ABC):
+class _BaseGeometry(metaclass=ABCMeta):
     """Base geometry class"""
 
-    def __init__(self, crs):
+    def __init__(self, crs: CRS):
         """
         :param crs: Coordinate reference system of the geometry
-        :type crs: constants.CRS
         """
         self._crs = CRS(crs)
 
     @property
-    def crs(self):
+    def crs(self) -> CRS:
         """Returns the coordinate reference system (CRS)
 
         :return: Coordinate reference system Enum
-        :rtype: constants.CRS
         """
         return self._crs
 
     @property
     @abstractmethod
-    def geometry(self):
+    def geometry(self) -> Union[Polygon, MultiPolygon]:
         """An abstract property - every subclass must implement geometry property"""
-        raise NotImplementedError
 
     @property
-    def geojson(self):
+    def geojson(self) -> dict:
         """Returns representation in a GeoJSON format. Use `json.dump` for writing it to file.
 
         :return: A dictionary in GeoJSON format
-        :rtype: dict
         """
         return self.get_geojson(with_crs=True)
 
-    def get_geojson(self, with_crs=True):
+    def get_geojson(self, with_crs: bool = True) -> dict:
         """Returns representation in a GeoJSON format. Use `json.dump` for writing it to file.
 
         :param with_crs: A flag indicating if GeoJSON dictionary should contain CRS part
-        :type with_crs: bool
         :return: A dictionary in GeoJSON format
-        :rtype: dict
         """
         geometry_geojson = shapely.geometry.mapping(self.geometry)
 
@@ -60,21 +57,20 @@ class BaseGeometry(ABC):
             return {**self._crs_to_geojson(), **geometry_geojson}
         return geometry_geojson
 
-    def _crs_to_geojson(self):
+    def _crs_to_geojson(self) -> dict:
         """Helper method which generates part of GeoJSON format related to CRS"""
         return {"crs": {"type": "name", "properties": {"name": f"urn:ogc:def:crs:EPSG::{self.crs.value}"}}}
 
     @property
-    def wkt(self):
+    def wkt(self) -> str:
         """Transforms geometry object into `Well-known text` format
 
         :return: string in WKT format
-        :rtype: str
         """
         return self.geometry.wkt
 
 
-class BBox(BaseGeometry):
+class BBox(_BaseGeometry):
     """Class representing a bounding box in a given CRS.
 
     Throughout the sentinelhub package this class serves as the canonical representation of a bounding
@@ -97,11 +93,10 @@ class BBox(BaseGeometry):
     - In case of ``constants.CRS.UTM_*`` axis x represents easting and axis y represents northing.
     """
 
-    def __init__(self, bbox, crs):
+    def __init__(self, bbox: Union["BBox", tuple, list, dict, str, BaseGeometry], crs: CRS):
         """
         :param bbox: A bbox in any valid representation
         :param crs: Coordinate reference system of the bounding box
-        :type crs: constants.CRS
         """
         x_fst, y_fst, x_snd, y_snd = BBox._to_tuple(bbox)
         self.min_x = min(x_fst, x_snd)
@@ -111,74 +106,66 @@ class BBox(BaseGeometry):
 
         super().__init__(crs)
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator[float]:
         """This method enables iteration over coordinates of bounding box"""
         return iter(self.lower_left + self.upper_right)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """Class representation"""
         return f"{self.__class__.__name__}(({self.lower_left}, {self.upper_right}), crs={repr(self.crs)})"
 
-    def __str__(self, reverse=False):
+    def __str__(self, reverse: bool = False) -> str:
         """Transforms bounding box into a string of coordinates
 
         :param reverse: `True` if x and y coordinates should be switched and `False` otherwise
-        :type reverse: bool
         :return: String of coordinates
-        :rtype: str
         """
         if reverse:
             return f"{self.min_y},{self.min_x},{self.max_y},{self.max_x}"
         return f"{self.min_x},{self.min_y},{self.max_x},{self.max_y}"
 
-    def __eq__(self, other):
+    def __eq__(self, other: object) -> bool:
         """Method for comparing two bounding boxes
 
         :param other: Another bounding box object
-        :type other: BBox
         :return: `True` if bounding boxes have the same coordinates and the same CRS and `False otherwise
-        :rtype: bool
         """
-        if not isinstance(other, BBox):
-            return False
-        return list(self) == list(other) and self.crs is other.crs
+        if isinstance(other, BBox):
+            return list(self) == list(other) and self.crs is other.crs
+        return False
 
     @property
-    def lower_left(self):
+    def lower_left(self) -> Tuple[float, float]:
         """Returns the lower left vertex of the bounding box
 
         :return: min_x, min_y
-        :rtype: (float, float)
         """
         return self.min_x, self.min_y
 
     @property
-    def upper_right(self):
+    def upper_right(self) -> Tuple[float, float]:
         """Returns the upper right vertex of the bounding box
 
         :return: max_x, max_y
-        :rtype: (float, float)
         """
         return self.max_x, self.max_y
 
     @property
-    def middle(self):
+    def middle(self) -> Tuple[float, float]:
         """Returns the middle point of the bounding box
 
         :return: middle point
-        :rtype: (float, float)
         """
         return (self.min_x + self.max_x) / 2, (self.min_y + self.max_y) / 2
 
-    def reverse(self):
+    def reverse(self) -> "BBox":
         """Returns a new BBox object where x and y coordinates are switched
 
         :return: New BBox object with switched coordinates
-        :rtype: BBox
         """
         return BBox((self.min_y, self.min_x, self.max_y, self.max_x), crs=self.crs)
 
-    def transform(self, crs, always_xy=True):
+    def transform(self, crs: CRS, always_xy: bool = True) -> "BBox":
         """Transforms BBox from current CRS to target CRS
 
         This transformation will take lower left and upper right corners of the bounding box, transform these 2 points
@@ -186,12 +173,9 @@ class BBox(BaseGeometry):
         bounding box but at least the transformation is reversible.
 
         :param crs: target CRS
-        :type crs: constants.CRS
         :param always_xy: Parameter that is passed to `pyproj.Transformer` object and defines axis order for
             transformation. The default value `True` is in most cases the correct one.
-        :type always_xy: bool
         :return: Bounding box in target CRS
-        :rtype: BBox
         """
         new_crs = CRS(crs)
         return BBox(
@@ -202,7 +186,7 @@ class BBox(BaseGeometry):
             crs=new_crs,
         )
 
-    def transform_bounds(self, crs, always_xy=True):
+    def transform_bounds(self, crs: CRS, always_xy: bool = True) -> "BBox":
         """Alternative way to transform BBox from current CRS to target CRS.
 
         This transformation will transform the bounding box geometry to another CRS as a geometric object, and then
@@ -210,30 +194,24 @@ class BBox(BaseGeometry):
         original bounding box, but it will always completely cover it.
 
         :param crs: target CRS
-        :type crs: constants.CRS
         :param always_xy: Parameter that is passed to `pyproj.Transformer` object and defines axis order for
             transformation. The default value `True` is in most cases the correct one.
-        :type always_xy: bool
         :return: Bounding box in target CRS
-        :rtype: BBox
         """
         bbox_geometry = Geometry(self.geometry, self.crs)
         bbox_geometry = bbox_geometry.transform(crs, always_xy=always_xy)
         return bbox_geometry.bbox
 
-    def buffer(self, buffer, *, relative=True):
+    def buffer(self, buffer: Union[float, Tuple[float, float]], *, relative: bool = True) -> "BBox":
         """Provides a new bounding box with a size that is changed either by a relative or an absolute buffer.
 
         :param buffer: The buffer can be provided either as a single number or a tuple of 2 numbers, one for buffer in
             horizontal direction and one for buffer in vertical direction. The buffer can also be negative as long as
             this doesn't reduce the bounding box into nothing.
-        :type buffer: (float, float) or float or None
         :param relative: If `True` the given buffer values will be interpreted as a percentage of distance between
             bounding box center point and its side edge (not to distance between opposite sides!). If `False` the given
             buffer will be interpreted as an absolute buffer measured in bounding box coordinate units.
-        :type relative: bool
         :return: A new bounding box of buffered size.
-        :rtype: BBox
         """
         if isinstance(buffer, tuple):
             buffer_x, buffer_y = buffer
@@ -264,14 +242,12 @@ class BBox(BaseGeometry):
             self.crs,
         )
 
-    def get_polygon(self, reverse=False):
+    def get_polygon(self, reverse: bool = False) -> Tuple[Tuple[float, float], ...]:
         """Returns a tuple of coordinates of 5 points describing a polygon. Points are listed in clockwise order, first
         point is the same as the last.
 
         :param reverse: `True` if x and y coordinates should be switched and `False` otherwise
-        :type reverse: bool
         :return: `((x_1, y_1), ... , (x_5, y_5))`
-        :rtype: tuple(tuple(float))
         """
         bbox = self.reverse() if reverse else self
         polygon = (
@@ -284,15 +260,20 @@ class BBox(BaseGeometry):
         return polygon
 
     @property
-    def geometry(self):
+    def geometry(self) -> shapely.geometry.Polygon:
         """Returns polygon geometry in shapely format
 
         :return: A polygon in shapely format
-        :rtype: shapely.geometry.polygon.Polygon
         """
         return shapely.geometry.Polygon(self.get_polygon())
 
-    def get_partition(self, num_x=None, num_y=None, size_x=None, size_y=None):
+    def get_partition(
+        self,
+        num_x: Optional[int] = None,
+        num_y: Optional[int] = None,
+        size_x: Optional[float] = None,
+        size_y: Optional[float] = None,
+    ) -> List[List["BBox"]]:
         """Partitions bounding box into smaller bounding boxes of the same size.
 
         If `num_x` and `num_y` are specified, the total number of BBoxes is know but not the size. If `size_x` and
@@ -300,15 +281,10 @@ class BBox(BaseGeometry):
         case, the generated bounding boxes might cover an area larger than the parent BBox.
 
         :param num_x: Number of parts BBox will be horizontally divided into.
-        :type num_x: int or None
         :param num_y: Number of parts BBox will be vertically divided into.
-        :type num_y: int or None
         :param size_x: Physical dimension of BBox along easting coordinate
-        :type size_x: float or None
         :param size_y: Physical dimension of BBox along northing coordinate
-        :type size_y: float or None
         :return: Two-dimensional list of smaller bounding boxes. Their location is
-        :rtype: list(list(BBox))
         """
         if (num_x is not None and num_y is not None) and (size_x is None and size_y is None):
             size_x, size_y = (self.max_x - self.min_x) / num_x, (self.max_y - self.min_y) / num_y
@@ -333,24 +309,20 @@ class BBox(BaseGeometry):
             for i in range(num_x)
         ]
 
-    def get_transform_vector(self, resx, resy):
+    def get_transform_vector(self, resx: float, resy: float) -> Tuple[float, float, float, float, float, float]:
         """Given resolution it returns a transformation vector
 
         :param resx: Resolution in x direction
-        :type resx: float or int
         :param resy: Resolution in y direction
-        :type resy: float or int
         :return: A tuple with 6 numbers representing transformation vector
-        :rtype: tuple(float)
         """
         return self.min_x, self._parse_resolution(resx), 0, self.max_y, 0, -self._parse_resolution(resy)
 
     @staticmethod
-    def _parse_resolution(res):
+    def _parse_resolution(res: Union[str, int, float]) -> float:
         """Helper method for parsing given resolution. It will also try to parse a string into float
 
         :return: A float value of resolution
-        :rtype: float
         """
         if isinstance(res, str):
             return float(res.strip("m"))
@@ -360,7 +332,7 @@ class BBox(BaseGeometry):
         raise TypeError(f"Resolution should be a float, got resolution of type {type(res)}")
 
     @staticmethod
-    def _to_tuple(bbox):
+    def _to_tuple(bbox: Union["BBox", tuple, list, dict, str, BaseGeometry]) -> Tuple[float, float, float, float]:
         """Converts the input bbox representation (see the constructor docstring for a list of valid representations)
         into a flat tuple
 
@@ -376,12 +348,12 @@ class BBox(BaseGeometry):
             return BBox._tuple_from_dict(bbox)
         if isinstance(bbox, BBox):
             return BBox._tuple_from_bbox(bbox)
-        if isinstance(bbox, shapely.geometry.base.BaseGeometry):
+        if isinstance(bbox, BaseGeometry):
             return bbox.bounds
         raise TypeError("Invalid bbox representation")
 
     @staticmethod
-    def _tuple_from_list_or_tuple(bbox):
+    def _tuple_from_list_or_tuple(bbox: Union[list, tuple]) -> Tuple[float, float, float, float]:
         """Converts a list or tuple representation of a bbox into a flat tuple representation.
 
         :param bbox: a list or tuple with 4 coordinates that is either flat or nested
@@ -389,22 +361,22 @@ class BBox(BaseGeometry):
         :raises: TypeError
         """
         if len(bbox) == 4:
-            return tuple(map(float, bbox))
+            return tuple(map(float, bbox))  # type: ignore # iterator length
         if len(bbox) == 2 and all(isinstance(point, (list, tuple)) for point in bbox):
             return BBox._tuple_from_list_or_tuple(bbox[0] + bbox[1])
         raise TypeError("Expected a valid list or tuple representation of a bbox")
 
     @staticmethod
-    def _tuple_from_str(bbox):
+    def _tuple_from_str(bbox: str) -> Tuple[float, float, float, float]:
         """Parses a string of numbers separated by any combination of commas and spaces
 
         :param bbox: e.g. str of the form `min_x ,min_y  max_x, max_y`
         :return: tuple (min_x,min_y,max_x,max_y)
         """
-        return tuple(float(s) for s in bbox.replace(",", " ").split() if s)
+        return tuple(float(s) for s in bbox.replace(",", " ").split() if s)  # type: ignore # iterator length
 
     @staticmethod
-    def _tuple_from_dict(bbox):
+    def _tuple_from_dict(bbox: dict) -> Tuple[float, float, float, float]:
         """Converts a dictionary representation of a bbox into a flat tuple representation
 
         :param bbox: a dict with keys "min_x, "min_y", "max_x", and "max_y"
@@ -414,7 +386,7 @@ class BBox(BaseGeometry):
         return bbox["min_x"], bbox["min_y"], bbox["max_x"], bbox["max_y"]
 
     @staticmethod
-    def _tuple_from_bbox(bbox):
+    def _tuple_from_bbox(bbox: "BBox") -> Tuple[float, float, float, float]:
         """Converts a BBox instance into a tuple
 
         :param bbox: An instance of the BBox type
@@ -423,7 +395,7 @@ class BBox(BaseGeometry):
         return bbox.lower_left + bbox.upper_right
 
 
-class Geometry(BaseGeometry):
+class Geometry(_BaseGeometry):
     """A class that combines shapely geometry with coordinate reference system. It currently supports polygons and
     multipolygons.
 
@@ -433,51 +405,43 @@ class Geometry(BaseGeometry):
     - A WKT string with (multi)polygon coordinates
     """
 
-    def __init__(self, geometry, crs):
+    def __init__(self, geometry: Union[Polygon, MultiPolygon, dict, str], crs: CRS):
         """
         :param geometry: A polygon or multipolygon in any valid representation
-        :type geometry: shapely.geometry.Polygon or shapely.geometry.MultiPolygon or dict or str
         :param crs: Coordinate reference system of the geometry
-        :type crs: constants.CRS
         """
         self._geometry = self._parse_geometry(geometry)
 
         super().__init__(crs)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """Method for class representation"""
         return f"{self.__class__.__name__}({self.wkt}, crs={repr(self.crs)})"
 
-    def __eq__(self, other):
+    def __eq__(self, other: object) -> bool:
         """Method for comparing two Geometry classes
 
         :param other: Another Geometry object
-        :type other: Geometry
         :return: `True` if geometry objects have the same geometry and CRS and `False` otherwise
-        :rtype: bool
         """
-        if not isinstance(other, Geometry):
-            return False
-        return self.geometry == other.geometry and self.crs is other.crs
+        if isinstance(other, Geometry):
+            return self.geometry == other.geometry and self.crs is other.crs
+        return False
 
-    def reverse(self):
+    def reverse(self) -> "Geometry":
         """Returns a new Geometry object where x and y coordinates are switched
 
         :return: New Geometry object with switched coordinates
-        :rtype: Geometry
         """
         return Geometry(shapely.ops.transform(lambda x, y: (y, x), self.geometry), crs=self.crs)
 
-    def transform(self, crs, always_xy=True):
+    def transform(self, crs: CRS, always_xy: bool = True) -> "Geometry":
         """Transforms Geometry from current CRS to target CRS
 
         :param crs: target CRS
-        :type crs: constants.CRS
         :param always_xy: Parameter that is passed to `pyproj.Transformer` object and defines axis order for
             transformation. The default value `True` is in most cases the correct one.
-        :type always_xy: bool
         :return: Geometry in target CRS
-        :rtype: Geometry
         """
         new_crs = CRS(crs)
 
@@ -489,7 +453,7 @@ class Geometry(BaseGeometry):
         return Geometry(geometry, crs=new_crs)
 
     @classmethod
-    def from_geojson(cls, geojson, crs=None):
+    def from_geojson(cls, geojson: dict, crs: Optional[CRS] = None) -> "Geometry":
         """Create Geometry object from geojson. It will parse crs from geojson (if info is available),
         otherwise it will be set to crs (WGS84 if parameter is empty)
 
@@ -508,131 +472,120 @@ class Geometry(BaseGeometry):
         return cls(geojson, crs=crs)
 
     @property
-    def geometry(self):
+    def geometry(self) -> Union[Polygon, MultiPolygon]:
         """Returns shapely object representing geometry in this class
 
         :return: A polygon or a multipolygon in shapely format
-        :rtype: shapely.geometry.Polygon or shapely.geometry.MultiPolygon
         """
         return self._geometry
 
     @property
-    def bbox(self):
+    def bbox(self) -> BBox:
         """Returns BBox object representing bounding box around the geometry
 
         :return: A bounding box, with same CRS
-        :rtype: BBox
         """
         return BBox(self.geometry, self.crs)
 
     @staticmethod
-    def _parse_geometry(geometry):
+    def _parse_geometry(geometry: Union[Polygon, MultiPolygon, dict, str]) -> Union[Polygon, MultiPolygon]:
         """Parses given geometry into shapely object
 
-        :param geometry:
+        :param geometry: A representation of the geometry
         :return: Shapely polygon or multipolygon
-        :rtype: shapely.geometry.Polygon or shapely.geometry.MultiPolygon
         :raises TypeError
         """
         if isinstance(geometry, str):
             geometry = shapely.wkt.loads(geometry)
         elif isinstance(geometry, dict):
             geometry = shapely.geometry.shape(geometry)
-        elif not isinstance(geometry, shapely.geometry.base.BaseGeometry):
+        elif not isinstance(geometry, BaseGeometry):
             raise TypeError("Unsupported geometry representation")
 
-        if not isinstance(geometry, (shapely.geometry.Polygon, shapely.geometry.MultiPolygon)):
+        if not isinstance(geometry, (Polygon, MultiPolygon)):
             raise ValueError(f"Supported geometry types are polygon and multipolygon, got {type(geometry)}")
 
         return geometry
 
 
-class BBoxCollection(BaseGeometry):
+class BBoxCollection(_BaseGeometry):
     """A collection of bounding boxes"""
 
-    def __init__(self, bbox_list):
+    def __init__(self, bbox_list: Union["BBoxCollection", List[BBox]]):
         """
         :param bbox_list: A list of BBox objects which have to be in the same CRS
-        :type bbox_list: list(BBox)
         """
         self._bbox_list, crs = self._parse_bbox_list(bbox_list)
         self._geometry = self._get_geometry()
 
         super().__init__(crs)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """Method for class representation"""
         bbox_list_repr = ", ".join([repr(bbox) for bbox in self.bbox_list])
         return f"{self.__class__.__name__}({bbox_list_repr})"
 
-    def __eq__(self, other):
+    def __eq__(self, other: object) -> bool:
         """Method for comparing two BBoxCollection classes"""
-        if not isinstance(other, BBoxCollection):
-            return False
-        return (
-            self.crs is other.crs
-            and len(self.bbox_list) == len(other.bbox_list)
-            and all(bbox == other_bbox for bbox, other_bbox in zip(self, other))
-        )
+        if isinstance(other, BBoxCollection):
+            return (
+                self.crs is other.crs
+                and len(self.bbox_list) == len(other.bbox_list)
+                and all(bbox == other_bbox for bbox, other_bbox in zip(self, other))
+            )
+        return False
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator[BBox]:
         """This method enables iteration over bounding boxes in collection"""
         return iter(self.bbox_list)
 
     @property
-    def bbox_list(self):
+    def bbox_list(self) -> List[BBox]:
         """Returns the list of bounding boxes from collection
 
         :return: The list of bounding boxes
-        :rtype: list(BBox)
         """
         return self._bbox_list
 
     @property
-    def geometry(self):
+    def geometry(self) -> MultiPolygon:
         """Returns shapely object representing geometry
 
         :return: A multipolygon of bounding boxes
-        :rtype: shapely.geometry.MultiPolygon
         """
         return self._geometry
 
     @property
-    def bbox(self):
+    def bbox(self) -> BBox:
         """Returns BBox object representing bounding box around the geometry
 
         :return: A bounding box, with same CRS
-        :rtype: BBox
         """
         return BBox(self.geometry, self.crs)
 
-    def reverse(self):
+    def reverse(self) -> "BBoxCollection":
         """Returns a new BBoxCollection object where all x and y coordinates are switched
 
         :return: New Geometry object with switched coordinates
-        :rtype: BBoxCollection
         """
         return BBoxCollection([bbox.reverse() for bbox in self.bbox_list])
 
-    def transform(self, crs, always_xy=True):
+    def transform(self, crs: CRS, always_xy: bool = True) -> "BBoxCollection":
         """Transforms BBoxCollection from current CRS to target CRS
 
         :param crs: target CRS
-        :type crs: constants.CRS
         :param always_xy: Parameter that is passed to `pyproj.Transformer` object and defines axis order for
             transformation. The default value `True` is in most cases the correct one.
-        :type always_xy: bool
         :return: BBoxCollection in target CRS
-        :rtype: BBoxCollection
         """
         return BBoxCollection([bbox.transform(crs, always_xy=always_xy) for bbox in self.bbox_list])
 
-    def _get_geometry(self):
+    def _get_geometry(self) -> MultiPolygon:
         """Creates a multipolygon of bounding box polygons"""
-        return shapely.geometry.MultiPolygon([bbox.geometry for bbox in self.bbox_list])
+        return MultiPolygon([bbox.geometry for bbox in self.bbox_list])
 
     @staticmethod
-    def _parse_bbox_list(bbox_list):
+    def _parse_bbox_list(bbox_list: Union["BBoxCollection", List[BBox]]) -> Tuple[List[BBox], CRS]:
         """Helper method for parsing a list of bounding boxes"""
         if isinstance(bbox_list, BBoxCollection):
             return bbox_list.bbox_list, bbox_list.crs
