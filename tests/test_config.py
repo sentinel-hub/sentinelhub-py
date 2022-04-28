@@ -137,7 +137,7 @@ def test_transfer_with_ray(ray):
 
     def _remote_ray_testing(remote_config):
         """Makes a few checks and modifications to the config object"""
-        assert repr(remote_config).startswith('SHConfig')
+        assert repr(remote_config).startswith("SHConfig")
         assert isinstance(remote_config.get_config_dict(), dict)
         assert os.path.exists(remote_config.get_config_location())
         assert remote_config.instance_id == "x"
@@ -148,5 +148,5 @@ def test_transfer_with_ray(ray):
     config_future = ray.remote(_remote_ray_testing).remote(config)
     transferred_config = ray.get(config_future)
 
-    assert repr(config).startswith('SHConfig')
+    assert repr(config).startswith("SHConfig")
     assert transferred_config.instance_id == "y"

@@ -9,4 +9,4 @@ isort
 pillow>=9.0.0
 rasterio;python_version<"3.10"
 click>=8.0.0
-ray
+ray[default]
