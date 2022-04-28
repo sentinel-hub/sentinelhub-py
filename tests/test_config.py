@@ -126,3 +126,27 @@ def test_get_config_dict(hide_credentials):
     else:
         assert config_dict["sh_client_secret"] == config.sh_client_secret
         assert config_dict["aws_secret_access_key"] == config.aws_secret_access_key
+
+
+def test_transfer_with_ray(ray):
+    """This test makes sure that the process of transferring SHConfig object to a Ray worker, working with it, and
+    sending it back works correctly.
+    """
+    config = SHConfig()
+    config.instance_id = "x"
+
+    def _remote_ray_testing(remote_config):
+        """Makes a few checks and modifications to the config object"""
+        assert repr(remote_config).startswith('SHConfig')
+        assert isinstance(remote_config.get_config_dict(), dict)
+        assert os.path.exists(remote_config.get_config_location())
+        assert remote_config.instance_id == "x"
+
+        remote_config.instance_id = "y"
+        return remote_config
+
+    config_future = ray.remote(_remote_ray_testing).remote(config)
+    transferred_config = ray.get(config_future)
+
+    assert repr(config).startswith('SHConfig')
+    assert transferred_config.instance_id == "y"
