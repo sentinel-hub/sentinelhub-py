@@ -5,21 +5,26 @@ import itertools
 import json
 import math
 import os
-from abc import ABC, abstractmethod
+from abc import ABCMeta, abstractmethod
+from typing import Any, Dict, Iterable, List, Optional, Tuple, Union
 
 import shapely
 import shapely.geometry
 import shapely.ops
 from shapely.geometry import GeometryCollection, MultiPolygon, Polygon
+from shapely.geometry.base import BaseGeometry
+
+from sentinelhub.api.batch import BatchRequest
 
 from .api import SentinelHubBatch, SentinelHubCatalog
 from .config import SHConfig
 from .constants import CRS
+from .data_collections import DataCollection
 from .geo_utils import transform_point
-from .geometry import BaseGeometry, BBox, BBoxCollection, Geometry
+from .geometry import BBox, BBoxCollection, Geometry, _BaseGeometry
 
 
-class AreaSplitter(ABC):
+class AreaSplitter(metaclass=ABCMeta):
     """Abstract class for splitter classes. It implements common methods used for splitting large area into smaller
     parts.
     """
@@ -32,17 +37,14 @@ class AreaSplitter(ABC):
         :type crs: CRS
         :param reduce_bbox_sizes: If `True` it will reduce the sizes of bounding boxes so that they will tightly fit
             the given geometry in `shape_list`.
-        :type reduce_bbox_sizes: bool
         """
         self.crs = CRS(crs)
-        self._parse_shape_list(shape_list, self.crs)
-        self.shape_list = shape_list
-        self.area_shape = self._join_shape_list(shape_list)
+        self.shape_list = self._parse_shape_list(shape_list, self.crs)
+        self.area_shape = self._join_shape_list(self.shape_list)
         self.reduce_bbox_sizes = reduce_bbox_sizes
 
         self.area_bbox = self.get_area_bbox()
-        self.bbox_list = None
-        self.info_list = None
+        self.bbox_list, self.info_list = self._make_split()
 
     @staticmethod
     def _parse_shape_list(shape_list, crs):
@@ -62,40 +64,10 @@ class AreaSplitter(ABC):
         """Helper method for parsing input shapes"""
         if isinstance(shape, (Polygon, MultiPolygon)):
             return shape
-        if isinstance(shape, BaseGeometry):
+        if isinstance(shape, _BaseGeometry):
             return shape.transform(crs).geometry
         raise ValueError(
-            f"The list of shapes must contain shapes of types {Polygon}, {MultiPolygon} or subtype of {BaseGeometry}"
-        )
-
-    @staticmethod
-    def _parse_split_parameters(split_parameter, allow_float=False):
-        """Parses the parameters defining the splitting of the BBox
-
-        :param split_parameter: The parameters defining the split. A tuple of int for `BBoxSplitter`, a tuple of float
-            for `BaseUtmSplitter`
-        :type split_parameter: int or (int, int) or float or (float, float)
-        :param allow_float: Whether to check for floats or not
-        :type allow_float: bool
-        :return: A tuple of n
-        :rtype: (int, int)
-        :raises: ValueError
-        """
-        parameters_type = (int, float) if allow_float else int
-        if isinstance(split_parameter, parameters_type):
-            return split_parameter, split_parameter
-
-        if (
-            isinstance(split_parameter, (tuple, list))
-            and len(split_parameter) == 2
-            and all(isinstance(param, parameters_type) for param in split_parameter)
-        ):
-            return split_parameter[0], split_parameter[1]
-
-        extra_type = "/float" if allow_float else ""
-        raise ValueError(
-            f"Split parameter must be an int{extra_type} or a tuple of 2 int{extra_type} but "
-            f"{split_parameter} was given"
+            f"The list of shapes must contain shapes of types {Polygon}, {MultiPolygon} or subtype of {_BaseGeometry}"
         )
 
     @staticmethod
@@ -242,27 +214,34 @@ class BBoxSplitter(AreaSplitter):
         :type split_shape: int or (int, int)
         :param reduce_bbox_sizes: If `True` it will reduce the sizes of bounding boxes so that they will tightly fit
             the given area geometry from `shape_list`.
-        :type reduce_bbox_sizes: bool
         """
+        self.split_shape = self._parse_split_parameters(split_shape)
         super().__init__(shape_list, crs, **kwargs)
 
-        self.split_shape = self._parse_split_parameters(split_shape)
+    @staticmethod
+    def _parse_split_parameters(split_parameter: Union[int, Tuple[int, int]]) -> Tuple[int, int]:
+        """Parses the parameters defining the splitting of the BBox."""
+        if isinstance(split_parameter, int):
+            return split_parameter, split_parameter
 
-        self._make_split()
+        if isinstance(split_parameter, (tuple, list)) and len(split_parameter) == 2:
+            split_x, split_y = split_parameter
+            if isinstance(split_x, int) and isinstance(split_y, int):
+                return split_x, split_y
 
-    def _make_split(self):
-        """This method makes the split"""
+        raise ValueError(f"Split parameter must be an integer or a tuple of 2 integers but {split_parameter} was given")
         columns, rows = self.split_shape
         bbox_partition = self.area_bbox.get_partition(num_x=columns, num_y=rows)
 
-        self.bbox_list = []
-        self.info_list = []
+        bbox_list, info_list = [], []
         for i, j in itertools.product(range(columns), range(rows)):
             if self._intersects_area(bbox_partition[i][j]):
-                self.bbox_list.append(bbox_partition[i][j])
+                bbox_list.append(bbox_partition[i][j])
 
                 info = {"parent_bbox": self.area_bbox, "index_x": i, "index_y": j}
-                self.info_list.append(info)
+                info_list.append(info)
+
+        return bbox_list, info_list
 
 
 class OsmSplitter(AreaSplitter):
@@ -271,7 +250,6 @@ class OsmSplitter(AreaSplitter):
     user it can also reduce the sizes of the remaining bounding boxes to best fit the area.
     """
 
-    _POP_WEB_MAX = None
 
     def __init__(self, shape_list, crs, zoom_level, **kwargs):
         """
@@ -286,11 +264,10 @@ class OsmSplitter(AreaSplitter):
             the given area geometry from `shape_list`.
         :type reduce_bbox_sizes: bool
         """
-        if self._POP_WEB_MAX is None:
-            OsmSplitter._POP_WEB_MAX = transform_point((180, 0), CRS.WGS84, CRS.POP_WEB)[0]
+        self._POP_WEB_MAX = transform_point((180, 0), CRS.WGS84, CRS.POP_WEB)[0]  # pylint: disable=invalid-name
 
-        super().__init__(shape_list, crs, **kwargs)
         self.zoom_level = zoom_level
+        super().__init__(shape_list, crs, **kwargs)
 
         self._make_split()
 
@@ -301,12 +278,11 @@ class OsmSplitter(AreaSplitter):
         self.area_bbox = self.get_area_bbox(CRS.POP_WEB)
         self._check_area_bbox()
 
-        self.bbox_list = []
-        self.info_list = []
-        self._recursive_split(self.get_world_bbox(), 0, 0, 0)
+        bbox_list, info_list = self._recursive_split(self.get_world_bbox(), 0, 0, 0, [], [])
 
-        for i, bbox in enumerate(self.bbox_list):
-            self.bbox_list[i] = bbox.transform(self.crs)
+        for i, bbox in enumerate(bbox_list):
+            bbox_list[i] = bbox.transform(self.crs)
+        return bbox_list, info_list
 
     def _check_area_bbox(self):
         """The method checks if the area bounding box is completely inside the OSM grid. That means that its latitudes
@@ -341,14 +317,18 @@ class OsmSplitter(AreaSplitter):
         :type row: int
         """
         if zoom_level == self.zoom_level:
-            self.bbox_list.append(bbox)
-            self.info_list.append({"zoom_level": zoom_level, "index_x": column, "index_y": row})
-            return
+            bbox_list.append(bbox)
+            info_list.append({"zoom_level": zoom_level, "index_x": column, "index_y": row})
+            return bbox_list, info_list
 
         bbox_partition = bbox.get_partition(num_x=2, num_y=2)
         for i, j in itertools.product(range(2), range(2)):
             if self._intersects_area(bbox_partition[i][j]):
-                self._recursive_split(bbox_partition[i][j], zoom_level + 1, 2 * column + i, 2 * row + 1 - j)
+                self._recursive_split(
+                    bbox_partition[i][j], zoom_level + 1, 2 * column + i, 2 * row + 1 - j, bbox_list, info_list
+                )
+
+        return bbox_list, info_list
 
 
 class TileSplitter(AreaSplitter):
@@ -386,11 +366,12 @@ class TileSplitter(AreaSplitter):
         self.tile_split_shape = tile_split_shape
         self.data_collection = data_collection
 
-        config = config or SHConfig()
+        sh_config = config or SHConfig()
         if data_collection.service_url:
-            config = config.copy()
-            config.sh_base_url = data_collection.service_url
-        self.catalog = SentinelHubCatalog(config=config)
+            sh_config = sh_config.copy()
+            sh_config.sh_base_url = data_collection.service_url  # type: ignore[attr-defined]
+        self.catalog = SentinelHubCatalog(config=sh_config)
+        super().__init__(shape_list, crs, **kwargs)
 
         self._make_split()
 
@@ -415,23 +396,24 @@ class TileSplitter(AreaSplitter):
             tile_dict[bbox_hash]["ids"].append(tile_info["id"])
             tile_dict[bbox_hash]["geometries"].append(geometry)
 
-        self.bbox_list = []
-        self.info_list = []
+        bbox_list, info_list = [], []
 
         for tile_info in tile_dict.values():
             if not self._intersects_area(tile_info["bbox"]):
                 continue
 
-            tile_bbox = tile_info["bbox"]
+            tile_bbox: BBox = tile_info["bbox"]
             bbox_splitter = BBoxSplitter([tile_bbox.geometry], tile_bbox.crs, split_shape=self.tile_split_shape)
 
             for bbox, info in zip(bbox_splitter.get_bbox_list(), bbox_splitter.get_info_list()):
                 if self._intersects_area(bbox):
-                    self.bbox_list.append(bbox)
+                    bbox_list.append(bbox)
 
                     info["ids"] = tile_info["ids"]
                     info["timestamps"] = tile_info["timestamps"]
-                    self.info_list.append(info)
+                    info_list.append(info)
+
+        return bbox_list, info_list
 
 
 class CustomGridSplitter(AreaSplitter):
@@ -454,12 +436,9 @@ class CustomGridSplitter(AreaSplitter):
             the given geometry in `shape_list`.
         :type reduce_bbox_sizes: bool
         """
-        super().__init__(shape_list, crs, **kwargs)
-
         self.bbox_grid = self._parse_bbox_grid(bbox_grid)
         self.bbox_split_shape = bbox_split_shape
-
-        self._make_split()
+        super().__init__(shape_list, crs, **kwargs)
 
     @staticmethod
     def _parse_bbox_grid(bbox_grid):
@@ -472,10 +451,8 @@ class CustomGridSplitter(AreaSplitter):
 
         raise ValueError(f"Parameter 'bbox_grid' should be an instance of {BBoxCollection}")
 
-    def _make_split(self):
-        """This method makes the split"""
-        self.bbox_list = []
-        self.info_list = []
+        bbox_list: List[BBox] = []
+        info_list: List[Dict[str, object]] = []
 
         for grid_idx, grid_bbox in enumerate(self.bbox_grid):
             if self._intersects_area(grid_bbox):
@@ -486,8 +463,10 @@ class CustomGridSplitter(AreaSplitter):
                     if self._intersects_area(bbox):
                         info["grid_index"] = grid_idx
 
-                        self.bbox_list.append(bbox)
-                        self.info_list.append(info)
+                        bbox_list.append(bbox)
+                        info_list.append(info)
+
+        return bbox_list, info_list
 
 
 class BaseUtmSplitter(AreaSplitter):
@@ -509,16 +488,27 @@ class BaseUtmSplitter(AreaSplitter):
         :param offset: Bounding box offset in horizontal and vertical directions in meters.
         :type offset: (int, int) or (float, float) or None
         """
-        super().__init__(shape_list, crs)
-
-        self.bbox_size = self._parse_split_parameters(bbox_size, allow_float=True)
+        self.bbox_size = self._parse_split_parameters(bbox_size)
         self.offset = self._parse_offset(offset)
 
-        self.shape_geometry = Geometry(self.area_shape, self.crs).transform(CRS.WGS84)
-
         self.utm_grid = self._get_utm_polygons()
+        super().__init__(shape_list, crs)
 
-        self._make_split()
+    @staticmethod
+    def _parse_split_parameters(split_parameter: Union[float, Tuple[float, float]]) -> Tuple[float, float]:
+        """Parses the parameters defining the splitting of the BBox."""
+        if isinstance(split_parameter, (int, float)):
+            return split_parameter, split_parameter
+
+        if isinstance(split_parameter, (tuple, list)) and len(split_parameter) == 2:
+            split_x, split_y = split_parameter
+            if isinstance(split_x, (int, float)) and isinstance(split_y, (int, float)):
+                return split_x, split_y
+
+        raise ValueError(
+            "Split parameter must be an integer, a float, a pair of integers or a pair of floats but"
+            f" {split_parameter} was given"
+        )
 
     @staticmethod
     def _parse_offset(offset_input):
@@ -526,7 +516,10 @@ class BaseUtmSplitter(AreaSplitter):
         if offset_input is None:
             return 0, 0
         if isinstance(offset_input, (tuple, list)) and len(offset_input) == 2:
-            return tuple(offset_input)
+            offset_x, offset_y = offset_input
+            if isinstance(offset_x, (int, float)) and isinstance(offset_y, (int, float)):
+                return offset_x, offset_y
+
         raise ValueError(f"An offset parameter should be a tuple of two numbers, instead {offset_input} was given")
 
     @abstractmethod
@@ -566,10 +559,11 @@ class BaseUtmSplitter(AreaSplitter):
     def _make_split(self):
         """Split each UTM grid into equally sized bboxes in correct UTM zone"""
         size_x, size_y = self.bbox_size
-        self.bbox_list = []
-        self.info_list = []
+        bbox_list: List[BBox] = []
+        info_list: List[Dict[str, object]] = []
 
         index = 0
+        shape_geometry = Geometry(self.area_shape, self.crs).transform(CRS.WGS84)
 
         for utm_cell in self.utm_grid:
             utm_cell_geom, utm_cell_prop = utm_cell
@@ -578,7 +572,7 @@ class BaseUtmSplitter(AreaSplitter):
                 continue
             utm_crs = self._get_utm_from_props(utm_cell_prop)
 
-            intersection = utm_cell_geom.intersection(self.shape_geometry.geometry)
+            intersection = utm_cell_geom.intersection(shape_geometry.geometry)
 
             if not intersection.is_empty and isinstance(intersection, GeometryCollection):
                 intersection = MultiPolygon(
@@ -593,8 +587,8 @@ class BaseUtmSplitter(AreaSplitter):
                 columns, rows = len(bbox_partition), len(bbox_partition[0])
                 for i, j in itertools.product(range(columns), range(rows)):
                     if bbox_partition[i][j].geometry.intersects(intersection.geometry):
-                        self.bbox_list.append(bbox_partition[i][j])
-                        self.info_list.append(
+                        bbox_list.append(bbox_partition[i][j])
+                        info_list.append(
                             dict(
                                 crs=utm_crs.name,
                                 utm_zone=str(utm_cell_prop["zone"]).zfill(2),
@@ -606,6 +600,7 @@ class BaseUtmSplitter(AreaSplitter):
                             )
                         )
                         index += 1
+        return bbox_list, info_list
 
     def get_bbox_list(self, buffer=None):
         """Get list of bounding boxes.
@@ -715,7 +710,7 @@ class BatchSplitter(AreaSplitter):
         batch_geometry = batch_request.geometry
         super().__init__([batch_geometry.geometry], batch_geometry.crs)
 
-        self._make_split()
+
 
     def _make_split(self):
         """This method actually loads bounding boxes from the service and prepares the lists"""
@@ -724,7 +719,9 @@ class BatchSplitter(AreaSplitter):
         tile_geometries = [Geometry.from_geojson(tile_info["geometry"]) for tile_info in tile_info_list]
         original_crs_list = [CRS(tile_info["origin"]["crs"]["properties"]["name"]) for tile_info in tile_info_list]
 
-        self.bbox_list = [geometry.transform(crs).bbox for geometry, crs in zip(tile_geometries, original_crs_list)]
-        self.info_list = [
+        bbox_list = [geometry.transform(crs).bbox for geometry, crs in zip(tile_geometries, original_crs_list)]
+        info_list = [
             {key: value for key, value in tile_info.items() if key != "geometry"} for tile_info in tile_info_list
         ]
+
+        return bbox_list, info_list
