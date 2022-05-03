@@ -53,6 +53,7 @@ def collection_fixture():
         },
         "created": "2020-06-22T12:30:22.814Z",
         "requiresMetadataUpdate": False,
+        "isConfigured": True,
     }
 
 
@@ -107,8 +108,6 @@ def test_get_collection(byoc, collection):
     sh_collection = byoc.get_collection(collection)
 
     assert isinstance(sh_collection, dict)
-    print(sh_collection)
-    print(collection)
     assert ByocCollection.from_dict(sh_collection) == ByocCollection.from_dict(collection)
 
 
