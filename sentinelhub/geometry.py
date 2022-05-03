@@ -3,7 +3,7 @@ Module implementing geometry classes
 """
 from abc import ABCMeta, abstractmethod
 from math import ceil
-from typing import Iterator, List, Optional, Tuple, Union
+from typing import Iterator, List, Optional, Tuple, TypeVar, Union
 
 import shapely.geometry
 import shapely.ops
@@ -13,6 +13,8 @@ from shapely.geometry.base import BaseGeometry
 
 from .constants import CRS
 from .geo_utils import transform_point
+
+Self = TypeVar("Self", bound="_BaseGeometry")
 
 
 class _BaseGeometry(metaclass=ABCMeta):
@@ -68,6 +70,10 @@ class _BaseGeometry(metaclass=ABCMeta):
         :return: string in WKT format
         """
         return self.geometry.wkt
+
+    @abstractmethod
+    def transform(self: Self, crs: CRS, always_xy: bool = True) -> Self:
+        """Transforms geometry from current CRS to target CRS."""
 
 
 class BBox(_BaseGeometry):
