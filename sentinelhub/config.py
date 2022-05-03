@@ -165,21 +165,17 @@ class SHConfig:
         """
         self._hide_credentials = hide_credentials
 
-        if not SHConfig._instance:
-            SHConfig._instance = self._SHConfig()
-
-        for prop in self._instance.CONFIG_PARAMS:
-            setattr(self, prop, getattr(self._instance, prop))
-
-    def __getattr__(self, name):
-        """This is called only if the class doesn't have the attribute itself"""
-        return getattr(self._instance, name)
+        for prop in self.get_params():
+            setattr(self, prop, getattr(self._global_instance, prop))
 
     def __getitem__(self, name):
-        return getattr(self, name)
+        """Config parameters can also be accessed as items."""
+        if name in self.get_params():
+            return getattr(self, name)
+        raise KeyError(f"'{name}' is not a supported config parameter")
 
     def __dir__(self):
-        return sorted(list(dir(super())) + list(self._instance.CONFIG_PARAMS))
+        return sorted(list(dir(super())) + list(self.get_params()))
 
     def __str__(self):
         """Content of SHConfig in json schema. If `hide_credentials` is set to `True` then credentials will be
@@ -198,6 +194,13 @@ class SHConfig:
 
         return "\n  ".join(repr_list).strip(",") + "\n)"
 
+    @property
+    def _global_instance(self):
+        """Uses a class attribute to store a global instance of a class with config parameters."""
+        if SHConfig._instance is None:
+            SHConfig._instance = SHConfig._SHConfig()
+        return SHConfig._instance
+
     def save(self):
         """Method that saves configuration parameter changes from instance of SHConfig class to global config class and
         to `config.json` file.
@@ -208,12 +211,12 @@ class SHConfig:
             ``my_config.save()``
         """
         is_changed = False
-        for prop in self._instance.CONFIG_PARAMS:
-            if getattr(self, prop) != getattr(self._instance, prop):
+        for prop in self.get_params():
+            if getattr(self, prop) != getattr(self._global_instance, prop):
                 is_changed = True
-                setattr(self._instance, prop, getattr(self, prop))
+                setattr(self._global_instance, prop, getattr(self, prop))
         if is_changed:
-            self._instance.save_configuration()
+            self._global_instance.save_configuration()
 
     def copy(self):
         """Makes a copy of an instance of `SHConfig`"""
@@ -245,9 +248,9 @@ class SHConfig:
         :param param: A configuration parameter
         :type param: str
         """
-        if param not in self._instance.CONFIG_PARAMS:
+        if param not in self.get_params():
             raise ValueError(f"Cannot reset unknown parameter '{param}'")
-        setattr(self, param, self._instance.CONFIG_PARAMS[param])
+        setattr(self, param, self._SHConfig.CONFIG_PARAMS[param])
 
     def get_params(self):
         """Returns a list of parameter names
@@ -255,7 +258,7 @@ class SHConfig:
         :return: List of parameter names
         :rtype: list(str)
         """
-        return list(self._instance.CONFIG_PARAMS)
+        return list(self._SHConfig.CONFIG_PARAMS)
 
     def get_config_dict(self):
         """Get a dictionary representation of `SHConfig` class. If `hide_credentials` is set to `True` then
@@ -264,7 +267,7 @@ class SHConfig:
         :return: A dictionary with configuration parameters
         :rtype: dict
         """
-        config_params = {param: getattr(self, param) for param in self._instance.CONFIG_PARAMS}
+        config_params = {param: getattr(self, param) for param in self.get_params()}
 
         if self._hide_credentials:
             config_params = {param: self._mask_credentials(param, value) for param, value in config_params.items()}
@@ -277,7 +280,7 @@ class SHConfig:
         :return: File path of `config.json` file
         :rtype: str
         """
-        return self._instance.get_config_file()
+        return self._global_instance.get_config_file()
 
     def has_eocloud_url(self):
         """Checks if base Sentinel Hub URL is set to eocloud URL
@@ -333,8 +336,8 @@ class SHConfig:
             )
 
     def _mask_credentials(self, param, value):
-        """In case a credentials parameter is given it will mask its value"""
-        if not (param in self._instance.CREDENTIALS and value):
+        """In case a parameter that holds credentials is given it will mask its value"""
+        if not (param in self._SHConfig.CREDENTIALS and value):
             return value
         if not isinstance(value, str):
             raise ValueError(f"Parameter '{param}' should be a string but {value} found")

@@ -50,3 +50,13 @@ def logger_fixture():
         level=logging.INFO, format="%(asctime)-15s %(module)s:%(lineno)d [%(levelname)s] %(funcName)s  %(message)s"
     )
     return logging.getLogger(__name__)
+
+
+@pytest.fixture(name="ray")
+def ray_fixture():
+    """Ensures that the ray server will stop even if test fails"""
+    ray = pytest.importorskip("ray")
+    ray.init(log_to_driver=False)
+
+    yield ray
+    ray.shutdown()

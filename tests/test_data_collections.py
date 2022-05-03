@@ -125,18 +125,8 @@ def helper_check_collection_list(collection_list):
     return is_list and contains_collections
 
 
-@pytest.fixture(name="ray")
-def ray_fixture():
-    """Ensures that the ray server will stop even if test fails"""
-    ray = pytest.importorskip("ray")
-    ray.init(log_to_driver=False)
-
-    yield ray
-    ray.shutdown()
-
-
 def test_transfer_with_ray(ray):
-    """This tests makes sure that the process of transferring a custom DataCollection object to a Ray worker and back
+    """This test makes sure that the process of transferring a custom DataCollection object to a Ray worker and back
     works correctly.
     """
     collection = DataCollection.SENTINEL2_L1C.define_from("MY_NEW_COLLECTION", api_id="xxx")
