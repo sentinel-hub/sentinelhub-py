@@ -6,7 +6,7 @@ import json
 import math
 import os
 from abc import ABCMeta, abstractmethod
-from typing import Any, Dict, Iterable, List, Optional, Tuple, Union
+from typing import Any, Dict, Iterable, List, Optional, Tuple, TypeVar, Union, cast
 
 import shapely
 import shapely.geometry
@@ -22,6 +22,8 @@ from .constants import CRS
 from .data_collections import DataCollection
 from .geo_utils import transform_point
 from .geometry import BBox, BBoxCollection, Geometry, _BaseGeometry
+
+T = TypeVar("T", float, int)
 
 
 class AreaSplitter(metaclass=ABCMeta):
@@ -195,21 +197,8 @@ class BBoxSplitter(AreaSplitter):
         :param reduce_bbox_sizes: If `True` it will reduce the sizes of bounding boxes so that they will tightly fit
             the given area geometry from `shape_list`.
         """
-        self.split_shape = self._parse_split_parameters(split_shape)
+        self.split_shape = _parse_to_pair(split_shape, allowed_types=(int,), param_name="split_shape")
         super().__init__(shape_list, crs, **kwargs)
-
-    @staticmethod
-    def _parse_split_parameters(split_parameter: Union[int, Tuple[int, int]]) -> Tuple[int, int]:
-        """Parses the parameters defining the splitting of the BBox."""
-        if isinstance(split_parameter, int):
-            return split_parameter, split_parameter
-
-        if isinstance(split_parameter, (tuple, list)) and len(split_parameter) == 2:
-            split_x, split_y = split_parameter
-            if isinstance(split_x, int) and isinstance(split_y, int):
-                return split_x, split_y
-
-        raise ValueError(f"Split parameter must be an integer or a pair of integers but {split_parameter} was given")
 
     def _make_split(self) -> Tuple[List[BBox], List[Dict[str, object]]]:
         columns, rows = self.split_shape
@@ -471,36 +460,12 @@ class BaseUtmSplitter(AreaSplitter):
             single value is given that will be interpreted as (value, value).
         :param offset: Bounding box offset in horizontal and vertical directions in meters.
         """
-        self.bbox_size = self._parse_split_parameters(bbox_size)
-        self.offset = self._parse_offset(offset)
+        self.bbox_size = _parse_to_pair(bbox_size, allowed_types=(int, float), param_name="bbox_size")
+
+        self.offset = _parse_to_pair(offset or 0.0, allowed_types=(int, float), param_name="offset")
 
         self.utm_grid = self._get_utm_polygons()
         super().__init__(shape_list, crs)
-
-    @staticmethod
-    def _parse_split_parameters(split_parameter: Union[float, Tuple[float, float]]) -> Tuple[float, float]:
-        """Parses the parameters defining the splitting of the BBox."""
-        if isinstance(split_parameter, (int, float)):
-            return split_parameter, split_parameter
-
-        if isinstance(split_parameter, (tuple, list)) and len(split_parameter) == 2:
-            split_x, split_y = split_parameter
-            if isinstance(split_x, (int, float)) and isinstance(split_y, (int, float)):
-                return split_x, split_y
-
-        raise ValueError(f"Split parameter must be a number or a pair of numbers but {split_parameter} was given")
-
-    @staticmethod
-    def _parse_offset(offset_input: Union[None, Tuple[float, float]]) -> Tuple[float, float]:
-        """Validates and parses offset input"""
-        if offset_input is None:
-            return 0, 0
-        if isinstance(offset_input, (tuple, list)) and len(offset_input) == 2:
-            offset_x, offset_y = offset_input
-            if isinstance(offset_x, (int, float)) and isinstance(offset_y, (int, float)):
-                return offset_x, offset_y
-
-        raise ValueError(f"An offset parameter should be a pair of numbers, instead {offset_input} was given")
 
     @abstractmethod
     def _get_utm_polygons(self) -> List[Tuple[BaseGeometry, Dict[str, Any]]]:
@@ -695,3 +660,23 @@ class BatchSplitter(AreaSplitter):
         ]
 
         return bbox_list, info_list
+
+
+def _parse_to_pair(
+    parameter: Union[T, Tuple[T, T]], allowed_types: Tuple[type, ...], param_name: str = ""
+) -> Tuple[T, T]:
+    """Parses the parameters defining the splitting of the BBox."""
+
+    if isinstance(parameter, (tuple, list)) and len(parameter) == 2:
+        split_x, split_y = parameter
+        if isinstance(split_x, allowed_types) and isinstance(split_y, allowed_types):
+            return split_x, split_y
+
+    parameter = cast(T, parameter)
+    if isinstance(parameter, allowed_types):
+        return parameter, parameter
+
+    raise ValueError(
+        f"Parameter {param_name} must be a single instance or a pair, with allowed types {allowed_types}, but"
+        f" {parameter} was given"
+    )
