@@ -42,26 +42,12 @@ class AreaSplitter(metaclass=ABCMeta):
             the given geometry in `shape_list`.
         """
         self.crs = CRS(crs)
-        self.shape_list = self._parse_shape_list(shape_list, self.crs)
+        self.shape_list = [self._parse_shape(shape, crs) for shape in shape_list]
         self.area_shape = self._join_shape_list(self.shape_list)
         self.reduce_bbox_sizes = reduce_bbox_sizes
 
         self.area_bbox = self.get_area_bbox()
         self.bbox_list, self.info_list = self._make_split()
-
-    @staticmethod
-    def _parse_shape_list(
-        shape_list: Iterable[Union[Polygon, MultiPolygon, _BaseGeometry]], crs: CRS
-    ) -> List[Union[Polygon, MultiPolygon]]:
-        """Checks if the given list of shapes is in correct format and parses geometry objects
-
-        :param shape_list: The parameter `shape_list` from class initialization
-        :raises: ValueError
-        """
-        if not isinstance(shape_list, list):
-            raise ValueError("Splitter must be initialized with a list of shapes")
-
-        return [AreaSplitter._parse_shape(shape, crs) for shape in shape_list]
 
     @staticmethod
     def _parse_shape(shape: Union[Polygon, MultiPolygon, _BaseGeometry], crs: CRS) -> Union[Polygon, MultiPolygon]:
