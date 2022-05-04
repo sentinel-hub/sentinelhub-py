@@ -223,7 +223,7 @@ class BBoxSplitter(AreaSplitter):
             if isinstance(split_x, int) and isinstance(split_y, int):
                 return split_x, split_y
 
-        raise ValueError(f"Split parameter must be an integer or a tuple of 2 integers but {split_parameter} was given")
+        raise ValueError(f"Split parameter must be an integer or a pair of integers but {split_parameter} was given")
 
     def _make_split(self) -> Tuple[List[BBox], List[Dict[str, object]]]:
         columns, rows = self.split_shape
@@ -245,7 +245,6 @@ class OsmSplitter(AreaSplitter):
     the specified zoom level. It calculates bounding boxes of all OSM tiles that intersect the area. If specified by
     user it can also reduce the sizes of the remaining bounding boxes to best fit the area.
     """
-
 
     def __init__(
         self,
@@ -271,7 +270,7 @@ class OsmSplitter(AreaSplitter):
         self.area_bbox = self.get_area_bbox(CRS.POP_WEB)
         self._check_area_bbox()
 
-        bbox_list, info_list = self._recursive_split(self.get_world_bbox(), 0, 0, 0, [], [])
+        bbox_list, info_list = self._recursive_split(self.get_world_bbox(), 0, 0, 0)
 
         for i, bbox in enumerate(bbox_list):
             bbox_list[i] = bbox.transform(self.crs)
@@ -302,8 +301,6 @@ class OsmSplitter(AreaSplitter):
         zoom_level: int,
         column: int,
         row: int,
-        bbox_list: List[BBox],
-        info_list: List[Dict[str, object]],
     ) -> Tuple[List[BBox], List[Dict[str, object]]]:
         """Method that recursively creates bounding boxes of OSM grid that intersect the area.
 
@@ -313,16 +310,17 @@ class OsmSplitter(AreaSplitter):
         :param row: Row in the OSM grid
         """
         if zoom_level == self.zoom_level:
-            bbox_list.append(bbox)
-            info_list.append({"zoom_level": zoom_level, "index_x": column, "index_y": row})
-            return bbox_list, info_list
+            return [bbox], [{"zoom_level": zoom_level, "index_x": column, "index_y": row}]
 
+        bbox_list, info_list = [], []
         bbox_partition = bbox.get_partition(num_x=2, num_y=2)
         for i, j in itertools.product(range(2), range(2)):
             if self._intersects_area(bbox_partition[i][j]):
-                self._recursive_split(
-                    bbox_partition[i][j], zoom_level + 1, 2 * column + i, 2 * row + 1 - j, bbox_list, info_list
+                bboxes, infos = self._recursive_split(
+                    bbox_partition[i][j], zoom_level + 1, 2 * column + i, 2 * row + 1 - j
                 )
+                bbox_list.extend(bboxes)
+                info_list.extend(infos)
 
         return bbox_list, info_list
 
@@ -504,10 +502,7 @@ class BaseUtmSplitter(AreaSplitter):
             if isinstance(split_x, (int, float)) and isinstance(split_y, (int, float)):
                 return split_x, split_y
 
-        raise ValueError(
-            "Split parameter must be an integer, a float, a pair of integers or a pair of floats but"
-            f" {split_parameter} was given"
-        )
+        raise ValueError(f"Split parameter must be a number or a pair of numbers but {split_parameter} was given")
 
     @staticmethod
     def _parse_offset(offset_input: Union[None, Tuple[float, float]]) -> Tuple[float, float]:
@@ -519,7 +514,7 @@ class BaseUtmSplitter(AreaSplitter):
             if isinstance(offset_x, (int, float)) and isinstance(offset_y, (int, float)):
                 return offset_x, offset_y
 
-        raise ValueError(f"An offset parameter should be a tuple of two numbers, instead {offset_input} was given")
+        raise ValueError(f"An offset parameter should be a pair of numbers, instead {offset_input} was given")
 
     @abstractmethod
     def _get_utm_polygons(self) -> List[Tuple[BaseGeometry, Dict[str, Any]]]:
@@ -566,6 +561,12 @@ class BaseUtmSplitter(AreaSplitter):
             if utm_cell_prop["zone"] == 0:
                 continue
             utm_crs = self._get_utm_from_props(utm_cell_prop)
+            cell_info = dict(
+                crs=utm_crs.name,
+                utm_zone=str(utm_cell_prop["zone"]).zfill(2),
+                utm_row=utm_cell_prop["row"],
+                direction=utm_cell_prop["direction"],
+            )
 
             intersection = utm_cell_geom.intersection(shape_geometry.geometry)
 
@@ -579,22 +580,13 @@ class BaseUtmSplitter(AreaSplitter):
 
                 bbox_partition = self._align_bbox_to_size(intersection.bbox).get_partition(size_x=size_x, size_y=size_y)
 
-                columns, rows = len(bbox_partition), len(bbox_partition[0])
-                for i, j in itertools.product(range(columns), range(rows)):
-                    if bbox_partition[i][j].geometry.intersects(intersection.geometry):
-                        bbox_list.append(bbox_partition[i][j])
-                        info_list.append(
-                            dict(
-                                crs=utm_crs.name,
-                                utm_zone=str(utm_cell_prop["zone"]).zfill(2),
-                                utm_row=utm_cell_prop["row"],
-                                direction=utm_cell_prop["direction"],
-                                index=index,
-                                index_x=i,
-                                index_y=j,
-                            )
-                        )
-                        index += 1
+                for i, column in enumerate(bbox_partition):
+                    for j, part in enumerate(column):
+                        if part.geometry.intersects(intersection.geometry):
+                            bbox_list.append(part)
+                            info_list.append(dict(**cell_info, index=index, index_x=i, index_y=j))
+                            index += 1
+
         return bbox_list, info_list
 
     def get_bbox_list(self, buffer: Union[None, float, Tuple[float, float]] = None) -> List[BBox]:  # type: ignore
