@@ -4,7 +4,7 @@ Module defining data collections
 import warnings
 from dataclasses import dataclass, field, fields
 from enum import Enum, EnumMeta
-from typing import Any, Dict, List, Optional, Tuple, Type
+from typing import Any, Dict, List, Optional, Tuple
 
 from aenum import extend_enum
 
@@ -109,7 +109,7 @@ def _shallow_asdict(dataclass_instance: Any) -> Dict[str, Any]:
 class _DataCollectionMeta(EnumMeta):
     """Metaclass that builds DataCollection class enums"""
 
-    def __getattribute__(cls, item: str) -> "DataCollection":
+    def __getattribute__(cls, item: str) -> Any:
         """This is executed whenever `DataCollection.SOMETHING` is called
 
         Extended method handles cases where a collection has been renamed. It provides a new collection and raises a
@@ -127,13 +127,13 @@ class _DataCollectionMeta(EnumMeta):
 
         return super().__getattribute__(item)
 
-    def __call__(cls, value: Any, *args: Any, **kwargs: Any) -> Type["DataCollection"]:  # type: ignore
+    def __call__(cls, value, *args, **kwargs):  # type: ignore
         """This is executed whenever `DataCollection('something')` is called
 
         This solves a problem of pickling a custom DataCollection and unpickling it in another process
         """
         if isinstance(value, DataCollectionDefinition) and value not in cls._value2member_map_ and value._name:
-            cls._try_add_data_collection(value._name, value)  # type: ignore
+            cls._try_add_data_collection(value._name, value)
 
         return super().__call__(value, *args, **kwargs)
 
@@ -167,7 +167,7 @@ class DataCollectionDefinition:
     # The following parameter is used to preserve custom DataCollection name during pickling and unpickling process:
     _name: Optional[str] = field(default=None, compare=False)
 
-    def __post_init__(self):
+    def __post_init__(self):  # type: ignore
         """In case a list of bands or metabands has been given this makes sure to cast it into a tuple"""
         if isinstance(self.bands, list):
             object.__setattr__(self, "bands", tuple(self.bands))
