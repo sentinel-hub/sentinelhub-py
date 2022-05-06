@@ -109,7 +109,7 @@ def _shallow_asdict(dataclass_instance: Any) -> Dict[str, Any]:
 class _DataCollectionMeta(EnumMeta):
     """Metaclass that builds DataCollection class enums"""
 
-    def __getattribute__(cls, item: str, *args: Any, **kwargs: Any) -> "DataCollection":
+    def __getattribute__(cls, item: str) -> "DataCollection":
         """This is executed whenever `DataCollection.SOMETHING` is called
 
         Extended method handles cases where a collection has been renamed. It provides a new collection and raises a
@@ -125,7 +125,7 @@ class _DataCollectionMeta(EnumMeta):
             )
             warnings.warn(message, category=SHDeprecationWarning)
 
-        return super().__getattribute__(item, *args, **kwargs)
+        return super().__getattribute__(item)
 
     def __call__(cls, value: Any, *args: Any, **kwargs: Any) -> Type["DataCollection"]:  # type: ignore
         """This is executed whenever `DataCollection('something')` is called
@@ -679,7 +679,7 @@ class DataCollection(Enum, metaclass=_DataCollectionMeta):
             raise ValueError(f"Data collection {self.name} does not define metabands")
         return self.value.metabands
 
-    def __getattr__(self, item: str, *args: Any, **kwargs: Any) -> Any:
+    def __getattr__(self, item: str) -> Any:
         """The following insures that any attribute from DataCollectionDefinition, which is already not a
         property or an attribute of DataCollection, becomes an attribute of DataCollection
         """
@@ -688,7 +688,7 @@ class DataCollection(Enum, metaclass=_DataCollectionMeta):
             if item in definition_dict:
                 return definition_dict[item]
 
-        return super().__getattribute__(item, *args, **kwargs)
+        return super().__getattribute__(item)
 
     @property
     def is_sentinel1(self) -> bool:
