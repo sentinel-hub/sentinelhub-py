@@ -186,7 +186,6 @@ class DataCollectionDefinition:
 
         :param params: Any of DataCollectionDefinition attributes
         :return: A new data collection definition
-        :rtype: DataCollectionDefinition
         """
         derived_params = _shallow_asdict(self)
         derived_params.update(params)
@@ -472,48 +471,28 @@ class DataCollection(Enum, metaclass=_DataCollectionMeta):
         certain use case (e.g. Process API, WFS, etc.), parameters for that use case don't have to be defined
 
         :param name: A name of a new data collection
-        :type name: str
         :param api_id: An ID to be used for Sentinel Hub Process API
-        :type api_id: str or None
         :param catalog_id: An ID to be used for Sentinel Hub Catalog API
-        :type catalog_id: str or None
         :param wfs_id: An ID to be used for Sentinel Hub WFS service
-        :type wfs_id: str or None
         :param service_url: A base URL of Sentinel Hub service deployment from where to download data. If it is not
             specified, a `sh_base_url` from a config will be used by default
-        :type service_url: str or None
         :param collection_type: A collection type
-        :type collection_type: str or None
         :param sensor_type: A type of a satellite's sensor
-        :type sensor_type: str or None
         :param processing_level: A level of processing applied on satellite data
-        :type processing_level: str or None
         :param swath_mode: A swath mode of SAR sensors
-        :type swath_mode: str or None
         :param polarization: A type of polarization
-        :type polarization: str or None
         :param resolution: A type of (Sentinel-1) resolution
-        :type resolution: str or None
         :param orbit_direction: A direction of satellite's orbit by which to filter satellite's data
-        :type orbit_direction: str or None
         :param timeliness: A timeliness of data
-        :type timeliness: str or None
         :param bands: Information about data collection bands
-        :type bands: tuple(Band) or None
         :param metabands: Information about data collection metabands
-        :type metabands: tuple(Band) or None
         :param collection_id: An ID of a BYOC or BATCH collection
-        :type collection_id: str or None
         :param is_timeless: `True` if a data collection can be filtered by time dimension and `False` otherwise
-        :type is_timeless: bool
         :param has_cloud_coverage: `True` if data collection can be filtered by cloud coverage percentage and `False`
             otherwise
-        :type has_cloud_coverage: bool
         :param dem_instance: one of the options listed in
             `DEM documentation <https://docs.sentinel-hub.com/api/latest/data/dem/#deminstance>`__
-        :type dem_instance: str or None
         :return: A new data collection
-        :rtype: DataCollection
         """
         definition = DataCollectionDefinition(
             api_id=api_id,
@@ -543,10 +522,8 @@ class DataCollection(Enum, metaclass=_DataCollectionMeta):
         """Define a new data collection from an existing one
 
         :param name: A name of a new data collection
-        :type name: str
         :param params: Any parameter to override current data collection parameters
         :return: A new data collection
-        :rtype: DataCollection
         """
         definition = self.value
         new_definition = definition.derive(**params, _name=name)
@@ -585,10 +562,8 @@ class DataCollection(Enum, metaclass=_DataCollectionMeta):
         """Defines a BYOC data collection
 
         :param collection_id: An ID of a data collection
-        :type collection_id: str
         :param params: Any parameter to override default BYOC data collection parameters
         :return: A new data collection
-        :rtype: DataCollection
         """
         params["name"] = params.get("name", f"BYOC_{collection_id}")
         params["api_id"] = params.get("api_id", f"byoc-{collection_id}")
@@ -603,10 +578,8 @@ class DataCollection(Enum, metaclass=_DataCollectionMeta):
         """Defines a BATCH data collection
 
         :param collection_id: An ID of a data collection
-        :type collection_id: str
         :param params: Any parameter to override default BATCH data collection parameters
         :return: A new data collection
-        :rtype: DataCollection
         """
         params["name"] = params.get("name", f"BATCH_{collection_id}")
         params["api_id"] = params.get("api_id", f"batch-{collection_id}")
@@ -621,7 +594,6 @@ class DataCollection(Enum, metaclass=_DataCollectionMeta):
         """Provides a Sentinel Hub Process API identifier or raises an error if it is not defined
 
         :return: An identifier
-        :rtype: str
         :raises: ValueError
         """
         if self.value.api_id is None:
@@ -633,7 +605,6 @@ class DataCollection(Enum, metaclass=_DataCollectionMeta):
         """Provides a Sentinel Hub Catalog API identifier or raises an error if it is not defined
 
         :return: An identifier
-        :rtype: str
         :raises: ValueError
         """
         if self.value.catalog_id is not None:
@@ -648,7 +619,6 @@ class DataCollection(Enum, metaclass=_DataCollectionMeta):
         """Provides a Sentinel Hub WFS identifier or raises an error if it is not defined
 
         :return: An identifier
-        :rtype: str
         :raises: ValueError
         """
         if self.value.wfs_id is None:
@@ -660,7 +630,6 @@ class DataCollection(Enum, metaclass=_DataCollectionMeta):
         """Provides band information available for the data collection
 
         :return: A tuple of band info
-        :rtype: tuple(str)
         :raises: ValueError
         """
         if self.value.bands is None:
@@ -672,7 +641,6 @@ class DataCollection(Enum, metaclass=_DataCollectionMeta):
         """Provides metaband information available for the data collection
 
         :return: A tuple of metaband info
-        :rtype: tuple(str)
         :raises: ValueError
         """
         if self.value.metabands is None:
@@ -697,7 +665,6 @@ class DataCollection(Enum, metaclass=_DataCollectionMeta):
         Example: ``DataCollection.SENTINEL1_IW.is_sentinel1``
 
         :return: `True` if collection is Sentinel-1 collection type and `False` otherwise
-        :rtype: bool
         """
         return self.collection_type == _CollectionType.SENTINEL1
 
@@ -706,7 +673,6 @@ class DataCollection(Enum, metaclass=_DataCollectionMeta):
         """Checks if data collection is a BYOC collection type
 
         :return: `True` if collection is a BYOC collection type and `False` otherwise
-        :rtype: bool
         """
         return self.collection_type == _CollectionType.BYOC
 
@@ -715,7 +681,6 @@ class DataCollection(Enum, metaclass=_DataCollectionMeta):
         """Checks if data collection is a batch collection type
 
         :return: `True` if collection is a batch collection type and `False` otherwise
-        :rtype: bool
         """
         return self.collection_type == _CollectionType.BATCH
 
@@ -723,7 +688,6 @@ class DataCollection(Enum, metaclass=_DataCollectionMeta):
         """Checks if a data collection contains given orbit direction
 
         :param orbit_direction: An orbit direction
-        :type orbit_direction: string
         :return: `True` if data collection contains the orbit direction
         :return: bool
         """
@@ -737,9 +701,7 @@ class DataCollection(Enum, metaclass=_DataCollectionMeta):
         """Returns which data collections are available for configured Sentinel Hub OGC URL
 
         :param config: A custom instance of config class to override parameters from the saved configuration.
-        :type config: SHConfig or None
         :return: List of available data collections
-        :rtype: list(DataCollection)
         """
         config = config or SHConfig()
         is_eocloud = config.has_eocloud_url()
