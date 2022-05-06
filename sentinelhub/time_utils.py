@@ -2,18 +2,17 @@
 Module with useful time/date functions
 """
 import datetime as dt
+from typing import Any, Iterable, List, Optional, Sequence, Tuple, Union, overload
 
 import dateutil.parser
 import dateutil.tz
 
 
-def is_valid_time(time):
+def is_valid_time(time: str) -> bool:
     """Check if input string represents a valid time/date stamp
 
     :param time: a string containing a time/date stamp
-    :type time: str
     :return: `True` is string is a valid time/date stamp, `False` otherwise
-    :rtype: bool
     """
     try:
         dateutil.parser.parse(time)
@@ -22,23 +21,28 @@ def is_valid_time(time):
         return False
 
 
-def parse_time(time_input, *, force_datetime=False, allow_undefined=False, **kwargs):
+def parse_time(
+    time_input: Union[None, str, dt.date, dt.datetime],
+    *,
+    force_datetime: bool = False,
+    allow_undefined: bool = False,
+    **kwargs: Any
+) -> Union[None, dt.date, dt.datetime]:
     """Parse input time/date string
 
     :param time_input: time/date to parse
-    :type time_input: str or datetime.date or datetime.datetime
     :param force_datetime: If True it will always return datetime.datetime object, if False it can also return only
         `datetime.date` object if only date is provided as input.
-    :type force_datetime: bool
     :param allow_undefined: Flag to allow parsing None or '..' into None
     :param allow_undefined: bool (default is False)
     :param kwargs: Any keyword arguments to be passed to `dateutil.parser.parse`. Example: `ignoretz=True`
     :return: A datetime object
-    :rtype: datetime.datetime or datetime.date
     """
 
-    if allow_undefined and time_input in [None, ".."]:
-        return None
+    if time_input is None or time_input == "..":
+        if allow_undefined:
+            return None
+        raise ValueError("Input is undefined but `allow_undefined` is set to `False`.")
 
     if isinstance(time_input, dt.date):
         if force_datetime and not isinstance(time_input, dt.datetime):
@@ -55,7 +59,11 @@ def parse_time(time_input, *, force_datetime=False, allow_undefined=False, **kwa
     return time.date()
 
 
-def parse_time_interval(time, allow_undefined=False, **kwargs):
+def parse_time_interval(
+    time: Union[None, str, dt.date, dt.datetime, Sequence[Union[None, str, dt.date, dt.datetime]]],
+    allow_undefined: bool = False,
+    **kwargs: Any
+) -> Tuple[Union[None, str, dt.date, dt.datetime], Union[None, str, dt.date, dt.datetime]]:
     """Parse input into an interval of two times, specifying start and end time, into datetime objects.
 
     The input time can have the following formats, which will be parsed as:
@@ -71,11 +79,11 @@ def parse_time_interval(time, allow_undefined=False, **kwargs):
     :param allow_undefined: Boolean flag controls if None or '..' are allowed
     :param allow_undefined: bool
     :param time: An input time
-    :type time: str or datetime.datetime or (str, str) or (datetime.datetime, datetime.datetime)
     :return: interval of start and end date of the form `YYYY-MM-DDThh:mm:ss`
-    :rtype: (datetime.datetime, datetime.datetime)
     :raises: ValueError
     """
+    date_interval: Tuple[Union[None, str, dt.date, dt.datetime], Union[None, str, dt.date, dt.datetime]]
+
     if allow_undefined and time in [None, ".."]:
         date_interval = None, None
     elif isinstance(time, (str, dt.date)):
@@ -100,18 +108,29 @@ def parse_time_interval(time, allow_undefined=False, **kwargs):
     return start_time, end_time
 
 
-def serialize_time(timestamp_input, *, use_tz=False):
+@overload
+def serialize_time(timestamp_input: Union[None, dt.date, dt.datetime], *, use_tz: bool = False) -> str:
+    ...
+
+
+@overload
+def serialize_time(timestamp_input: Iterable[Union[None, dt.date, dt.datetime]], *, use_tz: bool = False) -> Tuple[str]:
+    ...
+
+
+def serialize_time(
+    timestamp_input: Union[None, dt.date, dt.datetime, Iterable[Union[None, dt.date, dt.datetime]]],
+    *,
+    use_tz: bool = False
+) -> Union[str, Tuple[str, ...]]:
     """Transforms datetime objects into ISO 8601 strings
 
     :param timestamp_input: A datetime object or a tuple of datetime objects
-    :type timestamp_input: datetime.date or datetime.datetime or tuple(datetime.date or datetime.datetime)
     :param use_tz: If `True` it will ensure that the serialized string contains a timezone information (typically
         with `Z` at the end instead of +00:00). If `False` it will make sure to remove any timezone information
-    :type use_tz: bool
     :return: Timestamp(s) serialized into string(s)
-    :rtype: str or tuple(str)
     """
-    if isinstance(timestamp_input, tuple):
+    if isinstance(timestamp_input, Iterable):
         return tuple(serialize_time(timestamp, use_tz=use_tz) for timestamp in timestamp_input)
 
     if timestamp_input is None:
@@ -120,46 +139,43 @@ def serialize_time(timestamp_input, *, use_tz=False):
     if not isinstance(timestamp_input, dt.date):
         raise ValueError("Expected a datetime object or a tuple of datetime objects")
 
-    if use_tz and not isinstance(timestamp_input, dt.datetime):
-        raise ValueError("Cannot ensure timezone information for datetime.date objects, use datetime.datetime instead")
+    if use_tz:
+        if not isinstance(timestamp_input, dt.datetime):
+            raise ValueError(
+                "Cannot ensure timezone information for datetime.date objects, use datetime.datetime instead"
+            )
 
-    if use_tz and not timestamp_input.tzinfo:
-        timestamp_input = timestamp_input.replace(tzinfo=dateutil.tz.tzutc())
+        if not timestamp_input.tzinfo:
+            timestamp_input = timestamp_input.replace(tzinfo=dateutil.tz.tzutc())
 
-    if not use_tz and isinstance(timestamp_input, dt.datetime) and timestamp_input.tzinfo:
+    elif isinstance(timestamp_input, dt.datetime) and timestamp_input.tzinfo:
         timestamp_input = timestamp_input.replace(tzinfo=None)
 
     return timestamp_input.isoformat().replace("+00:00", "Z")
 
 
-def date_to_datetime(date, time=None):
+def date_to_datetime(date: dt.date, time: Optional[dt.time] = None) -> dt.datetime:
     """Converts a date object into datetime object
 
     :param date: a date object
-    :type date: datetime.date
     :param time: an option time object, if not provided it will replace it with 00:00:00
-    :type time: datetime.time
     :return: A datetime object derived from date and time
-    :rtype: datetime.datetime
     """
     if time is None:
         time = dt.datetime.min.time()
     return dt.datetime.combine(date, time)
 
 
-def filter_times(timestamps, time_difference):
+def filter_times(timestamps: Iterable[dt.datetime], time_difference: dt.timedelta) -> List[dt.datetime]:
     """Filters out timestamps within time_difference, preserving only the oldest timestamp.
 
     :param timestamps: A list of timestamps
-    :type timestamps: list(datetime.datetime)
     :param time_difference: A time difference threshold
-    :type time_difference: datetime.timedelta
     :return: An ordered list of timestamps `d_1<=d_2<=...<=d_n` such that `d_(i+1)-d_i > time_difference`
-    :rtype: list(datetime.datetime)
     """
     timestamps = sorted(set(timestamps))
 
-    filtered_timestamps = []
+    filtered_timestamps: List[dt.datetime] = []
     for current_timestamp in timestamps:
         if not filtered_timestamps or current_timestamp - filtered_timestamps[-1] > time_difference:
             filtered_timestamps.append(current_timestamp)

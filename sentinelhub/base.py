@@ -1,7 +1,6 @@
 """
 Implementation of base interface classes of this package.
 """
-
 import copy
 import os
 from abc import ABCMeta, abstractmethod
@@ -9,10 +8,8 @@ from typing import Dict, Generic, Iterable, List, Optional, Tuple, TypeVar
 
 import numpy as np
 
-from sentinelhub import DownloadClient
-
 from .config import SHConfig
-from .download import DownloadRequest
+from .download import DownloadClient, DownloadRequest
 from .os_utils import make_folder
 
 _T = TypeVar("_T")

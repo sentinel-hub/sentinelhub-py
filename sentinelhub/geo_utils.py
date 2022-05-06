@@ -1,11 +1,14 @@
 """
 Module for manipulation of geographical information
 """
-from typing import List, Optional, Sequence, Tuple, Union
+from __future__ import annotations
 
-from sentinelhub import BBox
+from typing import TYPE_CHECKING, List, Optional, Sequence, Tuple, Union
 
 from .constants import CRS
+
+if TYPE_CHECKING:
+    from .geometry import BBox
 
 ERR = 0.1
 

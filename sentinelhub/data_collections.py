@@ -4,7 +4,7 @@ Module defining data collections
 import warnings
 from dataclasses import dataclass, field, fields
 from enum import Enum, EnumMeta
-from typing import Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple, Type
 
 from aenum import extend_enum
 
@@ -100,7 +100,7 @@ class OrbitDirection:
     BOTH = "BOTH"
 
 
-def _shallow_asdict(dataclass_instance):
+def _shallow_asdict(dataclass_instance: Any) -> Dict[str, Any]:
     """Returns a dictionary of fields and values, but is not recursive and does not deepcopy like `asdict`"""
     # This definition needs to be above the class definitions in the file
     return {field.name: getattr(dataclass_instance, field.name) for field in fields(dataclass_instance)}
@@ -109,7 +109,7 @@ def _shallow_asdict(dataclass_instance):
 class _DataCollectionMeta(EnumMeta):
     """Metaclass that builds DataCollection class enums"""
 
-    def __getattribute__(cls, item, *args, **kwargs):
+    def __getattribute__(cls, item: str, *args: Any, **kwargs: Any) -> "DataCollection":
         """This is executed whenever `DataCollection.SOMETHING` is called
 
         Extended method handles cases where a collection has been renamed. It provides a new collection and raises a
@@ -127,13 +127,13 @@ class _DataCollectionMeta(EnumMeta):
 
         return super().__getattribute__(item, *args, **kwargs)
 
-    def __call__(cls, value, *args, **kwargs):
+    def __call__(cls, value: Any, *args: Any, **kwargs: Any) -> Type["DataCollection"]:  # type: ignore
         """This is executed whenever `DataCollection('something')` is called
 
         This solves a problem of pickling a custom DataCollection and unpickling it in another process
         """
         if isinstance(value, DataCollectionDefinition) and value not in cls._value2member_map_ and value._name:
-            cls._try_add_data_collection(value._name, value)
+            cls._try_add_data_collection(value._name, value)  # type: ignore
 
         return super().__call__(value, *args, **kwargs)
 
@@ -174,13 +174,13 @@ class DataCollectionDefinition:
         if isinstance(self.metabands, list):
             object.__setattr__(self, "metabands", tuple(self.metabands))
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """A nicer representation of parameters that define a data collection"""
         valid_params = {name: value for name, value in _shallow_asdict(self).items() if value is not None}
         params_repr = "\n  ".join(f"{name}: {value}" for name, value in valid_params.items() if name != "_name")
         return f"{self.__class__.__name__}(\n  {params_repr}\n)"
 
-    def derive(self, **params):
+    def derive(self, **params: Any) -> "DataCollectionDefinition":
         """Create a new data collection definition from current definition and parameters that override current
         parameters
 
@@ -445,27 +445,27 @@ class DataCollection(Enum, metaclass=_DataCollectionMeta):
     @classmethod
     def define(
         cls,
-        name,
+        name: str,
         *,
-        api_id=None,
-        catalog_id=None,
-        wfs_id=None,
-        service_url=None,
-        collection_type=None,
-        sensor_type=None,
-        processing_level=None,
-        swath_mode=None,
-        polarization=None,
-        resolution=None,
-        orbit_direction=None,
-        timeliness=None,
-        bands=None,
-        metabands=None,
-        collection_id=None,
-        is_timeless=False,
-        has_cloud_coverage=False,
-        dem_instance=None,
-    ):
+        api_id: Optional[str] = None,
+        catalog_id: Optional[str] = None,
+        wfs_id: Optional[str] = None,
+        service_url: Optional[str] = None,
+        collection_type: Optional[str] = None,
+        sensor_type: Optional[str] = None,
+        processing_level: Optional[str] = None,
+        swath_mode: Optional[str] = None,
+        polarization: Optional[str] = None,
+        resolution: Optional[str] = None,
+        orbit_direction: Optional[str] = None,
+        timeliness: Optional[str] = None,
+        bands: Optional[Tuple[Band, ...]] = None,
+        metabands: Optional[Tuple[Band, ...]] = None,
+        collection_id: Optional[str] = None,
+        is_timeless: bool = False,
+        has_cloud_coverage: bool = False,
+        dem_instance: Optional[str] = None,
+    ) -> "DataCollection":
         """Define a new data collection
 
         Note that all parameters, except `name` are optional. If a data collection definition won't be used for a
@@ -539,7 +539,7 @@ class DataCollection(Enum, metaclass=_DataCollectionMeta):
         cls._try_add_data_collection(name, definition)
         return cls(definition)
 
-    def define_from(self, name, **params):
+    def define_from(self, name: str, **params: Any) -> "DataCollection":
         """Define a new data collection from an existing one
 
         :param name: A name of a new data collection
@@ -555,7 +555,7 @@ class DataCollection(Enum, metaclass=_DataCollectionMeta):
         return DataCollection(new_definition)
 
     @classmethod
-    def _try_add_data_collection(cls, name, definition):
+    def _try_add_data_collection(cls, name: str, definition: DataCollectionDefinition) -> None:
         """Tries adding a new data collection definition. If the exact enum has already been defined then it won't do
         anything. However, if either a name or a definition has already been matched with another name or definition
         then it will raise an error.
@@ -581,7 +581,7 @@ class DataCollection(Enum, metaclass=_DataCollectionMeta):
         )
 
     @classmethod
-    def define_byoc(cls, collection_id, **params):
+    def define_byoc(cls, collection_id: str, **params: Any) -> "DataCollection":
         """Defines a BYOC data collection
 
         :param collection_id: An ID of a data collection
@@ -599,7 +599,7 @@ class DataCollection(Enum, metaclass=_DataCollectionMeta):
         return cls.define(**params)
 
     @classmethod
-    def define_batch(cls, collection_id, **params):
+    def define_batch(cls, collection_id: str, **params: Any) -> "DataCollection":
         """Defines a BATCH data collection
 
         :param collection_id: An ID of a data collection
@@ -617,7 +617,7 @@ class DataCollection(Enum, metaclass=_DataCollectionMeta):
         return cls.define(**params)
 
     @property
-    def api_id(self):
+    def api_id(self) -> str:
         """Provides a Sentinel Hub Process API identifier or raises an error if it is not defined
 
         :return: An identifier
@@ -629,7 +629,7 @@ class DataCollection(Enum, metaclass=_DataCollectionMeta):
         return self.value.api_id
 
     @property
-    def catalog_id(self):
+    def catalog_id(self) -> str:
         """Provides a Sentinel Hub Catalog API identifier or raises an error if it is not defined
 
         :return: An identifier
@@ -644,7 +644,7 @@ class DataCollection(Enum, metaclass=_DataCollectionMeta):
         raise ValueError(f"Data collection {self.name} is missing a Sentinel Hub Catalog API identifier")
 
     @property
-    def wfs_id(self):
+    def wfs_id(self) -> str:
         """Provides a Sentinel Hub WFS identifier or raises an error if it is not defined
 
         :return: An identifier
@@ -656,7 +656,7 @@ class DataCollection(Enum, metaclass=_DataCollectionMeta):
         return self.value.wfs_id
 
     @property
-    def bands(self):
+    def bands(self) -> Tuple[Band, ...]:
         """Provides band information available for the data collection
 
         :return: A tuple of band info
@@ -668,7 +668,7 @@ class DataCollection(Enum, metaclass=_DataCollectionMeta):
         return self.value.bands
 
     @property
-    def metabands(self):
+    def metabands(self) -> Tuple[Band, ...]:
         """Provides metaband information available for the data collection
 
         :return: A tuple of metaband info
@@ -679,7 +679,7 @@ class DataCollection(Enum, metaclass=_DataCollectionMeta):
             raise ValueError(f"Data collection {self.name} does not define metabands")
         return self.value.metabands
 
-    def __getattr__(self, item, *args, **kwargs):
+    def __getattr__(self, item: str, *args: Any, **kwargs: Any) -> Any:
         """The following insures that any attribute from DataCollectionDefinition, which is already not a
         property or an attribute of DataCollection, becomes an attribute of DataCollection
         """
@@ -691,7 +691,7 @@ class DataCollection(Enum, metaclass=_DataCollectionMeta):
         return super().__getattribute__(item, *args, **kwargs)
 
     @property
-    def is_sentinel1(self):
+    def is_sentinel1(self) -> bool:
         """Checks if data collection is a Sentinel-1 collection type
 
         Example: ``DataCollection.SENTINEL1_IW.is_sentinel1``
@@ -702,7 +702,7 @@ class DataCollection(Enum, metaclass=_DataCollectionMeta):
         return self.collection_type == _CollectionType.SENTINEL1
 
     @property
-    def is_byoc(self):
+    def is_byoc(self) -> bool:
         """Checks if data collection is a BYOC collection type
 
         :return: `True` if collection is a BYOC collection type and `False` otherwise
@@ -711,7 +711,7 @@ class DataCollection(Enum, metaclass=_DataCollectionMeta):
         return self.collection_type == _CollectionType.BYOC
 
     @property
-    def is_batch(self):
+    def is_batch(self) -> bool:
         """Checks if data collection is a batch collection type
 
         :return: `True` if collection is a batch collection type and `False` otherwise
@@ -719,7 +719,7 @@ class DataCollection(Enum, metaclass=_DataCollectionMeta):
         """
         return self.collection_type == _CollectionType.BATCH
 
-    def contains_orbit_direction(self, orbit_direction):
+    def contains_orbit_direction(self, orbit_direction: str) -> bool:
         """Checks if a data collection contains given orbit direction
 
         :param orbit_direction: An orbit direction
@@ -733,7 +733,7 @@ class DataCollection(Enum, metaclass=_DataCollectionMeta):
         return orbit_direction.upper() == defined_direction.upper()
 
     @classmethod
-    def get_available_collections(cls, config=None):
+    def get_available_collections(cls, config: Optional[SHConfig] = None) -> List["DataCollection"]:
         """Returns which data collections are available for configured Sentinel Hub OGC URL
 
         :param config: A custom instance of config class to override parameters from the saved configuration.
@@ -754,7 +754,11 @@ class DataCollection(Enum, metaclass=_DataCollectionMeta):
 DataSource = DataCollection
 
 
-def handle_deprecated_data_source(data_collection, data_source, default=None):
+def handle_deprecated_data_source(
+    data_collection: Optional[DataCollection],
+    data_source: Optional[DataCollection],
+    default: Optional[DataCollection] = None,
+) -> DataCollection:
     """Joins parameters used to specify a data collection. In case data_source is given it raises a warning. In case
     both are given it raises an error. In case neither are given but there is a default collection it raises another
     warning.
@@ -774,4 +778,4 @@ def handle_deprecated_data_source(data_collection, data_source, default=None):
         )
         return default
 
-    return data_collection or data_source
+    return data_collection or data_source  # type: ignore
