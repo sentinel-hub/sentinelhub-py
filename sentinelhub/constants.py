@@ -6,6 +6,7 @@ import mimetypes
 import re
 import warnings
 from enum import Enum, EnumMeta
+from typing import Any, Callable, Union
 
 import numpy as np
 import pyproj
@@ -20,11 +21,10 @@ class PackageProps:
     """Class for obtaining package properties. Currently, it supports obtaining package version."""
 
     @staticmethod
-    def get_version():
+    def get_version() -> str:
         """Returns package version
 
         :return: package version
-        :rtype: str
         """
         return __version__
 
@@ -57,7 +57,7 @@ class ServiceType(Enum):
 class ResamplingTypeMeta(EnumMeta):
     """Metaclass for ResamplingType so that it is not case sensitive."""
 
-    def __call__(cls, value, *args, **kwargs):
+    def __call__(cls, value: str, *args: Any, **kwargs: Any):  # type: ignore
         if isinstance(value, str):
             value = value.upper()
 
@@ -85,7 +85,7 @@ class CRSMeta(EnumMeta):
 
     _UNSUPPORTED_CRS = pyproj.CRS(4326)
 
-    def __new__(mcs, cls, bases, classdict):
+    def __new__(mcs, cls, bases, classdict):  # type: ignore
         """This is executed at the beginning of runtime when CRS class is created"""
         for direction, direction_value in [("N", "6"), ("S", "7")]:
             for zone in range(1, 61):
@@ -93,7 +93,7 @@ class CRSMeta(EnumMeta):
 
         return super().__new__(mcs, cls, bases, classdict)
 
-    def __call__(cls, crs_value, *args, **kwargs):
+    def __call__(cls, crs_value, *args, **kwargs):  # type: ignore
         """This is executed whenever CRS('something') is called"""
         # pylint: disable=signature-differs
         crs_value = cls._parse_crs(crs_value)
@@ -105,7 +105,7 @@ class CRSMeta(EnumMeta):
         return super().__call__(crs_value, *args, **kwargs)
 
     @staticmethod
-    def _parse_crs(value):
+    def _parse_crs(value: Union[int, str, dict, pyproj.CRS]) -> str:
         """Method for parsing different inputs representing the same CRS enum. Examples:
 
         - 4326
@@ -143,11 +143,11 @@ class CRSMeta(EnumMeta):
         if isinstance(value, str):
             if "urn:ogc:def:crs" in value.lower():
                 crs_template = re.compile(r"urn:ogc:def:crs:.+::(?P<code>.+)", re.IGNORECASE)
-                value = crs_template.match(value).group("code")
+                value = crs_template.match(value).group("code")  # type: ignore
             if value.upper() == "CRS84":
                 return "4326"
             return value.lower().strip("epsg: ")
-        return value
+        return value  # type: ignore
 
 
 class CRS(Enum, metaclass=CRSMeta):
@@ -161,89 +161,79 @@ class CRS(Enum, metaclass=CRSMeta):
     POP_WEB = "3857"
     #: UTM enum members are defined in CRSMeta.__new__
 
-    def __str__(self):
+    def __str__(self) -> str:
         """Method for casting CRS enum into string"""
         return self.ogc_string()
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """Method for retrieving CRS enum representation"""
         return f"CRS('{self.value}')"
 
     @classmethod
-    def has_value(cls, value):
+    def has_value(cls, value: str) -> bool:
         """Tests whether CRS contains a constant defined with string `value`.
 
         :param value: The string representation of the enum constant.
-        :type value: str
         :return: `True` if there exists a constant with string value `value`, `False` otherwise
-        :rtype: bool
         """
         return value in cls._value2member_map_
 
     @property
-    def epsg(self):
+    def epsg(self) -> int:
         """EPSG code property
 
         :return: EPSG code of given CRS
-        :rtype: int
         """
         return int(self.value)
 
-    def ogc_string(self):
+    def ogc_string(self) -> str:
         """Returns a string of the form authority:id representing the CRS.
 
         :param self: An enum constant representing a coordinate reference system.
-        :type self: CRS
         :return: A string representation of the CRS.
-        :rtype: str
         """
         return f"EPSG:{CRS(self).value}"
 
     @property
-    def opengis_string(self):
+    def opengis_string(self) -> str:
         """Returns a URL to OGC webpage where the CRS is defined
 
         :return: A URL with CRS definition
-        :rtype: str
         """
         return f"http://www.opengis.net/def/crs/EPSG/0/{self.epsg}"
 
-    def is_utm(self):
+    def is_utm(self) -> bool:
         """Checks if crs is one of the 64 possible UTM coordinate reference systems.
 
         :param self: An enum constant representing a coordinate reference system.
-        :type self: CRS
         :return: `True` if crs is UTM and `False` otherwise
-        :rtype: bool
         """
         return self.name.startswith("UTM")
 
     @functools.lru_cache(maxsize=128)
-    def projection(self):
+    def projection(self) -> pyproj.Proj:
         """Returns a projection in form of pyproj class.
 
         For better time performance this method will cache `128` most recent results. Cache can be released with
         `CRS.projection.cache_clear()`.
 
         :return: pyproj projection class
-        :rtype: pyproj.Proj
         """
         return pyproj.Proj(self._get_pyproj_projection_def(), preserve_units=True)
 
     @functools.lru_cache(maxsize=128)
-    def pyproj_crs(self):
+    def pyproj_crs(self) -> pyproj.CRS:
         """Returns a pyproj CRS class.
 
         For better time performance this method will cache `128` most recent results. Cache can be released with
         `CRS.pyproj_crs.cache_clear()`.
 
         :return: pyproj CRS class
-        :rtype: pyproj.CRS
         """
         return pyproj.CRS(self._get_pyproj_projection_def())
 
     @functools.lru_cache(maxsize=512)
-    def get_transform_function(self, other, always_xy=True):
+    def get_transform_function(self, other: "CRS", always_xy: bool = True) -> Callable[..., tuple]:
         """Returns a function for transforming geometrical objects from one CRS to another. The function will support
         transformations between any objects that pyproj supports.
 
@@ -251,33 +241,26 @@ class CRS(Enum, metaclass=CRSMeta):
         `CRS.get_transform_function.cache_clear()`.
 
         :param self: Initial CRS
-        :type self: CRS
         :param other: Target CRS
-        :type other: CRS
         :param always_xy: Parameter that is passed to `pyproj.Transformer` object and defines axis order for
             transformation. The default value `True` is in most cases the correct one.
-        :type always_xy: bool
         :return: A projection function obtained from pyproj package
-        :rtype: function
         """
         return pyproj.Transformer.from_proj(self.projection(), other.projection(), always_xy=always_xy).transform
 
     @staticmethod
-    def get_utm_from_wgs84(lng, lat):
+    def get_utm_from_wgs84(lng: float, lat: float) -> "CRS":
         """Convert from WGS84 to UTM coordinate system
 
         :param lng: Longitude
-        :type lng: float
         :param lat: Latitude
-        :type lat: float
         :return: UTM coordinates
-        :rtype: tuple
         """
         _, _, zone, _ = utm.from_latlon(lat, lng)
         direction = "N" if lat >= 0 else "S"
         return CRS[f"UTM_{zone}{direction}"]
 
-    def _get_pyproj_projection_def(self):
+    def _get_pyproj_projection_def(self) -> str:
         """Returns a pyproj crs definition
 
         For WGS 84 it ensures lng-lat order
@@ -305,24 +288,20 @@ class CustomUrlParam(Enum):
     MINQA = "MinQA"
 
     @classmethod
-    def has_value(cls, value):
+    def has_value(cls, value: str) -> bool:
         """Tests whether CustomUrlParam contains a constant defined with a string `value`
 
         :param value: The string representation of the enum constant
-        :type value: str
         :return: `True` if there exists a constant with a string value `value`, `False` otherwise
-        :rtype: bool
         """
         return any(value.lower() == item.value.lower() for item in cls)
 
     @staticmethod
-    def get_string(param):
+    def get_string(param: Enum) -> str:
         """Get custom url parameter name as string
 
         :param param: CustomUrlParam enum constant
-        :type param: Enum constant
         :return: String describing the file format
-        :rtype: str
         """
         return param.value
 
@@ -366,22 +345,19 @@ class MimeType(Enum):
     GZIP = "gz"
 
     @property
-    def extension(self):
+    def extension(self) -> str:
         """Returns file extension of the MimeType object
 
         :returns: A file extension string
-        :rtype: str
         """
         return self.value
 
     @staticmethod
-    def from_string(mime_type_str):
+    def from_string(mime_type_str: str) -> "MimeType":
         """Parses mime type from a file extension string
 
         :param mime_type_str: A file extension string
-        :type mime_type_str: str
         :return: A mime type enum
-        :rtype: MimeType
         """
         guessed_extension = mimetypes.guess_extension(mime_type_str)
         if guessed_extension:
@@ -397,42 +373,36 @@ class MimeType(Enum):
         except KeyError as exception:
             raise ValueError(f"Data format {mime_type_str} is not supported") from exception
 
-    def is_image_format(self):
+    def is_image_format(self) -> bool:
         """Checks whether file format is an image format
 
         Example: ``MimeType.PNG.is_image_format()`` or ``MimeType.is_image_format(MimeType.PNG)``
 
         :param self: File format
-        :type self: MimeType
         :return: `True` if file is in image format, `False` otherwise
-        :rtype: bool
         """
         return self in frozenset([MimeType.TIFF, MimeType.PNG, MimeType.JP2, MimeType.JPG])
 
-    def is_api_format(self):
+    def is_api_format(self) -> bool:
         """Checks if mime type is supported by Sentinel Hub API
 
         :return: True if API supports this format and False otherwise
-        :rtype: bool
         """
         return self in frozenset([MimeType.JPG, MimeType.PNG, MimeType.TIFF, MimeType.JSON])
 
     @classmethod
-    def has_value(cls, value):
+    def has_value(cls, value: str) -> bool:
         """Tests whether MimeType contains a constant defined with string ``value``
 
         :param value: The string representation of the enum constant
-        :type value: str
         :return: `True` if there exists a constant with string value ``value``, `False` otherwise
-        :rtype: bool
         """
         return value in cls._value2member_map_
 
-    def get_string(self):
+    def get_string(self) -> str:
         """Get file format as string
 
         :return: String describing the file format
-        :rtype: str
         """
         if self is MimeType.JP2:
             return "image/jpeg2000"
@@ -450,11 +420,10 @@ class MimeType(Enum):
         """
         return path.endswith(f".{self.extension}")
 
-    def get_expected_max_value(self):
+    def get_expected_max_value(self) -> Union[float, int]:
         """Returns max value of image `MimeType` format and raises an error if it is not an image format
 
         :return: A maximum value of specified image format
-        :rtype: int or float
         :raises: ValueError
         """
         try:

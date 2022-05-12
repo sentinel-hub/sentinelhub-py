@@ -344,7 +344,7 @@ class TileSplitter(AreaSplitter):
         super().__init__(shape_list, crs, **kwargs)
 
     def _make_split(self) -> Tuple[List[BBox], List[Dict[str, object]]]:
-        tile_dict: Dict[Tuple[Tuple[float, ...], str], Dict[str, Any]] = {}
+        tile_dict: Dict[Tuple[Tuple[float, ...], int], Dict[str, Any]] = {}
 
         search_iterator = self.catalog.search(
             self.data_collection, time=self.time_interval, bbox=self.area_bbox, fields=self._CATALOG_FILTER

@@ -1,73 +1,72 @@
 """
 Implementation of base interface classes of this package.
 """
-
 import copy
 import os
-from abc import ABC, abstractmethod
+from abc import ABCMeta, abstractmethod
+from typing import Dict, Generic, Iterable, List, Optional, Tuple, TypeVar
+
+import numpy as np
 
 from .config import SHConfig
-from .download import DownloadRequest
+from .download import DownloadClient, DownloadRequest
 from .os_utils import make_folder
 
+_T = TypeVar("_T")
 
-class DataRequest(ABC):
+
+class DataRequest(metaclass=ABCMeta):
     """A base abstract class for all implementations of data request interface.
 
     Every data request type can write the fetched data to disk and then read it again (and hence avoid the need to
     download the same data again).
     """
 
-    def __init__(self, download_client_class, *, data_folder=None, config=None):
+    def __init__(
+        self, download_client_class: type, *, data_folder: Optional[str] = None, config: Optional[SHConfig] = None
+    ):
         """
         :param download_client_class: A class implementing a download client
-        :type download_client_class: type
         :param data_folder: location of the directory where the fetched data will be saved.
-        :type data_folder: str
         :param config: A custom instance of config class to override parameters from the saved configuration.
-        :type config: SHConfig or None
         """
         self.download_client_class = download_client_class
         self.data_folder = data_folder
         self.config = config or SHConfig()
 
-        self.download_list = []
-        self.folder_list = []
+        self.download_list: List[DownloadRequest] = []
+        self.folder_list: List[str] = []
         self.create_request()
 
     @abstractmethod
-    def create_request(self):
+    def create_request(self) -> None:
         """An abstract method for logic of creating download requests"""
-        raise NotImplementedError
 
-    def get_download_list(self):
+    def get_download_list(self) -> List[DownloadRequest]:
         """
         Returns a list of download requests for requested data.
 
         :return: List of data to be downloaded
-        :rtype: list(sentinelhub.DownloadRequest)
         """
         return self.download_list
 
-    def get_filename_list(self):
+    def get_filename_list(self) -> List[str]:
         """Returns a list of file names (or paths relative to `data_folder`) where the requested data will be saved
         or read from, if it has already been downloaded and saved.
 
         :return: A list of filenames
-        :rtype: list(str)
         """
         return [request.get_relative_paths()[1] for request in self.download_list]
 
-    def get_url_list(self):
+    def get_url_list(self) -> List[str]:
         """
         Returns a list of urls for requested data.
 
         :return: List of URLs from where data will be downloaded.
-        :rtype: list(str)
         """
         return [request.url for request in self.download_list]
 
-    def is_valid_request(self):
+    def is_valid_request(self) -> bool:
         """Checks if initialized class instance successfully prepared a list of items to download
 
         :return: `True` if request is valid and `False` otherwise
@@ -80,80 +79,77 @@ class DataRequest(ABC):
     def get_data(
         self,
         *,
-        save_data=False,
-        redownload=False,
-        data_filter=None,
-        max_threads=None,
-        decode_data=True,
-        raise_download_errors=True,
-    ):
+        save_data: bool = False,
+        redownload: bool = False,
+        data_filter: Optional[List[int]] = None,
+        max_threads: Optional[int] = None,
+        decode_data: bool = True,
+        raise_download_errors: bool = True,
+    ) -> List[np.ndarray]:
         """Get requested data either by downloading it or by reading it from the disk (if it
         was previously downloaded and saved).
 
         :param save_data: flag to turn on/off saving of data to disk. Default is `False`.
-        :type save_data: bool
         :param redownload: if `True`, download again the requested data even though it's already saved to disk.
             Default is `False`, do not download if data is already available on disk.
-        :type redownload: bool
         :param data_filter: Used to specify which items will be returned by the method and in which order. E.g. with
             ``data_filter=[0, 2, -1]`` the method will return only 1st, 3rd and last item. Default filter is `None`.
-        :type data_filter: list(int) or None
         :param max_threads: Maximum number of threads to be used for download in parallel. The default is
             `max_threads=None` which will use the number of processors on the system multiplied by 5.
-        :type max_threads: int or None
         :param decode_data: If `True` (default) it decodes data (e.g., returns image as an array of numbers);
             if `False` it returns binary data.
-        :type decode_data: bool
         :param raise_download_errors: If `True` any error in download process should be raised as
             ``DownloadFailedException``. If `False` failed downloads will only raise warnings and the method will
             return list with `None` values in places where the results of failed download requests should be.
-        :type raise_download_errors: bool
         :return: requested images as numpy arrays, where each array corresponds to a single acquisition and has
             shape ``[height, width, channels]``.
-        :rtype: list of numpy arrays
         """
         self._preprocess_request(save_data, True)
         return self._execute_data_download(
             data_filter, redownload, max_threads, raise_download_errors, decode_data=decode_data
         )
 
-    def save_data(self, *, data_filter=None, redownload=False, max_threads=None, raise_download_errors=False):
+    def save_data(
+        self,
+        *,
+        data_filter: Optional[List[int]] = None,
+        redownload: bool = False,
+        max_threads: Optional[int] = None,
+        raise_download_errors: bool = False,
+    ) -> None:
         """Saves data to disk. If ``redownload=True`` then the data is redownloaded using ``max_threads`` workers.
 
         :param data_filter: Used to specify which items will be returned by the method and in which order. E.g. with
             `data_filter=[0, 2, -1]` the method will return only 1st, 3rd and last item. Default filter is `None`.
-        :type data_filter: list(int) or None
         :param redownload: data is redownloaded if ``redownload=True``. Default is `False`
-        :type redownload: bool
         :param max_threads: Maximum number of threads to be used for download in parallel. The default is
             `max_threads=None` which will use the number of processors on the system multiplied by 5.
-        :type max_threads: int or None
         :param raise_download_errors: If `True` any error in download process should be raised as
             ``DownloadFailedException``. If `False` failed downloads will only raise warnings.
-        :type raise_download_errors: bool
         """
         self._preprocess_request(True, False)
         self._execute_data_download(data_filter, redownload, max_threads, raise_download_errors)
 
-    def _execute_data_download(self, data_filter, redownload, max_threads, raise_download_errors, decode_data=True):
+    def _execute_data_download(
+        self,
+        data_filter: Optional[List[int]] = None,
+        redownload: bool = False,
+        max_threads: Optional[int] = None,
+        raise_download_errors: bool = False,
+        decode_data: bool = True,
+    ) -> List[np.ndarray]:
         """Calls download module and executes the download process
 
         :param data_filter: Used to specify which items will be returned by the method and in which order. E.g. with
             `data_filter=[0, 2, -1]` the method will return only 1st, 3rd and last item. Default filter is `None`.
-        :type data_filter: list(int) or None
         :param redownload: data is redownloaded if ``redownload=True``. Default is `False`
-        :type redownload: bool
         :param max_threads: Maximum number of threads to be used for download in parallel. The default is
             `max_threads=None` which will use the number of processors on the system multiplied by 5.
-        :type max_threads: int or None
         :param raise_download_errors: If `True` any error in download process should be raised as
             ``DownloadFailedException``. If `False` failed downloads will only raise warnings.
-        :type raise_download_errors: bool
         :param decode_data: If `True` (default) it decodes data (e.g., returns image as an array of numbers);
             if `False` it returns binary data.
-        :type decode_data: bool
         :return: List of data obtained from download
-        :rtype: list
         """
         is_repeating_filter = False
         if data_filter is None:
@@ -180,7 +176,7 @@ class DataRequest(ABC):
         return data_list
 
     @staticmethod
-    def _filter_repeating_items(download_list):
+    def _filter_repeating_items(download_list: List[DownloadRequest]) -> Tuple[List[DownloadRequest], List[int]]:
         """Because of data_filter some requests in download list might be the same. In order not to download them again
         this method will reduce the list of requests. It will also return a mapping list which can be used to
         reconstruct the previous list of download requests.
@@ -192,7 +188,7 @@ class DataRequest(ABC):
         """
         unique_requests_map = {}
         mapping_list = []
-        unique_download_list = []
+        unique_download_list: List[DownloadRequest] = []
         for download_request in download_list:
             if download_request not in unique_requests_map:
                 unique_requests_map[download_request] = len(unique_download_list)
@@ -200,7 +196,7 @@ class DataRequest(ABC):
             mapping_list.append(unique_requests_map[download_request])
         return unique_download_list, mapping_list
 
-    def _preprocess_request(self, save_data, return_data):
+    def _preprocess_request(self, save_data: bool, return_data: bool) -> None:
         """Prepares requests for download and creates empty folders
 
         :param save_data: Tells whether to save data or not
@@ -211,23 +207,23 @@ class DataRequest(ABC):
         if not self.is_valid_request():
             raise ValueError("Cannot obtain data because request is invalid")
 
-        if save_data and self.data_folder is None:
-            raise ValueError(
-                "Request parameter `data_folder` is not specified. "
-                "In order to save data please set `data_folder` to location on your disk."
-            )
+        if save_data:
+            if self.data_folder is None:
+                raise ValueError(
+                    "Request parameter `data_folder` is not specified. "
+                    "In order to save data please set `data_folder` to location on your disk."
+                )
+
+            for folder in self.folder_list:
+                make_folder(os.path.join(self.data_folder, folder))
 
         for download_request in self.download_list:
             download_request.save_response = save_data
             download_request.return_data = return_data
             download_request.data_folder = self.data_folder
 
-        if save_data:
-            for folder in self.folder_list:
-                make_folder(os.path.join(self.data_folder, folder))
 
-
-class FeatureIterator(ABC):
+class FeatureIterator(Generic[_T], metaclass=ABCMeta):
     """An implementation of a base feature iteration class
 
     Main functionalities:
@@ -237,25 +233,22 @@ class FeatureIterator(ABC):
       features again.
     """
 
-    def __init__(self, client, url, params=None):
+    def __init__(self, client: DownloadClient, url: str, params: Optional[Dict[str, object]] = None):
         """
         :param client: An instance of a download client object
-        :type client: DownloadClient
         :param url: A URL where requests will be made
-        :type url: str
         :param params: Parameters to be sent with each request
-        :type params: dict or None
         """
         self.client = client
         self.url = url
         self.params = params or {}
 
         self.index = 0
-        self.features = []
+        self.features: List[_T] = []
         self.next = None
         self.finished = False
 
-    def __iter__(self):
+    def __iter__(self) -> "FeatureIterator[_T]":
         """Method called at the beginning of a new iteration
 
         :return: It returns the iterator class itself
@@ -264,7 +257,7 @@ class FeatureIterator(ABC):
         self.index = 0
         return self
 
-    def __next__(self):
+    def __next__(self) -> _T:
         """Method called to provide the next feature in iteration
 
         :return: the next feature
@@ -280,6 +273,5 @@ class FeatureIterator(ABC):
         raise StopIteration
 
     @abstractmethod
-    def _fetch_features(self):
+    def _fetch_features(self) -> Iterable[_T]:
         """Collects and returns more features from the service"""
-        raise NotImplementedError
