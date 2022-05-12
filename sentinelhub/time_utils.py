@@ -22,12 +22,12 @@ def is_valid_time(time: str) -> bool:
 
 
 def parse_time(
-    time_input: Union[None, str, dt.date, dt.datetime],
+    time_input: Union[None, str, dt.date],
     *,
     force_datetime: bool = False,
     allow_undefined: bool = False,
     **kwargs: Any
-) -> Union[None, dt.date, dt.datetime]:
+) -> Optional[dt.date]:
     """Parse input time/date string
 
     :param time_input: time/date to parse
@@ -60,10 +60,10 @@ def parse_time(
 
 
 def parse_time_interval(
-    time: Union[None, str, dt.date, dt.datetime, Sequence[Union[None, str, dt.date, dt.datetime]]],
+    time: Union[None, str, dt.date, Sequence[Union[None, str, dt.date]]],
     allow_undefined: bool = False,
     **kwargs: Any
-) -> Tuple[Union[None, str, dt.date, dt.datetime], Union[None, str, dt.date, dt.datetime]]:
+) -> Tuple[Optional[dt.date], Optional[dt.date]]:
     """Parse input into an interval of two times, specifying start and end time, into datetime objects.
 
     The input time can have the following formats, which will be parsed as:
@@ -82,7 +82,7 @@ def parse_time_interval(
     :return: interval of start and end date of the form `YYYY-MM-DDThh:mm:ss`
     :raises: ValueError
     """
-    date_interval: Tuple[Union[None, str, dt.date, dt.datetime], Union[None, str, dt.date, dt.datetime]]
+    date_interval: Tuple[Union[None, str, dt.date], Union[None, str, dt.date]]
 
     if allow_undefined and time in [None, ".."]:
         date_interval = None, None
@@ -109,17 +109,17 @@ def parse_time_interval(
 
 
 @overload
-def serialize_time(timestamp_input: Union[None, dt.date, dt.datetime], *, use_tz: bool = False) -> str:
+def serialize_time(timestamp_input: Union[None, dt.date], *, use_tz: bool = False) -> str:
     ...
 
 
 @overload
-def serialize_time(timestamp_input: Iterable[Union[None, dt.date, dt.datetime]], *, use_tz: bool = False) -> Tuple[str]:
+def serialize_time(timestamp_input: Iterable[Union[None, dt.date]], *, use_tz: bool = False) -> Tuple[str]:
     ...
 
 
 def serialize_time(
-    timestamp_input: Union[None, dt.date, dt.datetime, Iterable[Union[None, dt.date, dt.datetime]]],
+    timestamp_input: Union[None, dt.date, Iterable[Union[None, dt.date]]],
     *,
     use_tz: bool = False
 ) -> Union[str, Tuple[str, ...]]:
