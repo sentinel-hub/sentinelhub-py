@@ -22,11 +22,7 @@ def is_valid_time(time: str) -> bool:
 
 
 def parse_time(
-    time_input: Union[None, str, dt.date],
-    *,
-    force_datetime: bool = False,
-    allow_undefined: bool = False,
-    **kwargs: Any
+    time_input: Union[None, str, dt.date], *, force_datetime: bool = False, allow_undefined: bool = False, **kwargs: Any
 ) -> Optional[dt.date]:
     """Parse input time/date string
 
@@ -60,9 +56,7 @@ def parse_time(
 
 
 def parse_time_interval(
-    time: Union[None, str, dt.date, Sequence[Union[None, str, dt.date]]],
-    allow_undefined: bool = False,
-    **kwargs: Any
+    time: Union[None, str, dt.date, Sequence[Union[None, str, dt.date]]], allow_undefined: bool = False, **kwargs: Any
 ) -> Tuple[Optional[dt.date], Optional[dt.date]]:
     """Parse input into an interval of two times, specifying start and end time, into datetime objects.
 
@@ -119,9 +113,7 @@ def serialize_time(timestamp_input: Iterable[Union[None, dt.date]], *, use_tz: b
 
 
 def serialize_time(
-    timestamp_input: Union[None, dt.date, Iterable[Union[None, dt.date]]],
-    *,
-    use_tz: bool = False
+    timestamp_input: Union[None, dt.date, Iterable[Union[None, dt.date]]], *, use_tz: bool = False
 ) -> Union[str, Tuple[str, ...]]:
     """Transforms datetime objects into ISO 8601 strings
 
