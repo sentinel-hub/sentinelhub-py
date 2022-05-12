@@ -103,17 +103,17 @@ def parse_time_interval(
 
 
 @overload
-def serialize_time(timestamp_input: Union[None, dt.date], *, use_tz: bool = False) -> str:
+def serialize_time(timestamp_input: Optional[dt.date], *, use_tz: bool = False) -> str:
     ...
 
 
 @overload
-def serialize_time(timestamp_input: Iterable[Union[None, dt.date]], *, use_tz: bool = False) -> Tuple[str]:
+def serialize_time(timestamp_input: Iterable[Optional[dt.date]], *, use_tz: bool = False) -> Tuple[str]:
     ...
 
 
 def serialize_time(
-    timestamp_input: Union[None, dt.date, Iterable[Union[None, dt.date]]], *, use_tz: bool = False
+    timestamp_input: Union[None, dt.date, Iterable[Optional[dt.date]]], *, use_tz: bool = False
 ) -> Union[str, Tuple[str, ...]]:
     """Transforms datetime objects into ISO 8601 strings
 
