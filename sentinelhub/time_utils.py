@@ -57,7 +57,7 @@ def parse_time(
 
 def parse_time_interval(
     time: Union[None, str, dt.date, Sequence[Union[None, str, dt.date]]], allow_undefined: bool = False, **kwargs: Any
-) -> Tuple[Optional[dt.date], Optional[dt.date]]:
+) -> Tuple[Optional[dt.datetime], Optional[dt.datetime]]:
     """Parse input into an interval of two times, specifying start and end time, into datetime objects.
 
     The input time can have the following formats, which will be parsed as:
