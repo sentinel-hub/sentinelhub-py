@@ -108,7 +108,7 @@ def serialize_time(timestamp_input: Optional[dt.date], *, use_tz: bool = False) 
 
 
 @overload
-def serialize_time(timestamp_input: Iterable[Optional[dt.date]], *, use_tz: bool = False) -> Tuple[str]:
+def serialize_time(timestamp_input: Iterable[Optional[dt.date]], *, use_tz: bool = False) -> Tuple[str, ...]:
     ...
 
 
