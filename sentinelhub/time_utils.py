@@ -2,7 +2,7 @@
 Module with useful time/date functions
 """
 import datetime as dt
-from typing import Any, Iterable, List, Optional, Sequence, Tuple, Union, overload
+from typing import Any, Iterable, List, Optional, Tuple, Union, overload
 
 import dateutil.parser
 import dateutil.tz
