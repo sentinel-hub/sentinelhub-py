@@ -2,7 +2,7 @@
 Module implementing some common utility functions
 """
 from enum import Enum
-from typing import Dict, Optional, Type, TypeVar
+from typing import Any, Dict, Optional, Type, TypeVar
 
 from dataclasses_json import LetterCase
 from dataclasses_json import config as dataclass_config
@@ -38,7 +38,7 @@ def enum_config(enum_class: Type[Enum]) -> Dict[str, dict]:
     )
 
 
-def _update_other_args(dict1: dict, dict2: dict) -> None:
+def _update_other_args(dict1: Dict[str, Any], dict2: Dict[str, Any]) -> None:
     """Function for a recursive update of `dict1` with `dict2`. The function loops over the keys in `dict2` and
     only the non-dict like values are assigned to the specified keys.
     """

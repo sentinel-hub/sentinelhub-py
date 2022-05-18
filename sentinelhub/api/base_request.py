@@ -1,16 +1,15 @@
 """
 Implementation of base Sentinel Hub interfaces
 """
-import datetime as dt
 from abc import ABCMeta, abstractmethod
-from typing import Any, Dict, Optional, Tuple, Union
+from typing import Any, Dict, Optional
 
 from ..base import DataRequest
 from ..constants import MimeType, MosaickingOrder, RequestType, ResamplingType
 from ..data_collections import DataCollection, OrbitDirection
 from ..download import DownloadRequest
 from ..geometry import BBox, Geometry
-from ..time_utils import parse_time_interval, serialize_time
+from ..time_utils import RawTimeIntervalType, parse_time_interval, serialize_time
 from .utils import _update_other_args
 
 
@@ -47,12 +46,12 @@ class SentinelHubBaseApiRequest(DataRequest, metaclass=ABCMeta):
         data_collection: DataCollection,
         *,
         identifier: Optional[str] = None,
-        time_interval: Union[None, Tuple[str, str], Tuple[dt.date, dt.date]] = None,
+        time_interval: Optional[RawTimeIntervalType] = None,
         maxcc: Optional[float] = None,
         mosaicking_order: Optional[MosaickingOrder] = None,
         upsampling: Optional[ResamplingType] = None,
         downsampling: Optional[ResamplingType] = None,
-        other_args: Optional[dict] = None,
+        other_args: Optional[Dict[str, Any]] = None,
     ) -> "InputDataDict":
         """Generate the `input data` part of the request body
 
@@ -91,7 +90,7 @@ class SentinelHubBaseApiRequest(DataRequest, metaclass=ABCMeta):
 
     @staticmethod
     def bounds(
-        bbox: Optional[BBox] = None, geometry: Optional[Geometry] = None, other_args: Optional[dict] = None
+        bbox: Optional[BBox] = None, geometry: Optional[Geometry] = None, other_args: Optional[Dict[str, Any]] = None
     ) -> Dict[str, Any]:
         """Generate a `bound` part of the API request
 
@@ -178,7 +177,7 @@ class InputDataDict(dict):
 
 def _get_data_filters(
     data_collection: DataCollection,
-    time_interval: Union[None, Tuple[str, str], Tuple[dt.date, dt.date]],
+    time_interval: Optional[RawTimeIntervalType],
     maxcc: Optional[float],
     mosaicking_order: Optional[MosaickingOrder],
 ) -> Dict[str, Any]:
