@@ -6,6 +6,9 @@ import copy
 import json
 import numbers
 import os
+from typing import Dict, List, Optional, Union
+
+ConfigDict = Dict[str, Union[str, int, float]]
 
 
 class SHConfig:
@@ -48,7 +51,7 @@ class SHConfig:
     class _SHConfig:
         """Internal class holding configuration parameters"""
 
-        CONFIG_PARAMS = {
+        CONFIG_PARAMS: ConfigDict = {
             "instance_id": "",
             "sh_client_id": "",
             "sh_client_secret": "",
@@ -79,10 +82,10 @@ class SHConfig:
             "aws_session_token",
         }
 
-        def __init__(self):
+        def __init__(self) -> None:
             self.load_configuration()
 
-        def _parse_configuration(self, config):
+        def _parse_configuration(self, config: ConfigDict) -> ConfigDict:
             """Checks if configuration file contains all keys and parses values"""
             for param, default_value in self.CONFIG_PARAMS.items():
                 if param not in config:
@@ -95,9 +98,9 @@ class SHConfig:
                 if not isinstance(config[param], param_type):
                     raise ValueError(f"Value of parameter '{param}' must be of type {param_type.__name__}")
 
-            if config["max_wfs_records_per_query"] > 100:
+            if config["max_wfs_records_per_query"] > 100:  # type: ignore[operator]
                 raise ValueError("Value of config parameter 'max_wfs_records_per_query' must be at most 100")
-            if config["max_opensearch_records_per_query"] > 500:
+            if config["max_opensearch_records_per_query"] > 500:  # type: ignore[operator]
                 raise ValueError("Value of config parameter 'max_opensearch_records_per_query' must be at most 500")
 
             # The following enables that url parameters can be written with or without / at the end
@@ -107,12 +110,11 @@ class SHConfig:
 
             return config
 
-        def get_config_file(self):
+        def get_config_file(self) -> str:
             """Checks if configuration file exists and returns its file path.
             If file doesn't exist it creates a default configurations file.
 
             :return: location of configuration file
-            :rtype: str
             """
             config_file = os.path.join(os.path.dirname(__file__), "config.json")
 
@@ -122,7 +124,7 @@ class SHConfig:
 
             return config_file
 
-        def load_configuration(self):
+        def load_configuration(self) -> None:
             """Method reads and loads the configuration file."""
             with open(self.get_config_file(), "r") as cfg_file:
                 config = json.load(cfg_file)
@@ -133,11 +135,10 @@ class SHConfig:
                 if prop in self.CONFIG_PARAMS:
                     setattr(self, prop, config[prop])
 
-        def get_config(self):
+        def get_config(self) -> ConfigDict:
             """Returns a dictionary with configuration parameters
 
             :return: A dictionary
-            :rtype: dict
             """
             config = {item: getattr(self, item) for item in self.CONFIG_PARAMS}
             for item, default_value in self.CONFIG_PARAMS.items():
@@ -145,7 +146,7 @@ class SHConfig:
                     config[item] = default_value
             return config
 
-        def save_configuration(self):
+        def save_configuration(self) -> None:
             """Method saves changed parameter values to the configuration file."""
             config = self.get_config()
 
@@ -154,9 +155,30 @@ class SHConfig:
             with open(self.get_config_file(), "w") as cfg_file:
                 json.dump(config, cfg_file, indent=2)
 
-    _instance = None
+    _instance: Optional[_SHConfig] = None
 
-    def __init__(self, hide_credentials=False):
+    instance_id: str
+    sh_client_id: str
+    sh_client_secret: str
+    sh_base_url: str
+    sh_auth_base_url: str
+    geopedia_wms_url: str
+    geopedia_rest_url: str
+    aws_access_key_id: str
+    aws_secret_access_key: str
+    aws_session_token: str
+    aws_metadata_url: str
+    aws_s3_l1c_bucket: str
+    aws_s3_l2a_bucket: str
+    opensearch_url: str
+    max_wfs_records_per_query: int
+    max_opensearch_records_per_query: int
+    max_download_attempts: int
+    download_sleep_time: float
+    download_timeout_seconds: float
+    number_of_download_processes: int
+
+    def __init__(self, hide_credentials: bool = False):
         """
         :param hide_credentials: If `True` then methods that provide the entire content of the config object will mask
             out all credentials. But credentials could still be accessed directly from config object attributes. The
@@ -168,22 +190,22 @@ class SHConfig:
         for prop in self.get_params():
             setattr(self, prop, getattr(self._global_instance, prop))
 
-    def __getitem__(self, name):
+    def __getitem__(self, name: str) -> Union[str, int, float]:
         """Config parameters can also be accessed as items."""
         if name in self.get_params():
             return getattr(self, name)
         raise KeyError(f"'{name}' is not a supported config parameter")
 
-    def __dir__(self):
+    def __dir__(self) -> List[str]:
         return sorted(list(dir(super())) + list(self.get_params()))
 
-    def __str__(self):
+    def __str__(self) -> str:
         """Content of SHConfig in json schema. If `hide_credentials` is set to `True` then credentials will be
         masked.
         """
         return json.dumps(self.get_config_dict(), indent=2)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """Representation of SHConfig parameters. If `hide_credentials` is set to `True` then credentials will be
         masked.
         """
@@ -195,13 +217,13 @@ class SHConfig:
         return "\n  ".join(repr_list).strip(",") + "\n)"
 
     @property
-    def _global_instance(self):
+    def _global_instance(self) -> _SHConfig:
         """Uses a class attribute to store a global instance of a class with config parameters."""
         if SHConfig._instance is None:
             SHConfig._instance = SHConfig._SHConfig()
         return SHConfig._instance
 
-    def save(self):
+    def save(self) -> None:
         """Method that saves configuration parameter changes from instance of SHConfig class to global config class and
         to `config.json` file.
 
@@ -218,11 +240,11 @@ class SHConfig:
         if is_changed:
             self._global_instance.save_configuration()
 
-    def copy(self):
+    def copy(self) -> "SHConfig":
         """Makes a copy of an instance of `SHConfig`"""
         return copy.copy(self)
 
-    def reset(self, params=...):
+    def reset(self, params: object = ...) -> None:
         """Resets configuration class to initial values. Use `SHConfig.save()` method in order to save this change.
 
         :param params: Parameters which will be reset. Parameters can be specified with a list of names, e.g.
@@ -242,30 +264,27 @@ class SHConfig:
                 f"Parameters must be specified in form of a list of strings or as a single string, instead got {params}"
             )
 
-    def _reset_param(self, param):
+    def _reset_param(self, param: str) -> None:
         """Resets a single parameter
 
         :param param: A configuration parameter
-        :type param: str
         """
         if param not in self.get_params():
             raise ValueError(f"Cannot reset unknown parameter '{param}'")
         setattr(self, param, self._SHConfig.CONFIG_PARAMS[param])
 
-    def get_params(self):
+    def get_params(self) -> List[str]:
         """Returns a list of parameter names
 
         :return: List of parameter names
-        :rtype: list(str)
         """
         return list(self._SHConfig.CONFIG_PARAMS)
 
-    def get_config_dict(self):
+    def get_config_dict(self) -> ConfigDict:
         """Get a dictionary representation of `SHConfig` class. If `hide_credentials` is set to `True` then
         credentials will be masked.
 
         :return: A dictionary with configuration parameters
-        :rtype: dict
         """
         config_params = {param: getattr(self, param) for param in self.get_params()}
 
@@ -274,56 +293,50 @@ class SHConfig:
 
         return config_params
 
-    def get_config_location(self):
+    def get_config_location(self) -> str:
         """Returns location of configuration file on disk
 
         :return: File path of `config.json` file
-        :rtype: str
         """
         return self._global_instance.get_config_file()
 
-    def has_eocloud_url(self):
+    def has_eocloud_url(self) -> bool:
         """Checks if base Sentinel Hub URL is set to eocloud URL
 
         :return: `True` if 'eocloud' string is in base OGC URL else `False`
-        :rtype: bool
         """
         return "eocloud" in self.sh_base_url
 
-    def get_sh_oauth_url(self):
+    def get_sh_oauth_url(self) -> str:
         """Provides URL for Sentinel Hub authentication endpoint
 
         :return: A URL endpoint
-        :rtype: str
         """
         return f"{self.sh_auth_base_url}/oauth/token"
 
-    def get_sh_process_api_url(self):
+    def get_sh_process_api_url(self) -> str:
         """Provides URL for Sentinel Hub Process API endpoint
 
         :return: A URL endpoint
-        :rtype: str
         """
         return f"{self.sh_base_url}/api/v1/process"
 
-    def get_sh_ogc_url(self):
+    def get_sh_ogc_url(self) -> str:
         """Provides URL for Sentinel Hub OGC endpoint
 
         :return: A URL endpoint
-        :rtype: str
         """
         ogc_endpoint = "v1" if self.has_eocloud_url() else "ogc"
         return f"{self.sh_base_url}/{ogc_endpoint}"
 
-    def get_sh_rate_limit_url(self):
+    def get_sh_rate_limit_url(self) -> str:
         """Provides URL for Sentinel Hub rate limiting endpoint
 
         :return: A URL endpoint
-        :rtype: str
         """
         return f"{self.sh_auth_base_url}/aux/ratelimit"
 
-    def raise_for_missing_instance_id(self):
+    def raise_for_missing_instance_id(self) -> None:
         """In case Sentinel Hub instance ID is missing it raises an informative error
 
         :raises: ValueError
@@ -335,7 +348,7 @@ class SHConfig:
                 "Check https://sentinelhub-py.readthedocs.io/en/latest/configure.html for more info."
             )
 
-    def _mask_credentials(self, param, value):
+    def _mask_credentials(self, param: str, value: object) -> object:
         """In case a parameter that holds credentials is given it will mask its value"""
         if not (param in self._SHConfig.CREDENTIALS and value):
             return value

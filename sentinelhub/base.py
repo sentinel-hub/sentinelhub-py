@@ -58,7 +58,7 @@ class DataRequest(metaclass=ABCMeta):
         """
         return [request.get_relative_paths()[1] for request in self.download_list]
 
-    def get_url_list(self) -> List[str]:
+    def get_url_list(self) -> List[Optional[str]]:
         """
         Returns a list of urls for requested data.
 
