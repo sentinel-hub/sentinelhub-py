@@ -20,8 +20,8 @@ class SentinelHubBaseApiRequest(DataRequest, metaclass=ABCMeta):
     _SERVICE_ENDPOINT = ""
     payload: Dict[str, Any] = {}
 
-    @abstractmethod
     @property
+    @abstractmethod
     def mime_type(self) -> MimeType:
         """The mime type of the request."""
 

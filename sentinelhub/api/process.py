@@ -48,7 +48,7 @@ class SentinelHubRequest(SentinelHubBaseApiRequest):
             raise ValueError("'evalscript' should be a string")
 
         parsed_mime_type = MimeType.from_string(responses[0]["format"]["type"])
-        self.mime_type = MimeType.TAR if len(responses) > 1 else parsed_mime_type
+        self._mime_type = MimeType.TAR if len(responses) > 1 else parsed_mime_type
 
         self.payload = self.body(
             request_bounds=self.bounds(bbox=bbox, geometry=geometry),
@@ -58,6 +58,10 @@ class SentinelHubRequest(SentinelHubBaseApiRequest):
         )
 
         super().__init__(SentinelHubDownloadClient, **kwargs)
+
+    @property
+    def mime_type(self) -> MimeType:
+        return self._mime_type
 
     @staticmethod
     def body(request_bounds, request_data, evalscript, request_output=None, other_args=None):
