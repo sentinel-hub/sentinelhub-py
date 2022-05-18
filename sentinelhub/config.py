@@ -172,7 +172,7 @@ class SHConfig:
     aws_s3_l2a_bucket: str
     opensearch_url: str
     max_wfs_records_per_query: int
-    max_opensearch_records_per_query: int
+    max_opensearch_records_per_query: int  # pylint: disable=invalid-name
     max_download_attempts: int
     download_sleep_time: float
     download_timeout_seconds: float
