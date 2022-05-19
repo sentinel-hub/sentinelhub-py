@@ -12,7 +12,116 @@ from typing import Dict, List, Optional, Union
 ConfigDict = Dict[str, Union[str, int, float]]
 
 
-class SHConfig:
+class _BaseSHConfig:
+    """A base class for the sentinelhub-py package configuration class.
+
+    Only contains defaults and custom getter methods.
+    """
+
+    CREDENTIALS = {
+        "instance_id",
+        "sh_client_id",
+        "sh_client_secret",
+        "aws_access_key_id",
+        "aws_secret_access_key",
+        "aws_session_token",
+    }
+    OTHER_PARAMS = {
+        "sh_base_url",
+        "sh_auth_base_url",
+        "geopedia_wms_url",
+        "geopedia_rest_url",
+        "aws_metadata_url",
+        "aws_s3_l1c_bucket",
+        "aws_s3_l2a_bucket",
+        "opensearch_url",
+        "max_wfs_records_per_query",
+        "max_opensearch_records_per_query",
+        "max_download_attempts",
+        "download_sleep_time",
+        "download_timeout_seconds",
+        "number_of_download_processes",
+    }
+    CONFIG_PARAMS = CREDENTIALS.union(OTHER_PARAMS)
+
+    def __init__(self) -> None:
+        self.instance_id: str = ""
+        self.sh_client_id: str = ""
+        self.sh_client_secret: str = ""
+        self.sh_base_url: str = "https://services.sentinel-hub.com"
+        self.sh_auth_base_url: str = "https://services.sentinel-hub.com"
+        self.geopedia_wms_url: str = "https://service.geopedia.world"
+        self.geopedia_rest_url: str = "https://www.geopedia.world/rest"
+        self.aws_access_key_id: str = ""
+        self.aws_secret_access_key: str = ""
+        self.aws_session_token: str = ""
+        self.aws_metadata_url: str = "https://roda.sentinel-hub.com"
+        self.aws_s3_l1c_bucket: str = "sentinel-s2-l1c"
+        self.aws_s3_l2a_bucket: str = "sentinel-s2-l2a"
+        self.opensearch_url: str = "http://opensearch.sentinel-hub.com/resto/api/collections/Sentinel2"
+        self.max_wfs_records_per_query: int = 100
+        self.max_opensearch_records_per_query: int = 500  # pylint: disable=invalid-name
+        self.max_download_attempts: int = 4
+        self.download_sleep_time: float = 5.0
+        self.download_timeout_seconds: float = 120.0
+        self.number_of_download_processes: int = 1
+
+    def __getitem__(self, name: str) -> Union[str, int, float]:
+        """Config parameters can also be accessed as items."""
+        if name in self.CONFIG_PARAMS:
+            return getattr(self, name)
+        raise KeyError(f"'{name}' is not a supported config parameter")
+
+    def has_eocloud_url(self) -> bool:
+        """Checks if base Sentinel Hub URL is set to eocloud URL
+
+        :return: `True` if 'eocloud' string is in base OGC URL else `False`
+        """
+        return "eocloud" in self.sh_base_url
+
+    def get_sh_oauth_url(self) -> str:
+        """Provides URL for Sentinel Hub authentication endpoint
+
+        :return: A URL endpoint
+        """
+        return f"{self.sh_auth_base_url}/oauth/token"
+
+    def get_sh_process_api_url(self) -> str:
+        """Provides URL for Sentinel Hub Process API endpoint
+
+        :return: A URL endpoint
+        """
+        return f"{self.sh_base_url}/api/v1/process"
+
+    def get_sh_ogc_url(self) -> str:
+        """Provides URL for Sentinel Hub OGC endpoint
+
+        :return: A URL endpoint
+        """
+        ogc_endpoint = "v1" if self.has_eocloud_url() else "ogc"
+        return f"{self.sh_base_url}/{ogc_endpoint}"
+
+    def get_sh_rate_limit_url(self) -> str:
+        """Provides URL for Sentinel Hub rate limiting endpoint
+
+        :return: A URL endpoint
+        """
+        return f"{self.sh_auth_base_url}/aux/ratelimit"
+
+    def raise_for_missing_instance_id(self) -> None:
+        """In case Sentinel Hub instance ID is missing it raises an informative error
+
+        :raises: ValueError
+        """
+        if not self.instance_id:
+            raise ValueError(
+                "Sentinel Hub instance ID is missing. "
+                "Either provide it with SHConfig object or save it into config.json configuration file. "
+                "Check https://sentinelhub-py.readthedocs.io/en/latest/configure.html for more info."
+            )
+
+
+class SHConfig(_BaseSHConfig):
     """A sentinelhub-py package configuration class.
 
     The class reads during its first initialization the configurable settings from ``./config.json`` file:
@@ -51,32 +160,6 @@ class SHConfig:
 
     _instance: Optional["SHConfig"] = None
 
-    CREDENTIALS = {
-        "instance_id",
-        "sh_client_id",
-        "sh_client_secret",
-        "aws_access_key_id",
-        "aws_secret_access_key",
-        "aws_session_token",
-    }
-    OTHER_PARAMS = {
-        "sh_base_url",
-        "sh_auth_base_url",
-        "geopedia_wms_url",
-        "geopedia_rest_url",
-        "aws_metadata_url",
-        "aws_s3_l1c_bucket",
-        "aws_s3_l2a_bucket",
-        "opensearch_url",
-        "max_wfs_records_per_query",
-        "max_opensearch_records_per_query",
-        "max_download_attempts",
-        "download_sleep_time",
-        "download_timeout_seconds",
-        "number_of_download_processes",
-    }
-    CONFIG_PARAMS = CREDENTIALS.union(OTHER_PARAMS)
-
     def __init__(self, hide_credentials: bool = False, no_loading: bool = False):
         """
         :param hide_credentials: If `True` then methods that provide the entire content of the config object will mask
@@ -84,28 +167,8 @@ class SHConfig:
             default is `False`.
         :param no_loading: Does not load the configuration file, returns config object with defaults only.
         """
+        super().__init__()
         self._hide_credentials = hide_credentials
-
-        self.instance_id: str = ""
-        self.sh_client_id: str = ""
-        self.sh_client_secret: str = ""
-        self.sh_base_url: str = "https://services.sentinel-hub.com"
-        self.sh_auth_base_url: str = "https://services.sentinel-hub.com"
-        self.geopedia_wms_url: str = "https://service.geopedia.world"
-        self.geopedia_rest_url: str = "https://www.geopedia.world/rest"
-        self.aws_access_key_id: str = ""
-        self.aws_secret_access_key: str = ""
-        self.aws_session_token: str = ""
-        self.aws_metadata_url: str = "https://roda.sentinel-hub.com"
-        self.aws_s3_l1c_bucket: str = "sentinel-s2-l1c"
-        self.aws_s3_l2a_bucket: str = "sentinel-s2-l2a"
-        self.opensearch_url: str = "http://opensearch.sentinel-hub.com/resto/api/collections/Sentinel2"
-        self.max_wfs_records_per_query: int = 100
-        self.max_opensearch_records_per_query: int = 500
-        self.max_download_attempts: int = 4
-        self.download_sleep_time: float = 5.0
-        self.download_timeout_seconds: float = 120.0
-        self.number_of_download_processes: int = 1
 
         if no_loading:
             return
@@ -115,7 +178,7 @@ class SHConfig:
 
     def _validate_values(self) -> None:
         """Ensures that the values are alligned with expectations."""
-        default = SHConfig(no_loading=True)
+        default = _BaseSHConfig()
         for param in self.CONFIG_PARAMS:
             value = getattr(self, param)
             default_value = getattr(default, param)
@@ -131,15 +194,6 @@ class SHConfig:
             raise ValueError("Value of config parameter 'max_wfs_records_per_query' must be at most 100")
         if self["max_opensearch_records_per_query"] > 500:  # type: ignore[operator]
             raise ValueError("Value of config parameter 'max_opensearch_records_per_query' must be at most 500")
-
-    def __getitem__(self, name: str) -> Union[str, int, float]:
-        """Config parameters can also be accessed as items."""
-        if name in self.CONFIG_PARAMS:
-            return getattr(self, name)
-        raise KeyError(f"'{name}' is not a supported config parameter")
-
-    def __dir__(self) -> List[str]:
-        return sorted(list(dir(super())) + list(self.CONFIG_PARAMS))
 
     def __str__(self) -> str:
         """Content of SHConfig in json schema. If `hide_credentials` is set to `True` then credentials will be
@@ -218,7 +272,7 @@ class SHConfig:
             ``'sh_base_url'``. By default, all parameters will be reset and default value is ``Ellipsis``.
         :type params: Ellipsis or list(str) or str
         """
-        default = SHConfig(no_loading=True)
+        default = _BaseSHConfig()
 
         if params is ...:
             params = self.get_params()
@@ -232,7 +286,7 @@ class SHConfig:
                 f"Parameters must be specified in form of a list of strings or as a single string, instead got {params}"
             )
 
-    def _reset_param(self, param: str, default: "SHConfig") -> None:
+    def _reset_param(self, param: str, default: _BaseSHConfig) -> None:
         """Resets a single parameter
 
         :param param: A configuration parameter
@@ -275,54 +329,6 @@ class SHConfig:
                 json.dump(default_dict, cfg_file, indent=2)
 
         return config_file
-
-    def has_eocloud_url(self) -> bool:
-        """Checks if base Sentinel Hub URL is set to eocloud URL
-
-        :return: `True` if 'eocloud' string is in base OGC URL else `False`
-        """
-        return "eocloud" in self.sh_base_url
-
-    def get_sh_oauth_url(self) -> str:
-        """Provides URL for Sentinel Hub authentication endpoint
-
-        :return: A URL endpoint
-        """
-        return f"{self.sh_auth_base_url}/oauth/token"
-
-    def get_sh_process_api_url(self) -> str:
-        """Provides URL for Sentinel Hub Process API endpoint
-
-        :return: A URL endpoint
-        """
-        return f"{self.sh_base_url}/api/v1/process"
-
-    def get_sh_ogc_url(self) -> str:
-        """Provides URL for Sentinel Hub OGC endpoint
-
-        :return: A URL endpoint
-        """
-        ogc_endpoint = "v1" if self.has_eocloud_url() else "ogc"
-        return f"{self.sh_base_url}/{ogc_endpoint}"
-
-    def get_sh_rate_limit_url(self) -> str:
-        """Provides URL for Sentinel Hub rate limiting endpoint
-
-        :return: A URL endpoint
-        """
-        return f"{self.sh_auth_base_url}/aux/ratelimit"
-
-    def raise_for_missing_instance_id(self) -> None:
-        """In case Sentinel Hub instance ID is missing it raises an informative error
-
-        :raises: ValueError
-        """
-        if not self.instance_id:
-            raise ValueError(
-                "Sentinel Hub instance ID is missing. "
-                "Either provide it with SHConfig object or save it into config.json configuration file. "
-                "Check https://sentinelhub-py.readthedocs.io/en/latest/configure.html for more info."
-            )
 
     def _mask_credentials(self, param: str, value: object) -> object:
         """In case a parameter that holds credentials is given it will mask its value"""
