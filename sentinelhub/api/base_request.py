@@ -1,23 +1,30 @@
 """
 Implementation of base Sentinel Hub interfaces
 """
+from abc import ABCMeta, abstractmethod
+from typing import Any, Dict, Optional
+
 from ..base import DataRequest
 from ..constants import MimeType, MosaickingOrder, RequestType, ResamplingType
-from ..data_collections import OrbitDirection
+from ..data_collections import DataCollection, OrbitDirection
 from ..download import DownloadRequest
 from ..geometry import BBox, Geometry
-from ..time_utils import parse_time_interval, serialize_time
+from ..time_utils import RawTimeIntervalType, parse_time_interval, serialize_time
 from .utils import _update_other_args
 
 
-class SentinelHubBaseApiRequest(DataRequest):
+class SentinelHubBaseApiRequest(DataRequest, metaclass=ABCMeta):
     """A base class for Sentinel Hub interfaces"""
 
     _SERVICE_ENDPOINT = ""
-    payload = {}
-    mime_type = None
+    payload: Dict[str, Any] = {}
 
-    def create_request(self):
+    @property
+    @abstractmethod
+    def mime_type(self) -> MimeType:
+        """The mime type of the request."""
+
+    def create_request(self) -> None:
         """Prepares a download request"""
         headers = {"content-type": MimeType.JSON.get_string(), "accept": self.mime_type.get_string()}
         base_url = self._get_base_url()
@@ -36,42 +43,33 @@ class SentinelHubBaseApiRequest(DataRequest):
 
     @staticmethod
     def input_data(
-        data_collection,
+        data_collection: DataCollection,
         *,
-        identifier=None,
-        time_interval=None,
-        maxcc=None,
-        mosaicking_order=None,
-        upsampling=None,
-        downsampling=None,
-        other_args=None,
-    ):
+        identifier: Optional[str] = None,
+        time_interval: Optional[RawTimeIntervalType] = None,
+        maxcc: Optional[float] = None,
+        mosaicking_order: Optional[MosaickingOrder] = None,
+        upsampling: Optional[ResamplingType] = None,
+        downsampling: Optional[ResamplingType] = None,
+        other_args: Optional[Dict[str, Any]] = None,
+    ) -> "InputDataDict":
         """Generate the `input data` part of the request body
 
         :param data_collection: One of supported Process API data collections.
-        :type data_collection: DataCollection
         :param identifier: A collection identifier that can be referred to in the evalscript. Parameter is referenced
             as `"id"` in service documentation. To learn more check
             `data fusion documentation <https://docs.sentinel-hub.com/api/latest/data/data-fusion>`__.
-        :type identifier: str or None
         :param time_interval: A time interval with start and end date of the form YYYY-MM-DDThh:mm:ss or YYYY-MM-DD or
             a datetime object
-        :type time_interval: (str, str) or (datetime, datetime)
         :param maxcc: Maximum accepted cloud coverage of an image. Float between 0.0 and 1.0. Default is 1.0.
-        :type maxcc: float or None
         :param mosaicking_order: Mosaicking order, which has to be either 'mostRecent', 'leastRecent' or 'leastCC'.
-        :type mosaicking_order: MosaickingOrder or str or None
         :param upsampling: A type of upsampling to apply on data
-        :type upsampling: ResamplingType or str
         :param downsampling: A type of downsampling to apply on data
-        :type downsampling: ResamplingType or str
         :param other_args: Additional dictionary of arguments. If provided, the resulting dictionary will get updated
             by it.
-        :type other_args: dict
         :return: A dictionary-like object that also contains additional attributes
-        :rtype: InputDataDict
         """
-        input_data_dict = {
+        input_data_dict: Dict[str, Any] = {
             "type": data_collection.api_id,
         }
         if identifier:
@@ -91,16 +89,15 @@ class SentinelHubBaseApiRequest(DataRequest):
         return InputDataDict(input_data_dict, service_url=data_collection.service_url)
 
     @staticmethod
-    def bounds(bbox=None, geometry=None, other_args=None):
+    def bounds(
+        bbox: Optional[BBox] = None, geometry: Optional[Geometry] = None, other_args: Optional[Dict[str, Any]] = None
+    ) -> Dict[str, Any]:
         """Generate a `bound` part of the API request
 
         :param bbox: Bounding box describing the area of interest.
-        :type bbox: sentinelhub.BBox
         :param geometry: Geometry describing the area of interest.
-        :type geometry: sentinelhub.Geometry
         :param other_args: Additional dictionary of arguments. If provided, the resulting dictionary will get updated
             by it.
-        :type other_args: dict
         """
         if bbox is None and geometry is None:
             raise ValueError("'bbox' and/or 'geometry' have to be provided.")
@@ -114,9 +111,9 @@ class SentinelHubBaseApiRequest(DataRequest):
         if bbox and geometry and bbox.crs != geometry.crs:
             raise ValueError("bbox and geometry should be in the same CRS")
 
-        crs = bbox.crs if bbox else geometry.crs
+        crs = bbox.crs if bbox else geometry.crs  # type: ignore[union-attr]
 
-        request_bounds = {"properties": {"crs": crs.opengis_string}}
+        request_bounds: Dict[str, Any] = {"properties": {"crs": crs.opengis_string}}
 
         if bbox:
             request_bounds["bbox"] = list(bbox)
@@ -129,7 +126,7 @@ class SentinelHubBaseApiRequest(DataRequest):
 
         return request_bounds
 
-    def _get_base_url(self):
+    def _get_base_url(self) -> str:
         """It decides which base URL to use. Restrictions from data collection definitions overrule the
         settings from config object. In case different collections have different restrictions then
         `SHConfig.sh_base_url` breaks the tie in case it matches one of the data collection URLs.
@@ -162,7 +159,7 @@ class SentinelHubBaseApiRequest(DataRequest):
 class InputDataDict(dict):
     """An input data dictionary which also holds additional attributes"""
 
-    def __init__(self, input_data_dict, *, service_url=None):
+    def __init__(self, input_data_dict: Dict[str, Any], *, service_url: Optional[str] = None):
         """
         :param input_data_dict: A normal dictionary with input parameters
         :type input_data_dict: dict
@@ -172,22 +169,27 @@ class InputDataDict(dict):
         super().__init__(input_data_dict)
         self.service_url = service_url
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """Modified dictionary representation that also shows additional attributes"""
         normal_dict_repr = super().__repr__()
         return f"{self.__class__.__name__}({normal_dict_repr}, service_url={self.service_url})"
 
 
-def _get_data_filters(data_collection, time_interval, maxcc, mosaicking_order):
+def _get_data_filters(
+    data_collection: DataCollection,
+    time_interval: Optional[RawTimeIntervalType],
+    maxcc: Optional[float],
+    mosaicking_order: Optional[MosaickingOrder],
+) -> Dict[str, Any]:
     """Builds a dictionary of data filters for Process API"""
-    data_filter = {}
+    data_filter: Dict[str, Any] = {}
 
     if time_interval:
         start_time, end_time = serialize_time(parse_time_interval(time_interval, allow_undefined=True), use_tz=True)
         data_filter["timeRange"] = {"from": start_time, "to": end_time}
 
     if maxcc is not None:
-        if not isinstance(maxcc, float) and (maxcc < 0 or maxcc > 1):
+        if maxcc < 0 or maxcc > 1:
             raise ValueError("maxcc should be a float on an interval [0, 1]")
 
         data_filter["maxCloudCoverage"] = int(maxcc * 100)
@@ -198,9 +200,9 @@ def _get_data_filters(data_collection, time_interval, maxcc, mosaicking_order):
     return {**data_filter, **_get_data_collection_filters(data_collection)}
 
 
-def _get_data_collection_filters(data_collection):
+def _get_data_collection_filters(data_collection: DataCollection) -> Dict[str, Any]:
     """Builds a dictionary of filters for Process API from a data collection definition"""
-    filters = {}
+    filters: Dict[str, Any] = {}
 
     if data_collection.swath_mode:
         filters["acquisitionMode"] = data_collection.swath_mode.upper()
@@ -223,9 +225,11 @@ def _get_data_collection_filters(data_collection):
     return filters
 
 
-def _get_processing_params(upsampling, downsampling):
+def _get_processing_params(
+    upsampling: Optional[ResamplingType], downsampling: Optional[ResamplingType]
+) -> Dict[str, Any]:
     """Builds a dictionary of processing parameters for Process API"""
-    processing_params = {}
+    processing_params: Dict[str, Any] = {}
 
     if upsampling:
         processing_params["upsampling"] = ResamplingType(upsampling).value

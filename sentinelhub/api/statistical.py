@@ -39,7 +39,6 @@ class SentinelHubStatistical(SentinelHubBaseApiRequest):
         :param config: A custom instance of config class to override parameters from the saved configuration.
         :type config: SHConfig or None
         """
-        self.mime_type = MimeType.JSON
         self.payload = self.body(
             request_bounds=self.bounds(bbox=bbox, geometry=geometry),
             request_data=input_data,
@@ -48,6 +47,10 @@ class SentinelHubStatistical(SentinelHubBaseApiRequest):
         )
 
         super().__init__(SentinelHubStatisticalDownloadClient, **kwargs)
+
+    @property
+    def mime_type(self) -> MimeType:
+        return MimeType.JSON
 
     @staticmethod
     def body(request_bounds, request_data, aggregation, calculations, other_args=None):

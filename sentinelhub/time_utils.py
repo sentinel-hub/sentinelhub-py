@@ -2,10 +2,13 @@
 Module with useful time/date functions
 """
 import datetime as dt
-from typing import Any, Iterable, List, Optional, Sequence, Tuple, Union, overload
+from typing import Any, Iterable, List, Optional, Tuple, Union, overload
 
 import dateutil.parser
 import dateutil.tz
+
+RawTimeType = Union[None, str, dt.date]
+RawTimeIntervalType = Tuple[RawTimeType, RawTimeType]
 
 
 def is_valid_time(time: str) -> bool:
@@ -22,7 +25,7 @@ def is_valid_time(time: str) -> bool:
 
 
 def parse_time(
-    time_input: Union[None, str, dt.date], *, force_datetime: bool = False, allow_undefined: bool = False, **kwargs: Any
+    time_input: RawTimeType, *, force_datetime: bool = False, allow_undefined: bool = False, **kwargs: Any
 ) -> Optional[dt.date]:
     """Parse input time/date string
 
@@ -56,7 +59,7 @@ def parse_time(
 
 
 def parse_time_interval(
-    time: Union[None, str, dt.date, Sequence[Union[None, str, dt.date]]], allow_undefined: bool = False, **kwargs: Any
+    time: Union[RawTimeType, RawTimeIntervalType], allow_undefined: bool = False, **kwargs: Any
 ) -> Tuple[Optional[dt.datetime], Optional[dt.datetime]]:
     """Parse input into an interval of two times, specifying start and end time, into datetime objects.
 
@@ -76,7 +79,7 @@ def parse_time_interval(
     :return: interval of start and end date of the form `YYYY-MM-DDThh:mm:ss`
     :raises: ValueError
     """
-    date_interval: Tuple[Union[None, str, dt.date], Union[None, str, dt.date]]
+    date_interval: Tuple[Union[None, dt.date], Union[None, dt.date]]
 
     if allow_undefined and time in [None, ".."]:
         date_interval = None, None
@@ -108,7 +111,7 @@ def serialize_time(timestamp_input: Optional[dt.date], *, use_tz: bool = False) 
 
 
 @overload
-def serialize_time(timestamp_input: Iterable[Optional[dt.date]], *, use_tz: bool = False) -> Tuple[str]:
+def serialize_time(timestamp_input: Iterable[Optional[dt.date]], *, use_tz: bool = False) -> Tuple[str, ...]:
     ...
 
 

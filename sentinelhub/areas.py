@@ -339,7 +339,7 @@ class TileSplitter(AreaSplitter):
         sh_config = config or SHConfig()
         if data_collection.service_url:
             sh_config = sh_config.copy()
-            sh_config.sh_base_url = data_collection.service_url  # type: ignore[attr-defined]
+            sh_config.sh_base_url = data_collection.service_url
         self.catalog = SentinelHubCatalog(config=sh_config)
         super().__init__(shape_list, crs, **kwargs)
 
