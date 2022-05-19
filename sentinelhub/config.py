@@ -6,7 +6,7 @@ import copy
 import json
 import numbers
 import os
-from typing import Dict, List, Optional, Union
+from typing import Dict, Iterable, List, Optional, Union
 
 ConfigDict = Dict[str, Union[str, int, float]]
 
@@ -25,11 +25,17 @@ class _BaseSHConfig:
         "aws_secret_access_key",
         "aws_session_token",
     }
-    OTHER_PARAMS = {
+    CONFIG_PARAMS = [
+        "instance_id",
+        "sh_client_id",
+        "sh_client_secret",
         "sh_base_url",
         "sh_auth_base_url",
         "geopedia_wms_url",
         "geopedia_rest_url",
+        "aws_access_key_id",
+        "aws_secret_access_key",
+        "aws_session_token",
         "aws_metadata_url",
         "aws_s3_l1c_bucket",
         "aws_s3_l2a_bucket",
@@ -40,8 +46,7 @@ class _BaseSHConfig:
         "download_sleep_time",
         "download_timeout_seconds",
         "number_of_download_processes",
-    }
-    CONFIG_PARAMS = CREDENTIALS.union(OTHER_PARAMS)
+    ]
 
     def __init__(self) -> None:
         self.instance_id: str = ""
@@ -176,7 +181,7 @@ class SHConfig(_BaseSHConfig):
             setattr(self, prop, getattr(self._global_instance, prop))
 
     def _validate_values(self) -> None:
-        """Ensures that the values are alligned with expectations."""
+        """Ensures that the values are aligned with expectations."""
         default = _BaseSHConfig()
         for param in self.CONFIG_PARAMS:
             value = getattr(self, param)
@@ -215,11 +220,11 @@ class SHConfig(_BaseSHConfig):
     def _global_instance(self) -> "SHConfig":
         """Uses a class attribute to store a global instance of a class with config parameters."""
         if SHConfig._instance is None:
-            SHConfig._instance = SHConfig.load_configuration(self.get_config_location())
+            SHConfig._instance = SHConfig.load(self.get_config_location())
         return SHConfig._instance
 
     @classmethod
-    def load_configuration(cls, filename: str) -> "SHConfig":
+    def load(cls, filename: str) -> "SHConfig":
         """Method that loads configuration parameters from a file. Does not affect global settings.
 
         :param filename: Path to file from which to read configuration.
@@ -263,13 +268,12 @@ class SHConfig(_BaseSHConfig):
         """Makes a copy of an instance of `SHConfig`"""
         return copy.copy(self)
 
-    def reset(self, params: object = ...) -> None:
+    def reset(self, params: Union[str, Iterable[str], object] = ...) -> None:
         """Resets configuration class to initial values. Use `SHConfig.save()` method in order to save this change.
 
         :param params: Parameters which will be reset. Parameters can be specified with a list of names, e.g.
             ``['instance_id', 'aws_access_key_id', 'aws_secret_access_key']``, or as a single name, e.g.
             ``'sh_base_url'``. By default, all parameters will be reset and default value is ``Ellipsis``.
-        :type params: Ellipsis or list(str) or str
         """
         default = _BaseSHConfig()
 
@@ -277,7 +281,7 @@ class SHConfig(_BaseSHConfig):
             params = self.get_params()
         if isinstance(params, str):
             self._reset_param(params, default)
-        elif isinstance(params, (list, tuple)):
+        elif isinstance(params, Iterable):
             for param in params:
                 self._reset_param(param, default)
         else:
