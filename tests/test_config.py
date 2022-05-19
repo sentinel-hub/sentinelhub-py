@@ -29,7 +29,7 @@ def test_config_file():
         config_dict = json.load(fp)
 
     for param, value in config_dict.items():
-        if param in config._instance.CREDENTIALS:
+        if param in config.CREDENTIALS:
             continue
 
         if isinstance(value, str):
@@ -40,14 +40,14 @@ def test_config_file():
 
 def test_reset():
     config = SHConfig()
-    default_config = SHConfig(no_loading=True)
+    default_config = SHConfig(use_defaults=True)
 
     old_value = config.instance_id
     new_value = "new"
     config.instance_id = new_value
     assert config.instance_id == new_value, "New value was not set"
     assert config["instance_id"] == new_value, "New value was not set"
-    assert config._instance.instance_id == old_value, "Private value has changed"
+    assert config._cache["instance_id"] == old_value, "Private value has changed"
 
     config.reset("sh_base_url")
     config.reset(["aws_access_key_id", "aws_secret_access_key"])
@@ -59,6 +59,7 @@ def test_reset():
 
 def test_save(restore_config):
     config = SHConfig()
+    old_value = config.download_timeout_seconds
 
     config.download_timeout_seconds = "abcd"
     with pytest.raises(ValueError):
@@ -66,6 +67,10 @@ def test_save(restore_config):
 
     new_value = 150.5
     config.download_timeout_seconds = new_value
+
+    new_config = SHConfig()
+    assert new_config.download_timeout_seconds == old_value, "Value should not have changed"
+
     config.save()
     config = SHConfig()
     assert config.download_timeout_seconds == new_value, "Saved value should have changed"
@@ -77,7 +82,7 @@ def test_copy():
 
     copied_config = config.copy()
     assert copied_config._hide_credentials
-    assert copied_config._instance is config._instance
+    assert copied_config._cache is config._cache
     assert copied_config.instance_id == config.instance_id
 
     copied_config.instance_id = "b"

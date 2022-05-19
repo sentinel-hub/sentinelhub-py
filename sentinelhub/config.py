@@ -6,7 +6,7 @@ import copy
 import json
 import numbers
 import os
-from typing import Dict, Iterable, List, Optional, Union
+from typing import Any, Dict, Iterable, List, Optional, Union
 
 ConfigDict = Dict[str, Union[str, int, float]]
 
@@ -162,23 +162,26 @@ class SHConfig(_BaseSHConfig):
 
     """
 
-    _instance: Optional["SHConfig"] = None
+    _cache: Optional[Dict[str, Any]] = None
 
-    def __init__(self, hide_credentials: bool = False, no_loading: bool = False):
+    def __init__(self, hide_credentials: bool = False, use_defaults: bool = False):
         """
         :param hide_credentials: If `True` then methods that provide the entire content of the config object will mask
             out all credentials. But credentials could still be accessed directly from config object attributes. The
             default is `False`.
-        :param no_loading: Does not load the configuration file, returns config object with defaults only.
+        :param use_defaults: Does not load the configuration file, returns config object with defaults only.
         """
         super().__init__()
         self._hide_credentials = hide_credentials
 
-        if no_loading:
-            return
+        if not use_defaults:
+            for param, value in self._global_cache.items():
+                setattr(self, param, value)
 
-        for prop in self.CONFIG_PARAMS:
-            setattr(self, prop, getattr(self._global_instance, prop))
+    def _copy_values_from(self, other: "_BaseSHConfig") -> None:
+        """Copies values of CONFIG_PARAMS from other config instance."""
+        for param in self.CONFIG_PARAMS:
+            setattr(self, param, getattr(other, param))
 
     def _validate_values(self) -> None:
         """Ensures that the values are aligned with expectations."""
@@ -217,11 +220,12 @@ class SHConfig(_BaseSHConfig):
         return "\n  ".join(repr_list).strip(",") + "\n)"
 
     @property
-    def _global_instance(self) -> "SHConfig":
+    def _global_cache(self) -> Dict[str, Any]:
         """Uses a class attribute to store a global instance of a class with config parameters."""
-        if SHConfig._instance is None:
-            SHConfig._instance = SHConfig.load(self.get_config_location())
-        return SHConfig._instance
+        if SHConfig._cache is None:
+            loaded_instance = SHConfig.load(self.get_config_location())
+            SHConfig._cache = {param: getattr(loaded_instance, param) for param in SHConfig.CONFIG_PARAMS}
+        return SHConfig._cache
 
     @classmethod
     def load(cls, filename: str) -> "SHConfig":
@@ -232,7 +236,7 @@ class SHConfig(_BaseSHConfig):
         with open(filename, "r") as cfg_file:
             config_dict = json.load(cfg_file)
 
-        config = cls(no_loading=True)
+        config = cls(use_defaults=True)
         for param, value in config_dict.items():
             if param in cls.CONFIG_PARAMS:
                 setattr(config, param, value)
@@ -255,9 +259,9 @@ class SHConfig(_BaseSHConfig):
 
         is_changed = False
         for param in self.CONFIG_PARAMS:
-            if getattr(self, param) != getattr(self._global_instance, param):
+            if getattr(self, param) != self._global_cache[param]:
                 is_changed = True
-                setattr(self._global_instance, param, getattr(self, param))
+                self._global_cache[param] = getattr(self, param)  # pylint: disable=unsupported-assignment-operation
 
         if is_changed:
             config_dict = {param: getattr(self, param) for param in self.CONFIG_PARAMS}
@@ -328,7 +332,7 @@ class SHConfig(_BaseSHConfig):
 
         if not os.path.isfile(config_file):
             with open(config_file, "w") as cfg_file:
-                default_dict = cls(no_loading=True).get_config_dict()
+                default_dict = cls(use_defaults=True).get_config_dict()
                 json.dump(default_dict, cfg_file, indent=2)
 
         return config_file
