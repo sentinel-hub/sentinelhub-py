@@ -8,6 +8,7 @@ import numbers
 import os
 from typing import Dict, List, Optional, Union
 
+
 ConfigDict = Dict[str, Union[str, int, float]]
 
 
@@ -48,156 +49,97 @@ class SHConfig:
 
     """
 
-    class _SHConfig:
-        """Internal class holding configuration parameters"""
+    _instance: Optional["SHConfig"] = None
 
-        CONFIG_PARAMS: ConfigDict = {
-            "instance_id": "",
-            "sh_client_id": "",
-            "sh_client_secret": "",
-            "sh_base_url": "https://services.sentinel-hub.com",
-            "sh_auth_base_url": "https://services.sentinel-hub.com",
-            "geopedia_wms_url": "https://service.geopedia.world",
-            "geopedia_rest_url": "https://www.geopedia.world/rest",
-            "aws_access_key_id": "",
-            "aws_secret_access_key": "",
-            "aws_session_token": "",
-            "aws_metadata_url": "https://roda.sentinel-hub.com",
-            "aws_s3_l1c_bucket": "sentinel-s2-l1c",
-            "aws_s3_l2a_bucket": "sentinel-s2-l2a",
-            "opensearch_url": "http://opensearch.sentinel-hub.com/resto/api/collections/Sentinel2",
-            "max_wfs_records_per_query": 100,
-            "max_opensearch_records_per_query": 500,
-            "max_download_attempts": 4,
-            "download_sleep_time": 5.0,
-            "download_timeout_seconds": 120.0,
-            "number_of_download_processes": 1,
-        }
-        CREDENTIALS = {
-            "instance_id",
-            "sh_client_id",
-            "sh_client_secret",
-            "aws_access_key_id",
-            "aws_secret_access_key",
-            "aws_session_token",
-        }
+    CREDENTIALS = {
+        "instance_id",
+        "sh_client_id",
+        "sh_client_secret",
+        "aws_access_key_id",
+        "aws_secret_access_key",
+        "aws_session_token",
+    }
+    OTHER_PARAMS = {
+        "sh_base_url",
+        "sh_auth_base_url",
+        "geopedia_wms_url",
+        "geopedia_rest_url",
+        "aws_metadata_url",
+        "aws_s3_l1c_bucket",
+        "aws_s3_l2a_bucket",
+        "opensearch_url",
+        "max_wfs_records_per_query",
+        "max_opensearch_records_per_query",
+        "max_download_attempts",
+        "download_sleep_time",
+        "download_timeout_seconds",
+        "number_of_download_processes",
+    }
+    CONFIG_PARAMS = CREDENTIALS.union(OTHER_PARAMS)
 
-        def __init__(self) -> None:
-            self.load_configuration()
-
-        def _parse_configuration(self, config: ConfigDict) -> ConfigDict:
-            """Checks if configuration file contains all keys and parses values"""
-            for param, default_value in self.CONFIG_PARAMS.items():
-                if param not in config:
-                    config[param] = default_value
-
-            for param, default_param in self.CONFIG_PARAMS.items():
-                param_type = type(default_param)
-                if (param_type is float) and isinstance(config[param], numbers.Number):
-                    continue
-                if not isinstance(config[param], param_type):
-                    raise ValueError(f"Value of parameter '{param}' must be of type {param_type.__name__}")
-
-            if config["max_wfs_records_per_query"] > 100:  # type: ignore[operator]
-                raise ValueError("Value of config parameter 'max_wfs_records_per_query' must be at most 100")
-            if config["max_opensearch_records_per_query"] > 500:  # type: ignore[operator]
-                raise ValueError("Value of config parameter 'max_opensearch_records_per_query' must be at most 500")
-
-            # The following enables that url parameters can be written with or without / at the end
-            for param, value in config.items():
-                if isinstance(value, str) and value.startswith("http"):
-                    config[param] = value.rstrip("/")
-
-            return config
-
-        def get_config_file(self) -> str:
-            """Checks if configuration file exists and returns its file path.
-            If file doesn't exist it creates a default configurations file.
-
-            :return: location of configuration file
-            """
-            config_file = os.path.join(os.path.dirname(__file__), "config.json")
-
-            if not os.path.isfile(config_file):
-                with open(config_file, "w") as cfg_file:
-                    json.dump(self.CONFIG_PARAMS, cfg_file, indent=2)
-
-            return config_file
-
-        def load_configuration(self) -> None:
-            """Method reads and loads the configuration file."""
-            with open(self.get_config_file(), "r") as cfg_file:
-                config = json.load(cfg_file)
-
-            config = self._parse_configuration(config)
-
-            for prop in config:
-                if prop in self.CONFIG_PARAMS:
-                    setattr(self, prop, config[prop])
-
-        def get_config(self) -> ConfigDict:
-            """Returns a dictionary with configuration parameters
-
-            :return: A dictionary
-            """
-            config = {item: getattr(self, item) for item in self.CONFIG_PARAMS}
-            for item, default_value in self.CONFIG_PARAMS.items():
-                if config[item] is None:
-                    config[item] = default_value
-            return config
-
-        def save_configuration(self) -> None:
-            """Method saves changed parameter values to the configuration file."""
-            config = self.get_config()
-
-            self._parse_configuration(config)
-
-            with open(self.get_config_file(), "w") as cfg_file:
-                json.dump(config, cfg_file, indent=2)
-
-    _instance: Optional[_SHConfig] = None
-
-    instance_id: str
-    sh_client_id: str
-    sh_client_secret: str
-    sh_base_url: str
-    sh_auth_base_url: str
-    geopedia_wms_url: str
-    geopedia_rest_url: str
-    aws_access_key_id: str
-    aws_secret_access_key: str
-    aws_session_token: str
-    aws_metadata_url: str
-    aws_s3_l1c_bucket: str
-    aws_s3_l2a_bucket: str
-    opensearch_url: str
-    max_wfs_records_per_query: int
-    max_opensearch_records_per_query: int  # pylint: disable=invalid-name
-    max_download_attempts: int
-    download_sleep_time: float
-    download_timeout_seconds: float
-    number_of_download_processes: int
-
-    def __init__(self, hide_credentials: bool = False):
+    def __init__(self, hide_credentials: bool = False, no_loading: bool = False):
         """
         :param hide_credentials: If `True` then methods that provide the entire content of the config object will mask
             out all credentials. But credentials could still be accessed directly from config object attributes. The
             default is `False`.
-        :type hide_credentials: bool
+        :param no_loading: Does not load the configuration file, returns config object with defaults only.
         """
         self._hide_credentials = hide_credentials
 
-        for prop in self.get_params():
+        self.instance_id: str = ""
+        self.sh_client_id: str = ""
+        self.sh_client_secret: str = ""
+        self.sh_base_url: str = "https://services.sentinel-hub.com"
+        self.sh_auth_base_url: str = "https://services.sentinel-hub.com"
+        self.geopedia_wms_url: str = "https://service.geopedia.world"
+        self.geopedia_rest_url: str = "https://www.geopedia.world/rest"
+        self.aws_access_key_id: str = ""
+        self.aws_secret_access_key: str = ""
+        self.aws_session_token: str = ""
+        self.aws_metadata_url: str = "https://roda.sentinel-hub.com"
+        self.aws_s3_l1c_bucket: str = "sentinel-s2-l1c"
+        self.aws_s3_l2a_bucket: str = "sentinel-s2-l2a"
+        self.opensearch_url: str = "http://opensearch.sentinel-hub.com/resto/api/collections/Sentinel2"
+        self.max_wfs_records_per_query: int = 100
+        self.max_opensearch_records_per_query: int = 500
+        self.max_download_attempts: int = 4
+        self.download_sleep_time: float = 5.0
+        self.download_timeout_seconds: float = 120.0
+        self.number_of_download_processes: int = 1
+
+        if no_loading:
+            return
+
+        for prop in self.CONFIG_PARAMS:
             setattr(self, prop, getattr(self._global_instance, prop))
+
+    def _validate_values(self) -> None:
+        """Ensures that the values are alligned with expectations."""
+        default = SHConfig(no_loading=True)
+        for param in self.CONFIG_PARAMS:
+            value = getattr(self, param)
+            default_value = getattr(default, param)
+            param_type = type(default_value)
+
+            if isinstance(value, str) and value.startswith("http"):
+                value = value.rstrip("/")
+            if (param_type is float) and isinstance(value, numbers.Number):
+                continue
+            if not isinstance(value, param_type):
+                raise ValueError(f"Value of parameter '{param}' must be of type {param_type.__name__}")
+        if self["max_wfs_records_per_query"] > 100:  # type: ignore[operator]
+            raise ValueError("Value of config parameter 'max_wfs_records_per_query' must be at most 100")
+        if self["max_opensearch_records_per_query"] > 500:  # type: ignore[operator]
+            raise ValueError("Value of config parameter 'max_opensearch_records_per_query' must be at most 500")
 
     def __getitem__(self, name: str) -> Union[str, int, float]:
         """Config parameters can also be accessed as items."""
-        if name in self.get_params():
+        if name in self.CONFIG_PARAMS:
             return getattr(self, name)
         raise KeyError(f"'{name}' is not a supported config parameter")
 
     def __dir__(self) -> List[str]:
-        return sorted(list(dir(super())) + list(self.get_params()))
+        return sorted(list(dir(super())) + list(self.CONFIG_PARAMS))
 
     def __str__(self) -> str:
         """Content of SHConfig in json schema. If `hide_credentials` is set to `True` then credentials will be
@@ -217,28 +159,52 @@ class SHConfig:
         return "\n  ".join(repr_list).strip(",") + "\n)"
 
     @property
-    def _global_instance(self) -> _SHConfig:
+    def _global_instance(self) -> "SHConfig":
         """Uses a class attribute to store a global instance of a class with config parameters."""
         if SHConfig._instance is None:
-            SHConfig._instance = SHConfig._SHConfig()
+            SHConfig._instance = SHConfig.load_configuration(self.get_config_location())
         return SHConfig._instance
 
-    def save(self) -> None:
+    @classmethod
+    def load_configuration(cls, filename: str) -> "SHConfig":
+        """Method that loads configuration parameters from a file. Does not affect global settings.
+
+        :param filename: Path to file from which to read configuration.
+        """
+        with open(filename, "r") as cfg_file:
+            config_dict = json.load(cfg_file)
+
+        config = cls(no_loading=True)
+        for param, value in config_dict.items():
+            if param in cls.CONFIG_PARAMS:
+                setattr(config, param, value)
+
+        config._validate_values()
+        return config
+
+    def save(self, filename: Optional[str] = None) -> None:
         """Method that saves configuration parameter changes from instance of SHConfig class to global config class and
         to `config.json` file.
+
+        :param filename: Optional name of file to which to save configuration. If not specified saves to global default.
 
         :Example:
             ``my_config = SHConfig()`` \n
             ``my_config.instance_id = '<new instance id>'`` \n
             ``my_config.save()``
         """
+        self._validate_values()
+
         is_changed = False
-        for prop in self.get_params():
-            if getattr(self, prop) != getattr(self._global_instance, prop):
+        for param in self.CONFIG_PARAMS:
+            if getattr(self, param) != getattr(self._global_instance, param):
                 is_changed = True
-                setattr(self._global_instance, prop, getattr(self, prop))
+                setattr(self._global_instance, param, getattr(self, param))
+
         if is_changed:
-            self._global_instance.save_configuration()
+            config_dict = {param: getattr(self, param) for param in self.CONFIG_PARAMS}
+            with open(filename or self.get_config_location(), "w") as cfg_file:
+                json.dump(config_dict, cfg_file, indent=2)
 
     def copy(self) -> "SHConfig":
         """Makes a copy of an instance of `SHConfig`"""
@@ -252,33 +218,35 @@ class SHConfig:
             ``'sh_base_url'``. By default, all parameters will be reset and default value is ``Ellipsis``.
         :type params: Ellipsis or list(str) or str
         """
+        default = SHConfig(no_loading=True)
+
         if params is ...:
             params = self.get_params()
         if isinstance(params, str):
-            self._reset_param(params)
+            self._reset_param(params, default)
         elif isinstance(params, (list, tuple)):
             for param in params:
-                self._reset_param(param)
+                self._reset_param(param, default)
         else:
             raise ValueError(
                 f"Parameters must be specified in form of a list of strings or as a single string, instead got {params}"
             )
 
-    def _reset_param(self, param: str) -> None:
+    def _reset_param(self, param: str, default: "SHConfig") -> None:
         """Resets a single parameter
 
         :param param: A configuration parameter
         """
         if param not in self.get_params():
             raise ValueError(f"Cannot reset unknown parameter '{param}'")
-        setattr(self, param, self._SHConfig.CONFIG_PARAMS[param])
+        setattr(self, param, getattr(default, param))
 
     def get_params(self) -> List[str]:
         """Returns a list of parameter names
 
         :return: List of parameter names
         """
-        return list(self._SHConfig.CONFIG_PARAMS)
+        return list(self.CONFIG_PARAMS)
 
     def get_config_dict(self) -> ConfigDict:
         """Get a dictionary representation of `SHConfig` class. If `hide_credentials` is set to `True` then
@@ -286,19 +254,27 @@ class SHConfig:
 
         :return: A dictionary with configuration parameters
         """
-        config_params = {param: getattr(self, param) for param in self.get_params()}
+        config_params = {param: getattr(self, param) for param in self.CONFIG_PARAMS}
 
         if self._hide_credentials:
             config_params = {param: self._mask_credentials(param, value) for param, value in config_params.items()}
 
         return config_params
 
-    def get_config_location(self) -> str:
+    @classmethod
+    def get_config_location(cls) -> str:
         """Returns location of configuration file on disk
 
         :return: File path of `config.json` file
         """
-        return self._global_instance.get_config_file()
+        config_file = os.path.join(os.path.dirname(__file__), "config.json")
+
+        if not os.path.isfile(config_file):
+            with open(config_file, "w") as cfg_file:
+                default_dict = cls(no_loading=True).get_config_dict()
+                json.dump(default_dict, cfg_file, indent=2)
+
+        return config_file
 
     def has_eocloud_url(self) -> bool:
         """Checks if base Sentinel Hub URL is set to eocloud URL
@@ -350,7 +326,7 @@ class SHConfig:
 
     def _mask_credentials(self, param: str, value: object) -> object:
         """In case a parameter that holds credentials is given it will mask its value"""
-        if not (param in self._SHConfig.CREDENTIALS and value):
+        if not (param in self.CREDENTIALS and value):
             return value
         if not isinstance(value, str):
             raise ValueError(f"Parameter '{param}' should be a string but {value} found")

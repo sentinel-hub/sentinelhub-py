@@ -40,6 +40,7 @@ def test_config_file():
 
 def test_reset():
     config = SHConfig()
+    default_config = SHConfig(no_loading=True)
 
     old_value = config.instance_id
     new_value = "new"
@@ -53,7 +54,7 @@ def test_reset():
     assert config.instance_id == new_value, "Instance ID should not reset yet"
 
     config.reset()
-    assert config.instance_id == config._instance.CONFIG_PARAMS["instance_id"], "Instance ID should reset"
+    assert config.instance_id == default_config.instance_id, "Instance ID should reset"
 
 
 def test_save(restore_config):
