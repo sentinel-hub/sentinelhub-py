@@ -130,9 +130,9 @@ class SHConfig:  # pylint: disable=too-many-instance-attributes
                 continue
             if not isinstance(value, param_type):
                 raise ValueError(f"Value of parameter '{param}' must be of type {param_type.__name__}")
-        if self["max_wfs_records_per_query"] > 100:  # type: ignore[operator]
+        if self.max_wfs_records_per_query > 100:
             raise ValueError("Value of config parameter 'max_wfs_records_per_query' must be at most 100")
-        if self["max_opensearch_records_per_query"] > 500:  # type: ignore[operator]
+        if self.max_opensearch_records_per_query > 500:
             raise ValueError("Value of config parameter 'max_opensearch_records_per_query' must be at most 500")
 
     def __getitem__(self, name: str) -> Union[str, int, float]:
