@@ -4,7 +4,7 @@ Module implementing an interface with
 """
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Dict, Optional
+from typing import Any, Dict, Optional, Union
 
 from dataclasses_json import CatchAll, LetterCase, Undefined
 from dataclasses_json import config as dataclass_config
@@ -15,6 +15,9 @@ from ..data_collections import DataCollection
 from ..geometry import Geometry
 from .base import BaseCollection, SentinelHubFeatureIterator, SentinelHubService
 from .utils import datetime_config, geometry_config, remove_undefined
+
+CollectionType = Union["ByocCollection", DataCollection, dict, str]
+TileType = Union["ByocTile", dict, str]
 
 
 @dataclass_json(letter_case=LetterCase.CAMEL, undefined=Undefined.INCLUDE)
@@ -73,11 +76,11 @@ class SentinelHubBYOC(SentinelHubService):
     """
 
     @staticmethod
-    def _get_service_url(base_url):
+    def _get_service_url(base_url: str) -> str:
         """Provides URL to Catalog API"""
         return f"{base_url}/api/v1/byoc"
 
-    def iter_collections(self, search=None, **kwargs):
+    def iter_collections(self, search: Optional[str] = None, **kwargs: Any) -> SentinelHubFeatureIterator:
         """Retrieve collections
 
         `BYOC API reference <https://docs.sentinel-hub.com/api/latest/reference/#operation/getByocCollections>`__
@@ -93,32 +96,30 @@ class SentinelHubBYOC(SentinelHubService):
             exception_message="Failed to obtain information about available BYOC collections",
         )
 
-    def get_collection(self, collection):
+    def get_collection(self, collection: CollectionType) -> Dict[str, Any]:
         """Get collection by its id
 
         `BYOC API reference <https://docs.sentinel-hub.com/api/latest/reference/#operation/getByocCollectionById>`__
 
         :param collection: a ByocCollection, dict or collection id string
         :return: dictionary of the collection
-        :rtype: dict
         """
         url = f"{self.service_url}/collections/{self._parse_id(collection)}"
         return self.client.get_json(url=url, use_session=True)["data"]
 
-    def create_collection(self, collection):
+    def create_collection(self, collection: CollectionType) -> Dict[str, Any]:
         """Create a new collection
 
         `BYOC API reference <https://docs.sentinel-hub.com/api/latest/reference/#operation/createByocCollection>`__
 
         :param collection: ByocCollection object or a dictionary
         :return: dictionary of the created collection
-        :rtype: dict
         """
         coll = self._to_dict(collection)
         url = f"{self.service_url}/collections"
         return self.client.get_json(url=url, post_values=coll, use_session=True)["data"]
 
-    def update_collection(self, collection):
+    def update_collection(self, collection: CollectionType) -> Dict[str, Any]:
         """Update an existing collection
 
         `BYOC API reference <https://docs.sentinel-hub.com/api/latest/reference/#operation/updateByocCollectionById>`__
@@ -132,7 +133,7 @@ class SentinelHubBYOC(SentinelHubService):
             url=url, request_type=RequestType.PUT, post_values=coll, headers=headers, use_session=True
         )
 
-    def delete_collection(self, collection):
+    def delete_collection(self, collection: CollectionType) -> Dict[str, Any]:
         """Delete existing collection by its id
 
         `BYOC API reference <https://docs.sentinel-hub.com/api/latest/reference/#operation/deleteByocCollectionById>`__
@@ -142,7 +143,7 @@ class SentinelHubBYOC(SentinelHubService):
         url = f"{self.service_url}/collections/{self._parse_id(collection)}"
         return self.client.get_json(url=url, request_type=RequestType.DELETE, use_session=True)
 
-    def copy_tiles(self, from_collection, to_collection):
+    def copy_tiles(self, from_collection: CollectionType, to_collection: CollectionType) -> Dict[str, Any]:
         """Copy tiles from one collection to another
 
         `BYOC API reference <https://docs.sentinel-hub.com/api/latest/reference/#operation/copyByocCollectionTiles>`__
@@ -156,7 +157,9 @@ class SentinelHubBYOC(SentinelHubService):
         )
         return self.client.get_json(url=url, request_type=RequestType.POST, use_session=True)
 
-    def iter_tiles(self, collection, sort=None, path=None, **kwargs):
+    def iter_tiles(
+        self, collection: CollectionType, sort: Optional[str] = None, path: Optional[str] = None, **kwargs: Any
+    ) -> SentinelHubFeatureIterator:
         """Iterator over collection tiles
 
         `BYOC API reference <https://docs.sentinel-hub.com/api/latest/reference/#operation/getByocCollectionTiles>`__
@@ -165,7 +168,6 @@ class SentinelHubBYOC(SentinelHubService):
         :param sort: Order in which to return tiles
         :param path: An exact path where tiles are located
         :param kwargs: Any other request parameters
-        :return: iterator
         """
         collection_id = self._parse_id(collection)
         return SentinelHubFeatureIterator(
@@ -175,7 +177,7 @@ class SentinelHubBYOC(SentinelHubService):
             exception_message=f"Failed to obtain information about tiles in BYOC collection {collection_id}",
         )
 
-    def get_tile(self, collection, tile):
+    def get_tile(self, collection: CollectionType, tile: TileType) -> Dict[str, Any]:
         """Get a tile of collection
 
         `BYOC API reference <https://docs.sentinel-hub.com/api/latest/reference/#operation/getByocCollectionTileById>`__
@@ -183,12 +185,11 @@ class SentinelHubBYOC(SentinelHubService):
         :param collection: a ByocCollection, dict or collection id string
         :param tile: a ByocTile, dict or tile id string
         :return: dictionary of the tile
-        :rtype: dict
         """
         url = f"{self.service_url}/collections/{self._parse_id(collection)}/tiles/{self._parse_id(tile)}"
         return self.client.get_json(url=url, use_session=True)["data"]
 
-    def create_tile(self, collection, tile):
+    def create_tile(self, collection: CollectionType, tile: TileType) -> Dict[str, Any]:
         """Create tile within collection
 
         `BYOC API reference <https://docs.sentinel-hub.com/api/latest/reference/#operation/createByocCollectionTile>`__
@@ -196,13 +197,12 @@ class SentinelHubBYOC(SentinelHubService):
         :param collection: a ByocCollection, dict or collection id string
         :param tile: a ByocTile or dict
         :return: dictionary of the tile
-        :rtype: dict
         """
         _tile = self._to_dict(tile)
         url = f"{self.service_url}/collections/{self._parse_id(collection)}/tiles"
         return self.client.get_json(url=url, post_values=_tile, use_session=True)["data"]
 
-    def update_tile(self, collection, tile):
+    def update_tile(self, collection: CollectionType, tile: TileType) -> Dict[str, Any]:
         """Update a tile within collection
 
         `BYOC API reference
@@ -227,7 +227,7 @@ class SentinelHubBYOC(SentinelHubService):
             url=url, request_type=RequestType.PUT, post_values=updates, headers=headers, use_session=True
         )
 
-    def delete_tile(self, collection, tile):
+    def delete_tile(self, collection: CollectionType, tile: TileType) -> Dict[str, Any]:
         """Delete a tile from collection
 
         `BYOC API reference
@@ -239,7 +239,7 @@ class SentinelHubBYOC(SentinelHubService):
         url = f"{self.service_url}/collections/{self._parse_id(collection)}/tiles/{self._parse_id(tile)}"
         return self.client.get_json(url=url, request_type=RequestType.DELETE, use_session=True)
 
-    def reingest_tile(self, collection, tile):
+    def reingest_tile(self, collection: CollectionType, tile: TileType) -> Dict[str, Any]:
         """Re-ingests a tile into a collection
 
         `BYOC API reference
@@ -252,7 +252,7 @@ class SentinelHubBYOC(SentinelHubService):
         return self.client.get_json(url=url, request_type=RequestType.POST, use_session=True)
 
     @staticmethod
-    def _parse_id(data):
+    def _parse_id(data: object) -> Optional[str]:
         if isinstance(data, (ByocCollection, DataCollection)):
             return data.collection_id
         if isinstance(data, ByocTile):
@@ -264,10 +264,10 @@ class SentinelHubBYOC(SentinelHubService):
         raise ValueError(f"Expected a BYOC/Data dataclass, dictionary or a string, got {data}.")
 
     @staticmethod
-    def _to_dict(data):
+    def _to_dict(data: object) -> dict:
         """Constructs dict from an object (either dataclass or dict)"""
         if isinstance(data, (ByocCollection, ByocTile, ByocCollectionAdditionalData, ByocCollectionBand)):
-            return data.to_dict()
+            return data.to_dict()  # type: ignore[union-attr]
         if isinstance(data, dict):
             return data
         raise ValueError(f"Expected either a data class (e.g., ByocCollection and similar) or a dict, got {data}.")

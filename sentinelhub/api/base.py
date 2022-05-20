@@ -2,9 +2,10 @@
 Module implementing some utility functions not suitable for other utility modules
 """
 import warnings
+from abc import ABCMeta
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Optional, Union
+from typing import Any, Dict, Iterable, Optional, Protocol, Union
 from urllib.parse import urlencode
 
 from dataclasses_json import CatchAll, LetterCase, Undefined
@@ -19,17 +20,15 @@ from ..exceptions import MissingDataInRequestException, SHDeprecationWarning
 from .utils import datetime_config, remove_undefined
 
 
-class SentinelHubService:
+class SentinelHubService(metaclass=ABCMeta):
     """A base class for classes interacting with different Sentinel Hub APIs"""
 
-    def __init__(self, config=None, base_url=None):
+    def __init__(self, config: Optional[SHConfig] = None, base_url: Optional[str] = None):
         """
         :param config: A configuration object with required parameters `sh_client_id`, `sh_client_secret`, and
             `sh_auth_base_url` which is used for authentication and `sh_base_url` which defines the service
             deployment that will be used.
-        :type config: SHConfig or None
         :param base_url: A deprecated parameter. Use `config` instead.
-        :type base_url: str or None
         """
         self.config = config or SHConfig()
 
@@ -49,28 +48,26 @@ class SentinelHubService:
         self.client = SentinelHubDownloadClient(config=self.config)
 
     @staticmethod
-    def _get_service_url(base_url):
+    def _get_service_url(base_url: str) -> str:
         """Provides the URL to a specific service"""
-        raise NotImplementedError
 
 
-class SentinelHubFeatureIterator(FeatureIterator):
+class SentinelHubFeatureIterator(FeatureIterator[Dict[str, Any]]):
     """Feature iterator for the most common implementation of feature pagination at Sentinel Hub services"""
 
-    def __init__(self, *args, exception_message=None, **kwargs):
+    def __init__(self, *args: Any, exception_message: Optional[str] = None, **kwargs: Any):
         """
         :param args: Arguments passed to FeatureIterator
         :param exception_message: A message to be raised if no features are found
-        :type exception_message: str
         :param kwargs: Keyword arguments passed to FeatureIterator
         """
         self.exception_message = exception_message or "No data found"
 
         super().__init__(*args, **kwargs)
 
-    def _fetch_features(self):
+    def _fetch_features(self) -> Iterable[Dict[str, Any]]:
         """Collect more results from the service"""
-        params = remove_undefined({**self.params, "viewtoken": self.next})
+        params = remove_undefined({**self.params, "viewtoken": self.next})  # type: ignore
         url = f"{self.url}?{urlencode(params)}"
 
         results = self.client.get_json(url, use_session=True)
@@ -85,6 +82,12 @@ class SentinelHubFeatureIterator(FeatureIterator):
         return new_features
 
 
+class _AdditionalData(Protocol):
+    """Describes minimum requirements for additional data passed to BaseCollection"""
+
+    bands: Optional[Dict[str, Any]]
+
+
 @dataclass_json(letter_case=LetterCase.CAMEL, undefined=Undefined.INCLUDE)
 @dataclass
 class BaseCollection:
@@ -93,12 +96,13 @@ class BaseCollection:
     name: str
     s3_bucket: str
     other_data: CatchAll
+    additional_data: Optional[_AdditionalData]
     collection_id: Optional[str] = field(metadata=dataclass_config(field_name="id"), default=None)
     user_id: Optional[str] = None
     created: Optional[datetime] = field(metadata=datetime_config, default=None)
     no_data: Optional[Union[int, float]] = None
 
-    def to_data_collection(self):
+    def to_data_collection(self) -> DataCollection:
         """Returns a DataCollection enum for this collection"""
         if self.collection_id is None:
             raise ValueError("This collection is missing a collection id")
