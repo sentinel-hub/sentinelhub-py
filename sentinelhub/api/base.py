@@ -6,7 +6,7 @@ import warnings
 from abc import ABCMeta
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import TYPE_CHECKING, Any, Dict, Iterable, Optional, Union
+from typing import Any, Dict, Iterable, Optional, Union
 from urllib.parse import urlencode
 
 from dataclasses_json import CatchAll, LetterCase, Undefined
