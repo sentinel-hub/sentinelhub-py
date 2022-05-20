@@ -6,7 +6,7 @@ import warnings
 from abc import ABCMeta
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any, Dict, Iterable, Optional, Union
+from typing import TYPE_CHECKING, Any, Dict, Iterable, Optional, Union
 from urllib.parse import urlencode
 
 from dataclasses_json import CatchAll, LetterCase, Undefined
@@ -21,10 +21,10 @@ from ..exceptions import MissingDataInRequestException, SHDeprecationWarning
 from .utils import datetime_config, remove_undefined
 
 
-if sys.version_info.minor < 8:
+if sys.version_info.minor >= 8:
     from typing_extensions import Protocol
 else:
-    from typing import Protocol
+    from typing import Protocol  # pylint: disable=ungrouped-imports
 
 
 class SentinelHubService(metaclass=ABCMeta):
