@@ -1,11 +1,12 @@
 """
 Module implementing some utility functions not suitable for other utility modules
 """
+import sys
 import warnings
 from abc import ABCMeta
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any, Dict, Iterable, Optional, Protocol, Union
+from typing import Any, Dict, Iterable, Optional, Union
 from urllib.parse import urlencode
 
 from dataclasses_json import CatchAll, LetterCase, Undefined
@@ -18,6 +19,12 @@ from ..data_collections import DataCollection
 from ..download.sentinelhub_client import SentinelHubDownloadClient
 from ..exceptions import MissingDataInRequestException, SHDeprecationWarning
 from .utils import datetime_config, remove_undefined
+
+
+if sys.version_info.minor < 8:
+    from typing_extensions import Protocol
+else:
+    from typing import Protocol
 
 
 class SentinelHubService(metaclass=ABCMeta):
