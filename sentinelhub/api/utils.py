@@ -2,16 +2,13 @@
 Module implementing some common utility functions
 """
 from enum import Enum
-from typing import Any, Dict, Optional, Type, TypeVar
+from typing import Any, Dict, Type
 
 from dataclasses_json import LetterCase
 from dataclasses_json import config as dataclass_config
 
 from ..geometry import Geometry
 from ..time_utils import parse_time, serialize_time
-
-_KT = TypeVar("_KT")
-_VT = TypeVar("_VT")
 
 datetime_config = dataclass_config(
     encoder=lambda time: serialize_time(time, use_tz=True) if time else None,
@@ -49,6 +46,6 @@ def _update_other_args(dict1: Dict[str, Any], dict2: Dict[str, Any]) -> None:
             dict1[key] = value
 
 
-def remove_undefined(payload: Dict[_KT, Optional[_VT]]) -> Dict[_KT, _VT]:
+def remove_undefined(payload: dict) -> dict:
     """Takes a dictionary and removes keys without value"""
     return {name: value for name, value in payload.items() if value is not None}

@@ -70,7 +70,6 @@ class DataRequest(metaclass=ABCMeta):
         """Checks if initialized class instance successfully prepared a list of items to download
 
         :return: `True` if request is valid and `False` otherwise
-        :rtype: bool
         """
         return isinstance(self.download_list, list) and all(
             isinstance(request, DownloadRequest) for request in self.download_list
@@ -182,9 +181,7 @@ class DataRequest(metaclass=ABCMeta):
         reconstruct the previous list of download requests.
 
         :param download_list: List of download requests
-        :type download_list: list(sentinelhub.DownloadRequest)
         :return: reduced download list with unique requests and mapping list
-        :rtype: (list(sentinelhub.DownloadRequest), list(int))
         """
         unique_requests_map = {}
         mapping_list = []
@@ -200,9 +197,7 @@ class DataRequest(metaclass=ABCMeta):
         """Prepares requests for download and creates empty folders
 
         :param save_data: Tells whether to save data or not
-        :type save_data: bool
         :param return_data: Tells whether to return data or not
-        :type return_data: bool
         """
         if not self.is_valid_request():
             raise ValueError("Cannot obtain data because request is invalid")
@@ -245,14 +240,13 @@ class FeatureIterator(Generic[_T], metaclass=ABCMeta):
 
         self.index = 0
         self.features: List[_T] = []
-        self.next = None
+        self.next: Optional[_T] = None
         self.finished = False
 
     def __iter__(self) -> "FeatureIterator[_T]":
         """Method called at the beginning of a new iteration
 
         :return: It returns the iterator class itself
-        :rtype: FeatureIterator
         """
         self.index = 0
         return self

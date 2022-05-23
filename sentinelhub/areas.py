@@ -637,9 +637,9 @@ class BatchSplitter(AreaSplitter):
         """
         self.batch_client = SentinelHubBatch(config=config)
 
-        if not (request_id or batch_request):
-            raise ValueError("One of the parameters request_id and batch_request has to be given")
         if batch_request is None:
+            if request_id is None:
+                raise ValueError("One of the parameters request_id and batch_request has to be given")
             batch_request = self.batch_client.get_request(request_id)
 
         self.batch_request = batch_request
