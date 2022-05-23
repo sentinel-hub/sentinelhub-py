@@ -436,14 +436,14 @@ def test_bad_credentials():
     )
 
     bad_credentials_config = SHConfig()
-    bad_credentials_config.sh_client_secret = "test-wrong-credentials"
+    bad_credentials_config.sh_client_id = "test"
 
     request = SentinelHubRequest(**request_params, config=bad_credentials_config)
     with pytest.raises(CustomOAuth2Error):
         request.get_data()
 
     missing_credentials_config = SHConfig()
-    missing_credentials_config.sh_client_secret = ""
+    missing_credentials_config.sh_client_id = ""
 
     request = SentinelHubRequest(**request_params, config=missing_credentials_config)
     with pytest.raises(ValueError):

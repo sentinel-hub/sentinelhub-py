@@ -68,14 +68,13 @@ def test_from_token(fake_token):
 @pytest.mark.sh_integration
 def test_refreshing_procedure(fake_token):
     config = SHConfig()
-    config.reset()
     config.sh_client_id = "sh-py-test"
     config.sh_client_secret = "sh-py-test"
 
     fake_token["expires_at"] -= 500
 
     for expiry in [None, 400]:
-        session = SentinelHubSession(config=config, refresh_before_expiry=None, _token=fake_token)
+        session = SentinelHubSession(config=config, refresh_before_expiry=expiry, _token=fake_token)
         assert session.token == fake_token
 
     session = SentinelHubSession(config=config, refresh_before_expiry=500, _token=fake_token)
