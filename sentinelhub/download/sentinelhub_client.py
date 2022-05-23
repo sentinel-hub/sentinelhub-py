@@ -177,3 +177,8 @@ class SentinelHubDownloadClient(DownloadClient):
             return sh_client_id, base_url
 
         raise ValueError(f"Expected a config or a session object but got {config_or_session}")
+
+    @staticmethod
+    def clear_cache() -> None:
+        """Clears cached sessions."""
+        SentinelHubDownloadClient._CACHED_SESSIONS = {}

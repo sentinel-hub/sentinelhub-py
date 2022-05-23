@@ -7,12 +7,6 @@ from sentinelhub import SentinelHubSession, SHConfig
 from sentinelhub.exceptions import SHUserWarning
 
 
-@pytest.fixture(name="session", scope="module")
-def session_fixture():
-    session = SentinelHubSession()
-    return session
-
-
 @pytest.fixture(name="fake_token")
 def fake_token_fixture():
     return {"access_token": "x", "expires_in": 1000, "expires_at": time.time() + 1000}
