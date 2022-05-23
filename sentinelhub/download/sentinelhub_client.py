@@ -5,10 +5,12 @@ import logging
 import time
 import warnings
 from threading import Lock
+from typing import Dict, Tuple, Union
 
 import requests
 
-from ..exceptions import SHRateLimitWarning
+from ..config import SHConfig
+from ..exceptions import SHRateLimitWarning, SHRuntimeWarning
 from .client import DownloadClient
 from .handlers import fail_user_errors, retry_temporary_errors
 from .rate_limit import SentinelHubRateLimit
@@ -20,7 +22,7 @@ LOGGER = logging.getLogger(__name__)
 class SentinelHubDownloadClient(DownloadClient):
     """Download client specifically configured for download from Sentinel Hub service"""
 
-    _CACHED_SESSIONS = {}
+    _CACHED_SESSIONS: Dict[Tuple[str, str], SentinelHubSession] = {}
 
     def __init__(self, *, session=None, **kwargs):
         """
@@ -128,7 +130,7 @@ class SentinelHubDownloadClient(DownloadClient):
         if self.session:
             return self.session
 
-        cache_key = self.config.sh_client_id, self.config.sh_client_secret, self.config.get_sh_oauth_url()
+        cache_key = self._get_cache_key(self.config)
         if cache_key in SentinelHubDownloadClient._CACHED_SESSIONS:
             session = SentinelHubDownloadClient._CACHED_SESSIONS[cache_key]
         else:
@@ -137,3 +139,41 @@ class SentinelHubDownloadClient(DownloadClient):
 
         self.session = session
         return session
+
+    @staticmethod
+    def cache_session(session: SentinelHubSession) -> None:
+        """Cache a Sentinel Hub session for to be reused by all instances of `SentinelHubDownloadClient` and its child
+        classes within the same Python runtime environment.
+
+        :param session: A session object to be cached.
+        """
+        if not isinstance(session, SentinelHubSession):
+            raise ValueError(
+                f"Given object should be an instance of {SentinelHubSession.__name__} but {session} was given"
+            )
+
+        cache_key = SentinelHubDownloadClient._get_cache_key(session)
+        SentinelHubDownloadClient._CACHED_SESSIONS[cache_key] = session
+
+    @staticmethod
+    def _get_cache_key(config_or_session: Union[SentinelHubSession, SHConfig]) -> Tuple[str, str]:
+        """Calculates a cache key for the given session or config object. The key consists of an OAuth client ID and
+        a base service URL.
+        """
+        if isinstance(config_or_session, SHConfig):
+            return config_or_session.sh_client_id, config_or_session.sh_base_url
+
+        if isinstance(config_or_session, SentinelHubSession):
+            base_url = config_or_session.config.sh_base_url
+
+            # If session was generated from token then config_or_session.config.sh_client_id could have wrong client id.
+            sh_client_id = config_or_session.info().get("aud", "")
+            if not sh_client_id:
+                warnings.warn(
+                    "Failed to read client ID from OAuth token. Session caching might not work correctly.",
+                    category=SHRuntimeWarning,
+                )
+
+            return sh_client_id, base_url
+
+        raise ValueError(f"Expected a config or a session object but got {config_or_session}")
