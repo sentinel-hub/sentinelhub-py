@@ -168,6 +168,7 @@ class SentinelHubBYOC(SentinelHubService):
         :param sort: Order in which to return tiles
         :param path: An exact path where tiles are located
         :param kwargs: Any other request parameters
+        :return: An iterator over payloads of tiles from the collection
         """
         collection_id = self._parse_id(collection)
         return SentinelHubFeatureIterator(

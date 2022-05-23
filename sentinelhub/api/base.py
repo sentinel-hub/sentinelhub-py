@@ -74,7 +74,7 @@ class SentinelHubFeatureIterator(FeatureIterator[Dict[str, Any]]):
 
     def _fetch_features(self) -> Iterable[Dict[str, Any]]:
         """Collect more results from the service"""
-        params = remove_undefined({**self.params, "viewtoken": self.next})  # type: ignore
+        params = remove_undefined({**self.params, "viewtoken": self.next})
         url = f"{self.url}?{urlencode(params)}"
 
         results = self.client.get_json(url, use_session=True)
