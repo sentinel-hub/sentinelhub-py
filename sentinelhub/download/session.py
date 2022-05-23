@@ -5,6 +5,7 @@ import base64
 import json
 import logging
 import time
+from typing import Any, Dict, Optional
 
 from oauthlib.oauth2 import BackendApplicationClient
 from requests_oauthlib import OAuth2Session
@@ -28,10 +29,9 @@ class SentinelHubSession:
 
     SECONDS_BEFORE_EXPIRY = 60
 
-    def __init__(self, config=None):
+    def __init__(self, config: Optional[SHConfig] = None):
         """
         :param config: An instance of package configuration class
-        :type config: SHConfig
         """
         self.config = config or SHConfig()
 
@@ -42,26 +42,21 @@ class SentinelHubSession:
                 "https://sentinelhub-py.readthedocs.io/en/latest/configure.html for more info."
             )
 
-        self._token = None
-        _ = self.token
+        self._token = self._collect_new_token()
 
     @property
-    def token(self):
+    def token(self) -> Dict[str, Any]:
         """Always up-to-date session's token
 
         :return: A token in a form of dictionary of parameters
-        :rtype: dict
         """
         if self._token and self._token["expires_at"] > time.time() + self.SECONDS_BEFORE_EXPIRY:
             return self._token
 
-        # A request parameter is created only in order for error handling decorators to work correctly
-        request = DownloadRequest(url=self.config.get_sh_oauth_url())
-        self._token = self._fetch_token(request)
-
+        self._token = self._collect_new_token()
         return self._token
 
-    def info(self):
+    def info(self) -> Dict[str, Any]:
         """Decode token to get token info"""
 
         token = self.token["access_token"].split(".")[1]
@@ -70,17 +65,24 @@ class SentinelHubSession:
         return json.loads(decoded_string)
 
     @property
-    def session_headers(self):
+    def session_headers(self) -> Dict[str, str]:
         """Provides session authorization headers
 
-        :return: A dictionary with authorization headers
-        :rtype: dict
+        :return: A dictionary with authorization headers.
         """
         return {"Authorization": f'Bearer {self.token["access_token"]}'}
 
+    def _collect_new_token(self) -> Dict[str, Any]:
+        """Creates a download request and fetches a token from the service.
+
+        Note that the `DownloadRequest` object is created only because retry decorators of `_fetch_method` require it.
+        """
+        request = DownloadRequest(url=self.config.get_sh_oauth_url())
+        return self._fetch_token(request)
+
     @retry_temporary_errors
     @fail_user_errors
-    def _fetch_token(self, request):
+    def _fetch_token(self, request: DownloadRequest) -> Dict[str, Any]:
         """Collects a new token from Sentinel Hub service"""
         oauth_client = BackendApplicationClient(client_id=self.config.sh_client_id)
 
