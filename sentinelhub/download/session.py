@@ -6,7 +6,7 @@ import json
 import logging
 import time
 import warnings
-from typing import Any, Dict, Optional
+from typing import Dict, Optional
 
 from oauthlib.oauth2 import BackendApplicationClient
 from requests_oauthlib import OAuth2Session
@@ -15,10 +15,9 @@ from ..config import SHConfig
 from ..download.handlers import fail_user_errors, retry_temporary_errors
 from ..download.request import DownloadRequest
 from ..exceptions import SHUserWarning
+from ..type_utils import JsonDict
 
 LOGGER = logging.getLogger(__name__)
-
-JsonDict = Dict[str, Any]
 
 
 class SentinelHubSession:
@@ -63,7 +62,7 @@ class SentinelHubSession:
         self._token = self._collect_new_token() if _token is None else _token
 
     @classmethod
-    def from_token(cls, token: Dict[str, Any]) -> "SentinelHubSession":
+    def from_token(cls, token: JsonDict) -> "SentinelHubSession":
         """Create a session object from the given token. The created session is configured not to refresh its token.
 
         :param token: A dictionary containing token object.

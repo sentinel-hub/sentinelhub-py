@@ -7,8 +7,7 @@ from typing import Any, Iterable, List, Optional, Tuple, Union, overload
 import dateutil.parser
 import dateutil.tz
 
-RawTimeType = Union[None, str, dt.date]
-RawTimeIntervalType = Tuple[RawTimeType, RawTimeType]
+from .type_utils import RawTimeIntervalType, RawTimeType
 
 
 def is_valid_time(time: str) -> bool:

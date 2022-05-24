@@ -3,7 +3,9 @@ Module implementing rate limiting logic for Sentinel Hub service
 """
 import time
 from enum import Enum
-from typing import Any, Dict, Union
+from typing import Union
+
+from ..type_utils import JsonDict
 
 
 class PolicyType(Enum):
@@ -64,7 +66,7 @@ class SentinelHubRateLimit:
 class PolicyBucket:
     """A class representing Sentinel Hub policy bucket"""
 
-    def __init__(self, policy_type: Union[str, PolicyType], policy_payload: Dict[str, Any]):
+    def __init__(self, policy_type: Union[str, PolicyType], policy_payload: JsonDict):
         """
         :param policy_type: A type of policy
         :param policy_payload: A dictionary of policy parameters

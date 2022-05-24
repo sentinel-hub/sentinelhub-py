@@ -7,7 +7,7 @@ import os
 import sys
 import warnings
 from concurrent.futures import Future, ThreadPoolExecutor, as_completed
-from typing import Any, Dict, List, Optional, Union, overload
+from typing import Any, List, Optional, Union, overload
 from xml.etree import ElementTree
 
 import requests
@@ -17,7 +17,8 @@ from ..config import SHConfig
 from ..constants import MimeType, RequestType
 from ..decoding import decode_data as decode_data_function
 from ..exceptions import DownloadFailedException, HashedNameCollisionException, SHRuntimeWarning
-from ..io_utils import read_data, read_json, write_bytes, write_json
+from ..io_utils import read_data, write_data
+from ..type_utils import JsonDict
 from .handlers import fail_user_errors, retry_temporary_errors
 from .request import DownloadRequest
 
@@ -138,11 +139,11 @@ class DownloadClient:
 
         if request_path and request.save_response and (self.redownload or not os.path.exists(request_path)):
             request_info = request.get_request_params(include_metadata=True)
-            write_json(request_path, request_info)
+            write_data(request_path, request_info, MimeType.JSON)
             LOGGER.debug("Saved request info to %s", request_path)
 
         if request.save_response:
-            write_bytes(response_path, response_content)
+            write_data(response_path, response_content, MimeType.RAW)
             LOGGER.debug("Saved data to %s", response_path)
 
         if request.return_data:
@@ -187,7 +188,7 @@ class DownloadClient:
         if not request_path:
             return
 
-        cached_request_info = read_json(request_path)
+        cached_request_info = read_data(request_path, MimeType.JSON)
         current_request_info = request.get_request_params(include_metadata=False)
         # Timestamps are allowed to differ
         del cached_request_info["timestamp"]
@@ -204,11 +205,11 @@ class DownloadClient:
     def get_json(
         self,
         url: str,
-        post_values: Optional[Dict[str, Any]] = None,
-        headers: Optional[Dict[str, Any]] = None,
+        post_values: Optional[JsonDict] = None,
+        headers: Optional[JsonDict] = None,
         request_type: Optional[RequestType] = None,
         **kwargs: Any,
-    ) -> Union[Dict[str, Any], list, str, None]:
+    ) -> Union[JsonDict, list, str, None]:
         """Download request as JSON data type
 
         :param url: A URL from where the data will be downloaded

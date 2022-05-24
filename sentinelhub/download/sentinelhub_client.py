@@ -11,6 +11,7 @@ import requests
 
 from ..config import SHConfig
 from ..exceptions import SHRateLimitWarning, SHRuntimeWarning
+from ..type_utils import JsonDict
 from .client import DownloadClient
 from .handlers import fail_user_errors, retry_temporary_errors
 from .rate_limit import SentinelHubRateLimit
@@ -108,7 +109,7 @@ class SentinelHubDownloadClient(DownloadClient):
             timeout=self.config.download_timeout_seconds,
         )
 
-    def _prepare_headers(self, request: DownloadRequest) -> Dict[str, Any]:
+    def _prepare_headers(self, request: DownloadRequest) -> JsonDict:
         """Prepares final headers by potentially joining them with session headers"""
         if not request.use_session:
             return request.headers
@@ -116,7 +117,7 @@ class SentinelHubDownloadClient(DownloadClient):
         session_headers = self._execute_thread_safe(self._get_session_headers)
         return {**session_headers, **request.headers}
 
-    def _get_session_headers(self) -> Dict[str, Any]:
+    def _get_session_headers(self) -> JsonDict:
         """Provides up-to-date session headers
 
         Note that calling session_headers property triggers update if session has expired therefore this has to be
