@@ -5,8 +5,9 @@ import json
 import logging
 import os
 import sys
+from typing import Any, Dict, List, Optional, Union, overload
 import warnings
-from concurrent.futures import ThreadPoolExecutor, as_completed
+from concurrent.futures import Future, ThreadPoolExecutor, as_completed
 
 import requests
 from tqdm.auto import tqdm
@@ -33,48 +34,64 @@ class DownloadClient:
     - reads and writes locally stored/cached data
     """
 
-    def __init__(self, *, redownload=False, raise_download_errors=True, config=None):
+    def __init__(
+        self, *, redownload: bool = False, raise_download_errors: bool = True, config: Optional[SHConfig] = None
+    ):
         """
         :param redownload: If `True` the data will always be downloaded again. By default, this is set to `False` and
             the data that has already been downloaded and saved to an expected location will be read from the
             location instead of being downloaded again.
-        :type redownload: bool
         :param raise_download_errors: If `True` any error in download process will be raised as
             `DownloadFailedException`. If `False` failed downloads will only raise warnings.
-        :type raise_download_errors: bool
         :param config: An instance of configuration class
-        :type config: SHConfig
         """
         self.redownload = redownload
         self.raise_download_errors = raise_download_errors
 
         self.config = config or SHConfig()
 
-    def download(self, download_requests, max_threads=None, decode_data=True, show_progress=False):
+    @overload
+    def download(
+        self,
+        download_requests: DownloadRequest,
+        max_threads: Optional[int] = None,
+        decode_data: bool = True,
+        show_progress: bool = False,
+    ) -> Any:
+        ...
+
+    @overload
+    def download(
+        self,
+        download_requests: List[DownloadRequest],
+        max_threads: Optional[int] = None,
+        decode_data: bool = True,
+        show_progress: bool = False,
+    ) -> List[Any]:
+        ...
+
+    def download(
+        self,
+        download_requests: Union[DownloadRequest, List[DownloadRequest]],
+        max_threads: Optional[int] = None,
+        decode_data: bool = True,
+        show_progress: bool = False,
+    ) -> Union[List[Any], Any]:
         """Download one or multiple requests, provided as a request list.
 
         :param download_requests: A list of requests or a single request to be executed.
-        :type download_requests: List[DownloadRequest] or DownloadRequest
         :param max_threads: Maximum number of threads to be used for download in parallel. The default is
             `max_threads=None` which will use the number of processors on the system multiplied by 5.
-        :type max_threads: int or None
         :param decode_data: If `True` it will decode data otherwise it will return it in binary format.
-        :type decode_data: bool
         :param show_progress: Whether a progress bar should be displayed while downloading
-        :type show_progress: bool
         :return: A list of results or a single result, depending on input parameter `download_requests`
-        :rtype: list(object) or object
         """
-        is_single_request = isinstance(download_requests, DownloadRequest)
-        if is_single_request:
-            download_requests = [download_requests]
+        requests = [download_requests] if isinstance(download_requests, DownloadRequest) else download_requests
 
-        data_list = [None] * len(download_requests)
+        data_list = [None] * len(requests)
 
         with ThreadPoolExecutor(max_workers=max_threads) as executor:
-            download_list = [
-                executor.submit(self._single_download, request, decode_data) for request in download_requests
-            ]
+            download_list = [executor.submit(self._single_download, request, decode_data) for request in requests]
             future_order = {future: i for i, future in enumerate(download_list)}
 
             # Consider using tqdm.contrib.concurrent.thread_map in the future
@@ -87,11 +104,11 @@ class DownloadClient:
                 for future in as_completed(download_list):
                     data_list[future_order[future]] = self._process_download_future(future)
 
-        if is_single_request:
+        if isinstance(download_requests, DownloadRequest):
             return data_list[0]
         return data_list
 
-    def _process_download_future(self, future):
+    def _process_download_future(self, future: Future) -> Any:
         """Unpacks the future and correctly handles exceptions"""
         try:
             return future.result()
@@ -103,7 +120,7 @@ class DownloadClient:
             warnings.warn(str(download_exception), category=SHRuntimeWarning)
             return None
 
-    def _single_download(self, request, decode_data):
+    def _single_download(self, request: DownloadRequest, decode_data: bool):
         """Method for downloading a single request"""
         request.raise_if_invalid()
 
@@ -135,7 +152,7 @@ class DownloadClient:
 
     @retry_temporary_errors
     @fail_user_errors
-    def _execute_download(self, request):
+    def _execute_download(self, request: DownloadRequest) -> bytes:
         """A default way of executing a single download request"""
         LOGGER.debug(
             "Sending %s request to %s. Hash of sent request is %s",
@@ -157,14 +174,14 @@ class DownloadClient:
 
         return response.content
 
-    def _is_download_required(self, request, response_path):
+    def _is_download_required(self, request: DownloadRequest, response_path: Optional[str]) -> bool:
         """Checks if download should actually be done"""
         return (request.save_response or request.return_data) and (
             self.redownload or response_path is None or not os.path.exists(response_path)
         )
 
     @staticmethod
-    def _check_cached_request_is_matching(request, request_path):
+    def _check_cached_request_is_matching(request: DownloadRequest, request_path: Optional[str]) -> None:
         """Ensures that the cached request matches the current one. Serves as protection against hash collisions"""
         if not request_path:
             return
@@ -183,7 +200,14 @@ class DownloadClient:
                 "but the requests are different. Possible hash collision"
             )
 
-    def get_json(self, url, post_values=None, headers=None, request_type=None, **kwargs):
+    def get_json(
+        self,
+        url,
+        post_values: Optional[Dict[str, Any]] = None,
+        headers: Optional[Dict[str, Any]] = None,
+        request_type: Optional[RequestType] = None,
+        **kwargs: Any,
+    ):
         """Download request as JSON data type
 
         :param url: A URL from where the data will be downloaded
@@ -218,14 +242,12 @@ class DownloadClient:
 
         return self._single_download(request, decode_data=True)
 
-    def get_xml(self, url, **kwargs):
+    def get_xml(self, url: str, **kwargs: Any) -> Any:
         """Download request as XML data type
 
         :param url: url to Sentinel Hub's services or other sources from where the data is downloaded
-        :type url: str
         :param kwargs: Any other parameters that are passed to DownloadRequest class
         :return: request response as XML instance
-        :rtype: XML instance or None
         """
         request = DownloadRequest(url=url, data_type=MimeType.XML, **kwargs)
         return self._single_download(request, decode_data=True)
