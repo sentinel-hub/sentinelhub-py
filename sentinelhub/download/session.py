@@ -81,13 +81,14 @@ class SentinelHubSession:
         :return: A token in a form of dictionary of parameters
         """
         remaining_token_time = self._token["expires_at"] - time.time()
-        if self.refresh_before_expiry is None or remaining_token_time > self.refresh_before_expiry:
+        if self.refresh_before_expiry is None:
             if remaining_token_time <= 0:
                 warnings.warn("The Sentinel Hub session token seems to be expired.", category=SHUserWarning)
-
             return self._token
 
-        self._token = self._collect_new_token()
+        if remaining_token_time <= self.refresh_before_expiry:
+            self._token = self._collect_new_token()
+
         return self._token
 
     def info(self) -> JsonDict:
