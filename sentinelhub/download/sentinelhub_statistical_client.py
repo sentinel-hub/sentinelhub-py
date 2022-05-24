@@ -6,8 +6,8 @@ import copy
 import logging
 import os
 from typing import Any, Dict, cast
-from sentinelhub.constants import MimeType
 
+from sentinelhub.constants import MimeType
 from sentinelhub.download.request import DownloadRequest
 
 from ..decoding import decode_data as decode_data_function

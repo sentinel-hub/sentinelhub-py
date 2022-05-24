@@ -13,6 +13,7 @@ from dataclasses_json import dataclass_json
 from ..constants import MimeType, RequestType
 from ..data_collections import DataCollection
 from ..geometry import Geometry
+from ..type_utils import Json, JsonDict
 from .base import BaseCollection, SentinelHubFeatureIterator, SentinelHubService
 from .utils import datetime_config, geometry_config, remove_undefined
 
@@ -96,7 +97,7 @@ class SentinelHubBYOC(SentinelHubService):
             exception_message="Failed to obtain information about available BYOC collections",
         )
 
-    def get_collection(self, collection: CollectionType) -> Dict[str, Any]:
+    def get_collection(self, collection: CollectionType) -> JsonDict:
         """Get collection by its id
 
         `BYOC API reference <https://docs.sentinel-hub.com/api/latest/reference/#operation/getByocCollectionById>`__
@@ -105,9 +106,12 @@ class SentinelHubBYOC(SentinelHubService):
         :return: dictionary of the collection
         """
         url = f"{self.service_url}/collections/{self._parse_id(collection)}"
-        return self.client.get_json(url=url, use_session=True)["data"]
+        json_response = self.client.get_json(url=url, use_session=True)
+        if not isinstance(json_response, dict) or "data" not in json_response:
+            raise RuntimeError(f"Response from {url} did not contain the expected information.")
+        return json_response["data"]
 
-    def create_collection(self, collection: CollectionType) -> Dict[str, Any]:
+    def create_collection(self, collection: CollectionType) -> JsonDict:
         """Create a new collection
 
         `BYOC API reference <https://docs.sentinel-hub.com/api/latest/reference/#operation/createByocCollection>`__
@@ -117,9 +121,12 @@ class SentinelHubBYOC(SentinelHubService):
         """
         coll = self._to_dict(collection)
         url = f"{self.service_url}/collections"
-        return self.client.get_json(url=url, post_values=coll, use_session=True)["data"]
+        json_response = self.client.get_json(url=url, post_values=coll, use_session=True)
+        if not isinstance(json_response, dict) or "data" not in json_response:
+            raise RuntimeError(f"Response from {url} did not contain the expected information.")
+        return json_response["data"]
 
-    def update_collection(self, collection: CollectionType) -> Dict[str, Any]:
+    def update_collection(self, collection: CollectionType) -> Json:
         """Update an existing collection
 
         `BYOC API reference <https://docs.sentinel-hub.com/api/latest/reference/#operation/updateByocCollectionById>`__
@@ -133,7 +140,7 @@ class SentinelHubBYOC(SentinelHubService):
             url=url, request_type=RequestType.PUT, post_values=coll, headers=headers, use_session=True
         )
 
-    def delete_collection(self, collection: CollectionType) -> Dict[str, Any]:
+    def delete_collection(self, collection: CollectionType) -> Json:
         """Delete existing collection by its id
 
         `BYOC API reference <https://docs.sentinel-hub.com/api/latest/reference/#operation/deleteByocCollectionById>`__
@@ -143,7 +150,7 @@ class SentinelHubBYOC(SentinelHubService):
         url = f"{self.service_url}/collections/{self._parse_id(collection)}"
         return self.client.get_json(url=url, request_type=RequestType.DELETE, use_session=True)
 
-    def copy_tiles(self, from_collection: CollectionType, to_collection: CollectionType) -> Dict[str, Any]:
+    def copy_tiles(self, from_collection: CollectionType, to_collection: CollectionType) -> Json:
         """Copy tiles from one collection to another
 
         `BYOC API reference <https://docs.sentinel-hub.com/api/latest/reference/#operation/copyByocCollectionTiles>`__
@@ -178,7 +185,7 @@ class SentinelHubBYOC(SentinelHubService):
             exception_message=f"Failed to obtain information about tiles in BYOC collection {collection_id}",
         )
 
-    def get_tile(self, collection: CollectionType, tile: TileType) -> Dict[str, Any]:
+    def get_tile(self, collection: CollectionType, tile: TileType) -> JsonDict:
         """Get a tile of collection
 
         `BYOC API reference <https://docs.sentinel-hub.com/api/latest/reference/#operation/getByocCollectionTileById>`__
@@ -188,9 +195,12 @@ class SentinelHubBYOC(SentinelHubService):
         :return: dictionary of the tile
         """
         url = f"{self.service_url}/collections/{self._parse_id(collection)}/tiles/{self._parse_id(tile)}"
-        return self.client.get_json(url=url, use_session=True)["data"]
+        json_response = self.client.get_json(url=url, use_session=True)
+        if not isinstance(json_response, dict) or "data" not in json_response:
+            raise RuntimeError(f"Response from {url} did not contain the expected information.")
+        return json_response["data"]
 
-    def create_tile(self, collection: CollectionType, tile: TileType) -> Dict[str, Any]:
+    def create_tile(self, collection: CollectionType, tile: TileType) -> JsonDict:
         """Create tile within collection
 
         `BYOC API reference <https://docs.sentinel-hub.com/api/latest/reference/#operation/createByocCollectionTile>`__
@@ -201,9 +211,12 @@ class SentinelHubBYOC(SentinelHubService):
         """
         _tile = self._to_dict(tile)
         url = f"{self.service_url}/collections/{self._parse_id(collection)}/tiles"
-        return self.client.get_json(url=url, post_values=_tile, use_session=True)["data"]
+        json_response = self.client.get_json(url=url, post_values=_tile, use_session=True)
+        if not isinstance(json_response, dict) or "data" not in json_response:
+            raise RuntimeError(f"Response from {url} did not contain the expected information.")
+        return json_response["data"]
 
-    def update_tile(self, collection: CollectionType, tile: TileType) -> Dict[str, Any]:
+    def update_tile(self, collection: CollectionType, tile: TileType) -> Json:
         """Update a tile within collection
 
         `BYOC API reference
@@ -228,7 +241,7 @@ class SentinelHubBYOC(SentinelHubService):
             url=url, request_type=RequestType.PUT, post_values=updates, headers=headers, use_session=True
         )
 
-    def delete_tile(self, collection: CollectionType, tile: TileType) -> Dict[str, Any]:
+    def delete_tile(self, collection: CollectionType, tile: TileType) -> Json:
         """Delete a tile from collection
 
         `BYOC API reference
@@ -240,7 +253,7 @@ class SentinelHubBYOC(SentinelHubService):
         url = f"{self.service_url}/collections/{self._parse_id(collection)}/tiles/{self._parse_id(tile)}"
         return self.client.get_json(url=url, request_type=RequestType.DELETE, use_session=True)
 
-    def reingest_tile(self, collection: CollectionType, tile: TileType) -> Dict[str, Any]:
+    def reingest_tile(self, collection: CollectionType, tile: TileType) -> Json:
         """Re-ingests a tile into a collection
 
         `BYOC API reference
