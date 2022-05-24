@@ -7,7 +7,7 @@ import shutil
 
 import pytest
 
-from sentinelhub import SHConfig
+from sentinelhub import SentinelHubSession, SHConfig
 
 pytest.register_assert_rewrite("sentinelhub.testing_utils")
 from sentinelhub.testing_utils import get_input_folder, get_output_folder
@@ -50,6 +50,11 @@ def logger_fixture():
         level=logging.INFO, format="%(asctime)-15s %(module)s:%(lineno)d [%(levelname)s] %(funcName)s  %(message)s"
     )
     return logging.getLogger(__name__)
+
+
+@pytest.fixture(name="session", scope="session")
+def session_fixture():
+    return SentinelHubSession()
 
 
 @pytest.fixture(name="ray")
