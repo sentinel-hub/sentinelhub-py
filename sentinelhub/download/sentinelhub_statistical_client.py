@@ -30,10 +30,8 @@ class SentinelHubStatisticalDownloadClient(SentinelHubDownloadClient):
         """
         :param n_interval_retries: Number of retries if a request fails just for a certain timestamp. (This parameter
             is experimental and might be changed in the future.)
-        :type n_interval_retries: int
         :param max_retry_threads: Number of threads used for retrying. (This parameter is experimental and might be
             changed in the future.)
-        :type max_retry_threads: int
         """
         super().__init__(*args, **kwargs)
 

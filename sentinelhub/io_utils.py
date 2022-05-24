@@ -7,7 +7,7 @@ import json
 import logging
 import os
 import warnings
-from typing import Any, Callable, Dict, Optional, Union
+from typing import Any, Callable, Dict, Optional
 from xml.etree import ElementTree
 
 import numpy as np
@@ -18,6 +18,7 @@ from .constants import MimeType
 from .decoding import decode_image_with_pillow, decode_jp2_image, decode_tar, get_data_format
 from .exceptions import SHUserWarning
 from .os_utils import create_parent_folder
+from .type_utils import Json
 
 LOGGER = logging.getLogger(__name__)
 
@@ -267,12 +268,11 @@ def write_csv(filename: str, data: np.ndarray, delimiter: str = CSV_DELIMITER) -
             csv_writer.writerow(line)
 
 
-def write_json(filename: str, data: Union[list, tuple, dict]) -> None:
+def write_json(filename: str, data: Json) -> None:
     """Write data to JSON file
 
     :param filename: name of JSON file to write data to
     :param data: data to write to JSON file
-    :type data: list, tuple
     """
     with open(filename, "w") as file:
         json.dump(data, file, indent=4, sort_keys=True)
@@ -283,7 +283,6 @@ def write_xml(filename: str, element_tree: ElementTree.ElementTree) -> None:
 
     :param filename: name of XML or GML file to write data to
     :param element_tree: data as ElementTree object
-    :type element_tree: xmlElementTree
     """
     return element_tree.write(filename)
     # this will write declaration tag in first line:
@@ -295,7 +294,6 @@ def write_numpy(filename: str, data: np.ndarray) -> None:
 
     :param filename: name of numpy file to write data to
     :param data: data to write to numpy file
-    :type data: numpy array
     """
     return np.save(filename, data)
 

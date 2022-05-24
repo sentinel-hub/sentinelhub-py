@@ -31,7 +31,6 @@ class SentinelHubDownloadClient(DownloadClient):
     def __init__(self, *, session: Optional[SentinelHubSession] = None, **kwargs: Any):
         """
         :param session: An OAuth2 session with Sentinel Hub service
-        :type session: SentinelHubSession or None
         :param kwargs: Optional parameters from DownloadClient
         """
         super().__init__(**kwargs)
