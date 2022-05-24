@@ -166,7 +166,7 @@ def read_numpy(filename: str) -> np.ndarray:
 
 
 def write_data(
-    filename: str, data: np.ndarray, data_format: Optional[MimeType] = None, compress: bool = False, add: bool = False
+    filename: str, data: Any, data_format: Optional[MimeType] = None, compress: bool = False, add: bool = False
 ) -> None:
     """Write image data to file
 

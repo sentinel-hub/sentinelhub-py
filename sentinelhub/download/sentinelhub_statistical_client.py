@@ -5,7 +5,7 @@ import concurrent.futures
 import copy
 import logging
 import os
-from typing import Any, Dict
+from typing import Any, Dict, cast
 from sentinelhub.constants import MimeType
 
 from sentinelhub.download.request import DownloadRequest
@@ -53,9 +53,10 @@ class SentinelHubStatisticalDownloadClient(SentinelHubDownloadClient):
             response_content = self._execute_download(request)
             stats_response = decode_data_function(response_content, request.data_type)
         else:
-            LOGGER.debug("Reading locally stored data from %s instead of downloading", response_path)
+            path = cast(str, response_path)  # fix in future, for now ensured by download_required
+            LOGGER.debug("Reading locally stored data from %s instead of downloading", path)
             self._check_cached_request_is_matching(request, request_path)
-            stats_response = read_data(response_path, data_format=request.data_type)
+            stats_response = read_data(path, data_format=request.data_type)
 
         failed_time_intervals: Dict[int, Any] = {}
         for index, stat_info in enumerate(stats_response["data"]):
@@ -78,7 +79,8 @@ class SentinelHubStatisticalDownloadClient(SentinelHubDownloadClient):
             LOGGER.debug("Saved request info to %s", request_path)
 
         if request.save_response and (download_required or n_succeeded_intervals > 0):
-            write_data(response_path, stats_response, data_format=request.data_type)
+            path = cast(str, response_path)  # fix in future, for now ensured by raise_if_invalid
+            write_data(path, stats_response, data_format=request.data_type)
             LOGGER.debug("Saved data to %s", response_path)
 
         if request.return_data:
@@ -90,6 +92,9 @@ class SentinelHubStatisticalDownloadClient(SentinelHubDownloadClient):
         interval_requests = []
         for time_interval in time_intervals.values():
             interval_request = copy.deepcopy(request)
+            if interval_request.post_values is None or "aggregation" not in interval_request.post_values:
+                raise RuntimeError("Unable to configure request for retrying by interval.")
+
             interval_request.post_values["aggregation"]["timeRange"] = time_interval
             interval_requests.append(interval_request)
 

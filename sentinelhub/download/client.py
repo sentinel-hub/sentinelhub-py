@@ -7,7 +7,7 @@ import os
 import sys
 import warnings
 from concurrent.futures import Future, ThreadPoolExecutor, as_completed
-from typing import Any, List, Optional, Union, overload
+from typing import Any, List, Optional, Union, cast, overload
 from xml.etree import ElementTree
 
 import requests
@@ -129,10 +129,11 @@ class DownloadClient:
         request_path, response_path = request.get_storage_paths()
 
         if not self._is_download_required(request, response_path):
+            path = cast(str, response_path)  # refactor in future, for now ensured by _is_download_required
             if request.return_data:
-                LOGGER.debug("Reading locally stored data from %s instead of downloading", response_path)
+                LOGGER.debug("Reading locally stored data from %s instead of downloading", path)
                 self._check_cached_request_is_matching(request, request_path)
-                return read_data(response_path, data_format=request.data_type if decode_data else MimeType.RAW)
+                return read_data(path, data_format=request.data_type if decode_data else MimeType.RAW)
             return None
 
         response_content = self._execute_download(request)
@@ -143,8 +144,9 @@ class DownloadClient:
             LOGGER.debug("Saved request info to %s", request_path)
 
         if request.save_response:
-            write_data(response_path, response_content, MimeType.RAW)
-            LOGGER.debug("Saved data to %s", response_path)
+            path = cast(str, response_path)  # refactor in future, for now ensured by raise_if_invalid
+            write_data(path, response_content, MimeType.RAW)
+            LOGGER.debug("Saved data to %s", path)
 
         if request.return_data:
             if decode_data:
@@ -156,6 +158,9 @@ class DownloadClient:
     @fail_user_errors
     def _execute_download(self, request: DownloadRequest) -> bytes:
         """A default way of executing a single download request"""
+        if request.url is None:
+            raise RuntimeError(f"Faulty request {request}, no URL specified.")
+
         LOGGER.debug(
             "Sending %s request to %s. Hash of sent request is %s",
             request.request_type.value,

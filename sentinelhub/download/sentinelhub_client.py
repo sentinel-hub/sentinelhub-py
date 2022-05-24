@@ -101,6 +101,9 @@ class SentinelHubDownloadClient(DownloadClient):
 
     def _do_download(self, request: DownloadRequest) -> Any:
         """Runs the download"""
+        if request.url is None:
+            raise RuntimeError(f"Faulty request {request}, no URL specified.")
+
         return requests.request(
             request.request_type.value,
             url=request.url,
