@@ -423,23 +423,6 @@ class DataCollection(Enum, metaclass=_DataCollectionMeta):
         has_cloud_coverage=True,
     )
 
-    # EOCloud collections (which are only available on a development eocloud service):
-    LANDSAT5 = DataCollectionDefinition(
-        wfs_id="L5.TILE",
-        service_url=ServiceUrl.EOCLOUD,
-        processing_level=_ProcessingLevel.GRD,
-    )
-    LANDSAT7 = DataCollectionDefinition(
-        wfs_id="L7.TILE",
-        service_url=ServiceUrl.EOCLOUD,
-        processing_level=_ProcessingLevel.GRD,
-    )
-    ENVISAT_MERIS = DataCollectionDefinition(
-        wfs_id="ENV.TILE",
-        service_url=ServiceUrl.EOCLOUD,
-        collection_type=_CollectionType.ENVISAT_MERIS,
-    )
-
     # pylint: disable=too-many-locals
     @classmethod
     def define(
@@ -703,14 +686,11 @@ class DataCollection(Enum, metaclass=_DataCollectionMeta):
         :param config: A custom instance of config class to override parameters from the saved configuration.
         :return: List of available data collections
         """
-        config = config or SHConfig()
-        is_eocloud = config.has_eocloud_url()
-
-        return [
-            data_collection
-            for data_collection in cls
-            if (data_collection.service_url == ServiceUrl.EOCLOUD) == is_eocloud
-        ]
+        if config is not None:
+            warnings.warn(
+                "Parameter config is deprecated, and will be removed in future.", category=SHDeprecationWarning
+            )
+        return list(cls)
 
 
 DataSource = DataCollection

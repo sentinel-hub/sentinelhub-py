@@ -286,13 +286,6 @@ class SHConfig:  # pylint: disable=too-many-instance-attributes
         hide_size = min(max(len(value) - 4, 10), len(value))
         return "*" * hide_size + value[hide_size:]
 
-    def has_eocloud_url(self) -> bool:
-        """Checks if base Sentinel Hub URL is set to eocloud URL
-
-        :return: `True` if 'eocloud' string is in base OGC URL else `False`
-        """
-        return "eocloud" in self.sh_base_url
-
     def get_sh_oauth_url(self) -> str:
         """Provides URL for Sentinel Hub authentication endpoint
 
@@ -312,8 +305,7 @@ class SHConfig:  # pylint: disable=too-many-instance-attributes
 
         :return: A URL endpoint
         """
-        ogc_endpoint = "v1" if self.has_eocloud_url() else "ogc"
-        return f"{self.sh_base_url}/{ogc_endpoint}"
+        return f"{self.sh_base_url}/ogc"
 
     def get_sh_rate_limit_url(self) -> str:
         """Provides URL for Sentinel Hub rate limiting endpoint

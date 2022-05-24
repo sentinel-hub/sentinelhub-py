@@ -20,7 +20,6 @@ from ..download.sentinelhub_client import SentinelHubDownloadClient
 from ..exceptions import MissingDataInRequestException, SHDeprecationWarning
 from .utils import datetime_config, remove_undefined
 
-
 if sys.version_info < (3, 8):
     from typing_extensions import Protocol
 else:

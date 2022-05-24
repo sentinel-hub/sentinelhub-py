@@ -113,11 +113,6 @@ def test_get_available_collections(config):
     collections = DataCollection.get_available_collections()
     assert helper_check_collection_list(collections)
 
-    config.sh_base_url = ServiceUrl.EOCLOUD
-    eocloud_collections = DataCollection.get_available_collections(config=config)
-    assert helper_check_collection_list(eocloud_collections)
-    assert eocloud_collections != collections
-
 
 def helper_check_collection_list(collection_list):
     is_list = isinstance(collection_list, list)
