@@ -6,7 +6,7 @@ import json
 import logging
 import time
 import warnings
-from typing import Any, Dict, Optional, Union
+from typing import Any, Dict, Optional
 
 from oauthlib.oauth2 import BackendApplicationClient
 from requests_oauthlib import OAuth2Session
@@ -36,7 +36,8 @@ class SentinelHubSession:
     def __init__(
         self,
         config: Optional[SHConfig] = None,
-        refresh_before_expiry: Optional[Union[int, float]] = DEFAULT_SECONDS_BEFORE_EXPIRY,
+        refresh_before_expiry: Optional[float] = DEFAULT_SECONDS_BEFORE_EXPIRY,
+        *,
         _token: Optional[JsonDict] = None,
     ):
         """
@@ -45,8 +46,8 @@ class SentinelHubSession:
             mechanism is activated. When this is activated it means that whenever a valid token will be again
             required the `SentinelHubSession` will re-authenticate to Sentinel Hub service and obtain a new token.
             By default, the parameter is set to `60` seconds. If this parameter is set to `None` it will deactivate
-            token refreshing and `SentinelHubSession` might provide a token that is already expired. This can be is
-            used to avoid re-authenticating too many times.
+            token refreshing and `SentinelHubSession` might provide a token that is already expired. This can be used
+            to avoid re-authenticating too many times.
         """
         self.config = config or SHConfig()
         self.refresh_before_expiry = refresh_before_expiry
@@ -108,7 +109,8 @@ class SentinelHubSession:
     def _collect_new_token(self) -> JsonDict:
         """Creates a download request and fetches a token from the service.
 
-        Note that the `DownloadRequest` object is created only because retry decorators of `_fetch_method` require it.
+        Note that the `DownloadRequest` object is created only because retry decorators of `_fetch_token` method
+        require it.
         """
         request = DownloadRequest(url=self.config.get_sh_oauth_url())
         return self._fetch_token(request)

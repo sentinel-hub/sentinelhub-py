@@ -3,15 +3,9 @@ import pytest
 from sentinelhub import SentinelHubDownloadClient, SentinelHubStatisticalDownloadClient, SHConfig
 
 
-@pytest.fixture(name="blank_config")
-def blank_config_fixture():
-    config = SHConfig()
-    config.reset()
-    return config
-
-
 @pytest.mark.sh_integration
-def test_client_with_fixed_session(session, blank_config):
+def test_client_with_fixed_session(session):
+    blank_config = SHConfig(use_defaults=True)
     client = SentinelHubDownloadClient(session=session, config=blank_config)
 
     used_session = client.get_session()

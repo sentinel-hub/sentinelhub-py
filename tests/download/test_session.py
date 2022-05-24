@@ -40,8 +40,7 @@ def test_token_info(session):
 
 
 def test_session_with_missing_credentials(fake_token):
-    config_without_credentials = SHConfig()
-    config_without_credentials.reset()
+    config_without_credentials = SHConfig(use_defaults=True)
 
     with pytest.raises(ValueError):
         SentinelHubSession(config=config_without_credentials)
@@ -49,6 +48,7 @@ def test_session_with_missing_credentials(fake_token):
     with pytest.raises(ValueError):
         SentinelHubSession(config=config_without_credentials, _token=fake_token)
 
+    # This succeeds because it receives and existing token and refreshing is deactivated
     session = SentinelHubSession(config=config_without_credentials, refresh_before_expiry=None, _token=fake_token)
     assert session.token == fake_token
 
