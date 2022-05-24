@@ -687,9 +687,8 @@ class DataCollection(Enum, metaclass=_DataCollectionMeta):
         :return: List of available data collections
         """
         if config is not None:
-            raise DeprecationWarning(
-                "The `config` parameter of the method `get_available_collections` is deprecated and will be"
-                " removed in the future."
+            warnings.warn(
+                "Parameter config is deprecated, and will be removed in future.", category=SHDeprecationWarning
             )
         return list(cls)
 
