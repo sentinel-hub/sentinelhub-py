@@ -5,9 +5,10 @@ import json
 import logging
 import os
 import sys
-from typing import Any, Dict, List, Optional, Union, overload
 import warnings
 from concurrent.futures import Future, ThreadPoolExecutor, as_completed
+from typing import Any, Dict, List, Optional, Union, overload
+from xml.etree import ElementTree
 
 import requests
 from tqdm.auto import tqdm
@@ -16,7 +17,7 @@ from ..config import SHConfig
 from ..constants import MimeType, RequestType
 from ..decoding import decode_data as decode_data_function
 from ..exceptions import DownloadFailedException, HashedNameCollisionException, SHRuntimeWarning
-from ..io_utils import read_data, write_data
+from ..io_utils import read_data, read_json, write_bytes, write_json
 from .handlers import fail_user_errors, retry_temporary_errors
 from .request import DownloadRequest
 
@@ -86,12 +87,12 @@ class DownloadClient:
         :param show_progress: Whether a progress bar should be displayed while downloading
         :return: A list of results or a single result, depending on input parameter `download_requests`
         """
-        requests = [download_requests] if isinstance(download_requests, DownloadRequest) else download_requests
+        downloads = [download_requests] if isinstance(download_requests, DownloadRequest) else download_requests
 
-        data_list = [None] * len(requests)
+        data_list = [None] * len(downloads)
 
         with ThreadPoolExecutor(max_workers=max_threads) as executor:
-            download_list = [executor.submit(self._single_download, request, decode_data) for request in requests]
+            download_list = [executor.submit(self._single_download, request, decode_data) for request in downloads]
             future_order = {future: i for i, future in enumerate(download_list)}
 
             # Consider using tqdm.contrib.concurrent.thread_map in the future
@@ -120,7 +121,7 @@ class DownloadClient:
             warnings.warn(str(download_exception), category=SHRuntimeWarning)
             return None
 
-    def _single_download(self, request: DownloadRequest, decode_data: bool):
+    def _single_download(self, request: DownloadRequest, decode_data: bool) -> Any:
         """Method for downloading a single request"""
         request.raise_if_invalid()
 
@@ -137,11 +138,11 @@ class DownloadClient:
 
         if request_path and request.save_response and (self.redownload or not os.path.exists(request_path)):
             request_info = request.get_request_params(include_metadata=True)
-            write_data(request_path, request_info, data_format=MimeType.JSON)
+            write_json(request_path, request_info)
             LOGGER.debug("Saved request info to %s", request_path)
 
         if request.save_response:
-            write_data(response_path, response_content, data_format=MimeType.RAW)
+            write_bytes(response_path, response_content)
             LOGGER.debug("Saved data to %s", response_path)
 
         if request.return_data:
@@ -186,7 +187,7 @@ class DownloadClient:
         if not request_path:
             return
 
-        cached_request_info = read_data(request_path, MimeType.JSON)
+        cached_request_info = read_json(request_path)
         current_request_info = request.get_request_params(include_metadata=False)
         # Timestamps are allowed to differ
         del cached_request_info["timestamp"]
@@ -202,26 +203,21 @@ class DownloadClient:
 
     def get_json(
         self,
-        url,
+        url: str,
         post_values: Optional[Dict[str, Any]] = None,
         headers: Optional[Dict[str, Any]] = None,
         request_type: Optional[RequestType] = None,
         **kwargs: Any,
-    ):
+    ) -> Union[Dict[str, Any], list, str, None]:
         """Download request as JSON data type
 
         :param url: A URL from where the data will be downloaded
-        :type url: str
         :param post_values: A dictionary of parameters for a POST request
-        :type post_values: dict or None
         :param headers: A dictionary of additional request headers
-        :type headers: dict
         :param request_type: A type of HTTP request to make. If not specified, then it will be a GET request if
             `post_values=None` and a POST request otherwise
-        :type request_type: RequestType or None
         :param kwargs: Any other parameters that are passed to DownloadRequest class
         :return: JSON data parsed into Python objects
-        :rtype: dict or list or str or None
         """
         json_headers = headers or {}
 
@@ -242,7 +238,7 @@ class DownloadClient:
 
         return self._single_download(request, decode_data=True)
 
-    def get_xml(self, url: str, **kwargs: Any) -> Any:
+    def get_xml(self, url: str, **kwargs: Any) -> ElementTree.ElementTree:
         """Download request as XML data type
 
         :param url: url to Sentinel Hub's services or other sources from where the data is downloaded

@@ -35,8 +35,8 @@ class ServiceUrl:
     MAIN = "https://services.sentinel-hub.com"
     USWEST = "https://services-uswest2.sentinel-hub.com"
     CREODIAS = "https://creodias.sentinel-hub.com"
-    EOCLOUD = "http://services.eocloud.sentinel-hub.com"
     MUNDI = "https://shservices.mundiwebservices.com"
+    CODE_DE = "https://code-de.sentinel-hub.com"
 
 
 class ServiceType(Enum):

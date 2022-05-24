@@ -1,15 +1,14 @@
 """
 Module implementing error handlers which can occur during download procedure
 """
-import sys
 import logging
+import sys
 import time
 from typing import Callable, Optional, TypeVar
 
 import requests
 
 from ..config import SHConfig
-
 from ..decoding import decode_sentinelhub_err_msg
 from ..exceptions import DownloadFailedException
 from .request import DownloadRequest

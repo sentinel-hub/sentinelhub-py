@@ -9,9 +9,8 @@ from typing import Any, Dict
 
 from sentinelhub.download.request import DownloadRequest
 
-from ..constants import MimeType
 from ..decoding import decode_data as decode_data_function
-from ..io_utils import read_data, write_data
+from ..io_utils import read_data, write_data, write_json
 from .sentinelhub_client import SentinelHubDownloadClient
 
 LOGGER = logging.getLogger(__name__)
@@ -73,7 +72,7 @@ class SentinelHubStatisticalDownloadClient(SentinelHubDownloadClient):
 
         if request_path and request.save_response and (self.redownload or not os.path.exists(request_path)):
             request_info = request.get_request_params(include_metadata=True)
-            write_data(request_path, request_info, data_format=MimeType.JSON)
+            write_json(request_path, request_info)
             LOGGER.debug("Saved request info to %s", request_path)
 
         if request.save_response and (download_required or n_succeeded_intervals > 0):
