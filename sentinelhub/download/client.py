@@ -258,7 +258,7 @@ class DownloadClient:
 
         if extract_key is None:
             return response
-        if (extract_key in response and isinstance(response[extract_key], dict)):
+        if extract_key in response and isinstance(response[extract_key], dict):
             return response[extract_key]
 
         raise error
