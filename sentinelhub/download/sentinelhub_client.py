@@ -27,6 +27,7 @@ class SentinelHubDownloadClient(DownloadClient):
     """Download client specifically configured for download from Sentinel Hub service"""
 
     _CACHED_SESSIONS: Dict[Tuple[str, str], SentinelHubSession] = {}
+    _UNIVERSAL_CACHE_KEY = "universal-user", "default-url"
 
     def __init__(self, *, session: Optional[SentinelHubSession] = None, **kwargs: Any):
         """
@@ -138,6 +139,8 @@ class SentinelHubDownloadClient(DownloadClient):
         cache_key = self._get_cache_key(self.config)
         if cache_key in SentinelHubDownloadClient._CACHED_SESSIONS:
             session = SentinelHubDownloadClient._CACHED_SESSIONS[cache_key]
+        elif SentinelHubDownloadClient._UNIVERSAL_CACHE_KEY in SentinelHubDownloadClient._CACHED_SESSIONS:
+            session = SentinelHubDownloadClient._CACHED_SESSIONS[SentinelHubDownloadClient._UNIVERSAL_CACHE_KEY]
         else:
             session = SentinelHubSession(config=self.config)
             SentinelHubDownloadClient._CACHED_SESSIONS[cache_key] = session
@@ -146,18 +149,26 @@ class SentinelHubDownloadClient(DownloadClient):
         return session
 
     @staticmethod
-    def cache_session(session: SentinelHubSession) -> None:
+    def cache_session(session: SentinelHubSession, universal: bool = False) -> None:
         """Cache a Sentinel Hub session for to be reused by all instances of `SentinelHubDownloadClient` and its child
         classes within the same Python runtime environment.
 
         :param session: A session object to be cached.
+        :param universal: By default a session is cached for a specific OAuth user ID and Sentinel Hub deployment. But
+            if this flag is set to `True` it will cache session for any OAuth user ID and deployment. The intended
+            purpose of this parameter is that when a session is sent to a remote processing instance, which doesn't
+            have configured Sentinel Hub OAuth credentials, then the session can still be used even without credentials.
         """
         if not isinstance(session, SentinelHubSession):
             raise ValueError(
                 f"Given object should be an instance of {SentinelHubSession.__name__} but {session} was given"
             )
 
-        cache_key = SentinelHubDownloadClient._get_cache_key(session)
+        cache_key = (
+            SentinelHubDownloadClient._UNIVERSAL_CACHE_KEY
+            if universal
+            else SentinelHubDownloadClient._get_cache_key(session)
+        )
         SentinelHubDownloadClient._CACHED_SESSIONS[cache_key] = session
 
     @staticmethod
