@@ -4,9 +4,11 @@ Module implementing Sentinel Hub session object
 import base64
 import json
 import logging
+import sys
 import time
 import warnings
-from typing import Dict, Optional
+from threading import Event, Thread
+from typing import Any, Dict, Optional
 
 from oauthlib.oauth2 import BackendApplicationClient
 from requests_oauthlib import OAuth2Session
@@ -16,6 +18,12 @@ from ..download.handlers import fail_user_errors, retry_temporary_errors
 from ..download.request import DownloadRequest
 from ..exceptions import SHUserWarning
 from ..type_utils import JsonDict
+
+if sys.version_info < (3, 8):
+    from shared_memory import SharedMemory
+else:
+    from multiprocessing.shared_memory import SharedMemory
+
 
 LOGGER = logging.getLogger(__name__)
 
@@ -126,3 +134,117 @@ class SentinelHubSession:
             return oauth_session.fetch_token(
                 token_url=request.url, client_id=self.config.sh_client_id, client_secret=self.config.sh_client_secret
             )
+
+
+_DEFAULT_SESSION_MEMORY_NAME = "sh-session-token"
+_NULL_MEMORY_VALUE = b"\x00"
+
+
+class SessionSharingThread(Thread):
+    """A thread for sharing a token from `SentinelHubSession` object in a shared memory object that can be accessed by
+    other Python processes during multiprocessing parallelization.
+
+    How to use it:
+
+    .. code-block:: python
+
+        thread = SessionSharingThread(session)
+        thread.run()
+
+        # Run a parallelization process here
+        # Use collect_shared_session() to retrieve the session with other processes
+
+        thread.stop()
+    """
+
+    _EXTRA_MEMORY_BYTES = 100
+
+    def __init__(
+        self, session: SentinelHubSession, *args: Any, memory_name: str = _DEFAULT_SESSION_MEMORY_NAME, **kwargs: Any
+    ):
+        """
+        :param session: A Sentinel Hub session to be used for sharing its authentication token.
+        :param args: Positional arguments to be propagated to `threading.Thread` parent class.
+        :param memory_name: A unique name for the requested shared memory block.
+        :param kwargs: Keyword arguments to be propagated to `threading.Thread` parent class.
+        """
+        super().__init__(*args, **kwargs)
+
+        self.session = session
+        self.memory_name = memory_name
+
+        if self.session.refresh_before_expiry is None:
+            raise ValueError(f"Given instance of {self.session.__class__.__name__} must be self-refreshing")
+        self._refresh_time = self.session.refresh_before_expiry
+
+        self._stop_event = Event()
+        self._is_shared_memory_created = False
+
+    def run(self) -> None:
+        """A running thread is running an infinite loop of sharing a token and waiting for token to expire. The loop
+        ends only when the thread is stopped."""
+        self._stop_event.clear()
+
+        while not self._stop_event.is_set():
+            token = self.session.token
+            self._share_token(token)
+
+            sleep_until_refresh_time = token["expires_at"] - time.time() - self._refresh_time
+            if sleep_until_refresh_time > 0:
+                self._stop_event.wait(timeout=sleep_until_refresh_time)
+
+    def _share_token(self, token: JsonDict) -> None:
+        """A token is encoded into bytes and written into a shared memory block.
+
+        Note that the `SharedMemory` object allocates extra `self._EXTRA_MEMORY_BYTES` bytes of memory because the
+        length of encoded token can vary a bit.
+        """
+        encoded_token = json.dumps(token).encode()
+
+        if self._is_shared_memory_created:
+            memory = SharedMemory(name=self.memory_name)
+        else:
+            memory = SharedMemory(
+                create=True,
+                size=len(encoded_token) + self._EXTRA_MEMORY_BYTES,
+                name=self.memory_name,
+            )
+            self._is_shared_memory_created = True
+
+        try:
+            memory.buf[:] = encoded_token + _NULL_MEMORY_VALUE * (memory.size - len(encoded_token))
+        finally:
+            memory.close()
+
+    def stop(self) -> None:
+        """The method stops the thread that would otherwise run indefinitely.
+
+        After the stop even is set it is important to wait for `run` method to finish and only afterward unlink shared
+        memory.
+        """
+        self._stop_event.set()
+        self._wait_for_tstate_lock()  # type: ignore[attr-defined]
+
+        if self._is_shared_memory_created:
+            memory = SharedMemory(name=self.memory_name)
+            memory.unlink()
+            self._is_shared_memory_created = False
+            memory.close()
+
+
+def collect_shared_session(memory_name: str = _DEFAULT_SESSION_MEMORY_NAME) -> SentinelHubSession:
+    """This utility function is meant to be used in combination with `SessionSharingThread`. It retrieves an
+    authentication token from the shared memory and returns it in an `SentinelHubSession` object.
+
+    :param memory_name: A unique name of the requested shared memory block from where to read the session. It should
+        match the one used in `SessionSharingThread`.
+    :return: An instance of `SentinelHubSession` that contains the shared token but is not self-refreshing.
+    """
+    memory = SharedMemory(name=memory_name)
+    try:
+        encoded_token = memory.buf.tobytes().rstrip(_NULL_MEMORY_VALUE)
+    finally:
+        memory.close()
+
+    token: JsonDict = json.loads(encoded_token)
+    return SentinelHubSession.from_token(token)

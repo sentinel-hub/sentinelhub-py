@@ -12,4 +12,5 @@ requests_oauthlib
 aenum>=2.1.4
 dataclasses-json
 tqdm
+shared-memory38;python_version<"3.8"
 typing-extensions;python_version<"3.8"
