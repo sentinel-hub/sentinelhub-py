@@ -196,7 +196,6 @@ class SafeTile(AwsTile):
         """Describes a structure inside tile folder of ESA product .SAFE structure.
 
         :return: nested dictionaries representing .SAFE structure
-        :rtype: dict
         """
         return {
             self.get_main_folder(): {
@@ -328,7 +327,6 @@ class SafeTile(AwsTile):
         """Creates ESA tile ID
 
         :return: ESA tile ID
-        :rtype: str
         """
         client = AwsDownloadClient(config=self.config)
         tree = client.get_xml(self.get_url(AwsConstants.METADATA))
@@ -357,14 +355,12 @@ class SafeTile(AwsTile):
     def get_sensing_time(self) -> str:
         """
         :return: Exact tile sensing time
-        :rtype: str
         """
         return self.tile_info["timestamp"].split(".")[0].replace("-", "").replace(":", "")
 
     def get_datastrip_time(self) -> str:
         """
         :return: Exact datastrip time
-        :rtype: str
         """
         # S2A_OPER_MSI_L1C_DS_EPAE_20181119T061056_S20181119T031012_N02.07 -> 20181119T031012
         # S2A_OPER_MSI_L1C_DS_EPA__20190225T132350_S20190129T144524_N02.07 -> 20190129T144524
@@ -373,21 +369,18 @@ class SafeTile(AwsTile):
     def get_datatake_time(self) -> str:
         """
         :return: Exact time of datatake
-        :rtype: str
         """
         return self.tile_info["productName"].split("_")[2]
 
     def get_main_folder(self) -> str:
         """
         :return: name of tile folder
-        :rtype: str
         """
         return self.tile_id
 
     def get_tile_metadata_name(self) -> str:
         """
         :return: name of tile metadata file
-        :rtype: str
         """
         if self.safe_type is EsaSafeType.OLD_TYPE:
             name = _edit_name(self.tile_id, "MTD", delete_end=True)
@@ -398,7 +391,6 @@ class SafeTile(AwsTile):
     def get_aux_data_name(self) -> str:
         """
         :return: name of auxiliary data file
-        :rtype: str
         """
         if self.safe_type is EsaSafeType.OLD_TYPE:
             # this is not correct, but we cannot reconstruct last two timestamps in auxiliary data file name
@@ -409,11 +401,8 @@ class SafeTile(AwsTile):
     def get_img_name(self, band: str, resolution: Optional[str] = None) -> str:
         """
         :param band: band name
-        :type band: str
         :param resolution: Specifies the resolution in case of Sentinel-2 L2A products
-        :type resolution: str or None
         :return: name of band image file
-        :rtype: str
         """
         band = band.split("/")[-1]
         if self.safe_type is EsaSafeType.OLD_TYPE:
@@ -429,13 +418,9 @@ class SafeTile(AwsTile):
     def get_qi_name(self, qi_type: str, band: str = "B00", data_format: MimeType = MimeType.GML) -> str:
         """
         :param qi_type: type of quality indicator
-        :type qi_type: str
         :param band: band name
-        :type band: str
         :param data_format: format of the file
-        :type data_format: MimeType
         :return: name of gml file
-        :rtype: str
         """
         band = band.split("/")[-1]
         if self.safe_type is EsaSafeType.OLD_TYPE:
@@ -450,7 +435,6 @@ class SafeTile(AwsTile):
     def get_preview_name(self) -> str:
         """Returns .SAFE name of full resolution L1C preview
         :return: name of preview file
-        :rtype: str
         """
         if self.safe_type is EsaSafeType.OLD_TYPE:
             name = _edit_name(self.tile_id, AwsConstants.PVI, delete_end=True)
@@ -463,15 +447,10 @@ def _edit_name(name: str, code: str, add_code: Optional[str] = None, delete_end:
     """Helping function for creating file names in .SAFE format
 
     :param name: initial string
-    :type name: str
     :param code:
-    :type code: str
     :param add_code:
-    :type add_code: str or None
     :param delete_end:
-    :type delete_end: bool
     :return: edited string
-    :rtype: str
     """
     info = name.split("_")
     info[2] = code

@@ -36,20 +36,14 @@ class SentinelHubStatistical(SentinelHubBaseApiRequest):
         `Statistical API reference <https://docs.sentinel-hub.com/api/latest/reference/#tag/statistical>`_.
 
         :param aggregation: Aggregation part of the payload, which can be generated with `aggregation` method
-        :type aggregation: dict
         :param input_data: A list of input dictionary objects as described in the API reference. It can be generated
             with `input_data` method
-        :type input_data: List[dict or InputDataDict]
         :param bbox: A bounding box of the request
-        :type bbox: sentinelhub.BBox or None
         :param geometry: A geometry of the request
-        :type geometry: sentinelhub.Geometry or None
         :param calculations: Calculations part of the payload.
         :param calculations: dict
         :param data_folder: Location of the directory where the downloaded data could be saved.
-        :type data_folder: str
         :param config: A custom instance of config class to override parameters from the saved configuration.
-        :type config: SHConfig or None
         """
         self.payload = self.body(
             request_bounds=self.bounds(bbox=bbox, geometry=geometry),

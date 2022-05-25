@@ -34,7 +34,6 @@ class GeopediaService:
     def __init__(self, config: Optional[SHConfig] = None):
         """
         :param config: A custom instance of config class to override parameters from the saved configuration.
-        :type config: SHConfig or None
         """
         self.config = config or SHConfig()
         self._base_url = self.config.geopedia_rest_url
@@ -96,16 +95,11 @@ class GeopediaSession(GeopediaService):
     ):
         """
         :param username: Optional parameter in case of login with Geopedia credentials
-        :type username: str or None
         :param password: Optional parameter in case of login with Geopedia credentials
-        :type password: str or None
         :param password_md5: Password can optionally also be provided as already encoded md5 hexadecimal string
-        :type password_md5: str or None
         :param is_global: If `True` this session will be shared among all instances of this class, otherwise it will be
             used only with the single instance. Default is `False`.
-        :type is_global: bool
         :param config: A custom instance of config class to override parameters from the saved configuration.
-        :type config: SHConfig or None
         """
         super().__init__(**kwargs)
 
@@ -131,7 +125,6 @@ class GeopediaSession(GeopediaService):
         """All information that Geopedia provides about the current session
 
         :return: A dictionary with session info
-        :rtype: dict
         """
         return self.provide_session()
 
@@ -140,7 +133,6 @@ class GeopediaSession(GeopediaService):
         """A public property of this class which provides a Geopedia session ID
 
         :return: A session ID string
-        :rtype: str
         """
         return self._parse_session_id(self.provide_session())
 
@@ -149,7 +141,6 @@ class GeopediaSession(GeopediaService):
         """Headers which have to be used when accessing any data from Geopedia with this session
 
         :return: A dictionary containing session headers
-        :rtype: dict
         """
         session_info = self.provide_session()
         return {session_info["sessionHeaderName"]: self._parse_session_id(session_info)}
@@ -159,7 +150,6 @@ class GeopediaSession(GeopediaService):
         """Information that this session has about user
 
         :return: A dictionary with user info
-        :rtype: dict
         """
         return self.provide_session()["user"]
 
@@ -168,7 +158,6 @@ class GeopediaSession(GeopediaService):
         """Geopedia user ID. If no login was done during session this will return `'NO_USER'`.
 
         :return: User ID string
-        :rtype: str
         """
         return self._parse_user_id(self.provide_session())
 
@@ -176,7 +165,6 @@ class GeopediaSession(GeopediaService):
         """Method that restarts Geopedia Session
 
         :return: It returns the object itself, with new session
-        :rtype: GeopediaSession
         """
         self.provide_session(start_new=True)
         return self
@@ -186,9 +174,7 @@ class GeopediaSession(GeopediaService):
 
         :param start_new: If `True` it will always create a new session. Otherwise, it will create a new
             session only if no session exists or the previous session timed out.
-        :type start_new: bool
         :return: Current session info
-        :rtype: dict
         """
         if self.is_global:
             self._session_info = self._global_session_info
@@ -251,7 +237,6 @@ class GeopediaWmsService(GeopediaService, OgcImageService):
     def __init__(self, **kwargs: Any):
         """
         :param config: A custom instance of config class to override parameters from the saved configuration.
-        :type config: SHConfig or None
         """
         super().__init__(**kwargs)
 
@@ -261,7 +246,6 @@ class GeopediaWmsService(GeopediaService, OgcImageService):
         """Get a list of DownloadRequests for all data that are under the given field in the table of a Geopedia layer.
 
         :return: list of items which have to be downloaded
-        :rtype: list(DownloadRequest)
         """
         request.layer = _parse_geopedia_layer(request.layer, return_wms_name=True)
 
@@ -287,7 +271,6 @@ class GeopediaImageService(GeopediaService):
         """
         :param base_url: Base url of Geopedia REST services. If `None`, the url
                      specified in the configuration file is taken.
-        :type base_url: str or None
         """
         super().__init__(**kwargs)
 
@@ -297,7 +280,6 @@ class GeopediaImageService(GeopediaService):
         """Get a list of DownloadRequests for all data that are under the given field in the table of a Geopedia layer.
 
         :return: list of items which have to be downloaded
-        :rtype: list(DownloadRequest)
         """
         return [
             DownloadRequest(
@@ -346,7 +328,6 @@ class GeopediaImageService(GeopediaService):
         """Returns iterator over info about data used for the `GeopediaVectorRequest`
 
         :return: Iterator of dictionaries containing info about data used in the request.
-        :rtype: Iterator[dict] or None
         """
         return self.gpd_iterator
 
@@ -368,20 +349,14 @@ class GeopediaFeatureIterator(FeatureIterator[JsonDict]):
     ):
         """
         :param layer: Geopedia layer which contains requested data
-        :type layer: str
         :param bbox: Bounding box of the requested image. Its coordinates must be in the CRS.POP_WEB (EPSG:3857)
             coordinate system.
-        :type bbox: BBox
         :param query_filter: Query string used for filtering returned features.
-        :type query_filter: str
         :param offset: Offset of resulting features
-        :type offset: int
         :param gpd_session: Optional parameter for specifying a custom Geopedia session, which can also contain login
             credentials. This can be used for accessing private Geopedia layers. By default, it is set to `None` and a
             basic Geopedia session without credentials will be created.
-        :type gpd_session: GeopediaSession or None
         :param config: A custom instance of config class to override parameters from the saved configuration.
-        :type config: SHConfig or None
         """
         self.layer = _parse_geopedia_layer(layer)
         self.config = config or SHConfig()
@@ -452,7 +427,6 @@ class GeopediaFeatureIterator(FeatureIterator[JsonDict]):
         Geopedia services to get this information.
 
         :return: Size of Geopedia layer with applied filters
-        :rtype: int
         """
         if self.layer_size is None:
             new_features = self._fetch_features()

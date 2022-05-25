@@ -114,28 +114,19 @@ class AwsTileRequest(AwsRequest[AwsTile]):
         """
         :param data_collection: A collection of requested AWS data. Supported collections are Sentinel-2 L1C and
             Sentinel-2 L2A.
-        :type data_collection: DataCollection
         :param tile: tile name (e.g. ``'T10UEV'``)
-        :type tile: str
         :param time: tile sensing time in ISO8601 format
-        :type time: str
         :param aws_index: there exist Sentinel-2 tiles with the same tile and time parameter. Therefore, each tile on
             AWS also has an index which is visible in their url path. If aws_index is set to `None` the class
             will try to find the index automatically. If there will be multiple choices it will choose the
             lowest index and inform the user.
-        :type aws_index: int or None
         :param bands: List of Sentinel-2 bands for request. If `None` all bands will be obtained
-        :type bands: list(str) or None
         :param metafiles: list of additional metafiles available on AWS
             (e.g. ``['metadata', 'tileInfo', 'preview/B01', 'TCI']``)
-        :type metafiles: list(str)
         :param safe_format: flag that determines the structure of saved data. If `True` it will be saved in .SAFE
             format defined by ESA. If `False` it will be saved in the same structure as the structure at AWS.
-        :type safe_format: bool
         :param data_folder: location of the directory where the fetched data will be saved.
-        :type data_folder: str
         :param config: A custom instance of config class to override parameters from the saved configuration.
-        :type config: SHConfig or None
         """
         self.data_collection = data_collection
         self.tile = tile
@@ -221,23 +212,15 @@ def download_safe_format(
     be specified.
 
     :param product_id: original ESA product identification string. Default is `None`
-    :type product_id: str
     :param tile: tuple containing tile name and sensing time/date. Default is `None`
-    :type tile: (str, str)
     :param folder: location of the directory where the fetched data will be saved. Default is ``'.'``
-    :type folder: str
     :param redownload: if `True`, download again the requested data even though it's already saved to disk. If
         `False`, do not download if data is already available on disk. Default is `False`
-    :type redownload: bool
     :param entire_product: in case tile is specified this flag determines if it will be place inside a .SAFE structure
         of the product. Default is `False`
-    :type entire_product: bool
     :param bands: list of bands to download. If `None` all bands will be downloaded. Default is `None`
-    :type bands: list(str) or None
     :param data_collection: In case of tile request the collection of satellite data has to be specified.
-    :type data_collection: DataCollection
     :return: Nested dictionaries representing .SAFE structure.
-    :rtype: dict
     """
     safe_request: Union[None, AwsTileRequest, AwsProductRequest] = None
     entire_product = entire_product and product_id is None
