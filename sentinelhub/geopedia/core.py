@@ -1,23 +1,37 @@
 """
 The core module for Geopedia interactions
 """
+from __future__ import annotations
 
 import datetime
 import hashlib
+import sys
+from typing import TYPE_CHECKING, Any, Iterable, Iterator, List, Optional, Union, overload
 
 from shapely.geometry import shape as geo_shape
+from shapely.geometry.base import BaseGeometry
 
-from ..api.ogc import OgcImageService
+from ..api.ogc import OgcImageService, OgcRequest
 from ..base import FeatureIterator
 from ..config import SHConfig
 from ..constants import CRS, MimeType
 from ..download import DownloadClient, DownloadRequest
+from ..geometry import BBox
+from ..type_utils import JsonDict
+
+if TYPE_CHECKING:
+    from .request import GeopediaImageRequest
+
+if sys.version_info < (3, 8):
+    from typing_extensions import Literal
+else:
+    from typing import Literal  # pylint: disable=ungrouped-imports
 
 
 class GeopediaService:
     """The class for Geopedia OGC services"""
 
-    def __init__(self, config=None):
+    def __init__(self, config: Optional[SHConfig] = None):
         """
         :param config: A custom instance of config class to override parameters from the saved configuration.
         :type config: SHConfig or None
@@ -26,7 +40,17 @@ class GeopediaService:
         self._base_url = self.config.geopedia_rest_url
 
 
-def _parse_geopedia_layer(layer, return_wms_name=False):
+@overload
+def _parse_geopedia_layer(layer: Union[int, str], return_wms_name: Literal[False] = False) -> int:
+    ...
+
+
+@overload
+def _parse_geopedia_layer(layer: Union[int, str], return_wms_name: Literal[True]) -> str:
+    ...
+
+
+def _parse_geopedia_layer(layer: Union[int, str], return_wms_name: bool = False) -> Union[int, str]:
     """Helper function for parsing Geopedia layer name. If WMS name is required and wrong form is given it will
     return a string with 'ttl' at the beginning. (WMS name can also start with something else, e.g. only 't'
     instead 'ttl', therefore anything else is also allowed.) Otherwise, it will parse it into a number.
@@ -61,7 +85,15 @@ class GeopediaSession(GeopediaService):
     _global_session_info = None
     _global_session_start = None
 
-    def __init__(self, *, username=None, password=None, password_md5=None, is_global=False, **kwargs):
+    def __init__(
+        self,
+        *,
+        username: Optional[str] = None,
+        password: Optional[str] = None,
+        password_md5: Optional[str] = None,
+        is_global: bool = False,
+        **kwargs: Any,
+    ):
         """
         :param username: Optional parameter in case of login with Geopedia credentials
         :type username: str or None
@@ -89,13 +121,13 @@ class GeopediaSession(GeopediaService):
                 "Either both username and password have to be specified or neither of them, only one found"
             )
 
-        self._session_info = None
-        self._session_start = None
+        self._session_info: Optional[dict] = None
+        self._session_start: Optional[datetime.datetime] = None
 
         self.provide_session()
 
     @property
-    def session_info(self):
+    def session_info(self) -> dict:
         """All information that Geopedia provides about the current session
 
         :return: A dictionary with session info
@@ -104,7 +136,7 @@ class GeopediaSession(GeopediaService):
         return self.provide_session()
 
     @property
-    def session_id(self):
+    def session_id(self) -> str:
         """A public property of this class which provides a Geopedia session ID
 
         :return: A session ID string
@@ -113,7 +145,7 @@ class GeopediaSession(GeopediaService):
         return self._parse_session_id(self.provide_session())
 
     @property
-    def session_headers(self):
+    def session_headers(self) -> dict:
         """Headers which have to be used when accessing any data from Geopedia with this session
 
         :return: A dictionary containing session headers
@@ -123,7 +155,7 @@ class GeopediaSession(GeopediaService):
         return {session_info["sessionHeaderName"]: self._parse_session_id(session_info)}
 
     @property
-    def user_info(self):
+    def user_info(self) -> dict:
         """Information that this session has about user
 
         :return: A dictionary with user info
@@ -132,7 +164,7 @@ class GeopediaSession(GeopediaService):
         return self.provide_session()["user"]
 
     @property
-    def user_id(self):
+    def user_id(self) -> str:
         """Geopedia user ID. If no login was done during session this will return `'NO_USER'`.
 
         :return: User ID string
@@ -140,7 +172,7 @@ class GeopediaSession(GeopediaService):
         """
         return self._parse_user_id(self.provide_session())
 
-    def restart(self):
+    def restart(self) -> "GeopediaSession":
         """Method that restarts Geopedia Session
 
         :return: It returns the object itself, with new session
@@ -149,7 +181,7 @@ class GeopediaSession(GeopediaService):
         self.provide_session(start_new=True)
         return self
 
-    def provide_session(self, start_new=False):
+    def provide_session(self, start_new: bool = False) -> dict:
         """Makes sure that session is still valid and provides session info
 
         :param start_new: If `True` it will always create a new session. Otherwise, it will create a new
@@ -164,14 +196,15 @@ class GeopediaSession(GeopediaService):
 
         if (
             self._session_info is None
+            or self._session_start is None
             or start_new
             or datetime.datetime.now() > self._session_start + self.SESSION_DURATION
         ):
             self._start_new_session()
 
-        return self._session_info
+        return self._session_info  # type: ignore[return-value]
 
-    def _start_new_session(self):
+    def _start_new_session(self) -> None:
         """Starts a new session and calculates when the new session will end. If username and password are provided
         it will also make login.
         """
@@ -181,31 +214,31 @@ class GeopediaSession(GeopediaService):
         session_url = f"{self._base_url}/data/v1/session/create?locale=en&sid={session_id}"
 
         client = DownloadClient(config=self.config)
-        self._session_info = client.get_json(session_url)
+        self._session_info = client.get_json_dict(session_url)
 
         if self.username and self.password and self._parse_user_id(self._session_info) == self.UNAUTHENTICATED_USER_ID:
-            self._make_login()
+            self._make_login(self._session_info)
 
         if self.is_global:
             GeopediaSession._global_session_info = self._session_info
             GeopediaSession._global_session_start = self._session_start
 
-    def _make_login(self):
+    def _make_login(self, session_info: dict) -> None:
         """Private method that makes login"""
         login_url = (
             f"{self._base_url}/data/v1/session/login?user={self.username}&pass={self.password}"
-            f"&sid={self._parse_session_id(self._session_info)}"
+            f"&sid={self._parse_session_id(session_info)}"
         )
         client = DownloadClient(config=self.config)
-        self._session_info = client.get_json(login_url)
+        self._session_info = client.get_json_dict(login_url)
 
     @staticmethod
-    def _parse_session_id(session_info):
+    def _parse_session_id(session_info: dict) -> str:
         """Method for parsing session ID from session info"""
         return session_info["sessionId"]
 
     @staticmethod
-    def _parse_user_id(session_info):
+    def _parse_user_id(session_info: dict) -> str:
         """Method for parsing user ID from session info"""
         return session_info["user"]["id"]
 
@@ -215,7 +248,7 @@ class GeopediaWmsService(GeopediaService, OgcImageService):
     `sentinelhub.ogc.OgcImageService` class.
     """
 
-    def __init__(self, **kwargs):
+    def __init__(self, **kwargs: Any):
         """
         :param config: A custom instance of config class to override parameters from the saved configuration.
         :type config: SHConfig or None
@@ -224,7 +257,7 @@ class GeopediaWmsService(GeopediaService, OgcImageService):
 
         self._base_url = self.config.geopedia_wms_url
 
-    def get_request(self, request):
+    def get_request(self, request: OgcRequest) -> List[DownloadRequest]:
         """Get a list of DownloadRequests for all data that are under the given field in the table of a Geopedia layer.
 
         :return: list of items which have to be downloaded
@@ -234,17 +267,15 @@ class GeopediaWmsService(GeopediaService, OgcImageService):
 
         return super().get_request(request)
 
-    def get_dates(self, request):
+    def get_dates(self, _: OgcRequest) -> List[Optional[datetime.datetime]]:
         """Geopedia does not support date queries
 
         :param request: OGC-type request
-        :type request: WmsRequest or WcsRequest
         :return: Undefined date
-        :rtype: [None]
         """
         return [None]
 
-    def get_wfs_iterator(self):
+    def get_wfs_iterator(self) -> Any:
         """This method is inherited from OgcImageService but is not implemented."""
         raise NotImplementedError
 
@@ -252,7 +283,7 @@ class GeopediaWmsService(GeopediaService, OgcImageService):
 class GeopediaImageService(GeopediaService):
     """Service class that provides images from a Geopedia vector layer."""
 
-    def __init__(self, **kwargs):
+    def __init__(self, **kwargs: Any):
         """
         :param base_url: Base url of Geopedia REST services. If `None`, the url
                      specified in the configuration file is taken.
@@ -260,9 +291,9 @@ class GeopediaImageService(GeopediaService):
         """
         super().__init__(**kwargs)
 
-        self.gpd_iterator = None
+        self.gpd_iterator: Optional[GeopediaFeatureIterator] = None
 
-    def get_request(self, request):
+    def get_request(self, request: GeopediaImageRequest) -> List[DownloadRequest]:
         """Get a list of DownloadRequests for all data that are under the given field in the table of a Geopedia layer.
 
         :return: list of items which have to be downloaded
@@ -275,7 +306,7 @@ class GeopediaImageService(GeopediaService):
             for item in self._get_items(request)
         ]
 
-    def _get_items(self, request):
+    def _get_items(self, request: GeopediaImageRequest) -> list:
         """Collects data from Geopedia layer and returns list of features"""
         if request.gpd_iterator is None:
             self.gpd_iterator = GeopediaFeatureIterator(
@@ -301,17 +332,17 @@ class GeopediaImageService(GeopediaService):
         return items
 
     @staticmethod
-    def _get_url(item):
+    def _get_url(item: dict) -> Optional[str]:
         return item.get("objectPath")
 
     @staticmethod
-    def _get_filename(request, item):
+    def _get_filename(request: GeopediaImageRequest, item: dict) -> Optional[str]:
         """Creates a filename"""
         if request.keep_image_names:
             return item["niceName"]
         return None
 
-    def get_gpd_iterator(self):
+    def get_gpd_iterator(self) -> Optional[GeopediaFeatureIterator]:
         """Returns iterator over info about data used for the `GeopediaVectorRequest`
 
         :return: Iterator of dictionaries containing info about data used in the request.
@@ -320,13 +351,21 @@ class GeopediaImageService(GeopediaService):
         return self.gpd_iterator
 
 
-class GeopediaFeatureIterator(FeatureIterator):
+class GeopediaFeatureIterator(FeatureIterator[JsonDict]):
     """Iterator for Geopedia Vector Service"""
 
     FILTER_EXPRESSION = "filterExpression"
     MAX_FEATURES_PER_REQUEST = 1000
 
-    def __init__(self, layer, bbox=None, query_filter=None, offset=0, gpd_session=None, config=None):
+    def __init__(
+        self,
+        layer: str,
+        bbox: Optional[BBox] = None,
+        query_filter: Optional[str] = None,
+        offset: int = 0,
+        gpd_session: Optional[GeopediaSession] = None,
+        config: Optional[SHConfig] = None,
+    ):
         """
         :param layer: Geopedia layer which contains requested data
         :type layer: str
@@ -355,9 +394,9 @@ class GeopediaFeatureIterator(FeatureIterator):
         super().__init__(client, url, params)
         self.next = f"{url}?offset={offset}&limit={self.MAX_FEATURES_PER_REQUEST}"
 
-        self.layer_size = None
+        self.layer_size: Optional[int] = None
 
-    def _build_request_params(self, bbox, query_filter):
+    def _build_request_params(self, bbox: Optional[BBox], query_filter: Optional[str]) -> dict:
         """Builds payload parameters for requests to Geopedia"""
         params = {}
         if bbox is not None:
@@ -374,13 +413,15 @@ class GeopediaFeatureIterator(FeatureIterator):
 
         return params
 
-    def __len__(self):
+    def __len__(self) -> int:
         """Length of iterator is number of features which can be obtained from Geopedia with applied filters"""
         return self.get_size()
 
-    def _fetch_features(self):
+    def _fetch_features(self) -> Iterable[JsonDict]:
         """Retrieves a new page of features from Geopedia"""
-        response = self.client.get_json(self.next, post_values=self.params, headers=self.gpd_session.session_headers)
+        response = self.client.get_json_dict(
+            self.next, post_values=self.params, headers=self.gpd_session.session_headers
+        )
 
         new_features = response["features"]
         pagination = response["pagination"]
@@ -396,17 +437,17 @@ class GeopediaFeatureIterator(FeatureIterator):
 
         return new_features
 
-    def get_geometry_iterator(self):
+    def get_geometry_iterator(self) -> Iterator[BaseGeometry]:
         """Iterator over Geopedia feature geometries"""
         for feature in self:
             yield geo_shape(feature["geometry"])
 
-    def get_field_iterator(self, field):
+    def get_field_iterator(self, field: str) -> Iterator[Any]:
         """Iterator over the specified field of Geopedia features"""
         for feature in self:
             yield feature["properties"].get(field, [])
 
-    def get_size(self):
+    def get_size(self) -> int:
         """Provides number of features which can be obtained. It has to fetch at least one feature from
         Geopedia services to get this information.
 
@@ -417,4 +458,4 @@ class GeopediaFeatureIterator(FeatureIterator):
             new_features = self._fetch_features()
             self.features.extend(new_features)
 
-        return self.layer_size
+        return self.layer_size  # type: ignore[return-value]
