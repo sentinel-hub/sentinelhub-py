@@ -33,8 +33,7 @@ class SentinelHubCatalog(SentinelHubService):
 
         :return: A service payload with information
         """
-        url = self.service_url
-        return self.client.get_json_dict(url)
+        return self.client.get_json_dict(self.service_url)
 
     def get_conformance(self) -> JsonDict:
         """Get information about specifications that this API conforms to
@@ -44,8 +43,7 @@ class SentinelHubCatalog(SentinelHubService):
 
         :return: A service payload with information
         """
-        url = f"{self.service_url}/conformance"
-        return self.client.get_json_dict(url)
+        return self.client.get_json_dict(f"{self.service_url}/conformance")
 
     def get_collections(self) -> List[JsonDict]:
         """Provides a list of collections that are available to a user
@@ -54,8 +52,7 @@ class SentinelHubCatalog(SentinelHubService):
 
         :return: A list of collections with information
         """
-        url = f"{self.service_url}/collections"
-        return self.client.get_json_dict(url)["collections"]
+        return self.client.get_json_dict(f"{self.service_url}/collections")["collections"]
 
     def get_collection(self, collection: Union[DataCollection, str]) -> JsonDict:
         """Provides information about given collection
