@@ -2,7 +2,8 @@
 Interface of
 `Sentinel Hub Web Feature Service (WFS) <https://www.sentinel-hub.com/develop/api/ogc/standard-parameters/wfs/>`__.
 """
-import datetime
+import datetime as dt
+from typing import Iterable, List, Optional, Tuple, Union
 from urllib.parse import urlencode
 
 import shapely.geometry
@@ -10,11 +11,14 @@ import shapely.geometry
 from ..base import FeatureIterator
 from ..config import SHConfig
 from ..constants import CRS, MimeType, ServiceType, SHConstants
+from ..data_collections import DataCollection
 from ..download import SentinelHubDownloadClient
+from ..geometry import BBox
 from ..time_utils import parse_time, parse_time_interval, serialize_time
+from ..type_utils import JsonDict, RawTimeIntervalType, RawTimeType
 
 
-class WebFeatureService(FeatureIterator):
+class WebFeatureService(FeatureIterator[JsonDict]):
     """Class for interaction with Sentinel Hub WFS service
 
     The class is an iterator over info about all available satellite tiles for requested parameters. It collects data
@@ -24,19 +28,22 @@ class WebFeatureService(FeatureIterator):
     For more info check `WFS documentation <https://www.sentinel-hub.com/develop/api/ogc/standard-parameters/wfs/>`__.
     """
 
-    def __init__(self, bbox, time_interval, *, data_collection, maxcc=1.0, config=None):
+    def __init__(
+        self,
+        bbox: BBox,
+        time_interval: Union[RawTimeType, RawTimeIntervalType],
+        *,
+        data_collection: DataCollection,
+        maxcc: float = 1.0,
+        config: Optional[SHConfig] = None,
+    ):
         """
         :param bbox: Bounding box of the requested image. Coordinates must be in the specified coordinate reference
             system.
-        :type bbox: geometry.BBox
         :param time_interval: interval with start and end date of the form YYYY-MM-DDThh:mm:ss or YYYY-MM-DD
-        :type time_interval: (str, str)
         :param data_collection: A collection of requested satellite data
-        :type data_collection: DataCollection
         :param maxcc: Maximum accepted cloud coverage of an image. Float between 0.0 and 1.0. Default is 1.0.
-        :type maxcc: float
         :param config: A custom instance of config class to override parameters from the saved configuration.
-        :type config: SHConfig or None
         """
         self.config = config or SHConfig()
         self.config.raise_for_missing_instance_id()
@@ -44,10 +51,10 @@ class WebFeatureService(FeatureIterator):
         self.bbox = bbox
 
         self.latest_time_only = time_interval == SHConstants.LATEST
-        if self.latest_time_only:
-            self.time_interval = datetime.datetime(year=1985, month=1, day=1), datetime.datetime.now()
-        else:
+        if not self.latest_time_only:
             self.time_interval = parse_time_interval(time_interval)
+        else:
+            self.time_interval = dt.datetime(year=1985, month=1, day=1), dt.datetime.now()
 
         self.data_collection = data_collection
         self.maxcc = maxcc
@@ -58,9 +65,9 @@ class WebFeatureService(FeatureIterator):
         params = self._build_request_params()
 
         super().__init__(client, url, params)
-        self.next = 0
+        self.next: int = 0
 
-    def _build_service_url(self):
+    def _build_service_url(self) -> str:
         """Creates a base URL for WFS service"""
         base_url = self.config.get_sh_ogc_url()
 
@@ -69,7 +76,7 @@ class WebFeatureService(FeatureIterator):
 
         return f"{base_url}/{ServiceType.WFS.value}/{self.config.instance_id}"
 
-    def _build_request_params(self):
+    def _build_request_params(self) -> JsonDict:
         """Builds URL parameters for WFS service"""
         start_time, end_time = serialize_time(self.time_interval, use_tz=True)
         return {
@@ -85,14 +92,12 @@ class WebFeatureService(FeatureIterator):
             "MAXFEATURES": self.max_features_per_request,
         }
 
-    def _fetch_features(self):
+    def _fetch_features(self) -> Iterable[JsonDict]:
         """Collects data from WFS service"""
-        params = {**self.params, "FEATURE_OFFSET": self.next}
+        params: JsonDict = {**self.params, "FEATURE_OFFSET": self.next}
         url = f"{self.url}?{urlencode(params)}"
 
-        response = self.client.get_json(url)
-
-        new_features = response["features"]
+        new_features = self.client.get_json_dict(url)["features"]
 
         if len(new_features) < self.max_features_per_request or self.latest_time_only:
             self.finished = True
@@ -107,13 +112,12 @@ class WebFeatureService(FeatureIterator):
         ]
         return new_features
 
-    def get_dates(self):
+    def get_dates(self) -> List[Optional[dt.date]]:
         """Returns a list of acquisition times from tile info data
 
         :return: List of acquisition times in the order returned by WFS service.
-        :rtype: list(datetime.datetime)
         """
-        tile_dates = []
+        tile_dates: List[Optional[dt.date]] = []
 
         for tile_info in self:
             if not tile_info["properties"]["date"]:  # could be True for custom (BYOC) data collections
@@ -125,35 +129,31 @@ class WebFeatureService(FeatureIterator):
 
         return tile_dates
 
-    def get_geometries(self):
+    def get_geometries(self) -> List[shapely.geometry.MultiPolygon]:
         """Returns a list of geometries from tile info data
 
         :return: List of multipolygon geometries in the order returned by WFS service.
-        :rtype: list(shapely.geometry.MultiPolygon)
         """
         return [shapely.geometry.shape(tile_info["geometry"]) for tile_info in self]
 
-    def get_tiles(self):
+    def get_tiles(self) -> List[Tuple[str, str, int]]:
         """Returns list of tiles with tile name, date and AWS index
 
         :return: List of tiles in form of (tile_name, date, aws_index)
-        :rtype: list((str, str, int))
         """
         return [self._parse_tile_url(tile_info["properties"]["path"]) for tile_info in self]
 
     @staticmethod
-    def _parse_tile_url(tile_url):
+    def _parse_tile_url(tile_url: str) -> Tuple[str, str, int]:
         """Extracts tile name, data and AWS index from tile URL
 
         :param tile_url: Location of tile at AWS
-        :type tile_url: str
         :return: Tuple in a form (tile_name, date, aws_index)
-        :rtype: (str, str, int)
         """
         props = tile_url.rsplit("/", 7)
         return "".join(props[1:4]), "-".join(props[4:7]), int(props[7])
 
-    def _sentinel1_product_check(self, tile_info):
+    def _sentinel1_product_check(self, tile_info: JsonDict) -> bool:
         """Checks if Sentinel-1 tile info match the data collection definition"""
         product_id = tile_info["properties"]["id"]
         props = product_id.split("_")

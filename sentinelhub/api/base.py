@@ -6,7 +6,7 @@ import warnings
 from abc import ABCMeta
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any, Dict, Iterable, Optional, Union, cast
+from typing import Any, Dict, Iterable, Optional, Union
 from urllib.parse import urlencode
 
 from dataclasses_json import CatchAll, LetterCase, Undefined
@@ -18,6 +18,7 @@ from ..config import SHConfig
 from ..data_collections import DataCollection
 from ..download.sentinelhub_client import SentinelHubDownloadClient
 from ..exceptions import MissingDataInRequestException, SHDeprecationWarning
+from ..type_utils import JsonDict
 from .utils import datetime_config, remove_undefined
 
 if sys.version_info < (3, 8):
@@ -58,7 +59,7 @@ class SentinelHubService(metaclass=ABCMeta):
         """Provides the URL to a specific service"""
 
 
-class SentinelHubFeatureIterator(FeatureIterator[Dict[str, Any]]):
+class SentinelHubFeatureIterator(FeatureIterator[JsonDict]):
     """Feature iterator for the most common implementation of feature pagination at Sentinel Hub services"""
 
     def __init__(self, *args: Any, exception_message: Optional[str] = None, **kwargs: Any):
@@ -68,22 +69,22 @@ class SentinelHubFeatureIterator(FeatureIterator[Dict[str, Any]]):
         :param kwargs: Keyword arguments passed to FeatureIterator
         """
         self.exception_message = exception_message or "No data found"
+        self.next: Optional[JsonDict] = None
 
         super().__init__(*args, **kwargs)
 
-    def _fetch_features(self) -> Iterable[Dict[str, Any]]:
+    def _fetch_features(self) -> Iterable[JsonDict]:
         """Collect more results from the service"""
         params = remove_undefined({**self.params, "viewtoken": self.next})
         url = f"{self.url}?{urlencode(params)}"
 
-        results = self.client.get_json(url, use_session=True)
-        results = cast(Dict[str, Any], results)
+        json_response = self.client.get_json_dict(url, use_session=True)
 
-        new_features = results.get("data")
+        new_features = json_response.get("data")
         if new_features is None:
             raise MissingDataInRequestException(self.exception_message)
 
-        self.next = results["links"].get("nextToken")
+        self.next = json_response["links"].get("nextToken")
         self.finished = self.next is None or not new_features
 
         return new_features

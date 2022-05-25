@@ -14,9 +14,7 @@ import shapely.ops
 from shapely.geometry import GeometryCollection, MultiPolygon, Polygon
 from shapely.geometry.base import BaseGeometry
 
-from sentinelhub.api.batch import BatchRequest
-
-from .api import SentinelHubBatch, SentinelHubCatalog
+from .api import BatchRequest, SentinelHubBatch, SentinelHubCatalog
 from .config import SHConfig
 from .constants import CRS
 from .data_collections import DataCollection
