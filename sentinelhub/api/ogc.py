@@ -87,23 +87,25 @@ class OgcRequest(DataRequest):
         self.custom_url_params = custom_url_params
         self.time_difference = time_difference
 
-        if self.custom_url_params is not None:
-            self._check_custom_url_parameters(self.custom_url_params)
+        self._check_custom_url_parameters()
 
         self.wfs_iterator: Optional[WebFeatureService] = None
 
         super().__init__(SentinelHubDownloadClient, **kwargs)
 
-    def _check_custom_url_parameters(self, params: Dict[CustomUrlParam, Any]) -> None:
+    def _check_custom_url_parameters(self) -> None:
         """Checks if custom url parameters are valid parameters.
 
         Throws ValueError if the provided parameter is not a valid parameter.
         """
-        for param in params:
+        if self.custom_url_params is None:
+            return
+
+        for param in self.custom_url_params:
             if param not in CustomUrlParam:
                 raise ValueError(f"Parameter {param} is not a valid custom url parameter. Please check and fix.")
 
-        if self.service_type is ServiceType.FIS and CustomUrlParam.GEOMETRY in params:
+        if self.service_type is ServiceType.FIS and CustomUrlParam.GEOMETRY in self.custom_url_params:
             raise ValueError(f"{CustomUrlParam.GEOMETRY} should not be a custom url parameter of a FIS request")
 
     def create_request(self, reset_wfs_iterator: bool = False) -> None:
