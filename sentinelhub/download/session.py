@@ -38,7 +38,7 @@ class SentinelHubSession:
     `service documentation <https://docs.sentinel-hub.com/api/latest/api/overview/authentication/>`__.
     """
 
-    DEFAULT_SECONDS_BEFORE_EXPIRY = 60
+    DEFAULT_SECONDS_BEFORE_EXPIRY = 120
 
     def __init__(
         self,
