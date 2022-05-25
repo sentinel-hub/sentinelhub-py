@@ -16,7 +16,12 @@ from tqdm.auto import tqdm
 from ..config import SHConfig
 from ..constants import MimeType, RequestType
 from ..decoding import decode_data as decode_data_function
-from ..exceptions import DownloadFailedException, HashedNameCollisionException, SHRuntimeWarning
+from ..exceptions import (
+    DownloadFailedException,
+    HashedNameCollisionException,
+    MissingDataInRequestException,
+    SHRuntimeWarning,
+)
 from ..io_utils import read_data, write_data
 from ..type_utils import JsonDict
 from .handlers import fail_user_errors, retry_temporary_errors
@@ -250,7 +255,7 @@ class DownloadClient:
         :param extract_key: If provided, the field is automatically extracted, checked, and returned
         For parameters see `get_json` method.
         """
-        error = RuntimeError(f"Response from {url} did not contain the expected information.")
+        error = MissingDataInRequestException(f"Response from {url} did not contain the expected information.")
         response = self.get_json(url, *args, **kwargs)
 
         if not isinstance(response, dict):

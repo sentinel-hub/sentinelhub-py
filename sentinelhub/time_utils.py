@@ -2,14 +2,14 @@
 Module with useful time/date functions
 """
 import datetime as dt
-from typing import Any, Iterable, List, Optional, Tuple, Union, overload, TypeVar
+from typing import Any, Iterable, List, Optional, Tuple, TypeVar, Union, overload
 
 import dateutil.parser
 import dateutil.tz
 
 from .type_utils import RawTimeIntervalType, RawTimeType
 
-TimeType = TypeVar("TimeType", dt.date, dt.datetime)
+TimeType = TypeVar("TimeType", dt.date, dt.datetime)  # pylint: disable=invalid-name
 
 
 def is_valid_time(time: str) -> bool:
