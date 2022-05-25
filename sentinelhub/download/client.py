@@ -252,21 +252,27 @@ class DownloadClient:
     def get_json_dict(self, url: str, *args: Any, extract_key: Optional[str] = None, **kwargs: Any) -> JsonDict:
         """Download request as JSON data type, failing if the result is not a dictionary
 
+        For other parameters see `get_json` method.
+
+        :param url: A URL from where the data will be downloaded
         :param extract_key: If provided, the field is automatically extracted, checked, and returned
-        For parameters see `get_json` method.
         """
-        error = MissingDataInRequestException(f"Response from {url} did not contain the expected information.")
         response = self.get_json(url, *args, **kwargs)
 
         if not isinstance(response, dict):
-            raise error
+            raise MissingDataInRequestException(
+                f"Response from {url} was expected to be a dictionary, but got {type(response)}."
+            )
 
         if extract_key is None:
             return response
         if extract_key in response and isinstance(response[extract_key], dict):
             return response[extract_key]
 
-        raise error
+        explanation = f"Value is of type {type(response[extract_key])}" if extract_key in response else "Key is missing"
+        raise MissingDataInRequestException(
+            f"Response from {url} was expected to have {extract_key} mapping to a dictionary. {explanation}."
+        )
 
     def get_xml(self, url: str, **kwargs: Any) -> ElementTree.ElementTree:
         """Download request as XML data type
