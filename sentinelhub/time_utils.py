@@ -2,12 +2,14 @@
 Module with useful time/date functions
 """
 import datetime as dt
-from typing import Any, Iterable, List, Optional, Tuple, Union, overload
+from typing import Any, Iterable, List, Optional, Tuple, TypeVar, Union, overload
 
 import dateutil.parser
 import dateutil.tz
 
 from .type_utils import RawTimeIntervalType, RawTimeType
+
+TimeType = TypeVar("TimeType", dt.date, dt.datetime)  # pylint: disable=invalid-name
 
 
 def is_valid_time(time: str) -> bool:
@@ -32,7 +34,6 @@ def parse_time(
     :param force_datetime: If True it will always return datetime.datetime object, if False it can also return only
         `datetime.date` object if only date is provided as input.
     :param allow_undefined: Flag to allow parsing None or '..' into None
-    :param allow_undefined: bool (default is False)
     :param kwargs: Any keyword arguments to be passed to `dateutil.parser.parse`. Example: `ignoretz=True`
     :return: A datetime object
     """
@@ -160,7 +161,7 @@ def date_to_datetime(date: dt.date, time: Optional[dt.time] = None) -> dt.dateti
     return dt.datetime.combine(date, time)
 
 
-def filter_times(timestamps: Iterable[dt.datetime], time_difference: dt.timedelta) -> List[dt.datetime]:
+def filter_times(timestamps: Iterable[TimeType], time_difference: dt.timedelta) -> List[TimeType]:
     """Filters out timestamps within time_difference, preserving only the oldest timestamp.
 
     :param timestamps: A list of timestamps
@@ -169,7 +170,7 @@ def filter_times(timestamps: Iterable[dt.datetime], time_difference: dt.timedelt
     """
     timestamps = sorted(set(timestamps))
 
-    filtered_timestamps: List[dt.datetime] = []
+    filtered_timestamps: List[TimeType] = []
     for current_timestamp in timestamps:
         if not filtered_timestamps or current_timestamp - filtered_timestamps[-1] > time_difference:
             filtered_timestamps.append(current_timestamp)

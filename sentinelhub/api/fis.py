@@ -1,12 +1,17 @@
 """
 Module for working with Sentinel Hub FIS service
 """
+import datetime
 import warnings
+from typing import Any, List, Optional, Union
 
 from ..constants import HistogramType, MimeType, RequestType, ServiceType, SHConstants
 from ..download import DownloadRequest
 from ..exceptions import SHDeprecationWarning
+from ..geometry import BBox, Geometry
+from ..time_utils import RawTimeIntervalType, RawTimeType
 from .ogc import OgcImageService, OgcRequest
+from .wfs import WebFeatureService
 
 
 class FisRequest(OgcRequest):
@@ -17,7 +22,17 @@ class FisRequest(OgcRequest):
     For more info check `FIS documentation <https://www.sentinel-hub.com/develop/api/ogc/fis-request/>`__.
     """
 
-    def __init__(self, layer, time, geometry_list, *, resolution="10m", bins=None, histogram_type=None, **kwargs):
+    def __init__(
+        self,
+        layer: str,
+        time: Union[RawTimeType, RawTimeIntervalType],
+        geometry_list: List[Union[Geometry, BBox]],
+        *,
+        resolution: str = "10m",
+        bins: Optional[str] = None,
+        histogram_type: Optional[HistogramType] = None,
+        **kwargs: Any,
+    ):
         """
         :param layer: An ID of a layer configured in Sentinel Hub Dashboard. It has to be configured for the same
             instance ID which will be used for this request. The satellite collection of the layer in Dashboard
@@ -62,9 +77,9 @@ class FisRequest(OgcRequest):
         self.bins = bins
         self.histogram_type = HistogramType(histogram_type) if histogram_type else None
 
-        super().__init__(bbox=None, layer=layer, time=time, service_type=ServiceType.FIS, **kwargs)
+        super().__init__(bbox=None, layer=layer, time=time, service_type=ServiceType.FIS, **kwargs)  # type: ignore
 
-    def create_request(self):
+    def create_request(self) -> None:  # type: ignore
         """Set download requests
 
         Create a list of DownloadRequests for all Sentinel-2 acquisitions within request's time interval and
@@ -73,11 +88,11 @@ class FisRequest(OgcRequest):
         fis_service = _FisService(config=self.config)
         self.download_list = fis_service.get_request(self)
 
-    def get_dates(self):
+    def get_dates(self) -> List[Optional[datetime.datetime]]:
         """This method is not supported for FIS request"""
         raise NotImplementedError
 
-    def get_tiles(self):
+    def get_tiles(self) -> Optional[WebFeatureService]:
         """This method is not supported for FIS request"""
         raise NotImplementedError
 
@@ -88,7 +103,7 @@ class _FisService(OgcImageService):
     Intermediate layer between FIS requests and the Sentinel Hub FIS services.
     """
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: Any, **kwargs: Any):
         message = (
             "Fis service is being deprecated in favour of SentinelHubStatistical. "
             "Although no immediate action is needed as FIS is still supported, consider switching to "
@@ -98,7 +113,7 @@ class _FisService(OgcImageService):
 
         super().__init__(*args, **kwargs)
 
-    def get_request(self, request):
+    def get_request(self, request: FisRequest) -> List[DownloadRequest]:  # type: ignore
         """Get download requests
 
         Create a list of DownloadRequests for all Sentinel-2 acquisitions within request's time interval and
@@ -106,13 +121,11 @@ class _FisService(OgcImageService):
 
         :param request: OGC-type request with specified bounding box, time interval, and cloud coverage for specific
             product.
-        :type request: OgcRequest or GeopediaRequest
-        :return: list of DownloadRequests
         """
 
         return [self._create_request(request=request, geometry=geometry) for geometry in request.geometry_list]
 
-    def _create_request(self, request, geometry):
+    def _create_request(self, request: FisRequest, geometry: Union[BBox, Geometry]) -> DownloadRequest:
         url = self.get_base_url(request)
 
         headers = {"Content-Type": MimeType.JSON.get_string(), **SHConstants.HEADERS}

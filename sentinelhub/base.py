@@ -4,13 +4,14 @@ Implementation of base interface classes of this package.
 import copy
 import os
 from abc import ABCMeta, abstractmethod
-from typing import Dict, Generic, Iterable, List, Optional, Tuple, TypeVar
+from typing import Generic, Iterable, List, Optional, Tuple, TypeVar
 
 import numpy as np
 
 from .config import SHConfig
 from .download import DownloadClient, DownloadRequest
 from .os_utils import make_folder
+from .type_utils import JsonDict
 
 _T = TypeVar("_T")
 
@@ -228,7 +229,7 @@ class FeatureIterator(Generic[_T], metaclass=ABCMeta):
       features again.
     """
 
-    def __init__(self, client: DownloadClient, url: str, params: Optional[Dict[str, object]] = None):
+    def __init__(self, client: DownloadClient, url: str, params: Optional[JsonDict] = None):
         """
         :param client: An instance of a download client object
         :param url: A URL where requests will be made
@@ -240,7 +241,6 @@ class FeatureIterator(Generic[_T], metaclass=ABCMeta):
 
         self.index = 0
         self.features: List[_T] = []
-        self.next: Optional[_T] = None
         self.finished = False
 
     def __iter__(self) -> "FeatureIterator[_T]":
