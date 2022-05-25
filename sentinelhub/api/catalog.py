@@ -4,12 +4,11 @@ A client interface for `Sentinel Hub Catalog API <https://docs.sentinel-hub.com/
 import datetime as dt
 from typing import Any, Iterable, List, Optional, Union
 
-from sentinelhub.type_utils import JsonDict, RawTimeIntervalType, RawTimeType
-
 from ..base import FeatureIterator
 from ..data_collections import DataCollection, OrbitDirection
 from ..geometry import CRS, BBox, Geometry
 from ..time_utils import parse_time, parse_time_interval, serialize_time
+from ..type_utils import JsonDict, RawTimeIntervalType, RawTimeType
 from .base import SentinelHubService
 from .utils import remove_undefined
 

@@ -5,11 +5,10 @@ import datetime
 import warnings
 from typing import Any, List, Optional, Union
 
-from sentinelhub.geometry import BBox, Geometry
-
 from ..constants import HistogramType, MimeType, RequestType, ServiceType, SHConstants
 from ..download import DownloadRequest
 from ..exceptions import SHDeprecationWarning
+from ..geometry import BBox, Geometry
 from ..time_utils import RawTimeIntervalType, RawTimeType
 from .ogc import OgcImageService, OgcRequest
 from .wfs import WebFeatureService

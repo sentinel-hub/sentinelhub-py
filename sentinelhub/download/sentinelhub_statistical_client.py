@@ -7,10 +7,9 @@ import logging
 import os
 from typing import Any, Dict, cast
 
-from sentinelhub.constants import MimeType
-from sentinelhub.download.request import DownloadRequest
-
+from ..constants import MimeType
 from ..decoding import decode_data as decode_data_function
+from ..download import DownloadRequest
 from ..io_utils import read_data, write_data
 from ..type_utils import JsonDict
 from .sentinelhub_client import SentinelHubDownloadClient
