@@ -48,10 +48,10 @@ jobs:
         run: pip install -e .[DEV]
       
       - name: Run mypy
-        run: mypy eogrow
+        run: mypy sentinelhub
 
       - name: Run pylint
-        run: pylint eogrow
+        run: pylint sentinelhub
 
   test-on-github:
     runs-on: ubuntu-latest
