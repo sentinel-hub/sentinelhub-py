@@ -52,7 +52,7 @@ class SentinelHubCatalog(SentinelHubService):
 
         :return: A list of collections with information
         """
-        return self.client.get_json_dict(f"{self.service_url}/collections")["collections"]
+        return self.client.get_json_dict(f"{self.service_url}/collections", use_session=True)["collections"]
 
     def get_collection(self, collection: Union[DataCollection, str]) -> JsonDict:
         """Provides information about given collection
