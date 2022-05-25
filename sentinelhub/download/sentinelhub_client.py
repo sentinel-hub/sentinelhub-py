@@ -31,7 +31,9 @@ class SentinelHubDownloadClient(DownloadClient):
 
     def __init__(self, *, session: Optional[SentinelHubSession] = None, **kwargs: Any):
         """
-        :param session: An OAuth2 session with Sentinel Hub service
+        :param session: If a session object is provided here then this client instance will always use only the
+            provided session. Otherwise, it will either use a cached session or create a new session and cache
+            it.
         :param kwargs: Optional parameters from DownloadClient
         """
         super().__init__(**kwargs)
@@ -145,7 +147,6 @@ class SentinelHubDownloadClient(DownloadClient):
             session = SentinelHubSession(config=self.config)
             SentinelHubDownloadClient._CACHED_SESSIONS[cache_key] = session
 
-        self.session = session
         return session
 
     @staticmethod

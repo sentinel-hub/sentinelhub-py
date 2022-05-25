@@ -1,6 +1,6 @@
 import pytest
 
-from sentinelhub import SentinelHubDownloadClient, SentinelHubStatisticalDownloadClient, SHConfig
+from sentinelhub import SentinelHubDownloadClient, SentinelHubSession, SentinelHubStatisticalDownloadClient, SHConfig
 
 FAST_SH_ENDPOINT = "https://services.sentinel-hub.com/api/v1/catalog/collections"
 
@@ -32,6 +32,23 @@ def test_session_caching_and_clearing(client_object, session):
 
     client_object.clear_cache()
     assert SentinelHubDownloadClient._CACHED_SESSIONS == {}
+
+
+def test_double_session_caching(session):
+    another_session = SentinelHubSession()
+
+    client = SentinelHubDownloadClient()
+    client.cache_session(session)
+    assert client.get_session() is session
+
+    client.cache_session(another_session)
+    assert client.get_session() is another_session
+
+    client_with_fixed_session = SentinelHubDownloadClient(session=session)
+    assert client_with_fixed_session.get_session() is session
+
+    client_with_fixed_session.cache_session(another_session)
+    assert client_with_fixed_session.get_session() is session
 
 
 @pytest.mark.sh_integration
