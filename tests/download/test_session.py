@@ -1,9 +1,11 @@
 import time
+from concurrent.futures import ProcessPoolExecutor
 
 import pytest
 from oauthlib.oauth2.rfc6749.errors import CustomOAuth2Error
 
 from sentinelhub import SentinelHubSession, SHConfig
+from sentinelhub.download import SessionSharingThread, collect_shared_session
 from sentinelhub.exceptions import SHUserWarning
 
 
@@ -80,3 +82,36 @@ def test_refreshing_procedure(fake_token):
     session = SentinelHubSession(config=config, refresh_before_expiry=500, _token=fake_token)
     with pytest.raises(CustomOAuth2Error):
         _ = session.token
+
+
+@pytest.mark.parametrize("memory_name", [None, "test-name"])
+def test_session_sharing_single_process(fake_token, memory_name):
+    session = SentinelHubSession(refresh_before_expiry=0, _token=fake_token)
+
+    kwargs = {} if memory_name is None else {"memory_name": memory_name}
+    thread = SessionSharingThread(session, **kwargs)
+    thread.start()
+
+    try:
+        collected_session = collect_shared_session(**kwargs)
+        assert collected_session.token == fake_token
+    finally:
+        thread.stop()
+
+
+@pytest.mark.parametrize("memory_name", [None, "test-name"])
+def test_session_sharing_multiprocess(fake_token, memory_name):
+    session = SentinelHubSession(refresh_before_expiry=0, _token=fake_token)
+
+    kwargs = {} if memory_name is None else {"memory_name": memory_name}
+    thread = SessionSharingThread(session, **kwargs)
+    thread.start()
+
+    try:
+        with ProcessPoolExecutor(max_workers=4) as executor:
+            futures = [executor.submit(collect_shared_session, **kwargs) for _ in range(10)]
+            collected_sessions = [future.result() for future in futures]
+
+        assert all(collected_session.token == fake_token for collected_session in collected_sessions)
+    finally:
+        thread.stop()

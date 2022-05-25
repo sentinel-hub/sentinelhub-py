@@ -149,7 +149,7 @@ class SessionSharingThread(Thread):
     .. code-block:: python
 
         thread = SessionSharingThread(session)
-        thread.run()
+        thread.start()
 
         # Run a parallelization process here
         # Use collect_shared_session() to retrieve the session with other processes
@@ -178,7 +178,15 @@ class SessionSharingThread(Thread):
         self._refresh_time = self.session.refresh_before_expiry
 
         self._stop_event = Event()
-        self._is_shared_memory_created = False
+        self._is_memory_shared_event = Event()
+
+    def start(self) -> None:
+        """Start running the thread.
+
+        After starting the thread it also waits for the token to be shared. This way no other process would try to
+        access the memory before it even exists."""
+        super().start()
+        self._is_memory_shared_event.wait()
 
     def run(self) -> None:
         """A running thread is running an infinite loop of sharing a token and waiting for token to expire. The loop
@@ -201,7 +209,7 @@ class SessionSharingThread(Thread):
         """
         encoded_token = json.dumps(token).encode()
 
-        if self._is_shared_memory_created:
+        if self._is_memory_shared_event.is_set():
             memory = SharedMemory(name=self.memory_name)
         else:
             memory = SharedMemory(
@@ -209,7 +217,7 @@ class SessionSharingThread(Thread):
                 size=len(encoded_token) + self._EXTRA_MEMORY_BYTES,
                 name=self.memory_name,
             )
-            self._is_shared_memory_created = True
+            self._is_memory_shared_event.set()
 
         try:
             memory.buf[:] = encoded_token + _NULL_MEMORY_VALUE * (memory.size - len(encoded_token))
@@ -225,10 +233,10 @@ class SessionSharingThread(Thread):
         self._stop_event.set()
         self._wait_for_tstate_lock()  # type: ignore[attr-defined]
 
-        if self._is_shared_memory_created:
+        if self._is_memory_shared_event.is_set():
             memory = SharedMemory(name=self.memory_name)
             memory.unlink()
-            self._is_shared_memory_created = False
+            self._is_memory_shared_event.clear()
             memory.close()
 
 
