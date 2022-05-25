@@ -106,10 +106,7 @@ class SentinelHubBYOC(SentinelHubService):
         :return: dictionary of the collection
         """
         url = f"{self.service_url}/collections/{self._parse_id(collection)}"
-        json_response = self.client.get_json(url=url, use_session=True)
-        if not isinstance(json_response, dict) or "data" not in json_response:
-            raise RuntimeError(f"Response from {url} did not contain the expected information.")
-        return json_response["data"]
+        return self.client.get_json_dict(url=url, use_session=True, extract_key="data")
 
     def create_collection(self, collection: CollectionType) -> JsonDict:
         """Create a new collection
@@ -121,10 +118,7 @@ class SentinelHubBYOC(SentinelHubService):
         """
         coll = self._to_dict(collection)
         url = f"{self.service_url}/collections"
-        json_response = self.client.get_json(url=url, post_values=coll, use_session=True)
-        if not isinstance(json_response, dict) or "data" not in json_response:
-            raise RuntimeError(f"Response from {url} did not contain the expected information.")
-        return json_response["data"]
+        return self.client.get_json_dict(url=url, post_values=coll, use_session=True, extract_key="data")
 
     def update_collection(self, collection: CollectionType) -> Json:
         """Update an existing collection
@@ -195,10 +189,7 @@ class SentinelHubBYOC(SentinelHubService):
         :return: dictionary of the tile
         """
         url = f"{self.service_url}/collections/{self._parse_id(collection)}/tiles/{self._parse_id(tile)}"
-        json_response = self.client.get_json(url=url, use_session=True)
-        if not isinstance(json_response, dict) or "data" not in json_response:
-            raise RuntimeError(f"Response from {url} did not contain the expected information.")
-        return json_response["data"]
+        return self.client.get_json_dict(url=url, use_session=True, extract_key="data")
 
     def create_tile(self, collection: CollectionType, tile: TileType) -> JsonDict:
         """Create tile within collection
@@ -211,10 +202,7 @@ class SentinelHubBYOC(SentinelHubService):
         """
         _tile = self._to_dict(tile)
         url = f"{self.service_url}/collections/{self._parse_id(collection)}/tiles"
-        json_response = self.client.get_json(url=url, post_values=_tile, use_session=True)
-        if not isinstance(json_response, dict) or "data" not in json_response:
-            raise RuntimeError(f"Response from {url} did not contain the expected information.")
-        return json_response["data"]
+        return self.client.get_json_dict(url=url, post_values=_tile, use_session=True, extract_key="data")
 
     def update_tile(self, collection: CollectionType, tile: TileType) -> Json:
         """Update a tile within collection

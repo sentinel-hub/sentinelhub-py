@@ -244,6 +244,25 @@ class DownloadClient:
 
         return self._single_download(request, decode_data=True)
 
+    def get_json_dict(self, url: str, *args: Any, extract_key: Optional[str] = None, **kwargs: Any) -> JsonDict:
+        """Download request as JSON data type, failing if the result is not a dictionary
+
+        :param extract_key: If provided, the field is automatically extracted, checked, and returned
+        For parameters see `get_json` method.
+        """
+        error = RuntimeError(f"Response from {url} did not contain the expected information.")
+        response = self.get_json(url, *args, **kwargs)
+
+        if not isinstance(response, dict):
+            raise error
+
+        if extract_key is None:
+            return response
+        if (extract_key in response and isinstance(response[extract_key], dict)):
+            return response[extract_key]
+
+        raise error
+
     def get_xml(self, url: str, **kwargs: Any) -> ElementTree.ElementTree:
         """Download request as XML data type
 

@@ -177,10 +177,7 @@ class SentinelHubBatch(SentinelHubService):
         :return: A tiling grid definition
         """
         url = self._get_tiling_grids_url(grid_id)
-        json_response = self.client.get_json(url=url, use_session=True)
-        if not isinstance(json_response, dict):
-            raise RuntimeError(f"Response from {url} did not contain the expected information.")
-        return json_response
+        return self.client.get_json_dict(url=url, use_session=True)
 
     def iter_requests(
         self, user_id: Optional[str] = None, search: Optional[str] = None, sort: Optional[str] = None, **kwargs: Any
@@ -345,10 +342,7 @@ class SentinelHubBatch(SentinelHubService):
         """
         request_id = self._parse_request_id(batch_request)
         url = self._get_tiles_url(request_id, tile_id=tile_id)
-        json_response = self.client.get_json(url, use_session=True)
-        if not isinstance(json_response, dict):
-            raise RuntimeError(f"Response from {url} did not contain the expected information.")
-        return json_response
+        return self.client.get_json_dict(url, use_session=True)
 
     def reprocess_tile(self, batch_request: BatchRequestType, tile_id: Optional[int]) -> Json:
         """Reprocess a single failed tile
@@ -387,10 +381,7 @@ class SentinelHubBatch(SentinelHubService):
         :return: A dictionary of the collection parameters
         """
         url = self._get_collections_url(collection_id)
-        json_response = self.client.get_json(url=url, use_session=True)
-        if not isinstance(json_response, dict) or "data" not in json_response:
-            raise RuntimeError(f"Response from {url} did not contain the expected information.")
-        return json_response["data"]
+        return self.client.get_json_dict(url=url, use_session=True, extract_key="data")
 
     def create_collection(self, collection: Union["BatchCollection", dict]) -> JsonDict:
         """Create a new batch collection
@@ -402,10 +393,7 @@ class SentinelHubBatch(SentinelHubService):
         """
         collection_payload = self._parse_collection_to_dict(collection)
         url = self._get_collections_url()
-        json_response = self.client.get_json(url=url, post_values=collection_payload, use_session=True)
-        if not isinstance(json_response, dict) or "data" not in json_response:
-            raise RuntimeError(f"Response from {url} did not contain the expected information.")
-        return json_response["data"]
+        return self.client.get_json_dict(url=url, post_values=collection_payload, use_session=True, extract_key="data")
 
     def update_collection(self, collection: Union["BatchCollection", dict]) -> Json:
         """Update an existing batch collection
