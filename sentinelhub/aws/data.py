@@ -53,10 +53,9 @@ class AwsData(metaclass=ABCMeta):
         self.base_url = self.get_base_url()
         self.base_http_url = self.get_base_url(force_http=True)
 
-        self.baseline = self.get_baseline()
-        self.safe_type = self.get_safe_type()
-
         # These need to be set by the child classes
+        self.baseline: str
+        self.safe_type: EsaSafeType
         self.data_collection: DataCollection
         self.date: dt.date
         self.product_id: str
@@ -335,6 +334,7 @@ class AwsProduct(AwsData):
         self.tile_list = self.parse_tile_list(tile_list)
 
         self.data_collection = self.get_data_collection()
+        self.safe_type = self.get_safe_type()
 
         super().__init__(**kwargs)
 
@@ -343,6 +343,7 @@ class AwsProduct(AwsData):
 
         client = AwsDownloadClient(config=self.config)
         self.product_info = client.get_json_dict(self.get_url(AwsConstants.PRODUCT_INFO))
+        self.baseline = self.get_baseline()
 
     @staticmethod
     def parse_tile_list(tile_input: Union[None, str, List[str]]) -> Optional[List[str]]:
@@ -507,6 +508,8 @@ class AwsTile(AwsData):
             raise ValueError("Cannot find data on AWS for specified tile, time and aws_index")
 
         self.product_id = self.get_product_id()
+        self.safe_type = self.get_safe_type()
+        self.baseline = self.get_baseline()
 
     @staticmethod
     def parse_tile_name(name: str) -> str:
