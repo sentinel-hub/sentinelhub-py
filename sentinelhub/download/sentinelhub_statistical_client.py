@@ -91,7 +91,7 @@ class SentinelHubStatisticalDownloadClient(SentinelHubDownloadClient):
         for time_interval in time_intervals.values():
             interval_request = copy.deepcopy(request)
             if interval_request.post_values is None or "aggregation" not in interval_request.post_values:
-                raise RuntimeError("Unable to configure request for retrying by interval.")
+                raise ValueError("Unable to configure request for retrying by interval.")
 
             interval_request.post_values["aggregation"]["timeRange"] = time_interval
             interval_requests.append(interval_request)

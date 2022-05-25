@@ -159,7 +159,7 @@ class DownloadClient:
     def _execute_download(self, request: DownloadRequest) -> bytes:
         """A default way of executing a single download request"""
         if request.url is None:
-            raise RuntimeError(f"Faulty request {request}, no URL specified.")
+            raise ValueError(f"Faulty request {request}, no URL specified.")
 
         LOGGER.debug(
             "Sending %s request to %s. Hash of sent request is %s",
