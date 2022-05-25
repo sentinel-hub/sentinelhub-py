@@ -34,6 +34,7 @@ def test_session_caching_and_clearing(client_object, session):
     assert SentinelHubDownloadClient._CACHED_SESSIONS == {}
 
 
+@pytest.mark.sh_integration
 def test_double_session_caching(session):
     another_session = SentinelHubSession()
 

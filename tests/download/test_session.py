@@ -9,6 +9,14 @@ from sentinelhub.download import SessionSharingThread, collect_shared_session
 from sentinelhub.exceptions import SHUserWarning
 
 
+@pytest.fixture(name="fake_config")
+def fake_config_fixture():
+    config = SHConfig()
+    config.sh_client_id = "sh-py-test"
+    config.sh_client_secret = "sh-py-test"
+    return config
+
+
 @pytest.fixture(name="fake_token")
 def fake_token_fixture():
     return {"access_token": "x", "expires_in": 1000, "expires_at": time.time() + 1000}
@@ -68,25 +76,21 @@ def test_from_token(fake_token):
 
 
 @pytest.mark.sh_integration
-def test_refreshing_procedure(fake_token):
-    config = SHConfig()
-    config.sh_client_id = "sh-py-test"
-    config.sh_client_secret = "sh-py-test"
-
+def test_refreshing_procedure(fake_token, fake_config):
     fake_token["expires_at"] -= 500
 
     for expiry in [None, 400]:
-        session = SentinelHubSession(config=config, refresh_before_expiry=expiry, _token=fake_token)
+        session = SentinelHubSession(config=fake_config, refresh_before_expiry=expiry, _token=fake_token)
         assert session.token == fake_token
 
-    session = SentinelHubSession(config=config, refresh_before_expiry=500, _token=fake_token)
+    session = SentinelHubSession(config=fake_config, refresh_before_expiry=500, _token=fake_token)
     with pytest.raises(CustomOAuth2Error):
         _ = session.token
 
 
 @pytest.mark.parametrize("memory_name", [None, "test-name"])
-def test_session_sharing_single_process(fake_token, memory_name):
-    session = SentinelHubSession(refresh_before_expiry=0, _token=fake_token)
+def test_session_sharing_single_process(fake_token, fake_config, memory_name):
+    session = SentinelHubSession(config=fake_config, refresh_before_expiry=0, _token=fake_token)
 
     kwargs = {} if memory_name is None else {"memory_name": memory_name}
     thread = SessionSharingThread(session, **kwargs)
@@ -100,8 +104,8 @@ def test_session_sharing_single_process(fake_token, memory_name):
 
 
 @pytest.mark.parametrize("memory_name", [None, "test-name"])
-def test_session_sharing_multiprocess(fake_token, memory_name):
-    session = SentinelHubSession(refresh_before_expiry=0, _token=fake_token)
+def test_session_sharing_multiprocess(fake_token, fake_config, memory_name):
+    session = SentinelHubSession(config=fake_config, refresh_before_expiry=0, _token=fake_token)
 
     kwargs = {} if memory_name is None else {"memory_name": memory_name}
     thread = SessionSharingThread(session, **kwargs)
