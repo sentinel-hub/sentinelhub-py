@@ -6,7 +6,9 @@ import logging
 import os
 import sys
 import warnings
-from concurrent.futures import ThreadPoolExecutor, as_completed
+from concurrent.futures import Future, ThreadPoolExecutor, as_completed
+from typing import Any, List, Optional, Union, cast, overload
+from xml.etree import ElementTree
 
 import requests
 from tqdm.auto import tqdm
@@ -16,6 +18,7 @@ from ..constants import MimeType, RequestType
 from ..decoding import decode_data as decode_data_function
 from ..exceptions import DownloadFailedException, HashedNameCollisionException, SHRuntimeWarning
 from ..io_utils import read_data, write_data
+from ..type_utils import JsonDict
 from .handlers import fail_user_errors, retry_temporary_errors
 from .request import DownloadRequest
 
@@ -33,48 +36,64 @@ class DownloadClient:
     - reads and writes locally stored/cached data
     """
 
-    def __init__(self, *, redownload=False, raise_download_errors=True, config=None):
+    def __init__(
+        self, *, redownload: bool = False, raise_download_errors: bool = True, config: Optional[SHConfig] = None
+    ):
         """
         :param redownload: If `True` the data will always be downloaded again. By default, this is set to `False` and
             the data that has already been downloaded and saved to an expected location will be read from the
             location instead of being downloaded again.
-        :type redownload: bool
         :param raise_download_errors: If `True` any error in download process will be raised as
             `DownloadFailedException`. If `False` failed downloads will only raise warnings.
-        :type raise_download_errors: bool
         :param config: An instance of configuration class
-        :type config: SHConfig
         """
         self.redownload = redownload
         self.raise_download_errors = raise_download_errors
 
         self.config = config or SHConfig()
 
-    def download(self, download_requests, max_threads=None, decode_data=True, show_progress=False):
+    @overload
+    def download(
+        self,
+        download_requests: DownloadRequest,
+        max_threads: Optional[int] = None,
+        decode_data: bool = True,
+        show_progress: bool = False,
+    ) -> Any:
+        ...
+
+    @overload
+    def download(
+        self,
+        download_requests: List[DownloadRequest],
+        max_threads: Optional[int] = None,
+        decode_data: bool = True,
+        show_progress: bool = False,
+    ) -> List[Any]:
+        ...
+
+    def download(
+        self,
+        download_requests: Union[DownloadRequest, List[DownloadRequest]],
+        max_threads: Optional[int] = None,
+        decode_data: bool = True,
+        show_progress: bool = False,
+    ) -> Union[List[Any], Any]:
         """Download one or multiple requests, provided as a request list.
 
         :param download_requests: A list of requests or a single request to be executed.
-        :type download_requests: List[DownloadRequest] or DownloadRequest
         :param max_threads: Maximum number of threads to be used for download in parallel. The default is
             `max_threads=None` which will use the number of processors on the system multiplied by 5.
-        :type max_threads: int or None
         :param decode_data: If `True` it will decode data otherwise it will return it in binary format.
-        :type decode_data: bool
         :param show_progress: Whether a progress bar should be displayed while downloading
-        :type show_progress: bool
         :return: A list of results or a single result, depending on input parameter `download_requests`
-        :rtype: list(object) or object
         """
-        is_single_request = isinstance(download_requests, DownloadRequest)
-        if is_single_request:
-            download_requests = [download_requests]
+        downloads = [download_requests] if isinstance(download_requests, DownloadRequest) else download_requests
 
-        data_list = [None] * len(download_requests)
+        data_list = [None] * len(downloads)
 
         with ThreadPoolExecutor(max_workers=max_threads) as executor:
-            download_list = [
-                executor.submit(self._single_download, request, decode_data) for request in download_requests
-            ]
+            download_list = [executor.submit(self._single_download, request, decode_data) for request in downloads]
             future_order = {future: i for i, future in enumerate(download_list)}
 
             # Consider using tqdm.contrib.concurrent.thread_map in the future
@@ -87,11 +106,11 @@ class DownloadClient:
                 for future in as_completed(download_list):
                     data_list[future_order[future]] = self._process_download_future(future)
 
-        if is_single_request:
+        if isinstance(download_requests, DownloadRequest):
             return data_list[0]
         return data_list
 
-    def _process_download_future(self, future):
+    def _process_download_future(self, future: Future) -> Any:
         """Unpacks the future and correctly handles exceptions"""
         try:
             return future.result()
@@ -103,29 +122,31 @@ class DownloadClient:
             warnings.warn(str(download_exception), category=SHRuntimeWarning)
             return None
 
-    def _single_download(self, request, decode_data):
+    def _single_download(self, request: DownloadRequest, decode_data: bool) -> Any:
         """Method for downloading a single request"""
         request.raise_if_invalid()
 
         request_path, response_path = request.get_storage_paths()
 
         if not self._is_download_required(request, response_path):
+            path = cast(str, response_path)  # refactor in future, for now ensured by _is_download_required
             if request.return_data:
-                LOGGER.debug("Reading locally stored data from %s instead of downloading", response_path)
+                LOGGER.debug("Reading locally stored data from %s instead of downloading", path)
                 self._check_cached_request_is_matching(request, request_path)
-                return read_data(response_path, data_format=request.data_type if decode_data else MimeType.RAW)
+                return read_data(path, data_format=request.data_type if decode_data else MimeType.RAW)
             return None
 
         response_content = self._execute_download(request)
 
         if request_path and request.save_response and (self.redownload or not os.path.exists(request_path)):
             request_info = request.get_request_params(include_metadata=True)
-            write_data(request_path, request_info, data_format=MimeType.JSON)
+            write_data(request_path, request_info, MimeType.JSON)
             LOGGER.debug("Saved request info to %s", request_path)
 
         if request.save_response:
-            write_data(response_path, response_content, data_format=MimeType.RAW)
-            LOGGER.debug("Saved data to %s", response_path)
+            path = cast(str, response_path)  # refactor in future, for now ensured by raise_if_invalid
+            write_data(path, response_content, MimeType.RAW)
+            LOGGER.debug("Saved data to %s", path)
 
         if request.return_data:
             if decode_data:
@@ -135,8 +156,11 @@ class DownloadClient:
 
     @retry_temporary_errors
     @fail_user_errors
-    def _execute_download(self, request):
+    def _execute_download(self, request: DownloadRequest) -> bytes:
         """A default way of executing a single download request"""
+        if request.url is None:
+            raise ValueError(f"Faulty request {request}, no URL specified.")
+
         LOGGER.debug(
             "Sending %s request to %s. Hash of sent request is %s",
             request.request_type.value,
@@ -157,14 +181,14 @@ class DownloadClient:
 
         return response.content
 
-    def _is_download_required(self, request, response_path):
+    def _is_download_required(self, request: DownloadRequest, response_path: Optional[str]) -> bool:
         """Checks if download should actually be done"""
         return (request.save_response or request.return_data) and (
             self.redownload or response_path is None or not os.path.exists(response_path)
         )
 
     @staticmethod
-    def _check_cached_request_is_matching(request, request_path):
+    def _check_cached_request_is_matching(request: DownloadRequest, request_path: Optional[str]) -> None:
         """Ensures that the cached request matches the current one. Serves as protection against hash collisions"""
         if not request_path:
             return
@@ -183,21 +207,23 @@ class DownloadClient:
                 "but the requests are different. Possible hash collision"
             )
 
-    def get_json(self, url, post_values=None, headers=None, request_type=None, **kwargs):
+    def get_json(
+        self,
+        url: str,
+        post_values: Optional[JsonDict] = None,
+        headers: Optional[JsonDict] = None,
+        request_type: Optional[RequestType] = None,
+        **kwargs: Any,
+    ) -> Union[JsonDict, list, str, None]:
         """Download request as JSON data type
 
         :param url: A URL from where the data will be downloaded
-        :type url: str
         :param post_values: A dictionary of parameters for a POST request
-        :type post_values: dict or None
         :param headers: A dictionary of additional request headers
-        :type headers: dict
         :param request_type: A type of HTTP request to make. If not specified, then it will be a GET request if
             `post_values=None` and a POST request otherwise
-        :type request_type: RequestType or None
         :param kwargs: Any other parameters that are passed to DownloadRequest class
         :return: JSON data parsed into Python objects
-        :rtype: dict or list or str or None
         """
         json_headers = headers or {}
 
@@ -218,14 +244,31 @@ class DownloadClient:
 
         return self._single_download(request, decode_data=True)
 
-    def get_xml(self, url, **kwargs):
+    def get_json_dict(self, url: str, *args: Any, extract_key: Optional[str] = None, **kwargs: Any) -> JsonDict:
+        """Download request as JSON data type, failing if the result is not a dictionary
+
+        :param extract_key: If provided, the field is automatically extracted, checked, and returned
+        For parameters see `get_json` method.
+        """
+        error = RuntimeError(f"Response from {url} did not contain the expected information.")
+        response = self.get_json(url, *args, **kwargs)
+
+        if not isinstance(response, dict):
+            raise error
+
+        if extract_key is None:
+            return response
+        if extract_key in response and isinstance(response[extract_key], dict):
+            return response[extract_key]
+
+        raise error
+
+    def get_xml(self, url: str, **kwargs: Any) -> ElementTree.ElementTree:
         """Download request as XML data type
 
         :param url: url to Sentinel Hub's services or other sources from where the data is downloaded
-        :type url: str
         :param kwargs: Any other parameters that are passed to DownloadRequest class
         :return: request response as XML instance
-        :rtype: XML instance or None
         """
         request = DownloadRequest(url=url, data_type=MimeType.XML, **kwargs)
         return self._single_download(request, decode_data=True)

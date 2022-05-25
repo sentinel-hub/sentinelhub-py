@@ -5,18 +5,22 @@ import logging
 import time
 import warnings
 from threading import Lock
-from typing import Dict, Tuple, Union
+from typing import Any, Callable, Dict, Optional, Tuple, TypeVar, Union
 
 import requests
 
 from ..config import SHConfig
 from ..exceptions import SHRateLimitWarning, SHRuntimeWarning
+from ..type_utils import JsonDict
 from .client import DownloadClient
 from .handlers import fail_user_errors, retry_temporary_errors
 from .rate_limit import SentinelHubRateLimit
+from .request import DownloadRequest
 from .session import SentinelHubSession
 
 LOGGER = logging.getLogger(__name__)
+
+T = TypeVar("T")
 
 
 class SentinelHubDownloadClient(DownloadClient):
@@ -24,10 +28,9 @@ class SentinelHubDownloadClient(DownloadClient):
 
     _CACHED_SESSIONS: Dict[Tuple[str, str], SentinelHubSession] = {}
 
-    def __init__(self, *, session=None, **kwargs):
+    def __init__(self, *, session: Optional[SentinelHubSession] = None, **kwargs: Any):
         """
         :param session: An OAuth2 session with Sentinel Hub service
-        :type session: SentinelHubSession or None
         :param kwargs: Optional parameters from DownloadClient
         """
         super().__init__(**kwargs)
@@ -40,9 +43,9 @@ class SentinelHubDownloadClient(DownloadClient):
         self.session = session
 
         self.rate_limit = SentinelHubRateLimit(num_processes=self.config.number_of_download_processes)
-        self.lock = None
+        self.lock: Optional[Lock] = None
 
-    def download(self, *args, **kwargs):
+    def download(self, *args: Any, **kwargs: Any) -> Any:
         """The main download method
 
         :param args: Passed to `DownloadClient.download`
@@ -57,7 +60,7 @@ class SentinelHubDownloadClient(DownloadClient):
 
     @retry_temporary_errors
     @fail_user_errors
-    def _execute_download(self, request):
+    def _execute_download(self, request: DownloadRequest) -> Any:
         """
         Executes the download with a single thread and uses a rate limit object, which is shared between all threads
         """
@@ -87,7 +90,7 @@ class SentinelHubDownloadClient(DownloadClient):
             LOGGER.debug("Request needs to wait. Sleeping for %0.2f", sleep_time)
             time.sleep(sleep_time)
 
-    def _execute_thread_safe(self, thread_unsafe_function, *args, **kwargs):
+    def _execute_thread_safe(self, thread_unsafe_function: Callable[..., T], *args: Any, **kwargs: Any) -> T:
         """Executes a function inside a thread lock and handles potential errors"""
         if self.lock is None:
             return thread_unsafe_function(*args, **kwargs)
@@ -95,8 +98,11 @@ class SentinelHubDownloadClient(DownloadClient):
         with self.lock:
             return thread_unsafe_function(*args, **kwargs)
 
-    def _do_download(self, request):
+    def _do_download(self, request: DownloadRequest) -> Any:
         """Runs the download"""
+        if request.url is None:
+            raise ValueError(f"Faulty request {request}, no URL specified.")
+
         return requests.request(
             request.request_type.value,
             url=request.url,
@@ -105,7 +111,7 @@ class SentinelHubDownloadClient(DownloadClient):
             timeout=self.config.download_timeout_seconds,
         )
 
-    def _prepare_headers(self, request):
+    def _prepare_headers(self, request: DownloadRequest) -> JsonDict:
         """Prepares final headers by potentially joining them with session headers"""
         if not request.use_session:
             return request.headers
@@ -113,7 +119,7 @@ class SentinelHubDownloadClient(DownloadClient):
         session_headers = self._execute_thread_safe(self._get_session_headers)
         return {**session_headers, **request.headers}
 
-    def _get_session_headers(self):
+    def _get_session_headers(self) -> JsonDict:
         """Provides up-to-date session headers
 
         Note that calling session_headers property triggers update if session has expired therefore this has to be
@@ -121,11 +127,10 @@ class SentinelHubDownloadClient(DownloadClient):
         """
         return self.get_session().session_headers
 
-    def get_session(self):
+    def get_session(self) -> SentinelHubSession:
         """Provides the session object used by the client
 
         :return: A Sentinel Hub session object
-        :rtype: SentinelHubSession
         """
         if self.session:
             return self.session

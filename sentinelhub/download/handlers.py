@@ -2,20 +2,41 @@
 Module implementing error handlers which can occur during download procedure
 """
 import logging
+import sys
 import time
+from typing import Callable, Optional, TypeVar
 
 import requests
 
+from ..config import SHConfig
 from ..decoding import decode_sentinelhub_err_msg
 from ..exceptions import DownloadFailedException
+from .request import DownloadRequest
+
+if sys.version_info < (3, 8):
+    from typing_extensions import Protocol
+else:
+    from typing import Protocol  # pylint: disable=ungrouped-imports
+
+
+class _HasConfig(Protocol):
+    """Interface of objects with a config."""
+
+    config: SHConfig
+
+
+Self = TypeVar("Self")
+SelfWithConfig = TypeVar("SelfWithConfig", bound=_HasConfig)
+T = TypeVar("T")
+
 
 LOGGER = logging.getLogger(__name__)
 
 
-def fail_user_errors(download_func):
+def fail_user_errors(download_func: Callable[[Self, DownloadRequest], T]) -> Callable[[Self, DownloadRequest], T]:
     """Decorator function for handling user errors"""
 
-    def new_download_func(self, request):
+    def new_download_func(self: Self, request: DownloadRequest) -> T:
         try:
             return download_func(self, request)
         except requests.HTTPError as exception:
@@ -30,11 +51,13 @@ def fail_user_errors(download_func):
     return new_download_func
 
 
-def retry_temporary_errors(download_func):
+def retry_temporary_errors(
+    download_func: Callable[[SelfWithConfig, DownloadRequest], T]
+) -> Callable[[SelfWithConfig, DownloadRequest], T]:
     """Decorator function for handling server and connection errors"""
     backoff_coefficient = 3
 
-    def new_download_func(self, request):
+    def new_download_func(self: SelfWithConfig, request: DownloadRequest) -> T:
         download_attempts = self.config.max_download_attempts
         sleep_time = self.config.download_sleep_time
 
@@ -72,10 +95,10 @@ def retry_temporary_errors(download_func):
     return new_download_func
 
 
-def fail_missing_file(download_func):
+def fail_missing_file(download_func: Callable[[Self, DownloadRequest], T]) -> Callable[[Self, DownloadRequest], T]:
     """A decorator for raising an error if a file is missing"""
 
-    def new_download_func(self, request):
+    def new_download_func(self: Self, request: DownloadRequest) -> T:
         try:
             return download_func(self, request)
         except requests.HTTPError as exception:
@@ -87,26 +110,21 @@ def fail_missing_file(download_func):
     return new_download_func
 
 
-def _is_temporary_problem(exception):
+def _is_temporary_problem(exception: Exception) -> bool:
     """Checks if the obtained exception is temporary and if download attempt should be repeated
 
     :param exception: Exception raised during download
-    :type exception: Exception
     :return: `True` if exception is temporary and `False` otherwise
-    :rtype: bool
     """
     return isinstance(exception, (requests.ConnectionError, requests.Timeout, requests.exceptions.ChunkedEncodingError))
 
 
-def _create_download_failed_message(exception, url):
+def _create_download_failed_message(exception: Exception, url: Optional[str]) -> str:
     """Creates message describing why download has failed
 
     :param exception: Exception raised during download
-    :type exception: Exception
     :param url: A URL from where download was attempted
-    :type url: str
     :return: Error message
-    :rtype: str
     """
     message = f"Failed to download from:\n{url}\nwith {exception.__class__.__name__}:\n{exception}"
 

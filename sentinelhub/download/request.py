@@ -6,11 +6,12 @@ import hashlib
 import json
 import os
 import warnings
-from typing import Any, Dict, Optional, Tuple
+from typing import Any, Optional, Tuple
 
 from ..constants import MimeType, RequestType
 from ..exceptions import SHRuntimeWarning
 from ..os_utils import sys_is_windows
+from ..type_utils import JsonDict
 
 
 class DownloadRequest:
@@ -24,9 +25,9 @@ class DownloadRequest:
         self,
         *,
         url: Optional[str] = None,
-        headers: Optional[Dict[str, Any]] = None,
+        headers: Optional[JsonDict] = None,
         request_type: RequestType = RequestType.GET,
-        post_values: Optional[Dict[str, Any]] = None,
+        post_values: Optional[JsonDict] = None,
         use_session: bool = False,
         data_type: MimeType = MimeType.RAW,
         save_response: bool = False,
@@ -75,7 +76,7 @@ class DownloadRequest:
                 "Data folder is not specified. Please give a data folder name in the initialization of your request."
             )
 
-    def get_request_params(self, include_metadata: bool = False) -> Dict[str, Any]:
+    def get_request_params(self, include_metadata: bool = False) -> JsonDict:
         """Provides parameters that define the request in form of a dictionary
 
         :param include_metadata: A flag defining if also metadata parameters should be included, such as headers and

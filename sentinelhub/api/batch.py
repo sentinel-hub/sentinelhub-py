@@ -19,6 +19,7 @@ from ..config import SHConfig
 from ..constants import RequestType
 from ..data_collections import DataCollection
 from ..geometry import CRS, BBox, Geometry
+from ..type_utils import Json, JsonDict
 from .base import BaseCollection, SentinelHubFeatureIterator, SentinelHubService
 from .process import SentinelHubRequest
 from .utils import datetime_config, enum_config, remove_undefined
@@ -93,7 +94,7 @@ class SentinelHubBatch(SentinelHubService):
     @staticmethod
     def tiling_grid(
         grid_id: int, resolution: float, buffer: Optional[Tuple[int, int]] = None, **kwargs: Any
-    ) -> Dict[str, Any]:
+    ) -> JsonDict:
         """A helper method to build a dictionary with tiling grid parameters
 
         :param grid_id: An ID of a tiling grid
@@ -166,7 +167,7 @@ class SentinelHubBatch(SentinelHubService):
             exception_message="Failed to obtain information about available tiling grids",
         )
 
-    def get_tiling_grid(self, grid_id: Union[int, str]) -> Dict[str, Any]:
+    def get_tiling_grid(self, grid_id: Union[int, str]) -> JsonDict:
         """Provides a single tiling grid
 
         `Batch API reference
@@ -175,7 +176,8 @@ class SentinelHubBatch(SentinelHubService):
         :param grid_id: An ID of a requested tiling grid
         :return: A tiling grid definition
         """
-        return self.client.get_json(self._get_tiling_grids_url(grid_id), use_session=True)
+        url = self._get_tiling_grids_url(grid_id)
+        return self.client.get_json_dict(url=url, use_session=True)
 
     def iter_requests(
         self, user_id: Optional[str] = None, search: Optional[str] = None, sort: Optional[str] = None, **kwargs: Any
@@ -227,7 +229,7 @@ class SentinelHubBatch(SentinelHubService):
         output: Optional[Dict[str, Any]] = None,
         description: Optional[str] = None,
         **kwargs: Any,
-    ) -> Dict[str, Any]:
+    ) -> Json:
         """Update batch job request parameters
 
         `Batch API reference
@@ -248,7 +250,7 @@ class SentinelHubBatch(SentinelHubService):
             url=self._get_process_url(request_id), post_values=payload, request_type=RequestType.PUT, use_session=True
         )
 
-    def delete_request(self, batch_request: BatchRequestType) -> Dict[str, Any]:
+    def delete_request(self, batch_request: BatchRequestType) -> Json:
         """Delete a batch job request
 
         `Batch API reference
@@ -262,7 +264,7 @@ class SentinelHubBatch(SentinelHubService):
             url=self._get_process_url(request_id), request_type=RequestType.DELETE, use_session=True
         )
 
-    def start_analysis(self, batch_request: BatchRequestType) -> Dict[str, Any]:
+    def start_analysis(self, batch_request: BatchRequestType) -> Json:
         """Starts analysis of a batch job request
 
         `Batch API reference <https://docs.sentinel-hub.com/api/latest/reference/#operation/batchAnalyse>`__
@@ -272,7 +274,7 @@ class SentinelHubBatch(SentinelHubService):
         """
         return self._call_job(batch_request, "analyse")
 
-    def start_job(self, batch_request: BatchRequestType) -> Dict[str, Any]:
+    def start_job(self, batch_request: BatchRequestType) -> Json:
         """Starts running a batch job
 
         `Batch API reference <https://docs.sentinel-hub.com/api/latest/reference/#operation/batchStartProcessRequest>`__
@@ -282,7 +284,7 @@ class SentinelHubBatch(SentinelHubService):
         """
         return self._call_job(batch_request, "start")
 
-    def cancel_job(self, batch_request: BatchRequestType) -> Dict[str, Any]:
+    def cancel_job(self, batch_request: BatchRequestType) -> Json:
         """Cancels a batch job
 
         `Batch API reference
@@ -293,7 +295,7 @@ class SentinelHubBatch(SentinelHubService):
         """
         return self._call_job(batch_request, "cancel")
 
-    def restart_job(self, batch_request: BatchRequestType) -> Dict[str, Any]:
+    def restart_job(self, batch_request: BatchRequestType) -> Json:
         """Restarts only those parts of a job that failed
 
         `Batch API reference
@@ -328,7 +330,7 @@ class SentinelHubBatch(SentinelHubService):
             exception_message="No tiles found, please run analysis on batch request before calling this method",
         )
 
-    def get_tile(self, batch_request: BatchRequestType, tile_id: Optional[int]) -> Dict[str, Any]:
+    def get_tile(self, batch_request: BatchRequestType, tile_id: Optional[int]) -> JsonDict:
         """Provides information about a single batch request tile
 
         `Batch API reference <https://docs.sentinel-hub.com/api/latest/reference/#operation/getBatchTileById>`__
@@ -340,9 +342,9 @@ class SentinelHubBatch(SentinelHubService):
         """
         request_id = self._parse_request_id(batch_request)
         url = self._get_tiles_url(request_id, tile_id=tile_id)
-        return self.client.get_json(url, use_session=True)
+        return self.client.get_json_dict(url, use_session=True)
 
-    def reprocess_tile(self, batch_request: BatchRequestType, tile_id: Optional[int]) -> Dict[str, Any]:
+    def reprocess_tile(self, batch_request: BatchRequestType, tile_id: Optional[int]) -> Json:
         """Reprocess a single failed tile
 
         `Batch API reference <https://docs.sentinel-hub.com/api/latest/reference/#operation/restartBatchTileById>`__
@@ -369,7 +371,7 @@ class SentinelHubBatch(SentinelHubService):
             exception_message="Failed to obtain information about available Batch collections",
         )
 
-    def get_collection(self, collection_id: str) -> Dict[str, Any]:
+    def get_collection(self, collection_id: str) -> JsonDict:
         """Get batch collection by its id
 
         `Batch API reference
@@ -378,9 +380,10 @@ class SentinelHubBatch(SentinelHubService):
         :param collection_id: A batch collection id
         :return: A dictionary of the collection parameters
         """
-        return self.client.get_json(url=self._get_collections_url(collection_id), use_session=True)["data"]
+        url = self._get_collections_url(collection_id)
+        return self.client.get_json_dict(url=url, use_session=True, extract_key="data")
 
-    def create_collection(self, collection: Union["BatchCollection", dict]) -> Dict[str, Any]:
+    def create_collection(self, collection: Union["BatchCollection", dict]) -> JsonDict:
         """Create a new batch collection
 
         `Batch API reference <https://docs.sentinel-hub.com/api/latest/reference/#operation/createNewBatchCollection>`__
@@ -389,11 +392,10 @@ class SentinelHubBatch(SentinelHubService):
         :return: A dictionary of a newly created collection
         """
         collection_payload = self._parse_collection_to_dict(collection)
-        return self.client.get_json(url=self._get_collections_url(), post_values=collection_payload, use_session=True)[
-            "data"
-        ]
+        url = self._get_collections_url()
+        return self.client.get_json_dict(url=url, post_values=collection_payload, use_session=True, extract_key="data")
 
-    def update_collection(self, collection: Union["BatchCollection", dict]) -> Dict[str, Any]:
+    def update_collection(self, collection: Union["BatchCollection", dict]) -> Json:
         """Update an existing batch collection
 
         `Batch API reference <https://docs.sentinel-hub.com/api/latest/reference/#operation/updateBatchCollection>`__
@@ -408,7 +410,7 @@ class SentinelHubBatch(SentinelHubService):
             use_session=True,
         )
 
-    def delete_collection(self, collection: BatchCollectionType) -> Dict[str, Any]:
+    def delete_collection(self, collection: BatchCollectionType) -> Json:
         """Delete an existing batch collection
 
         `Batch API reference <https://docs.sentinel-hub.com/api/latest/reference/#operation/deleteBatchCollection>`__
@@ -420,7 +422,7 @@ class SentinelHubBatch(SentinelHubService):
             url=self._get_collections_url(collection_id), request_type=RequestType.DELETE, use_session=True
         )
 
-    def _call_job(self, batch_request: BatchRequestType, endpoint_name: str) -> Dict[str, Any]:
+    def _call_job(self, batch_request: BatchRequestType, endpoint_name: str) -> Json:
         """Makes a POST request to the service that triggers a processing job"""
         request_id = self._parse_request_id(batch_request)
         job_url = f"{self._get_process_url(request_id)}/{endpoint_name}"

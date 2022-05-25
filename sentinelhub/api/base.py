@@ -6,7 +6,7 @@ import warnings
 from abc import ABCMeta
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any, Dict, Iterable, Optional, Union
+from typing import Any, Dict, Iterable, Optional, Union, cast
 from urllib.parse import urlencode
 
 from dataclasses_json import CatchAll, LetterCase, Undefined
@@ -77,6 +77,7 @@ class SentinelHubFeatureIterator(FeatureIterator[Dict[str, Any]]):
         url = f"{self.url}?{urlencode(params)}"
 
         results = self.client.get_json(url, use_session=True)
+        results = cast(Dict[str, Any], results)
 
         new_features = results.get("data")
         if new_features is None:
