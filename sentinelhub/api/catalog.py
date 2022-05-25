@@ -191,9 +191,7 @@ class CatalogSearchIterator(FeatureIterator[JsonDict]):
         """Collects more results from the service"""
         payload = remove_undefined({**self.params, "next": self.next})
 
-        results = self.client.get_json(self.url, post_values=payload, use_session=True)
-        if not isinstance(results, dict):
-            raise RuntimeError(f"Response from {self.url} did not contain the expected information.")
+        results = self.client.get_json_dict(self.url, post_values=payload, use_session=True)
 
         self.next = results["context"].get("next")
         new_features = results["features"]
