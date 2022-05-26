@@ -100,12 +100,9 @@ class SentinelHubRequest(SentinelHubBaseApiRequest):
         """Generate an element of `output.responses` as described in the Process API reference.
 
         :param identifier: Identifier of the output response.
-        :type identifier: str
         :param response_format: A mime type of one of 'png', 'json', 'jpeg', 'tiff'.
-        :type response_format: str or sentinelhub.MimeType
         :param other_args: Additional dictionary of arguments. If provided, the resulting dictionary will get updated
             by it.
-        :type other_args: dict
         """
         output_response = {"identifier": identifier, "format": {"type": MimeType(response_format).get_string()}}
 

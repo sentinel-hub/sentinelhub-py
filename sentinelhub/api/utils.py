@@ -13,7 +13,7 @@ from ..time_utils import parse_time, serialize_time
 datetime_config = dataclass_config(
     encoder=lambda time: serialize_time(time, use_tz=True) if time else None,
     decoder=lambda time: parse_time(time, force_datetime=True) if time else None,
-    letter_case=LetterCase.CAMEL,  # type: ignore[arg-type]
+    letter_case=LetterCase.CAMEL,
 )
 
 
@@ -21,7 +21,7 @@ geometry_config = dataclass_config(
     encoder=Geometry.get_geojson,
     decoder=lambda geojson: Geometry.from_geojson(geojson) if geojson else None,
     exclude=lambda geojson: geojson is None,  # type: ignore[misc, arg-type]
-    letter_case=LetterCase.CAMEL,  # type: ignore[arg-type]
+    letter_case=LetterCase.CAMEL,
 )
 
 
@@ -31,7 +31,7 @@ def enum_config(enum_class: Type[Enum]) -> Dict[str, dict]:
         encoder=lambda enum_item: enum_item.value,
         decoder=lambda item: enum_class(item) if item else None,
         exclude=lambda item: item is None,  # type: ignore[misc, arg-type]
-        letter_case=LetterCase.CAMEL,  # type: ignore[arg-type]
+        letter_case=LetterCase.CAMEL,
     )
 
 

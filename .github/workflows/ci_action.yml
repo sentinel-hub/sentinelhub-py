@@ -15,7 +15,6 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Check code compliance with black
-        if: github.event_name == 'push'
         run: |
           pip install black[jupyter]
           black . --check --diff
@@ -28,10 +27,31 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Check code compliance with isort
-        if: github.event_name == 'push'
         run: |
           pip install isort
           isort **/*.py --check --diff
+
+  check-code-pylint-and-mypy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out current branch
+        if: github.event_name == 'push'
+        uses: actions/checkout@v2
+
+      - name: Setup Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: "3.8"
+          architecture: x64
+      
+      - name: Install packages
+        run: pip install -e .[DEV]
+      
+      - name: Run mypy
+        run: mypy sentinelhub
+
+      - name: Run pylint
+        run: pylint sentinelhub
 
   test-on-github:
     runs-on: ubuntu-latest
@@ -79,7 +99,6 @@ jobs:
       - name: Run pylint and reduced tests
         if: matrix.python-version != '3.8'
         run: |
-          pylint sentinelhub
           pytest -m "not sh_integration and not aws_integration"
 
       - name: Upload code coverage
