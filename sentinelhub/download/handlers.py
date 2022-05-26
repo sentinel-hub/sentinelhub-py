@@ -45,7 +45,9 @@ def fail_user_errors(download_func: Callable[[Self, DownloadRequest], T]) -> Cal
                 and exception.response.status_code != requests.status_codes.codes.TOO_MANY_REQUESTS
             ):
 
-                raise DownloadFailedException(_create_download_failed_message(exception, request.url)) from exception
+                raise DownloadFailedException(
+                    _create_download_failed_message(exception, request.url), request_exception=exception
+                ) from exception
             raise exception from exception
 
     return new_download_func
@@ -77,7 +79,7 @@ def retry_temporary_errors(
 
                 if attempt_num == download_attempts - 1:
                     message = _create_download_failed_message(exception, request.url)
-                    raise DownloadFailedException(message) from exception
+                    raise DownloadFailedException(message, request_exception=exception) from exception
 
                 LOGGER.debug(
                     "Download attempt failed: %s\n%d attempts left, will retry in %ds",
@@ -103,7 +105,9 @@ def fail_missing_file(download_func: Callable[[Self, DownloadRequest], T]) -> Ca
             return download_func(self, request)
         except requests.HTTPError as exception:
             if exception.response.status_code == requests.status_codes.codes.NOT_FOUND:
-                raise DownloadFailedException(f"File in location {request.url} is missing") from exception
+                raise DownloadFailedException(
+                    f"File in location {request.url} is missing", request_exception=exception
+                ) from exception
 
             raise exception from exception
 
