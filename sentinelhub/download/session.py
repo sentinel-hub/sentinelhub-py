@@ -160,15 +160,14 @@ class SessionSharingThread(Thread):
     _EXTRA_MEMORY_BYTES = 100
 
     def __init__(
-        self, session: SentinelHubSession, *args: Any, memory_name: str = _DEFAULT_SESSION_MEMORY_NAME, **kwargs: Any
+        self, session: SentinelHubSession, memory_name: str = _DEFAULT_SESSION_MEMORY_NAME, **kwargs: Any
     ):
         """
         :param session: A Sentinel Hub session to be used for sharing its authentication token.
-        :param args: Positional arguments to be propagated to `threading.Thread` parent class.
         :param memory_name: A unique name for the requested shared memory block.
         :param kwargs: Keyword arguments to be propagated to `threading.Thread` parent class.
         """
-        super().__init__(*args, **kwargs)
+        super().__init__(**kwargs)
 
         self.session = session
         self.memory_name = memory_name

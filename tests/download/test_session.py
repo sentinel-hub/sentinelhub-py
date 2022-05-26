@@ -93,7 +93,9 @@ def test_session_sharing_single_process(fake_token, fake_config, memory_name):
     session = SentinelHubSession(config=fake_config, refresh_before_expiry=0, _token=fake_token)
 
     kwargs = {} if memory_name is None else {"memory_name": memory_name}
-    thread = SessionSharingThread(session, **kwargs)
+    thread = SessionSharingThread(session, name="thread name", **kwargs)
+    assert thread.name == "thread name"
+
     thread.start()
 
     try:
