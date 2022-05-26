@@ -1,11 +1,10 @@
-***************
 Package content
-***************
+===============
 
 Content of the **sentinelhub** package.
 
 Modules
-~~~~~~~
+-------
 
 .. toctree::
     api

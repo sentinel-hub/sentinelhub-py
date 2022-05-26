@@ -2,9 +2,12 @@
 #
 
 # You can set these variables from the command line.
+AUTODOC = sphinx-apidoc
+AUTODOCOPTS   = --separate --no-toc
 SPHINXOPTS    =
 SPHINXBUILD   = python3 -msphinx
 SPHINXPROJ    = sentinelhub
+PROJDIR       = ../sentinelhub
 SOURCEDIR     = source
 BUILDDIR      = build
 
@@ -19,5 +22,6 @@ help:
 %: Makefile
 	rm -rf ./build/
 	cp -vr ../examples source/
+	@$(SPHINXAUTODOC) -o "$(BUILDDIR)" "$(PROJDIR)" $(AUTODOCOPTS)
 	@$(SPHINXBUILD) -M $@ "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
 	rm -r source/examples source/markdowns
