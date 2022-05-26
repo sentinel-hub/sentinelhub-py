@@ -102,7 +102,7 @@ def test_session_sharing_single_process(fake_token, fake_config, memory_name):
         collected_session = collect_shared_session(**kwargs)
         assert collected_session.token == fake_token
     finally:
-        thread.stop()
+        thread.join()
 
 
 @pytest.mark.parametrize("memory_name", [None, "test-name"])
@@ -120,4 +120,4 @@ def test_session_sharing_multiprocess(fake_token, fake_config, memory_name):
 
         assert all(collected_session.token == fake_token for collected_session in collected_sessions)
     finally:
-        thread.stop()
+        thread.join()

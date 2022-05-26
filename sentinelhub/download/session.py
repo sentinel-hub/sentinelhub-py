@@ -154,14 +154,12 @@ class SessionSharingThread(Thread):
         # Run a parallelization process here
         # Use collect_shared_session() to retrieve the session with other processes
 
-        thread.stop()
+        thread.join()
     """
 
     _EXTRA_MEMORY_BYTES = 100
 
-    def __init__(
-        self, session: SentinelHubSession, memory_name: str = _DEFAULT_SESSION_MEMORY_NAME, **kwargs: Any
-    ):
+    def __init__(self, session: SentinelHubSession, memory_name: str = _DEFAULT_SESSION_MEMORY_NAME, **kwargs: Any):
         """
         :param session: A Sentinel Hub session to be used for sharing its authentication token.
         :param memory_name: A unique name for the requested shared memory block.
@@ -223,14 +221,13 @@ class SessionSharingThread(Thread):
         finally:
             memory.close()
 
-    def stop(self) -> None:
-        """The method stops the thread that would otherwise run indefinitely.
+    def join(self, timeout: Optional[float] = None) -> None:
+        """The method stops the thread that would otherwise run indefinitely and joins it with the main thread.
 
-        After the stop even is set it is important to wait for `run` method to finish and only afterward unlink shared
-        memory.
+        :param timeout: Parameter that is propagated to `threading.Thread.join` method.
         """
         self._stop_event.set()
-        self._wait_for_tstate_lock()  # type: ignore[attr-defined]
+        super().join(timeout=timeout)
 
         if self._is_memory_shared_event.is_set():
             memory = SharedMemory(name=self.memory_name)
