@@ -41,7 +41,6 @@ class SentinelHubStatistical(SentinelHubBaseApiRequest):
         :param bbox: A bounding box of the request
         :param geometry: A geometry of the request
         :param calculations: Calculations part of the payload.
-        :param calculations: dict
         :param data_folder: Location of the directory where the downloaded data could be saved.
         :param config: A custom instance of config class to override parameters from the saved configuration.
         """
