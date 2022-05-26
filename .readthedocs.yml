@@ -10,3 +10,13 @@ python:
     path: .
     extra_requirements:
     - docs
+
+build:
+  os: "ubuntu-20.04"
+  tools:
+    python: "3.8"
+  jobs:
+    pre_build:
+      - cd docs
+      - make autodoc
+      - cd ..
