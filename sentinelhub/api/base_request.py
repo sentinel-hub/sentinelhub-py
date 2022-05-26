@@ -162,9 +162,7 @@ class InputDataDict(dict):
     def __init__(self, input_data_dict: Dict[str, Any], *, service_url: Optional[str] = None):
         """
         :param input_data_dict: A normal dictionary with input parameters
-        :type input_data_dict: dict
         :param service_url: A service URL defined by a data collection
-        :type service_url: str
         """
         super().__init__(input_data_dict)
         self.service_url = service_url

@@ -1,6 +1,8 @@
 """
 Module that implements command line interface for AWS package functionalities
 """
+from typing import Optional, Tuple
+
 import click
 
 from ..data_collections import DataCollection
@@ -16,7 +18,16 @@ from .request import download_safe_format, get_safe_format
 @click.option("-e", "--entire", is_flag=True, default=False, help="Get entire product of specified tile")
 @click.option("-b", "--bands", default=None, help="Comma separated list (no spaces) of bands to retrieve")
 @click.option("--l2a", is_flag=True, default=False, help="In case of tile request this flag specifies L2A products")
-def aws(product, tile, folder, redownload, info, entire, bands, l2a):
+def aws(
+    product: Optional[str],
+    tile: Optional[Tuple[str, str]],
+    folder: str,
+    redownload: bool,
+    info: bool,
+    entire: bool,
+    bands: Optional[str],
+    l2a: bool,
+) -> None:
     """Download Sentinel-2 data from Sentinel-2 on AWS to ESA SAFE format. Download uses multiple threads.
 
     \b

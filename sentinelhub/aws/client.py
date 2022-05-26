@@ -3,6 +3,9 @@ Module implementing a download client that is adjusted to download from AWS
 """
 import logging
 import warnings
+from typing import Any
+
+from ..download.request import DownloadRequest
 
 try:
     import boto3
@@ -25,7 +28,7 @@ class AwsDownloadClient(DownloadClient):
     GLOBAL_S3_CLIENT = None
 
     @fail_missing_file
-    def _execute_download(self, request):
+    def _execute_download(self, request: DownloadRequest) -> Any:
         """Executes a download procedure"""
         if not self.is_s3_request(request):
             return super()._execute_download(request)
@@ -37,7 +40,7 @@ class AwsDownloadClient(DownloadClient):
         LOGGER.debug("Successful download from %s", request.url)
         return response_content
 
-    def _get_s3_client(self):
+    def _get_s3_client(self) -> Any:
         """Provides a s3 client object"""
         warnings.filterwarnings("ignore", category=ResourceWarning, message="unclosed.*<ssl.SSLSocket.*>")
         try:
@@ -56,8 +59,10 @@ class AwsDownloadClient(DownloadClient):
         return s3_client
 
     @staticmethod
-    def _do_download(request, s3_client):
+    def _do_download(request: DownloadRequest, s3_client: Any) -> Any:
         """Does the download from s3"""
+        if request.url is None:
+            raise ValueError(f"Faulty request {request}, no URL specified.")
         _, _, bucket_name, url_key = request.url.split("/", 3)
 
         try:
@@ -77,10 +82,9 @@ class AwsDownloadClient(DownloadClient):
             raise ValueError(f"Aws bucket {bucket_name} does not exist") from exception
 
     @staticmethod
-    def is_s3_request(request):
+    def is_s3_request(request: DownloadRequest) -> bool:
         """Checks if data has to be downloaded from AWS s3 bucket
 
         :return: `True` if url describes location at AWS s3 bucket and `False` otherwise
-        :rtype: bool
         """
-        return request.url.startswith("s3://")
+        return request.url is not None and request.url.startswith("s3://")
