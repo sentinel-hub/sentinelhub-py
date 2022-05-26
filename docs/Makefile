@@ -29,6 +29,5 @@ autodoc: Makefile
 %: Makefile
 	rm -rf ./build/
 	cp -vr ../examples source/
-	$(AUTODOC) $(SOURCEDIR) $(PROJDIR) $(AUTODOCEXCLUDE) $(AUTODOCOPTS)
 	$(SPHINXBUILD) -M $@ "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
 	rm -r source/examples source/markdowns
