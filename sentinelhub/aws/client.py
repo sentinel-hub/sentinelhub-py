@@ -44,7 +44,7 @@ class AwsDownloadClient(DownloadClient):
         """Provides a s3 client object"""
         warnings.filterwarnings("ignore", category=ResourceWarning, message="unclosed.*<ssl.SSLSocket.*>")
         try:
-            s3_client = boto3.Session().client(  # type: ignore[attr-defined]
+            s3_client = boto3.Session().client(
                 "s3",
                 aws_access_key_id=self.config.aws_access_key_id or None,
                 aws_secret_access_key=self.config.aws_secret_access_key or None,

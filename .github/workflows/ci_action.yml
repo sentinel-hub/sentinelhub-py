@@ -45,7 +45,7 @@ jobs:
           architecture: x64
       
       - name: Install packages
-        run: pip install -e .[DEV]
+        run: pip install -e .[AWS,DEV]
       
       - name: Run mypy
         run: mypy sentinelhub
