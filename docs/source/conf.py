@@ -22,6 +22,7 @@ project = "Sentinel Hub"
 project_copyright = "2018, Sentinel Hub"
 author = "Sinergise EO research team"
 doc_title = "sentinelhub Documentation"
+autodoc_typehints = "description"
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
