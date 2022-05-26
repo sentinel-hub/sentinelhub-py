@@ -2,14 +2,18 @@
 #
 
 # You can set these variables from the command line.
-AUTODOC = sphinx-apidoc
-AUTODOCOPTS   = --separate --no-toc
-SPHINXOPTS    =
-SPHINXBUILD   = python3 -msphinx
-SPHINXPROJ    = sentinelhub
-PROJDIR       = ../sentinelhub
-SOURCEDIR     = source
-BUILDDIR      = build
+PROJDIR        = ../sentinelhub
+SOURCEDIR      = source
+BUILDDIR       = build
+
+AUTODOC        = sphinx-apidoc -o
+AUTODOCEXCLUDE = ../sentinelhub/commands.py
+AUTODOCOPTS    = --separate --no-toc
+
+SPHINXOPTS     =
+SPHINXBUILD    = python3 -msphinx
+SPHINXPROJ     = sentinelhub
+
 
 # Put it first so that "make" without argument is like "make help".
 help:
@@ -22,6 +26,6 @@ help:
 %: Makefile
 	rm -rf ./build/
 	cp -vr ../examples source/
-	@$(SPHINXAUTODOC) -o "$(BUILDDIR)" "$(PROJDIR)" $(AUTODOCOPTS)
-	@$(SPHINXBUILD) -M $@ "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
+	$(AUTODOC) $(SOURCEDIR) $(PROJDIR) $(AUTODOCEXCLUDE) $(AUTODOCOPTS)
+	$(SPHINXBUILD) -M $@ "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
 	rm -r source/examples source/markdowns
