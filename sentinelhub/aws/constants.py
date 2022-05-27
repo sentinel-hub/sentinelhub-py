@@ -127,6 +127,7 @@ class AwsConstants:
             PREVIEW_JP2: MimeType.JP2,
             TCI: MimeType.JP2,
             QI_MSK_CLASSI: MimeType.JP2,
+            QI_MSK_CLASSI_V4: MimeType.JP2,
             QI_MSK_CLOUD: MimeType.GML,
             CAMSFO: MimeType.RAW,
             AUX_CAMSFO: MimeType.RAW,

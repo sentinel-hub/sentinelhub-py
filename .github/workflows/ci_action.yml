@@ -48,7 +48,7 @@ jobs:
         run: pip install -e .[DEV]
       
       - name: Run mypy
-        run: mypy sentinelhub
+        run: mypy sentinelhub setup.py
 
       - name: Run pylint
         run: pylint sentinelhub
