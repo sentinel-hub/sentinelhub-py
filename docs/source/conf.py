@@ -102,7 +102,7 @@ pygments_style = "sphinx"
 todo_include_todos = True
 
 # Mock imports that won't and don't have to be installed in ReadTheDocs environment
-autodoc_mock_imports = ["boto3", "botocore", "pyproj", "pytest"]
+autodoc_mock_imports = ["boto3", "botocore"]
 
 # -- Options for HTML output ----------------------------------------------
 
@@ -262,7 +262,7 @@ process_readme()
 current_dir = os.path.abspath(os.path.dirname(__file__))
 module = os.path.join(current_dir, "..", "..", "sentinelhub")
 
-APIDOC_EXCLUDE = [os.path.join(module, "commands.py")]
+APIDOC_EXCLUDE = [os.path.join(module, "commands.py"), os.path.join(module, "aws", "commands.py")]
 APIDOC_OPTIONS = ["--module-first", "--separate", "--no-toc", "--templatedir", os.path.join(current_dir, "_templates")]
 
 

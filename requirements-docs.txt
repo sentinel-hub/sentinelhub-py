@@ -7,4 +7,3 @@ matplotlib
 ipython
 m2r2
 jinja2
-pytest
