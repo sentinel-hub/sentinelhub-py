@@ -14,9 +14,9 @@
 {%- endmacro %}
 
 {%- if is_namespace %}
-{{- [pkgname, "namespace"] | join(" ") | e | heading }}
+{{- pkgname | e | heading }}
 {% else %}
-{{- [pkgname, "package"] | join(" ") | e | heading }}
+{{- "package" | e | heading }}
 {% endif %}
 
 {%- if is_namespace %}
