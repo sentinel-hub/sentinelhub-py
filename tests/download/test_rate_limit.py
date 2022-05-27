@@ -6,11 +6,13 @@ import itertools as it
 import time
 from dataclasses import dataclass
 from threading import Lock
+from typing import List
 
 import pytest
 from pytest import approx
 
 from sentinelhub.download.rate_limit import PolicyBucket, PolicyType, SentinelHubRateLimit
+from sentinelhub.type_utils import JsonDict
 
 
 class DummyService:
@@ -18,16 +20,13 @@ class DummyService:
     purposes
     """
 
-    def __init__(self, policy_buckets, units_per_request, process_time):
+    def __init__(self, policy_buckets: List[PolicyBucket], units_per_request: int, process_time: float):
         """
         :param policy_buckets: A list of policy buckets on the service
-        :type policy_buckets: list(PolicyBucket)
         :param units_per_request: Number of processing units each request would cost. It assumes that each request will
             cost the same amount of processing units.
-        :type units_per_request: int
         :param process_time: A number of seconds it would take to process each request. It assumes that each request
             will take the same amount of time.
-        :type process_time: float
         """
         self.policy_buckets = policy_buckets
         self.units_per_request = units_per_request
@@ -36,7 +35,7 @@ class DummyService:
         self.time = time.monotonic()
         self.lock = Lock()
 
-    def make_request(self):
+    def make_request(self) -> JsonDict:
         """Simulates a single request to the service. First it waits the processing time, then it updates the policy
         buckets.
         """
@@ -61,13 +60,13 @@ class DummyService:
 
         return headers
 
-    def _get_new_bucket_content(self):
+    def _get_new_bucket_content(self) -> List[float]:
         """Calculates the new content of buckets"""
         costs = ((1 if bucket.is_request_bucket() else self.units_per_request) for bucket in self.policy_buckets)
 
         return [bucket.content - cost for bucket, cost in zip(self.policy_buckets, costs)]
 
-    def _get_headers(self, is_rate_limited):
+    def _get_headers(self, is_rate_limited) -> JsonDict:
         """Creates and returns headers that Sentinel Hub service would return"""
         headers = {}
 
