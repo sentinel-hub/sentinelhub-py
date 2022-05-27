@@ -260,6 +260,7 @@ process_readme()
 
 # Auto-generate documentation pages
 current_dir = os.path.abspath(os.path.dirname(__file__))
+target_dir = os.path.join(current_dir, "pages")
 module = os.path.join(current_dir, "..", "..", "sentinelhub")
 
 APIDOC_EXCLUDE = [os.path.join(module, "commands.py"), os.path.join(module, "aws", "commands.py")]
@@ -271,7 +272,7 @@ def run_apidoc(_):
 
     sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 
-    main(["-e", "-o", current_dir, module, *APIDOC_EXCLUDE, *APIDOC_OPTIONS])
+    main(["-e", "-o", target_dir, module, *APIDOC_EXCLUDE, *APIDOC_OPTIONS])
 
 
 def setup(app):
