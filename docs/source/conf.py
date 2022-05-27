@@ -42,8 +42,6 @@ version = release.rsplit(".", 1)[0]
 #
 # needs_sphinx = '1.0'
 
-autodoc_typehints = "description"
-
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
@@ -61,6 +59,9 @@ extensions = [
     "sphinx.ext.githubpages",
     "m2r2",
 ]
+
+# Incude typehints in descriptions
+autodoc_typehints = "description"
 
 # Both the class’ and the __init__ method’s docstring are concatenated and inserted.
 autoclass_content = "both"
@@ -260,7 +261,7 @@ process_readme()
 
 # Auto-generate documentation pages
 current_dir = os.path.abspath(os.path.dirname(__file__))
-target_dir = os.path.join(current_dir, "pages")
+target_dir = os.path.join(current_dir, "reference")
 module = os.path.join(current_dir, "..", "..", "sentinelhub")
 
 APIDOC_EXCLUDE = [os.path.join(module, "commands.py"), os.path.join(module, "aws", "commands.py")]
