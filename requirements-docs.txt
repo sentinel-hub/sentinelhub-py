@@ -1,9 +1,8 @@
-jupyter_core
-docutils
 sphinx
 sphinx_rtd_theme
 nbsphinx
 matplotlib
 ipython
 m2r2
-jinja2==3.0.3
+docutils==0.17.1  # Newer versions don't format lists correctly on some browsers when run on ReadTheDocs
+jinja2==3.0.3  # Newer versions aren't compatible with nbsphinx==0.8.8
