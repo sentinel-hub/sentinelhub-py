@@ -1,31 +1,34 @@
 import io
 import os
+from typing import List
 
 from setuptools import find_packages, setup
 
 
-def parse_requirements(file):
+def parse_requirements(filename: str) -> List[str]:
     required_packages = []
-    with open(os.path.join(os.path.dirname(__file__), file)) as req_file:
+    with open(os.path.join(os.path.dirname(__file__), filename)) as req_file:
         for line in req_file:
-            if "/" not in line:
-                required_packages.append(line.strip())
+            required_packages.append(line.strip())
     return required_packages
 
 
-def get_version():
-    for line in open(os.path.join(os.path.dirname(__file__), "sentinelhub", "_version.py")):
+def get_version() -> str:
+    path = os.path.join(os.path.dirname(__file__), "sentinelhub", "_version.py")
+    for line in open(path):
         if line.find("__version__") >= 0:
             version = line.split("=")[1].strip()
             return version.strip('"').strip("'")
 
+    raise ValueError(f"Version not found in {path}")
 
-def get_long_description():
+
+def get_long_description() -> str:
     return io.open("README.md", encoding="utf-8").read()
 
 
-def update_package_config():
-    """Every time sentinelhub package is installed entire config.json is overwritten. However this function
+def update_package_config() -> None:
+    """Every time sentinelhub package is installed entire config.json is overwritten. However, this function
     will check if sentinelhub is already installed and try to copy those parameters from old config.json that are by
     default set to an empty value (i.e. instance_id, aws_access_key_id and aws_secret_access_key) into new config.json
     file.
@@ -35,7 +38,11 @@ def update_package_config():
         import json
         import sys
 
-        path = importlib.machinery.PathFinder().find_spec("sentinelhub", sys.path[1:]).submodule_search_locations[0]
+        spec = importlib.machinery.PathFinder().find_spec("sentinelhub", sys.path[1:])
+        if spec is None or spec.submodule_search_locations is None:
+            return
+
+        path = spec.submodule_search_locations[0]
         old_config_filename = os.path.join(path, "config.json")
 
         with open(old_config_filename, "r") as file:
@@ -54,7 +61,7 @@ def update_package_config():
         pass
 
 
-def try_create_config_file():
+def try_create_config_file() -> None:
     """After the package is installed it will try to trigger saving a config.json file"""
     try:
         from sentinelhub.config import SHConfig
@@ -78,7 +85,13 @@ setup(
     author_email="info@sentinel-hub.com",
     license="MIT",
     packages=find_packages(),
-    package_data={"sentinelhub": ["sentinelhub/config.json", "sentinelhub/.utmzones.geojson", "sentinelhub/py.typed"]},
+    package_data={
+        "sentinelhub": [
+            "sentinelhub/config.json",
+            "sentinelhub/.utmzones.geojson",
+            "sentinelhub/py.typed",
+        ]
+    },
     include_package_data=True,
     install_requires=parse_requirements("requirements.txt"),
     extras_require={
