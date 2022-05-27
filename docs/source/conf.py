@@ -263,7 +263,8 @@ current_dir = os.path.abspath(os.path.dirname(__file__))
 module = os.path.join(current_dir, "..", "..", "sentinelhub")
 
 APIDOC_EXCLUDE = [os.path.join(module, "commands.py")]
-APIDOC_OPTIONS = ["--module-first", "--separate", "--no-toc"]
+APIDOC_OPTIONS = ["--module-first", "--separate", "--no-toc", "--templatedir", os.path.join(current_dir, "_templates")]
+
 
 def run_apidoc(_):
     from sphinx.ext.apidoc import main
