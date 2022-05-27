@@ -16,7 +16,7 @@
 {%- if is_namespace %}
 {{- pkgname | e | heading }}
 {% else %}
-{{- "package" | e | heading }}
+{{- pkgname | e | heading }}
 {% endif %}
 
 {%- if is_namespace %}
