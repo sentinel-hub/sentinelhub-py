@@ -1,6 +1,5 @@
-*************
 Configuration
-*************
+=============
 
 
 The package contains a configuration file ``config.json``. After the package is installed you can check the initial

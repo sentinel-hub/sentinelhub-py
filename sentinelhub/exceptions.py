@@ -1,8 +1,10 @@
 """
 Module defining custom package exceptions
 """
-
 import warnings
+from typing import Optional
+
+import requests
 
 
 class BaseSentinelHubException(Exception):
@@ -11,6 +13,10 @@ class BaseSentinelHubException(Exception):
 
 class DownloadFailedException(BaseSentinelHubException):
     """General exception which is raised whenever download fails"""
+
+    def __init__(self, msg: str, *, request_exception: Optional[requests.RequestException] = None) -> None:
+        super().__init__(msg)
+        self.request_exception = request_exception
 
 
 class OutOfRequestsException(DownloadFailedException):
