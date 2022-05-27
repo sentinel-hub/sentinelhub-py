@@ -102,7 +102,7 @@ pygments_style = "sphinx"
 todo_include_todos = True
 
 # Mock imports that won't and don't have to be installed in ReadTheDocs environment
-autodoc_mock_imports = ["boto3", "botocore"]
+autodoc_mock_imports = ["boto3", "botocore", "pytest"]
 
 # -- Options for HTML output ----------------------------------------------
 
