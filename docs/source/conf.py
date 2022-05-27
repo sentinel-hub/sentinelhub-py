@@ -13,6 +13,7 @@
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
 import os
+import sys
 import shutil
 
 # -- Project information -----------------------------------------------------
@@ -22,7 +23,7 @@ project = "Sentinel Hub"
 project_copyright = "2018, Sentinel Hub"
 author = "Sinergise EO research team"
 doc_title = "sentinelhub Documentation"
-autodoc_typehints = "description"
+
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -40,6 +41,8 @@ version = release.rsplit(".", 1)[0]
 # If your documentation needs a minimal Sphinx version, state it here.
 #
 # needs_sphinx = '1.0'
+
+autodoc_typehints = "description"
 
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
@@ -255,16 +258,19 @@ def process_readme():
 
 process_readme()
 
+# Auto-generate documentation pages
+current_dir = os.path.abspath(os.path.dirname(__file__))
+module = os.path.join(current_dir, "..", "..", "sentinelhub")
+
+APIDOC_EXCLUDE = [os.path.join(module, "commands.py")]
+APIDOC_OPTIONS = ["--module-first", "--separate", "--no-toc"]
 
 def run_apidoc(_):
     from sphinx.ext.apidoc import main
-    import os
-    import sys
 
     sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
-    cur_dir = os.path.abspath(os.path.dirname(__file__))
-    module = os.path.join(cur_dir, "..", "..", "sentinelhub")
-    main(["-e", "-o", cur_dir, module, os.path.join(module, "commands.py"), "--separate", "--no-toc"])
+
+    main(["-e", "-o", current_dir, module, *APIDOC_EXCLUDE, *APIDOC_OPTIONS])
 
 
 def setup(app):
