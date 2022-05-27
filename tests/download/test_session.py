@@ -1,10 +1,20 @@
 import time
+from concurrent.futures import ProcessPoolExecutor
 
 import pytest
 from oauthlib.oauth2.rfc6749.errors import CustomOAuth2Error
 
 from sentinelhub import SentinelHubSession, SHConfig
+from sentinelhub.download import SessionSharingThread, collect_shared_session
 from sentinelhub.exceptions import SHUserWarning
+
+
+@pytest.fixture(name="fake_config")
+def fake_config_fixture():
+    config = SHConfig()
+    config.sh_client_id = "sh-py-test"
+    config.sh_client_secret = "sh-py-test"
+    return config
 
 
 @pytest.fixture(name="fake_token")
@@ -66,17 +76,48 @@ def test_from_token(fake_token):
 
 
 @pytest.mark.sh_integration
-def test_refreshing_procedure(fake_token):
-    config = SHConfig()
-    config.sh_client_id = "sh-py-test"
-    config.sh_client_secret = "sh-py-test"
-
+def test_refreshing_procedure(fake_token, fake_config):
     fake_token["expires_at"] -= 500
 
     for expiry in [None, 400]:
-        session = SentinelHubSession(config=config, refresh_before_expiry=expiry, _token=fake_token)
+        session = SentinelHubSession(config=fake_config, refresh_before_expiry=expiry, _token=fake_token)
         assert session.token == fake_token
 
-    session = SentinelHubSession(config=config, refresh_before_expiry=500, _token=fake_token)
+    session = SentinelHubSession(config=fake_config, refresh_before_expiry=500, _token=fake_token)
     with pytest.raises(CustomOAuth2Error):
         _ = session.token
+
+
+@pytest.mark.parametrize("memory_name", [None, "test-name"])
+def test_session_sharing_single_process(fake_token, fake_config, memory_name):
+    session = SentinelHubSession(config=fake_config, refresh_before_expiry=0, _token=fake_token)
+
+    kwargs = {} if memory_name is None else {"memory_name": memory_name}
+    thread = SessionSharingThread(session, name="thread name", **kwargs)
+    assert thread.name == "thread name"
+
+    thread.start()
+
+    try:
+        collected_session = collect_shared_session(**kwargs)
+        assert collected_session.token == fake_token
+    finally:
+        thread.join()
+
+
+@pytest.mark.parametrize("memory_name", [None, "test-name"])
+def test_session_sharing_multiprocess(fake_token, fake_config, memory_name):
+    session = SentinelHubSession(config=fake_config, refresh_before_expiry=0, _token=fake_token)
+
+    kwargs = {} if memory_name is None else {"memory_name": memory_name}
+    thread = SessionSharingThread(session, **kwargs)
+    thread.start()
+
+    try:
+        with ProcessPoolExecutor(max_workers=4) as executor:
+            futures = [executor.submit(collect_shared_session, **kwargs) for _ in range(10)]
+            collected_sessions = [future.result() for future in futures]
+
+        assert all(collected_session.token == fake_token for collected_session in collected_sessions)
+    finally:
+        thread.join()
