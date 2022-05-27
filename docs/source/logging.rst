@@ -1,6 +1,5 @@
-*******
 Logging
-*******
+=======
 
 The package provides runtime information through the use of logging. To enable basic logs provided by ``sentinelhub`` enable logging on the ``DEBUG`` level.
 

@@ -1,5 +1,5 @@
 Documentation of `sentinelhub` Python package
-*********************************************
+=============================================
 
 .. mdinclude:: markdowns/INTRO.md
 
@@ -11,4 +11,4 @@ Documentation of `sentinelhub` Python package
     configure
     logging
     examples
-    docs
+    reference/sentinelhub
