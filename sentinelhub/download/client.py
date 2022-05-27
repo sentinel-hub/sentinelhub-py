@@ -11,6 +11,7 @@ from typing import Any, List, Optional, Union, cast, overload
 from xml.etree import ElementTree
 
 import requests
+from requests import Response
 from tqdm.auto import tqdm
 
 from ..config import SHConfig
@@ -141,7 +142,7 @@ class DownloadClient:
                 return read_data(path, data_format=request.data_type if decode_data else MimeType.RAW)
             return None
 
-        response_content = self._execute_download(request)
+        response = self._execute_download(request)
 
         if request_path and request.save_response and (self.redownload or not os.path.exists(request_path)):
             request_info = request.get_request_params(include_metadata=True)
@@ -161,7 +162,7 @@ class DownloadClient:
 
     @retry_temporary_errors
     @fail_user_errors
-    def _execute_download(self, request: DownloadRequest) -> bytes:
+    def _execute_download(self, request: DownloadRequest) -> Response:
         """A default way of executing a single download request"""
         if request.url is None:
             raise ValueError(f"Faulty request {request}, no URL specified.")
@@ -184,7 +185,7 @@ class DownloadClient:
         response.raise_for_status()
         LOGGER.debug("Successful %s request to %s", request.request_type.value, request.url)
 
-        return response.content
+        return response
 
     def _is_download_required(self, request: DownloadRequest, response_path: Optional[str]) -> bool:
         """Checks if download should actually be done"""

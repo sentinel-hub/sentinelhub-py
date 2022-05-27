@@ -6,6 +6,7 @@ import hashlib
 import json
 import os
 import warnings
+from dataclasses import dataclass
 from typing import Any, Optional, Tuple
 
 from ..constants import MimeType, RequestType
@@ -148,3 +149,18 @@ class DownloadRequest:
                 "saving on disk"
             )
             warnings.warn(message, category=SHRuntimeWarning)
+
+
+class DownloadData:
+
+    data: Any
+    headers: Optional[JsonDict]
+    status_code: Optional[int]
+    elapsed = Optional[float]
+    # MimeType? although that is not relevant anymore
+
+    def from_response(self):
+        pass
+
+    def from_file(self):
+        pass
