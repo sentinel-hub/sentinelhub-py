@@ -7,7 +7,6 @@ Modules
 -------
 
 .. toctree::
-    :maxdepth: 4
 
     sentinelhub.api
     sentinelhub.areas

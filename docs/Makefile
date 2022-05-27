@@ -19,5 +19,5 @@ help:
 %: Makefile
 	rm -rf ./build/
 	cp -vr ../examples source/
-	$(SPHINXBUILD) -M $@ "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
+	@$(SPHINXBUILD) -M $@ "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
 	rm -r source/examples source/markdowns
