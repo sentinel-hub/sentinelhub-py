@@ -1,7 +1,7 @@
 pytest>=4.0.0
 pytest-cov
 codecov
-pylint>=2.2.0
+pylint>=2.14.0
 twine
 requests-mock
 black[jupyter]>=22.1.0
