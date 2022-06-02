@@ -199,27 +199,55 @@ class SessionSharingThread(Thread):
                 self._stop_event.wait(timeout=sleep_until_refresh_time)
 
     def _share_token(self, token: JsonDict) -> None:
-        """A token is encoded into bytes and written into a shared memory block.
-
-        Note that the `SharedMemory` object allocates extra `self._EXTRA_MEMORY_BYTES` bytes of memory because the
-        length of encoded token can vary a bit.
-        """
+        """A token is encoded into bytes and written into a shared memory block."""
         encoded_token = json.dumps(token).encode()
-
-        if self._is_memory_shared_event.is_set():
-            memory = SharedMemory(name=self.memory_name)
-        else:
-            memory = SharedMemory(
-                create=True,
-                size=len(encoded_token) + self._EXTRA_MEMORY_BYTES,
-                name=self.memory_name,
-            )
-            self._is_memory_shared_event.set()
+        memory = self._get_shared_memory(encoded_token)
 
         try:
             memory.buf[:] = encoded_token + _NULL_MEMORY_VALUE * (memory.size - len(encoded_token))
         finally:
             memory.close()
+
+    def _get_shared_memory(self, encoded_token: bytes) -> SharedMemory:
+        """Provides a shared memory object.
+
+        The method also handles a case where a shared memory with the same name would be left unclosed from before.
+        Because the memory can be persistent and requires low-level knowledge of `multiprocessing.shared_memory` to
+        close it manually this method will close it automatically and inform users about the problem.
+        """
+        if self._is_memory_shared_event.is_set():
+            return SharedMemory(name=self.memory_name)
+
+        try:
+            memory = self._create_shared_memory(encoded_token)
+        except FileExistsError:
+            warnings.warn(
+                f"A shared memory with a name '{self.memory_name}' already exists. It will be removed and allocated "
+                f"anew. Please make sure that every {self.__class__.__name__} instance is joined at the end. If you "
+                "are using multiple threads then specify different 'memory_name' parameter for each of them.",
+                category=SHUserWarning,
+            )
+
+            memory = SharedMemory(name=self.memory_name)
+            memory.unlink()
+            memory.close()
+
+            memory = self._create_shared_memory(encoded_token)
+
+        self._is_memory_shared_event.set()
+        return memory
+
+    def _create_shared_memory(self, encoded_token: bytes) -> SharedMemory:
+        """Create a new shared memory space.
+
+        Note that the `SharedMemory` object allocates extra `self._EXTRA_MEMORY_BYTES` bytes of memory because the
+        length of encoded token can vary a bit.
+        """
+        return SharedMemory(
+            create=True,
+            size=len(encoded_token) + self._EXTRA_MEMORY_BYTES,
+            name=self.memory_name,
+        )
 
     def join(self, timeout: Optional[float] = None) -> None:
         """The method stops the thread that would otherwise run indefinitely and joins it with the main thread.
@@ -230,10 +258,43 @@ class SessionSharingThread(Thread):
         super().join(timeout=timeout)
 
         if self._is_memory_shared_event.is_set():
-            memory = SharedMemory(name=self.memory_name)
-            memory.unlink()
+            try:
+                memory = SharedMemory(name=self.memory_name)
+                memory.unlink()
+                memory.close()
+            except FileNotFoundError:
+                pass
+
             self._is_memory_shared_event.clear()
-            memory.close()
+
+
+class SessionSharing:
+    """An object that in the background runs a `SessionSharingThread` which shares a Sentinel Hub authentication
+    token in a shared memory object that can be accessed by other Python processes during multiprocessing
+    parallelization. The object also makes sure that the thread is always closed at the end.
+
+    How to use it:
+
+    .. code-block:: python
+
+        with SessionSharing(session):
+            # Run a parallelization process here
+    """
+
+    def __init__(self, session: SentinelHubSession, **kwargs: Any):
+        """
+        :param args: A Sentinel Hub session to be used for sharing its authentication token.
+        :param kwargs: Keyword arguments to be propagated to `SessionSharingThread`.
+        """
+        self.thread = SessionSharingThread(session, **kwargs)
+
+    def __enter__(self) -> None:
+        """Starts running the session-sharing thread."""
+        self.thread.start()
+
+    def __exit__(self, *_: Any, **__: Any) -> None:
+        """Closes the running session-sharing thread."""
+        self.thread.join()
 
 
 def collect_shared_session(memory_name: str = _DEFAULT_SESSION_MEMORY_NAME) -> SentinelHubSession:
@@ -244,7 +305,14 @@ def collect_shared_session(memory_name: str = _DEFAULT_SESSION_MEMORY_NAME) -> S
         match the one used in `SessionSharingThread`.
     :return: An instance of `SentinelHubSession` that contains the shared token but is not self-refreshing.
     """
-    memory = SharedMemory(name=memory_name)
+    try:
+        memory = SharedMemory(name=memory_name)
+    except FileNotFoundError as exception:
+        raise FileNotFoundError(
+            f"Couldn't obtain a shared session because a shared memory '{memory_name}' doesn't exist. Make sure that"
+            " you are running session sharing when calling this function"
+        ) from exception
+
     try:
         encoded_token = memory.buf.tobytes().rstrip(_NULL_MEMORY_VALUE)
     finally:

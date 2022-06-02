@@ -5,7 +5,7 @@ import pytest
 from oauthlib.oauth2.rfc6749.errors import CustomOAuth2Error
 
 from sentinelhub import SentinelHubSession, SHConfig
-from sentinelhub.download import SessionSharingThread, collect_shared_session
+from sentinelhub.download import SessionSharing, SessionSharingThread, collect_shared_session
 from sentinelhub.exceptions import SHUserWarning
 
 
@@ -121,3 +121,35 @@ def test_session_sharing_multiprocess(fake_token, fake_config, memory_name):
         assert all(collected_session.token == fake_token for collected_session in collected_sessions)
     finally:
         thread.join()
+
+
+@pytest.mark.parametrize("memory_name", [None, "test-name"])
+def test_session_sharing_object(fake_token, fake_config, memory_name):
+    session = SentinelHubSession(config=fake_config, refresh_before_expiry=0, _token=fake_token)
+
+    kwargs = {} if memory_name is None else {"memory_name": memory_name}
+    manager = SessionSharing(session, name="thread name", **kwargs)
+
+    with pytest.raises(FileNotFoundError):
+        collect_shared_session(**kwargs)
+
+    with manager:
+        collected_session = collect_shared_session(**kwargs)
+        assert collected_session.token == fake_token
+
+    with pytest.raises(FileNotFoundError):
+        collect_shared_session(**kwargs)
+
+
+def test_handling_of_unclosed_memory(fake_token, fake_config):
+    session = SentinelHubSession(config=fake_config, refresh_before_expiry=0, _token=fake_token)
+
+    thread1 = SessionSharingThread(session)
+    thread1.start()
+
+    thread2 = SessionSharingThread(session)
+    with pytest.warns(SHUserWarning):
+        thread2.start()
+
+    thread1.join()
+    thread2.join()
