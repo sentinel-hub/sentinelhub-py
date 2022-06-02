@@ -134,10 +134,10 @@ class AreaSplitter(metaclass=ABCMeta):
         :return: A bounding box of the area defined by the `shape_list`
         """
         bbox_list = [BBox(shape.bounds, crs=self.crs) for shape in self.shape_list]
-        area_min_x = min([bbox.lower_left[0] for bbox in bbox_list])
-        area_min_y = min([bbox.lower_left[1] for bbox in bbox_list])
-        area_max_x = max([bbox.upper_right[0] for bbox in bbox_list])
-        area_max_y = max([bbox.upper_right[1] for bbox in bbox_list])
+        area_min_x = min(bbox.lower_left[0] for bbox in bbox_list)
+        area_min_y = min(bbox.lower_left[1] for bbox in bbox_list)
+        area_max_x = max(bbox.upper_right[0] for bbox in bbox_list)
+        area_max_y = max(bbox.upper_right[1] for bbox in bbox_list)
         bbox = BBox([area_min_x, area_min_y, area_max_x, area_max_y], crs=self.crs)
         if crs is None:
             return bbox
