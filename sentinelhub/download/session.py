@@ -305,7 +305,14 @@ def collect_shared_session(memory_name: str = _DEFAULT_SESSION_MEMORY_NAME) -> S
         match the one used in `SessionSharingThread`.
     :return: An instance of `SentinelHubSession` that contains the shared token but is not self-refreshing.
     """
-    memory = SharedMemory(name=memory_name)
+    try:
+        memory = SharedMemory(name=memory_name)
+    except FileNotFoundError as exception:
+        raise FileNotFoundError(
+            f"Couldn't obtain a shared session because a shared memory '{memory_name}' doesn't exist. Make sure that"
+            " you are running session sharing when calling this function"
+        ) from exception
+
     try:
         encoded_token = memory.buf.tobytes().rstrip(_NULL_MEMORY_VALUE)
     finally:
