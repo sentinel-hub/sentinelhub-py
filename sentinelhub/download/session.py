@@ -281,7 +281,7 @@ class SessionSharing:
             # Run a parallelization process here
     """
 
-    def __init__(self, session: SentinelHubSession, **kwargs):
+    def __init__(self, session: SentinelHubSession, **kwargs: Any):
         """
         :param args: A Sentinel Hub session to be used for sharing its authentication token.
         :param kwargs: Keyword arguments to be propagated to `SessionSharingThread`.
@@ -292,7 +292,7 @@ class SessionSharing:
         """Starts running the session-sharing thread."""
         self.thread.start()
 
-    def __exit__(self, *_, **__) -> None:
+    def __exit__(self, *_: Any, **__: Any) -> None:
         """Closes the running session-sharing thread."""
         self.thread.join()
 
