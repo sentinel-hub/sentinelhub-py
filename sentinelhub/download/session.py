@@ -268,6 +268,35 @@ class SessionSharingThread(Thread):
             self._is_memory_shared_event.clear()
 
 
+class SessionSharing:
+    """An object that in the background runs a `SessionSharingThread` which shares a Sentinel Hub authentication
+    token in a shared memory object that can be accessed by other Python processes during multiprocessing
+    parallelization. The object also makes sure that the thread is always closed at the end.
+
+    How to use it:
+
+    .. code-block:: python
+
+        with SessionSharing(session):
+            # Run a parallelization process here
+    """
+
+    def __init__(self, session: SentinelHubSession, **kwargs):
+        """
+        :param args: A Sentinel Hub session to be used for sharing its authentication token.
+        :param kwargs: Keyword arguments to be propagated to `SessionSharingThread`.
+        """
+        self.thread = SessionSharingThread(session, **kwargs)
+
+    def __enter__(self) -> None:
+        """Starts running the session-sharing thread."""
+        self.thread.start()
+
+    def __exit__(self, *_, **__) -> None:
+        """Closes the running session-sharing thread."""
+        self.thread.join()
+
+
 def collect_shared_session(memory_name: str = _DEFAULT_SESSION_MEMORY_NAME) -> SentinelHubSession:
     """This utility function is meant to be used in combination with `SessionSharingThread`. It retrieves an
     authentication token from the shared memory and returns it in an `SentinelHubSession` object.
