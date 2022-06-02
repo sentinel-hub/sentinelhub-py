@@ -121,3 +121,17 @@ def test_session_sharing_multiprocess(fake_token, fake_config, memory_name):
         assert all(collected_session.token == fake_token for collected_session in collected_sessions)
     finally:
         thread.join()
+
+
+def test_handling_of_unclosed_memory(fake_token, fake_config):
+    session = SentinelHubSession(config=fake_config, refresh_before_expiry=0, _token=fake_token)
+
+    thread1 = SessionSharingThread(session)
+    thread1.start()
+
+    thread2 = SessionSharingThread(session)
+    with pytest.warns(SHUserWarning):
+        thread2.start()
+
+    thread1.join()
+    thread2.join()
