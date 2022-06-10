@@ -101,7 +101,11 @@ def test_refreshing_procedure(fake_token, fake_config):
     ],
 )
 def test_oauth_compliance_hook_4xx(
-    requests_mock: Mocker, status_code: int, response_payload: Optional[JsonDict], expected_exception: Type[Exception]
+    requests_mock: Mocker,
+    status_code: int,
+    response_payload: Optional[JsonDict],
+    expected_exception: Type[Exception],
+    fake_config: SHConfig,
 ):
     requests_mock.post(
         "https://services.sentinel-hub.com/oauth/token",
@@ -110,7 +114,7 @@ def test_oauth_compliance_hook_4xx(
     )
 
     with pytest.raises(expected_exception):
-        SentinelHubSession()
+        SentinelHubSession(config=fake_config)
     assert len(requests_mock.request_history) == 1
 
 
@@ -123,20 +127,21 @@ def test_oauth_compliance_hook_4xx(
         (None,),
     ],
 )
-def test_oauth_compliance_hook_5xx(requests_mock: Mocker, status_code: int, response_payload: Optional[JsonDict]):
+def test_oauth_compliance_hook_5xx(
+    requests_mock: Mocker, status_code: int, response_payload: Optional[JsonDict], fake_config: SHConfig
+):
     requests_mock.post(
         "https://services.sentinel-hub.com/oauth/token",
         json=response_payload,
         status_code=status_code,
     )
 
-    config = SHConfig()
-    config.max_download_attempts = 10
-    config.download_sleep_time = 0
+    fake_config.max_download_attempts = 10
+    fake_config.download_sleep_time = 0
 
     with pytest.raises(DownloadFailedException):
-        SentinelHubSession(config=config)
-    assert len(requests_mock.request_history) == config.max_download_attempts
+        SentinelHubSession(config=fake_config)
+    assert len(requests_mock.request_history) == fake_config.max_download_attempts
 
 
 @pytest.mark.parametrize("memory_name", [None, "test-name"])
