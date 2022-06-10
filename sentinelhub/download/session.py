@@ -10,7 +10,10 @@ import warnings
 from threading import Event, Thread
 from typing import Any, Dict, Optional
 
+import requests
 from oauthlib.oauth2 import BackendApplicationClient
+from requests import Response
+from requests.exceptions import JSONDecodeError
 from requests_oauthlib import OAuth2Session
 
 from ..config import SHConfig
@@ -131,9 +134,37 @@ class SentinelHubSession:
 
         LOGGER.debug("Creating a new authentication session with Sentinel Hub service")
         with OAuth2Session(client=oauth_client) as oauth_session:
+            oauth_session.register_compliance_hook("access_token_response", self._compliance_hook)
+
             return oauth_session.fetch_token(
                 token_url=request.url, client_id=self.config.sh_client_id, client_secret=self.config.sh_client_secret
             )
+
+    @staticmethod
+    def _compliance_hook(response: Response) -> Response:
+        """Checks if a response from Sentinel Hub Authentication service has an error status code but no error message.
+
+        By default, `requests_oauthlib` ignores status of a response and only looks at an error message in a
+        response body. However, Sentinel Hub service can return a response with an error status code and
+        without an error message. In such cases `requests_oauthlib` would raise a completely wrong error message. This
+        hook makes sure that a correct error message is raised.
+
+        It is important that in case of 5xx errors always an error is raised so that authentication can be retried.
+        But in case of 4xx errors where response contains an error message this method intentionally doesn't raise
+        an error so that `oauthlib` can later raise a more descriptive error.
+        """
+        if response.status_code >= requests.status_codes.codes.INTERNAL_SERVER_ERROR:
+            response.raise_for_status()
+
+        try:
+            token_dict = response.json()
+            if "error" in token_dict:
+                return response
+        except JSONDecodeError:
+            pass
+
+        response.raise_for_status()
+        return response
 
 
 _DEFAULT_SESSION_MEMORY_NAME = "sh-session-token"
