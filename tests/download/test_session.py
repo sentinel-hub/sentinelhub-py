@@ -1,12 +1,15 @@
 import time
 from concurrent.futures import ProcessPoolExecutor
+from typing import Optional, Type
 
 import pytest
 from oauthlib.oauth2.rfc6749.errors import CustomOAuth2Error
+from requests_mock import Mocker
 
 from sentinelhub import SentinelHubSession, SHConfig
 from sentinelhub.download import SessionSharing, SessionSharingThread, collect_shared_session
-from sentinelhub.exceptions import SHUserWarning
+from sentinelhub.exceptions import DownloadFailedException, SHUserWarning
+from sentinelhub.type_utils import JsonDict
 
 
 @pytest.fixture(name="fake_config")
@@ -86,6 +89,54 @@ def test_refreshing_procedure(fake_token, fake_config):
     session = SentinelHubSession(config=fake_config, refresh_before_expiry=500, _token=fake_token)
     with pytest.raises(CustomOAuth2Error):
         _ = session.token
+
+
+@pytest.mark.parametrize("status_code", [400, 404])
+@pytest.mark.parametrize(
+    "response_payload, expected_exception",
+    [
+        ({"error": "Mocked error message", "access_token": "xxx"}, CustomOAuth2Error),
+        ({"access_token": "xxx"}, DownloadFailedException),
+        (None, DownloadFailedException),
+    ],
+)
+def test_oauth_compliance_hook_4xx(
+    requests_mock: Mocker, status_code: int, response_payload: Optional[JsonDict], expected_exception: Type[Exception]
+):
+    requests_mock.post(
+        "https://services.sentinel-hub.com/oauth/token",
+        json=response_payload,
+        status_code=status_code,
+    )
+
+    with pytest.raises(expected_exception):
+        SentinelHubSession()
+    assert len(requests_mock.request_history) == 1
+
+
+@pytest.mark.parametrize("status_code", [500, 503])
+@pytest.mark.parametrize(
+    "response_payload",
+    [
+        ({"error": "Mocked error message", "access_token": "xxx"},),
+        ({"access_token": "xxx"},),
+        (None,),
+    ],
+)
+def test_oauth_compliance_hook_5xx(requests_mock: Mocker, status_code: int, response_payload: Optional[JsonDict]):
+    requests_mock.post(
+        "https://services.sentinel-hub.com/oauth/token",
+        json=response_payload,
+        status_code=status_code,
+    )
+
+    config = SHConfig()
+    config.max_download_attempts = 10
+    config.download_sleep_time = 0
+
+    with pytest.raises(DownloadFailedException):
+        SentinelHubSession(config=config)
+    assert len(requests_mock.request_history) == config.max_download_attempts
 
 
 @pytest.mark.parametrize("memory_name", [None, "test-name"])

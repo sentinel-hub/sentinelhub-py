@@ -8,7 +8,7 @@ utm
 shapely
 pyproj>=2.2.0
 oauthlib
-requests_oauthlib
+requests-oauthlib>=1.0.0
 aenum>=2.1.4
 dataclasses-json
 tqdm
