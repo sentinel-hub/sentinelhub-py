@@ -144,6 +144,9 @@ def decode_sentinelhub_err_msg(response: Response) -> str:
     :param response: Sentinel Hub service response
     :return: An error message
     """
+    if not isinstance(response.content, bytes) or not response.content:
+        return ""
+
     try:
         server_message = []
         for elem in decode_data(response.content, MimeType.XML):
