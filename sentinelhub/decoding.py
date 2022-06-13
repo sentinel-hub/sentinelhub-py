@@ -164,7 +164,7 @@ def decode_sentinelhub_err_msg(response: Response) -> str:
         for elem in decode_data(response.content, MimeType.XML):
             if "ServiceException" in elem.tag or "Message" in elem.tag or elem.tag == "body":
                 for text in elem.itertext():
-                    stripped_text = text.strip("\n\t ")
+                    stripped_text = text.strip()
                     if stripped_text:
                         server_message.append(stripped_text)
         return " ".join(server_message)
