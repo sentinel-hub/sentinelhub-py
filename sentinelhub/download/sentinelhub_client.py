@@ -8,6 +8,7 @@ from threading import Lock
 from typing import Any, Callable, Dict, Optional, Tuple, TypeVar, Union
 
 import requests
+from requests import Response
 
 from ..config import SHConfig
 from ..exceptions import SHRateLimitWarning, SHRuntimeWarning
@@ -63,7 +64,7 @@ class SentinelHubDownloadClient(DownloadClient):
 
     @retry_temporary_errors
     @fail_user_errors
-    def _execute_download(self, request: DownloadRequest) -> Any:
+    def _execute_download(self, request: DownloadRequest) -> bytes:
         """
         Executes the download with a single thread and uses a rate limit object, which is shared between all threads
         """
@@ -101,7 +102,7 @@ class SentinelHubDownloadClient(DownloadClient):
         with self.lock:
             return thread_unsafe_function(*args, **kwargs)
 
-    def _do_download(self, request: DownloadRequest) -> Any:
+    def _do_download(self, request: DownloadRequest) -> Response:
         """Runs the download"""
         if request.url is None:
             raise ValueError(f"Faulty request {request}, no URL specified.")
