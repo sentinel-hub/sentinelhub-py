@@ -20,6 +20,7 @@ from .constants import CRS
 from .data_collections import DataCollection
 from .geo_utils import transform_point
 from .geometry import BBox, BBoxCollection, Geometry, _BaseGeometry
+from .type_utils import JsonDict
 
 T = TypeVar("T", float, int)
 
@@ -641,23 +642,52 @@ class BatchSplitter(AreaSplitter):
             batch_request = self.batch_client.get_request(request_id)
 
         self.batch_request = batch_request
+        self.tile_size = self._get_tile_size()
+        self.tile_buffer = self._get_tile_buffer()
 
         batch_geometry = batch_request.geometry
         super().__init__([batch_geometry.geometry], batch_geometry.crs)
+
+    def _get_tile_size(self) -> Tuple[float, float]:
+        """Collects a tile size from the tiling grid info in units of the grid CRS."""
+        tiling_grid_id = self.batch_request.tiling_grid["id"]
+        grid_info = self.batch_client.get_tiling_grid(tiling_grid_id)
+
+        return grid_info["properties"]["tileWidth"], grid_info["properties"]["tileHeight"]
+
+    def _get_tile_buffer(self) -> Tuple[float, float]:
+        """Calculates tile buffer in units of the grid CRS."""
+        grid_info = self.batch_request.tiling_grid
+        resolution = grid_info["resolution"]
+        return grid_info["bufferX"] * resolution, grid_info["bufferY"] * resolution
 
     def _make_split(self) -> Tuple[List[BBox], List[Dict[str, object]]]:
         """This method actually loads bounding boxes from the service and prepares the lists"""
         tile_info_list = list(self.batch_client.iter_tiles(self.batch_request))
 
-        tile_geometries = [Geometry.from_geojson(tile_info["geometry"]) for tile_info in tile_info_list]
-        original_crs_list = [CRS(tile_info["origin"]["crs"]["properties"]["name"]) for tile_info in tile_info_list]
-
-        bbox_list = [geometry.transform(crs).bbox for geometry, crs in zip(tile_geometries, original_crs_list)]
+        bbox_list = [self._reconstruct_bbox(tile_info) for tile_info in tile_info_list]
         info_list = [
             {key: value for key, value in tile_info.items() if key != "geometry"} for tile_info in tile_info_list
         ]
 
         return bbox_list, info_list
+
+    def _reconstruct_bbox(self, tile_info: JsonDict) -> BBox:
+        """Reconstructs a bounding box from tile and grid properties."""
+        tile_crs = CRS(tile_info["origin"]["crs"]["properties"]["name"])
+
+        upper_left_corner = tile_info["origin"]["coordinates"]
+        width, height = self.tile_size
+
+        return BBox(
+            [
+                upper_left_corner[0] - self.tile_buffer[0],
+                upper_left_corner[1] - height - self.tile_buffer[1],
+                upper_left_corner[0] + width + self.tile_buffer[0],
+                upper_left_corner[1] + self.tile_buffer[1],
+            ],
+            tile_crs,
+        )
 
 
 def _parse_to_pair(
