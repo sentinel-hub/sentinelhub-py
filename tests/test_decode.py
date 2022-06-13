@@ -28,6 +28,7 @@ HTML_RESPONSE = (
     " failed.</title>\n</head>\n<body><h2>HTTP ERROR 500</h2>\n<p>Problem accessing /oauth/tokeninfo. Reason:\n<pre>"
     " Request failed.</pre></p>\n</body>\n</html>\n"
 )
+PARSED_HTML = "HTTP ERROR 500 Problem accessing /oauth/tokeninfo. Reason: Request failed."
 
 
 @pytest.mark.parametrize(
@@ -36,8 +37,9 @@ HTML_RESPONSE = (
         (None, ""),
         (False, ""),
         ("Text message!", "Text message!"),
-        ('{"error": "Json message!"}', '{"error": "Json message!"}'),
-        # (HTML_RESPONSE, HTML_RESPONSE),
+        ('{"error": "Json message!"}', "Json message!"),
+        ('{ "foo":  {"bar"  : 42}\n }', '{"foo": {"bar": 42}}'),
+        (HTML_RESPONSE, PARSED_HTML),
     ],
 )
 def test_decode_sentinelhub_err_msg(content: Union[str, bool, None], expected_message: str) -> None:

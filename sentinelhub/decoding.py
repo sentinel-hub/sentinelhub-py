@@ -6,6 +6,7 @@ import struct
 import tarfile
 import warnings
 from io import BytesIO, IOBase
+from json import JSONDecodeError
 from typing import Any, Dict, Union
 from xml.etree import ElementTree
 
@@ -148,11 +149,25 @@ def decode_sentinelhub_err_msg(response: Response) -> str:
         return ""
 
     try:
+        json_message = json.loads(response.content)
+        if "error" in json_message:
+            json_message = json_message["error"]
+
+        if isinstance(json_message, str):
+            return json_message
+        return json.dumps(json_message)
+    except JSONDecodeError:
+        pass
+
+    try:
         server_message = []
         for elem in decode_data(response.content, MimeType.XML):
-            if "ServiceException" in elem.tag or "Message" in elem.tag:
-                server_message.append(elem.text.strip("\n\t "))
-        return "".join(server_message)
+            if "ServiceException" in elem.tag or "Message" in elem.tag or elem.tag == "body":
+                for text in elem.itertext():
+                    stripped_text = text.strip("\n\t ")
+                    if stripped_text:
+                        server_message.append(stripped_text)
+        return " ".join(server_message)
     except ElementTree.ParseError:
         return response.text
 
