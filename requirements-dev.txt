@@ -9,8 +9,7 @@ isort
 pillow>=9.0.0
 click>=8.0.0
 rasterio;python_version<"3.10"
-ray[default];python_version<"3.10"
-protobuf<=3.20.1;python_version<"3.10" # incompatible ray dependency
+ray[default]
 mypy
 types-requests
 types-python-dateutil
