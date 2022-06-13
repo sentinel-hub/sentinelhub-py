@@ -1,4 +1,4 @@
-requests>=2.5.0
+requests>=2.27.0
 click
 numpy
 tifffile>=2020.9.30
