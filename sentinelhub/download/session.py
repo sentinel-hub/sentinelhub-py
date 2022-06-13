@@ -149,7 +149,7 @@ class SentinelHubSession:
         without an error message. In such cases `requests_oauthlib` would raise a completely wrong error message. This
         hook makes sure that a correct error message is raised.
 
-        It is important that in case of 5xx errors always an error is raised so that authentication can be retried.
+        It is important that in case of 5xx errors an error is always raised so that authentication can be retried.
         But in case of 4xx errors where response contains an error message this method intentionally doesn't raise
         an error so that `oauthlib` can later raise a more descriptive error.
         """
