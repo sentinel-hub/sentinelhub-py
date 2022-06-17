@@ -2,7 +2,7 @@ import os
 
 import pytest
 
-from sentinelhub import DataCollection, read_data, write_data
+from sentinelhub import DataCollection, read_data
 from sentinelhub.aws import AwsConstants, AwsProductRequest, AwsTileRequest
 
 
