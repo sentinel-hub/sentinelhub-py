@@ -20,7 +20,7 @@ jobs:
           ref: ${{ env.CHECKOUT_BRANCH }}
 
       - name: Prepare linters
-        run: pip install black[jupyter] isort flake8 nqba
+        run: pip install black[jupyter] isort flake8 nbqa
 
       - name: Check code compliance with black
         run: black . --check --diff
