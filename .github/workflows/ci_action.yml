@@ -33,7 +33,7 @@ jobs:
       - name: Check code compliance with flake8
         run: |
           pip install isort
-          flake8 . --check --diff
+          flake8 .
           nbqa flake8 examples --ignore=E402
 
   check-code-pylint-and-mypy:
