@@ -13,7 +13,7 @@ from typing import Any, Dict, Optional
 import requests
 from oauthlib.oauth2 import BackendApplicationClient
 from requests import Response
-from requests.exceptions import JSONDecodeError
+from json import JSONDecodeError
 from requests_oauthlib import OAuth2Session
 
 from ..config import SHConfig
