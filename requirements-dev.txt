@@ -11,6 +11,8 @@ click>=8.0.0
 rasterio;python_version<"3.10"
 ray[default]
 mypy
+nbqa
 types-requests
 types-python-dateutil
 types-urllib3
+flake8
