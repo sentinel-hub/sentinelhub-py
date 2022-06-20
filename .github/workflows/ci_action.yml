@@ -28,7 +28,7 @@ jobs:
       - name: Check code compliance with isort
         run: |
           isort . --check --diff
-          nbqa isort . --check --nbqa-diff
+          nbqa isort . --nbqa-diff
 
       - name: Check code compliance with flake8
         run: |
