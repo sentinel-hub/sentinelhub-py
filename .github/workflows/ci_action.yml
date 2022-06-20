@@ -39,7 +39,7 @@ jobs:
       - name: Check code compliance with flake8
         run: |
           flake8 .
-          nbqa flake8 . --ignore=E402
+          nbqa flake8 .
 
   check-code-pylint-and-mypy:
     runs-on: ubuntu-latest
