@@ -28,13 +28,12 @@ jobs:
       - name: Check code compliance with isort
         run: |
           isort . --check --diff
-          nbqa isort examples --check --diff
+          nbqa isort . --check --nbqa-diff
 
       - name: Check code compliance with flake8
         run: |
-          pip install isort
           flake8 .
-          nbqa flake8 examples --ignore=E402
+          nbqa flake8 . --ignore=E402
 
   check-code-pylint-and-mypy:
     runs-on: ubuntu-latest

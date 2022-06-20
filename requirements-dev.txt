@@ -15,3 +15,4 @@ nbqa
 types-requests
 types-python-dateutil
 types-urllib3
+flake8
