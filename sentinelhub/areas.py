@@ -659,7 +659,7 @@ class BatchSplitter(AreaSplitter):
         """Calculates tile buffer in units of the grid CRS."""
         grid_info = self.batch_request.tiling_grid
         resolution = grid_info["resolution"]
-        return grid_info["bufferX"] * resolution, grid_info["bufferY"] * resolution
+        return grid_info.get("bufferX", 0) * resolution, grid_info.get("bufferY", 0) * resolution
 
     def _make_split(self) -> Tuple[List[BBox], List[Dict[str, object]]]:
         """This method actually loads bounding boxes from the service and prepares the lists"""
