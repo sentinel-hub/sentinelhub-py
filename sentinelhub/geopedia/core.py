@@ -301,7 +301,6 @@ class GeopediaImageService(GeopediaService):
         items = []
 
         for field_items in field_iter:  # an image field can have multiple images
-
             for item in field_items:
                 if not item["mimeType"].startswith("image/"):
                     continue

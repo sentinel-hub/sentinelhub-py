@@ -425,7 +425,6 @@ class CustomGridSplitter(AreaSplitter):
 
         for grid_idx, grid_bbox in enumerate(self.bbox_grid):
             if self._intersects_area(grid_bbox):
-
                 bbox_splitter = BBoxSplitter([grid_bbox.geometry], grid_bbox.crs, split_shape=self.bbox_split_shape)
 
                 for bbox, info in zip(bbox_splitter.get_bbox_list(), bbox_splitter.get_info_list()):
