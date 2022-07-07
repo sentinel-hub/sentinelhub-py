@@ -8,7 +8,6 @@ black[jupyter]>=22.1.0
 isort
 pillow>=9.0.0
 click>=8.0.0
-rasterio;python_version<"3.10"
 ray[default]
 mypy
 nbqa
