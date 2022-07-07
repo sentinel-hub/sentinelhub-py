@@ -1,5 +1,4 @@
 import os
-import sys
 from platform import python_implementation
 
 import numpy as np
