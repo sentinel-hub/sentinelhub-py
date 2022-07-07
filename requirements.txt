@@ -2,7 +2,7 @@ requests>=2.27.0
 click
 numpy
 tifffile>=2020.9.30
-pillow
+pillow>=9.2.0
 python-dateutil
 utm
 shapely
