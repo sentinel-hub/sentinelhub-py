@@ -15,8 +15,8 @@ TimeType = TypeVar("TimeType", dt.date, dt.datetime)  # pylint: disable=invalid-
 def is_valid_time(time: str) -> bool:
     """Check if input string represents a valid time/date stamp
 
-    :param time: a string containing a time/date stamp
-    :return: `True` is string is a valid time/date stamp, `False` otherwise
+    :param time: A string containing a time/date.
+    :return: `True` is string is a valid time/date, `False` otherwise.
     """
     try:
         dateutil.parser.parse(time)
@@ -30,12 +30,12 @@ def parse_time(
 ) -> Optional[dt.date]:
     """Parse input time/date string
 
-    :param time_input: time/date to parse
+    :param time_input: An input representation of a time.
     :param force_datetime: If True it will always return datetime.datetime object, if False it can also return only
         `datetime.date` object if only date is provided as input.
-    :param allow_undefined: Flag to allow parsing None or '..' into None
-    :param kwargs: Any keyword arguments to be passed to `dateutil.parser.parse`. Example: `ignoretz=True`
-    :return: A datetime object
+    :param allow_undefined: Flag to allow parsing None or '..' into None.
+    :param kwargs: Keyword arguments to be passed to `dateutil.parser.parse`. Example: `ignoretz=True`.
+    :return: A parsed datetime representing the time.
     """
 
     if time_input is None or time_input == "..":
@@ -73,10 +73,10 @@ def parse_time_interval(
     All input times can also be specified as `datetime` objects. Instances of `datetime.date` will be treated as
     `YYYY-MM-DD` and instance of `datetime.datetime` will be treated as `YYYY-MM-DDThh:mm:ss`.
 
-    :param allow_undefined: Boolean flag controls if None or '..' are allowed
-    :param allow_undefined: bool
-    :param time: An input time
-    :return: interval of start and end date of the form `YYYY-MM-DDThh:mm:ss`
+    :param time: An input representation of a time interval.
+    :param allow_undefined: Boolean flag controls if None or '..' are allowed.
+    :param kwargs: Keyword arguments to be passed to `parse_time` function.
+    :return: A pair of datetime objects defining the time interval.
     :raises: ValueError
     """
     date_interval: Tuple[Union[None, dt.date], Union[None, dt.date]]
@@ -118,12 +118,12 @@ def serialize_time(timestamp_input: Iterable[Optional[dt.date]], *, use_tz: bool
 def serialize_time(
     timestamp_input: Union[None, dt.date, Iterable[Optional[dt.date]]], *, use_tz: bool = False
 ) -> Union[str, Tuple[str, ...]]:
-    """Transforms datetime objects into ISO 8601 strings
+    """Transforms datetime objects into ISO 8601 strings.
 
-    :param timestamp_input: A datetime object or a tuple of datetime objects
+    :param timestamp_input: A datetime object or a tuple of datetime objects.
     :param use_tz: If `True` it will ensure that the serialized string contains a timezone information (typically
-        with `Z` at the end instead of +00:00). If `False` it will make sure to remove any timezone information
-    :return: Timestamp(s) serialized into string(s)
+        with `Z` at the end instead of +00:00). If `False` it will make sure to remove any timezone information.
+    :return: Timestamp(s) serialized into string(s).
     """
     if isinstance(timestamp_input, Iterable):
         return tuple(serialize_time(timestamp, use_tz=use_tz) for timestamp in timestamp_input)
@@ -150,11 +150,11 @@ def serialize_time(
 
 
 def date_to_datetime(date: dt.date, time: Optional[dt.time] = None) -> dt.datetime:
-    """Converts a date object into datetime object
+    """Converts a date object into datetime object.
 
-    :param date: a date object
-    :param time: an option time object, if not provided it will replace it with 00:00:00
-    :return: A datetime object derived from date and time
+    :param date: A date object.
+    :param time: An option time object, if not provided it will replace it with `00:00:00`.
+    :return: A datetime object derived from date and time.
     """
     if time is None:
         time = dt.datetime.min.time()
@@ -164,9 +164,9 @@ def date_to_datetime(date: dt.date, time: Optional[dt.time] = None) -> dt.dateti
 def filter_times(timestamps: Iterable[TimeType], time_difference: dt.timedelta) -> List[TimeType]:
     """Filters out timestamps within time_difference, preserving only the oldest timestamp.
 
-    :param timestamps: A list of timestamps
-    :param time_difference: A time difference threshold
-    :return: An ordered list of timestamps `d_1<=d_2<=...<=d_n` such that `d_(i+1)-d_i > time_difference`
+    :param timestamps: A list of timestamps.
+    :param time_difference: A time difference threshold.
+    :return: An ordered list of timestamps `d_1 <= d_2 <= ... <= d_n` such that `d_(i+1)-d_i > time_difference`.
     """
     timestamps = sorted(set(timestamps))
 
