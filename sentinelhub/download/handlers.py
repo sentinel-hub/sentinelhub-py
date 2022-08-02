@@ -44,7 +44,6 @@ def fail_user_errors(download_func: Callable[[Self, DownloadRequest], T]) -> Cal
                 exception.response.status_code < requests.status_codes.codes.INTERNAL_SERVER_ERROR
                 and exception.response.status_code != requests.status_codes.codes.TOO_MANY_REQUESTS
             ):
-
                 raise DownloadFailedException(
                     _create_download_failed_message(exception, request.url), request_exception=exception
                 ) from exception
@@ -67,7 +66,6 @@ def retry_temporary_errors(
             try:
                 return download_func(self, request)
             except requests.RequestException as exception:
-
                 if not (
                     _is_temporary_problem(exception)
                     or (

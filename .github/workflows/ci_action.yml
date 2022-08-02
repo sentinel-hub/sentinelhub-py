@@ -5,38 +5,49 @@ on:
   schedule:
     - cron: '0 0 * * *'
 
+env:
+  # The only way to simulate if-else statement
+  CHECKOUT_BRANCH: ${{ github.event_name == 'push' && github.ref || 'develop' }}
+
 jobs:
 
-  check-code-black:
+  check-code-black-isort-flake8:
     runs-on: ubuntu-latest
     steps:
-      - name: Check out current branch
-        if: github.event_name == 'push'
+      - name: Checkout branch
         uses: actions/checkout@v2
+        with:
+          ref: ${{ env.CHECKOUT_BRANCH }}
+
+      - name: Setup Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: "3.8"
+          architecture: x64
+
+      - name: Prepare linters
+        run: pip install black[jupyter] isort flake8 nbqa
 
       - name: Check code compliance with black
-        run: |
-          pip install black[jupyter]
-          black . --check --diff
-
-  check-code-isort:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Check out current branch
-        if: github.event_name == 'push'
-        uses: actions/checkout@v2
+        run: black . --check --diff
 
       - name: Check code compliance with isort
         run: |
-          pip install isort
-          isort **/*.py --check --diff
+          isort . --check --diff
+          nbqa isort . --nbqa-diff
+
+      - name: Check code compliance with flake8
+        run: |
+          flake8 .
+          nbqa flake8 .
 
   check-code-pylint-and-mypy:
     runs-on: ubuntu-latest
     steps:
-      - name: Check out current branch
-        if: github.event_name == 'push'
+      - name: Checkout branch
         uses: actions/checkout@v2
+        with:
+          ref: ${{ env.CHECKOUT_BRANCH }}
 
       - name: Setup Python
         uses: actions/setup-python@v2
@@ -45,10 +56,10 @@ jobs:
           architecture: x64
       
       - name: Install packages
-        run: pip install -e .[DEV]
+        run: pip install -e .[AWS,DEV]
       
       - name: Run mypy
-        run: mypy sentinelhub
+        run: mypy sentinelhub setup.py
 
       - name: Run pylint
         run: pylint sentinelhub
@@ -63,15 +74,10 @@ jobs:
           - '3.9'
           - '3.10'
     steps:
-      - name: Check out current branch in case of a push event
-        if: github.event_name == 'push'
-        uses: actions/checkout@v2
-
-      - name: Check out develop branch in case of a scheduled event
-        if: github.event_name == 'schedule'
+      - name: Checkout branch
         uses: actions/checkout@v2
         with:
-          ref: develop
+          ref: ${{ env.CHECKOUT_BRANCH }}
 
       - name: Setup Python
         uses: actions/setup-python@v2

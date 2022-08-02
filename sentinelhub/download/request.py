@@ -152,7 +152,6 @@ class DownloadRequest:
 
 
 class DownloadData:
-
     data: Any
     headers: Optional[JsonDict]
     status_code: Optional[int]

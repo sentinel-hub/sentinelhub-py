@@ -89,7 +89,7 @@ def size(pathname: str) -> int:
     """
     if os.path.isfile(pathname):
         return os.path.getsize(pathname)
-    return sum([size(f"{pathname}/{name}") for name in get_content_list(pathname)])
+    return sum(size(f"{pathname}/{name}") for name in get_content_list(pathname))
 
 
 def sys_is_windows() -> bool:

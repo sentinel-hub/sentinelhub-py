@@ -10,7 +10,7 @@ import pytest
 from sentinelhub import SentinelHubSession, SHConfig
 
 pytest.register_assert_rewrite("sentinelhub.testing_utils")
-from sentinelhub.testing_utils import get_input_folder, get_output_folder
+from sentinelhub.testing_utils import get_input_folder, get_output_folder  # noqa
 
 INPUT_FOLDER = get_input_folder(__file__)
 OUTPUT_FOLDER = get_output_folder(__file__)

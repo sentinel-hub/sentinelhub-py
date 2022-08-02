@@ -5,8 +5,34 @@ preview = true
 [tool.isort]
 profile = "black"
 known_absolute = "sentinelhub"
-sections = ["FUTURE","STDLIB","THIRDPARTY","ABSOLUTE","LOCALFOLDER"]
+sections = ["FUTURE", "STDLIB", "THIRDPARTY", "ABSOLUTE", "LOCALFOLDER"]
 line_length = 120
+
+[tool.pylint.format]
+max-line-length = 120
+
+[tool.pylint.messages_control]
+disable = [
+    "no-member",
+    "arguments-differ",
+    "assignment-from-no-return",
+    "unsubscriptable-object",
+    "invalid-unary-operand-type",
+    "unspecified-encoding",
+    "unnecessary-ellipsis"
+]
+
+[tool.pylint.design]
+max-args = 10
+max-attributes = 20
+max-locals = 20
+min-public-methods = 0
+
+[tool.pylint.similarities]
+min-similarity-lines = 5
+
+[tool.pylint.classes]
+valid-metaclass-classmethod-first-arg = "mcs"
 
 [tool.pytest.ini_options]
 markers = [
@@ -38,3 +64,8 @@ disallow_untyped_defs = true
 disallow_untyped_decorators = true
 warn_unreachable = true
 strict_equality = true
+
+[tool.nbqa.addopts]
+flake8 = [
+    "--extend-ignore=E402"
+]

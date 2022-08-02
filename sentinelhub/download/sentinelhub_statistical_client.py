@@ -100,7 +100,7 @@ class SentinelHubStatisticalDownloadClient(SentinelHubDownloadClient):
 
         return dict(zip(time_intervals, stat_info_responses))
 
-    def _execute_single_stat_download(self, request: DownloadRequest) -> Any:
+    def _execute_single_stat_download(self, request: DownloadRequest) -> JsonDict:
         """Makes sure a download for a single time interval is retried"""
         for retry_count in range(self.n_interval_retries):
             response = self._execute_download(request)

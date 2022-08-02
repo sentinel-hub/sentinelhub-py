@@ -14,6 +14,7 @@
 #
 import os
 import shutil
+import sys
 
 # -- Project information -----------------------------------------------------
 
@@ -22,6 +23,7 @@ project = "Sentinel Hub"
 project_copyright = "2018, Sentinel Hub"
 author = "Sinergise EO research team"
 doc_title = "sentinelhub Documentation"
+
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -57,6 +59,9 @@ extensions = [
     "sphinx.ext.githubpages",
     "m2r2",
 ]
+
+# Incude typehints in descriptions
+autodoc_typehints = "description"
 
 # Both the class’ and the __init__ method’s docstring are concatenated and inserted.
 autoclass_content = "both"
@@ -98,7 +103,7 @@ pygments_style = "sphinx"
 todo_include_todos = True
 
 # Mock imports that won't and don't have to be installed in ReadTheDocs environment
-autodoc_mock_imports = ["boto3", "botocore"]
+autodoc_mock_imports = ["boto3", "botocore", "pytest"]
 
 # -- Options for HTML output ----------------------------------------------
 
@@ -253,3 +258,23 @@ def process_readme():
 
 
 process_readme()
+
+# Auto-generate documentation pages
+current_dir = os.path.abspath(os.path.dirname(__file__))
+target_dir = os.path.join(current_dir, "reference")
+module = os.path.join(current_dir, "..", "..", "sentinelhub")
+
+APIDOC_EXCLUDE = [os.path.join(module, "commands.py"), os.path.join(module, "aws", "commands.py")]
+APIDOC_OPTIONS = ["--module-first", "--separate", "--no-toc", "--templatedir", os.path.join(current_dir, "_templates")]
+
+
+def run_apidoc(_):
+    from sphinx.ext.apidoc import main
+
+    sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
+
+    main(["-e", "-o", target_dir, module, *APIDOC_EXCLUDE, *APIDOC_OPTIONS])
+
+
+def setup(app):
+    app.connect("builder-inited", run_apidoc)

@@ -6,17 +6,17 @@ import struct
 import tarfile
 import warnings
 from io import BytesIO, IOBase
+from json import JSONDecodeError
 from typing import Any, Dict, Union
 from xml.etree import ElementTree
 
 import numpy as np
-import PIL
 import tifffile as tiff
 from PIL import Image
 from requests import Response
 
 from .constants import MimeType
-from .exceptions import ImageDecodingError, SHUserWarning
+from .exceptions import ImageDecodingError
 
 
 def decode_data(response_content: bytes, data_type: MimeType) -> Any:
@@ -83,38 +83,13 @@ def decode_image_with_pillow(stream: Union[IOBase, str]) -> np.ndarray:
 
 
 def decode_jp2_image(stream: IOBase) -> np.ndarray:
-    """Tries to decode a JPEG2000 image either using `rasterio` or `Pillow` package.
+    """Tries to decode a JPEG2000 image using the `Pillow` package.
 
     :param stream: A binary stream format.
     :return: A numpy array representing an image of shape (height, width) or (height, width, channels).
     """
-    try:
-        # pylint: disable=import-outside-toplevel
-        import rasterio
-        from rasterio.errors import NotGeoreferencedWarning
-
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore", NotGeoreferencedWarning)
-            with rasterio.open(stream) as file:
-                image = np.array(file.read())
-
-        image = np.moveaxis(image, 0, -1)
-        if image.shape[-1] == 1:
-            image = np.squeeze(image, axis=-1)
-
-        return image
-    except ImportError:
-        pass
-
     image = decode_image_with_pillow(stream)
     bit_depth = get_jp2_bit_depth(stream)
-
-    if PIL.__version__ >= "9.0.0" and bit_depth == 15:
-        warnings.warn(
-            f"Pillow {PIL.__version__} probably incorrectly decoded 15-bit JPEG2000 image. To decode it correctly "
-            "install rasterio package and run this code again.",
-            category=SHUserWarning,
-        )
 
     return fix_jp2_image(image, bit_depth)
 
@@ -144,12 +119,29 @@ def decode_sentinelhub_err_msg(response: Response) -> str:
     :param response: Sentinel Hub service response
     :return: An error message
     """
+    if not isinstance(response.content, bytes) or not response.content:
+        return ""
+
+    try:
+        json_message = json.loads(response.content)
+        if "error" in json_message:
+            json_message = json_message["error"]
+
+        if isinstance(json_message, str):
+            return json_message
+        return json.dumps(json_message)
+    except JSONDecodeError:
+        pass
+
     try:
         server_message = []
         for elem in decode_data(response.content, MimeType.XML):
-            if "ServiceException" in elem.tag or "Message" in elem.tag:
-                server_message.append(elem.text.strip("\n\t "))
-        return "".join(server_message)
+            if "ServiceException" in elem.tag or "Message" in elem.tag or elem.tag == "body":
+                for text in elem.itertext():
+                    stripped_text = text.strip()
+                    if stripped_text:
+                        server_message.append(stripped_text)
+        return " ".join(server_message)
     except ElementTree.ParseError:
         return response.text
 

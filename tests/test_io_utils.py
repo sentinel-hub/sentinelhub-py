@@ -1,5 +1,4 @@
 import os
-import sys
 from platform import python_implementation
 
 import numpy as np
@@ -22,11 +21,6 @@ from sentinelhub.exceptions import SHUserWarning
     ],
 )
 def test_img_read(input_folder, output_folder, filename, mean, shape):
-    if filename == "img-15bit.jp2" and sys.version_info >= (3, 10):
-        pytest.skip(
-            "Rasterio doesn't support Python 3.10 yet, therefore JPEG2000 images would not be decoded correctly."
-        )
-
     is_jpeg = filename.endswith("jpg")
     img = read_data(os.path.join(input_folder, filename))
 

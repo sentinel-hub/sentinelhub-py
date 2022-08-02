@@ -406,7 +406,6 @@ def test_multipart_geometry():
 
 
 def test_bad_credentials():
-
     evalscript = """
                 //VERSION=3
 
