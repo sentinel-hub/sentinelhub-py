@@ -1,8 +1,6 @@
 """
 A module that tests an interface for Sentinel Hub Batch processing
 """
-import datetime as dt
-
 import pytest
 
 from sentinelhub import BatchStatisticalRequest, DataCollection, SentinelHubBatchStatistical, SentinelHubStatistical
