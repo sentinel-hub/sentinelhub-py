@@ -5,12 +5,7 @@ import datetime as dt
 
 import pytest
 
-from sentinelhub import (
-    BatchStatisticalRequest,
-    DataCollection,
-    SentinelHubBatchStatistical,
-    SentinelHubStatistical,
-)
+from sentinelhub import BatchStatisticalRequest, DataCollection, SentinelHubBatchStatistical, SentinelHubStatistical
 
 pytestmark = pytest.mark.sh_integration
 
