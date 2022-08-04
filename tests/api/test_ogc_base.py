@@ -1,6 +1,7 @@
 import pytest
 
 from sentinelhub import CRS, BBox, DataCollection, WcsRequest
+from sentinelhub.download.request import DownloadResponse
 
 
 @pytest.fixture(name="wcs_request")
@@ -34,7 +35,7 @@ def test_encoded_latest_result(wcs_request):
 
     assert isinstance(result_list, list)
     assert len(result_list) == 1
-    assert all(isinstance(result, bytes) for result in result_list)
+    assert all(isinstance(result, DownloadResponse) for result in result_list)
 
     cached_result_list = wcs_request.get_data(decode_data=False)
     assert result_list == cached_result_list
