@@ -96,8 +96,10 @@ class DataRequest(metaclass=ABCMeta):
             ``data_filter=[0, 2, -1]`` the method will return only 1st, 3rd and last item. Default filter is `None`.
         :param max_threads: Maximum number of threads to be used for download in parallel. The default is
             `max_threads=None` which will use the number of processors on the system multiplied by 5.
-        :param decode_data: If `True` (default) it decodes data (e.g., returns image as an array of numbers);
-            if `False` it returns binary data.
+        :param decode_data: If `True` it will return data in a decoded format, e.g. images in form of `numpy` arrays
+            of values, JSON data in form of Python dictionaries, etc. Otherwise, it will return `DownloadResponse`
+            objects which contain both encoded data in a binary format and metadata about response, e.g. response
+            headers, status code, elapsed download time, etc.
         :param raise_download_errors: If `True` any error in download process should be raised as
             ``DownloadFailedException``. If `False` failed downloads will only raise warnings and the method will
             return list with `None` values in places where the results of failed download requests should be.

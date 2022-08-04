@@ -1,16 +1,23 @@
 """
 Module implementing DownloadRequest class
 """
+from __future__ import annotations
+
 import datetime as dt
+import functools
 import hashlib
 import json
 import os
 import warnings
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any, Optional, Tuple
 
+from requests import Response
+
 from ..constants import MimeType, RequestType
+from ..decoding import decode_data
 from ..exceptions import SHRuntimeWarning
+from ..io_utils import read_data, write_data
 from ..os_utils import sys_is_windows
 from ..type_utils import JsonDict
 
@@ -151,15 +158,98 @@ class DownloadRequest:
             warnings.warn(message, category=SHRuntimeWarning)
 
 
-class DownloadData:
-    data: Any
-    headers: Optional[JsonDict]
-    status_code: Optional[int]
-    elapsed = Optional[float]
-    # MimeType? although that is not relevant anymore
+@dataclass(frozen=True)
+class DownloadResponse:
+    """A class defining a single download response.
 
-    def from_response(self):
-        pass
+    :param request: A download request object for which the response is obtained.
+    :param content: Raw encoded data of the response.
+    :param headers: Headers obtained with the response.
+    :param status_code: Status code of the response.
+    :param elapsed: Number of seconds it took to obtain the response.
+    """
 
-    def from_file(self):
-        pass
+    request: DownloadRequest
+    content: bytes
+    headers: JsonDict = field(default_factory=dict)
+    status_code: Optional[int] = None
+    elapsed: Optional[float] = None
+
+    @classmethod
+    def from_response(cls, response: Response, request: DownloadRequest) -> DownloadResponse:
+        """Creates `DownloadResponse` object from obtained from a service response and request info.
+
+        :param: A service response object.
+        :param: A request for which response was obtained.
+        :return: An instance of a download response object.
+        """
+        return cls(
+            request=request,
+            content=response.content,
+            headers=dict(response.headers),
+            status_code=response.status_code,
+            elapsed=response.elapsed.total_seconds(),
+        )
+
+    @classmethod
+    def from_local(cls, request: DownloadRequest) -> DownloadResponse:
+        """Creates `DownloadResponse` object by loading it from locally cached data.
+
+        :param request: A request object for which data is cached locally.
+        :return: An instance of a download response object.
+        """
+        request_path, response_path = request.get_storage_paths()
+        if response_path is None:
+            raise ValueError("Cannot load cached data because response path isn't defined")
+
+        content = read_data(response_path, data_format=MimeType.RAW)
+
+        response_builder = functools.partial(cls, request=request, content=content)
+        if request_path is None:
+            return response_builder()
+
+        response_info = read_data(request_path, data_format=MimeType.JSON).get("response")
+        if response_info is None:
+            return response_builder()
+
+        return response_builder(
+            headers=response_info.get("headers", {}),
+            status_code=response_info.get("status_code"),
+            elapsed=response_info.get("elapsed"),
+        )
+
+    def to_local(self) -> None:
+        """Caches data about a request and a response locally."""
+        request_path, response_path = self.request.get_storage_paths()
+        if response_path is None:
+            raise ValueError("Cannot cache data because response path isn't defined")
+
+        write_data(response_path, self.content, data_format=MimeType.RAW)
+
+        if request_path is None:
+            return
+
+        info = {
+            "request": self.request.get_request_params(include_metadata=True),
+            "response": {
+                "headers": self.headers,
+                "status_code": self.status_code,
+                "elapsed": self.elapsed,
+            },
+        }
+        write_data(request_path, info, data_format=MimeType.JSON)
+
+    @property
+    def response_type(self) -> MimeType:
+        """Provides the expected mime type of the response data."""
+        if self.request.data_type is not MimeType.RAW:
+            return self.request.data_type
+
+        content_type = self.headers.get("Content-Type") or self.headers.get("content-type")
+        if content_type:
+            return MimeType.from_string(content_type)
+        return MimeType.RAW
+
+    def decode(self) -> Any:
+        """Decodes binary data into a Python object."""
+        return decode_data(self.content, data_type=self.response_type)

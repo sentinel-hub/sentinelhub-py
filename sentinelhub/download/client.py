@@ -7,26 +7,24 @@ import os
 import sys
 import warnings
 from concurrent.futures import Future, ThreadPoolExecutor, as_completed
-from typing import Any, List, Optional, Union, cast, overload
+from typing import Any, List, Optional, Union, overload
 from xml.etree import ElementTree
 
 import requests
-from requests import Response
 from tqdm.auto import tqdm
 
 from ..config import SHConfig
 from ..constants import MimeType, RequestType
-from ..decoding import decode_data as decode_data_function
 from ..exceptions import (
     DownloadFailedException,
     HashedNameCollisionException,
     MissingDataInRequestException,
     SHRuntimeWarning,
 )
-from ..io_utils import read_data, write_data
+from ..io_utils import read_data
 from ..type_utils import JsonDict
 from .handlers import fail_user_errors, retry_temporary_errors
-from .request import DownloadRequest
+from .request import DownloadRequest, DownloadResponse
 
 LOGGER = logging.getLogger(__name__)
 
@@ -90,7 +88,8 @@ class DownloadClient:
         :param download_requests: A list of requests or a single request to be executed.
         :param max_threads: Maximum number of threads to be used for download in parallel. The default is
             `max_threads=None` which will use the number of processors on the system multiplied by 5.
-        :param decode_data: If `True` it will decode data otherwise it will return it in binary format.
+        :param decode_data: If `True` it will decode data otherwise it will return it in form of a `DownloadResponse`
+            objects which contain binary data and response metadata.
         :param show_progress: Whether a progress bar should be displayed while downloading
         :return: A list of results or a single result, depending on input parameter `download_requests`
         """
@@ -98,8 +97,9 @@ class DownloadClient:
 
         data_list = [None] * len(downloads)
 
+        single_download_method = self._single_download_decoded if decode_data else self._single_download
         with ThreadPoolExecutor(max_workers=max_threads) as executor:
-            download_list = [executor.submit(self._single_download, request, decode_data) for request in downloads]
+            download_list = [executor.submit(single_download_method, request) for request in downloads]
             future_order = {future: i for i, future in enumerate(download_list)}
 
             # Consider using tqdm.contrib.concurrent.thread_map in the future
@@ -128,41 +128,38 @@ class DownloadClient:
             warnings.warn(str(download_exception), category=SHRuntimeWarning)
             return None
 
-    def _single_download(self, request: DownloadRequest, decode_data: bool) -> Any:
-        """Method for downloading a single request"""
+    def _single_download_decoded(self, request: DownloadRequest) -> Any:
+        """Downloads a response and decodes it into data. By decoding a single response"""
+        response = self._single_download(request)
+        return None if response is None else response.decode()
+
+    def _single_download(self, request: DownloadRequest) -> Optional[DownloadResponse]:
+        """Method for downloading a single request."""
         request.raise_if_invalid()
 
         request_path, response_path = request.get_storage_paths()
 
         if not self._is_download_required(request, response_path):
-            path = cast(str, response_path)  # refactor in future, for now ensured by _is_download_required
-            if request.return_data:
-                LOGGER.debug("Reading locally stored data from %s instead of downloading", path)
-                self._check_cached_request_is_matching(request, request_path)
-                return read_data(path, data_format=request.data_type if decode_data else MimeType.RAW)
-            return None
+            if not request.return_data or response_path is None:
+                return None
+
+            LOGGER.debug("Reading locally stored data from %s instead of downloading", response_path)
+            self._check_cached_request_is_matching(request, request_path)
+            return DownloadResponse.from_local(request)
 
         response = self._execute_download(request)
 
-        if request_path and request.save_response and (self.redownload or not os.path.exists(request_path)):
-            request_info = request.get_request_params(include_metadata=True)
-            write_data(request_path, request_info, MimeType.JSON)
-            LOGGER.debug("Saved request info to %s", request_path)
-
-        if request.save_response:
-            path = cast(str, response_path)  # refactor in future, for now ensured by raise_if_invalid
-            write_data(path, response_content, MimeType.RAW)
-            LOGGER.debug("Saved data to %s", path)
+        if request.save_response and response_path and (self.redownload or not os.path.exists(response_path)):
+            response.to_local()
+            LOGGER.debug("Saved response data to %s", response_path)
 
         if request.return_data:
-            if decode_data:
-                return decode_data_function(response_content, request.data_type)
-            return response_content
+            return response
         return None
 
     @retry_temporary_errors
     @fail_user_errors
-    def _execute_download(self, request: DownloadRequest) -> Response:
+    def _execute_download(self, request: DownloadRequest) -> DownloadResponse:
         """A default way of executing a single download request"""
         if request.url is None:
             raise ValueError(f"Faulty request {request}, no URL specified.")
@@ -185,7 +182,7 @@ class DownloadClient:
         response.raise_for_status()
         LOGGER.debug("Successful %s request to %s", request.request_type.value, request.url)
 
-        return response
+        return DownloadResponse.from_response(response, request)
 
     def _is_download_required(self, request: DownloadRequest, response_path: Optional[str]) -> bool:
         """Checks if download should actually be done"""
@@ -200,10 +197,13 @@ class DownloadClient:
             return
 
         cached_request_info = read_data(request_path, MimeType.JSON)
-        current_request_info = request.get_request_params(include_metadata=False)
+        if "request" in cached_request_info:  # Backwards compatibility - older versions don't have "request" subdict
+            cached_request_info = cached_request_info["request"]
         # Timestamps are allowed to differ
         del cached_request_info["timestamp"]
         del cached_request_info["headers"]
+
+        current_request_info = request.get_request_params(include_metadata=False)
         # Saved request was jsonified
         current_request_info_json = json.loads(json.dumps(current_request_info))
 
@@ -248,7 +248,7 @@ class DownloadClient:
             **kwargs,
         )
 
-        return self._single_download(request, decode_data=True)
+        return self._single_download_decoded(request)
 
     def get_json_dict(self, url: str, *args: Any, extract_key: Optional[str] = None, **kwargs: Any) -> JsonDict:
         """Download request as JSON data type, failing if the result is not a dictionary
@@ -283,4 +283,4 @@ class DownloadClient:
         :return: request response as XML instance
         """
         request = DownloadRequest(url=url, data_type=MimeType.XML, **kwargs)
-        return self._single_download(request, decode_data=True)
+        return self._single_download_decoded(request)
