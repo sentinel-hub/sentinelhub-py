@@ -8,7 +8,7 @@ import time
 from collections import defaultdict
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, DefaultDict, Dict, Iterable, Iterator, List, Optional, Tuple, Union
+from typing import Any, DefaultDict, Dict, Iterator, List, Optional, Tuple, Union
 
 from dataclasses_json import CatchAll, LetterCase, Undefined
 from dataclasses_json import config as dataclass_config
@@ -20,7 +20,8 @@ from ..constants import RequestType
 from ..data_collections import DataCollection
 from ..geometry import CRS, BBox, Geometry
 from ..type_utils import Json, JsonDict
-from .base import BaseCollection, SentinelHubFeatureIterator, SentinelHubService
+from .base import BaseCollection, SentinelHubFeatureIterator
+from .batch_base import BaseBatchClient, BaseBatchRequest, BatchRequestStatus, BatchUserAction
 from .process import SentinelHubRequest
 from .utils import datetime_config, enum_config, remove_undefined
 
@@ -30,7 +31,18 @@ BatchRequestType = Union[str, dict, "BatchRequest"]
 BatchCollectionType = Union[str, dict, "BatchCollection"]
 
 
-class SentinelHubBatch(SentinelHubService):
+class BatchTileStatus(Enum):
+    """An enum class with all possible batch tile statuses"""
+
+    PENDING = "PENDING"
+    SCHEDULED = "SCHEDULED"
+    QUEUED = "QUEUED"
+    PROCESSING = "PROCESSING"
+    PROCESSED = "PROCESSED"
+    FAILED = "FAILED"
+
+
+class SentinelHubBatch(BaseBatchClient):
     """An interface class for Sentinel Hub Batch API
 
     For more info check `Batch API reference <https://docs.sentinel-hub.com/api/latest/reference/#tag/batch_process>`__.
@@ -422,12 +434,6 @@ class SentinelHubBatch(SentinelHubService):
             url=self._get_collections_url(collection_id), request_type=RequestType.DELETE, use_session=True
         )
 
-    def _call_job(self, batch_request: BatchRequestType, endpoint_name: str) -> Json:
-        """Makes a POST request to the service that triggers a processing job"""
-        request_id = self._parse_request_id(batch_request)
-        job_url = f"{self._get_process_url(request_id)}/{endpoint_name}"
-        return self.client.get_json(url=job_url, request_type=RequestType.POST, use_session=True)
-
     def _get_process_url(self, request_id: Optional[str] = None) -> str:
         """Creates a URL for process endpoint"""
         url = f"{self.service_url}/process"
@@ -456,16 +462,7 @@ class SentinelHubBatch(SentinelHubService):
             return f"{url}/{collection_id}"
         return url
 
-    @staticmethod
-    def _parse_request_id(data: BatchRequestType) -> str:
-        """Parses batch request id from multiple possible inputs"""
-        if isinstance(data, BatchRequest):
-            return data.request_id
-        if isinstance(data, dict):
-            return data["id"]
-        if isinstance(data, str):
-            return data
-        raise ValueError(f"Expected a BatchRequest, dictionary or a string, got {data}.")
+    _get_job_endpoint_url = _get_process_url
 
     @staticmethod
     def _parse_collection_id(data: BatchCollectionType) -> Optional[str]:
@@ -488,42 +485,9 @@ class SentinelHubBatch(SentinelHubService):
         raise ValueError(f"Expected either a BatchCollection or a dict, got {data}.")
 
 
-class BatchRequestStatus(Enum):
-    """An enum class with all possible batch request statuses"""
-
-    CREATED = "CREATED"
-    ANALYSING = "ANALYSING"
-    ANALYSIS_DONE = "ANALYSIS_DONE"
-    PROCESSING = "PROCESSING"
-    DONE = "DONE"
-    FAILED = "FAILED"
-    PARTIAL = "PARTIAL"
-    CANCELED = "CANCELED"
-
-
-class BatchTileStatus(Enum):
-    """An enum class with all possible batch tile statuses"""
-
-    PENDING = "PENDING"
-    SCHEDULED = "SCHEDULED"
-    QUEUED = "QUEUED"
-    PROCESSING = "PROCESSING"
-    PROCESSED = "PROCESSED"
-    FAILED = "FAILED"
-
-
-class BatchUserAction(Enum):
-    """An enum class with all possible batch user actions"""
-
-    START = "START"
-    ANALYSE = "ANALYSE"
-    NONE = "NONE"
-    CANCEL = "CANCEL"
-
-
 @dataclass_json(letter_case=LetterCase.CAMEL, undefined=Undefined.INCLUDE)
-@dataclass
-class BatchRequest:
+@dataclass(repr=False)
+class BatchRequest(BaseBatchRequest):
     """A dataclass object that holds information about a batch request"""
 
     request_id: str = field(metadata=dataclass_config(field_name="id"))
@@ -554,12 +518,6 @@ class BatchRequest:
         "value_estimate",
         "tile_count",
     ]
-
-    def __repr__(self) -> str:
-        """A representation that shows the basic parameters of a batch job"""
-        repr_params = {name: getattr(self, name) for name in self._REPR_PARAM_NAMES if getattr(self, name) is not None}
-        repr_params_str = "\n  ".join(f"{name}={value}" for name, value in repr_params.items())
-        return f"{self.__class__.__name__}(\n  {repr_params_str}\n  ...\n)"
 
     @property
     def evalscript(self) -> str:
@@ -592,25 +550,6 @@ class BatchRequest:
         if geometry is None:
             raise ValueError("Geometry is not defined for this batch request")
         return Geometry(geometry, crs)
-
-    def raise_for_status(
-        self,
-        status: Union[str, BatchRequestStatus, Iterable[Union[str, BatchRequestStatus]]] = BatchRequestStatus.FAILED,
-    ) -> None:
-        """Raises an error in case batch request has a given status
-
-        :param status: One or more status codes on which to raise an error. The default is `'FAILED'`.
-        :raises: RuntimeError
-        """
-        if isinstance(status, (str, BatchRequestStatus)):
-            status = [status]
-        status_list = [BatchRequestStatus(_status) for _status in status]
-
-        if self.status in status_list:
-            formatted_error_message = f' and error message: "{self.error}"' if self.error else ""
-            raise RuntimeError(
-                f"Raised for batch request {self.request_id} with status {self.status.value}{formatted_error_message}"
-            )
 
     def _parse_bounds_payload(self) -> Tuple[Optional[List[float]], Optional[list], CRS]:
         """Parses bbox, geometry and crs from batch request payload. If bbox or geometry don't exist it returns None

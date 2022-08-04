@@ -1,17 +1,16 @@
 """
 The part of the package that implements interface with Sentinel Hub services.
 """
-
 from .batch import (
     BatchCollection,
     BatchRequest,
-    BatchRequestStatus,
     BatchTileStatus,
-    BatchUserAction,
     SentinelHubBatch,
     monitor_batch_analysis,
     monitor_batch_job,
 )
+from .batch_base import BatchRequestStatus, BatchUserAction
+from .batch_statistical import BatchStatisticalRequest, SentinelHubBatchStatistical
 from .byoc import ByocCollection, ByocCollectionAdditionalData, ByocCollectionBand, ByocTile, SentinelHubBYOC
 from .catalog import SentinelHubCatalog
 from .fis import FisRequest
