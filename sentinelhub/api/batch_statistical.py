@@ -2,11 +2,11 @@
 Module implementing an interface with
 `Sentinel Hub Batch Processing API <https://docs.sentinel-hub.com/api/latest/api/batch-statistical/>`__.
 """
-import sys
 import datetime as dt
 import logging
+import sys
 from dataclasses import dataclass, field
-from typing import Any, List, Optional, Union 
+from typing import Any, List, Optional, Union
 
 from dataclasses_json import CatchAll, LetterCase, Undefined
 from dataclasses_json import config as dataclass_config
@@ -15,12 +15,13 @@ from dataclasses_json import dataclass_json
 from ..type_utils import Json, JsonDict
 from .base_request import InputDataDict
 from .batch_base import BaseBatchClient, BaseBatchRequest, BatchRequestStatus, BatchUserAction
+from .statistical import SentinelHubStatistical
 from .utils import datetime_config, enum_config, remove_undefined
 
 if sys.version_info < (3, 11):
-    from typing_extensions import TypedDict, NotRequired
+    from typing_extensions import NotRequired, TypedDict
 else:
-    from typing import TypedDict, NotRequired  # pylint: disable=ungrouped-imports
+    from typing import NotRequired, TypedDict  # pylint: disable=ungrouped-imports
 
 LOGGER = logging.getLogger(__name__)
 
@@ -56,8 +57,8 @@ class SentinelHubBatchStatistical(BaseBatchClient["BatchStatisticalRequest"]):
 
     def create(
         self,
-        input_data: List[Union[JsonDict, InputDataDict]],
         input_features: S3Specification,
+        input_data: List[Union[JsonDict, InputDataDict]],
         aggregation: JsonDict,
         calculations: JsonDict,
         output: S3Specification,
@@ -82,6 +83,32 @@ class SentinelHubBatchStatistical(BaseBatchClient["BatchStatisticalRequest"]):
         request_info = self.client.get_json_dict(url, post_values=payload, use_session=True)
 
         return BatchStatisticalRequest.from_dict(request_info)
+
+    def create_from_statistical_request(
+        self,
+        statistical_request: SentinelHubStatistical,
+        input_features: S3Specification,
+        output: S3Specification,
+        **kwargs: Any,
+    ) -> "BatchStatisticalRequest":
+        """Create a new batch statistical request from an existing statistical request.
+
+        :param statistical_request: A Sentinel Hub Statistical request.
+        :param input_features: A dictionary describing the S3 path and credentials to access the input GeoPackage.
+        :param output: A dictionary describing the S3 path and credentials to access the output folder.
+        :param kwargs: Any other arguments to be added to a dictionary of parameters
+        :returns: A Batch Statistical request with the same calculations and aggregations but using geometries
+            specified in the input GeoPackage.
+        """
+
+        return self.create(
+            input_features=input_features,
+            input_data=statistical_request.payload["input"]["data"],
+            aggregation=statistical_request.payload["aggregation"],
+            calculations=statistical_request.payload["calculations"],
+            output=output,
+            **kwargs,
+        )
 
     @staticmethod
     def s3_specification(
