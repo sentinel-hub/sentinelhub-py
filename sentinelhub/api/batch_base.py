@@ -41,10 +41,10 @@ class BaseBatchClient(SentinelHubService, Generic[BatchRequestType], metaclass=A
     def _call_job(self, batch_request: RequestSpec, endpoint_name: str) -> Json:
         """Makes a POST request to the service that triggers a processing job"""
         request_id = self._parse_request_id(batch_request)
-        job_url = f"{self._get_job_endpoint_url(request_id)}/{endpoint_name}"
+        job_url = f"{self._get_processing_url(request_id)}/{endpoint_name}"
         return self.client.get_json(url=job_url, request_type=RequestType.POST, use_session=True)
 
-    def _get_job_endpoint_url(self, request_id: Optional[str] = None) -> str:
+    def _get_processing_url(self, request_id: Optional[str] = None) -> str:
         """Creates a URL for the batch statistical endpoint"""
         url = self.service_url
         if request_id:

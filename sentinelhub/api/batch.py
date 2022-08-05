@@ -98,7 +98,7 @@ class SentinelHubBatch(BaseBatchClient):
         }
         payload = remove_undefined(payload)
 
-        url = self._get_process_url()
+        url = self._get_processing_url()
         request_info = self.client.get_json(url, post_values=payload, use_session=True)
 
         return BatchRequest.from_dict(request_info)  # type: ignore[attr-defined]
@@ -207,7 +207,7 @@ class SentinelHubBatch(BaseBatchClient):
         """
         params = remove_undefined({"userid": user_id, "search": search, "sort": sort, **kwargs})
         feature_iterator = SentinelHubFeatureIterator(
-            client=self.client, url=self._get_process_url(), params=params, exception_message="No requests found"
+            client=self.client, url=self._get_processing_url(), params=params, exception_message="No requests found"
         )
         for request_info in feature_iterator:
             yield BatchRequest.from_dict(request_info)  # type: ignore[attr-defined]
@@ -232,7 +232,7 @@ class SentinelHubBatch(BaseBatchClient):
         :return: Batch request info
         """
         request_id = self._parse_request_id(batch_request)
-        request_info = self.client.get_json(url=self._get_process_url(request_id), use_session=True)
+        request_info = self.client.get_json(url=self._get_processing_url(request_id), use_session=True)
         return BatchRequest.from_dict(request_info)  # type: ignore[attr-defined]
 
     def update_request(
@@ -259,7 +259,7 @@ class SentinelHubBatch(BaseBatchClient):
         request_id = self._parse_request_id(batch_request)
         payload = remove_undefined({"output": output, "description": description, **kwargs})
         return self.client.get_json(
-            url=self._get_process_url(request_id), post_values=payload, request_type=RequestType.PUT, use_session=True
+            url=self._get_processing_url(request_id), post_values=payload, request_type=RequestType.PUT, use_session=True
         )
 
     def delete_request(self, batch_request: BatchRequestType) -> Json:
@@ -273,7 +273,7 @@ class SentinelHubBatch(BaseBatchClient):
         """
         request_id = self._parse_request_id(batch_request)
         return self.client.get_json(
-            url=self._get_process_url(request_id), request_type=RequestType.DELETE, use_session=True
+            url=self._get_processing_url(request_id), request_type=RequestType.DELETE, use_session=True
         )
 
     def start_analysis(self, batch_request: BatchRequestType) -> Json:
@@ -434,7 +434,7 @@ class SentinelHubBatch(BaseBatchClient):
             url=self._get_collections_url(collection_id), request_type=RequestType.DELETE, use_session=True
         )
 
-    def _get_process_url(self, request_id: Optional[str] = None) -> str:
+    def _get_processing_url(self, request_id: Optional[str] = None) -> str:
         """Creates a URL for process endpoint"""
         url = f"{self.service_url}/process"
         if request_id:
@@ -443,7 +443,7 @@ class SentinelHubBatch(BaseBatchClient):
 
     def _get_tiles_url(self, request_id: str, tile_id: Union[None, str, int] = None) -> str:
         """Creates a URL for tiles endpoint"""
-        url = f"{self._get_process_url(request_id)}/tiles"
+        url = f"{self._get_processing_url(request_id)}/tiles"
         if tile_id:
             return f"{url}/{tile_id}"
         return url
@@ -461,8 +461,6 @@ class SentinelHubBatch(BaseBatchClient):
         if collection_id:
             return f"{url}/{collection_id}"
         return url
-
-    _get_job_endpoint_url = _get_process_url
 
     @staticmethod
     def _parse_collection_id(data: BatchCollectionType) -> Optional[str]:

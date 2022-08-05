@@ -71,7 +71,7 @@ class SentinelHubBatchStatistical(BaseBatchClient["BatchStatisticalRequest"]):
         :return: Batch request info
         """
         request_id = self._parse_request_id(batch_request)
-        request_info = self.client.get_json(url=self._get_job_endpoint_url(request_id), use_session=True)
+        request_info = self.client.get_json(url=self._get_processing_url(request_id), use_session=True)
         return BatchStatisticalRequest.from_dict(request_info)  # type: ignore[attr-defined]
 
     def get_status(self, batch_request: BatchStatisticalRequestType) -> JsonDict:
@@ -83,7 +83,7 @@ class SentinelHubBatchStatistical(BaseBatchClient["BatchStatisticalRequest"]):
         :return: Batch request status dictionary
         """
         request_id = self._parse_request_id(batch_request)
-        endpoint_url = f"{self._get_job_endpoint_url(request_id)}/status"
+        endpoint_url = f"{self._get_processing_url(request_id)}/status"
         request_info = self.client.get_json_dict(url=endpoint_url, use_session=True)
         return request_info
 
