@@ -5,13 +5,14 @@ Module implementing an interface with
 import datetime as dt
 import logging
 from dataclasses import dataclass, field
-from typing import Any, Optional, Union
+from typing import Any, List, Optional, Union
 
 from dataclasses_json import CatchAll, LetterCase, Undefined
 from dataclasses_json import config as dataclass_config
 from dataclasses_json import dataclass_json
 
 from ..type_utils import Json, JsonDict
+from .base_request import InputDataDict
 from .batch_base import BaseBatchClient, BaseBatchRequest, BatchRequestStatus, BatchUserAction
 from .utils import datetime_config, enum_config, remove_undefined
 
@@ -27,7 +28,6 @@ class SentinelHubBatchStatistical(BaseBatchClient["BatchStatisticalRequest"]):
     information.
     """
 
-    # pylint: disable=too-many-public-methods
     @staticmethod
     def _get_service_url(base_url: str) -> str:
         """Provides URL to Batch Statistical API"""
@@ -35,7 +35,7 @@ class SentinelHubBatchStatistical(BaseBatchClient["BatchStatisticalRequest"]):
 
     def create(
         self,
-        input_data: JsonDict,
+        input_data: List[Union[JsonDict, InputDataDict]],
         input_features: JsonDict,
         aggregation: JsonDict,
         calculations: JsonDict,
@@ -145,4 +145,5 @@ class BatchStatisticalRequest(BaseBatchRequest):
         "user_action",
         "cost_pu",
         "error",
+        "completion_percentage",
     )

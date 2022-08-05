@@ -46,7 +46,7 @@ class BaseBatchClient(SentinelHubService, Generic[BatchRequestType], metaclass=A
 
     def _get_job_endpoint_url(self, request_id: Optional[str] = None) -> str:
         """Creates a URL for the batch statistical endpoint"""
-        url = f"{self.service_url}"
+        url = self.service_url
         if request_id:
             return f"{url}/{request_id}"
         return url
