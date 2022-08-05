@@ -2,10 +2,11 @@
 Module implementing an interface with
 `Sentinel Hub Batch Processing API <https://docs.sentinel-hub.com/api/latest/api/batch-statistical/>`__.
 """
+import sys
 import datetime as dt
 import logging
 from dataclasses import dataclass, field
-from typing import Any, List, Optional, Union
+from typing import Any, List, Optional, Union 
 
 from dataclasses_json import CatchAll, LetterCase, Undefined
 from dataclasses_json import config as dataclass_config
@@ -16,9 +17,29 @@ from .base_request import InputDataDict
 from .batch_base import BaseBatchClient, BaseBatchRequest, BatchRequestStatus, BatchUserAction
 from .utils import datetime_config, enum_config, remove_undefined
 
+if sys.version_info < (3, 11):
+    from typing_extensions import TypedDict, NotRequired
+else:
+    from typing import TypedDict, NotRequired  # pylint: disable=ungrouped-imports
+
 LOGGER = logging.getLogger(__name__)
 
 BatchStatisticalRequestType = Union[str, dict, "BatchStatisticalRequest"]
+
+
+class S3AccessSpecification(TypedDict):
+    """Specification of a S3 path."""
+
+    url: str
+    accessKey: str
+    secretAccessKey: str
+    region: NotRequired[str]
+
+
+class S3Specification(TypedDict):
+    """Specification of a S3 input or output."""
+
+    s3: S3AccessSpecification
 
 
 class SentinelHubBatchStatistical(BaseBatchClient["BatchStatisticalRequest"]):
@@ -36,10 +57,10 @@ class SentinelHubBatchStatistical(BaseBatchClient["BatchStatisticalRequest"]):
     def create(
         self,
         input_data: List[Union[JsonDict, InputDataDict]],
-        input_features: JsonDict,
+        input_features: S3Specification,
         aggregation: JsonDict,
         calculations: JsonDict,
-        output: JsonDict,
+        output: S3Specification,
         **kwargs: Any,
     ) -> "BatchStatisticalRequest":
         """Create a new batch statistical request
@@ -61,6 +82,24 @@ class SentinelHubBatchStatistical(BaseBatchClient["BatchStatisticalRequest"]):
         request_info = self.client.get_json_dict(url, post_values=payload, use_session=True)
 
         return BatchStatisticalRequest.from_dict(request_info)
+
+    @staticmethod
+    def s3_specification(
+        url: str, access_key: str, secret_access_key: str, region: Optional[str] = None
+    ) -> S3Specification:
+        """A helper method to build a dictionary used for specifying S3 paths
+
+        :param url: A URL pointing to an S3 bucket or an object in an S3 bucket.
+        :param access_key: AWS access key that allows programmatic access to the S3 bucket specified in the `url` field.
+        :param secret_access_key: AWS secret access key which must correspond to the AWS access key.
+        :param region: The region where the S3 bucket is located. If omitted, the region of the Sentinel Hub deployment
+            that the request is submitted to is assumed.
+        :return: A dictionary of S3 specifications used by the Batch Statistical API
+        """
+        s3_access: S3AccessSpecification = {"url": url, "accessKey": access_key, "secretAccessKey": secret_access_key}
+        if region is not None:
+            s3_access["region"] = region
+        return {"s3": s3_access}
 
     def get_request(self, batch_request: BatchStatisticalRequestType) -> "BatchStatisticalRequest":
         """Collects information about a single batch request
@@ -124,7 +163,7 @@ class SentinelHubBatchStatistical(BaseBatchClient["BatchStatisticalRequest"]):
 @dataclass_json(letter_case=LetterCase.CAMEL, undefined=Undefined.INCLUDE)
 @dataclass(repr=False)
 class BatchStatisticalRequest(BaseBatchRequest):  # pylint: disable=abstract-method
-    """A dataclass object that holds information about a batch request"""
+    """A dataclass object that holds information about a batch statistical request"""
 
     request_id: str = field(metadata=dataclass_config(field_name="id"))
     other_data: CatchAll

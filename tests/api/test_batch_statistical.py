@@ -27,7 +27,8 @@ def test_create_and_run_batch_request(statistical_batch_client, requests_mock):
     calculations = {"ndvi": {"histograms": {"default": {"nBins": 20, "lowEdge": -1.0, "highEdge": 1.0}}}}
 
     input_features = {"s3": {"url": "s3://path/to/gpkg", "accessKey": "", "secretAccessKey": ""}}
-    output = {"s3": {"url": "s3://path/to/output/folder", "accessKey": "", "secretAccessKey": ""}}
+    output = SentinelHubBatchStatistical.s3_specification("s3://path/to/output/folder", "", "")
+    assert output == {"s3": {"url": "s3://path/to/output/folder", "accessKey": "", "secretAccessKey": ""}}
 
     requests_mock.post("/oauth/token", real_http=True)
     request_id = "mocked-id"
