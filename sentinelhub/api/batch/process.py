@@ -15,15 +15,15 @@ from dataclasses_json import config as dataclass_config
 from dataclasses_json import dataclass_json
 from tqdm.auto import tqdm
 
-from ..config import SHConfig
-from ..constants import RequestType
-from ..data_collections import DataCollection
-from ..geometry import CRS, BBox, Geometry
-from ..type_utils import Json, JsonDict
-from .base import BaseCollection, SentinelHubFeatureIterator
-from .batch_base import BaseBatchClient, BaseBatchRequest, BatchRequestStatus, BatchUserAction
-from .process import SentinelHubRequest
-from .utils import datetime_config, enum_config, remove_undefined
+from ...config import SHConfig
+from ...constants import RequestType
+from ...data_collections import DataCollection
+from ...geometry import CRS, BBox, Geometry
+from ...type_utils import Json, JsonDict
+from ..base import BaseCollection, SentinelHubFeatureIterator
+from ..process import SentinelHubRequest
+from ..utils import datetime_config, enum_config, remove_undefined
+from .base import BaseBatchClient, BaseBatchRequest, BatchRequestStatus, BatchUserAction
 
 LOGGER = logging.getLogger(__name__)
 
@@ -509,7 +509,7 @@ class BatchRequest(BaseBatchRequest):  # pylint: disable=abstract-method
     user_action_updated: Optional[str] = field(metadata=datetime_config, default=None)
     error: Optional[str] = None
 
-    _REPR_PARAM_NAMES = [
+    _REPR_PARAM_NAMES = (
         "request_id",
         "description",
         "bucket_name",
@@ -518,7 +518,7 @@ class BatchRequest(BaseBatchRequest):  # pylint: disable=abstract-method
         "user_action",
         "value_estimate",
         "tile_count",
-    ]
+    )
 
     @property
     def evalscript(self) -> str:
