@@ -3,14 +3,15 @@ Module containing shared code of Batch Process API and Batch Statistical API
 """
 from abc import ABCMeta
 from enum import Enum
-from typing import Generic, Iterable, Optional, Sequence, TypeVar, Union
+from typing import Generic, Iterable, Optional, Sequence, Type, TypeVar, Union
 
 from ..constants import RequestType
-from ..type_utils import Json
+from ..type_utils import Json, JsonDict
 from .base import SentinelHubService
 
 BatchRequestType = TypeVar("BatchRequestType", bound="BaseBatchRequest")  # pylint: disable=invalid-name
 RequestSpec = Union[str, dict, BatchRequestType]
+Self = TypeVar("Self")
 
 
 class BatchRequestStatus(Enum):
@@ -63,7 +64,7 @@ class BaseBatchClient(SentinelHubService, Generic[BatchRequestType], metaclass=A
         raise ValueError(f"Expected a BatchRequest, dictionary or a string, got {data}.")
 
 
-class BaseBatchRequest:
+class BaseBatchRequest(metaclass=ABCMeta):
     """Class containing helper functions for Batch Request classes"""
 
     _REPR_PARAM_NAMES: Sequence[str]
@@ -71,6 +72,15 @@ class BaseBatchRequest:
     request_id: str
     error: Optional[str]
     status: BatchRequestStatus
+
+    def to_dict(self) -> JsonDict:
+        """Transforms itself into a dictionary form."""
+        raise NotImplementedError("Method should be implemented or provided via `dataclass_json` decorator.")
+
+    @classmethod
+    def from_dict(cls: Type[Self], json_dict: JsonDict) -> Self:
+        """Transforms itself into a dictionary form."""
+        raise NotImplementedError("Method should be implemented or provided via `dataclass_json` decorator.")
 
     def __repr__(self) -> str:
         """A representation that shows the basic parameters of a batch job"""

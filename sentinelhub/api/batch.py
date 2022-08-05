@@ -99,9 +99,9 @@ class SentinelHubBatch(BaseBatchClient):
         payload = remove_undefined(payload)
 
         url = self._get_processing_url()
-        request_info = self.client.get_json(url, post_values=payload, use_session=True)
+        request_info = self.client.get_json_dict(url, post_values=payload, use_session=True)
 
-        return BatchRequest.from_dict(request_info)  # type: ignore[attr-defined]
+        return BatchRequest.from_dict(request_info)
 
     @staticmethod
     def tiling_grid(
@@ -210,7 +210,7 @@ class SentinelHubBatch(BaseBatchClient):
             client=self.client, url=self._get_processing_url(), params=params, exception_message="No requests found"
         )
         for request_info in feature_iterator:
-            yield BatchRequest.from_dict(request_info)  # type: ignore[attr-defined]
+            yield BatchRequest.from_dict(request_info)
 
     def get_latest_request(self) -> "BatchRequest":
         """Provides a batch request that has been created the latest
@@ -232,8 +232,8 @@ class SentinelHubBatch(BaseBatchClient):
         :return: Batch request info
         """
         request_id = self._parse_request_id(batch_request)
-        request_info = self.client.get_json(url=self._get_processing_url(request_id), use_session=True)
-        return BatchRequest.from_dict(request_info)  # type: ignore[attr-defined]
+        request_info = self.client.get_json_dict(url=self._get_processing_url(request_id), use_session=True)
+        return BatchRequest.from_dict(request_info)
 
     def update_request(
         self,
@@ -259,7 +259,10 @@ class SentinelHubBatch(BaseBatchClient):
         request_id = self._parse_request_id(batch_request)
         payload = remove_undefined({"output": output, "description": description, **kwargs})
         return self.client.get_json(
-            url=self._get_processing_url(request_id), post_values=payload, request_type=RequestType.PUT, use_session=True
+            url=self._get_processing_url(request_id),
+            post_values=payload,
+            request_type=RequestType.PUT,
+            use_session=True,
         )
 
     def delete_request(self, batch_request: BatchRequestType) -> Json:
@@ -485,7 +488,7 @@ class SentinelHubBatch(BaseBatchClient):
 
 @dataclass_json(letter_case=LetterCase.CAMEL, undefined=Undefined.INCLUDE)
 @dataclass(repr=False)
-class BatchRequest(BaseBatchRequest):
+class BatchRequest(BaseBatchRequest):  # pylint: disable=abstract-method
     """A dataclass object that holds information about a batch request"""
 
     request_id: str = field(metadata=dataclass_config(field_name="id"))

@@ -58,9 +58,9 @@ class SentinelHubBatchStatistical(BaseBatchClient["BatchStatisticalRequest"]):
         payload = remove_undefined(payload)
 
         url = self.service_url
-        request_info = self.client.get_json(url, post_values=payload, use_session=True)
+        request_info = self.client.get_json_dict(url, post_values=payload, use_session=True)
 
-        return BatchStatisticalRequest.from_dict(request_info)  # type: ignore[attr-defined]
+        return BatchStatisticalRequest.from_dict(request_info)
 
     def get_request(self, batch_request: BatchStatisticalRequestType) -> "BatchStatisticalRequest":
         """Collects information about a single batch request
@@ -71,8 +71,8 @@ class SentinelHubBatchStatistical(BaseBatchClient["BatchStatisticalRequest"]):
         :return: Batch request info
         """
         request_id = self._parse_request_id(batch_request)
-        request_info = self.client.get_json(url=self._get_processing_url(request_id), use_session=True)
-        return BatchStatisticalRequest.from_dict(request_info)  # type: ignore[attr-defined]
+        request_info = self.client.get_json_dict(url=self._get_processing_url(request_id), use_session=True)
+        return BatchStatisticalRequest.from_dict(request_info)
 
     def get_status(self, batch_request: BatchStatisticalRequestType) -> JsonDict:
         """Collects information about a the status of a request
@@ -123,7 +123,7 @@ class SentinelHubBatchStatistical(BaseBatchClient["BatchStatisticalRequest"]):
 
 @dataclass_json(letter_case=LetterCase.CAMEL, undefined=Undefined.INCLUDE)
 @dataclass(repr=False)
-class BatchStatisticalRequest(BaseBatchRequest):
+class BatchStatisticalRequest(BaseBatchRequest):  # pylint: disable=abstract-method
     """A dataclass object that holds information about a batch request"""
 
     request_id: str = field(metadata=dataclass_config(field_name="id"))
