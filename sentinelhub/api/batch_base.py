@@ -11,7 +11,6 @@ from .base import SentinelHubService
 
 BatchRequestType = TypeVar("BatchRequestType", bound="BaseBatchRequest")  # pylint: disable=invalid-name
 RequestSpec = Union[str, dict, BatchRequestType]
-Self = TypeVar("Self", bound="BaseBatchClient")
 
 
 class BatchRequestStatus(Enum):
