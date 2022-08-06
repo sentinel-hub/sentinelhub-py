@@ -5,7 +5,7 @@ import datetime as dt
 import json
 import os
 from dataclasses import dataclass
-from typing import Optional
+from typing import Any, Dict, Optional
 
 import pytest
 
@@ -120,3 +120,25 @@ def test_download_response_decoding(
 
     expected_decoded_response = response.content if response.response_type is MimeType.RAW else data
     assert response.decode() == expected_decoded_response
+
+
+@pytest.mark.parametrize(
+    "new_params",
+    [
+        {"content": b"x"},
+        {"status_code": 501, "elapsed": 0.1},
+        {},
+    ],
+)
+def test_download_response_derive(new_params: Dict[str, Any]) -> None:
+    response = DownloadResponse(request=DownloadRequest(), content=b"", headers={"x": 1})
+
+    derived_response = response.derive(**new_params)
+    assert derived_response is not response
+    for param in ("request", "content", "headers", "status_code", "elapsed"):
+        if param in new_params:
+            expected_value = new_params[param]
+        else:
+            expected_value = getattr(response, param)
+
+        assert getattr(derived_response, param) == expected_value

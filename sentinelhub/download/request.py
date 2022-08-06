@@ -9,7 +9,7 @@ import hashlib
 import json
 import os
 import warnings
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, fields
 from typing import Any, Optional, Tuple
 
 from requests import Response
@@ -253,3 +253,14 @@ class DownloadResponse:
     def decode(self) -> Any:
         """Decodes binary data into a Python object."""
         return decode_data(self.content, data_type=self.response_type)
+
+    def derive(self, **params: Any) -> DownloadResponse:
+        """Create a new response by changing some parameters of the existing one.
+
+        :param params: Any of `DownloadResponse` attributes.
+        :return: A new instance of `DownloadResponse` with modified parameters
+        """
+        derived_params = {_field.name: getattr(self, _field.name) for _field in fields(self)}
+        derived_params.update(params)
+
+        return DownloadResponse(**derived_params)

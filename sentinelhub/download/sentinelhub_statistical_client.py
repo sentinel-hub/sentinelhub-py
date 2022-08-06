@@ -57,13 +57,8 @@ class SentinelHubStatisticalDownloadClient(SentinelHubDownloadClient):
         if n_succeeded_intervals == 0:
             return response
 
-        return DownloadResponse(
-            request=response.request,
-            content=json.dumps(stats_response).encode("utf-8"),
-            headers=response.headers,
-            status_code=response.status_code,
-            elapsed=response.elapsed,
-        )
+        new_content = json.dumps(stats_response).encode("utf-8")
+        return response.derive(content=new_content)
 
     def _download_per_interval(self, request: DownloadRequest, time_intervals: Dict[int, Any]) -> dict:
         """Download statistics per each time interval"""
