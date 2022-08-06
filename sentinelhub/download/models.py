@@ -61,6 +61,10 @@ class DownloadRequest:
         self.request_type = RequestType(self.request_type)
         self.data_type = MimeType(self.data_type)
 
+    def __hash__(self) -> int:
+        """This dataclass is mutable, but we still assign its id as its hash."""
+        return id(self)
+
     def raise_if_invalid(self) -> None:
         """Method that raises an error if something is wrong with request parameters
 
