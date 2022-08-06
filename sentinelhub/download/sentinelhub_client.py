@@ -15,8 +15,8 @@ from ..exceptions import SHRateLimitWarning, SHRuntimeWarning
 from ..type_utils import JsonDict
 from .client import DownloadClient
 from .handlers import fail_user_errors, retry_temporary_errors
+from .models import DownloadRequest, DownloadResponse
 from .rate_limit import SentinelHubRateLimit
-from .request import DownloadRequest, DownloadResponse
 from .session import SentinelHubSession
 
 LOGGER = logging.getLogger(__name__)

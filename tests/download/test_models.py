@@ -10,7 +10,7 @@ from typing import Any, Dict, Optional
 import pytest
 
 from sentinelhub import DownloadRequest, MimeType
-from sentinelhub.download.request import DownloadResponse
+from sentinelhub.download.models import DownloadResponse
 from sentinelhub.exceptions import SHRuntimeWarning
 from sentinelhub.type_utils import JsonDict
 

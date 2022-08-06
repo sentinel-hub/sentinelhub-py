@@ -15,7 +15,7 @@ except ImportError as import_exception:
 
 from ..download.client import DownloadClient
 from ..download.handlers import fail_missing_file
-from ..download.request import DownloadRequest, DownloadResponse
+from ..download.models import DownloadRequest, DownloadResponse
 from ..exceptions import AwsDownloadFailedException
 
 LOGGER = logging.getLogger(__name__)

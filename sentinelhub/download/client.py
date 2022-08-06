@@ -24,7 +24,7 @@ from ..exceptions import (
 from ..io_utils import read_data
 from ..type_utils import JsonDict
 from .handlers import fail_user_errors, retry_temporary_errors
-from .request import DownloadRequest, DownloadResponse
+from .models import DownloadRequest, DownloadResponse
 
 LOGGER = logging.getLogger(__name__)
 

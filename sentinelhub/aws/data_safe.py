@@ -7,7 +7,7 @@ from typing import Any, List, Optional, Tuple
 
 from ..constants import MimeType
 from ..data_collections import DataCollection
-from ..download.request import DownloadRequest
+from ..download.models import DownloadRequest
 from ..exceptions import SHRuntimeWarning
 from .client import AwsDownloadClient
 from .constants import AwsConstants, EsaSafeType

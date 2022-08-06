@@ -11,7 +11,7 @@ import requests
 from ..config import SHConfig
 from ..decoding import decode_sentinelhub_err_msg
 from ..exceptions import DownloadFailedException
-from .request import DownloadRequest
+from .models import DownloadRequest
 
 if sys.version_info < (3, 8):
     from typing_extensions import Protocol

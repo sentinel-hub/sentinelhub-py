@@ -8,7 +8,7 @@ import logging
 from typing import Any, Dict
 
 from ..type_utils import JsonDict
-from .request import DownloadRequest, DownloadResponse
+from .models import DownloadRequest, DownloadResponse
 from .sentinelhub_client import SentinelHubDownloadClient
 
 LOGGER = logging.getLogger(__name__)

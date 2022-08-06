@@ -1,7 +1,7 @@
 import pytest
 
 from sentinelhub import CRS, BBox, DataCollection, WcsRequest
-from sentinelhub.download.request import DownloadResponse
+from sentinelhub.download.models import DownloadResponse
 
 
 @pytest.fixture(name="wcs_request")

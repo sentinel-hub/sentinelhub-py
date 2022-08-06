@@ -7,7 +7,7 @@ import os
 import pytest
 
 from sentinelhub import DownloadClient, DownloadRequest, MimeType, write_data
-from sentinelhub.download.request import DownloadResponse
+from sentinelhub.download.models import DownloadResponse
 from sentinelhub.exceptions import HashedNameCollisionException, SHRuntimeWarning
 
 
