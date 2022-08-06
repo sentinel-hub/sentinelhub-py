@@ -5,10 +5,8 @@ import logging
 import warnings
 from typing import Any
 
-from ..download.request import DownloadRequest
-
 try:
-    import boto3
+    from boto3 import Session
     from botocore.exceptions import NoCredentialsError
 except ImportError as import_exception:
     raise ImportError(
@@ -17,6 +15,7 @@ except ImportError as import_exception:
 
 from ..download.client import DownloadClient
 from ..download.handlers import fail_missing_file
+from ..download.request import DownloadRequest, DownloadResponse
 from ..exceptions import AwsDownloadFailedException
 
 LOGGER = logging.getLogger(__name__)
@@ -28,7 +27,7 @@ class AwsDownloadClient(DownloadClient):
     GLOBAL_S3_CLIENT = None
 
     @fail_missing_file
-    def _execute_download(self, request: DownloadRequest) -> Any:
+    def _execute_download(self, request: DownloadRequest) -> DownloadResponse:
         """Executes a download procedure"""
         if not self.is_s3_request(request):
             return super()._execute_download(request)
@@ -38,13 +37,13 @@ class AwsDownloadClient(DownloadClient):
         response_content = self._do_download(request, s3_client)
 
         LOGGER.debug("Successful download from %s", request.url)
-        return response_content
+        return DownloadResponse(request=request, content=response_content)
 
     def _get_s3_client(self) -> Any:
         """Provides a s3 client object"""
         warnings.filterwarnings("ignore", category=ResourceWarning, message="unclosed.*<ssl.SSLSocket.*>")
         try:
-            s3_client = boto3.Session().client(
+            s3_client = Session().client(
                 "s3",
                 aws_access_key_id=self.config.aws_access_key_id or None,
                 aws_secret_access_key=self.config.aws_secret_access_key or None,
@@ -59,7 +58,7 @@ class AwsDownloadClient(DownloadClient):
         return s3_client
 
     @staticmethod
-    def _do_download(request: DownloadRequest, s3_client: Any) -> Any:
+    def _do_download(request: DownloadRequest, s3_client: Any) -> bytes:
         """Does the download from s3"""
         if request.url is None:
             raise ValueError(f"Faulty request {request}, no URL specified.")
