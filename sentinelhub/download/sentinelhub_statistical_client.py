@@ -7,6 +7,7 @@ import json
 import logging
 from typing import Any, Dict
 
+from ..exceptions import DownloadFailedException
 from ..type_utils import JsonDict
 from .models import DownloadRequest, DownloadResponse
 from .sentinelhub_client import SentinelHubDownloadClient
@@ -17,10 +18,10 @@ LOGGER = logging.getLogger(__name__)
 class SentinelHubStatisticalDownloadClient(SentinelHubDownloadClient):
     """A special download client for Sentinel Hub Statistical API
 
-    Besides a normal download from Sentinel Hub services it implements an additional process of retrying and caching.
+    Beside a normal download from Sentinel Hub services it implements an additional process of retrying and caching.
     """
 
-    _RETRIABLE_ERRORS = ["EXECUTION_ERROR", "TIMEOUT"]
+    _RETRIABLE_ERRORS = ("EXECUTION_ERROR", "TIMEOUT")
 
     def __init__(self, *args: Any, n_interval_retries: int = 1, max_retry_threads: int = 5, **kwargs: Any):
         """
@@ -86,7 +87,7 @@ class SentinelHubStatisticalDownloadClient(SentinelHubDownloadClient):
             if not self._has_retriable_error(stat_info) or retry_count == self.n_interval_retries - 1:
                 return stat_info
 
-        raise ValueError("No more retries available, download unsuccessful")
+        raise DownloadFailedException("No more interval retries available, download unsuccessful")
 
     def _has_retriable_error(self, stat_info: JsonDict) -> bool:
         """Checks if a dictionary of Stat API info for a single time interval has an error that can fixed by retrying

@@ -155,11 +155,11 @@ class DownloadClient:
         processed_response = self._process_response(request, response)
 
         if request.save_response and response_path and (no_local_data or processed_response is not response):
-            response.to_local()
+            processed_response.to_local()
             LOGGER.debug("Saved response data to %s", response_path)
 
         if request.return_data:
-            return response
+            return processed_response
         return None
 
     @retry_temporary_errors
