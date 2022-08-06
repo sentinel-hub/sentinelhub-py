@@ -27,7 +27,7 @@ def test_download_request() -> None:
         data_folder=data_folder,
         filename=None,
         return_data=True,
-        additional_param=True,
+        extra_params={"param": 42},
     )
 
     assert isinstance(request.get_request_params(include_metadata=True), dict)

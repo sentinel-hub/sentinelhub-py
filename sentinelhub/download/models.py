@@ -10,7 +10,7 @@ import json
 import os
 import warnings
 from dataclasses import dataclass, field, fields
-from typing import Any, Optional, Tuple
+from typing import Any, Dict, Optional, Tuple
 
 from requests import Response
 
@@ -22,57 +22,44 @@ from ..os_utils import sys_is_windows
 from ..type_utils import JsonDict
 
 
+@dataclass
 class DownloadRequest:
     """A class defining a single download request.
 
     The class is a container with all parameters needed to execute a single download request and save or return
     downloaded data.
+
+    :param url: A URL from where to download
+    :param headers: Headers of an HTTP request
+    :param request_type: Type of request, either GET or POST. Default is `RequestType.GET`
+    :param post_values: A dictionary of values that will be sent with a POST request. Default is `None`
+    :param use_session: A flag that specifies if the download request will require a session header
+    :param data_type: An expected file format of downloaded data. Default is `MimeType.RAW`
+    :param save_response: A flag defining if the downloaded data will be saved to disk. Default is `False`.
+    :param data_folder: A folder path where the fetched data will be (or already is) saved. Default is `None`
+    :param filename: A custom filename where the data will be saved. By default, data will be saved in a folder
+        which name are hashed request parameters.
+    :param return_data: A flag defining if the downloaded data will be returned as an output of download procedure.
+        Default is `True`.
+    :param extra_params: Any additional parameters.
     """
 
-    def __init__(
-        self,
-        *,
-        url: Optional[str] = None,
-        headers: Optional[JsonDict] = None,
-        request_type: RequestType = RequestType.GET,
-        post_values: Optional[JsonDict] = None,
-        use_session: bool = False,
-        data_type: MimeType = MimeType.RAW,
-        save_response: bool = False,
-        data_folder: Optional[str] = None,
-        filename: Optional[str] = None,
-        return_data: bool = True,
-        **properties: Any,
-    ):
-        """
-        :param url: A URL from where to download
-        :param headers: Headers of an HTTP request
-        :param request_type: Type of request, either GET or POST. Default is `RequestType.GET`
-        :param post_values: A dictionary of values that will be sent with a POST request. Default is `None`
-        :param use_session: A flag that specifies if the download request will require a session header
-        :param data_type: An expected file format of downloaded data. Default is `MimeType.RAW`
-        :param save_response: A flag defining if the downloaded data will be saved to disk. Default is `False`.
-        :param data_folder: A folder path where the fetched data will be (or already is) saved. Default is `None`
-        :param filename: A custom filename where the data will be saved. By default, data will be saved in a folder
-            which name are hashed request parameters.
-        :param return_data: A flag defining if the downloaded data will be returned as an output of download procedure.
-            Default is `True`.
-        :param properties: Any additional parameters.
-        """
-        self.url = url
-        self.headers = headers or {}
-        self.request_type = RequestType(request_type)
-        self.post_values = post_values
-        self.use_session = use_session
+    url: Optional[str] = None
+    headers: JsonDict = field(default_factory=dict)
+    request_type: RequestType = RequestType.GET
+    post_values: Optional[JsonDict] = None
+    use_session: bool = False
+    data_type: MimeType = MimeType.RAW
+    save_response: bool = False
+    data_folder: Optional[str] = None
+    filename: Optional[str] = None
+    return_data: bool = True
+    extra_params: Dict[str, Any] = field(default_factory=dict)
 
-        self.data_type = MimeType(data_type)
-
-        self.save_response = save_response
-        self.data_folder = data_folder
-        self.filename = filename
-        self.return_data = return_data
-
-        self.properties = properties
+    def __post_init__(self) -> None:
+        """Additional parsing of init parameters."""
+        self.request_type = RequestType(self.request_type)
+        self.data_type = MimeType(self.data_type)
 
     def raise_if_invalid(self) -> None:
         """Method that raises an error if something is wrong with request parameters
