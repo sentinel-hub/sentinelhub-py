@@ -3,15 +3,12 @@ Download process for Sentinel Hub Statistical API
 """
 import concurrent.futures
 import copy
+import json
 import logging
-import os
-from typing import Any, Dict, cast
+from typing import Any, Dict
 
-from ..constants import MimeType
-from ..decoding import decode_data as decode_data_function
-from ..io_utils import read_data, write_data
 from ..type_utils import JsonDict
-from .request import DownloadRequest
+from .request import DownloadRequest, DownloadResponse
 from .sentinelhub_client import SentinelHubDownloadClient
 
 LOGGER = logging.getLogger(__name__)
@@ -20,7 +17,7 @@ LOGGER = logging.getLogger(__name__)
 class SentinelHubStatisticalDownloadClient(SentinelHubDownloadClient):
     """A special download client for Sentinel Hub Statistical API
 
-    Besides a normal download from Sentinel Hub services it implements an additional process of retrying and caching
+    Besides a normal download from Sentinel Hub services it implements an additional process of retrying and caching.
     """
 
     _RETRIABLE_ERRORS = ["EXECUTION_ERROR", "TIMEOUT"]
@@ -37,23 +34,10 @@ class SentinelHubStatisticalDownloadClient(SentinelHubDownloadClient):
         self.n_interval_retries = n_interval_retries
         self.max_retry_threads = max_retry_threads
 
-    def _single_download(self, request: DownloadRequest, _: Any) -> Any:
-        """Method for downloading a single request"""
-        request.raise_if_invalid()
-        if not (request.save_response or request.return_data):
-            return None
-
-        request_path, response_path = request.get_storage_paths()
-
-        download_required = self.redownload or response_path is None or not os.path.exists(response_path)
-        if download_required:
-            response_content = self._execute_download(request)
-            stats_response = decode_data_function(response_content, request.data_type)
-        else:
-            path = cast(str, response_path)  # fix in future, for now ensured by download_required
-            LOGGER.debug("Reading locally stored data from %s instead of downloading", path)
-            self._check_cached_request_is_matching(request, request_path)
-            stats_response = read_data(path, data_format=request.data_type)
+    def _process_response(self, request: DownloadRequest, response: DownloadResponse) -> DownloadResponse:
+        """After downloading the response for all timestamps this method handles redownload for those timestamps for
+        which download failed."""
+        stats_response = response.decode()
 
         failed_time_intervals: Dict[int, Any] = {}
         for index, stat_info in enumerate(stats_response["data"]):
@@ -70,19 +54,16 @@ class SentinelHubStatisticalDownloadClient(SentinelHubDownloadClient):
                 retried_responses.get(index, stat_info) for index, stat_info in enumerate(stats_response["data"])
             ]
 
-        if request_path and request.save_response and (self.redownload or not os.path.exists(request_path)):
-            request_info = request.get_request_params(include_metadata=True)
-            write_data(request_path, request_info, MimeType.JSON)
-            LOGGER.debug("Saved request info to %s", request_path)
+        if n_succeeded_intervals == 0:
+            return response
 
-        if request.save_response and (download_required or n_succeeded_intervals > 0):
-            path = cast(str, response_path)  # fix in future, for now ensured by raise_if_invalid
-            write_data(path, stats_response, data_format=request.data_type)
-            LOGGER.debug("Saved data to %s", response_path)
-
-        if request.return_data:
-            return stats_response
-        return None
+        return DownloadResponse(
+            request=response.request,
+            content=json.dumps(stats_response).encode("utf-8"),
+            headers=response.headers,
+            status_code=response.status_code,
+            elapsed=response.elapsed,
+        )
 
     def _download_per_interval(self, request: DownloadRequest, time_intervals: Dict[int, Any]) -> dict:
         """Download statistics per each time interval"""
@@ -104,7 +85,7 @@ class SentinelHubStatisticalDownloadClient(SentinelHubDownloadClient):
         """Makes sure a download for a single time interval is retried"""
         for retry_count in range(self.n_interval_retries):
             response = self._execute_download(request)
-            stat_response = decode_data_function(response, request.data_type)
+            stat_response = response.decode()
             stat_info = stat_response["data"][0]
 
             if not self._has_retriable_error(stat_info) or retry_count == self.n_interval_retries - 1:

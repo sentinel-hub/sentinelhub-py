@@ -136,20 +136,25 @@ class DownloadClient:
     def _single_download(self, request: DownloadRequest) -> Optional[DownloadResponse]:
         """Method for downloading a single request."""
         request.raise_if_invalid()
+        if not (request.save_response or request.return_data):
+            return None
 
         request_path, response_path = request.get_storage_paths()
 
-        if not self._is_download_required(request, response_path):
+        no_local_data = self.redownload or response_path is None or not os.path.exists(response_path)
+        if no_local_data:
+            response = self._execute_download(request)
+        else:
             if not request.return_data or response_path is None:
                 return None
 
             LOGGER.debug("Reading locally stored data from %s instead of downloading", response_path)
             self._check_cached_request_is_matching(request, request_path)
-            return DownloadResponse.from_local(request)
+            response = DownloadResponse.from_local(request)
 
-        response = self._execute_download(request)
+        processed_response = self._process_response(request, response)
 
-        if request.save_response and response_path and (self.redownload or not os.path.exists(response_path)):
+        if request.save_response and response_path and (no_local_data or processed_response is not response):
             response.to_local()
             LOGGER.debug("Saved response data to %s", response_path)
 
@@ -184,12 +189,6 @@ class DownloadClient:
 
         return DownloadResponse.from_response(response, request)
 
-    def _is_download_required(self, request: DownloadRequest, response_path: Optional[str]) -> bool:
-        """Checks if download should actually be done"""
-        return (request.save_response or request.return_data) and (
-            self.redownload or response_path is None or not os.path.exists(response_path)
-        )
-
     @staticmethod
     def _check_cached_request_is_matching(request: DownloadRequest, request_path: Optional[str]) -> None:
         """Ensures that the cached request matches the current one. Serves as protection against hash collisions"""
@@ -212,6 +211,10 @@ class DownloadClient:
                 f"Request has hashed name {request.get_hashed_name()}, which matches request saved at {request_path}, "
                 "but the requests are different. Possible hash collision"
             )
+
+    def _process_response(self, _: DownloadRequest, response: DownloadResponse) -> DownloadResponse:
+        """This method is meant to be overwritten by inherited implementations of the client object."""
+        return response
 
     def get_json(
         self,
