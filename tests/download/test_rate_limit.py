@@ -66,36 +66,22 @@ class DummyService:
 
         return [bucket.content - cost for bucket, cost in zip(self.policy_buckets, costs)]
 
-    def _get_headers(self, is_rate_limited) -> JsonDict:
+    def _get_headers(self, is_rate_limited: bool) -> JsonDict:
         """Creates and returns headers that Sentinel Hub service would return"""
-        headers = {}
-
-        request_bucket_content = [bucket.content for bucket in self.policy_buckets if bucket.is_request_bucket()]
-        units_bucket_content = [bucket.content for bucket in self.policy_buckets if not bucket.is_request_bucket()]
-
-        for bucket_content, header_key in [
-            (request_bucket_content, SentinelHubRateLimit.REQUEST_COUNT_HEADER),
-            (units_bucket_content, SentinelHubRateLimit.UNITS_COUNT_HEADER),
-        ]:
-            if bucket_content:
-                headers[header_key] = min(bucket_content)
+        headers = {SentinelHubRateLimit.UNITS_SPENT_HEADER: self.units_per_request}
 
         if is_rate_limited:
-            headers[SentinelHubRateLimit.VIOLATION_HEADER] = True
-
             expected_request_wait_time = max(
                 bucket.get_wait_time(0, 1, 1, 0, 0) for bucket in self.policy_buckets if bucket.is_request_bucket()
             )
-            if expected_request_wait_time > 0:
-                headers[SentinelHubRateLimit.REQUEST_RETRY_HEADER] = int(1000 * expected_request_wait_time)
-
             expected_units_wait_time = max(
                 bucket.get_wait_time(0, 1, self.units_per_request, 0, 0)
                 for bucket in self.policy_buckets
                 if not bucket.is_request_bucket()
             )
-            if expected_units_wait_time > 0:
-                headers[SentinelHubRateLimit.UNITS_RETRY_HEADER] = int(1000 * expected_units_wait_time)
+            expected_wait_time = max(expected_request_wait_time, expected_units_wait_time)
+
+            headers[SentinelHubRateLimit.RETRY_HEADER] = int(1000 * expected_wait_time)
 
         return headers
 
@@ -182,7 +168,7 @@ def run_interaction(logger, service, rate_limit, request_num, index):
             continue
 
         response_headers = service.make_request()
-        if SentinelHubRateLimit.VIOLATION_HEADER not in response_headers:
+        if SentinelHubRateLimit.RETRY_HEADER not in response_headers:
             request_num -= 1
         else:
             rate_limit_hits += 1

@@ -28,11 +28,8 @@ class SentinelHubRateLimit:
     about when the next download attempt will be possible.
     """
 
-    REQUEST_RETRY_HEADER = "Retry-After"
-    REQUEST_COUNT_HEADER = "X-RateLimit-Remaining"
-    UNITS_RETRY_HEADER = "X-ProcessingUnits-Retry-After"
-    UNITS_COUNT_HEADER = "X-ProcessingUnits-Remaining"
-    VIOLATION_HEADER = "X-RateLimit-ViolatedPolicy"
+    RETRY_HEADER = "Retry-After"
+    UNITS_SPENT_HEADER = "X-ProcessingUnits-Spent"
 
     def __init__(self, num_processes: int = 1, minimum_wait_time: float = 0.05, maximum_wait_time: float = 60.0):
         """
@@ -56,7 +53,7 @@ class SentinelHubRateLimit:
     def update(self, headers: dict) -> None:
         """Update the next possible download time if the service has responded with the rate limit"""
         retry_after: float
-        retry_after = max(int(headers.get(self.REQUEST_RETRY_HEADER, 0)), int(headers.get(self.UNITS_RETRY_HEADER, 0)))
+        retry_after = int(headers.get(self.RETRY_HEADER, 0))
         retry_after = retry_after / 1000
 
         if retry_after:
