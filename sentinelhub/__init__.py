@@ -48,7 +48,7 @@ from .constants import (
     ServiceUrl,
     SHConstants,
 )
-from .data_collections import DataCollection, DataSource
+from .data_collections import DataCollection
 from .data_collections_bands import Band, Unit
 from .download import (
     DownloadClient,

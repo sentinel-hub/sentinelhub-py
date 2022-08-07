@@ -1,17 +1,14 @@
 """
 Module defining data collections
 """
-import warnings
 from dataclasses import dataclass, field, fields
 from enum import Enum, EnumMeta
 from typing import Any, Dict, List, Optional, Tuple
 
 from aenum import extend_enum
 
-from .config import SHConfig
 from .constants import ServiceUrl
 from .data_collections_bands import Band, Bands, MetaBands
-from .exceptions import SHDeprecationWarning
 
 
 class _CollectionType:
@@ -109,24 +106,6 @@ def _shallow_asdict(dataclass_instance: Any) -> Dict[str, Any]:
 class _DataCollectionMeta(EnumMeta):
     """Metaclass that builds DataCollection class enums"""
 
-    def __getattribute__(cls, item: str) -> Any:
-        """This is executed whenever `DataCollection.SOMETHING` is called
-
-        Extended method handles cases where a collection has been renamed. It provides a new collection and raises a
-        deprecation warning.
-        """
-        if item in _RENAMED_COLLECTIONS:
-            old_item = item
-            item = _RENAMED_COLLECTIONS[old_item]
-
-            message = (
-                f"DataCollection.{old_item} had been renamed into DataCollection.{item}. Please switch to the "
-                "new name as the old one will soon be removed."
-            )
-            warnings.warn(message, category=SHDeprecationWarning)
-
-        return super().__getattribute__(item)
-
     def __call__(cls, value, *args, **kwargs):  # type: ignore
         """This is executed whenever `DataCollection('something')` is called
 
@@ -191,18 +170,6 @@ class DataCollectionDefinition:
         derived_params.update(params)
 
         return DataCollectionDefinition(**derived_params)
-
-
-_RENAMED_COLLECTIONS = {  # DataCollection renaming for backwards-compatibility
-    "LANDSAT15_L1": "LANDSAT_MSS_L1",
-    "LANDSAT45_L1": "LANDSAT_TM_L1",
-    "LANDSAT45_L2": "LANDSAT_TM_L2",
-    "LANDSAT7_L1": "LANDSAT_ETM_L1",
-    "LANDSAT7_L2": "LANDSAT_ETM_L2",
-    "LANDSAT8": "LANDSAT_OT_L1",
-    "LANDSAT8_L1": "LANDSAT_OT_L1",
-    "LANDSAT8_L2": "LANDSAT_OT_L2",
-}
 
 
 class DataCollection(Enum, metaclass=_DataCollectionMeta):
@@ -680,44 +647,9 @@ class DataCollection(Enum, metaclass=_DataCollectionMeta):
         return orbit_direction.upper() == defined_direction.upper()
 
     @classmethod
-    def get_available_collections(cls, config: Optional[SHConfig] = None) -> List["DataCollection"]:
+    def get_available_collections(cls) -> List["DataCollection"]:
         """Returns which data collections are available for configured Sentinel Hub OGC URL
 
-        :param config: A custom instance of config class to override parameters from the saved configuration.
         :return: List of available data collections
         """
-        if config is not None:
-            warnings.warn(
-                "Parameter config is deprecated, and will be removed in future.", category=SHDeprecationWarning
-            )
         return list(cls)
-
-
-DataSource = DataCollection
-
-
-def handle_deprecated_data_source(
-    data_collection: Optional[DataCollection],
-    data_source: Optional[DataCollection],
-    default: Optional[DataCollection] = None,
-) -> DataCollection:
-    """Joins parameters used to specify a data collection. In case data_source is given it raises a warning. In case
-    both are given it raises an error. In case neither are given but there is a default collection it raises another
-    warning.
-
-    Note that this function is only temporary and will be removed in future package versions
-    """
-    if data_source is not None:
-        warnings.warn("Parameter data_source is deprecated, use data_collection instead", category=SHDeprecationWarning)
-
-    if data_collection is not None and data_source is not None:
-        raise ValueError("Only one of the parameters data_collection and data_source should be given")
-
-    if data_collection is None and data_source is None and default is not None:
-        warnings.warn(
-            "In the future please specify data_collection parameter, for now taking DataCollection.SENTINEL2_L1C",
-            category=SHDeprecationWarning,
-        )
-        return default
-
-    return data_collection or data_source  # type: ignore
