@@ -20,4 +20,4 @@ help:
 	rm -rf ./build/
 	cp -vr ../examples source/
 	@$(SPHINXBUILD) -M $@ "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
-	rm -r source/examples source/markdowns
+	rm -r source/examples source/markdowns source/reference
