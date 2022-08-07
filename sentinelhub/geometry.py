@@ -1,9 +1,11 @@
 """
 Module implementing geometry classes
 """
+from __future__ import annotations
+
 from abc import ABCMeta, abstractmethod
 from math import ceil
-from typing import Iterator, List, Optional, Tuple, TypeVar, Union
+from typing import Callable, Iterator, List, Optional, Tuple, TypeVar, Union
 
 import shapely.geometry
 import shapely.ops
@@ -75,6 +77,10 @@ class _BaseGeometry(metaclass=ABCMeta):
     def transform(self: Self, crs: CRS, always_xy: bool = True) -> Self:
         """Transforms geometry from current CRS to target CRS."""
 
+    @abstractmethod
+    def apply(self: Self, operation: Callable[[float, float], Tuple[float, float]]) -> Self:
+        """Applies a function to each vertex of a geometry object."""
+
 
 class BBox(_BaseGeometry):
     """Class representing a bounding box in a given CRS.
@@ -99,7 +105,7 @@ class BBox(_BaseGeometry):
     - In case of ``constants.CRS.UTM_*`` axis x represents easting and axis y represents northing.
     """
 
-    def __init__(self, bbox: Union["BBox", tuple, list, dict, str, BaseGeometry], crs: CRS):
+    def __init__(self, bbox: Union[BBox, tuple, list, dict, str, BaseGeometry], crs: CRS):
         """
         :param bbox: A bbox in any valid representation
         :param crs: Coordinate reference system of the bounding box
@@ -164,14 +170,14 @@ class BBox(_BaseGeometry):
         """
         return (self.min_x + self.max_x) / 2, (self.min_y + self.max_y) / 2
 
-    def reverse(self) -> "BBox":
+    def reverse(self) -> BBox:
         """Returns a new BBox object where x and y coordinates are switched
 
         :return: New BBox object with switched coordinates
         """
         return BBox((self.min_y, self.min_x, self.max_y, self.max_x), crs=self.crs)
 
-    def transform(self, crs: CRS, always_xy: bool = True) -> "BBox":
+    def transform(self, crs: CRS, always_xy: bool = True) -> BBox:
         """Transforms BBox from current CRS to target CRS
 
         This transformation will take lower left and upper right corners of the bounding box, transform these 2 points
@@ -192,7 +198,7 @@ class BBox(_BaseGeometry):
             crs=new_crs,
         )
 
-    def transform_bounds(self, crs: CRS, always_xy: bool = True) -> "BBox":
+    def transform_bounds(self, crs: CRS, always_xy: bool = True) -> BBox:
         """Alternative way to transform BBox from current CRS to target CRS.
 
         This transformation will transform the bounding box geometry to another CRS as a geometric object, and then
@@ -208,7 +214,12 @@ class BBox(_BaseGeometry):
         bbox_geometry = bbox_geometry.transform(crs, always_xy=always_xy)
         return bbox_geometry.bbox
 
-    def buffer(self, buffer: Union[float, Tuple[float, float]], *, relative: bool = True) -> "BBox":
+    def apply(self, operation: Callable[[float, float], Tuple[float, float]]) -> BBox:
+        """Applies a function to lower left and upper right pairs of coordinates of the bounding box to create a new
+        bounding box."""
+        return BBox((operation(*self.lower_left), operation(*self.upper_right)), crs=self.crs)
+
+    def buffer(self, buffer: Union[float, Tuple[float, float]], *, relative: bool = True) -> BBox:
         """Provides a new bounding box with a size that is changed either by a relative or an absolute buffer.
 
         :param buffer: The buffer can be provided either as a single number or a tuple of 2 numbers, one for buffer in
@@ -279,7 +290,7 @@ class BBox(_BaseGeometry):
         num_y: Optional[int] = None,
         size_x: Optional[float] = None,
         size_y: Optional[float] = None,
-    ) -> List[List["BBox"]]:
+    ) -> List[List[BBox]]:
         """Partitions bounding box into smaller bounding boxes of the same size.
 
         If `num_x` and `num_y` are specified, the total number of BBoxes is know but not the size. If `size_x` and
@@ -338,7 +349,7 @@ class BBox(_BaseGeometry):
         raise TypeError(f"Resolution should be a float, got resolution of type {type(res)}")
 
     @staticmethod
-    def _to_tuple(bbox: Union["BBox", tuple, list, dict, str, BaseGeometry]) -> Tuple[float, float, float, float]:
+    def _to_tuple(bbox: Union[BBox, tuple, list, dict, str, BaseGeometry]) -> Tuple[float, float, float, float]:
         """Converts the input bbox representation (see the constructor docstring for a list of valid representations)
         into a flat tuple
 
@@ -392,7 +403,7 @@ class BBox(_BaseGeometry):
         return bbox["min_x"], bbox["min_y"], bbox["max_x"], bbox["max_y"]
 
     @staticmethod
-    def _tuple_from_bbox(bbox: "BBox") -> Tuple[float, float, float, float]:
+    def _tuple_from_bbox(bbox: BBox) -> Tuple[float, float, float, float]:
         """Converts a BBox instance into a tuple
 
         :param bbox: An instance of the BBox type
@@ -434,14 +445,14 @@ class Geometry(_BaseGeometry):
             return self.geometry == other.geometry and self.crs is other.crs
         return False
 
-    def reverse(self) -> "Geometry":
+    def reverse(self) -> Geometry:
         """Returns a new Geometry object where x and y coordinates are switched
 
         :return: New Geometry object with switched coordinates
         """
         return Geometry(shapely.ops.transform(lambda x, y: (y, x), self.geometry), crs=self.crs)
 
-    def transform(self, crs: CRS, always_xy: bool = True) -> "Geometry":
+    def transform(self, crs: CRS, always_xy: bool = True) -> Geometry:
         """Transforms Geometry from current CRS to target CRS
 
         :param crs: target CRS
@@ -458,8 +469,12 @@ class Geometry(_BaseGeometry):
 
         return Geometry(geometry, crs=new_crs)
 
+    def apply(self, operation: Callable[[float, float], Tuple[float, float]]) -> Geometry:
+        """Applies a function to each pair of vertex coordinates of the geometry to create a new geometry."""
+        return Geometry(shapely.ops.transform(operation, self.geometry), crs=self.crs)
+
     @classmethod
-    def from_geojson(cls, geojson: dict, crs: Optional[CRS] = None) -> "Geometry":
+    def from_geojson(cls, geojson: dict, crs: Optional[CRS] = None) -> Geometry:
         """Create Geometry object from geojson. It will parse crs from geojson (if info is available),
         otherwise it will be set to crs (WGS84 if parameter is empty)
 
@@ -517,7 +532,7 @@ class Geometry(_BaseGeometry):
 class BBoxCollection(_BaseGeometry):
     """A collection of bounding boxes"""
 
-    def __init__(self, bbox_list: Union["BBoxCollection", List[BBox]]):
+    def __init__(self, bbox_list: Union[BBoxCollection, List[BBox]]):
         """
         :param bbox_list: A list of BBox objects which have to be in the same CRS
         """
@@ -569,14 +584,14 @@ class BBoxCollection(_BaseGeometry):
         """
         return BBox(self.geometry, self.crs)
 
-    def reverse(self) -> "BBoxCollection":
+    def reverse(self) -> BBoxCollection:
         """Returns a new BBoxCollection object where all x and y coordinates are switched
 
         :return: New Geometry object with switched coordinates
         """
         return BBoxCollection([bbox.reverse() for bbox in self.bbox_list])
 
-    def transform(self, crs: CRS, always_xy: bool = True) -> "BBoxCollection":
+    def transform(self, crs: CRS, always_xy: bool = True) -> BBoxCollection:
         """Transforms BBoxCollection from current CRS to target CRS
 
         :param crs: target CRS
@@ -586,12 +601,17 @@ class BBoxCollection(_BaseGeometry):
         """
         return BBoxCollection([bbox.transform(crs, always_xy=always_xy) for bbox in self.bbox_list])
 
+    def apply(self, operation: Callable[[float, float], Tuple[float, float]]) -> BBoxCollection:
+        """Applies a function to lower-left and upper-right pairs of coordinates of each bounding box in the collection
+        to create a new collection of modified bounding boxes."""
+        return BBoxCollection([bbox.apply(operation) for bbox in self.bbox_list])
+
     def _get_geometry(self) -> MultiPolygon:
         """Creates a multipolygon of bounding box polygons"""
         return MultiPolygon([bbox.geometry for bbox in self.bbox_list])
 
     @staticmethod
-    def _parse_bbox_list(bbox_list: Union["BBoxCollection", List[BBox]]) -> Tuple[List[BBox], CRS]:
+    def _parse_bbox_list(bbox_list: Union[BBoxCollection, List[BBox]]) -> Tuple[List[BBox], CRS]:
         """Helper method for parsing a list of bounding boxes"""
         if isinstance(bbox_list, BBoxCollection):
             return bbox_list.bbox_list, bbox_list.crs

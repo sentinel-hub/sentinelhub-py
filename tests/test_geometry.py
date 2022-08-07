@@ -1,10 +1,14 @@
 import copy
+from typing import Tuple, TypeVar
 
 import pytest
 import shapely.geometry
 from pytest import approx
 
 from sentinelhub import CRS, BBox, BBoxCollection, Geometry, get_utm_crs
+from sentinelhub.geometry import _BaseGeometry
+
+GeoType = TypeVar("GeoType", bound=_BaseGeometry)
 
 WKT_STRING = (
     "MULTIPOLYGON (((40 40, 20 45, 45 30, 40 40)), ((20 35, 10 30, 10 10, 30 5, 45 20, 20 35), "
@@ -17,6 +21,11 @@ BBOX = BBox(bbox=[14.00, 45.00, 14.03, 45.03], crs=CRS.WGS84)
 BBOX_COLLECTION = BBoxCollection([BBOX, BBox("46,13,47,20", CRS.WGS84)])
 
 GEOMETRY_LIST = [GEOMETRY1, GEOMETRY2, BBOX_COLLECTION, BBOX]
+
+
+def _round_point_coords(x: float, y: float, decimals: int = 1) -> Tuple[float, float]:
+    """Rounds coordinates of a point"""
+    return round(x, decimals), round(y, decimals)
 
 
 def test_bbox_no_crs():
@@ -138,7 +147,7 @@ def test_transform():
 
 def test_transform_bounds():
     bbox1 = BBox([46.07, 13.23, 46.24, 13.57], CRS.WGS84)
-    utm_crs = get_utm_crs(*bbox1.middle, CRS.WGS84)
+    utm_crs = get_utm_crs(*bbox1.middle, source_crs=CRS.WGS84)
     bbox2 = bbox1.transform_bounds(utm_crs).transform_bounds(CRS.WGS84)
 
     assert bbox2.geometry.contains(bbox1.geometry)
@@ -232,3 +241,24 @@ def test_wkt():
 @pytest.mark.parametrize("geometry", [GEOMETRY1, GEOMETRY2, BBOX_COLLECTION])
 def test_bbox(geometry):
     assert geometry.bbox == BBox(geometry.geometry, geometry.crs), "Failed bbox property"
+
+
+@pytest.mark.parametrize(
+    "input_geometry, expected_output_geometry",
+    [
+        (BBox((1.11, 0, 0.999, 0.05), crs=CRS.WGS84), BBox((1.1, 0, 1.0, 0.1), crs=CRS.WGS84)),
+        (
+            Geometry("POLYGON ((0 0, 1.001 0.99, -0.1 0.45, 0 0))", crs=CRS.WGS84),
+            Geometry("POLYGON ((0 0, 1.0 1.0, -0.1 0.5, 0 0))", crs=CRS.WGS84),
+        ),
+        (
+            BBoxCollection([BBox((1.11, 0, 0.999, 0.05), crs=CRS.WGS84) for _ in range(3)]),
+            BBoxCollection([BBox((1.1, 0, 1.0, 0.1), crs=CRS.WGS84) for _ in range(3)]),
+        ),
+    ],
+)
+def test_apply_method(input_geometry: GeoType, expected_output_geometry: GeoType) -> None:
+    rounded_geometry = input_geometry.apply(_round_point_coords)
+
+    assert rounded_geometry is not input_geometry
+    assert rounded_geometry == expected_output_geometry
