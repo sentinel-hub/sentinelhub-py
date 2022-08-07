@@ -1,6 +1,7 @@
 """
 Module for managing configuration data from `config.json`
 """
+from __future__ import annotations
 
 import copy
 import json
@@ -158,6 +159,12 @@ class SHConfig:  # pylint: disable=too-many-instance-attributes
 
         return "\n  ".join(repr_list).strip(",") + "\n)"
 
+    def __eq__(self, other: object) -> bool:
+        """Two instances of `SHConfig` are equal if all values of their parameters are equal."""
+        if not isinstance(other, SHConfig):
+            return False
+        return all(getattr(self, param) == getattr(other, param) for param in self.CONFIG_PARAMS)
+
     @property
     def _global_cache(self) -> Dict[str, Any]:
         """Uses a class attribute to store a global instance of a class with config parameters."""
@@ -167,7 +174,7 @@ class SHConfig:  # pylint: disable=too-many-instance-attributes
         return SHConfig._cache
 
     @classmethod
-    def load(cls, filename: str) -> "SHConfig":
+    def load(cls, filename: str) -> SHConfig:
         """Method that loads configuration parameters from a file. Does not affect global settings.
 
         :param filename: Path to file from which to read configuration.
@@ -207,7 +214,7 @@ class SHConfig:  # pylint: disable=too-many-instance-attributes
             with open(filename or self.get_config_location(), "w") as cfg_file:
                 json.dump(config_dict, cfg_file, indent=2)
 
-    def copy(self) -> "SHConfig":
+    def copy(self) -> SHConfig:
         """Makes a copy of an instance of `SHConfig`"""
         return copy.copy(self)
 
@@ -232,7 +239,7 @@ class SHConfig:  # pylint: disable=too-many-instance-attributes
                 f"Parameters must be specified in form of a list of strings or as a single string, instead got {params}"
             )
 
-    def _reset_param(self, param: str, default: "SHConfig") -> None:
+    def _reset_param(self, param: str, default: SHConfig) -> None:
         """Resets a single parameter
 
         :param param: A configuration parameter

@@ -89,6 +89,19 @@ def test_copy():
     assert config.instance_id == "a"
 
 
+def test_config_equality():
+    assert SHConfig() != 42
+
+    config1 = SHConfig(hide_credentials=False, use_defaults=True)
+    config2 = SHConfig(hide_credentials=True, use_defaults=True)
+
+    assert config1 is not config2
+    assert config1 == config2
+
+    config2.sh_client_id = "XXX"
+    assert config1 != config2
+
+
 def test_raise_for_missing_instance_id():
     config = SHConfig()
 
