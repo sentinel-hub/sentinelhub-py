@@ -94,7 +94,7 @@ language = "en"
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This patterns also effect to html_static_path and html_extra_path
-exclude_patterns = ["**.ipynb_checkpoints", "_reference*"]
+exclude_patterns = ["**.ipynb_checkpoints", "custom_reference*"]
 
 # The name of the Pygments (syntax highlighting) style to use.
 pygments_style = "sphinx"
@@ -262,14 +262,14 @@ process_readme()
 # Auto-generate documentation pages
 current_dir = os.path.abspath(os.path.dirname(__file__))
 reference_dir = os.path.join(current_dir, "reference")
-predefined_reference_dir = os.path.join(current_dir, "_reference")
+custom_reference_dir = os.path.join(current_dir, "custom_reference")
 module = os.path.join(current_dir, "..", "..", "sentinelhub")
 
 APIDOC_EXCLUDE = [os.path.join(module, "commands.py"), os.path.join(module, "aws", "commands.py")]
 APIDOC_OPTIONS = ["--module-first", "--separate", "--no-toc", "--templatedir", os.path.join(current_dir, "_templates")]
 
 shutil.rmtree(reference_dir, ignore_errors=True)
-shutil.copytree(predefined_reference_dir, reference_dir)
+shutil.copytree(custom_reference_dir, reference_dir)
 
 
 def run_apidoc(_):
