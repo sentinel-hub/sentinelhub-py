@@ -84,7 +84,7 @@ class SentinelHubBatchStatistical(BaseBatchClient["BatchStatisticalRequest"]):
 
         return BatchStatisticalRequest.from_dict(request_info)
 
-    def create_from_statistical_request(
+    def create_from_request(
         self,
         statistical_request: SentinelHubStatistical,
         input_features: AccessSpecification,
