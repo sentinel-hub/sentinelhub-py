@@ -28,7 +28,7 @@ LOGGER = logging.getLogger(__name__)
 BatchStatisticalRequestType = Union[str, dict, "BatchStatisticalRequest"]
 
 
-class S3AccessSpecification(TypedDict):
+class S3Specification(TypedDict):
     """Specification of a S3 path."""
 
     url: str
@@ -37,10 +37,10 @@ class S3AccessSpecification(TypedDict):
     region: NotRequired[str]
 
 
-class S3Specification(TypedDict):
+class AccessSpecification(TypedDict):
     """Specification of a S3 input or output."""
 
-    s3: S3AccessSpecification
+    s3: S3Specification
 
 
 class SentinelHubBatchStatistical(BaseBatchClient["BatchStatisticalRequest"]):
@@ -57,11 +57,11 @@ class SentinelHubBatchStatistical(BaseBatchClient["BatchStatisticalRequest"]):
 
     def create(
         self,
-        input_features: S3Specification,
+        input_features: AccessSpecification,
         input_data: List[Union[JsonDict, InputDataDict]],
         aggregation: JsonDict,
         calculations: JsonDict,
-        output: S3Specification,
+        output: AccessSpecification,
         **kwargs: Any,
     ) -> "BatchStatisticalRequest":
         """Create a new batch statistical request
@@ -87,8 +87,8 @@ class SentinelHubBatchStatistical(BaseBatchClient["BatchStatisticalRequest"]):
     def create_from_statistical_request(
         self,
         statistical_request: SentinelHubStatistical,
-        input_features: S3Specification,
-        output: S3Specification,
+        input_features: AccessSpecification,
+        output: AccessSpecification,
         **kwargs: Any,
     ) -> "BatchStatisticalRequest":
         """Create a new batch statistical request from an existing statistical request.
@@ -113,7 +113,7 @@ class SentinelHubBatchStatistical(BaseBatchClient["BatchStatisticalRequest"]):
     @staticmethod
     def s3_specification(
         url: str, access_key: str, secret_access_key: str, region: Optional[str] = None
-    ) -> S3Specification:
+    ) -> AccessSpecification:
         """A helper method to build a dictionary used for specifying S3 paths
 
         :param url: A URL pointing to an S3 bucket or an object in an S3 bucket.
@@ -123,7 +123,7 @@ class SentinelHubBatchStatistical(BaseBatchClient["BatchStatisticalRequest"]):
             that the request is submitted to is assumed.
         :return: A dictionary of S3 specifications used by the Batch Statistical API
         """
-        s3_access: S3AccessSpecification = {"url": url, "accessKey": access_key, "secretAccessKey": secret_access_key}
+        s3_access: S3Specification = {"url": url, "accessKey": access_key, "secretAccessKey": secret_access_key}
         if region is not None:
             s3_access["region"] = region
         return {"s3": s3_access}
