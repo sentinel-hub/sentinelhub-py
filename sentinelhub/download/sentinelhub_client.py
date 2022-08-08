@@ -15,8 +15,8 @@ from ..exceptions import SHRateLimitWarning, SHRuntimeWarning
 from ..type_utils import JsonDict
 from .client import DownloadClient
 from .handlers import fail_user_errors, retry_temporary_errors
+from .models import DownloadRequest, DownloadResponse
 from .rate_limit import SentinelHubRateLimit
-from .request import DownloadRequest
 from .session import SentinelHubSession
 
 LOGGER = logging.getLogger(__name__)
@@ -64,7 +64,7 @@ class SentinelHubDownloadClient(DownloadClient):
 
     @retry_temporary_errors
     @fail_user_errors
-    def _execute_download(self, request: DownloadRequest) -> bytes:
+    def _execute_download(self, request: DownloadRequest) -> DownloadResponse:
         """
         Executes the download with a single thread and uses a rate limit object, which is shared between all threads
         """
@@ -89,7 +89,7 @@ class SentinelHubDownloadClient(DownloadClient):
                 response.raise_for_status()
 
                 LOGGER.debug("Successful %s request to %s", request.request_type.value, request.url)
-                return response.content
+                return DownloadResponse.from_response(response, request)
 
             LOGGER.debug("Request needs to wait. Sleeping for %0.2f", sleep_time)
             time.sleep(sleep_time)

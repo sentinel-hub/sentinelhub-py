@@ -207,9 +207,9 @@ class AwsData(metaclass=ABCMeta):
         """
 
         def aws_sort_function(download_request: DownloadRequest) -> Tuple[int, str, int]:
-            data_name = download_request.properties["data_name"]
-            if "product_name" in download_request.properties:
-                product_name = download_request.properties["product_name"]
+            data_name = download_request.extra_params["data_name"]
+            if "product_name" in download_request.extra_params:
+                product_name = download_request.extra_params["product_name"]
             else:
                 if download_request.url is None:
                     raise ValueError(f"Faulty request {download_request}, no URL specified.")
@@ -243,8 +243,10 @@ class AwsData(metaclass=ABCMeta):
                             url=substruct,
                             filename=subfolder,
                             data_type=data_type,
-                            data_name=data_name,
-                            product_name=product_name,
+                            extra_params={
+                                "data_name": data_name,
+                                "product_name": product_name,
+                            },
                         )
                     )
             else:
@@ -373,7 +375,7 @@ class AwsProduct(AwsData):
                 url=self.get_url(metafile),
                 filename=self.get_filepath(metafile),
                 data_type=AwsConstants.AWS_FILES[metafile],
-                data_name=metafile,
+                extra_params={"data_name": metafile},
             )
             for metafile in self.metafiles
             if metafile in AwsConstants.PRODUCT_FILES
@@ -539,7 +541,10 @@ class AwsTile(AwsData):
                 filename = self.get_filepath(data_name)
                 self.download_list.append(
                     DownloadRequest(
-                        url=url, filename=filename, data_type=AwsConstants.AWS_FILES[data_name], data_name=data_name
+                        url=url,
+                        filename=filename,
+                        data_type=AwsConstants.AWS_FILES[data_name],
+                        extra_params={"data_name": data_name},
                     )
                 )
         self.sort_download_list()

@@ -6,12 +6,12 @@ twine
 requests-mock
 black[jupyter]>=22.1.0
 isort
-pillow>=9.0.0
+flake8
+nbqa
 click>=8.0.0
 ray[default]
 mypy
-nbqa
 types-requests
 types-python-dateutil
 types-urllib3
-flake8
+boto3-stubs>=1.20.0
