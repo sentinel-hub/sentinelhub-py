@@ -2,6 +2,7 @@
 A module with tests for batch utilities
 """
 import random
+import sys
 from collections import defaultdict
 from typing import Dict, List, Tuple
 
@@ -18,6 +19,7 @@ from sentinelhub import (
 )
 
 
+@pytest.mark.skipif(sys.version < "3.8", reason="Mocking check for call.args doesn't work correctly for Python 3.7")
 @pytest.mark.parametrize(
     "tile_status_sequence",
     [
@@ -114,6 +116,7 @@ def test_monitor_batch_job_sleep_time_error() -> None:
         monitor_batch_job("x", analysis_sleep_time=4)
 
 
+@pytest.mark.skipif(sys.version < "3.8", reason="Mocking check for call.args doesn't work correctly for Python 3.7")
 @pytest.mark.parametrize(
     "status_sequence",
     [
