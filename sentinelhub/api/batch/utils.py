@@ -83,7 +83,7 @@ def monitor_batch_job(
 
 def monitor_batch_job(
     batch_request: BatchRequestSpec,
-    config: Optional[SHConfig],
+    config: Optional[SHConfig] = None,
     sleep_time: int = _DEFAULT_SLEEP_TIME,
     analysis_sleep_time: int = _DEFAULT_ANALYSIS_SLEEP_TIME,
     *,
@@ -147,7 +147,7 @@ def monitor_batch_analysis(
 
 def monitor_batch_analysis(
     batch_request: BatchRequestSpec,
-    config: Optional[SHConfig],
+    config: Optional[SHConfig] = None,
     sleep_time: int = _DEFAULT_ANALYSIS_SLEEP_TIME,
     *,
     batch_kind: BatchKind = "process",
