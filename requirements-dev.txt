@@ -1,9 +1,10 @@
 pytest>=4.0.0
+pytest-mock
+requests-mock
 pytest-cov
 codecov
-pylint>=2.14.0
 twine
-requests-mock
+pylint>=2.14.0
 black[jupyter]>=22.1.0
 isort
 flake8

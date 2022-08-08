@@ -23,7 +23,7 @@ _DEFAULT_ANALYSIS_SLEEP_TIME = 10
 
 def monitor_batch_job(
     batch_request: BatchRequestType,
-    config: Optional[SHConfig],
+    config: Optional[SHConfig] = None,
     sleep_time: int = _DEFAULT_SLEEP_TIME,
     analysis_sleep_time: int = _DEFAULT_ANALYSIS_SLEEP_TIME,
 ) -> DefaultDict[BatchTileStatus, List[dict]]:
@@ -87,7 +87,7 @@ def monitor_batch_job(
 
 
 def monitor_batch_analysis(
-    batch_request: BatchRequestType, config: Optional[SHConfig], sleep_time: int = _DEFAULT_ANALYSIS_SLEEP_TIME
+    batch_request: BatchRequestType, config: Optional[SHConfig] = None, sleep_time: int = _DEFAULT_ANALYSIS_SLEEP_TIME
 ) -> BatchRequest:
     """A utility function that is waiting until analysis phase of a batch job finishes and regularly checks its status.
     In case analysis phase failed it raises an error at the end.
