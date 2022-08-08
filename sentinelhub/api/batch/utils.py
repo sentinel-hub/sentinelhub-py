@@ -61,9 +61,9 @@ def monitor_batch_job(
     success_count = len(tiles_per_status[BatchTileStatus.PROCESSED])
     finished_count = success_count + len(tiles_per_status[BatchTileStatus.FAILED])
 
-    with tqdm(total=batch_request.tile_count, initial=finished_count, desc="Progress rate") as progress_bar, tqdm(
-        total=finished_count, initial=success_count, desc="Success rate"
-    ) as success_bar:
+    progress_bar = tqdm(total=batch_request.tile_count, initial=finished_count, desc="Progress rate")
+    success_bar = tqdm(total=finished_count, initial=success_count, desc="Success rate")
+    with progress_bar, success_bar:
         while finished_count < batch_request.tile_count:
             time.sleep(sleep_time)
 
