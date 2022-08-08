@@ -3,7 +3,15 @@ A module that tests an interface for Sentinel Hub Batch processing
 """
 import pytest
 
-from sentinelhub import BatchStatisticalRequest, DataCollection, SentinelHubBatchStatistical, SentinelHubStatistical
+from sentinelhub import (
+    CRS,
+    BatchStatisticalRequest,
+    BBox,
+    DataCollection,
+    SentinelHubBatchStatistical,
+    SentinelHubStatistical,
+)
+from sentinelhub.api.batch.statistical import AccessSpecification
 
 pytestmark = pytest.mark.sh_integration
 
@@ -13,7 +21,7 @@ def statistical_batch_client_fixture(config):
     return SentinelHubBatchStatistical(config=config)
 
 
-def test_create_and_run_batch_request(statistical_batch_client, requests_mock):
+def test_create_and_run_batch_request(statistical_batch_client: SentinelHubBatchStatistical, requests_mock):
     """A test that mocks creation and execution of a new batch request"""
     rgb_evalscript = "some evalscript"
 
@@ -26,7 +34,7 @@ def test_create_and_run_batch_request(statistical_batch_client, requests_mock):
     input_data = [SentinelHubStatistical.input_data(DataCollection.SENTINEL2_L1C, maxcc=0.8)]
     calculations = {"ndvi": {"histograms": {"default": {"nBins": 20, "lowEdge": -1.0, "highEdge": 1.0}}}}
 
-    input_features = {"s3": {"url": "s3://path/to/gpkg", "accessKey": "", "secretAccessKey": ""}}
+    input_features: AccessSpecification = {"s3": {"url": "s3://path/to/gpkg", "accessKey": "", "secretAccessKey": ""}}
     output = SentinelHubBatchStatistical.s3_specification("s3://path/to/output/folder", "", "")
     assert output == {"s3": {"url": "s3://path/to/output/folder", "accessKey": "", "secretAccessKey": ""}}
 
@@ -57,6 +65,20 @@ def test_create_and_run_batch_request(statistical_batch_client, requests_mock):
     assert isinstance(batch_request, BatchStatisticalRequest)
     assert batch_request.request_id == request_id
     assert request_id in repr(batch_request)
+
+    statistical_request = SentinelHubStatistical(
+        aggregation=aggregation,
+        calculations=calculations,
+        input_data=input_data,
+        bbox=BBox((0, 0, 0, 0), CRS.WGS84),
+        geometry=None,
+    )
+    derived_request = statistical_batch_client.create_from_request(
+        statistical_request=statistical_request,
+        input_features=input_features,
+        output=output,
+    )
+    assert batch_request == derived_request
 
     endpoints = ["analyse", "start", "cancel"]
     full_endpoints = [f"/api/v1/statistics/batch/{request_id}/{endpoint}" for endpoint in endpoints]
