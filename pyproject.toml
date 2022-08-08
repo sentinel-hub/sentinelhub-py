@@ -5,6 +5,7 @@ preview = true
 [tool.isort]
 profile = "black"
 known_absolute = "sentinelhub"
+known_local_folder = "utils"
 sections = ["FUTURE", "STDLIB", "THIRDPARTY", "ABSOLUTE", "LOCALFOLDER"]
 line_length = 120
 
