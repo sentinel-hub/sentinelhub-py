@@ -51,7 +51,7 @@ def monitor_batch_job(
     if sleep_time < _MIN_SLEEP_TIME:
         raise ValueError(f"To avoid making too many service requests please set sleep_time>={_MIN_SLEEP_TIME}")
 
-    batch_request = monitor_batch_analysis(batch_request, config, sleep_time=analysis_sleep_time)
+    batch_request = monitor_batch_analysis(batch_request, config=config, sleep_time=analysis_sleep_time)
     if batch_request.status is BatchRequestStatus.PROCESSING:
         LOGGER.info("Batch job is running")
 
