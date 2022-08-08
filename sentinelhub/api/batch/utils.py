@@ -2,10 +2,11 @@
 Module implementing utilities for working with batch jobs.
 """
 import logging
+import sys
 import time
 import warnings
 from collections import defaultdict
-from typing import DefaultDict, List, Literal, Optional, TypeVar, Union, overload
+from typing import DefaultDict, List, Optional, TypeVar, Union, overload
 
 from tqdm.auto import tqdm
 
@@ -13,6 +14,11 @@ from ...config import SHConfig
 from .base import BatchRequestStatus
 from .process import BatchRequest, BatchTileStatus, SentinelHubBatch
 from .statistical import BatchStatisticalRequest, SentinelHubBatchStatistical
+
+if sys.version_info < (3, 8):
+    from typing_extensions import Literal
+else:
+    from typing import Literal  # pylint: disable=ungrouped-imports
 
 LOGGER = logging.getLogger(__name__)
 
