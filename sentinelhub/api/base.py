@@ -2,7 +2,6 @@
 Module implementing some utility functions not suitable for other utility modules
 """
 import sys
-import warnings
 from abc import ABCMeta
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -17,7 +16,7 @@ from ..base import FeatureIterator
 from ..config import SHConfig
 from ..data_collections import DataCollection
 from ..download.sentinelhub_client import SentinelHubDownloadClient
-from ..exceptions import MissingDataInRequestException, SHDeprecationWarning
+from ..exceptions import MissingDataInRequestException
 from ..type_utils import JsonDict
 from .utils import datetime_config, remove_undefined
 
@@ -30,26 +29,15 @@ else:
 class SentinelHubService(metaclass=ABCMeta):
     """A base class for classes interacting with different Sentinel Hub APIs"""
 
-    def __init__(self, config: Optional[SHConfig] = None, base_url: Optional[str] = None):
+    def __init__(self, config: Optional[SHConfig] = None):
         """
         :param config: A configuration object with required parameters `sh_client_id`, `sh_client_secret`, and
             `sh_auth_base_url` which is used for authentication and `sh_base_url` which defines the service
             deployment that will be used.
-        :param base_url: A deprecated parameter. Use `config` instead.
         """
         self.config = config or SHConfig()
 
-        if base_url:
-            warnings.warn(
-                "Parameter base_url is deprecated and will soon be removed. Instead set "
-                "config.sh_base_url = base_url and provide it with config parameter",
-                category=SHDeprecationWarning,
-            )
-
-        base_url = base_url or self.config.sh_base_url
-        if not isinstance(base_url, str):
-            raise ValueError(f"Sentinel Hub base URL parameter should be a string but got {base_url}")
-        base_url = base_url.rstrip("/")
+        base_url = self.config.sh_base_url.rstrip("/")
         self.service_url = self._get_service_url(base_url)
 
         self.client = SentinelHubDownloadClient(config=self.config)
