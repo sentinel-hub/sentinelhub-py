@@ -79,22 +79,14 @@ class AwsProductRequest(AwsRequest[AwsProduct]):
         super().__init__(**kwargs)
 
     def create_request(self) -> None:
-        if self.safe_format:
-            self.aws_service = SafeProduct(
-                self.product_id,
-                tile_list=self.tile_list,
-                bands=self.bands,
-                metafiles=self.metafiles,
-                config=self.config,
-            )
-        else:
-            self.aws_service = AwsProduct(
-                self.product_id,
-                tile_list=self.tile_list,
-                bands=self.bands,
-                metafiles=self.metafiles,
-                config=self.config,
-            )
+        product_class = SafeProduct if self.safe_format else AwsProduct
+        self.aws_service = product_class(
+            self.product_id,
+            tile_list=self.tile_list,
+            bands=self.bands,
+            metafiles=self.metafiles,
+            config=self.config,
+        )
 
         self.download_list, self.folder_list = self.aws_service.get_requests()
 
@@ -139,26 +131,16 @@ class AwsTileRequest(AwsRequest[AwsTile]):
         if self.tile is None or self.time is None:
             raise ValueError("The parameters `tile` and `time` must be set.")
 
-        if self.safe_format:
-            self.aws_service = SafeTile(
-                self.tile,
-                self.time,
-                self.aws_index,
-                bands=self.bands,
-                metafiles=self.metafiles,
-                data_collection=self.data_collection,
-                config=self.config,
-            )
-        else:
-            self.aws_service = AwsTile(
-                self.tile,
-                self.time,
-                self.aws_index,
-                bands=self.bands,
-                metafiles=self.metafiles,
-                data_collection=self.data_collection,
-                config=self.config,
-            )
+        tile_class = SafeTile if self.safe_format else AwsTile
+        self.aws_service = tile_class(
+            self.tile,
+            self.time,
+            self.aws_index,
+            bands=self.bands,
+            metafiles=self.metafiles,
+            data_collection=self.data_collection,
+            config=self.config,
+        )
 
         self.download_list, self.folder_list = self.aws_service.get_requests()
 
