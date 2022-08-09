@@ -1,5 +1,11 @@
 """
 A module with tests for batch utilities
+
+IMPORTANT: These tests intentionally break the "black box principle" of testing because these are not ordinary functions
+we are testing. It is not enough to just verify correctness of outputs. We also have to verify the procedure itself:
+how many interactions with Sentinel Hub service they make, how much time they sleep, and how many logs they report.
+Because of that the tests are very strict. If you break them make sure to understand what is happening before either
+changing the code or the tests.
 """
 import random
 import sys
