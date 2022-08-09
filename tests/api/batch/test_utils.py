@@ -36,7 +36,7 @@ from sentinelhub import (
 @pytest.mark.parametrize("config", [SHConfig(), None])
 @pytest.mark.parametrize("sleep_time", [60, 1000])
 def test_monitor_batch_job(
-    tile_status_sequence: Tuple[Dict[BatchTileStatus, int]],
+    tile_status_sequence: Tuple[Dict[BatchTileStatus, int], ...],
     batch_status: BatchRequestStatus,
     config: SHConfig,
     sleep_time: int,
