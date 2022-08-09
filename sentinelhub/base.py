@@ -4,7 +4,7 @@ Implementation of base interface classes of this package.
 import copy
 import os
 from abc import ABCMeta, abstractmethod
-from typing import Generic, Iterable, List, Optional, Tuple, TypeVar
+from typing import Callable, Generic, Iterable, List, Optional, Tuple, TypeVar
 
 import numpy as np
 
@@ -24,7 +24,7 @@ class DataRequest(metaclass=ABCMeta):
     """
 
     def __init__(
-        self, download_client_class: type, *, data_folder: Optional[str] = None, config: Optional[SHConfig] = None
+        self, download_client_class: Callable, *, data_folder: Optional[str] = None, config: Optional[SHConfig] = None
     ):
         """
         :param download_client_class: A class implementing a download client

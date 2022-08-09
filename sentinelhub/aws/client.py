@@ -3,7 +3,7 @@ Module implementing a download client that is adjusted to download from AWS
 """
 import logging
 import warnings
-from typing import Any
+from typing import Any, Dict, Optional
 
 try:
     from boto3 import Session
@@ -25,6 +25,17 @@ class AwsDownloadClient(DownloadClient):
     """An AWS download client class"""
 
     GLOBAL_S3_CLIENT = None
+
+    def __init__(self, *args: Any, boto3_params: Optional[Dict[str, Any]] = None, **kwargs: Any):
+        """
+        :param args: Positional arguments propagated to `DownloadClient` class.
+        :param boto3_params: A dictionary of extra parameters that will be propagated to `botocore.client.S3.get_object`
+            method. E.g. `{"RequestPayer": "requester"}`.
+        :param kwargs: Keyword arguments propagated to `DownloadClient` class.
+        """
+        super().__init__(*args, **kwargs)
+
+        self.boto3_params = boto3_params or {}
 
     @fail_missing_file
     def _execute_download(self, request: DownloadRequest) -> DownloadResponse:
@@ -57,15 +68,15 @@ class AwsDownloadClient(DownloadClient):
 
         return s3_client
 
-    @staticmethod
-    def _do_download(request: DownloadRequest, s3_client: Any) -> bytes:
+    def _do_download(self, request: DownloadRequest, s3_client: Any) -> bytes:
         """Does the download from s3"""
         if request.url is None:
             raise ValueError(f"Faulty request {request}, no URL specified.")
         _, _, bucket_name, url_key = request.url.split("/", 3)
 
         try:
-            response = s3_client.get_object(Bucket=bucket_name, Key=url_key, RequestPayer="requester")
+            response = s3_client.get_object(Bucket=bucket_name, Key=url_key, **self.boto3_params)
+            print(type(s3_client))
             return response["Body"].read()
         except NoCredentialsError as exception:
             raise ValueError(

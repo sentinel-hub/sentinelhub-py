@@ -1,6 +1,7 @@
 """
 Data request interface for downloading satellite data from AWS
 """
+import functools
 from abc import abstractmethod
 from typing import Any, Generic, List, Optional, Tuple, TypeVar, Union
 
@@ -13,7 +14,7 @@ from .data_safe import SafeProduct, SafeTile
 T = TypeVar("T")
 
 
-class AwsRequest(DataRequest, Generic[T]):
+class _BaseAwsDataRequest(DataRequest, Generic[T]):
     """The base class for Amazon Web Service request classes. Common parameters are defined here.
 
     Collects and provides data from AWS.
@@ -43,7 +44,9 @@ class AwsRequest(DataRequest, Generic[T]):
         self.safe_format = safe_format
 
         self.aws_service: T
-        super().__init__(AwsDownloadClient, **kwargs)
+
+        client_class = functools.partial(AwsDownloadClient, boto3_params={"RequestPayer": "requester"})
+        super().__init__(client_class, **kwargs)
 
     @abstractmethod
     def create_request(self) -> None:
@@ -56,7 +59,7 @@ class AwsRequest(DataRequest, Generic[T]):
         return self.aws_service
 
 
-class AwsProductRequest(AwsRequest[AwsProduct]):
+class AwsProductRequest(_BaseAwsDataRequest[AwsProduct]):
     """AWS Service request class for an ESA product."""
 
     def __init__(self, product_id: str, *, tile_list: Optional[List[str]] = None, **kwargs: Any):
@@ -91,7 +94,7 @@ class AwsProductRequest(AwsRequest[AwsProduct]):
         self.download_list, self.folder_list = self.aws_service.get_requests()
 
 
-class AwsTileRequest(AwsRequest[AwsTile]):
+class AwsTileRequest(_BaseAwsDataRequest[AwsTile]):
     """AWS Service request class for an ESA tile."""
 
     def __init__(
