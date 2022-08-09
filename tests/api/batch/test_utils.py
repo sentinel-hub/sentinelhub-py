@@ -128,7 +128,7 @@ def _tile_status_counts_to_tiles(tile_status_counts: Dict[BatchTileStatus, int])
     ],
 )
 @pytest.mark.parametrize("config", [SHConfig(), None])
-@pytest.mark.parametrize("sleep_time", [60, 1000])
+@pytest.mark.parametrize("sleep_time", [15, 1000])
 def test_monitor_batch_statistical_job(
     batch_status: BatchRequestStatus,
     progress_sequence: Sequence[float],
