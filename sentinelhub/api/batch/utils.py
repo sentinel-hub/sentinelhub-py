@@ -75,7 +75,7 @@ def monitor_batch_process_job(
     if sleep_time < _MIN_SLEEP_TIME:
         raise ValueError(f"To avoid making too many service requests please set sleep_time>={_MIN_SLEEP_TIME}")
 
-    batch_request = monitor_batch_analysis(batch_request, config, sleep_time=analysis_sleep_time)
+    batch_request = monitor_batch_analysis(batch_request, config=config, sleep_time=analysis_sleep_time)
     if batch_request.status is BatchRequestStatus.PROCESSING:
         LOGGER.info("Batch job is running")
 
@@ -85,9 +85,9 @@ def monitor_batch_process_job(
     success_count = len(tiles_per_status[BatchTileStatus.PROCESSED])
     finished_count = success_count + len(tiles_per_status[BatchTileStatus.FAILED])
 
-    with tqdm(total=batch_request.tile_count, initial=finished_count, desc="Progress rate") as progress_bar, tqdm(
-        total=finished_count, initial=success_count, desc="Success rate"
-    ) as success_bar:
+    progress_bar = tqdm(total=batch_request.tile_count, initial=finished_count, desc="Progress rate")
+    success_bar = tqdm(total=finished_count, initial=success_count, desc="Success rate")
+    with progress_bar, success_bar:
         while finished_count < batch_request.tile_count:
             time.sleep(sleep_time)
 
