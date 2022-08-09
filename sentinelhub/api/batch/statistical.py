@@ -192,8 +192,10 @@ class SentinelHubBatchStatistical(BaseBatchClient["BatchStatisticalRequest"]):
 class BatchStatisticalRequest(BaseBatchRequest):  # pylint: disable=abstract-method
     """A dataclass object that holds information about a batch statistical request"""
 
+    # dataclass_json doesn't handle parameter inheritance correctly
+    # pylint: disable=duplicate-code
+
     request_id: str = field(metadata=dataclass_config(field_name="id"))
-    other_data: CatchAll
     completion_percentage: float
     request: dict
     status: BatchRequestStatus = field(metadata=enum_config(BatchRequestStatus))
@@ -203,6 +205,7 @@ class BatchStatisticalRequest(BaseBatchRequest):  # pylint: disable=abstract-met
     user_action: Optional[BatchUserAction] = field(metadata=enum_config(BatchUserAction), default=None)
     user_action_updated: Optional[str] = field(metadata=datetime_config, default=None)
     error: Optional[str] = None
+    other_data: CatchAll = None
 
     _REPR_PARAM_NAMES = (
         "request_id",
