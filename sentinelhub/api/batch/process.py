@@ -487,11 +487,13 @@ class SentinelHubBatch(BaseBatchClient):
 class BatchRequest(BaseBatchRequest):  # pylint: disable=abstract-method
     """A dataclass object that holds information about a batch request"""
 
+    # dataclass_json doesn't handle parameter inheritance correctly
+    # pylint: disable=duplicate-code
+
     request_id: str = field(metadata=dataclass_config(field_name="id"))
     process_request: dict
     tile_count: int
     status: BatchRequestStatus = field(metadata=enum_config(BatchRequestStatus))
-    other_data: CatchAll
     user_id: Optional[str] = None
     created: Optional[dt.datetime] = field(metadata=datetime_config, default=None)
     tiling_grid: dict = field(default_factory=dict)
@@ -504,6 +506,7 @@ class BatchRequest(BaseBatchRequest):  # pylint: disable=abstract-method
     user_action: Optional[BatchUserAction] = field(metadata=enum_config(BatchUserAction), default=None)
     user_action_updated: Optional[str] = field(metadata=datetime_config, default=None)
     error: Optional[str] = None
+    other_data: CatchAll = field(default_factory=dict)
 
     _REPR_PARAM_NAMES = (
         "request_id",
@@ -563,8 +566,8 @@ class BatchRequest(BaseBatchRequest):  # pylint: disable=abstract-method
 class BatchCollectionBatchData:
     """Dataclass to hold batch collection batchData part of the payload"""
 
-    other_data: CatchAll
     tiling_grid_id: Optional[int] = None
+    other_data: CatchAll = field(default_factory=dict)
 
 
 @dataclass_json(letter_case=LetterCase.CAMEL, undefined=Undefined.INCLUDE)
@@ -572,8 +575,8 @@ class BatchCollectionBatchData:
 class BatchCollectionAdditionalData:
     """Dataclass to hold batch collection additionalData part of the payload"""
 
-    other_data: CatchAll
     bands: Optional[Dict[str, Any]] = None
+    other_data: CatchAll = field(default_factory=dict)
 
 
 class BatchCollection(BaseCollection):

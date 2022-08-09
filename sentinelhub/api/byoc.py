@@ -26,12 +26,12 @@ TileType = Union["ByocTile", dict, str]
 class ByocCollectionBand:
     """Dataclass to hold BYOC collection band specification"""
 
-    other_data: CatchAll
     source: Optional[str] = None
     band_index: Optional[int] = None
     bit_depth: int = 8
     sample_format: str = "UINT"
     no_data: Optional[float] = None
+    other_data: CatchAll = field(default_factory=dict)
 
 
 @dataclass_json(letter_case=LetterCase.CAMEL, undefined=Undefined.INCLUDE)
@@ -39,10 +39,10 @@ class ByocCollectionBand:
 class ByocCollectionAdditionalData:
     """Dataclass to hold BYOC collection additional data"""
 
-    other_data: CatchAll
     bands: Optional[Dict[str, ByocCollectionBand]] = None
     max_meters_per_pixel: Optional[float] = None
     max_meters_per_pixel_override: Optional[float] = None
+    other_data: CatchAll = field(default_factory=dict)
 
 
 @dataclass_json(letter_case=LetterCase.CAMEL, undefined=Undefined.INCLUDE)
@@ -59,7 +59,6 @@ class ByocTile:
     """Dataclass to hold BYOC tile data"""
 
     path: str
-    other_data: CatchAll
     status: Optional[str] = None
     tile_id: Optional[str] = field(metadata=dataclass_config(field_name="id"), default=None)
     tile_geometry: Optional[Geometry] = field(metadata=geometry_config, default=None)
@@ -67,6 +66,7 @@ class ByocTile:
     created: Optional[datetime] = field(metadata=datetime_config, default=None)
     sensing_time: Optional[datetime] = field(metadata=datetime_config, default=None)
     additional_data: Optional[dict] = None
+    other_data: CatchAll = field(default_factory=dict)
 
 
 class SentinelHubBYOC(SentinelHubService):
