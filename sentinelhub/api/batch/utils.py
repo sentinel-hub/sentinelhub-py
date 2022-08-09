@@ -24,8 +24,8 @@ BatchStatisticalRequestSpec = Union[str, dict, BatchStatisticalRequest]
 
 _MIN_SLEEP_TIME = 60
 _DEFAULT_SLEEP_TIME = 120
-_MIN_STAT_SLEEP_TIME = 10
-_DEFAULT_STAT_SLEEP_TIME = 15
+_MIN_STAT_SLEEP_TIME = 15
+_DEFAULT_STAT_SLEEP_TIME = 30
 _MIN_ANALYSIS_SLEEP_TIME = 5
 _DEFAULT_ANALYSIS_SLEEP_TIME = 10
 
@@ -75,7 +75,7 @@ def monitor_batch_process_job(
     if sleep_time < _MIN_SLEEP_TIME:
         raise ValueError(f"To avoid making too many service requests please set sleep_time>={_MIN_SLEEP_TIME}")
 
-    batch_request = monitor_batch_analysis(batch_request, config=config, sleep_time=analysis_sleep_time)
+    batch_request = monitor_batch_process_analysis(batch_request, config=config, sleep_time=analysis_sleep_time)
     if batch_request.status is BatchRequestStatus.PROCESSING:
         LOGGER.info("Batch job is running")
 
@@ -166,7 +166,7 @@ def monitor_batch_statistical_job(
             time.sleep(sleep_time)
 
             request_status = batch_client.get_status(batch_request)
-            progress_bar.update(progress - request_status["completionPercentage"])
+            progress_bar.update(request_status["completionPercentage"] - progress)
             progress = request_status["completionPercentage"]
     return request_status
 

@@ -26,6 +26,10 @@ from .api import (
     WmsRequest,
     monitor_batch_analysis,
     monitor_batch_job,
+    monitor_batch_process_analysis,
+    monitor_batch_process_job,
+    monitor_batch_statistical_analysis,
+    monitor_batch_statistical_job,
     opensearch,
 )
 from .api.opensearch import get_area_dates, get_area_info, get_tile_info, get_tile_info_id
