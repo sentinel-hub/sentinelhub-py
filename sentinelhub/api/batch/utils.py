@@ -23,7 +23,7 @@ _DEFAULT_ANALYSIS_SLEEP_TIME = 10
 
 def monitor_batch_job(
     batch_request: BatchRequestType,
-    config: Optional[SHConfig],
+    config: Optional[SHConfig] = None,
     sleep_time: int = _DEFAULT_SLEEP_TIME,
     analysis_sleep_time: int = _DEFAULT_ANALYSIS_SLEEP_TIME,
 ) -> DefaultDict[BatchTileStatus, List[dict]]:
@@ -51,7 +51,7 @@ def monitor_batch_job(
     if sleep_time < _MIN_SLEEP_TIME:
         raise ValueError(f"To avoid making too many service requests please set sleep_time>={_MIN_SLEEP_TIME}")
 
-    batch_request = monitor_batch_analysis(batch_request, config, sleep_time=analysis_sleep_time)
+    batch_request = monitor_batch_analysis(batch_request, config=config, sleep_time=analysis_sleep_time)
     if batch_request.status is BatchRequestStatus.PROCESSING:
         LOGGER.info("Batch job is running")
 
@@ -61,9 +61,9 @@ def monitor_batch_job(
     success_count = len(tiles_per_status[BatchTileStatus.PROCESSED])
     finished_count = success_count + len(tiles_per_status[BatchTileStatus.FAILED])
 
-    with tqdm(total=batch_request.tile_count, initial=finished_count, desc="Progress rate") as progress_bar, tqdm(
-        total=finished_count, initial=success_count, desc="Success rate"
-    ) as success_bar:
+    progress_bar = tqdm(total=batch_request.tile_count, initial=finished_count, desc="Progress rate")
+    success_bar = tqdm(total=finished_count, initial=success_count, desc="Success rate")
+    with progress_bar, success_bar:
         while finished_count < batch_request.tile_count:
             time.sleep(sleep_time)
 
@@ -87,7 +87,7 @@ def monitor_batch_job(
 
 
 def monitor_batch_analysis(
-    batch_request: BatchRequestType, config: Optional[SHConfig], sleep_time: int = _DEFAULT_ANALYSIS_SLEEP_TIME
+    batch_request: BatchRequestType, config: Optional[SHConfig] = None, sleep_time: int = _DEFAULT_ANALYSIS_SLEEP_TIME
 ) -> BatchRequest:
     """A utility function that is waiting until analysis phase of a batch job finishes and regularly checks its status.
     In case analysis phase failed it raises an error at the end.

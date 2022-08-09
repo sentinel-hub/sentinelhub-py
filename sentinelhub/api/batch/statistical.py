@@ -141,7 +141,7 @@ class SentinelHubBatchStatistical(BaseBatchClient["BatchStatisticalRequest"]):
         return BatchStatisticalRequest.from_dict(request_info)
 
     def get_status(self, batch_request: BatchStatisticalRequestType) -> JsonDict:
-        """Collects information about a the status of a request
+        """Collects information about a status of a request
 
         `Batch Statistical API reference
         <https://docs.sentinel-hub.com/api/latest/reference/#operation/batchStatisticalGetStatus>`__
