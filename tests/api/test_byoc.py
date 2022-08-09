@@ -131,6 +131,26 @@ def test_get_tile(byoc, collection, tile):
     assert ByocTile.from_dict(sh_tile) == ByocTile.from_dict(tile)
 
 
+def test_byoc_tile_generating():
+    """Makes sure all default parameters get defined in the same way."""
+    tile_from_init = ByocTile(path="x")
+    tile_from_dict = ByocTile.from_dict({"path": "x"})
+
+    assert tile_from_init == tile_from_dict
+
+
+def test_byoc_tile_other_data(tile):
+    """Makes sure other_data is handled correctly."""
+    tile["FakeParam"] = "x"
+
+    tile_object = ByocTile.from_dict(tile)
+    assert isinstance(tile_object, ByocTile)
+    assert tile_object.other_data == {"FakeParam": "x"}
+
+    tile_dict = tile_object.to_dict()
+    assert tile == tile_dict
+
+
 def test_create_collection(byoc, requests_mock):
     requests_mock.post("/oauth/token", real_http=True)
     mocked_url = "/api/v1/byoc/collections"
