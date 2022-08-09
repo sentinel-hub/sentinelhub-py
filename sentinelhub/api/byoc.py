@@ -31,7 +31,7 @@ class ByocCollectionBand:
     bit_depth: int = 8
     sample_format: str = "UINT"
     no_data: Optional[float] = None
-    other_data: CatchAll = None
+    other_data: CatchAll = field(default_factory=dict)
 
 
 @dataclass_json(letter_case=LetterCase.CAMEL, undefined=Undefined.INCLUDE)
@@ -42,7 +42,7 @@ class ByocCollectionAdditionalData:
     bands: Optional[Dict[str, ByocCollectionBand]] = None
     max_meters_per_pixel: Optional[float] = None
     max_meters_per_pixel_override: Optional[float] = None
-    other_data: CatchAll = None
+    other_data: CatchAll = field(default_factory=dict)
 
 
 @dataclass_json(letter_case=LetterCase.CAMEL, undefined=Undefined.INCLUDE)
@@ -66,7 +66,7 @@ class ByocTile:
     created: Optional[datetime] = field(metadata=datetime_config, default=None)
     sensing_time: Optional[datetime] = field(metadata=datetime_config, default=None)
     additional_data: Optional[dict] = None
-    other_data: CatchAll = None
+    other_data: CatchAll = field(default_factory=dict)
 
 
 class SentinelHubBYOC(SentinelHubService):

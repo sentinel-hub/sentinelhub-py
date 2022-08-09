@@ -506,7 +506,7 @@ class BatchRequest(BaseBatchRequest):  # pylint: disable=abstract-method
     user_action: Optional[BatchUserAction] = field(metadata=enum_config(BatchUserAction), default=None)
     user_action_updated: Optional[str] = field(metadata=datetime_config, default=None)
     error: Optional[str] = None
-    other_data: CatchAll = None
+    other_data: CatchAll = field(default_factory=dict)
 
     _REPR_PARAM_NAMES = (
         "request_id",
@@ -567,7 +567,7 @@ class BatchCollectionBatchData:
     """Dataclass to hold batch collection batchData part of the payload"""
 
     tiling_grid_id: Optional[int] = None
-    other_data: CatchAll = None
+    other_data: CatchAll = field(default_factory=dict)
 
 
 @dataclass_json(letter_case=LetterCase.CAMEL, undefined=Undefined.INCLUDE)
@@ -576,7 +576,7 @@ class BatchCollectionAdditionalData:
     """Dataclass to hold batch collection additionalData part of the payload"""
 
     bands: Optional[Dict[str, Any]] = None
-    other_data: CatchAll = None
+    other_data: CatchAll = field(default_factory=dict)
 
 
 class BatchCollection(BaseCollection):

@@ -205,7 +205,7 @@ class BatchStatisticalRequest(BaseBatchRequest):  # pylint: disable=abstract-met
     user_action: Optional[BatchUserAction] = field(metadata=enum_config(BatchUserAction), default=None)
     user_action_updated: Optional[str] = field(metadata=datetime_config, default=None)
     error: Optional[str] = None
-    other_data: CatchAll = None
+    other_data: CatchAll = field(default_factory=dict)
 
     _REPR_PARAM_NAMES = (
         "request_id",

@@ -96,7 +96,7 @@ class BaseCollection:
     user_id: Optional[str] = None
     created: Optional[datetime] = field(metadata=datetime_config, default=None)
     no_data: Optional[Union[int, float]] = None
-    other_data: CatchAll = None
+    other_data: CatchAll = field(default_factory=dict)
 
     def to_data_collection(self) -> DataCollection:
         """Returns a DataCollection enum for this collection"""
