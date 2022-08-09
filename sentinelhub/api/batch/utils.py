@@ -166,8 +166,9 @@ def monitor_batch_statistical_job(
             time.sleep(sleep_time)
 
             request_status = batch_client.get_status(batch_request)
-            progress_bar.update(request_status["completionPercentage"] - progress)
-            progress = request_status["completionPercentage"]
+            new_progress = request_status["completionPercentage"]
+            progress_bar.update(new_progress - progress)
+            progress = new_progress
     return request_status
 
 
