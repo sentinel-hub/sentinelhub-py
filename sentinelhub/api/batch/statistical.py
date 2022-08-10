@@ -201,7 +201,7 @@ class BatchStatisticalRequest(BaseBatchRequest):  # pylint: disable=abstract-met
     status: BatchRequestStatus = field(metadata=enum_config(BatchRequestStatus))
     user_id: Optional[str] = None
     created: Optional[dt.datetime] = field(metadata=datetime_config, default=None)
-    cost_pu: Optional[float] = None
+    cost_pu: Optional[float] = field(metadata=dataclass_config(field_name="costPU"), default=None)
     user_action: Optional[BatchUserAction] = field(metadata=enum_config(BatchUserAction), default=None)
     user_action_updated: Optional[str] = field(metadata=datetime_config, default=None)
     error: Optional[str] = None
