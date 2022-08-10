@@ -1,6 +1,7 @@
 pytest>=4.0.0
 pytest-mock
 requests-mock
+moto
 pytest-cov
 codecov
 twine
