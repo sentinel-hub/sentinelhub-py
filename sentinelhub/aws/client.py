@@ -25,7 +25,7 @@ LOGGER = logging.getLogger(__name__)
 class AwsDownloadClient(DownloadClient):
     """An AWS download client class"""
 
-    GLOBAL_S3_CLIENTS = {}
+    GLOBAL_S3_CLIENTS: Dict[str, Any] = {}
 
     def __init__(self, *args: Any, boto_params: Optional[Dict[str, Any]] = None, **kwargs: Any):
         """

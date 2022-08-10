@@ -1,9 +1,9 @@
 """
 Module implementing utilities for collecting data, produced with Sentinel Hub Statistical Batch API, from an S3 bucket.
 """
-from typing import Any, List, Optional, Sequence, Union
+from typing import List, Optional, Sequence, Union
 
-from ..api.batch.statistical import BatchStatisticalRequest, SentinelHubBatchStatistical
+from ..api.batch.statistical import BatchStatisticalRequest, BatchStatisticalRequestType, SentinelHubBatchStatistical
 from ..base import DataRequest
 from ..config import SHConfig
 from ..constants import MimeType
@@ -16,11 +16,11 @@ class AwsBatchResults(DataRequest):
 
     def __init__(
         self,
-        batch_request,
+        batch_request: BatchStatisticalRequestType,
         *,
         feature_ids: Optional[Sequence[Union[str, int]]] = None,
         data_folder: Optional[str] = None,
-        config: Optional[SHConfig] = None
+        config: Optional[SHConfig] = None,
     ):
         """
         :param batch_request: Info about a batch request - either an instance of `BatchStatisticalRequest` or a
@@ -38,7 +38,9 @@ class AwsBatchResults(DataRequest):
         super().__init__(AwsDownloadClient, data_folder=data_folder, config=config)
 
     @staticmethod
-    def _parse_batch_request(batch_request, config: Optional[SHConfig]) -> BatchStatisticalRequest:
+    def _parse_batch_request(
+        batch_request: BatchStatisticalRequestType, config: Optional[SHConfig]
+    ) -> BatchStatisticalRequest:
         """In case a batch request is not defined with an instance of `BatchStatisticalRequest` it will make sure that
         such an instance is created."""
         if isinstance(batch_request, BatchStatisticalRequest):
