@@ -29,7 +29,7 @@ class AwsBatchResults(DataRequest):
             these results. If not provided it will collect the names of all JSON files from results folder on the
             bucket and download all of them. Note that it is recommended that you provide this parameter otherwise this
             class will have to make additional requests to the S3 bucket in order to list all features from the folder.
-        :param data_folder: A location of the directory where the downloaded data could be saved.
+        :param data_folder: Directory to which the files should be saved.
         :param config: A config object that contains AWS credentials to access the S3 bucket with results.
         """
         self.batch_request = self._parse_batch_request(batch_request, config)
