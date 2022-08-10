@@ -11,6 +11,7 @@ from moto import mock_s3
 from pytest_mock import MockerFixture
 
 from sentinelhub import BatchRequestStatus, BatchStatisticalRequest, SHConfig
+from sentinelhub.api.batch.statistical import BatchStatisticalRequestType
 from sentinelhub.aws import AwsBatchResults
 from sentinelhub.type_utils import JsonDict
 
@@ -47,10 +48,15 @@ def _create_mocked_bucket_and_upload_data(bucket_name: str, paths: Sequence[str]
 @mock_s3
 @pytest.mark.parametrize("batch_input_type", list(BatchInputType))
 @pytest.mark.parametrize("use_feature_ids", [True, False])
-@pytest.mark.parametrize("config", [None, SHConfig()])
+@pytest.mark.parametrize("config, show_progress", [(None, False), (SHConfig(), True)])
 def test_aws_batch_results(
-    batch_input_type: BatchInputType, use_feature_ids: bool, config: Optional[SHConfig], mocker: MockerFixture
+    batch_input_type: BatchInputType,
+    use_feature_ids: bool,
+    config: Optional[SHConfig],
+    show_progress: bool,
+    mocker: MockerFixture,
 ) -> None:
+    """This test mocks an S3 bucket and data on it. Then it runs AwsBatchResults and downloads results from it."""
     bucket_name = "mocked-test-bucket"
     batch_id = "fake-batch-id"
     prefix = "path/to/outputs/"
@@ -69,6 +75,7 @@ def test_aws_batch_results(
         request={"output": {"s3": {"url": f"s3://{bucket_name}/{prefix}"}}},
     )
 
+    batch_input: BatchStatisticalRequestType
     if batch_input_type is BatchInputType.ID:
         batch_input = batch_id
         batch_mock = mocker.patch("sentinelhub.SentinelHubBatchStatistical.get_request")
@@ -80,6 +87,6 @@ def test_aws_batch_results(
 
     feature_ids_input = feature_ids if use_feature_ids else None
     results = AwsBatchResults(batch_input, feature_ids=feature_ids_input, config=config)
-    downloaded_data = results.get_data()
+    downloaded_data = results.get_data(show_progress=show_progress)
 
     assert downloaded_data == data

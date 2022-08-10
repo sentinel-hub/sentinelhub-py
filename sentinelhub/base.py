@@ -4,9 +4,7 @@ Implementation of base interface classes of this package.
 import copy
 import os
 from abc import ABCMeta, abstractmethod
-from typing import Callable, Generic, Iterable, List, Optional, Tuple, TypeVar
-
-import numpy as np
+from typing import Any, Callable, Generic, Iterable, List, Optional, Tuple, TypeVar
 
 from .config import SHConfig
 from .download import DownloadClient, DownloadRequest
@@ -85,7 +83,8 @@ class DataRequest(metaclass=ABCMeta):
         max_threads: Optional[int] = None,
         decode_data: bool = True,
         raise_download_errors: bool = True,
-    ) -> List[np.ndarray]:
+        show_progress: bool = False,
+    ) -> List[Any]:
         """Get requested data either by downloading it or by reading it from the disk (if it
         was previously downloaded and saved).
 
@@ -103,12 +102,18 @@ class DataRequest(metaclass=ABCMeta):
         :param raise_download_errors: If `True` any error in download process should be raised as
             ``DownloadFailedException``. If `False` failed downloads will only raise warnings and the method will
             return list with `None` values in places where the results of failed download requests should be.
+        :param show_progress: Whether a progress bar should be displayed while downloading.
         :return: requested images as numpy arrays, where each array corresponds to a single acquisition and has
             shape ``[height, width, channels]``.
         """
         self._preprocess_request(save_data, True)
         return self._execute_data_download(
-            data_filter, redownload, max_threads, raise_download_errors, decode_data=decode_data
+            data_filter,
+            redownload,
+            max_threads,
+            raise_download_errors,
+            decode_data=decode_data,
+            show_progress=show_progress,
         )
 
     def save_data(
@@ -118,6 +123,7 @@ class DataRequest(metaclass=ABCMeta):
         redownload: bool = False,
         max_threads: Optional[int] = None,
         raise_download_errors: bool = False,
+        show_progress: bool = False,
     ) -> None:
         """Saves data to disk. If ``redownload=True`` then the data is redownloaded using ``max_threads`` workers.
 
@@ -128,9 +134,12 @@ class DataRequest(metaclass=ABCMeta):
             `max_threads=None` which will use the number of processors on the system multiplied by 5.
         :param raise_download_errors: If `True` any error in download process should be raised as
             ``DownloadFailedException``. If `False` failed downloads will only raise warnings.
+        :param show_progress: Whether a progress bar should be displayed while downloading.
         """
         self._preprocess_request(True, False)
-        self._execute_data_download(data_filter, redownload, max_threads, raise_download_errors)
+        self._execute_data_download(
+            data_filter, redownload, max_threads, raise_download_errors, show_progress=show_progress
+        )
 
     def _execute_data_download(
         self,
@@ -139,7 +148,8 @@ class DataRequest(metaclass=ABCMeta):
         max_threads: Optional[int] = None,
         raise_download_errors: bool = False,
         decode_data: bool = True,
-    ) -> List[np.ndarray]:
+        show_progress: bool = False,
+    ) -> List[Any]:
         """Calls download module and executes the download process
 
         :param data_filter: Used to specify which items will be returned by the method and in which order. E.g. with
@@ -151,6 +161,7 @@ class DataRequest(metaclass=ABCMeta):
             ``DownloadFailedException``. If `False` failed downloads will only raise warnings.
         :param decode_data: If `True` (default) it decodes data (e.g., returns image as an array of numbers);
             if `False` it returns binary data.
+        :param show_progress: Whether a progress bar should be displayed while downloading.
         :return: List of data obtained from download
         """
         is_repeating_filter = False
@@ -170,7 +181,9 @@ class DataRequest(metaclass=ABCMeta):
         client = self.download_client_class(
             redownload=redownload, raise_download_errors=raise_download_errors, config=self.config
         )
-        data_list = client.download(filtered_download_list, max_threads=max_threads, decode_data=decode_data)
+        data_list = client.download(
+            filtered_download_list, max_threads=max_threads, decode_data=decode_data, show_progress=show_progress
+        )
 
         if is_repeating_filter:
             data_list = [copy.deepcopy(data_list[index]) for index in mapping_list]
