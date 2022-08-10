@@ -8,7 +8,7 @@ from typing import Any, Generic, List, Optional, Tuple, TypeVar, Union
 from ..base import DataRequest
 from ..data_collections import DataCollection
 from .client import AwsDownloadClient
-from .data import AwsProduct, AwsTile
+from .data import AwsProduct, AwsTile, REQUESTER_PAYS_PARAMS
 from .data_safe import SafeProduct, SafeTile
 
 T = TypeVar("T")
@@ -45,7 +45,7 @@ class _BaseAwsDataRequest(DataRequest, Generic[T]):
 
         self.aws_service: T
 
-        client_class = functools.partial(AwsDownloadClient, boto_params={"RequestPayer": "requester"})
+        client_class = functools.partial(AwsDownloadClient, boto_params=REQUESTER_PAYS_PARAMS)
         super().__init__(client_class, **kwargs)
 
     @abstractmethod
