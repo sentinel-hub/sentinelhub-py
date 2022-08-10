@@ -11,7 +11,7 @@ from ..download.models import DownloadRequest
 from ..exceptions import SHRuntimeWarning
 from .client import AwsDownloadClient
 from .constants import AwsConstants, EsaSafeType
-from .data import AwsProduct, AwsTile, REQUESTER_PAYS_PARAMS
+from .data import REQUESTER_PAYS_PARAMS, AwsProduct, AwsTile
 
 
 class SafeProduct(AwsProduct):

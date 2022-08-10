@@ -8,7 +8,7 @@ from typing import Any, Generic, List, Optional, Tuple, TypeVar, Union
 from ..base import DataRequest
 from ..data_collections import DataCollection
 from .client import AwsDownloadClient
-from .data import AwsProduct, AwsTile, REQUESTER_PAYS_PARAMS
+from .data import REQUESTER_PAYS_PARAMS, AwsProduct, AwsTile
 from .data_safe import SafeProduct, SafeTile
 
 T = TypeVar("T")
