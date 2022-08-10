@@ -1,19 +1,20 @@
 """
 Data request interface for downloading satellite data from AWS
 """
+import functools
 from abc import abstractmethod
 from typing import Any, Generic, List, Optional, Tuple, TypeVar, Union
 
 from ..base import DataRequest
 from ..data_collections import DataCollection
 from .client import AwsDownloadClient
-from .data import AwsProduct, AwsTile
+from .data import REQUESTER_PAYS_PARAMS, AwsProduct, AwsTile
 from .data_safe import SafeProduct, SafeTile
 
 T = TypeVar("T")
 
 
-class AwsRequest(DataRequest, Generic[T]):
+class _BaseAwsDataRequest(DataRequest, Generic[T]):
     """The base class for Amazon Web Service request classes. Common parameters are defined here.
 
     Collects and provides data from AWS.
@@ -43,7 +44,9 @@ class AwsRequest(DataRequest, Generic[T]):
         self.safe_format = safe_format
 
         self.aws_service: T
-        super().__init__(AwsDownloadClient, **kwargs)
+
+        client_class = functools.partial(AwsDownloadClient, boto_params=REQUESTER_PAYS_PARAMS)
+        super().__init__(client_class, **kwargs)
 
     @abstractmethod
     def create_request(self) -> None:
@@ -56,7 +59,7 @@ class AwsRequest(DataRequest, Generic[T]):
         return self.aws_service
 
 
-class AwsProductRequest(AwsRequest[AwsProduct]):
+class AwsProductRequest(_BaseAwsDataRequest[AwsProduct]):
     """AWS Service request class for an ESA product."""
 
     def __init__(self, product_id: str, *, tile_list: Optional[List[str]] = None, **kwargs: Any):
@@ -79,27 +82,19 @@ class AwsProductRequest(AwsRequest[AwsProduct]):
         super().__init__(**kwargs)
 
     def create_request(self) -> None:
-        if self.safe_format:
-            self.aws_service = SafeProduct(
-                self.product_id,
-                tile_list=self.tile_list,
-                bands=self.bands,
-                metafiles=self.metafiles,
-                config=self.config,
-            )
-        else:
-            self.aws_service = AwsProduct(
-                self.product_id,
-                tile_list=self.tile_list,
-                bands=self.bands,
-                metafiles=self.metafiles,
-                config=self.config,
-            )
+        product_class = SafeProduct if self.safe_format else AwsProduct
+        self.aws_service = product_class(
+            self.product_id,
+            tile_list=self.tile_list,
+            bands=self.bands,
+            metafiles=self.metafiles,
+            config=self.config,
+        )
 
         self.download_list, self.folder_list = self.aws_service.get_requests()
 
 
-class AwsTileRequest(AwsRequest[AwsTile]):
+class AwsTileRequest(_BaseAwsDataRequest[AwsTile]):
     """AWS Service request class for an ESA tile."""
 
     def __init__(
@@ -139,26 +134,16 @@ class AwsTileRequest(AwsRequest[AwsTile]):
         if self.tile is None or self.time is None:
             raise ValueError("The parameters `tile` and `time` must be set.")
 
-        if self.safe_format:
-            self.aws_service = SafeTile(
-                self.tile,
-                self.time,
-                self.aws_index,
-                bands=self.bands,
-                metafiles=self.metafiles,
-                data_collection=self.data_collection,
-                config=self.config,
-            )
-        else:
-            self.aws_service = AwsTile(
-                self.tile,
-                self.time,
-                self.aws_index,
-                bands=self.bands,
-                metafiles=self.metafiles,
-                data_collection=self.data_collection,
-                config=self.config,
-            )
+        tile_class = SafeTile if self.safe_format else AwsTile
+        self.aws_service = tile_class(
+            self.tile,
+            self.time,
+            self.aws_index,
+            bands=self.bands,
+            metafiles=self.metafiles,
+            data_collection=self.data_collection,
+            config=self.config,
+        )
 
         self.download_list, self.folder_list = self.aws_service.get_requests()
 

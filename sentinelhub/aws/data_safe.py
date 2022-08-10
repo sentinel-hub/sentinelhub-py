@@ -11,7 +11,7 @@ from ..download.models import DownloadRequest
 from ..exceptions import SHRuntimeWarning
 from .client import AwsDownloadClient
 from .constants import AwsConstants, EsaSafeType
-from .data import AwsProduct, AwsTile
+from .data import REQUESTER_PAYS_PARAMS, AwsProduct, AwsTile
 
 
 class SafeProduct(AwsProduct):
@@ -160,7 +160,7 @@ class SafeProduct(AwsProduct):
         """Returns time when the L2A processing started and reports was created.
         :return: String in a form YYYYMMDDTHHMMSS
         """
-        client = AwsDownloadClient(config=self.config)
+        client = AwsDownloadClient(config=self.config, boto_params=REQUESTER_PAYS_PARAMS)
         tree = client.get_xml(self.get_url(AwsConstants.REPORT))
 
         try:
@@ -328,7 +328,7 @@ class SafeTile(AwsTile):
 
         :return: ESA tile ID
         """
-        client = AwsDownloadClient(config=self.config)
+        client = AwsDownloadClient(config=self.config, boto_params=REQUESTER_PAYS_PARAMS)
         tree = client.get_xml(self.get_url(AwsConstants.METADATA))
 
         tile_id_tag = (

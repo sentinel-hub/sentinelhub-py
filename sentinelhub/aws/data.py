@@ -23,6 +23,8 @@ MAX_SUPPORTED_BASELINES = {
     DataCollection.SENTINEL2_L2A: "04.00",
 }
 
+REQUESTER_PAYS_PARAMS = {"RequestPayer": "requester"}
+
 
 class AwsData(metaclass=ABCMeta):
     """A base class for collecting satellite data from AWS."""
@@ -343,7 +345,7 @@ class AwsProduct(AwsData):
         self.date = self.get_date()
         self.product_url = self.get_product_url()
 
-        client = AwsDownloadClient(config=self.config)
+        client = AwsDownloadClient(config=self.config, boto_params=REQUESTER_PAYS_PARAMS)
         self.product_info = client.get_json_dict(self.get_url(AwsConstants.PRODUCT_INFO))
         self.baseline = self.get_baseline()
 
@@ -598,7 +600,7 @@ class AwsTile(AwsData):
 
         :return: dictionary with tile information
         """
-        client = AwsDownloadClient(config=self.config)
+        client = AwsDownloadClient(config=self.config, boto_params=REQUESTER_PAYS_PARAMS)
         return client.get_json_dict(self.get_url(AwsConstants.TILE_INFO))
 
     def get_url(self, filename: str) -> str:
