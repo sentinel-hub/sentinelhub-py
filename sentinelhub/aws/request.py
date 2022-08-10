@@ -45,7 +45,7 @@ class _BaseAwsDataRequest(DataRequest, Generic[T]):
 
         self.aws_service: T
 
-        client_class = functools.partial(AwsDownloadClient, boto3_params={"RequestPayer": "requester"})
+        client_class = functools.partial(AwsDownloadClient, boto_params={"RequestPayer": "requester"})
         super().__init__(client_class, **kwargs)
 
     @abstractmethod
