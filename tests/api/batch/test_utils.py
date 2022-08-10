@@ -21,8 +21,8 @@ from sentinelhub import (
     BatchStatisticalRequest,
     BatchTileStatus,
     SHConfig,
-    monitor_batch_process_analysis,
-    monitor_batch_process_job,
+    monitor_batch_analysis,
+    monitor_batch_job,
     monitor_batch_statistical_analysis,
     monitor_batch_statistical_job,
 )
@@ -69,7 +69,7 @@ def test_monitor_batch_process_job(
     batch_request = BatchRequest(
         request_id="mocked-request", process_request={}, tile_count=tile_count, status=batch_status
     )
-    monitor_analysis_mock = mocker.patch("sentinelhub.api.batch.utils.monitor_batch_process_analysis")
+    monitor_analysis_mock = mocker.patch("sentinelhub.api.batch.utils.monitor_batch_analysis")
     monitor_analysis_mock.return_value = batch_request
 
     batch_tiles_mock = mocker.patch("sentinelhub.SentinelHubBatch.iter_tiles")
@@ -78,7 +78,7 @@ def test_monitor_batch_process_job(
     sleep_mock = mocker.patch("time.sleep")
     logging_mock = mocker.patch("logging.Logger.info")
 
-    results = monitor_batch_process_job("mocked-request", config=config, sleep_time=sleep_time)
+    results = monitor_batch_job("mocked-request", config=config, sleep_time=sleep_time)
 
     assert isinstance(results, defaultdict)
     assert set(results) == {BatchTileStatus.PROCESSED, BatchTileStatus.FAILED}
@@ -172,9 +172,7 @@ def test_monitor_batch_statistical_job(
     assert logging_mock.call_count == int(is_processing_logged)
 
 
-@pytest.mark.parametrize(
-    "monitor_function, sleep_time", [(monitor_batch_process_job, 59), (monitor_batch_statistical_job, 14)]
-)
+@pytest.mark.parametrize("monitor_function, sleep_time", [(monitor_batch_job, 59), (monitor_batch_statistical_job, 14)])
 def test_monitor_batch_job_sleep_time_error(monitor_function: Callable, sleep_time: int) -> None:
     with pytest.raises(ValueError):
         monitor_function("x", sleep_time=sleep_time)
@@ -195,7 +193,7 @@ def test_monitor_batch_job_sleep_time_error(monitor_function: Callable, sleep_ti
 )
 @pytest.mark.parametrize("config", [SHConfig(), None])
 @pytest.mark.parametrize("sleep_time", [5, 1000])
-def test_monitor_batch_process_analysis(
+def test_monitor_batch_analysis(
     status_sequence: Tuple[BatchRequestStatus, ...], config: SHConfig, sleep_time: int, mocker: MockerFixture
 ) -> None:
     """This test mocks:
@@ -218,9 +216,9 @@ def test_monitor_batch_process_analysis(
 
     if status_sequence[-1] in [BatchRequestStatus.CANCELED, BatchRequestStatus.FAILED]:
         with pytest.raises(RuntimeError):
-            monitor_batch_process_analysis("mocked-request", config=config, sleep_time=sleep_time)
+            monitor_batch_analysis("mocked-request", config=config, sleep_time=sleep_time)
     else:
-        result = monitor_batch_process_analysis("mocked-request", config=config, sleep_time=sleep_time)
+        result = monitor_batch_analysis("mocked-request", config=config, sleep_time=sleep_time)
         assert result is batch_requests[-1]
 
     sleep_loop_counts = len(status_sequence) - 1
@@ -291,7 +289,7 @@ def test_monitor_batch_statistical_analysis(
     assert logging_mock.call_count == len(status_sequence) - 1
 
 
-@pytest.mark.parametrize("monitor_function", (monitor_batch_process_analysis, monitor_batch_statistical_analysis))
+@pytest.mark.parametrize("monitor_function", (monitor_batch_analysis, monitor_batch_statistical_analysis))
 def test_monitor_batch_analysis_sleep_time_error(monitor_function: Callable) -> None:
     with pytest.raises(ValueError):
         monitor_function("x", sleep_time=4)

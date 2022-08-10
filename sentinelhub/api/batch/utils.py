@@ -3,14 +3,12 @@ Module implementing utilities for working with batch jobs.
 """
 import logging
 import time
-import warnings
 from collections import defaultdict
 from typing import DefaultDict, List, Optional, Union
 
 from tqdm.auto import tqdm
 
 from ...config import SHConfig
-from ...exceptions import SHDeprecationWarning
 from ...type_utils import JsonDict
 from .base import BatchRequestStatus
 from .process import BatchRequest, BatchTileStatus, SentinelHubBatch
@@ -31,21 +29,6 @@ _DEFAULT_ANALYSIS_SLEEP_TIME = 10
 
 
 def monitor_batch_job(
-    batch_request: BatchProcessRequestSpec,
-    config: Optional[SHConfig] = None,
-    sleep_time: int = _DEFAULT_SLEEP_TIME,
-    analysis_sleep_time: int = _DEFAULT_ANALYSIS_SLEEP_TIME,
-) -> DefaultDict[BatchTileStatus, List[dict]]:
-    """Deprecated version of `monitor_batch_process_job`."""
-    warnings.warn(
-        "This function was renamed to `monitor_batch_process_job` with the introduction of Statistical Batch. Please"
-        " update your code accordingly.",
-        category=SHDeprecationWarning,
-    )
-    return monitor_batch_process_job(batch_request, config, sleep_time, analysis_sleep_time)
-
-
-def monitor_batch_process_job(
     batch_request: BatchProcessRequestSpec,
     config: Optional[SHConfig] = None,
     sleep_time: int = _DEFAULT_SLEEP_TIME,
@@ -75,7 +58,7 @@ def monitor_batch_process_job(
     if sleep_time < _MIN_SLEEP_TIME:
         raise ValueError(f"To avoid making too many service requests please set sleep_time>={_MIN_SLEEP_TIME}")
 
-    batch_request = monitor_batch_process_analysis(batch_request, config=config, sleep_time=analysis_sleep_time)
+    batch_request = monitor_batch_analysis(batch_request, config=config, sleep_time=analysis_sleep_time)
     if batch_request.status is BatchRequestStatus.PROCESSING:
         LOGGER.info("Batch job is running")
 
@@ -173,20 +156,6 @@ def monitor_batch_statistical_job(
 
 
 def monitor_batch_analysis(
-    batch_request: BatchProcessRequestSpec,
-    config: Optional[SHConfig] = None,
-    sleep_time: int = _DEFAULT_ANALYSIS_SLEEP_TIME,
-) -> BatchRequest:
-    """Deprecated version of `monitor_batch_process_analysis`."""
-    warnings.warn(
-        "This function was renamed to `monitor_batch_process_analysis` with the introduction of Statistical Batch. "
-        "Please update your code accordingly.",
-        category=SHDeprecationWarning,
-    )
-    return monitor_batch_process_analysis(batch_request, config, sleep_time)
-
-
-def monitor_batch_process_analysis(
     batch_request: BatchProcessRequestSpec,
     config: Optional[SHConfig] = None,
     sleep_time: int = _DEFAULT_ANALYSIS_SLEEP_TIME,
