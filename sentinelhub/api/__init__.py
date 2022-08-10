@@ -12,6 +12,8 @@ from .batch import (
     SentinelHubBatchStatistical,
     monitor_batch_analysis,
     monitor_batch_job,
+    monitor_batch_statistical_analysis,
+    monitor_batch_statistical_job,
 )
 from .byoc import ByocCollection, ByocCollectionAdditionalData, ByocCollectionBand, ByocTile, SentinelHubBYOC
 from .catalog import SentinelHubCatalog

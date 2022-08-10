@@ -10,7 +10,7 @@ changing the code or the tests.
 import random
 import sys
 from collections import defaultdict
-from typing import Dict, List, Tuple
+from typing import Callable, Dict, List, Sequence, Tuple
 
 import pytest
 from pytest_mock import MockerFixture
@@ -18,10 +18,13 @@ from pytest_mock import MockerFixture
 from sentinelhub import (
     BatchRequest,
     BatchRequestStatus,
+    BatchStatisticalRequest,
     BatchTileStatus,
     SHConfig,
     monitor_batch_analysis,
     monitor_batch_job,
+    monitor_batch_statistical_analysis,
+    monitor_batch_statistical_job,
 )
 
 
@@ -41,7 +44,7 @@ from sentinelhub import (
 @pytest.mark.parametrize("batch_status", [BatchRequestStatus.PROCESSING, BatchRequestStatus.ANALYSIS_DONE])
 @pytest.mark.parametrize("config", [SHConfig(), None])
 @pytest.mark.parametrize("sleep_time", [60, 1000])
-def test_monitor_batch_job(
+def test_monitor_batch_process_job(
     tile_status_sequence: Tuple[Dict[BatchTileStatus, int], ...],
     batch_status: BatchRequestStatus,
     config: SHConfig,
@@ -114,12 +117,68 @@ def _tile_status_counts_to_tiles(tile_status_counts: Dict[BatchTileStatus, int])
     return tiles
 
 
-def test_monitor_batch_job_sleep_time_error() -> None:
+@pytest.mark.skipif(sys.version < "3.8", reason="Mocking check for call.args doesn't work correctly for Python 3.7")
+@pytest.mark.parametrize("batch_status", [BatchRequestStatus.PROCESSING, BatchRequestStatus.ANALYSIS_DONE])
+@pytest.mark.parametrize(
+    "progress_sequence",
+    [
+        (0, 10, 30.5, 70, 90, 99, 100),
+        (50.712, 80, 100),
+        (100,),
+    ],
+)
+@pytest.mark.parametrize("config", [SHConfig(), None])
+@pytest.mark.parametrize("sleep_time", [15, 1000])
+def test_monitor_batch_statistical_job(
+    batch_status: BatchRequestStatus,
+    progress_sequence: Sequence[float],
+    config: SHConfig,
+    sleep_time: int,
+    mocker: MockerFixture,
+) -> None:
+    """This test mocks:
+
+    - the method for monitoring batch analysis because that is not a part of this test,
+    - requesting info about batch tiles to avoid calling Sentinel Hub service,
+    - sleeping time to avoid waiting,
+    - logging to ensure logs are being recorded.
+
+    At the end it also checks if all mocks have been called the expected number of times and with expected parameters.
+    """
+
+    batch_request = BatchStatisticalRequest(
+        request_id="mocked-request", request={}, status=batch_status, completion_percentage=0
+    )
+    monitor_analysis_mock = mocker.patch("sentinelhub.api.batch.utils.monitor_batch_statistical_analysis")
+    monitor_analysis_mock.return_value = batch_request
+    get_status_mock = mocker.patch("sentinelhub.SentinelHubBatchStatistical.get_status")
+    get_status_mock.side_effect = ({"completionPercentage": x} for x in progress_sequence)
+
+    sleep_mock = mocker.patch("time.sleep")
+    logging_mock = mocker.patch("logging.Logger.info")
+
+    results = monitor_batch_statistical_job("mocked-request", config=config, sleep_time=sleep_time)
+
+    assert isinstance(results, dict)
+    assert results["completionPercentage"] == 100
+
+    assert monitor_analysis_mock.call_count == 1
+
+    assert sleep_mock.call_count == len(progress_sequence) - 1
+    assert get_status_mock.call_count == len(progress_sequence)
+    assert all(call.args == (sleep_time,) and call.kwargs == {} for call in sleep_mock.mock_calls)
+
+    is_processing_logged = batch_status is BatchRequestStatus.PROCESSING
+    assert logging_mock.call_count == int(is_processing_logged)
+
+
+@pytest.mark.parametrize("monitor_function, sleep_time", [(monitor_batch_job, 59), (monitor_batch_statistical_job, 14)])
+def test_monitor_batch_job_sleep_time_error(monitor_function: Callable, sleep_time: int) -> None:
     with pytest.raises(ValueError):
-        monitor_batch_job("x", sleep_time=59)
+        monitor_function("x", sleep_time=sleep_time)
 
     with pytest.raises(ValueError):
-        monitor_batch_job("x", analysis_sleep_time=4)
+        monitor_function("x", analysis_sleep_time=4)
 
 
 @pytest.mark.skipif(sys.version < "3.8", reason="Mocking check for call.args doesn't work correctly for Python 3.7")
@@ -177,6 +236,60 @@ def test_monitor_batch_analysis(
     assert logging_mock.call_count == sleep_loop_counts
 
 
-def test_monitor_batch_analysis_sleep_time_error() -> None:
+@pytest.mark.skipif(sys.version < "3.8", reason="Mocking check for call.args doesn't work correctly for Python 3.7")
+@pytest.mark.parametrize(
+    "status_sequence",
+    [
+        (BatchRequestStatus.CREATED, BatchRequestStatus.ANALYSING, BatchRequestStatus.ANALYSIS_DONE),
+        (BatchRequestStatus.DONE,),
+        (BatchRequestStatus.ANALYSING, BatchRequestStatus.CANCELED),
+        (BatchRequestStatus.FAILED,),
+    ],
+)
+@pytest.mark.parametrize("config", [SHConfig(), None])
+@pytest.mark.parametrize("sleep_time", [5, 1000])
+def test_monitor_batch_statistical_analysis(
+    status_sequence: Tuple[BatchRequestStatus, ...], config: SHConfig, sleep_time: int, mocker: MockerFixture
+) -> None:
+    """This test mocks:
+
+    - a method of Batch API interface to avoid calling Sentinel Hub service,
+    - sleeping time to avoid waiting,
+    - logging to ensure logs are being recorded.
+
+    At the end it also checks if all mocks have been called the expected number of times and with expected parameters.
+    """
+    request_statuses = [{"status": status} for status in status_sequence]
+    final_request = BatchStatisticalRequest(
+        "mocked-request", completion_percentage=0, request={}, status=status_sequence[-1]
+    )
+
+    batch_mock = mocker.patch("sentinelhub.SentinelHubBatchStatistical.get_request")
+    batch_mock.return_value = final_request
+    status_mock = mocker.patch("sentinelhub.SentinelHubBatchStatistical.get_status")
+    status_mock.side_effect = request_statuses
+    sleep_mock = mocker.patch("time.sleep")
+    logging_mock = mocker.patch("logging.Logger.info")
+
+    if status_sequence[-1] in [BatchRequestStatus.CANCELED, BatchRequestStatus.FAILED]:
+        with pytest.raises(RuntimeError):
+            monitor_batch_statistical_analysis("mocked-request", config=config, sleep_time=sleep_time)
+    else:
+        result = monitor_batch_statistical_analysis("mocked-request", config=config, sleep_time=sleep_time)
+        assert result is final_request
+        assert batch_mock.call_count == 1
+        assert batch_mock.mock_calls[0].args == ("mocked-request",)
+
+    assert sleep_mock.call_count == len(status_sequence) - 1
+    assert all(call.args == (sleep_time,) and call.kwargs == {} for call in sleep_mock.mock_calls)
+
+    assert status_mock.call_count == len(status_sequence)
+    assert all(call.args == ("mocked-request",) and call.kwargs == {} for call in status_mock.mock_calls)
+
+    assert logging_mock.call_count == len(status_sequence) - 1
+
+
+@pytest.mark.parametrize("monitor_function", (monitor_batch_analysis, monitor_batch_statistical_analysis))
+def test_monitor_batch_analysis_sleep_time_error(monitor_function: Callable) -> None:
     with pytest.raises(ValueError):
-        monitor_batch_analysis("x", sleep_time=4)
+        monitor_function("x", sleep_time=4)
