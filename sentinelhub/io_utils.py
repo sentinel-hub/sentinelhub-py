@@ -11,14 +11,23 @@ from typing import Any, Callable, Dict, Optional
 from xml.etree import ElementTree
 
 import numpy as np
-import tifffile as tiff
-from PIL import Image
 
 from .constants import MimeType
 from .decoding import decode_image_with_pillow, decode_jp2_image, decode_tar, get_data_format
-from .exceptions import SHUserWarning
+from .exceptions import SHUserWarning, show_import_warning
 from .os_utils import create_parent_folder
 from .type_utils import Json
+
+# The following is only for the purpose of using the package within SentinelHub QGIS plugin
+try:
+    import tifffile as tiff
+except ImportError:
+    show_import_warning("tifffile")
+try:
+    from PIL import Image
+except ImportError:
+    show_import_warning("Pillow")
+
 
 LOGGER = logging.getLogger(__name__)
 

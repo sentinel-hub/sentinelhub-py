@@ -11,12 +11,20 @@ from typing import Any, Dict, Union
 from xml.etree import ElementTree
 
 import numpy as np
-import tifffile as tiff
-from PIL import Image
 from requests import Response
 
 from .constants import MimeType
-from .exceptions import ImageDecodingError
+from .exceptions import ImageDecodingError, show_import_warning
+
+# The following is only for the purpose of using the package within SentinelHub QGIS plugin
+try:  # pylint: disable=duplicate-code
+    import tifffile as tiff
+except ImportError:
+    show_import_warning("tifffile")
+try:
+    from PIL import Image
+except ImportError:
+    show_import_warning("Pillow")
 
 
 def decode_data(response_content: bytes, data_type: MimeType) -> Any:

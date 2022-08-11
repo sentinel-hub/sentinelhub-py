@@ -47,6 +47,11 @@ class SHUserWarning(UserWarning):
     """A custom user warning for sentinelhub-py package"""
 
 
+class SHImportWarning(SHUserWarning):
+    """A custom warning shown if a dependency package failed to be imported. This can happen in case the package was
+    installed without some dependencies."""
+
+
 class SHRuntimeWarning(RuntimeWarning):
     """A custom runtime warning for sentinelhub-py package"""
 
@@ -55,7 +60,14 @@ class SHRateLimitWarning(SHRuntimeWarning):
     """A custom runtime warning in case user hit the rate limit for downloads"""
 
 
+def show_import_warning(package_name: str) -> None:
+    """A general way of showing import warnings in the package."""
+    message = f"Failed to import {package_name} package. Some sentinelhub-py functionalities might not work correctly!"
+    warnings.warn(message, category=SHImportWarning)
+
+
 warnings.simplefilter("default", SHDeprecationWarning)
 warnings.simplefilter("default", SHUserWarning)
+warnings.simplefilter("always", SHImportWarning)
 warnings.simplefilter("always", SHRuntimeWarning)
 warnings.simplefilter("always", SHRateLimitWarning)
