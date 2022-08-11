@@ -57,10 +57,11 @@ class SentinelHubBatchStatistical(BaseBatchClient["BatchStatisticalRequest"]):
 
     def create(
         self,
+        *,
         input_features: AccessSpecification,
         input_data: List[Union[JsonDict, InputDataDict]],
         aggregation: JsonDict,
-        calculations: JsonDict,
+        calculations: Optional[JsonDict],
         output: AccessSpecification,
         **kwargs: Any,
     ) -> "BatchStatisticalRequest":

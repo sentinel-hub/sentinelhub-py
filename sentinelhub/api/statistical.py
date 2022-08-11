@@ -10,7 +10,7 @@ from ..geometry import BBox, Geometry
 from ..time_utils import parse_time_interval, serialize_time
 from ..type_utils import JsonDict, RawTimeIntervalType
 from .base_request import InputDataDict, SentinelHubBaseApiRequest
-from .utils import _update_other_args
+from .utils import _update_other_args, remove_undefined
 
 
 class SentinelHubStatistical(SentinelHubBaseApiRequest):
@@ -80,9 +80,6 @@ class SentinelHubStatistical(SentinelHubBaseApiRequest):
             if "dataFilter" not in input_data_payload:
                 input_data_payload["dataFilter"] = {}
 
-        if calculations is None:
-            calculations = {"default": {}}
-
         request_body = {
             "input": {"bounds": request_bounds, "data": request_data},
             "aggregation": aggregation,
@@ -92,7 +89,7 @@ class SentinelHubStatistical(SentinelHubBaseApiRequest):
         if other_args:
             _update_other_args(request_body, other_args)
 
-        return request_body
+        return remove_undefined(request_body)
 
     @staticmethod
     def aggregation(
