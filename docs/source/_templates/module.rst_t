@@ -1,6 +1,4 @@
-:github_url: https://github.com/sentinel-hub/sentinelhub-py
-
-{% if show_headings %}
+{%- if show_headings %}
 {{- basename | e | heading }}
 {%- endif %}
 
