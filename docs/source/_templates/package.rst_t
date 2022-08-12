@@ -1,4 +1,6 @@
-{%- macro automodule(modname, options) -%}
+:github_url: https://github.com/sentinel-hub/sentinelhub-py
+
+{% macro automodule(modname, options) -%}
 .. automodule:: {{ modname }}
 {%- for option in options %}
    :{{ option }}:

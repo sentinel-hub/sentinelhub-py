@@ -117,10 +117,10 @@ html_logo = "./sentinel-hub-by_sinergise-dark_background.png"
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
 # documentation.
-
-html_theme_options = {
-    "github_url": "https://github.com/sentinel-hub/sentinelhub-py",
-}
+#
+# html_theme_options = {
+#     "rightsidebar": "true",
+#     "relbarbgcolor": "black"}
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
