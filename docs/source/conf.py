@@ -216,6 +216,12 @@ epub_exclude_files = ["search.html"]
 # Example configuration for intersphinx: refer to the Python standard library.
 intersphinx_mapping = {"https://docs.python.org/3.8/": None}
 
+# copy examples
+try:
+    shutil.copytree("../../examples", "./examples")
+except FileExistsError:
+    pass
+
 
 MARKDOWNS_FOLDER = "./markdowns"
 shutil.rmtree(MARKDOWNS_FOLDER, ignore_errors=True)
