@@ -1,6 +1,14 @@
 import pytest
+from requests_mock import Mocker
 
-from sentinelhub import SentinelHubDownloadClient, SentinelHubSession, SentinelHubStatisticalDownloadClient, SHConfig
+from sentinelhub import (
+    SentinelHubDownloadClient,
+    SentinelHubSession,
+    SentinelHubStatisticalDownloadClient,
+    SHConfig,
+    __version__,
+)
+from sentinelhub.constants import RequestType
 
 FAST_SH_ENDPOINT = "https://services.sentinel-hub.com/api/v1/catalog/collections"
 
@@ -18,6 +26,27 @@ def test_client_with_fixed_session(session):
 
     with pytest.raises(ValueError):
         SentinelHubDownloadClient(session=blank_config, config=blank_config)
+
+
+@pytest.mark.sh_integration
+@pytest.mark.parametrize("request_type", [RequestType.GET, RequestType.POST, RequestType.PUT])
+def test_client_headers(request_type: RequestType, session: SentinelHubSession, requests_mock: Mocker) -> None:
+    """Makes sure user agent headers are always sent by the client."""
+    blank_config = SHConfig(use_defaults=True)
+    client = SentinelHubDownloadClient(session=session, config=blank_config)
+
+    requests_mock.get(url="/fake-endpoint")
+    fake_url = "https://xyz.sentinel-hub.com/fake-endpoint"
+
+    client.get_json(
+        fake_url,
+    )
+
+    assert len(requests_mock.request_history) == 1
+    mocked_request = requests_mock.request_history[0]
+
+    assert mocked_request.url == fake_url
+    assert mocked_request.headers["User-Agent"] == f"sentinelhub-py/v{__version__}"
 
 
 @pytest.mark.sh_integration

@@ -11,6 +11,7 @@ import requests
 from requests import Response
 
 from ..config import SHConfig
+from ..constants import SHConstants
 from ..exceptions import SHRateLimitWarning, SHRuntimeWarning
 from ..type_utils import JsonDict
 from .client import DownloadClient
@@ -116,12 +117,15 @@ class SentinelHubDownloadClient(DownloadClient):
         )
 
     def _prepare_headers(self, request: DownloadRequest) -> JsonDict:
-        """Prepares final headers by potentially joining them with session headers"""
-        if not request.use_session:
-            return request.headers
+        """Prepares final headers by potentially joining them with session headers. Note that in the current
+        implementation of this method request headers have priority to overwrite default and session headers with the
+        same keys.
+        """
+        session_headers: JsonDict = {}
+        if request.use_session:
+            session_headers = self._execute_thread_safe(self._get_session_headers)
 
-        session_headers = self._execute_thread_safe(self._get_session_headers)
-        return {**session_headers, **request.headers}
+        return {**SHConstants.HEADERS, **session_headers, **request.headers}
 
     def _get_session_headers(self) -> JsonDict:
         """Provides up-to-date session headers

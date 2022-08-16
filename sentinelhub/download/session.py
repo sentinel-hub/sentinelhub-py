@@ -17,6 +17,7 @@ from requests.exceptions import JSONDecodeError
 from requests_oauthlib import OAuth2Session
 
 from ..config import SHConfig
+from ..constants import SHConstants
 from ..download.handlers import fail_user_errors, retry_temporary_errors
 from ..download.models import DownloadRequest
 from ..exceptions import SHUserWarning
@@ -42,6 +43,7 @@ class SentinelHubSession:
     """
 
     DEFAULT_SECONDS_BEFORE_EXPIRY = 120
+    DEFAULT_HEADERS = {"Content-Type": "application/x-www-form-urlencoded"}  # Following SH API documentation
 
     def __init__(
         self,
@@ -137,7 +139,10 @@ class SentinelHubSession:
             oauth_session.register_compliance_hook("access_token_response", self._compliance_hook)
 
             return oauth_session.fetch_token(
-                token_url=request.url, client_id=self.config.sh_client_id, client_secret=self.config.sh_client_secret
+                token_url=request.url,
+                client_id=self.config.sh_client_id,
+                client_secret=self.config.sh_client_secret,
+                headers={**self.DEFAULT_HEADERS, **SHConstants.HEADERS},
             )
 
     @staticmethod

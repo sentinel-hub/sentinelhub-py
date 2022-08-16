@@ -11,7 +11,7 @@ from urllib.parse import urlencode
 
 from ..base import DataRequest
 from ..config import SHConfig
-from ..constants import CRS, CustomUrlParam, MimeType, ResamplingType, ServiceType, SHConstants
+from ..constants import CRS, CustomUrlParam, MimeType, ResamplingType, ServiceType
 from ..data_collections import DataCollection
 from ..download import DownloadRequest, SentinelHubDownloadClient
 from ..geo_utils import get_image_dimension
@@ -289,7 +289,6 @@ class OgcImageService:
             DownloadRequest(
                 url=self.get_url(request=request, date=date, size_x=size_x, size_y=size_y),
                 data_type=request.image_format,
-                headers=SHConstants.HEADERS,
             )
             for date in self.get_dates(request)
         ]
