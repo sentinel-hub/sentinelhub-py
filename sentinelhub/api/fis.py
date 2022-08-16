@@ -5,7 +5,7 @@ import datetime
 import warnings
 from typing import Any, List, Optional, Union
 
-from ..constants import HistogramType, MimeType, RequestType, ServiceType, SHConstants
+from ..constants import HistogramType, MimeType, RequestType, ServiceType
 from ..download import DownloadRequest
 from ..exceptions import SHDeprecationWarning
 from ..geometry import BBox, Geometry
@@ -117,8 +117,6 @@ class _FisService(OgcImageService):
     def _create_request(self, request: FisRequest, geometry: Union[BBox, Geometry]) -> DownloadRequest:
         url = self.get_base_url(request)
 
-        headers = {"Content-Type": MimeType.JSON.get_string(), **SHConstants.HEADERS}
-
         post_data = {**self._get_common_url_parameters(request), **self._get_fis_parameters(request, geometry)}
         post_data = {k.lower(): v for k, v in post_data.items()}  # lowercase required on SH service
 
@@ -126,6 +124,6 @@ class _FisService(OgcImageService):
             url=f"{url}/{self.config.instance_id}",
             post_values=post_data,
             data_type=MimeType.JSON,
-            headers=headers,
+            headers={"Content-Type": MimeType.JSON.get_string()},
             request_type=RequestType.POST,
         )
