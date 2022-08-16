@@ -1,12 +1,12 @@
 import time
 from concurrent.futures import ProcessPoolExecutor
-from typing import Optional, Type
+from typing import Any, Dict, Optional, Type
 
 import pytest
 from oauthlib.oauth2.rfc6749.errors import CustomOAuth2Error
 from requests_mock import Mocker
 
-from sentinelhub import SentinelHubSession, SHConfig
+from sentinelhub import SentinelHubSession, SHConfig, __version__
 from sentinelhub.download import SessionSharing, SessionSharingThread, collect_shared_session
 from sentinelhub.exceptions import DownloadFailedException, SHUserWarning
 from sentinelhub.type_utils import JsonDict
@@ -50,6 +50,23 @@ def test_token_info(session):
 
     for key in ["sub", "aud", "jti", "exp", "name", "email", "sid", "org", "did", "aid", "d"]:
         assert key in info
+
+
+def test_session_content_and_headers(fake_config: SHConfig, fake_token: Dict[str, Any], requests_mock: Mocker) -> None:
+    """Make sure correct content and headers are passed to the service."""
+    requests_mock.post(url="/oauth/token", response_list=[{"json": fake_token}])
+
+    token = SentinelHubSession(config=fake_config).token
+    assert abs(token["expires_at"] - fake_token["expires_at"]) < 0.1  # Somehow oauthlib changes these times a bit
+    token["expires_at"] = fake_token["expires_at"]
+    assert token == fake_token
+
+    assert len(requests_mock.request_history) == 1
+    mocked_request = requests_mock.request_history[0]
+
+    assert mocked_request.url == f"{fake_config.sh_base_url}/oauth/token"
+    assert mocked_request.headers["User-Agent"] == f"sentinelhub-py/v{__version__}"
+    assert mocked_request.headers["Content-Type"] == "application/x-www-form-urlencoded"
 
 
 def test_session_with_missing_credentials(fake_token):
