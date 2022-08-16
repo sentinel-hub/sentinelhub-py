@@ -1,7 +1,7 @@
 {%- if show_headings %}
 {{- basename | e | heading }}
+{%- endif %}
 
-{% endif -%}
 .. automodule:: {{ qualname }}
 {%- for option in automodule_options %}
    :{{ option }}:
