@@ -1,7 +1,7 @@
 """
 Module with statistics to dataframe transformation.
 """
-from typing import Dict, List, Optional, Tuple, Union
+from typing import Dict, List, Optional, Tuple
 
 import pandas as pd
 
@@ -11,7 +11,7 @@ from .type_utils import JsonDict
 
 def _histogram_to_dataframe(
         hist_cols: Tuple[str, str], hist_data: List[JsonDict]
-) -> Dict[str, List[Union[int, float]]]:
+) -> Dict[str, List[float]]:
     """Transform Statistical API histogram into a pandas.DataFrame
 
     :param hist_cols: Column names to store histogram as a dataframe. Example: ("ndvi_B0_bins", "ndvi_B0_counts").
@@ -29,8 +29,8 @@ def _histogram_to_dataframe(
 
 
 def _statistical_to_dataframe(
-    res_data: List[JsonDict], excl_stats: List[str] = None, incl_histogram: bool = False
-) -> Optional[pd.DataFrame]:
+    res_data: List[JsonDict], excl_stats: Optional[List[str]] = None, incl_histogram: bool = False
+) -> pd.DataFrame:
     """Transform Statistical API response into a pandas.DataFrame
 
     :param res_data: An input representation of Statistical API response.
@@ -81,27 +81,31 @@ def _statistical_to_dataframe(
 
 
 def result_to_dataframe(
-    rslt_data: List[JsonDict], excl_stats: List[str] = None, incl_histogram: bool = False
-) -> Tuple[Optional[pd.DataFrame], List[Union[str, None]]]:
+    result_data: List[JsonDict], excl_stats: Optional[List[str]] = None, incl_hist: bool = False
+) -> Tuple[pd.DataFrame, List[str]]:
     """Transform Batch Statistical API get_data results into a pandas.DataFrame
 
-    :param rslt_data: An input representation of Batch Statistical API result.
+    :param result_data: An input representation of Batch Statistical API result.
     :param excl_stats: Unwanted statistical name.
-    :param incl_histogram: Flag to transform histogram.
+    :param incl_hist: Flag to transform histogram.
     :return: Statistical dataframe and identifiers that failed on request.
     """
     if not excl_stats:
         excl_stats = []
 
-    nrslt = len(rslt_data)
-    dfs = [0] * nrslt
+    nresults = len(result_data)
+    dfs = [0] * nresults
     nulls = []
-    for idx in range(nrslt):
-        identifier, response = rslt_data[idx]["identifier"], rslt_data[idx]["response"]
+    for idx in range(nresults):
+        identifier, response = result_data[idx]["identifier"], result_data[idx]["response"]
         if response:
-            rslt_df = _statistical_to_dataframe(response["data"], excl_stats, incl_histogram)
-            rslt_df["identifier"] = identifier
-            dfs[idx] = rslt_df
+            result_df = _statistical_to_dataframe(response["data"], excl_stats, incl_hist)
+            result_df["identifier"] = identifier
+            dfs[idx] = result_df
         else:
             nulls.append(identifier)
+
+    if len(nulls) == nresults:
+        raise RuntimeError("Batch Statistical API response for all geometries is empty.")
+
     return pd.concat(dfs), nulls
