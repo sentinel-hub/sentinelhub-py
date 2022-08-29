@@ -9,9 +9,7 @@ from .time_utils import parse_time
 from .type_utils import JsonDict
 
 
-def _histogram_to_dataframe(
-        hist_cols: Tuple[str, str], hist_data: List[JsonDict]
-) -> Dict[str, List[float]]:
+def _histogram_to_dataframe(hist_cols: Tuple[str, str], hist_data: List[JsonDict]) -> Dict[str, List[float]]:
     """Transform Statistical API histogram into a pandas.DataFrame
 
     :param hist_cols: Column names to store histogram as a dataframe. Example: ("ndvi_B0_bins", "ndvi_B0_counts").
@@ -19,12 +17,11 @@ def _histogram_to_dataframe(
     :return: Statistical histogram stored as bins and counts.
     """
 
-    nbins = len(hist_data)
-    low_edges, high_edges, counts = ([0] * nbins for _ in range(3))
-    for idx in range(nbins):
-        low_edges[idx] = hist_data[idx]["lowEdge"]
-        high_edges[idx] = hist_data[idx]["highEdge"]
-        counts[idx] = hist_data[idx]["count"]
+    low_edges, high_edges, counts = ([] for _ in range(3))
+    for hist_bin in hist_data:
+        low_edges.append(hist_bin["lowEdge"])
+        high_edges.append(hist_bin["highEdge"])
+        counts.append(hist_bin["count"])
     return {hist_cols[0]: sorted(set(low_edges + high_edges)), hist_cols[1]: counts}
 
 
@@ -41,16 +38,16 @@ def _statistical_to_dataframe(
     if not excl_stats:
         excl_stats = []
 
-    nintervals = len(res_data)
-    interval_dfs = [0] * nintervals
-    for idx in range(nintervals):
-        if "outputs" in res_data[idx]:
-            df_entry = dict()
-            df_entry["interval_from"] = parse_time(res_data[idx]["interval"]["from"]).date()
-            df_entry["interval_to"] = parse_time(res_data[idx]["interval"]["to"]).date()
+    dfs = []
+    for interval in res_data:
+        if "outputs" in interval:
+            df_entry = {
+                "interval_from": parse_time(interval["interval"]["from"]),
+                "interval_to": parse_time(interval["interval"]["to"])
+            }
 
             is_valid_entry = False
-            for output_name, output_data in res_data[idx]["outputs"].items():
+            for output_name, output_data in interval["outputs"].items():
                 for band_name, band_values in output_data["bands"].items():
                     band_stats = band_values["stats"]
                     if band_stats["sampleCount"] == band_stats["noDataCount"]:
@@ -73,11 +70,9 @@ def _statistical_to_dataframe(
                         df_entry.update(_histogram_to_dataframe(hist_col_names, band_bins))
 
             if is_valid_entry:
-                interval_dfs[idx] = df_entry
+                dfs.append(df_entry)
 
-    valid_dfs = [entry for entry in interval_dfs if entry != 0]
-
-    return pd.DataFrame(valid_dfs)
+    return pd.DataFrame(dfs)
 
 
 def result_to_dataframe(
