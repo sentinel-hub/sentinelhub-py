@@ -3,8 +3,7 @@ Module with statistics to dataframe transformation.
 """
 from typing import Any, Dict, List, Optional, Tuple, Union
 
-import pandas as pd
-
+from .exceptions import PandasNotInstalled
 from .time_utils import parse_time
 from .type_utils import JsonDict
 
@@ -110,6 +109,11 @@ def statistical_to_dataframe(
     :param incl_hist: Flag to transform histogram.
     :return: Statistical dataframe and identifiers that failed on request.
     """
+    try:
+        import pandas as pd
+    except ModuleNotFoundError as exception:
+        raise PandasNotInstalled("Pandas must be installed for the statistical_to_dataframe method") from exception
+
     if not excl_stats:
         excl_stats = []
 
