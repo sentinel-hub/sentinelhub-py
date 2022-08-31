@@ -22,7 +22,7 @@ jobs:
         with:
           concurrent_skipping: 'same_content_newer'
           skip_after_successful_duplicate: 'true'
-          do_not_skip: '["pull_request", "workflow_dispatch", "schedule"]'
+          do_not_skip: '["schedule"]'
 
   check-code-black-isort-flake8:
     needs: check_duplication
