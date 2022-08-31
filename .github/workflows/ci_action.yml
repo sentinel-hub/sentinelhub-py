@@ -1,8 +1,8 @@
 name: build
 
 on:
+  pull_request:
   push:
-  pull_request:  # does this double the actions on updating a pull request?
   schedule:
     - cron: '0 0 * * *'
 
