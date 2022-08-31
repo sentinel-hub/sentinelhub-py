@@ -76,7 +76,7 @@ def _extract_stats(
 
 def _extract_response_data(
     response_data: List[JsonDict], excl_stats: Optional[List[str]], incl_histogram: bool
-) -> pd.DataFrame:
+) -> List[Dict[str, Any]]:
     """Transform Statistical API response into a pandas.DataFrame
 
     :param response_data: An input representation of Statistical API response.
@@ -87,27 +87,27 @@ def _extract_response_data(
     if not excl_stats:
         excl_stats = []
 
-    dfs = []
+    df_entries = []
     for interval in response_data:
         if "outputs" in interval:
             df_entry: Dict[str, Any] = _extract_stats(interval["outputs"], excl_stats, incl_histogram)
             if df_entry:
                 df_entry["interval_from"] = parse_time(interval["interval"]["from"])
                 df_entry["interval_to"] = parse_time(interval["interval"]["to"])
-                dfs.append(df_entry)
+                df_entries.append(df_entry)
 
-    return pd.DataFrame(dfs)
+    return df_entries
 
 
 def statistical_to_dataframe(
     result_data: List[JsonDict], excl_stats: Optional[List[str]] = None, incl_hist: bool = False
-) -> Tuple[pd.DataFrame, List[str]]:
+) -> Any:
     """Transform (Batch) Statistical API get_data results into a pandas.DataFrame
 
     :param result_data: An input representation of (Batch) Statistical API result.
     :param excl_stats: Unwanted statistical name.
     :param incl_hist: Flag to transform histogram.
-    :return: Statistical dataframe and identifiers that failed on request.
+    :return: Statistical dataframe.
     """
     try:
         import pandas as pd
@@ -119,17 +119,48 @@ def statistical_to_dataframe(
 
     nresults = len(result_data)
     dfs = [None] * nresults
-    nulls = []
     for idx in range(nresults):
         identifier, response = result_data[idx]["identifier"], result_data[idx]["response"]
         if response:
-            result_df = _extract_response_data(response["data"], excl_stats, incl_hist)
+            result_entries = _extract_response_data(response["data"], excl_stats, incl_hist)
+            result_df = pd.DataFrame(result_entries)
             result_df["identifier"] = identifier
             dfs[idx] = result_df
+
+    return pd.concat(dfs)
+
+
+def _get_failed_intervals(
+    identifier: str, response_data: List[JsonDict]
+) -> Optional[Dict[str, Union[str, List[Tuple[str, str]]]]]:
+    """Collect failed intervals of a partially failed request
+
+    :param identifier: The identifier of the geometry.
+    :param response_data: An input representation of Statistical API response.
+    :return: The identifier of a geometry that has a response status of PARTIAL and the failed intervals.
+    """
+    failed_intervals = []
+    for interval in response_data:
+        if "error" in interval:
+            failed_intervals.append((interval["interval"]["from"], interval["interval"]["to"]))
+
+    return {"identifier": identifier, "failed_intervals": failed_intervals} if failed_intervals else None
+
+
+def get_failed_requests(result_data: List[JsonDict]) -> List[Dict[str, Union[str, List[Tuple[str, str]]]]]:
+    """Collect failed requests of (Batch) Statistical Results
+
+    :param result_data: An input representation of (Batch) Statistical API result.
+    :return: Failed requests of (Batch) Statistical Results.
+    """
+    failed_request = []
+    for result in result_data:
+        identifier, response = result["identifier"], result["response"]
+        if not response:
+            failed_request.append({"identifier": identifier})
         else:
-            nulls.append(identifier)
+            failed_intervals = _get_failed_intervals(identifier, response["data"])
+            if failed_intervals:
+                failed_request.append(failed_intervals)
 
-    if len(nulls) == nresults:
-        raise RuntimeError("All statistical responses are empty.")
-
-    return pd.concat(dfs), nulls
+    return failed_request
