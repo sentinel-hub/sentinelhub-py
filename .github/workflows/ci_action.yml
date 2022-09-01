@@ -11,7 +11,7 @@ on:
 
 env:
   # The only way to simulate if-else statement
-  CHECKOUT_BRANCH: ${{ github.event_name == 'push' && github.ref || 'develop' }}
+  CHECKOUT_BRANCH: ${{ github.event_name == 'schedule' && 'develop' || github.ref }}
 
 jobs:
 
