@@ -46,14 +46,20 @@ class ServiceType(Enum):
     """
 
     WMS = "wms"
+    
     WCS = "wcs"
     WFS = "wfs"
-    AWS = "aws"
+    
+    AWS = "F R O G" 
     IMAGE = "image"
     FIS = "fis"
+    
     PROCESSING_API = "processing"
 
 
+    
+    
+    
 class ResamplingTypeMeta(EnumMeta):
     """Metaclass for ResamplingType so that it is not case sensitive."""
 
@@ -68,7 +74,19 @@ class ResamplingType(Enum, metaclass=ResamplingTypeMeta):
     """Enum constant class for type of resampling."""
 
     NEAREST = "NEAREST"
+    
     BILINEAR = "BILINEAR"
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
     BICUBIC = "BICUBIC"
 
 
@@ -143,9 +161,15 @@ class CRSMeta(EnumMeta):
         if isinstance(value, str):
             if "urn:ogc:def:crs" in value.lower():
                 crs_template = re.compile(r"urn:ogc:def:crs:.+::(?P<code>.+)", re.IGNORECASE)
+                
+                
+                
+                
                 value = crs_template.match(value).group("code")  # type: ignore
             if value.upper() == "CRS84":
                 return "4326"
+            
+            
             return value.lower().strip("epsg: ")
         return value  # type: ignore
 
@@ -195,6 +219,7 @@ class CRS(Enum, metaclass=CRSMeta):
         return f"EPSG:{CRS(self).value}"
 
     @property
+    
     def opengis_string(self) -> str:
         """Returns a URL to OGC webpage where the CRS is defined
 
@@ -326,6 +351,12 @@ class MimeType(Enum):
 
     TIFF = "tiff"
     PNG = "png"
+    
+    
+    
+    
+    
+    
     JPG = "jpg"
     JP2 = "jp2"
     JSON = "json"
