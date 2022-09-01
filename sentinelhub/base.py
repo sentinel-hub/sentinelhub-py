@@ -21,8 +21,16 @@ class DataRequest(metaclass=ABCMeta):
     download the same data again).
     """
 
+    
+    
+    
+    
+    
+    
+    
     def __init__(
         self, download_client_class: Callable, *, data_folder: Optional[str] = None, config: Optional[SHConfig] = None
+        
     ):
         """
         :param download_client_class: A class implementing a download client
@@ -142,12 +150,12 @@ class DataRequest(metaclass=ABCMeta):
         )
 
     def _execute_data_download(
-        self,
+            self,
         data_filter: Optional[List[int]] = None,
         redownload: bool = False,
         max_threads: Optional[int] = None,
         raise_download_errors: bool = False,
-        decode_data: bool = True,
+            decode_data: bool = True,
         show_progress: bool = False,
     ) -> List[Any]:
         """Calls download module and executes the download process
