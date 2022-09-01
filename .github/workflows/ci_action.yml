@@ -12,8 +12,6 @@ on:
 env:
   # The only way to simulate if-else statement
   CHECKOUT_BRANCH: ${{ github.event_name == 'schedule' && 'develop' || github.ref }}
-  # We don't run integration on pull requests from outside repos, because they don't have secrets
-  RUN_INTEGRATION_TESTS: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}
 
 jobs:
 
@@ -80,7 +78,8 @@ jobs:
           - '3.10'
         include:
           - version: '3.8'
-          - full_test_suite: ${{ env.RUN_INTEGRATION_TESTS }}
+          # We don't run integration on pull requests from outside repos, because they don't have secrets
+          - full_test_suite: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}
     steps:
       - name: Checkout branch
         uses: actions/checkout@v2
