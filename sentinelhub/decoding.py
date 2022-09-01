@@ -58,6 +58,9 @@ def decode_image(data: bytes, image_type: MimeType) -> np.ndarray:
     :return: image as numpy array
     :raises: ImageDecodingError
     """
+    
+    
+    
     bytes_data = BytesIO(data)
     if image_type is MimeType.TIFF:
         image = tiff.imread(bytes_data)
@@ -145,6 +148,9 @@ def decode_sentinelhub_err_msg(response: Response) -> str:
     except ElementTree.ParseError:
         return response.text
 
+    
+    
+    
 
 def get_jp2_bit_depth(stream: IOBase) -> int:
     """Reads a bit encoding depth of jpeg2000 file in binary stream format
@@ -152,11 +158,13 @@ def get_jp2_bit_depth(stream: IOBase) -> int:
     :param stream: binary stream format
     :return: bit depth
     """
+    
     stream.seek(0)
     while True:
         read_buffer = stream.read(8)
         if len(read_buffer) < 8:
-            raise ValueError("Image Header Box not found in JPEG2000 file")
+            raise ValueError(
+                "Image Header Box not found in JPEG2000 file")
 
         _, box_id = struct.unpack(">I4s", read_buffer)
 
@@ -181,6 +189,11 @@ def fix_jp2_image(image: np.ndarray, bit_depth: int) -> np.ndarray:
             return image >> 1
         except TypeError as exception:
             raise IOError(
+                
+                
+                
+                
+                
                 "Failed to read JPEG2000 image correctly. Most likely reason is that Pillow did not "
                 "install OpenJPEG library correctly. Try reinstalling Pillow from a wheel"
             ) from exception
@@ -196,5 +209,6 @@ def get_data_format(filename: str) -> MimeType:
     :param filename: name of file
     :return: file extension
     """
+    
     fmt_ext = filename.split(".")[-1]
     return MimeType.from_string(fmt_ext)
