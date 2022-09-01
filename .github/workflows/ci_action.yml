@@ -12,6 +12,8 @@ on:
 env:
   # The only way to simulate if-else statement
   CHECKOUT_BRANCH: ${{ github.event_name == 'schedule' && 'develop' || github.ref }}
+  # We don't run integration on pull requests from outside repos, because they don't have secrets
+  RUN_INTEGRATION_TESTS: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}
 
 jobs:
 
@@ -74,9 +76,11 @@ jobs:
       matrix:
         python-version:
           - '3.7'
-          - '3.8'
           - '3.9'
           - '3.10'
+        include:
+          - version: '3.8'
+          - full_test_suite: ${{ env.RUN_INTEGRATION_TESTS }}
     steps:
       - name: Checkout branch
         uses: actions/checkout@v2
@@ -96,7 +100,7 @@ jobs:
           pip install -e .[AWS,DEV]
 
       - name: Run full tests and code coverage
-        if: matrix.python-version == '3.8'
+        if: ${{ matrix.full_test_suite }}
         run: |
           sentinelhub.config \
             --sh_client_id "${{ secrets.SH_CLIENT_ID }}" \
@@ -107,12 +111,12 @@ jobs:
           pytest --cov --cov-report=term --cov-report=xml
 
       - name: Run pylint and reduced tests
-        if: matrix.python-version != '3.8'
+        if: ${{ !matrix.full_test_suite }}
         run: |
           pytest -m "not sh_integration and not aws_integration"
 
       - name: Upload code coverage
-        if: matrix.python-version == '3.8'
+        if: ${{ matrix.full_test_suite }}
         uses: codecov/codecov-action@v2
         with:
           files: coverage.xml
