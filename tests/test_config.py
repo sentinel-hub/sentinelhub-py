@@ -24,6 +24,9 @@ def test_config_file():
 
     config_file = config.get_config_location()
     assert os.path.isfile(config_file), f"Config file does not exist: {os.path.abspath(config_file)}"
+    
+    
+    
 
     with open(config_file, "r") as fp:
         config_dict = json.load(fp)
@@ -94,6 +97,9 @@ def test_config_equality():
 
     config1 = SHConfig(hide_credentials=False, use_defaults=True)
     config2 = SHConfig(hide_credentials=True, use_defaults=True)
+    
+    
+    
 
     assert config1 is not config2
     assert config1 == config2
@@ -104,6 +110,7 @@ def test_config_equality():
 
 def test_raise_for_missing_instance_id():
     config = SHConfig()
+    
 
     config.instance_id = "xxx"
     config.raise_for_missing_instance_id()
@@ -156,15 +163,23 @@ def test_transfer_with_ray(ray):
 
     def _remote_ray_testing(remote_config):
         """Makes a few checks and modifications to the config object"""
+        
+        
+        
         assert repr(remote_config).startswith("SHConfig")
         assert isinstance(remote_config.get_config_dict(), dict)
+        
         assert os.path.exists(remote_config.get_config_location())
         assert remote_config.instance_id == "x"
 
+        
         remote_config.instance_id = "y"
         return remote_config
+    
+    
 
     config_future = ray.remote(_remote_ray_testing).remote(config)
+    
     transferred_config = ray.get(config_future)
 
     assert repr(config).startswith("SHConfig")
