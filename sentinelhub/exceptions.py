@@ -39,10 +39,6 @@ class HashedNameCollisionException(BaseSentinelHubException):
     """This exception is raised when two different requests are assigned the same hashed name."""
 
 
-class PandasNotInstalled(BaseSentinelHubException):
-    """This exception is raised when statistical_to_dataframe utility is called but Pandas is not installed."""
-
-
 class SHDeprecationWarning(DeprecationWarning):
     """A custom deprecation warning for sentinelhub-py package"""
 

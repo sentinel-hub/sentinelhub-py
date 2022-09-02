@@ -3,17 +3,18 @@ Module with statistics to dataframe transformation.
 """
 from typing import Any, Dict, List, Optional, Tuple, Union
 
-from .exceptions import PandasNotInstalled
 from .time_utils import parse_time
 from .type_utils import JsonDict
 
+_PANDAS_IMPORT_MESSAGE = "The Pandas backend is not installed by default. We suggest you install the `pandas` package."
 
-def _extract_hist(hist_cols: Tuple[str, str], hist_data: List[JsonDict]) -> Dict[str, List[float]]:
-    """Transform Statistical API histogram into pandas.DataFrame entry
 
-    :param hist_cols: Column names to store histogram as a dataframe. Example: ("ndvi_B0_bins", "ndvi_B0_counts").
-    :param hist_data: An input representation of Statistical API histogram.
-    :return: Statistical histogram stored as bins and counts.
+def _extract_hist(hist_data: List[Dict[str, float]]) -> Tuple[List[float], List[float]]:
+    """Transform Statistical API histogram into sequences of bins and counts
+
+    :param hist_data: An input representation of Statistical API histogram data in a form of the low edges,
+        the high edges, and the counts for each bin.
+    :return: Statistical histogram bins and counts value as sequences.
     """
 
     nbins = len(hist_data)
@@ -24,73 +25,62 @@ def _extract_hist(hist_cols: Tuple[str, str], hist_data: List[JsonDict]) -> Dict
             bins.append(hist_data[idx]["highEdge"])
         counts.append(hist_data[idx]["count"])
 
-    return {hist_cols[0]: bins, hist_cols[1]: counts}
+    return bins, counts
 
 
-def _extract_percentiles(col_name: str, perc_data: Dict[str, float]) -> Dict[str, float]:
-    """Transform statistical percentiles into pandas.DataFrame entry
-
-    :param col_name: Output name and band name. Example: ndvi_B0.
-    :param perc_data: An input representation of percentile data of <col_name>.
-    :return: Percentile data as a pandas.DataFrame entry. Examples: {"ndvi_B0_<perc>": perc_val}.
-    """
-    perc_entry = {}
-    for perc, perc_val in perc_data.items():
-        perc_col_name = f"{col_name}_{perc}"
-        perc_entry[perc_col_name] = perc_val
-    return perc_entry
-
-
-def _extract_stats(
-    interval_output: JsonDict, excl_stats: List[str], incl_histogram: bool
-) -> Dict[str, Union[List[float], float]]:
+def _extract_stats(interval_output: JsonDict, exclude_stats: List[str]) -> Dict[str, Union[List[float], float]]:
     """Transform statistics into pandas.DataFrame entry
 
     :param interval_output: An input representation of statistics of an aggregation interval.
-    :param excl_stats: Unwanted statistical name.
-    :param incl_histogram: Flag to transform histogram.
+    :param exclude_stats: Statistics that will be excluded from output.
     :return: Statistics as a pandas.DataFrame entry.
     """
     stat_entry: Dict[str, Union[List[float], float]] = {}
     for output_name, output_data in interval_output.items():
         for band_name, band_values in output_data["bands"].items():
             band_stats = band_values["stats"]
+            # statistics are not valid when sample count equals to no data count
             if band_stats["sampleCount"] == band_stats["noDataCount"]:
                 break
 
             for stat_name, value in band_stats.items():
-                if stat_name not in excl_stats:
+                if stat_name not in exclude_stats:
                     col_name = f"{output_name}_{band_name}_{stat_name}"
                     if stat_name == "percentiles":
-                        stat_entry.update(_extract_percentiles(col_name, value))
+                        stat_entry.update(
+                            {
+                                f"{col_name}_{percentile_name}": percentile_value
+                                for percentile_name, percentile_value in value.items()
+                            }
+                        )
                     else:
                         stat_entry[col_name] = value
 
-                if incl_histogram:
+                if "histogram" in band_values:
                     band_bins = band_values["histogram"]["bins"]
-                    hist_col_names = (f"{output_name}_{band_name}_bins", f"{output_name}_{band_name}_counts")
-                    stat_entry.update(_extract_hist(hist_col_names, band_bins))
+                    hist_bins_value, hist_counts_value = _extract_hist(band_bins)
+                    stat_entry.update(
+                        {
+                            f"{output_name}_{band_name}_bins": hist_bins_value,
+                            f"{output_name}_{band_name}_counts": hist_counts_value,
+                        }
+                    )
 
     return stat_entry
 
 
-def _extract_response_data(
-    response_data: List[JsonDict], excl_stats: Optional[List[str]], incl_histogram: bool
-) -> List[Dict[str, Any]]:
+def _extract_response_data(response_data: List[JsonDict], exclude_stats: List[str]) -> List[Dict[str, Any]]:
     """Transform Statistical API response into a pandas.DataFrame
 
-    :param response_data: An input representation of Statistical API response.
-    :param excl_stats: Unwanted statistical name.
-    :param incl_histogram: Flag to transform histogram.
-    :return: Statistical dataframe
+    :param response_data: An input representation of Statistical API response. The response is a list of JsonDict and
+        each contains the statistics of an aggregation interval.
+    :param exclude_stats: Statistics that will be excluded from output.
+    :return: DataFrame entries of all aggregation intervals of a single geometry.
     """
-    if not excl_stats:
-        excl_stats = []
-
     df_entries = []
     for interval in response_data:
         if "outputs" in interval:
-            df_entry: Dict[str, Any] = _extract_stats(interval["outputs"], excl_stats, incl_histogram)
+            df_entry: Dict[str, Any] = _extract_stats(interval["outputs"], exclude_stats)
             if df_entry:
                 df_entry["interval_from"] = parse_time(interval["interval"]["from"])
                 df_entry["interval_to"] = parse_time(interval["interval"]["to"])
@@ -99,35 +89,33 @@ def _extract_response_data(
     return df_entries
 
 
-def statistical_to_dataframe(
-    result_data: List[JsonDict], excl_stats: Optional[List[str]] = None, incl_hist: bool = False
-) -> Any:
-    """Transform (Batch) Statistical API get_data results into a pandas.DataFrame
+def statistical_to_dataframe(result_data: List[JsonDict], exclude_stats: Optional[List[str]] = None) -> Any:
+    """Transform (Batch) Statistical API results into a pandas.DataFrame
 
-    :param result_data: An input representation of (Batch) Statistical API result.
-    :param excl_stats: Unwanted statistical name.
-    :param incl_hist: Flag to transform histogram.
+    :param result_data: An input representation of (Batch) Statistical API result returned from
+        `AwsBatchResults.get_data()`. Each JsonDict in the list is a Statistical API response of an input geometry.
+    :param exclude_stats: Statistical API has `min`, `max`, `mean`, and `stDev` as default statistics.
+        The default statistics defined in this parameter will be removed from DataFrame.
     :return: Statistical dataframe.
     """
     try:
-        import pandas as pd
-    except ModuleNotFoundError as exception:
-        raise PandasNotInstalled("Pandas must be installed for the statistical_to_dataframe method") from exception
+        import pandas  # pylint: disable=import-outside-toplevel
+    except ImportError as exception:
+        raise ImportError(_PANDAS_IMPORT_MESSAGE) from exception
 
-    if not excl_stats:
-        excl_stats = []
+    exclude_stats = exclude_stats or []
 
     nresults = len(result_data)
     dfs = [None] * nresults
     for idx in range(nresults):
         identifier, response = result_data[idx]["identifier"], result_data[idx]["response"]
         if response:
-            result_entries = _extract_response_data(response["data"], excl_stats, incl_hist)
-            result_df = pd.DataFrame(result_entries)
+            result_entries = _extract_response_data(response["data"], exclude_stats)
+            result_df = pandas.DataFrame(result_entries)
             result_df["identifier"] = identifier
             dfs[idx] = result_df
 
-    return pd.concat(dfs)
+    return pandas.concat(dfs)
 
 
 def _get_failed_intervals(
@@ -153,14 +141,14 @@ def get_failed_requests(result_data: List[JsonDict]) -> List[Dict[str, Union[str
     :param result_data: An input representation of (Batch) Statistical API result.
     :return: Failed requests of (Batch) Statistical Results.
     """
-    failed_request = []
+    failed_requests = []
     for result in result_data:
         identifier, response = result["identifier"], result["response"]
         if not response:
-            failed_request.append({"identifier": identifier})
+            failed_requests.append({"identifier": identifier})
         else:
             failed_intervals = _get_failed_intervals(identifier, response["data"])
             if failed_intervals:
-                failed_request.append(failed_intervals)
+                failed_requests.append(failed_intervals)
 
-    return failed_request
+    return failed_requests
