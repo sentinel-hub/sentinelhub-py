@@ -6,7 +6,9 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 from .time_utils import parse_time
 from .type_utils import JsonDict
 
-_PANDAS_IMPORT_MESSAGE = "The Pandas backend is not installed by default. We suggest you install the `pandas` package."
+_PANDAS_IMPORT_MESSAGE = (
+    "To use this function you need to install the `pandas` library, which is not a dependency of sentinelhub-py."
+)
 
 
 def _extract_hist(hist_data: List[Dict[str, float]]) -> Tuple[List[float], List[float]]:
@@ -36,7 +38,7 @@ def _extract_stats(interval_output: JsonDict, exclude_stats: List[str]) -> Dict[
     :return: Statistics as a pandas.DataFrame entry.
     """
     stat_entry: Dict[str, Union[List[float], float]] = {}
-    for output_name, output_data in interval_output.items():
+    for output_name, output_data in interval_output.items():  # pylint: disable=too-many-nested-blocks
         for band_name, band_values in output_data["bands"].items():
             band_stats = band_values["stats"]
             # statistics are not valid when sample count equals to no data count
@@ -47,24 +49,16 @@ def _extract_stats(interval_output: JsonDict, exclude_stats: List[str]) -> Dict[
                 if stat_name not in exclude_stats:
                     col_name = f"{output_name}_{band_name}_{stat_name}"
                     if stat_name == "percentiles":
-                        stat_entry.update(
-                            {
-                                f"{col_name}_{percentile_name}": percentile_value
-                                for percentile_name, percentile_value in value.items()
-                            }
-                        )
+                        for percentile_name, percentile_value in value.items():
+                            stat_entry[f"{col_name}_{percentile_name}"] = percentile_value
                     else:
                         stat_entry[col_name] = value
 
-                if "histogram" in band_values:
-                    band_bins = band_values["histogram"]["bins"]
-                    hist_bins_value, hist_counts_value = _extract_hist(band_bins)
-                    stat_entry.update(
-                        {
-                            f"{output_name}_{band_name}_bins": hist_bins_value,
-                            f"{output_name}_{band_name}_counts": hist_counts_value,
-                        }
-                    )
+            if "histogram" in band_values:
+                band_bins = band_values["histogram"]["bins"]
+                hist_bins, hist_counts = _extract_hist(band_bins)
+                stat_entry[f"{output_name}_{band_name}_bins"] = hist_bins
+                stat_entry[f"{output_name}_{band_name}_counts"] = hist_counts
 
     return stat_entry
 
@@ -92,10 +86,13 @@ def _extract_response_data(response_data: List[JsonDict], exclude_stats: List[st
 def statistical_to_dataframe(result_data: List[JsonDict], exclude_stats: Optional[List[str]] = None) -> Any:
     """Transform (Batch) Statistical API results into a pandas.DataFrame
 
+    This function has a dependency of the `pandas` library, which is not a requirement of sentinelhub-py and needs to be
+    installed before using the function.
+
     :param result_data: An input representation of (Batch) Statistical API result returned from
         `AwsBatchResults.get_data()`. Each JsonDict in the list is a Statistical API response of an input geometry.
-    :param exclude_stats: Statistical API has `min`, `max`, `mean`, and `stDev` as default statistics.
-        The default statistics defined in this parameter will be removed from DataFrame.
+    :param exclude_stats: The statistic names defined in this parameter will be excluded from the output DataFrame.
+
     :return: Statistical dataframe.
     """
     try:
