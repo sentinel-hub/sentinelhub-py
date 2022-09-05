@@ -54,7 +54,7 @@ from .constants import (
 )
 from .data_collections import DataCollection
 from .data_collections_bands import Band, Unit
-from .data_utils import get_failed_requests, statistical_to_dataframe
+from .data_utils import get_failed_statistical_requests, statistical_to_dataframe
 from .download import (
     DownloadClient,
     DownloadRequest,

@@ -132,7 +132,7 @@ def _get_failed_intervals(
     return {"identifier": identifier, "failed_intervals": failed_intervals} if failed_intervals else None
 
 
-def get_failed_requests(result_data: List[JsonDict]) -> List[Dict[str, Union[str, List[Tuple[str, str]]]]]:
+def get_failed_statistical_requests(result_data: List[JsonDict]) -> List[Dict[str, Union[str, List[Tuple[str, str]]]]]:
     """Collect failed requests of (Batch) Statistical Results
 
     :param result_data: An input representation of (Batch) Statistical API result.
