@@ -6,14 +6,16 @@ from datetime import datetime
 
 import dateutil.tz
 import pytest
+from requests_mock import Mocker
 
 from sentinelhub import ByocCollection, ByocTile, DownloadFailedException, SentinelHubBYOC, SHConfig
+from sentinelhub.type_utils import JsonDict
 
 pytestmark = pytest.mark.sh_integration
 
 
 @pytest.fixture(name="config")
-def config_fixture():
+def config_fixture() -> SHConfig:
     config = SHConfig()
     for param in config.get_params():
         env_variable = param.upper()
@@ -23,12 +25,12 @@ def config_fixture():
 
 
 @pytest.fixture(name="byoc")
-def byoc_fixture(config):
+def byoc_fixture(config: SHConfig) -> SentinelHubBYOC:
     return SentinelHubBYOC(config=config)
 
 
 @pytest.fixture(name="collection")
-def collection_fixture():
+def collection_fixture() -> JsonDict:
     return {
         "id": "7453e962-0ee5-4f74-8227-89759fbe9ba9",
         "userId": "1b639ce6-eb3e-494c-9cb4-2eab3569b121",
@@ -58,7 +60,7 @@ def collection_fixture():
 
 
 @pytest.fixture(name="tile")
-def tile_fixture():
+def tile_fixture() -> JsonDict:
     return {
         "id": "8ac6e49c-996b-49cc-a0d4-ff67491b7a97",
         "path": "maps/si_(BAND).tiff",
@@ -97,26 +99,26 @@ def tile_fixture():
     }
 
 
-def test_get_collections(byoc):
+def test_get_collections(byoc: SentinelHubBYOC) -> None:
     collections = list(byoc.iter_collections())
 
     assert len(collections) >= 0
     assert all(isinstance(collection, dict) for collection in collections)
 
 
-def test_get_collection(byoc, collection):
+def test_get_collection(byoc: SentinelHubBYOC, collection: JsonDict) -> None:
     sh_collection = byoc.get_collection(collection)
 
     assert isinstance(sh_collection, dict)
     assert ByocCollection.from_dict(sh_collection) == ByocCollection.from_dict(collection)
 
 
-def test_get_non_existing_collection(byoc):
+def test_get_non_existing_collection(byoc: SentinelHubBYOC) -> None:
     with pytest.raises(DownloadFailedException):
         byoc.get_collection(collection="sinergise")
 
 
-def test_get_tiles(byoc, collection, tile):
+def test_get_tiles(byoc: SentinelHubBYOC, collection: JsonDict, tile: JsonDict) -> None:
     tiles = list(byoc.iter_tiles(collection))
 
     assert len(tiles) == 1
@@ -124,14 +126,14 @@ def test_get_tiles(byoc, collection, tile):
     assert ByocTile.from_dict(tiles[0]) == ByocTile.from_dict(tile)
 
 
-def test_get_tile(byoc, collection, tile):
+def test_get_tile(byoc: SentinelHubBYOC, collection: JsonDict, tile: JsonDict) -> None:
     sh_tile = byoc.get_tile(collection=collection, tile=tile)
 
     assert isinstance(sh_tile, dict)
     assert ByocTile.from_dict(sh_tile) == ByocTile.from_dict(tile)
 
 
-def test_byoc_tile_generating():
+def test_byoc_tile_generating() -> None:
     """Makes sure all default parameters get defined in the same way."""
     tile_from_init = ByocTile(path="x")
     tile_from_dict = ByocTile.from_dict({"path": "x"})
@@ -139,7 +141,7 @@ def test_byoc_tile_generating():
     assert tile_from_init == tile_from_dict
 
 
-def test_byoc_tile_other_data(tile):
+def test_byoc_tile_other_data(tile: JsonDict) -> None:
     """Makes sure other_data is handled correctly."""
     tile["FakeParam"] = "x"
 
@@ -151,7 +153,7 @@ def test_byoc_tile_other_data(tile):
     assert tile == tile_dict
 
 
-def test_create_collection(byoc, requests_mock):
+def test_create_collection(byoc: SentinelHubBYOC, requests_mock: Mocker) -> None:
     requests_mock.post("/oauth/token", real_http=True)
     mocked_url = "/api/v1/byoc/collections"
 
@@ -163,7 +165,7 @@ def test_create_collection(byoc, requests_mock):
     assert ByocCollection.from_dict(response) == new_collection
 
 
-def test_update_collection(byoc, collection, requests_mock):
+def test_update_collection(byoc: SentinelHubBYOC, collection: JsonDict, requests_mock: Mocker) -> None:
     requests_mock.post("/oauth/token", real_http=True)
     mocked_url = f'/api/v1/byoc/collections/{collection["id"]}'
 
@@ -176,7 +178,7 @@ def test_update_collection(byoc, collection, requests_mock):
     assert response == ""
 
 
-def test_delete_collection(byoc, collection, requests_mock):
+def test_delete_collection(byoc: SentinelHubBYOC, collection: JsonDict, requests_mock: Mocker) -> None:
     requests_mock.post("/oauth/token", real_http=True)
     mocked_url = f'/api/v1/byoc/collections/{collection["id"]}'
 
@@ -187,7 +189,7 @@ def test_delete_collection(byoc, collection, requests_mock):
     assert response == ""
 
 
-def test_create_tile(byoc, collection, requests_mock):
+def test_create_tile(byoc: SentinelHubBYOC, collection: JsonDict, requests_mock: Mocker) -> None:
     requests_mock.post("/oauth/token", real_http=True)
     mocked_url = f'/api/v1/byoc/collections/{collection["id"]}/tiles'
 
@@ -199,7 +201,7 @@ def test_create_tile(byoc, collection, requests_mock):
     assert ByocTile.from_dict(response) == tile
 
 
-def test_update_tile(byoc, collection, tile, requests_mock):
+def test_update_tile(byoc: SentinelHubBYOC, collection: JsonDict, tile: JsonDict, requests_mock: Mocker) -> None:
     requests_mock.post("/oauth/token", real_http=True)
     mocked_url = f'/api/v1/byoc/collections/{collection["id"]}/tiles/{tile["id"]}'
 
@@ -213,7 +215,7 @@ def test_update_tile(byoc, collection, tile, requests_mock):
     assert response == ""
 
 
-def test_delete_tile(byoc, collection, tile, requests_mock):
+def test_delete_tile(byoc: SentinelHubBYOC, collection: JsonDict, tile: JsonDict, requests_mock: Mocker) -> None:
     requests_mock.post("/oauth/token", real_http=True)
     mocked_url = f'/api/v1/byoc/collections/{collection["id"]}/tiles/{tile["id"]}'
 
@@ -224,7 +226,7 @@ def test_delete_tile(byoc, collection, tile, requests_mock):
     assert response == ""
 
 
-def test_reingest_tile(byoc, collection, tile, requests_mock):
+def test_reingest_tile(byoc: SentinelHubBYOC, collection: JsonDict, tile: JsonDict, requests_mock: Mocker) -> None:
     requests_mock.post("/oauth/token", real_http=True)
     mocked_url = f'/api/v1/byoc/collections/{collection["id"]}/tiles/{tile["id"]}/reingest'
 
