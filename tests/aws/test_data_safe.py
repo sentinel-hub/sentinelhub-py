@@ -1,4 +1,5 @@
 import os
+from typing import Any, Dict
 
 import pytest
 
@@ -7,7 +8,7 @@ from sentinelhub.aws import AwsConstants, AwsProductRequest, AwsTileRequest
 
 
 @pytest.fixture(name="safe_folder", scope="session")
-def safe_folder_fixture(input_folder):
+def safe_folder_fixture(input_folder: str) -> str:
     """Provides a folder each file contains a definition of a .SAFE structure on how it will be reconstructed from
     files from AWS S3 buckets."""
     return os.path.join(input_folder, "aws_safe")
@@ -70,7 +71,7 @@ TEST_CASES = [
 
 @pytest.mark.aws_integration
 @pytest.mark.parametrize("test_name, product_id, params", TEST_CASES)
-def test_safe_struct(test_name, product_id, params, safe_folder):
+def test_safe_struct(test_name: str, product_id: str, params: Dict[str, Any], safe_folder: str) -> None:
     params = dict(
         safe_format=True,
         **params,

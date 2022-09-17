@@ -8,7 +8,7 @@ from sentinelhub.aws import AwsProductRequest, AwsTileRequest
 pytestmark = pytest.mark.aws_integration
 
 
-def test_aws_tile(output_folder):
+def test_aws_tile(output_folder: str) -> None:
     request = AwsTileRequest(
         data_folder=output_folder,
         bands="B01, B05",
@@ -24,7 +24,7 @@ def test_aws_tile(output_folder):
     assert np.mean(data[0]) == approx(1357.99, abs=1e-1)
 
 
-def test_aws_product(output_folder):
+def test_aws_product(output_folder: str) -> None:
     request = AwsProductRequest(
         data_folder=output_folder,
         bands="B10",
@@ -37,7 +37,7 @@ def test_aws_product(output_folder):
     assert len(data) == 51
 
 
-def test_partial_aws_product(output_folder):
+def test_partial_aws_product(output_folder: str) -> None:
     request = AwsProductRequest(
         data_folder=output_folder,
         bands="B12",
@@ -55,7 +55,7 @@ def test_partial_aws_product(output_folder):
     assert len(data) == 1
 
 
-def test_l2a_product(output_folder):
+def test_l2a_product(output_folder: str) -> None:
     request = AwsProductRequest(
         data_folder=output_folder,
         metafiles="metadata,tileInfo,productInfo, datastrip/*/metadata",
