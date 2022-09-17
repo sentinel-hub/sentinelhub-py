@@ -26,12 +26,12 @@ def pytest_configure(config):
 
 
 @pytest.fixture(name="config")
-def config_fixture():
+def config_fixture() -> SHConfig:
     return SHConfig()
 
 
 @pytest.fixture(name="input_folder", scope="session")
-def input_folder_fixture():
+def input_folder_fixture() -> str:
     return INPUT_FOLDER
 
 
@@ -45,7 +45,7 @@ def output_folder_fixture():
 
 
 @pytest.fixture(name="logger")
-def logger_fixture():
+def logger_fixture() -> logging.Logger:
     logging.basicConfig(
         level=logging.INFO, format="%(asctime)-15s %(module)s:%(lineno)d [%(levelname)s] %(funcName)s  %(message)s"
     )
@@ -53,7 +53,7 @@ def logger_fixture():
 
 
 @pytest.fixture(name="session", scope="session")
-def session_fixture():
+def session_fixture() -> SentinelHubSession:
     return SentinelHubSession()
 
 

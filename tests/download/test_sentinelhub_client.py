@@ -1,3 +1,5 @@
+from typing import Type, Union
+
 import pytest
 from requests_mock import Mocker
 
@@ -14,7 +16,7 @@ FAST_SH_ENDPOINT = "https://services.sentinel-hub.com/api/v1/catalog/collections
 
 
 @pytest.mark.sh_integration
-def test_client_with_fixed_session(session):
+def test_client_with_fixed_session(session: SentinelHubSession) -> None:
     blank_config = SHConfig(use_defaults=True)
     client = SentinelHubDownloadClient(session=session, config=blank_config)
 
@@ -25,7 +27,7 @@ def test_client_with_fixed_session(session):
     assert info
 
     with pytest.raises(ValueError):
-        SentinelHubDownloadClient(session=blank_config, config=blank_config)
+        SentinelHubDownloadClient(session=blank_config, config=blank_config)  # type: ignore[arg-type]
 
 
 @pytest.mark.sh_integration
@@ -51,7 +53,9 @@ def test_client_headers(request_type: RequestType, session: SentinelHubSession, 
 
 @pytest.mark.sh_integration
 @pytest.mark.parametrize("client_object", [SentinelHubDownloadClient, SentinelHubDownloadClient()])
-def test_session_caching_and_clearing(client_object, session):
+def test_session_caching_and_clearing(
+    client_object: Union[SentinelHubDownloadClient, Type[SentinelHubDownloadClient]], session: SentinelHubSession
+) -> None:
     client_object.clear_cache()
     assert SentinelHubDownloadClient._CACHED_SESSIONS == {}
 
@@ -64,7 +68,7 @@ def test_session_caching_and_clearing(client_object, session):
 
 
 @pytest.mark.sh_integration
-def test_double_session_caching(session):
+def test_double_session_caching(session: SentinelHubSession) -> None:
     another_session = SentinelHubSession()
 
     client = SentinelHubDownloadClient()
@@ -82,7 +86,7 @@ def test_double_session_caching(session):
 
 
 @pytest.mark.sh_integration
-def test_session_caching_on_subclass(session):
+def test_session_caching_on_subclass(session: SentinelHubSession) -> None:
     statistical_client = SentinelHubStatisticalDownloadClient()
     statistical_client.cache_session(session)
 
@@ -95,7 +99,7 @@ def test_session_caching_on_subclass(session):
 
 
 @pytest.mark.sh_integration
-def test_universal_session_caching(session):
+def test_universal_session_caching(session: SentinelHubSession) -> None:
     SentinelHubDownloadClient.clear_cache()
 
     config_without_credentials = SHConfig(use_defaults=True)
