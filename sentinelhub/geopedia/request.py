@@ -3,7 +3,7 @@ Data request interface for Geopedia services
 """
 
 from abc import abstractmethod
-from typing import Any, Optional
+from typing import Any, Optional, Union
 
 from ..base import DataRequest
 from ..constants import CRS, MimeType, ServiceType
@@ -17,7 +17,7 @@ class GeopediaRequest(DataRequest):
 
     def __init__(
         self,
-        layer: str,
+        layer: Union[str, int],
         service_type: ServiceType,
         *,
         bbox: BBox,
@@ -63,7 +63,7 @@ class GeopediaWmsRequest(GeopediaRequest):
 
     def __init__(
         self,
-        layer: str,
+        layer: Union[str, int],
         theme: str,
         bbox: BBox,
         *,
