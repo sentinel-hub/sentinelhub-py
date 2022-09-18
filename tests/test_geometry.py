@@ -1,5 +1,5 @@
 import copy
-from typing import Tuple, TypeVar
+from typing import Any, List, Tuple, TypeVar, Union
 
 import pytest
 import shapely.geometry
@@ -28,12 +28,12 @@ def _round_point_coords(x: float, y: float, decimals: int = 1) -> Tuple[float, f
     return round(x, decimals), round(y, decimals)
 
 
-def test_bbox_no_crs():
+def test_bbox_no_crs() -> None:
     with pytest.raises(TypeError):
-        BBox("46,13,47,20")
+        BBox("46,13,47,20")  # type: ignore[call-arg]
 
 
-def test_bbox_from_string():
+def test_bbox_from_string() -> None:
     bbox_str = "46.07, 13.23, 46.24, 13.57"
     bbox = BBox(bbox_str, CRS.WGS84)
     assert bbox.lower_left == (46.07, 13.23)
@@ -41,7 +41,7 @@ def test_bbox_from_string():
     assert bbox.crs == CRS.WGS84
 
 
-def test_bbox_from_bad_string():
+def test_bbox_from_bad_string() -> None:
     with pytest.raises(ValueError):
         # Too few coordinates
         BBox("46.07, 13.23, 46.24", CRS.WGS84)
@@ -52,7 +52,7 @@ def test_bbox_from_bad_string():
 
 
 @pytest.mark.parametrize(
-    "bbox_lst",
+    "bbox_coords",
     [
         [46.07, 13.23, 46.24, 13.57],
         [46.24, 13.23, 46.07, 13.57],
@@ -60,8 +60,8 @@ def test_bbox_from_bad_string():
         [46.24, 13.57, 46.07, 13.23],
     ],
 )
-def test_bbox_from_flat_list(bbox_lst):
-    bbox = BBox(bbox_lst, CRS.WGS84)
+def test_bbox_from_flat_list(bbox_coords: List[float]) -> None:
+    bbox = BBox(bbox_coords, CRS.WGS84)
     assert bbox.lower_left == (46.07, 13.23)
     assert bbox.upper_right == (46.24, 13.57)
     assert bbox.crs == CRS.WGS84
@@ -78,14 +78,14 @@ def test_bbox_from_flat_list(bbox_lst):
         BBox({"min_x": 46.07, "min_y": 13.23, "max_x": 46.24, "max_y": 13.57}, CRS.WGS84),
     ],
 )
-def test_bbox_different_input(bbox_input):
+def test_bbox_different_input(bbox_input: Any) -> None:
     bbox = BBox(bbox_input, CRS.WGS84)
     assert bbox.upper_right == (46.24, 13.57)
     assert bbox.lower_left == (46.07, 13.23)
     assert bbox.crs == CRS.WGS84
 
 
-def test_bbox_from_bad_dict():
+def test_bbox_from_bad_dict() -> None:
     bbox_dict = {"x1": 46.07, "y1": 13.23, "x2": 46.24, "y2": 13.57}
     with pytest.raises(KeyError):
         BBox(bbox_dict, CRS.WGS84)
@@ -99,11 +99,11 @@ def test_bbox_from_bad_dict():
         shapely.geometry.Polygon([(1, 0), (1, 1), (0, 0)]),
     ],
 )
-def test_bbox_from_shapely(bbox_input):
+def test_bbox_from_shapely(bbox_input: Any) -> None:
     assert BBox(bbox_input, CRS.WGS84) == BBox((0, 0, 1, 1), CRS.WGS84)
 
 
-def test_bbox_to_str():
+def test_bbox_to_str() -> None:
     x1, y1, x2, y2 = 45.0, 12.0, 47.0, 14.0
     crs = CRS.WGS84
     expect_str = f"{x1},{y1},{x2},{y2}"
@@ -111,21 +111,21 @@ def test_bbox_to_str():
     assert str(bbox) == expect_str
 
 
-def test_bbox_to_repr():
+def test_bbox_to_repr() -> None:
     x1, y1, x2, y2 = 45.0, 12.0, 47.0, 14.0
     bbox = BBox(((x1, y1), (x2, y2)), crs=CRS("4326"))
     expect_repr = f"BBox((({x1}, {y1}), ({x2}, {y2})), crs=CRS('4326'))"
     assert repr(bbox) == expect_repr
 
 
-def test_bbox_iter():
+def test_bbox_iter() -> None:
     bbox_lst = [46.07, 13.23, 46.24, 13.57]
     bbox = BBox(bbox_lst, CRS.WGS84)
     list_from_bbox_iter = list(bbox)
     assert list_from_bbox_iter == bbox_lst
 
 
-def test_bbox_eq():
+def test_bbox_eq() -> None:
     bbox1 = BBox([46.07, 13.23, 46.24, 13.57], CRS.WGS84)
     bbox2 = BBox(((46.24, 13.57), (46.07, 13.23)), 4326)
     bbox3 = BBox([46.07, 13.23, 46.24, 13.57], CRS.POP_WEB)
@@ -136,7 +136,7 @@ def test_bbox_eq():
     assert bbox1 is not None
 
 
-def test_transform():
+def test_transform() -> None:
     bbox1 = BBox([46.07, 13.23, 46.24, 13.57], CRS.WGS84)
     bbox2 = bbox1.transform(CRS.POP_WEB).transform(CRS.WGS84)
 
@@ -145,7 +145,7 @@ def test_transform():
     assert bbox1.crs == bbox2.crs
 
 
-def test_transform_bounds():
+def test_transform_bounds() -> None:
     bbox1 = BBox([46.07, 13.23, 46.24, 13.57], CRS.WGS84)
     utm_crs = get_utm_crs(*bbox1.middle, source_crs=CRS.WGS84)
     bbox2 = bbox1.transform_bounds(utm_crs).transform_bounds(CRS.WGS84)
@@ -154,13 +154,13 @@ def test_transform_bounds():
     assert bbox2.geometry.difference(bbox1.geometry).area > 1e-4
 
 
-def test_geometry():
+def test_geometry() -> None:
     bbox = BBox([46.07, 13.23, 46.24, 13.57], CRS.WGS84)
     assert isinstance(bbox.get_geojson(), dict)
     assert isinstance(bbox.geometry, shapely.geometry.Polygon)
 
 
-def test_buffer():
+def test_buffer() -> None:
     bbox = BBox([46.07, 13.23, 46.24, 13.57], CRS.WGS84)
 
     assert bbox != bbox.buffer(42)
@@ -180,25 +180,25 @@ def test_buffer():
 
 
 @pytest.mark.parametrize("geometry", GEOMETRY_LIST)
-def test_repr(geometry):
+def test_repr(geometry: GeoType) -> None:
     assert isinstance(repr(geometry), str)
 
 
 @pytest.mark.parametrize("geometry", GEOMETRY_LIST)
-def test_eq(geometry):
+def test_eq(geometry: GeoType) -> None:
     assert geometry == copy.deepcopy(geometry), "Deep copied object should be equal to the original"
     assert geometry is not None
 
 
 @pytest.mark.parametrize("geometry", GEOMETRY_LIST)
-def test_reverse(geometry):
+def test_reverse(geometry: GeoType) -> None:
     reversed_geometry = geometry.reverse()
     assert geometry != reversed_geometry
     assert geometry == reversed_geometry.reverse(), "Twice reversed geometry should equal the original"
 
 
 @pytest.mark.parametrize("geometry", GEOMETRY_LIST)
-def test_transform_geometry(geometry):
+def test_transform_geometry(geometry: GeoType) -> None:
     new_geometry = geometry.transform(CRS.POP_WEB)
     assert geometry != new_geometry, "Transformed geometry should be different"
 
@@ -208,7 +208,7 @@ def test_transform_geometry(geometry):
 
 
 @pytest.mark.parametrize("geometry", [GEOMETRY1, GEOMETRY2])
-def test_geojson(geometry):
+def test_geojson(geometry: Geometry) -> None:
     assert geometry == Geometry(
         geometry.geojson, geometry.crs
     ), "Transforming geometry to geojson and back should preserve it"
@@ -216,7 +216,7 @@ def test_geojson(geometry):
     assert geometry == Geometry.from_geojson(geometry.get_geojson())
 
 
-def test_geojson_parameter_with_crs():
+def test_geojson_parameter_with_crs() -> None:
     expected_without_crs = {
         "type": "Polygon",
         "coordinates": (((0.0, 0.0), (0.0, 1.0), (1.0, 1.0), (1.0, 0.0), (0.0, 0.0)),),
@@ -229,7 +229,7 @@ def test_geojson_parameter_with_crs():
     assert GEOMETRY1.get_geojson(with_crs=True) == expected_with_crs
 
 
-def test_wkt():
+def test_wkt() -> None:
     for geometry in [GEOMETRY1, GEOMETRY2]:
         assert geometry == Geometry(
             geometry.wkt, geometry.crs
@@ -239,7 +239,7 @@ def test_wkt():
 
 
 @pytest.mark.parametrize("geometry", [GEOMETRY1, GEOMETRY2, BBOX_COLLECTION])
-def test_bbox(geometry):
+def test_bbox(geometry: Union[Geometry, BBoxCollection]) -> None:
     assert geometry.bbox == BBox(geometry.geometry, geometry.crs), "Failed bbox property"
 
 
