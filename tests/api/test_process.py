@@ -1,6 +1,7 @@
 """ Tests for the Process API requests
 """
 import json
+from typing import Any, Dict
 
 import pytest
 from oauthlib.oauth2.rfc6749.errors import CustomOAuth2Error
@@ -26,7 +27,7 @@ from sentinelhub.testing_utils import test_numpy_data
 pytestmark = pytest.mark.sh_integration
 
 
-def test_single_jpg():
+def test_single_jpg() -> None:
     """Test downloading three bands of L1C"""
     evalscript = """
         //VERSION=3
@@ -69,7 +70,7 @@ def test_single_jpg():
     )
 
 
-def test_other_args(config, output_folder):
+def test_other_args(config: SHConfig, output_folder: str) -> None:
     """Test downloading three bands of L1C"""
     evalscript = """
         //VERSION=3
@@ -113,7 +114,7 @@ def test_other_args(config, output_folder):
     )
 
 
-def test_preview_mode():
+def test_preview_mode() -> None:
     """Test downloading three bands of L1C"""
     evalscript = """
         //VERSION=3
@@ -158,7 +159,7 @@ def test_preview_mode():
     )
 
 
-def test_resolution_parameter():
+def test_resolution_parameter() -> None:
     """Test downloading three bands of L1C"""
     evalscript = """
         //VERSION=3
@@ -202,7 +203,7 @@ def test_resolution_parameter():
     )
 
 
-def test_multipart_tar():
+def test_multipart_tar() -> None:
     """Test downloading multiple outputs, packed into a TAR file"""
     evalscript = """
         //VERSION=3
@@ -263,7 +264,7 @@ def test_multipart_tar():
     assert json_data["norm_factor"] == 0.0001
 
 
-def test_multipart_geometry():
+def test_multipart_geometry() -> None:
     evalscript = """
         //VERSION=3
 
@@ -405,7 +406,7 @@ def test_multipart_geometry():
     assert json_data["rgb_ratios"] == approx(expected_ratios)
 
 
-def test_bad_credentials():
+def test_bad_credentials() -> None:
     evalscript = """
                 //VERSION=3
 
@@ -421,7 +422,7 @@ def test_bad_credentials():
                     return [2.5 * sample.B04, 2.5 * sample.B03, 2.5 * sample.B02];
                 }
             """
-    request_params = dict(
+    request_params: Dict[str, Any] = dict(
         evalscript=evalscript,
         input_data=[
             SentinelHubRequest.input_data(
@@ -449,7 +450,7 @@ def test_bad_credentials():
         request.get_data()
 
 
-def test_data_fusion(config):
+def test_data_fusion(config: SHConfig) -> None:
     evalscript = """
     //VERSION=3
     function setup() {
@@ -512,12 +513,12 @@ def test_data_fusion(config):
     assert request.download_list[0].url == f"{ServiceUrl.MAIN}/api/v1/process"
 
 
-def test_conflicting_service_url_restrictions(config):
+def test_conflicting_service_url_restrictions(config: SHConfig) -> None:
     """This data fusion attempt is expected to raise an error because config URL is not one of the URLs of data
     collections.
     """
     config.sh_base_url = ServiceUrl.MAIN
-    request_params = dict(
+    request_params: Dict[str, Any] = dict(
         evalscript="",
         input_data=[
             SentinelHubRequest.input_data(data_collection=DataCollection.LANDSAT_OT_L2),
@@ -533,7 +534,7 @@ def test_conflicting_service_url_restrictions(config):
         SentinelHubRequest(**request_params)
 
 
-def test_bbox_geometry():
+def test_bbox_geometry() -> None:
     """Test intersection between bbox and geometry"""
     evalscript = """
         //VERSION=3
@@ -582,7 +583,7 @@ def test_bbox_geometry():
     )
 
 
-def test_basic_functionalities():
+def test_basic_functionalities() -> None:
     normal_dict = {"a": 10, "b": {"c": 20, 30: "d"}}
     service_url = "xyz"
     input_data_dict = InputDataDict(normal_dict, service_url=service_url)

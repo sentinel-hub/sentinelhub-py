@@ -5,20 +5,30 @@ import datetime as dt
 import itertools as it
 
 import pytest
+from requests_mock import Mocker
 
-from sentinelhub import CRS, BatchRequest, BBox, DataCollection, MimeType, SentinelHubBatch, SentinelHubRequest
+from sentinelhub import (
+    CRS,
+    BatchRequest,
+    BBox,
+    DataCollection,
+    MimeType,
+    SentinelHubBatch,
+    SentinelHubRequest,
+    SHConfig,
+)
 from sentinelhub.constants import ServiceUrl
 
 pytestmark = pytest.mark.sh_integration
 
 
 @pytest.fixture(name="batch_client")
-def batch_client_fixture(config):
+def batch_client_fixture(config: SHConfig) -> SentinelHubBatch:
     return SentinelHubBatch(config=config)
 
 
 @pytest.mark.parametrize("base_url", [ServiceUrl.MAIN, ServiceUrl.USWEST])
-def test_iter_tiling_grids(base_url, config):
+def test_iter_tiling_grids(base_url: str, config: SHConfig) -> None:
     config.sh_base_url = base_url
     batch_client = SentinelHubBatch(config=config)
     tiling_grids = list(batch_client.iter_tiling_grids())
@@ -27,13 +37,13 @@ def test_iter_tiling_grids(base_url, config):
     assert all(isinstance(item, dict) for item in tiling_grids)
 
 
-def test_single_tiling_grid(batch_client):
+def test_single_tiling_grid(batch_client: SentinelHubBatch) -> None:
     tiling_grid = batch_client.get_tiling_grid(0)
 
     assert isinstance(tiling_grid, dict)
 
 
-def test_create_and_run_batch_request(batch_client, requests_mock):
+def test_create_and_run_batch_request(batch_client: SentinelHubBatch, requests_mock: Mocker) -> None:
     """A test that mocks creation and execution of a new batch request"""
     evalscript = "some evalscript"
     time_interval = dt.date(year=2020, month=6, day=1), dt.date(year=2020, month=6, day=10)
@@ -107,7 +117,7 @@ def test_create_and_run_batch_request(batch_client, requests_mock):
         assert requests_mock.request_history[index - len(full_endpoints)].url.endswith(full_endpoint)
 
 
-def test_iter_requests(batch_client):
+def test_iter_requests(batch_client: SentinelHubBatch) -> None:
     batch_requests = list(it.islice(batch_client.iter_requests(), 10))
     assert all(isinstance(request, BatchRequest) for request in batch_requests)
 

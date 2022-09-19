@@ -2,6 +2,7 @@
 Tests for sh_utils.py module
 """
 import math
+from typing import List
 
 import pytest
 
@@ -12,7 +13,7 @@ from sentinelhub.base import FeatureIterator
 class DummyIterator(FeatureIterator):
     """As features it generates integer values"""
 
-    def __init__(self, total, limit):
+    def __init__(self, total: int, limit: int):
         """
         :param total: Number of features in total
         :param limit: Max number of features provided by each fetch
@@ -23,7 +24,7 @@ class DummyIterator(FeatureIterator):
         self.feature_fetch_count = 0
         super().__init__(client=DownloadClient(), url="")
 
-    def _fetch_features(self):
+    def _fetch_features(self) -> List[int]:
         start_interval = len(self.features)
         end_interval = min(start_interval + self.limit, self.total)
 
@@ -38,7 +39,7 @@ class DummyIterator(FeatureIterator):
 
 
 @pytest.mark.parametrize("total,limit", [(100, 1000), (100, 10), (100, 7), (100, 1)])
-def test_feature_iterator(total, limit):
+def test_feature_iterator(total: int, limit: int) -> None:
     iterator = DummyIterator(total, limit)
 
     for _ in range(2):

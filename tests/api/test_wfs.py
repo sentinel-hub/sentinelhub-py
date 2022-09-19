@@ -2,6 +2,7 @@
 Test for Sentinel Hub WFS
 """
 import datetime
+from typing import Any, Dict
 
 import pytest
 from shapely.geometry import MultiPolygon
@@ -29,7 +30,7 @@ pytestmark = pytest.mark.sh_integration
         ),
     ],
 )
-def test_wfs(args, kwargs, expected_len):
+def test_wfs(args: list, kwargs: Dict[str, Any], expected_len: int) -> None:
     iterator = WebFeatureService(*args, **kwargs)
     features = list(iterator)
     dates = iterator.get_dates()

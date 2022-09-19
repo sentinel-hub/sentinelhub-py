@@ -37,7 +37,7 @@ class FisTestCase:
     result_length: int
     save_data: bool = False
 
-    def collect_data(self, output_folder):
+    def collect_data(self, output_folder: str) -> list:
         request = FisRequest(**self.kwargs, data_folder=output_folder)
         if self.save_data:
             request.save_data(redownload=True)
@@ -110,7 +110,7 @@ TEST_CASES = [
 
 @pytest.mark.sh_integration
 @pytest.mark.parametrize("test_case", TEST_CASES)
-def test_fis(output_folder, test_case):
+def test_fis(output_folder: str, test_case: FisTestCase) -> None:
     with pytest.warns(SHDeprecationWarning):
         data = test_case.collect_data(output_folder)
     assert len(data) == test_case.result_length

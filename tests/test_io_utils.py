@@ -1,5 +1,6 @@
 import os
 from platform import python_implementation
+from typing import Tuple
 
 import numpy as np
 import pytest
@@ -20,7 +21,7 @@ from sentinelhub.exceptions import SHUserWarning
         ("img-16bit.jp2", 0.3041897, (1830, 1830)),
     ],
 )
-def test_img_read(input_folder, output_folder, filename, mean, shape):
+def test_img_read(input_folder: str, output_folder: str, filename: str, mean: float, shape: Tuple[int, ...]) -> None:
     is_jpeg = filename.endswith("jpg")
     img = read_data(os.path.join(input_folder, filename))
 
@@ -44,7 +45,7 @@ def test_img_read(input_folder, output_folder, filename, mean, shape):
         assert np.array_equal(img, new_img), "Original and saved image are not the same"
 
 
-def test_read_tar_with_folder(input_folder):
+def test_read_tar_with_folder(input_folder: str) -> None:
     path = os.path.join(input_folder, "tar-folder.tar")
     data = read_data(path)
 

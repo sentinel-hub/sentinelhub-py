@@ -1,6 +1,7 @@
 """
 Tests for constants.py module
 """
+from typing import Any, Type
 
 import numpy as np
 import pyproj
@@ -22,7 +23,7 @@ from sentinelhub.exceptions import SHUserWarning
         (13, -46, "32733"),
     ],
 )
-def test_utm(lng, lat, epsg):
+def test_utm(lng: float, lat: float, epsg: str) -> None:
     crs = CRS.get_utm_from_wgs84(lng, lat)
     assert epsg == crs.value
 
@@ -43,13 +44,13 @@ def test_utm(lng, lat, epsg):
         (pyproj.CRS(3857), CRS.POP_WEB),
     ],
 )
-def test_crs_parsing(parse_value, expected):
+def test_crs_parsing(parse_value: Any, expected: CRS) -> None:
     parsed_result = CRS(parse_value)
     assert parsed_result == expected
 
 
 @pytest.mark.parametrize("parse_value, expected, warning", [(pyproj.CRS(4326), CRS.WGS84, SHUserWarning)])
-def test_crs_parsing_warn(parse_value, expected, warning):
+def test_crs_parsing_warn(parse_value: Any, expected: CRS, warning: Type[Warning]) -> None:
     with pytest.warns(warning):
         parsed_result = CRS(parse_value)
         assert parsed_result == expected
@@ -64,7 +65,7 @@ def test_crs_parsing_warn(parse_value, expected, warning):
         (CRS.UTM_33S, "EPSG:32733"),
     ],
 )
-def test_ogc_string(crs, epsg):
+def test_ogc_string(crs: CRS, epsg: str) -> None:
     ogc_str = CRS.ogc_string(crs)
     assert epsg == ogc_str
 
@@ -82,12 +83,12 @@ def test_ogc_string(crs, epsg):
         (CRS("32733"), "CRS('32733')"),
     ],
 )
-def test_crs_repr(crs, crs_repr):
+def test_crs_repr(crs: CRS, crs_repr: str) -> None:
     assert crs_repr == repr(crs)
 
 
 @pytest.mark.parametrize("crs", CRS)
-def test_crs_has_value(crs):
+def test_crs_has_value(crs: CRS) -> None:
     assert CRS.has_value(crs.value), f"Expected support for CRS {crs.value}"
 
 
@@ -95,7 +96,7 @@ def test_crs_has_value(crs):
     "value, fails",
     [("string", True), (-1, True), (999, True), (None, True), (3035, False), ("EPSG:3035", False), (10000, False)],
 )
-def test_custom_crs(value, fails):
+def test_custom_crs(value: Any, fails: bool) -> None:
     if fails:
         with pytest.raises(ValueError):
             CRS(value)
@@ -107,7 +108,7 @@ def test_custom_crs(value, fails):
 
 
 @pytest.mark.parametrize("crs", [CRS.WGS84, CRS.POP_WEB, CRS.UTM_38N])
-def test_pyproj_methods(crs):
+def test_pyproj_methods(crs: CRS) -> None:
     assert isinstance(crs.projection(), pyproj.Proj)
     assert isinstance(crs.pyproj_crs(), pyproj.CRS)
 
@@ -123,19 +124,19 @@ def test_pyproj_methods(crs):
         *[(mime_type.extension, mime_type) for mime_type in MimeType],
     ],
 )
-def test_mime_type_from_string(ext, mime_type):
+def test_mime_type_from_string(ext: str, mime_type: MimeType) -> None:
     assert MimeType.from_string(ext) == mime_type
 
 
 @pytest.mark.parametrize("faulty_arg", ["unknown ext", "tiff;depth=32f"])
-def test_mimetype_no_value_fail(faulty_arg):
+def test_mimetype_no_value_fail(faulty_arg: str) -> None:
     assert not MimeType.has_value(faulty_arg), "This value is not supposed to be type of the Enum"
     with pytest.raises(ValueError):
         MimeType.from_string(faulty_arg)
 
 
 @pytest.mark.parametrize("ext", ["tif", "tiff", "jpg", "jpeg", "png", "jp2"])
-def test_is_image_format(ext):
+def test_is_image_format(ext: str) -> None:
     mime_type = MimeType.from_string(ext)
     assert MimeType.is_image_format(mime_type)
 
@@ -155,7 +156,7 @@ def test_is_image_format(ext):
         (MimeType.TAR, "application/x-tar"),
     ],
 )
-def test_get_string(mime_type, expected_string):
+def test_get_string(mime_type: MimeType, expected_string: str) -> None:
     assert MimeType.get_string(mime_type) == expected_string
     assert MimeType.from_string(expected_string) == mime_type, "Result of `get_string` not accepted by `from_string`"
 
@@ -164,11 +165,11 @@ def test_get_string(mime_type, expected_string):
     "mime_type, path, expected_answer",
     [(MimeType.NPY, "some/path/file.npy", True), (MimeType.GPKG, "file.gpkg.gz", False)],
 )
-def test_matches_extension(mime_type, path, expected_answer):
+def test_matches_extension(mime_type: MimeType, path: str, expected_answer: bool) -> None:
     assert mime_type.matches_extension(path) == expected_answer
 
 
-def test_get_expected_max_value():
+def test_get_expected_max_value() -> None:
     assert MimeType.TIFF.get_expected_max_value() == 65535
     assert MimeType.PNG.get_expected_max_value() == 255
 
@@ -176,7 +177,7 @@ def test_get_expected_max_value():
         MimeType.TAR.get_expected_max_value()
 
 
-def test_request_type():
+def test_request_type() -> None:
     with pytest.raises(ValueError):
         RequestType("post")
 
