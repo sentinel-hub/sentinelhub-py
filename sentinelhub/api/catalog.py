@@ -2,7 +2,8 @@
 A client interface for `Sentinel Hub Catalog API <https://docs.sentinel-hub.com/api/latest/api/catalog>`__.
 """
 import datetime as dt
-from typing import Any, Iterable, List, Optional, Union
+import sys
+from typing import Any, Dict, Iterable, List, Optional, Union
 
 from ..base import FeatureIterator
 from ..data_collections import DataCollection, OrbitDirection
@@ -11,6 +12,11 @@ from ..time_utils import parse_time, parse_time_interval, serialize_time
 from ..type_utils import JsonDict, RawTimeIntervalType, RawTimeType
 from .base import SentinelHubService
 from .utils import remove_undefined
+
+if sys.version_info < (3, 8):
+    from typing_extensions import Literal
+else:
+    from typing import Literal  # pylint: disable=ungrouped-imports
 
 
 class SentinelHubCatalog(SentinelHubService):
@@ -23,7 +29,7 @@ class SentinelHubCatalog(SentinelHubService):
     @staticmethod
     def _get_service_url(base_url: str) -> str:
         """Provides URL to Catalog API"""
-        return f"{base_url}/api/v1/catalog"
+        return f"{base_url}/api/v1/catalog/1.0.0"
 
     def get_info(self) -> JsonDict:
         """Provides the main information that define Sentinel Hub Catalog API
@@ -86,7 +92,9 @@ class SentinelHubCatalog(SentinelHubService):
         bbox: Optional[BBox] = None,
         geometry: Optional[Geometry] = None,
         ids: Optional[List[str]] = None,
-        query: Optional[JsonDict] = None,
+        filter: Union[None, str, JsonDict] = None,  # pylint: disable=redefined-builtin
+        filter_lang: Literal["cql2-text", "cql2-json"] = "cql2-text",
+        filter_crs: Optional[str] = None,
         fields: Optional[JsonDict] = None,
         distinct: Optional[str] = None,
         limit: int = 100,
@@ -106,13 +114,23 @@ class SentinelHubCatalog(SentinelHubService):
         :param geometry: A search geometry, it will always reprojected to WGS 84 before being sent to the service.
             This parameter is defined with parameter `intersects` at the service.
         :param ids: A list of feature ids as defined in service documentation
-        :param query: A STAC query described in Catalog API documentation
+        :param filter: A STAC filter in CQL2, described in Catalog API documentation
+        :param filter_lang: How to parse CQL2 of the `filter` input, described in Catalog API documentation
+        :param filter_crs: The CRS used by spatial literals in the 'filter' value, provided in URI form. Example input
+            is `"http://www.opengis.net/def/crs/OGC/1.3/CRS84"`
         :param fields: A dictionary of fields to include or exclude described in Catalog API documentation
         :param distinct: A special query attribute described in Catalog API documentation
         :param limit: A number of results to return per each request. At the end iterator will always provide all
             results the difference is only in how many requests it will have to make in the background.
         :param kwargs: Any other parameters that will be passed directly to the service
         """
+
+        if "query" in kwargs:
+            raise ValueError(
+                "The parameter `query` has been deprecated and replaced by `filter` in the Catalog 1.0.0 update. The"
+                " queries/filters are now done in the CQL2 language."
+            )
+
         url = f"{self.service_url}/search"
 
         collection_id = self._parse_collection_id(collection)
@@ -123,10 +141,6 @@ class SentinelHubCatalog(SentinelHubService):
         if geometry and geometry.crs is not CRS.WGS84:
             geometry = geometry.transform(CRS.WGS84)
 
-        _query = self._get_data_collection_filters(collection)
-        if query:
-            _query.update(query)
-
         payload = remove_undefined(
             {
                 "collections": [collection_id],
@@ -134,7 +148,9 @@ class SentinelHubCatalog(SentinelHubService):
                 "bbox": list(bbox) if bbox else None,
                 "intersects": geometry.get_geojson(with_crs=False) if geometry else None,
                 "ids": ids,
-                "query": _query,
+                "filter": self._prepare_filters(filter, collection, filter_lang),
+                "filter-lang": filter_lang,
+                "filter-crs": filter_crs,
                 "fields": fields,
                 "distinct": distinct,
                 "limit": limit,
@@ -146,35 +162,68 @@ class SentinelHubCatalog(SentinelHubService):
 
     @staticmethod
     def _parse_collection_id(collection: Union[str, DataCollection]) -> str:
-        """Extracts catalog collection id from an object defining a collection"""
+        """Extracts catalog collection id from an object defining a collection."""
         if isinstance(collection, DataCollection):
             return collection.catalog_id
         if isinstance(collection, str):
             return collection
         raise ValueError(f"Expected either a DataCollection object or a collection id string, got {collection}")
 
+    def _prepare_filters(
+        self,
+        filter_query: Union[None, str, JsonDict],
+        collection: Union[DataCollection, str],
+        filter_lang: Literal["cql2-text", "cql2-json"],
+    ) -> Union[None, str, JsonDict]:
+        """Asserts that the input coincides with the selected filter language and adds any collection filters."""
+        input_missmatch_msg = f"Filter query is {filter_query} but the filter language is set to {filter_lang}."
+
+        collection_filters = self._get_data_collection_filters(collection)
+
+        if filter_lang == "cql2-text":
+            if not (filter_query is None or isinstance(filter_query, str)):
+                raise ValueError(input_missmatch_msg)
+
+            text_queries = [f"{field}='{value}'" for field, value in collection_filters.items()]
+            if filter_query:
+                text_queries.append(filter_query)
+            return " AND ".join(text_queries) if text_queries else None
+
+        # filter_lang == cql2-json
+        if not (filter_query is None or isinstance(filter_query, dict)):
+            raise ValueError(input_missmatch_msg)
+
+        json_queries = [
+            {"op": "=", "args": [{"property": field}, value]} for field, value in collection_filters.items()
+        ]
+        if filter_query:
+            json_queries.append(filter_query)
+        return {"op": "and", "args": json_queries} if json_queries else None
+
     @staticmethod
-    def _get_data_collection_filters(data_collection: Union[DataCollection, str]) -> JsonDict:
-        """Builds a dictionary of query filters for catalog API from a data collection definition"""
-        filters: JsonDict = {}
+    def _get_data_collection_filters(data_collection: Union[DataCollection, str]) -> Dict[str, str]:
+        """Builds a `field: value` dictionary to create filters for catalog API corresponding to a data collection
+        definition.
+        """
+        filters: Dict[str, str] = {}
 
         if isinstance(data_collection, str):
             return filters
 
         if data_collection.swath_mode:
-            filters["sar:instrument_mode"] = {"eq": data_collection.swath_mode.upper()}
+            filters["sar:instrument_mode"] = data_collection.swath_mode.upper()
 
         if data_collection.polarization:
-            filters["polarization"] = {"eq": data_collection.polarization.upper()}
+            filters["s1:polarization"] = data_collection.polarization.upper()
 
         if data_collection.resolution:
-            filters["resolution"] = {"eq": data_collection.resolution.upper()}
+            filters["s1:resolution"] = data_collection.resolution.upper()
 
         if data_collection.orbit_direction and data_collection.orbit_direction.upper() != OrbitDirection.BOTH:
-            filters["sat:orbit_state"] = {"eq": data_collection.orbit_direction.lower()}
+            filters["sat:orbit_state"] = data_collection.orbit_direction.lower()
 
         if data_collection.timeliness:
-            filters["timeliness"] = {"eq": data_collection.timeliness}
+            filters["s1:timeliness"] = data_collection.timeliness
 
         return filters
 
