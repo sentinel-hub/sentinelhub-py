@@ -189,16 +189,20 @@ class SentinelHubCatalog(SentinelHubService):
                 text_queries.append(filter_query)
             return " AND ".join(text_queries) if text_queries else None
 
-        # filter_lang == cql2-json
-        if not (filter_query is None or isinstance(filter_query, dict)):
-            raise ValueError(input_missmatch_msg)
+        if filter_lang == "cql2-json":
+            if not (filter_query is None or isinstance(filter_query, dict)):
+                raise ValueError(input_missmatch_msg)
 
-        json_queries = [
-            {"op": "=", "args": [{"property": field}, value]} for field, value in collection_filters.items()
-        ]
-        if filter_query:
-            json_queries.append(filter_query)
-        return {"op": "and", "args": json_queries} if json_queries else None
+            json_queries = [
+                {"op": "=", "args": [{"property": field}, value]} for field, value in collection_filters.items()
+            ]
+            if filter_query:
+                json_queries.append(filter_query)
+            return {"op": "and", "args": json_queries} if json_queries else None
+
+        raise ValueError(
+            f'Parameter `filter_lang` must be on of "cql2-text" or "cql2-json" but {filter_lang} was given.'
+        )
 
     @staticmethod
     def _get_data_collection_filters(data_collection: Union[DataCollection, str]) -> Dict[str, str]:
