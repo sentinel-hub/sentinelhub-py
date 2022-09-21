@@ -66,23 +66,56 @@ def test_get_feature(catalog: SentinelHubCatalog) -> None:
 def test_search_bbox(catalog: SentinelHubCatalog) -> None:
     """Tests search with bounding box"""
     time_interval = "2021-01-01T00:00:00", "2021-01-15T00:00:10"
-    cloud_cover_interval = 10, 50
 
     search_iterator = catalog.search(
         collection=DataCollection.SENTINEL2_L1C,
         time=time_interval,
         bbox=TEST_BBOX.transform(CRS.POP_WEB),
-        query={"eo:cloud_cover": {"gt": cloud_cover_interval[0], "lt": cloud_cover_interval[1]}},
         limit=2,
     )
 
     assert isinstance(search_iterator, CatalogSearchIterator)
 
-    for _ in range(3):
-        result = next(search_iterator)
+    for result in search_iterator:
         assert isinstance(result, dict)
         assert time_interval[0] <= result["properties"]["datetime"] <= time_interval[1]
-        assert cloud_cover_interval[0] <= result["properties"]["eo:cloud_cover"] <= cloud_cover_interval[1]
+
+
+def test_search_filter(catalog: SentinelHubCatalog) -> None:
+    time_interval = "2021-01-01T00:00:00", "2021-01-31T00:00:10"
+    min_cc, max_cc = 10, 20
+    common_kwargs = dict(
+        collection=DataCollection.SENTINEL2_L1C,
+        time=time_interval,
+        bbox=TEST_BBOX.transform(CRS.POP_WEB),
+        limit=2,
+    )
+
+    unbounded_search_iterator = catalog.search(**common_kwargs)
+    assert len(list(unbounded_search_iterator)) == 6
+
+    text_filter_iterator = catalog.search(
+        filter=f"eo:cloud_cover>{min_cc} AND eo:cloud_cover<{max_cc}",
+        **common_kwargs,
+    )
+    text_filtered = list(text_filter_iterator)
+
+    assert len(text_filtered) == 4
+    assert all(min_cc < result["properties"]["eo:cloud_cover"] < max_cc for result in text_filtered)
+
+    json_filter_iterator = catalog.search(
+        filter={
+            "op": "and",
+            "args": [
+                {"op": ">", "args": [{"property": "eo:cloud_cover"}, min_cc]},
+                {"op": "<", "args": [{"property": "eo:cloud_cover"}, max_cc]},
+            ],
+        },
+        filter_lang="cql2-json",
+        **common_kwargs,
+    )
+
+    assert text_filtered == list(json_filter_iterator)
 
 
 def test_search_geometry_and_iterator_methods(catalog: SentinelHubCatalog) -> None:
@@ -93,7 +126,7 @@ def test_search_geometry_and_iterator_methods(catalog: SentinelHubCatalog) -> No
         collection=DataCollection.SENTINEL2_L1C,
         time=("2021-01-01", "2021-01-5"),
         geometry=search_geometry,
-        query={"eo:cloud_cover": {"lt": 40}},
+        filter="eo:cloud_cover<40",
     )
     results = list(search_iterator)
 
