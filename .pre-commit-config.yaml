@@ -11,8 +11,6 @@ repos:
       - id: check-yaml
       - id: check-merge-conflict
       - id: debug-statements
-      - id: detect-aws-credentials
-
 
   - repo: https://github.com/psf/black
     rev: 22.8.0
@@ -29,8 +27,13 @@ repos:
   - repo: https://github.com/PyCQA/autoflake
     rev: v1.5.3
     hooks:
-    -   id: autoflake
-        args: [--remove-all-unused-imports, --in-place, --ignore-init-module-imports]
+      - id: autoflake
+        args:
+          [
+            --remove-all-unused-imports,
+            --in-place,
+            --ignore-init-module-imports,
+          ]
 
   - repo: https://github.com/pycqa/flake8
     rev: 5.0.4
