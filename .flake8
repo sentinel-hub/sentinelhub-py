@@ -1,6 +1,7 @@
 [flake8]
-ignore = E203, W503
+ignore = E203, W503, C408
 exclude = .git, __pycache__
+min_python_version = 3.7.0
 max-line-length= 120
 max-complexity = 13
 per-file-ignores =
