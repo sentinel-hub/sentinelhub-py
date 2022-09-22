@@ -136,9 +136,6 @@ def test_download_response_derive(new_params: Dict[str, Any]) -> None:
     derived_response = response.derive(**new_params)
     assert derived_response is not response
     for param in ("request", "content", "headers", "status_code", "elapsed"):
-        if param in new_params:
-            expected_value = new_params[param]
-        else:
-            expected_value = getattr(response, param)
+        expected_value = new_params.get(param, getattr(response, param))
 
         assert getattr(derived_response, param) == expected_value

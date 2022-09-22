@@ -196,8 +196,9 @@ class DownloadClient:
             return
 
         cached_request_info = read_data(request_path, MimeType.JSON)
-        if "request" in cached_request_info:  # Backwards compatibility - older versions don't have "request" subdict
-            cached_request_info = cached_request_info["request"]
+        # Backwards compatibility - older versions don't have "request" subdict
+        cached_request_info = cached_request_info.get("request", cached_request_info)
+
         # Timestamps are allowed to differ
         del cached_request_info["timestamp"]
         del cached_request_info["headers"]

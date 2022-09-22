@@ -17,7 +17,7 @@ def test_saving_responses(output_folder: str) -> None:
         assert isinstance(data, list)
         assert len(data) == 1
     except ValueError:
-        assert False, "get_data method with save_data=False should work without specifying data_folder"
+        raise AssertionError("get_data method with save_data=False should work without specifying data_folder")
 
     with pytest.raises(ValueError):
         aws_request.get_data(save_data=True, redownload=True)
@@ -35,4 +35,4 @@ def test_saving_responses(output_folder: str) -> None:
         assert len(get_folder_list(product_folder)) == 5
         assert len(get_file_list(product_folder)) == 1
     except ValueError:
-        assert False, "Expected to obtain and save data"
+        raise AssertionError("Expected to obtain and save data")
