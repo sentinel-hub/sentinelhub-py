@@ -2,7 +2,7 @@
 Module implementing some utility functions not suitable for other utility modules
 """
 import sys
-from abc import ABCMeta
+from abc import ABCMeta, abstractmethod
 from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any, Dict, Iterable, Optional, Union
@@ -43,6 +43,7 @@ class SentinelHubService(metaclass=ABCMeta):
         self.client = SentinelHubDownloadClient(config=self.config)
 
     @staticmethod
+    @abstractmethod
     def _get_service_url(base_url: str) -> str:
         """Provides the URL to a specific service"""
 

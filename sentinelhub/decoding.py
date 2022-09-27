@@ -124,7 +124,7 @@ def decode_sentinelhub_err_msg(response: Response) -> str:
 
     try:
         json_message = json.loads(response.content)
-        if "error" in json_message:
+        if isinstance(json_message, dict) and "error" in json_message:
             json_message = json_message["error"]
 
         if isinstance(json_message, str):

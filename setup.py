@@ -15,10 +15,11 @@ def parse_requirements(filename: str) -> List[str]:
 
 def get_version() -> str:
     path = os.path.join(os.path.dirname(__file__), "sentinelhub", "_version.py")
-    for line in open(path):
-        if line.find("__version__") >= 0:
-            version = line.split("=")[1].strip()
-            return version.strip('"').strip("'")
+    with open(path) as version_file:
+        for line in version_file:
+            if line.find("__version__") >= 0:
+                version = line.split("=")[1].strip()
+                return version.strip('"').strip("'")
 
     raise ValueError(f"Version not found in {path}")
 

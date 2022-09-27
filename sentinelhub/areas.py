@@ -449,7 +449,7 @@ class BaseUtmSplitter(AreaSplitter):
         shape_list: Iterable[Union[Polygon, MultiPolygon, _BaseGeometry]],
         crs: CRS,
         bbox_size: Union[float, Tuple[float, float]],
-        offset: Union[None, Tuple[float, float]] = None,
+        offset: Optional[Tuple[float, float]] = None,
     ):
         """
         :param shape_list: A list of geometrical shapes describing the area of interest

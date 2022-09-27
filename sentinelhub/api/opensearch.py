@@ -157,8 +157,7 @@ def search_iter(
         LOGGER.debug("URL=%s", url)
 
         response = client.get_json_dict(url)
-        for tile_info in response["features"]:
-            yield tile_info
+        yield from response["features"]
 
         if len(response["features"]) < config.max_opensearch_records_per_query:
             break

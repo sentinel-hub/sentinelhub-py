@@ -79,7 +79,7 @@ def parse_time_interval(
     :return: A pair of datetime objects defining the time interval.
     :raises: ValueError
     """
-    date_interval: Tuple[Union[None, dt.date], Union[None, dt.date]]
+    date_interval: Tuple[Optional[dt.date], Optional[dt.date]]
 
     if allow_undefined and time in [None, ".."]:
         date_interval = None, None

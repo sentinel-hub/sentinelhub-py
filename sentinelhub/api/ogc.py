@@ -38,7 +38,7 @@ class OgcRequest(DataRequest):
         maxcc: float = 1.0,
         image_format: MimeType = MimeType.PNG,
         custom_url_params: Optional[Dict[CustomUrlParam, Any]] = None,
-        time_difference: datetime.timedelta = datetime.timedelta(seconds=-1),
+        time_difference: datetime.timedelta = datetime.timedelta(seconds=-1),  # noqa: B008
         **kwargs: Any,
     ):
         """
