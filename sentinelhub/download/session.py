@@ -13,20 +13,26 @@ from typing import Any, Dict, Optional
 import requests
 from oauthlib.oauth2 import BackendApplicationClient
 from requests import Response
-from requests.exceptions import JSONDecodeError
 from requests_oauthlib import OAuth2Session
 
 from ..config import SHConfig
 from ..constants import SHConstants
 from ..download.handlers import fail_user_errors, retry_temporary_errors
 from ..download.models import DownloadRequest
-from ..exceptions import SHUserWarning
+from ..exceptions import SHUserWarning, show_import_warning
 from ..type_utils import JsonDict
 
 if sys.version_info < (3, 8):
     from shared_memory import SharedMemory
 else:
     from multiprocessing.shared_memory import SharedMemory
+
+# The following is only for the purpose of using the package within SentinelHub QGIS plugin
+try:
+    from requests.exceptions import JSONDecodeError  # pylint: disable=ungrouped-imports
+except ImportError:
+    show_import_warning("requests>=2.27.0")
+    from json import JSONDecodeError  # type: ignore[misc]
 
 
 LOGGER = logging.getLogger(__name__)
