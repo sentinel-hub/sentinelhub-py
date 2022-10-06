@@ -33,5 +33,5 @@ URL = "https://roda.sentinel-hub.com/sentinel-s2-l1c/tiles/54/H/VH/2017/4/14/0/m
         "sentinelhub.download --help",
     ],
 )
-def test_return_type(output_folder, command):
+def test_return_type(output_folder: str, command: str) -> None:
     assert subprocess.call(command, shell=True) == 0

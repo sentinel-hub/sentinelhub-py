@@ -35,7 +35,7 @@ $ pip install sentinelhub[AWS]  # extra dependencies for interacting with Amazon
 Alternatively, the package can be installed with Conda from `conda-forge` channel
 
 ```
-$ conda install -c conda-forge sentinelhub 
+$ conda install -c conda-forge sentinelhub
 ```
 
 To install the package manually, clone the repository and run

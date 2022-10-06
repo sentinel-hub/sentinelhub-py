@@ -339,7 +339,7 @@ class GeopediaFeatureIterator(FeatureIterator[JsonDict]):
 
     def __init__(
         self,
-        layer: str,
+        layer: Union[str, int],
         bbox: Optional[BBox] = None,
         query_filter: Optional[str] = None,
         offset: int = 0,

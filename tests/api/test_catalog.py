@@ -2,11 +2,12 @@
 Tests for the module with Catalog API interface
 """
 import datetime as dt
+from typing import Union
 
 import dateutil.tz
 import pytest
 
-from sentinelhub import CRS, BBox, DataCollection, Geometry, SentinelHubCatalog
+from sentinelhub import CRS, BBox, DataCollection, Geometry, SentinelHubCatalog, SHConfig
 from sentinelhub.api.catalog import CatalogSearchIterator
 
 TEST_BBOX = BBox([46.16, -16.15, 46.51, -15.58], CRS.WGS84)
@@ -15,14 +16,14 @@ pytestmark = pytest.mark.sh_integration
 
 
 @pytest.fixture(name="catalog")
-def catalog_fixture(config):
+def catalog_fixture(config: SHConfig) -> SentinelHubCatalog:
     return SentinelHubCatalog(config=config)
 
 
 @pytest.mark.parametrize(
     "data_collection", [DataCollection.SENTINEL2_L2A, DataCollection.LANDSAT_TM_L1, DataCollection.SENTINEL3_OLCI]
 )
-def test_info_with_different_deployments(config, data_collection):
+def test_info_with_different_deployments(config: SHConfig, data_collection: DataCollection) -> None:
     """Test if basic interaction works with different data collections on different deployments"""
     config.sh_base_url = data_collection.service_url or config.sh_base_url
     catalog = SentinelHubCatalog(config=config)
@@ -32,13 +33,13 @@ def test_info_with_different_deployments(config, data_collection):
     assert all(link["href"].startswith(config.sh_base_url) for link in info["links"])
 
 
-def test_conformance(catalog):
+def test_conformance(catalog: SentinelHubCatalog) -> None:
     """Test conformance endpoint"""
     conformance = catalog.get_conformance()
     assert isinstance(conformance, dict)
 
 
-def test_get_collections(catalog):
+def test_get_collections(catalog: SentinelHubCatalog) -> None:
     """Tests collections endpoint"""
     collections = catalog.get_collections()
 
@@ -47,13 +48,13 @@ def test_get_collections(catalog):
 
 
 @pytest.mark.parametrize("collection_input", ["sentinel-2-l1c", DataCollection.SENTINEL1_IW])
-def test_get_collection(catalog, collection_input):
+def test_get_collection(catalog: SentinelHubCatalog, collection_input: Union[DataCollection, str]) -> None:
     """Test endpoint for a single collection info"""
     collection_info = catalog.get_collection(collection_input)
     assert isinstance(collection_info, dict)
 
 
-def test_get_feature(catalog):
+def test_get_feature(catalog: SentinelHubCatalog) -> None:
     """Test endpoint for a single feature info"""
     feature_id = "S2B_MSIL2A_20200318T120639_N0214_R080_T24FWD_20200318T135608"
     feature_info = catalog.get_feature(DataCollection.SENTINEL2_L2A, feature_id)
@@ -62,29 +63,62 @@ def test_get_feature(catalog):
     assert feature_info["id"] == feature_id
 
 
-def test_search_bbox(catalog):
+def test_search_bbox(catalog: SentinelHubCatalog) -> None:
     """Tests search with bounding box"""
     time_interval = "2021-01-01T00:00:00", "2021-01-15T00:00:10"
-    cloud_cover_interval = 10, 50
 
     search_iterator = catalog.search(
         collection=DataCollection.SENTINEL2_L1C,
         time=time_interval,
         bbox=TEST_BBOX.transform(CRS.POP_WEB),
-        query={"eo:cloud_cover": {"gt": cloud_cover_interval[0], "lt": cloud_cover_interval[1]}},
         limit=2,
     )
 
     assert isinstance(search_iterator, CatalogSearchIterator)
 
-    for _ in range(3):
-        result = next(search_iterator)
+    for result in search_iterator:
         assert isinstance(result, dict)
         assert time_interval[0] <= result["properties"]["datetime"] <= time_interval[1]
-        assert cloud_cover_interval[0] <= result["properties"]["eo:cloud_cover"] <= cloud_cover_interval[1]
 
 
-def test_search_geometry_and_iterator_methods(catalog):
+def test_search_filter(catalog: SentinelHubCatalog) -> None:
+    time_interval = "2021-01-01T00:00:00", "2021-01-31T00:00:10"
+    min_cc, max_cc = 10, 20
+    common_kwargs = dict(
+        collection=DataCollection.SENTINEL2_L1C,
+        time=time_interval,
+        bbox=TEST_BBOX.transform(CRS.POP_WEB),
+        limit=2,
+    )
+
+    unbounded_search_iterator = catalog.search(**common_kwargs)
+    assert len(list(unbounded_search_iterator)) == 6
+
+    text_filter_iterator = catalog.search(
+        filter=f"eo:cloud_cover>{min_cc} AND eo:cloud_cover<{max_cc}",
+        **common_kwargs,
+    )
+    text_filtered = list(text_filter_iterator)
+
+    assert len(text_filtered) == 4
+    assert all(min_cc < result["properties"]["eo:cloud_cover"] < max_cc for result in text_filtered)
+
+    json_filter_iterator = catalog.search(
+        filter={
+            "op": "and",
+            "args": [
+                {"op": ">", "args": [{"property": "eo:cloud_cover"}, min_cc]},
+                {"op": "<", "args": [{"property": "eo:cloud_cover"}, max_cc]},
+            ],
+        },
+        filter_lang="cql2-json",
+        **common_kwargs,
+    )
+
+    assert text_filtered == list(json_filter_iterator)
+
+
+def test_search_geometry_and_iterator_methods(catalog: SentinelHubCatalog) -> None:
     """Tests search with a geometry and test methods of CatalogSearchIterator"""
     search_geometry = Geometry(TEST_BBOX.geometry, crs=TEST_BBOX.crs)
 
@@ -92,7 +126,7 @@ def test_search_geometry_and_iterator_methods(catalog):
         collection=DataCollection.SENTINEL2_L1C,
         time=("2021-01-01", "2021-01-5"),
         geometry=search_geometry,
-        query={"eo:cloud_cover": {"lt": 40}},
+        filter="eo:cloud_cover<40",
     )
     results = list(search_iterator)
 
@@ -130,7 +164,9 @@ def test_search_geometry_and_iterator_methods(catalog):
         ),
     ],
 )
-def test_search_for_data_collection(config, data_collection, feature_id):
+def test_search_for_data_collection(
+    config: SHConfig, data_collection: Union[DataCollection, str], feature_id: str
+) -> None:
     """Tests search functionality for each data collection to confirm compatibility between DataCollection parameters
     and Catalog API
     """
@@ -149,7 +185,7 @@ def test_search_for_data_collection(config, data_collection, feature_id):
     assert result["id"] == feature_id
 
 
-def test_search_with_ids(config):
+def test_search_with_ids(config: SHConfig) -> None:
     """Tests a search without time and bbox parameters"""
     tile_id = "LE07_L1TP_160071_20170110_20201008_02_T1"
     config.sh_base_url = DataCollection.LANDSAT_ETM_L1.service_url

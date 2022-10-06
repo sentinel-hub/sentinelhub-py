@@ -34,9 +34,9 @@ function evaluatePixel(samples) {
     let NDVI = index(samples.B08, samples.B04);
     let NDVI_RE1 = index(samples.B08, samples.B05);
 
-    // Bare Soil Index 
+    // Bare Soil Index
     let NBSI = index((samples.B11 + samples.B04), (samples.B08 + samples.B02));
-    
+
     // cloud probability normalized to interval [0, 1]
     let CLP = samples.CLP / 255.0;
 
@@ -48,7 +48,7 @@ function evaluatePixel(samples) {
 
     const f = 5000;
     return {
-        bands: [samples.B01, samples.B02, samples.B03, samples.B04, samples.B05, samples.B06, 
+        bands: [samples.B01, samples.B02, samples.B03, samples.B04, samples.B05, samples.B06,
                 samples.B07, samples.B08, samples.B8A, samples.B09, samples.B11, samples.B12],
         masks: [samples.CLM],
         indices: [toUINT(NDVI, f), toUINT(NDVI_RE1, f), toUINT(NBSI, f), toUINT(CLP, f)],

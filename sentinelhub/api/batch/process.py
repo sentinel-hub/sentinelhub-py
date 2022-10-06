@@ -436,30 +436,30 @@ class SentinelHubBatch(BaseBatchClient):
     def _get_processing_url(self, request_id: Optional[str] = None) -> str:
         """Creates a URL for process endpoint"""
         url = f"{self.service_url}/process"
-        if request_id:
-            return f"{url}/{request_id}"
-        return url
+        if request_id is None:
+            return url
+        return f"{url}/{request_id}"
 
     def _get_tiles_url(self, request_id: str, tile_id: Union[None, str, int] = None) -> str:
         """Creates a URL for tiles endpoint"""
         url = f"{self._get_processing_url(request_id)}/tiles"
-        if tile_id:
-            return f"{url}/{tile_id}"
-        return url
+        if tile_id is None:
+            return url
+        return f"{url}/{tile_id}"
 
     def _get_tiling_grids_url(self, grid_id: Union[None, str, int] = None) -> str:
         """Creates a URL for tiling grids endpoint"""
         url = f"{self.service_url}/tilinggrids"
-        if grid_id:
-            return f"{url}/{grid_id}"
-        return url
+        if grid_id is None:
+            return url
+        return f"{url}/{grid_id}"
 
     def _get_collections_url(self, collection_id: Optional[str] = None) -> str:
         """Creates a URL for batch collections endpoint"""
         url = f"{self.service_url}/collections"
-        if collection_id:
-            return f"{url}/{collection_id}"
-        return url
+        if collection_id is None:
+            return url
+        return f"{url}/{collection_id}"
 
     @staticmethod
     def _parse_collection_id(data: BatchCollectionType) -> Optional[str]:

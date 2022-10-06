@@ -4,8 +4,10 @@ Module with global fixtures
 import logging
 import os
 import shutil
+from typing import Any, Generator
 
 import pytest
+from pytest import Config
 
 from sentinelhub import SentinelHubSession, SHConfig
 
@@ -16,7 +18,7 @@ INPUT_FOLDER = get_input_folder(__file__)
 OUTPUT_FOLDER = get_output_folder(__file__)
 
 
-def pytest_configure(config):
+def pytest_configure(config: Config) -> None:
     shconfig = SHConfig()
     for param in shconfig.get_params():
         env_variable = param.upper()
@@ -26,17 +28,17 @@ def pytest_configure(config):
 
 
 @pytest.fixture(name="config")
-def config_fixture():
+def config_fixture() -> SHConfig:
     return SHConfig()
 
 
 @pytest.fixture(name="input_folder", scope="session")
-def input_folder_fixture():
+def input_folder_fixture() -> str:
     return INPUT_FOLDER
 
 
 @pytest.fixture(name="output_folder")
-def output_folder_fixture():
+def output_folder_fixture() -> Generator[str, None, None]:
     """Creates the necessary folder and cleans up after test is done."""
     if not os.path.exists(OUTPUT_FOLDER):
         os.mkdir(OUTPUT_FOLDER)
@@ -45,7 +47,7 @@ def output_folder_fixture():
 
 
 @pytest.fixture(name="logger")
-def logger_fixture():
+def logger_fixture() -> logging.Logger:
     logging.basicConfig(
         level=logging.INFO, format="%(asctime)-15s %(module)s:%(lineno)d [%(levelname)s] %(funcName)s  %(message)s"
     )
@@ -53,12 +55,12 @@ def logger_fixture():
 
 
 @pytest.fixture(name="session", scope="session")
-def session_fixture():
+def session_fixture() -> SentinelHubSession:
     return SentinelHubSession()
 
 
 @pytest.fixture(name="ray")
-def ray_fixture():
+def ray_fixture() -> Generator[Any, None, None]:
     """Ensures that the ray server will stop even if test fails"""
     ray = pytest.importorskip("ray")
     ray.init(log_to_driver=False)

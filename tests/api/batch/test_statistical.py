@@ -2,6 +2,7 @@
 A module that tests an interface for Sentinel Hub Batch processing
 """
 import pytest
+from requests_mock import Mocker
 
 from sentinelhub import (
     CRS,
@@ -10,6 +11,7 @@ from sentinelhub import (
     DataCollection,
     SentinelHubBatchStatistical,
     SentinelHubStatistical,
+    SHConfig,
 )
 from sentinelhub.api.batch.statistical import AccessSpecification
 
@@ -17,11 +19,13 @@ pytestmark = pytest.mark.sh_integration
 
 
 @pytest.fixture(name="statistical_batch_client")
-def statistical_batch_client_fixture(config):
+def statistical_batch_client_fixture(config: SHConfig) -> SentinelHubBatchStatistical:
     return SentinelHubBatchStatistical(config=config)
 
 
-def test_create_and_run_batch_request(statistical_batch_client: SentinelHubBatchStatistical, requests_mock):
+def test_create_and_run_batch_request(
+    statistical_batch_client: SentinelHubBatchStatistical, requests_mock: Mocker
+) -> None:
     """A test that mocks creation and execution of a new batch request"""
     rgb_evalscript = "some evalscript"
 

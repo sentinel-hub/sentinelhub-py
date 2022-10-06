@@ -5,8 +5,9 @@ import concurrent.futures
 import itertools as it
 import time
 from dataclasses import dataclass
+from logging import Logger
 from threading import Lock
-from typing import List
+from typing import Any, Dict, List, Tuple
 
 import pytest
 from pytest import approx
@@ -20,7 +21,7 @@ class DummyService:
     purposes
     """
 
-    def __init__(self, policy_buckets: List[PolicyBucket], units_per_request: int, process_time: float):
+    def __init__(self, policy_buckets: List[PolicyBucket], units_per_request: float, process_time: float):
         """
         :param policy_buckets: A list of policy buckets on the service
         :param units_per_request: Number of processing units each request would cost. It assumes that each request will
@@ -114,15 +115,15 @@ FIXED_BUCKETS = [
     ],
 )
 def test_scenarios(
-    logger,
-    bucket_defs,
-    process_num,
-    units_per_request,
-    process_time,
-    request_num,
-    max_elapsed_time,
-    max_rate_limit_hits,
-):
+    logger: Logger,
+    bucket_defs: List[Tuple[PolicyType, Dict[str, Any]]],
+    process_num: int,
+    units_per_request: float,
+    process_time: float,
+    request_num: int,
+    max_elapsed_time: float,
+    max_rate_limit_hits: int,
+) -> None:
     """For each test case it simulates a parallel interaction between a service and multiple instances of
     rate-limiting object.
     """
@@ -153,7 +154,9 @@ def test_scenarios(
     assert total_rate_limit_hits <= max_rate_limit_hits, "Rate limit object hit the rate limit too many times"
 
 
-def run_interaction(logger, service, rate_limit, request_num, index):
+def run_interaction(
+    logger: Logger, service: DummyService, rate_limit: SentinelHubRateLimit, request_num: int, index: int
+) -> int:
     """Runs an interaction between service instance and a single instance of a rate-limiting object"""
     rate_limit_hits = 0
     while request_num > 0:
@@ -239,7 +242,7 @@ TEST_CASES = [
 
 
 @pytest.mark.parametrize("test_case", TEST_CASES)
-def test_basic_bucket_methods(test_case):
+def test_basic_bucket_methods(test_case: PolicyBucketTestCase) -> None:
     bucket = PolicyBucket(test_case.bucket_kind, test_case.bucket_kwargs)
 
     assert bucket.is_request_bucket() == test_case.is_request_bucket

@@ -1,5 +1,6 @@
 import itertools
 import os
+from typing import Any, Dict, List, Tuple, Type, Union
 
 import pytest
 import shapely.geometry
@@ -16,6 +17,7 @@ from sentinelhub import (
     UtmZoneSplitter,
     read_data,
 )
+from sentinelhub.areas import AreaSplitter
 from sentinelhub.testing_utils import get_input_folder
 
 geojson = read_data(os.path.join(get_input_folder(__file__), "cies_islands.json"))
@@ -56,14 +58,14 @@ BBOX_GRID = [
         ),
     ],
 )
-def test_return_type(constructor, args, kwargs, bbox_len):
+def test_return_type(constructor: Type[AreaSplitter], args: list, kwargs: Dict[str, Any], bbox_len: int) -> None:
     splitter = constructor(*args, **kwargs)
-    return_lists = [
+
+    return_lists: List[Tuple[list, Union[Type, Tuple[Type, ...]]]] = [
         (splitter.get_bbox_list(buffer=0.2), BBox),
         (splitter.get_info_list(), dict),
         (splitter.get_geometry_list(), (shapely.geometry.Polygon, shapely.geometry.MultiPolygon)),
     ]
-
     for return_list, item_type in return_lists:
         assert isinstance(return_list, list)
         assert len(return_list) == bbox_len

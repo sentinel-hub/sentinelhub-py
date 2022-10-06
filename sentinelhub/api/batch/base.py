@@ -36,7 +36,7 @@ class BatchUserAction(Enum):
     CANCEL = "CANCEL"
 
 
-class BaseBatchClient(SentinelHubService, Generic[BatchRequestType], metaclass=ABCMeta):
+class BaseBatchClient(SentinelHubService, Generic[BatchRequestType], metaclass=ABCMeta):  # noqa: B024
     """Class containing common methods and helper functions for Batch Client classes"""
 
     def _call_job(self, batch_request: RequestSpec, endpoint_name: str) -> Json:
@@ -48,9 +48,9 @@ class BaseBatchClient(SentinelHubService, Generic[BatchRequestType], metaclass=A
     def _get_processing_url(self, request_id: Optional[str] = None) -> str:
         """Creates a URL for the batch statistical endpoint"""
         url = self.service_url
-        if request_id:
-            return f"{url}/{request_id}"
-        return url
+        if request_id is None:
+            return url
+        return f"{url}/{request_id}"
 
     @staticmethod
     def _parse_request_id(data: RequestSpec) -> str:
@@ -64,7 +64,7 @@ class BaseBatchClient(SentinelHubService, Generic[BatchRequestType], metaclass=A
         raise ValueError(f"Expected a BatchRequest, dictionary or a string, got {data}.")
 
 
-class BaseBatchRequest(metaclass=ABCMeta):
+class BaseBatchRequest:
     """Class containing helper functions for Batch Request classes"""
 
     _REPR_PARAM_NAMES: Sequence[str]

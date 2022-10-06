@@ -92,7 +92,7 @@ def get_area_info(bbox: BBox, date_interval: RawTimeIntervalType, maxcc: Optiona
     return list(result_list)
 
 
-def get_area_dates(bbox: BBox, date_interval: RawTimeIntervalType, maxcc: Optional[int] = None) -> List[dt.date]:
+def get_area_dates(bbox: BBox, date_interval: RawTimeIntervalType, maxcc: Optional[float] = None) -> List[dt.date]:
     """Get list of times of existing images from specified area and time range
 
     :param bbox: bounding box of requested area
@@ -157,8 +157,7 @@ def search_iter(
         LOGGER.debug("URL=%s", url)
 
         response = client.get_json_dict(url)
-        for tile_info in response["features"]:
-            yield tile_info
+        yield from response["features"]
 
         if len(response["features"]) < config.max_opensearch_records_per_query:
             break

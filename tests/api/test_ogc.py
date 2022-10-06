@@ -40,10 +40,10 @@ class OgcTestCase:
     date_check: Optional[datetime.datetime] = None
     save_data: bool = False
 
-    def initialize_request(self, output_folder):
+    def initialize_request(self, output_folder: str) -> OgcRequest:
         return self.constructor(**self.kwargs, data_folder=output_folder)
 
-    def collect_data(self, request):
+    def collect_data(self, request: OgcRequest) -> list:
         if self.save_data:
             request.save_data(redownload=True, data_filter=self.data_filter)
             return request.get_data(save_data=True, data_filter=self.data_filter)
@@ -468,7 +468,7 @@ TEST_CASES = [
 
 
 @pytest.mark.parametrize("test_case", TEST_CASES)
-def test_ogc(test_case, output_folder):
+def test_ogc(test_case: OgcTestCase, output_folder: str) -> None:
     # Run data collection
     request = test_case.initialize_request(output_folder)
     data = test_case.collect_data(request)
@@ -502,7 +502,7 @@ def test_ogc(test_case, output_folder):
     )
 
 
-def test_too_large_request():
+def test_too_large_request() -> None:
     bbox = BBox((-5.23, 48.0, -5.03, 48.17), CRS.WGS84)
     request = WmsRequest(
         data_collection=DataCollection.SENTINEL2_L1C,

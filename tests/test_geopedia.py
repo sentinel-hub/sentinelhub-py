@@ -1,6 +1,6 @@
 import datetime
 from dataclasses import dataclass
-from typing import Optional
+from typing import Any, Dict, Optional
 
 import numpy as np
 import pytest
@@ -19,7 +19,7 @@ from sentinelhub.testing_utils import test_numpy_data
 pytestmark = pytest.mark.geopedia_integration
 
 
-def test_global_session():
+def test_global_session() -> None:
     session1 = GeopediaSession(is_global=True)
     session2 = GeopediaSession(is_global=True)
     session3 = GeopediaSession(is_global=False)
@@ -28,7 +28,7 @@ def test_global_session():
     assert session1.session_id != session3.session_id, "Global and local sessions should not have the same session ID"
 
 
-def test_session_update():
+def test_session_update() -> None:
     session = GeopediaSession()
     initial_session_id = session.session_id
 
@@ -36,7 +36,7 @@ def test_session_update():
     assert session.user_id == "NO_USER", "Session user ID should be 'NO_USER'"
 
 
-def test_session_timeout():
+def test_session_timeout() -> None:
     session = GeopediaSession()
     session.SESSION_DURATION = datetime.timedelta(seconds=-1)
     initial_session_id = session.session_id
@@ -52,13 +52,13 @@ def test_session_timeout():
         dict(username="some_user", password="some_password", password_md5="md5_encoded"),
     ],
 )
-def test_false_initialization(bad_kwargs):
+def test_false_initialization(bad_kwargs: Dict[str, Any]) -> None:
     with pytest.raises(ValueError):
         GeopediaSession(**bad_kwargs)
 
 
 @pytest.mark.xfail(run=True, reason="Geopedia sometimes returns numerically wrong data")
-def test_geopedia_wms():
+def test_geopedia_wms() -> None:
     bbox = BBox(bbox=[(524358.0140363087, 6964349.630376049), (534141.9536568124, 6974133.5699965535)], crs=CRS.POP_WEB)
     gpd_request = GeopediaWmsRequest(
         layer=1917, theme="ml_aws", bbox=bbox, width=50, height=50, image_format=MimeType.PNG
@@ -71,7 +71,7 @@ def test_geopedia_wms():
     test_numpy_data(np.array(data), exp_min=0, exp_max=255, exp_mean=150.9248, exp_median=255)
 
 
-def test_geopedia_image_request(output_folder):
+def test_geopedia_image_request(output_folder: str) -> None:
     bbox = BBox(bbox=[(13520759, 437326), (13522689, 438602)], crs=CRS.POP_WEB)
     image_field_name = "Masks"
 
@@ -124,7 +124,7 @@ TEST_CASES = [
 
 
 @pytest.mark.parametrize("test_case", TEST_CASES)
-def test_iterator(test_case):
+def test_iterator(test_case: GeopediaFeatureIteratorTestCase) -> None:
     gpd_iter = GeopediaFeatureIterator(**test_case.params)
 
     for idx, feature in enumerate(gpd_iter):
@@ -139,7 +139,7 @@ def test_iterator(test_case):
 
 
 @pytest.mark.parametrize("test_case", TEST_CASES)
-def test_size_before_iteration(test_case):
+def test_size_before_iteration(test_case: GeopediaFeatureIteratorTestCase) -> None:
     if not test_case.min_features:
         return
 

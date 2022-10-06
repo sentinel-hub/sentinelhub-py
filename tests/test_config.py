@@ -3,6 +3,7 @@ Unit tests for config.py module
 """
 import json
 import os
+from typing import Any, Generator
 
 import pytest
 
@@ -10,7 +11,7 @@ from sentinelhub import SHConfig
 
 
 @pytest.fixture(name="restore_config")
-def restore_config_fixture():
+def restore_config_fixture() -> Generator[None, None, None]:
     """A fixture that makes sure original config is restored after a test is executed. It restores the config even if
     a test has failed.
     """
@@ -19,7 +20,7 @@ def restore_config_fixture():
     original_config.save()
 
 
-def test_config_file():
+def test_config_file() -> None:
     config = SHConfig()
 
     config_file = config.get_config_location()
@@ -38,7 +39,7 @@ def test_config_file():
         assert config[param] == value
 
 
-def test_reset():
+def test_reset() -> None:
     config = SHConfig()
     default_config = SHConfig(use_defaults=True)
 
@@ -57,11 +58,11 @@ def test_reset():
     assert config.instance_id == default_config.instance_id, "Instance ID should reset"
 
 
-def test_save(restore_config):
+def test_save(restore_config: None) -> None:
     config = SHConfig()
     old_value = config.download_timeout_seconds
 
-    config.download_timeout_seconds = "abcd"
+    config.download_timeout_seconds = "abcd"  # type: ignore[assignment]
     with pytest.raises(ValueError):
         config.save()
 
@@ -76,7 +77,7 @@ def test_save(restore_config):
     assert config.download_timeout_seconds == new_value, "Saved value should have changed"
 
 
-def test_copy():
+def test_copy() -> None:
     config = SHConfig(hide_credentials=True)
     config.instance_id = "a"
 
@@ -89,7 +90,7 @@ def test_copy():
     assert config.instance_id == "a"
 
 
-def test_config_equality():
+def test_config_equality() -> None:
     assert SHConfig() != 42
 
     config1 = SHConfig(hide_credentials=False, use_defaults=True)
@@ -102,7 +103,7 @@ def test_config_equality():
     assert config1 != config2
 
 
-def test_raise_for_missing_instance_id():
+def test_raise_for_missing_instance_id() -> None:
     config = SHConfig()
 
     config.instance_id = "xxx"
@@ -114,7 +115,7 @@ def test_raise_for_missing_instance_id():
 
 
 @pytest.mark.parametrize("hide_credentials", [False, True])
-def test_config_repr(hide_credentials):
+def test_config_repr(hide_credentials: bool) -> None:
     config = SHConfig(hide_credentials=hide_credentials)
     config.instance_id = "a" * 20
     config_repr = repr(config)
@@ -130,7 +131,7 @@ def test_config_repr(hide_credentials):
 
 
 @pytest.mark.parametrize("hide_credentials", [False, True])
-def test_get_config_dict(hide_credentials):
+def test_get_config_dict(hide_credentials: bool) -> None:
     config = SHConfig(hide_credentials=hide_credentials)
     config.sh_client_secret = "x" * 15
     config.aws_secret_access_key = "y" * 10
@@ -147,14 +148,14 @@ def test_get_config_dict(hide_credentials):
         assert config_dict["aws_secret_access_key"] == config.aws_secret_access_key
 
 
-def test_transfer_with_ray(ray):
+def test_transfer_with_ray(ray: Any) -> None:
     """This test makes sure that the process of transferring SHConfig object to a Ray worker, working with it, and
     sending it back works correctly.
     """
     config = SHConfig()
     config.instance_id = "x"
 
-    def _remote_ray_testing(remote_config):
+    def _remote_ray_testing(remote_config: SHConfig) -> SHConfig:
         """Makes a few checks and modifications to the config object"""
         assert repr(remote_config).startswith("SHConfig")
         assert isinstance(remote_config.get_config_dict(), dict)

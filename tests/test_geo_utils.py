@@ -1,28 +1,30 @@
 """
 Test for geo_utils module and correctness of geographical transformations
 """
+from typing import Tuple, Union
+
 import pytest
 
 from sentinelhub import CRS, BBox, geo_utils
 
 
-def test_wgs84_to_utm():
+def test_wgs84_to_utm() -> None:
     x, y = geo_utils.wgs84_to_utm(15.525078, 44.1440478, CRS.UTM_33N)
     assert (x, y) == pytest.approx((541995.694062, 4888006.132887), rel=1e-8)
 
 
-def test_to_wgs84():
+def test_to_wgs84() -> None:
     lng, lat = geo_utils.to_wgs84(541995.694062, 4888006.132887, CRS.UTM_33N)
     assert (lng, lat) == pytest.approx((15.525078, 44.1440478), rel=1e-8)
 
 
-def test_get_utm_crs():
+def test_get_utm_crs() -> None:
     lng, lat = 15.52, 44.14
     crs = geo_utils.get_utm_crs(lng, lat)
     assert crs is CRS.UTM_33N
 
 
-def test_bbox_to_resolution():
+def test_bbox_to_resolution() -> None:
     bbox = BBox(((111.644, 8.655), (111.7, 8.688)), CRS.WGS84)
     resx, resy = geo_utils.bbox_to_resolution(bbox, 512, 512)
 
@@ -30,14 +32,16 @@ def test_bbox_to_resolution():
 
 
 @pytest.mark.parametrize("resolution, expected_dimensions", [(10, (615, 366)), ((20, 50), (308, 73))])
-def test_bbox_to_dimensions(resolution, expected_dimensions):
+def test_bbox_to_dimensions(
+    resolution: Union[float, Tuple[float, float]], expected_dimensions: Tuple[int, int]
+) -> None:
     bbox = BBox(((111.644, 8.655), (111.7, 8.688)), CRS.WGS84)
     dimensions = geo_utils.bbox_to_dimensions(bbox, resolution)
 
     assert dimensions == expected_dimensions
 
 
-def test_get_image_dimensions():
+def test_get_image_dimensions() -> None:
     bbox = BBox(((111.644, 8.655), (111.7, 8.688)), CRS.WGS84)
     width = geo_utils.get_image_dimension(bbox, height=715)
     height = geo_utils.get_image_dimension(bbox, width=1202)
@@ -46,7 +50,7 @@ def test_get_image_dimensions():
     assert height == 715
 
 
-def test_bbox_transform():
+def test_bbox_transform() -> None:
     bbox = BBox(((111.644, 8.655), (111.7, 8.688)), CRS.WGS84)
     new_bbox = bbox.transform(CRS.POP_WEB)
     expected_bbox = BBox((12428153.23, 967155.41, 12434387.12, 970871.43), CRS.POP_WEB)
@@ -65,7 +69,9 @@ def test_bbox_transform():
         ((543569.807, 6062625.7678), CRS(3346), CRS.UTM_35N, (350231.496834, 6063682.846723)),
     ],
 )
-def test_transform_point(point, source_crs, target_crs, target_point):
+def test_transform_point(
+    point: Tuple[float, float], source_crs: CRS, target_crs: CRS, target_point: Tuple[float, float]
+) -> None:
     new_point = geo_utils.transform_point(point, source_crs, target_crs)
     new_source_point = geo_utils.transform_point(new_point, target_crs, source_crs)
 

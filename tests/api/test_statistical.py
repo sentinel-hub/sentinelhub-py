@@ -1,9 +1,12 @@
 """
 Tests for the module with Statistical API
 """
+from typing import Any, Dict, Optional, Tuple
+
 import pytest
 
 from sentinelhub import CRS, BBox, DataCollection, Geometry, SentinelHubStatistical
+from sentinelhub.type_utils import JsonDict
 
 EVALSCRIPT = """
 //VERSION=3
@@ -82,17 +85,17 @@ GEOMETRY = Geometry(BBOX.geometry, crs=BBOX.crs)
     ],
 )
 def test_statistical_api(
-    evalscript,
-    bbox,
-    geometry,
-    time_interval,
-    resolution,
-    aggregation_interval,
-    data_collection,
-    data_filters,
-    calculations,
-    results,
-):
+    evalscript: str,
+    bbox: Optional[BBox],
+    geometry: Optional[Geometry],
+    time_interval: Tuple[str, str],
+    resolution: Tuple[float, float],
+    aggregation_interval: str,
+    data_collection: DataCollection,
+    data_filters: Dict[str, Any],
+    calculations: Optional[JsonDict],
+    results: JsonDict,
+) -> None:
     aggregation = SentinelHubStatistical.aggregation(
         evalscript=evalscript,
         time_interval=time_interval,

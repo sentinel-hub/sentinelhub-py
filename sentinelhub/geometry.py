@@ -3,6 +3,7 @@ Module implementing geometry classes
 """
 from __future__ import annotations
 
+import contextlib
 from abc import ABCMeta, abstractmethod
 from math import ceil
 from typing import Callable, Iterator, List, Optional, Tuple, TypeVar, Union
@@ -482,10 +483,8 @@ class Geometry(_BaseGeometry):
         :param crs: crs to be used if not available in geojson, CRS.WGS84 if not provided
         :return: Geometry object
         """
-        try:
+        with contextlib.suppress(KeyError, AttributeError, TypeError):
             crs = CRS(geojson["crs"]["properties"]["name"])
-        except (KeyError, AttributeError, TypeError):
-            pass
 
         if not crs:
             crs = CRS.WGS84

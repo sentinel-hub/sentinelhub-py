@@ -12,6 +12,7 @@
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
+import contextlib
 import os
 import shutil
 import sys
@@ -31,10 +32,11 @@ doc_title = "sentinelhub Documentation"
 # built documents.
 #
 # The release is read from __init__ file and version is shortened release string.
-for line in open(os.path.join(os.path.dirname(__file__), "../../sentinelhub/_version.py")):
-    if line.find("__version__") >= 0:
-        release = line.split("=")[1].strip()
-        release = release.strip('"').strip("'")
+with open(os.path.join(os.path.dirname(__file__), "../../sentinelhub/_version.py")) as version_file:
+    for line in version_file:
+        if line.find("__version__") >= 0:
+            release = line.split("=")[1].strip()
+            release = release.strip('"').strip("'")
 version = release.rsplit(".", 1)[0]
 
 # -- General configuration ------------------------------------------------
@@ -217,10 +219,8 @@ epub_exclude_files = ["search.html"]
 intersphinx_mapping = {"https://docs.python.org/3.8/": None}
 
 # copy examples
-try:
+with contextlib.suppress(FileExistsError):
     shutil.copytree("../../examples", "./examples")
-except FileExistsError:
-    pass
 
 
 MARKDOWNS_FOLDER = "./markdowns"
