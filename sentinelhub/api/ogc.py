@@ -351,7 +351,7 @@ class OgcImageService:
             params["MAXCC"] = 100.0 * request.maxcc
 
         if hasattr(request, "custom_url_params") and request.custom_url_params is not None:
-            custom_params = request.custom_url_params
+            custom_params = request.custom_url_params.copy()
 
             if CustomUrlParam.EVALSCRIPT in custom_params:
                 evalscript = custom_params[CustomUrlParam.EVALSCRIPT]
