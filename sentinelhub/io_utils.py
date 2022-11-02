@@ -166,7 +166,6 @@ def read_numpy(filename: str) -> np.ndarray:
 
 
 def _create_parent_folder(filename: str) -> None:
-    """Create parent folder for input filename recursively"""
     path = os.path.dirname(filename)
     if path != "":
         os.makedirs(path, exist_ok=True)
