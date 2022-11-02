@@ -17,7 +17,6 @@ from PIL import Image
 from .constants import MimeType
 from .decoding import decode_image_with_pillow, decode_jp2_image, decode_tar, get_data_format
 from .exceptions import SHUserWarning
-from .os_utils import create_parent_folder
 from .type_utils import Json
 
 LOGGER = logging.getLogger(__name__)
@@ -166,6 +165,13 @@ def read_numpy(filename: str) -> np.ndarray:
     return np.load(filename)
 
 
+def _create_parent_folder(filename: str) -> None:
+    """Create parent folder for input filename recursively"""
+    path = os.path.dirname(filename)
+    if path != "":
+        os.makedirs(path, exist_ok=True)
+
+
 def write_data(
     filename: str, data: Any, data_format: Optional[MimeType] = None, compress: bool = False, add: bool = False
 ) -> None:
@@ -182,7 +188,7 @@ def write_data(
     :param add: whether to append to existing text file or not. Default is `False`
     :raises: exception if numpy format is not supported or file cannot be written
     """
-    create_parent_folder(filename)
+    _create_parent_folder(filename)
 
     if not isinstance(data_format, MimeType):
         data_format = get_data_format(filename)

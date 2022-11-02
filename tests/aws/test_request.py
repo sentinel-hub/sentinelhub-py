@@ -2,7 +2,6 @@ import os
 
 import pytest
 
-from sentinelhub import get_file_list, get_folder_list
 from sentinelhub.aws import AwsProductRequest
 
 
@@ -32,7 +31,7 @@ def test_saving_responses(output_folder: str) -> None:
         assert isinstance(data, list)
         assert len(data) == 1
         product_folder = os.path.join(output_folder, product_id)
-        assert len(get_folder_list(product_folder)) == 5
-        assert len(get_file_list(product_folder)) == 1
+        assert len([f for f in os.scandir(product_folder) if f.is_dir()]) == 5
+        assert len([f for f in os.scandir(product_folder) if f.is_file()]) == 1
     except ValueError:
         raise AssertionError("Expected to obtain and save data")

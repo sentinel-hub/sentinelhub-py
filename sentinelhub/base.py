@@ -8,7 +8,6 @@ from typing import Any, Callable, Generic, Iterable, List, Optional, Tuple, Type
 
 from .config import SHConfig
 from .download import DownloadClient, DownloadRequest
-from .os_utils import make_folder
 from .type_utils import JsonDict
 
 _T = TypeVar("_T")
@@ -226,7 +225,7 @@ class DataRequest(metaclass=ABCMeta):
                 )
 
             for folder in self.folder_list:
-                make_folder(os.path.join(self.data_folder, folder))
+                os.makedirs(os.path.join(self.data_folder, folder), exist_ok=True)
 
         for download_request in self.download_list:
             download_request.save_response = save_data
