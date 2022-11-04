@@ -24,9 +24,6 @@ from sentinelhub.exceptions import SHUserWarning
 def test_img_read(input_folder: str, output_folder: str, filename: str, mean: float, shape: Tuple[int, ...]) -> None:
     img = read_data(os.path.join(input_folder, filename))
 
-    if filename.endswith("txt"):
-        img = np.fromstring(img)
-
     assert img.shape == shape
     assert np.mean(img) == approx(mean, abs=1e-4)
     assert img.flags["WRITEABLE"], "Obtained numpy array is not writeable"
