@@ -53,7 +53,7 @@ def test_img_read_jpeg(
 
 def test_read_write_text() -> None:
     with TempFS() as filesystem:
-        file_path = os.path.join(filesystem.root_path, "test-string.txt")
+        file_path = filesystem.getsyspath("test-string.txt")
 
         text = "sentinelhub-py is often shortened to sh-py"
         write_data(file_path, text)
@@ -62,7 +62,7 @@ def test_read_write_text() -> None:
 
 def test_read_write_xml() -> None:
     with TempFS() as filesystem:
-        file_path = os.path.join(filesystem.root_path, "test-xml.xml")
+        file_path = filesystem.getsyspath("test-xml.xml")
 
         root = ET.Element("EOPatch")
         data = ET.SubElement(root, "data")
@@ -72,6 +72,7 @@ def test_read_write_xml() -> None:
 
         write_data(file_path, tree)
         tree_new = read_data(file_path)
+        assert isinstance(tree_new, ET.ElementTree)
         assert set(tree_new.getroot().itertext()) == set(tree.getroot().itertext())
 
 
