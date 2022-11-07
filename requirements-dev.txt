@@ -1,12 +1,14 @@
 boto3-stubs>=1.20.0
 click>=8.0.0
 codecov
+fs
 moto
 mypy
 pre-commit
 pylint>=2.14.0
 pytest>=4.0.0
 pytest-cov
+pytest-lazy-fixture
 pytest-mock
 ray[default]
 requests-mock
