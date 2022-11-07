@@ -6,6 +6,7 @@ import numpy as np
 import pytest
 from fs.tempfs import TempFS
 from pytest import approx
+from pytest_lazyfixture import lazy_fixture
 
 from sentinelhub import read_data, write_data
 from sentinelhub.exceptions import SHUserWarning
@@ -30,11 +31,13 @@ def test_img_read(input_folder: str, filename: str, mean: float, shape: Tuple[in
     assert img.flags["WRITEABLE"], "Obtained numpy array is not writeable"
 
 
-xml_root = ET.Element("EOPatch")
-xml_data = ET.SubElement(xml_root, "data")
-ET.SubElement(xml_data, "field1", name="BANDS-S2-L1C").text = "some value1"
-ET.SubElement(xml_data, "field2", name="CLP").text = "some value2"
-TEST_XML = ET.ElementTree(xml_root)
+@pytest.fixture
+def xml_test():
+    xml_root = ET.Element("EOPatch")
+    xml_data = ET.SubElement(xml_root, "data")
+    ET.SubElement(xml_data, "field1", name="BANDS-S2-L1C").text = "some value1"
+    ET.SubElement(xml_data, "field2", name="CLP").text = "some value2"
+    return ET.ElementTree(xml_root)
 
 
 @pytest.mark.parametrize(
@@ -46,13 +49,14 @@ TEST_XML = ET.ElementTree(xml_root)
         ("img-15bit.jp2", np.arange((5 * 5 * 3), dtype=np.uint8).reshape((5, 5, 3))),
         ("img-16bit.jp2", np.arange((5 * 5 * 3), dtype=np.uint8).reshape((5, 5, 3))),
         ("test-string.txt", "sentinelhub-py is often shortened to sh-py"),
-        ("test-xml.xml", TEST_XML),
+        ("test-xml.xml", lazy_fixture("xml_test")),
     ],
 )
-def test_write(filename: str, data: Union[str, np.ndarray, ET.ElementTree]) -> None:
+def test_write_read(filename: str, data: Union[str, np.ndarray, ET.ElementTree]) -> None:
     with TempFS() as filesystem:
         file_path = filesystem.getsyspath(filename)
         write_data(file_path, data)
+        assert filesystem.exists(filename)
         new_data = read_data(file_path)
 
         if isinstance(data, np.ndarray):
