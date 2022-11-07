@@ -32,7 +32,7 @@ def test_img_read(input_folder: str, filename: str, mean: float, shape: Tuple[in
 
 
 @pytest.fixture
-def xml_test():
+def xml_testcase():
     xml_root = ET.Element("EOPatch")
     xml_data = ET.SubElement(xml_root, "data")
     ET.SubElement(xml_data, "field1", name="BANDS-S2-L1C").text = "some value1"
@@ -49,7 +49,7 @@ def xml_test():
         ("img-15bit.jp2", np.arange((5 * 5 * 3), dtype=np.uint8).reshape((5, 5, 3))),
         ("img-16bit.jp2", np.arange((5 * 5 * 3), dtype=np.uint8).reshape((5, 5, 3))),
         ("test-string.txt", "sentinelhub-py is often shortened to sh-py"),
-        ("test-xml.xml", lazy_fixture("xml_test")),
+        ("test-xml.xml", lazy_fixture("xml_testcase")),
     ],
 )
 def test_write_read(filename: str, data: Union[str, np.ndarray, ET.ElementTree]) -> None:
