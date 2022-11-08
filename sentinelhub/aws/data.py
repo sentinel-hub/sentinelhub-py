@@ -185,9 +185,9 @@ class AwsData(metaclass=ABCMeta):
         :raises: ValueError
         """
         if hasattr(self, "tile_info"):
-            return self.tile_info["datastrip"]["id"][-5:]  # type: ignore[attr-defined]
+            return self.tile_info["datastrip"]["id"][-5:]
         if hasattr(self, "product_info"):
-            return self.product_info["datastrips"][0]["id"][-5:]  # type: ignore[attr-defined]
+            return self.product_info["datastrips"][0]["id"][-5:]
         raise ValueError("No info file has been obtained yet.")
 
     @staticmethod
