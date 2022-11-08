@@ -96,6 +96,7 @@ def tile_fixture() -> JsonDict:
         "created": "2020-06-22T12:33:36.081000Z",
         "sensingTime": None,
         "additionalData": {"minMetersPerPixel": 10.0, "maxMetersPerPixel": 160.0},
+        "other_data": {"ingestionStart": "2022-11-07T14:51:57.381758Z"},
     }
 
 
