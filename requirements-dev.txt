@@ -3,7 +3,7 @@ click>=8.0.0
 codecov
 fs
 moto
-mypy
+mypy>=0.990
 pre-commit
 pylint>=2.14.0
 pytest>=4.0.0

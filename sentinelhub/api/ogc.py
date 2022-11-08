@@ -311,7 +311,7 @@ class OgcImageService:
         :return: url to Sentinel Hub's OGC service for this product.
         """
         url = self.get_base_url(request)
-        authority = request.theme if hasattr(request, "theme") else self.config.instance_id  # type: ignore
+        authority = request.theme if hasattr(request, "theme") else self.config.instance_id
 
         params = self._get_common_url_parameters(request)
         if request.service_type in (ServiceType.WMS, ServiceType.WCS):
