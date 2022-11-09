@@ -57,7 +57,7 @@ def test_session_content_and_headers(fake_config: SHConfig, fake_token: Dict[str
     requests_mock.post(url="/oauth/token", response_list=[{"json": fake_token}])
     call_time = time.time()
     token = SentinelHubSession(config=fake_config).token
-    # "expires_at" is derived from "expires_in"  which is used just for initial calculation of "expires_at"
+    # "expires_at" is derived from "expires_in"  and not read from the response field "expires_at"
     # tokens are refreshed 120s before "expires_at" so even few second miscalculation should not be problematic
     assert token["expires_at"] == pytest.approx(call_time + fake_token["expires_in"], 1.0)
     token["expires_at"] = fake_token["expires_at"]
