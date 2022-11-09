@@ -110,6 +110,23 @@ class Bands:
         Band("B07", (Unit.REFLECTANCE,), (np.float32,)),
     )
     LANDSAT_MSS_L1 = tuple(Band(f"B0{index}", (Unit.REFLECTANCE,), (np.float32,)) for index in range(1, 5))
+    HARMONIZED_LANDSAT_SENTINEL = (
+        Band("CoastalAerosol", (Unit.REFLECTANCE, Unit.DN), (np.float32, np.int16)),
+        Band("Blue", (Unit.REFLECTANCE, Unit.DN), (np.float32, np.int16)),
+        Band("Green", (Unit.REFLECTANCE, Unit.DN), (np.float32, np.int16)),
+        Band("Red", (Unit.REFLECTANCE, Unit.DN), (np.float32, np.int16)),
+        Band("RedEdge1", (Unit.REFLECTANCE, Unit.DN), (np.float32, np.int16)),
+        Band("RedEdge2", (Unit.REFLECTANCE, Unit.DN), (np.float32, np.int16)),
+        Band("RedEdge3", (Unit.REFLECTANCE, Unit.DN), (np.float32, np.int16)),
+        Band("NIR_Broad", (Unit.REFLECTANCE, Unit.DN), (np.float32, np.int16)),
+        Band("NIR_Narrow", (Unit.REFLECTANCE, Unit.DN), (np.float32, np.int16)),
+        Band("SWIR1", (Unit.REFLECTANCE, Unit.DN), (np.float32, np.int16)),
+        Band("SWIR2", (Unit.REFLECTANCE, Unit.DN), (np.float32, np.int16)),
+        Band("WaterVapor", (Unit.REFLECTANCE, Unit.DN), (np.float32, np.int16)),
+        Band("Cirrus", (Unit.REFLECTANCE, Unit.DN), (np.float32, np.int16)),
+        Band("ThermalInfrared1", (Unit.BRIGHTNESS_TEMPERATURE, Unit.DN), (np.int16, np.int16)),
+        Band("ThermalInfrared2", (Unit.BRIGHTNESS_TEMPERATURE, Unit.DN), (np.int16, np.int16)),
+    )
     MODIS = tuple(Band(f"B0{index}", (Unit.REFLECTANCE,), (np.float32,)) for index in range(1, 8))
     DEM = (Band("DEM", (Unit.METERS,), (np.float32,)),)
 
@@ -208,6 +225,11 @@ class MetaBands:
     )
     LANDSAT_MSS_L1 = (
         *(Band(name, (Unit.DN,), (np.uint16,)) for name in ["BQA", "QA_RADSAT"]),
+        Band("dataMask", (Unit.DN,), (bool,)),
+    )
+    HARMONIZED_LANDSAT_SENTINEL = (
+        Band("QA", (Unit.DN,), (np.uint16,)),
+        *(Band(name, (Unit.DEGREES, Unit.DN), (np.float32, np.uint16)) for name in ["VAA", "VZA", "SAA", "SZA"]),
         Band("dataMask", (Unit.DN,), (bool,)),
     )
     MODIS = (Band("dataMask", (Unit.DN,), (bool,)),)
