@@ -28,7 +28,7 @@ class _CollectionType:
     DEM = "DEM"
     BYOC = "BYOC"
     BATCH = "BATCH"
-    HLS = "Harmonized LandSat Sentinel"
+    HLS = "Harmonized Landsat Sentinel"
 
 
 class _SensorType:
