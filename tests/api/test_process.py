@@ -596,3 +596,41 @@ def test_basic_functionalities() -> None:
     assert service_url in input_data_dict_repr
 
     assert json.dumps(input_data_dict) == json.dumps(normal_dict)
+
+
+def test_hsl_jpg() -> None:
+    """Test downloading three bands of L1C"""
+    evalscript = """
+        //VERSION=3
+        function setup() {
+          return {
+            input: ["Blue","Green","Red", "dataMask"],
+            output: { bands: 4 }
+          };
+        }
+
+        function evaluatePixel(sample) {
+          return [sample.Blue, sample.Green, sample.Red, sample.dataMask];
+        }
+    """
+
+    request = SentinelHubRequest(
+        evalscript=evalscript,
+        input_data=[
+            SentinelHubRequest.input_data(
+                data_collection=DataCollection.HARMONIZED_LANDSAT_SENTINEL,
+                time_interval=("2022-01-11", "2022-08-11"),
+                maxcc=0.3,
+                mosaicking_order=MosaickingOrder.LEAST_CC,
+            )
+        ],
+        responses=[SentinelHubRequest.output_response("default", MimeType.JPG)],
+        bbox=BBox(bbox=[46.16, -16.15, 46.51, -15.58], crs=CRS.WGS84),
+        size=(512, 856),
+    )
+
+    img = request.get_data()[0]
+
+    test_numpy_data(
+        img, exp_shape=(856, 512, 3), exp_min=0, exp_max=126, exp_mean=18.887, exp_median=17.0, exp_std=11.157
+    )
