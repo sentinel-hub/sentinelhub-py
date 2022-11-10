@@ -28,6 +28,7 @@ class _CollectionType:
     DEM = "DEM"
     BYOC = "BYOC"
     BATCH = "BATCH"
+    HLS = "Harmonized Landsat Sentinel"
 
 
 class _SensorType:
@@ -387,6 +388,15 @@ class DataCollection(Enum, metaclass=_DataCollectionMeta):
         processing_level=_ProcessingLevel.L1B,
         bands=Bands.SENTINEL3_SLSTR,
         metabands=MetaBands.SENTINEL3_SLSTR,
+        has_cloud_coverage=True,
+    )
+    HARMONIZED_LANDSAT_SENTINEL = DataCollectionDefinition(
+        api_id="hls",
+        catalog_id="hls",
+        collection_type=_CollectionType.HLS,
+        service_url=ServiceUrl.USWEST,
+        bands=Bands.HARMONIZED_LANDSAT_SENTINEL,
+        metabands=MetaBands.HARMONIZED_LANDSAT_SENTINEL,
         has_cloud_coverage=True,
     )
 
