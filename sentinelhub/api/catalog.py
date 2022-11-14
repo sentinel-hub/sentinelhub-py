@@ -251,7 +251,7 @@ class CatalogSearchIterator(FeatureIterator[JsonDict]):
 
         return new_features
 
-    def get_timestamps(self) -> List[dt.date]:
+    def get_timestamps(self) -> List[dt.datetime]:
         """Provides features timestamps
 
         :return: A list of sensing times
