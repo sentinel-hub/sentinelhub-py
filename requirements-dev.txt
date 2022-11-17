@@ -1,3 +1,4 @@
+basemap
 boto3-stubs>=1.20.0
 click>=8.0.0
 codecov
