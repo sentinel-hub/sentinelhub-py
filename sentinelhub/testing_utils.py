@@ -3,6 +3,7 @@ Utility tools for writing unit tests for packages which rely on `sentinelhub-py`
 """
 import os
 from typing import Optional, Tuple
+from warnings import warn
 
 import numpy as np
 from pytest import approx
@@ -28,6 +29,22 @@ def test_numpy_data(
     exp_median: Optional[float] = None,
     exp_std: Optional[float] = None,
     delta: Optional[float] = None,
+) -> None:
+    warn('Deprecated, rather use function "assert_statistics_match" look changelog', DeprecationWarning, stacklevel=2)
+    assert_statistics_match(data, exp_shape, exp_dtype, exp_min, exp_max, exp_mean, exp_median, exp_std, delta)
+
+
+def assert_statistics_match(
+    data: Optional[np.ndarray] = None,
+    exp_shape: Optional[Tuple[int, ...]] = None,
+    exp_dtype: Optional[np.dtype] = None,
+    exp_min: Optional[float] = None,
+    exp_max: Optional[float] = None,
+    exp_mean: Optional[float] = None,
+    exp_median: Optional[float] = None,
+    exp_std: Optional[float] = None,
+    delta: Optional[float] = None,
+    abs_delta: Optional[bool] = False,
 ) -> None:
     """Validates basic statistics of data array
 
@@ -61,6 +78,12 @@ def test_numpy_data(
     for name, (func, expected) in stats_suite.items():
         if expected is not None:
             data_stats[name] = func(data)  # type: ignore # unknown function
-            exp_stats[name] = expected if name in is_precise else approx(expected, rel=delta)
+            exp_stats[name] = (
+                expected
+                if name in is_precise
+                else approx(expected, rel=delta)
+                if not abs_delta
+                else approx(expected, abs=delta)
+            )
 
     assert data_stats == exp_stats, "Statistics differ from expected values"

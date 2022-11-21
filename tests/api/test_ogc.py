@@ -19,7 +19,7 @@ from sentinelhub import (
     WmsRequest,
 )
 from sentinelhub.api.ogc import OgcImageService, OgcRequest
-from sentinelhub.testing_utils import test_numpy_data
+from sentinelhub.testing_utils import assert_statistics_match
 
 pytestmark = pytest.mark.sh_integration
 
@@ -492,7 +492,7 @@ def test_ogc(test_case: OgcTestCase, output_folder: str) -> None:
         else:
             assert not np.array_equal(data[0], data[-1]), "First and last output should be different"
 
-    test_numpy_data(
+    assert_statistics_match(
         data[0],
         exp_min=test_case.img_min,
         exp_max=test_case.img_max,
