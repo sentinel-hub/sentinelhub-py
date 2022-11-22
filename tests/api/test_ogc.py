@@ -499,6 +499,7 @@ def test_ogc(test_case: OgcTestCase, output_folder: str) -> None:
         exp_mean=test_case.img_mean,
         exp_median=test_case.img_median,
         exp_std=test_case.img_std,
+        rel_delta=1e-4,
     )
 
 
