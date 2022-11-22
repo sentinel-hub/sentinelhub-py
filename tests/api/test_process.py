@@ -22,7 +22,7 @@ from sentinelhub import (
     bbox_to_dimensions,
 )
 from sentinelhub.api.base_request import InputDataDict
-from sentinelhub.testing_utils import test_numpy_data
+from sentinelhub.testing_utils import assert_statistics_match
 
 pytestmark = pytest.mark.sh_integration
 
@@ -65,8 +65,15 @@ def test_single_jpg() -> None:
 
     img = request.get_data(max_threads=3)[0]
 
-    test_numpy_data(
-        img, exp_shape=(856, 512, 3), exp_min=2, exp_max=255, exp_mean=74.898, exp_median=69, exp_std=27.89786
+    assert_statistics_match(
+        img,
+        exp_shape=(856, 512, 3),
+        exp_min=2,
+        exp_max=255,
+        exp_mean=74.898,
+        exp_median=69,
+        exp_std=27.89786,
+        rel_delta=1e-4,
     )
 
 
@@ -109,8 +116,15 @@ def test_other_args(config: SHConfig, output_folder: str) -> None:
 
     img = request.get_data(max_threads=3)[0]
 
-    test_numpy_data(
-        img, exp_shape=(856, 512, 3), exp_min=0, exp_max=255, exp_mean=74.92, exp_median=69, exp_std=28.141225755093437
+    assert_statistics_match(
+        img,
+        exp_shape=(856, 512, 3),
+        exp_min=0,
+        exp_max=255,
+        exp_mean=74.92,
+        exp_median=69,
+        exp_std=28.14122,
+        rel_delta=1e-4,
     )
 
 
@@ -154,8 +168,15 @@ def test_preview_mode() -> None:
 
     img = request.get_data(max_threads=3)[0]
 
-    test_numpy_data(
-        img, exp_shape=(6, 6, 3), exp_min=330, exp_max=3128, exp_mean=1787.5185, exp_median=1880.5, exp_std=593.3735
+    assert_statistics_match(
+        img,
+        exp_shape=(6, 6, 3),
+        exp_min=330,
+        exp_max=3128,
+        exp_mean=1787.5185,
+        exp_median=1880.5,
+        exp_std=593.3735,
+        rel_delta=1e-4,
     )
 
 
@@ -198,8 +219,15 @@ def test_resolution_parameter() -> None:
 
     img = request.get_data(max_threads=3)[0]
 
-    test_numpy_data(
-        img, exp_shape=(153, 160, 3), exp_min=670, exp_max=6105, exp_mean=1848.7660, exp_median=1895, exp_std=612.048
+    assert_statistics_match(
+        img,
+        exp_shape=(153, 160, 3),
+        exp_min=670,
+        exp_max=6105,
+        exp_mean=1848.7660,
+        exp_median=1895,
+        exp_std=612.048,
+        rel_delta=1e-4,
     )
 
 
@@ -254,8 +282,15 @@ def test_multipart_tar() -> None:
 
     img_data = tar["default.tif"]
 
-    test_numpy_data(
-        img_data, exp_shape=(856, 512, 3), exp_min=0, exp_max=8073, exp_mean=1176.32, exp_median=1086, exp_std=449.4658
+    assert_statistics_match(
+        img_data,
+        exp_shape=(856, 512, 3),
+        exp_min=0,
+        exp_max=8073,
+        exp_mean=1176.32,
+        exp_median=1086,
+        exp_std=449.4658,
+        rel_delta=1e-4,
     )
 
     json_data = tar["userdata.json"]
@@ -394,8 +429,15 @@ def test_multipart_geometry() -> None:
 
     img = tar["default.tif"]
 
-    test_numpy_data(
-        img, exp_shape=(382, 181, 3), exp_min=25, exp_max=255, exp_mean=144.89, exp_median=79, exp_std=95.578
+    assert_statistics_match(
+        img,
+        exp_shape=(382, 181, 3),
+        exp_min=25,
+        exp_max=255,
+        exp_mean=144.89,
+        exp_median=79,
+        exp_std=95.578,
+        rel_delta=1e-4,
     )
 
     json_data = tar["userdata.json"]
@@ -506,8 +548,15 @@ def test_data_fusion(config: SHConfig) -> None:
     )
     image = request.get_data()[0]
 
-    test_numpy_data(
-        image, exp_shape=(100, 100, 3), exp_min=23, exp_max=255, exp_mean=98.128, exp_median=92, exp_std=37.487
+    assert_statistics_match(
+        image,
+        exp_shape=(100, 100, 3),
+        exp_min=23,
+        exp_max=255,
+        exp_mean=98.128,
+        exp_median=92,
+        exp_std=37.487,
+        rel_delta=1e-4,
     )
 
     assert request.download_list[0].url == f"{ServiceUrl.MAIN}/api/v1/process"
@@ -578,8 +627,15 @@ def test_bbox_geometry() -> None:
 
     img = request.get_data(max_threads=3)[0]
 
-    test_numpy_data(
-        img, exp_shape=(856, 512, 3), exp_min=0, exp_max=255, exp_mean=22.625, exp_median=0, exp_std=39.02901
+    assert_statistics_match(
+        img,
+        exp_shape=(856, 512, 3),
+        exp_min=0,
+        exp_max=255,
+        exp_mean=22.625,
+        exp_median=0,
+        exp_std=39.02901,
+        rel_delta=1e-4,
     )
 
 

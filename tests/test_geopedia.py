@@ -14,7 +14,7 @@ from sentinelhub import (
     GeopediaWmsRequest,
     MimeType,
 )
-from sentinelhub.testing_utils import test_numpy_data
+from sentinelhub.testing_utils import assert_statistics_match
 
 pytestmark = pytest.mark.geopedia_integration
 
@@ -68,7 +68,7 @@ def test_geopedia_wms() -> None:
     assert isinstance(data, list)
     assert len(data) == 1
 
-    test_numpy_data(np.array(data), exp_min=0, exp_max=255, exp_mean=150.9248, exp_median=255)
+    assert_statistics_match(np.array(data), exp_min=0, exp_max=255, exp_mean=150.9248, exp_median=255)
 
 
 def test_geopedia_image_request(output_folder: str) -> None:
@@ -88,7 +88,9 @@ def test_geopedia_image_request(output_folder: str) -> None:
     assert isinstance(image_list, list)
     assert len(image_list) == 5
 
-    test_numpy_data(np.array(image_list), exp_min=0, exp_max=255, exp_mean=66.88769, exp_median=0)
+    assert_statistics_match(
+        np.array(image_list), exp_min=0, exp_max=255, exp_mean=66.88769, exp_median=0, rel_delta=1e-4
+    )
 
     filenames = gpd_request.get_filename_list()
     image_stats = list(gpd_request.get_items())[0]["properties"][image_field_name]

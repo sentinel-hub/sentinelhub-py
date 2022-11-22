@@ -3,9 +3,12 @@ Utility tools for writing unit tests for packages which rely on `sentinelhub-py`
 """
 import os
 from typing import Optional, Tuple
+from warnings import warn
 
 import numpy as np
 from pytest import approx
+
+from .exceptions import SHDeprecationWarning
 
 
 def get_input_folder(current_file: str) -> str:
@@ -27,10 +30,32 @@ def test_numpy_data(
     exp_mean: Optional[float] = None,
     exp_median: Optional[float] = None,
     exp_std: Optional[float] = None,
-    delta: Optional[float] = None,
+    delta: float = 1e-4,
+) -> None:
+    """Deprecated version of assert_statistics_match"""
+    warn(
+        "test_numpy_data` has been deprecated in favor of `assert_statistics_match", SHDeprecationWarning, stacklevel=2
+    )
+    if data is None:
+        return
+    assert_statistics_match(
+        data, exp_shape, exp_dtype, exp_min, exp_max, exp_mean, exp_median, exp_std, rel_delta=delta
+    )
+
+
+def assert_statistics_match(
+    data: np.ndarray,
+    exp_shape: Optional[Tuple[int, ...]] = None,
+    exp_dtype: Optional[np.dtype] = None,
+    exp_min: Optional[float] = None,
+    exp_max: Optional[float] = None,
+    exp_mean: Optional[float] = None,
+    exp_median: Optional[float] = None,
+    exp_std: Optional[float] = None,
+    rel_delta: Optional[float] = None,
+    abs_delta: Optional[float] = None,
 ) -> None:
     """Validates basic statistics of data array
-
     :param data: Data array
     :param exp_shape: Expected shape
     :param exp_dtype: Expected dtype
@@ -39,11 +64,9 @@ def test_numpy_data(
     :param exp_mean: Expected mean value
     :param exp_median: Expected median value
     :param exp_std: Expected standard deviation value
-    :param delta: Precision of validation (relative). If not set, it will be set automatically
+    :param rel_delta: Precision of validation (relative)
+    :param abs_delta: Precision of validation (absolute)
     """
-    if data is None:
-        return
-    delta = delta if delta is not None else 1e-4
 
     stats_suite = {
         "shape": (lambda array: array.shape, exp_shape),
@@ -61,6 +84,6 @@ def test_numpy_data(
     for name, (func, expected) in stats_suite.items():
         if expected is not None:
             data_stats[name] = func(data)  # type: ignore # unknown function
-            exp_stats[name] = expected if name in is_precise else approx(expected, rel=delta)
+            exp_stats[name] = expected if name in is_precise else approx(expected, rel=rel_delta, abs=abs_delta)
 
     assert data_stats == exp_stats, "Statistics differ from expected values"
