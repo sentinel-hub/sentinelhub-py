@@ -1,3 +1,5 @@
+from typing import Dict
+
 import numpy as np
 import pytest
 
@@ -30,7 +32,7 @@ from sentinelhub.testing_utils import assert_statistics_match
         ],
     ),
 )
-def test_assert_statistics_match(data, expected_statistics, succeed):
+def test_assert_statistics_match(data: np.data, expected_statistics: Dict, succeed: bool) -> None:
     if succeed:
         assert_statistics_match(data, **expected_statistics)
     else:

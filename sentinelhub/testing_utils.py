@@ -30,6 +30,7 @@ def test_numpy_data(
     exp_std: Optional[float] = None,
     delta: Optional[float] = None,
 ) -> None:
+    """Deprecated version of assert_statistics_match"""
     warn('Deprecated, rather use function "assert_statistics_match" look changelog', DeprecationWarning, stacklevel=2)
     assert_statistics_match(data, exp_shape, exp_dtype, exp_min, exp_max, exp_mean, exp_median, exp_std, delta)
 
@@ -57,6 +58,7 @@ def assert_statistics_match(
     :param exp_median: Expected median value
     :param exp_std: Expected standard deviation value
     :param delta: Precision of validation (relative). If not set, it will be set automatically
+    :abs_delta: Option to set precision of validation in absolute terms
     """
     if data is None:
         return
