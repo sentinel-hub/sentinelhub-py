@@ -65,6 +65,7 @@ disallow_untyped_defs = true
 disallow_untyped_decorators = true
 warn_unreachable = true
 strict_equality = true
+pretty = true
 
 [tool.nbqa.addopts]
 flake8 = [
