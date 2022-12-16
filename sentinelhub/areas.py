@@ -184,7 +184,8 @@ class BBoxSplitter(AreaSplitter):
         self,
         shape_list: Iterable[Union[Polygon, MultiPolygon, _BaseGeometry]],
         crs: CRS,
-        split_shape: Union[int, Tuple[int, int]],
+        split_shape: Union[None, int, Tuple[int, int]] = None,
+        split_size: Union[None, int, Tuple[int, int]] = None,
         **kwargs: Any,
     ):
         """
@@ -193,15 +194,32 @@ class BBoxSplitter(AreaSplitter):
         :param split_shape: Parameter that describes the shape in which the area bounding box will be split.
             It can be a tuple of the form `(n, m)` which means the area bounding box will be split into `n` columns
             and `m` rows. It can also be a single integer `n` which is the same as `(n, n)`.
+        :param split_size: Parameter that describes the size of patches (in meters) into which the area bounding box
+            will be split.
+            It can be a tuple of the form `(width, height)` which means the area bounding box will be split into patches
+            of size (width, height). It can also be a single integer `size` which is the same as `(size, size)`.
         :param reduce_bbox_sizes: If `True` it will reduce the sizes of bounding boxes so that they will tightly fit
             the given area geometry from `shape_list`.
         """
-        self.split_shape = _parse_to_pair(split_shape, allowed_types=(int,), param_name="split_shape")
+        if (split_shape is not None) and (split_size is None):
+            self.split_params = ("shape", _parse_to_pair(split_shape, allowed_types=(int,), param_name="split_shape"))
+        elif (split_shape is None) and (split_size is not None):
+            self.split_params = ("size", _parse_to_pair(split_size, allowed_types=(int,), param_name="split_size"))
+        else:
+            raise ValueError("Exactly one of 'split_shape' or 'split_size' needs to be specified.")
         super().__init__(shape_list, crs, **kwargs)
 
     def _make_split(self) -> Tuple[List[BBox], List[Dict[str, object]]]:
-        columns, rows = self.split_shape
-        bbox_partition = self.area_bbox.get_partition(num_x=columns, num_y=rows)
+        mode, split_params = self.split_params
+        if mode == "shape":
+            columns, rows = split_params
+            bbox_partition = self.area_bbox.get_partition(num_x=columns, num_y=rows)
+        else:
+            width, height = split_params
+            bbox_partition = self.area_bbox.get_partition(size_x=width, size_y=height)
+
+            columns = len(bbox_partition)
+            rows = len(bbox_partition[0])
 
         bbox_list, info_list = [], []
         for i, j in itertools.product(range(columns), range(rows)):
