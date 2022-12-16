@@ -202,21 +202,20 @@ class BBoxSplitter(AreaSplitter):
             the given area geometry from `shape_list`.
         """
         if (split_shape is not None) and (split_size is None):
-            self.split_shape = _parse_to_pair(split_shape, allowed_types=(int,), param_name="split_shape")
-            self.split_size = None
+            self.split_params = ("shape", _parse_to_pair(split_shape, allowed_types=(int,), param_name="split_shape"))
         elif (split_shape is None) and (split_size is not None):
-            self.split_shape = None
-            self.split_size = _parse_to_pair(split_size, allowed_types=(int,), param_name="split_shape")
+            self.split_params = ("size", _parse_to_pair(split_size, allowed_types=(int,), param_name="split_size"))
         else:
             raise ValueError("Exactly one of 'split_shape' or 'split_size' needs to be specified.")
         super().__init__(shape_list, crs, **kwargs)
 
     def _make_split(self) -> Tuple[List[BBox], List[Dict[str, object]]]:
-        if self.split_shape is not None:
-            columns, rows = self.split_shape
+        mode, split_params = self.split_params
+        if mode == "shape":
+            columns, rows = split_params
             bbox_partition = self.area_bbox.get_partition(num_x=columns, num_y=rows)
         else:
-            width, height = self.split_size
+            width, height = split_params
             bbox_partition = self.area_bbox.get_partition(size_x=width, size_y=height)
 
             columns = len(bbox_partition)
