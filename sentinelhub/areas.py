@@ -221,7 +221,6 @@ class BBoxSplitter(AreaSplitter):
             columns = len(bbox_partition)
             rows = len(bbox_partition[0])
 
-
         bbox_list, info_list = [], []
         for i, j in itertools.product(range(columns), range(rows)):
             if self._intersects_area(bbox_partition[i][j]):
