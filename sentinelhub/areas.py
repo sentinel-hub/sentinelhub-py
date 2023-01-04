@@ -194,8 +194,8 @@ class BBoxSplitter(AreaSplitter):
         :param split_shape: Parameter that describes the shape in which the area bounding box will be split.
             It can be a tuple of the form `(n, m)` which means the area bounding box will be split into `n` columns
             and `m` rows. It can also be a single integer `n` which is the same as `(n, n)`.
-        :param split_size: Parameter that describes the size of patches (in meters) into which the area bounding box
-            will be split.
+        :param split_size: Parameter that describes the size of patches (in the same Unit of Measure of the CRS)
+         into which the area bounding box will be split.
             It can be a tuple of the form `(width, height)` which means the area bounding box will be split into patches
             of size (width, height). It can also be a single integer `size` which is the same as `(size, size)`.
         :param reduce_bbox_sizes: If `True` it will reduce the sizes of bounding boxes so that they will tightly fit
