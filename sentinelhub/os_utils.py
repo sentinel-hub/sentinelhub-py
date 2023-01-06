@@ -14,8 +14,10 @@ from .exceptions import SHDeprecationWarning
 def deprecated(func: Callable) -> Callable:  # pylint: disable=missing-docstring
     def deprecated_func(*args, **kwargs):  # type: ignore
         warnings.warn(
-            f"Function `{func.__name__}` is part of `sentinelhub.os_utils` module, which is deprecated and will be"
-            " removed in future version.",
+            (
+                f"Function `{func.__name__}` is part of `sentinelhub.os_utils` module, which is deprecated and will be"
+                " removed in future version."
+            ),
             category=SHDeprecationWarning,
             stacklevel=2,
         )

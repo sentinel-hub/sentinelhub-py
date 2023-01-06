@@ -258,9 +258,11 @@ class SessionSharingThread(Thread):
             memory = self._create_shared_memory(encoded_token)
         except FileExistsError:
             warnings.warn(
-                f"A shared memory with a name '{self.memory_name}' already exists. It will be removed and allocated "
-                f"anew. Please make sure that every {self.__class__.__name__} instance is joined at the end. If you "
-                "are using multiple threads then specify different 'memory_name' parameter for each of them.",
+                (
+                    f"A shared memory with a name '{self.memory_name}' already exists. It will be removed and allocated"
+                    f" anew. Please make sure that every {self.__class__.__name__} instance is joined at the end. If"
+                    " you are using multiple threads then specify different 'memory_name' parameter for each of them."
+                ),
                 category=SHUserWarning,
             )
 
