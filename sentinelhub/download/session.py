@@ -21,7 +21,7 @@ from ..constants import SHConstants
 from ..download.handlers import fail_user_errors, retry_temporary_errors
 from ..download.models import DownloadRequest
 from ..exceptions import SHUserWarning
-from ..type_utils import JsonDict
+from ..types import JsonDict
 
 if sys.version_info < (3, 8):
     from shared_memory import SharedMemory

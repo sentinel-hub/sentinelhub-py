@@ -4,7 +4,7 @@ Module with statistics to dataframe transformation.
 from typing import Any, Dict, List, Optional, Tuple, Union
 
 from .time_utils import parse_time
-from .type_utils import JsonDict
+from .types import JsonDict
 
 _PANDAS_IMPORT_MESSAGE = (
     "To use this function you need to install the `pandas` library, which is not a dependency of sentinelhub-py."

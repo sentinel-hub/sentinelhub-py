@@ -15,7 +15,7 @@ from ..data_collections import DataCollection
 from ..download import SentinelHubDownloadClient
 from ..geometry import BBox
 from ..time_utils import parse_time, parse_time_interval, serialize_time
-from ..type_utils import JsonDict, RawTimeIntervalType, RawTimeType
+from ..types import JsonDict, RawTimeIntervalType, RawTimeType
 
 
 class WebFeatureService(FeatureIterator[JsonDict]):

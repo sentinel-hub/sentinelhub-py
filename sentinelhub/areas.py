@@ -20,7 +20,7 @@ from .constants import CRS
 from .data_collections import DataCollection
 from .geo_utils import transform_point
 from .geometry import BBox, BBoxCollection, Geometry, _BaseGeometry
-from .type_utils import JsonDict
+from .types import JsonDict
 
 T = TypeVar("T", float, int)
 

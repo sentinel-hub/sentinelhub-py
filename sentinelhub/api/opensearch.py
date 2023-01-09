@@ -14,7 +14,7 @@ from ..constants import CRS
 from ..download import DownloadClient
 from ..geometry import BBox
 from ..time_utils import RawTimeIntervalType, RawTimeType, parse_time, parse_time_interval, serialize_time
-from ..type_utils import JsonDict
+from ..types import JsonDict
 
 LOGGER = logging.getLogger(__name__)
 

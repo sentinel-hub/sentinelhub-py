@@ -7,7 +7,7 @@ from typing import Any, Iterable, List, Optional, Tuple, TypeVar, Union, overloa
 import dateutil.parser
 import dateutil.tz
 
-from .type_utils import RawTimeIntervalType, RawTimeType
+from .types import RawTimeIntervalType, RawTimeType
 
 TimeType = TypeVar("TimeType", dt.date, dt.datetime)  # pylint: disable=invalid-name
 

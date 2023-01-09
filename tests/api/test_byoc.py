@@ -9,7 +9,7 @@ import pytest
 from requests_mock import Mocker
 
 from sentinelhub import ByocCollection, ByocTile, DownloadFailedException, SentinelHubBYOC, SHConfig
-from sentinelhub.type_utils import JsonDict
+from sentinelhub.types import JsonDict
 
 pytestmark = pytest.mark.sh_integration
 

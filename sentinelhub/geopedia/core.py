@@ -17,7 +17,7 @@ from ..config import SHConfig
 from ..constants import CRS, MimeType
 from ..download import DownloadClient, DownloadRequest
 from ..geometry import BBox
-from ..type_utils import JsonDict
+from ..types import JsonDict
 
 if TYPE_CHECKING:
     from .request import GeopediaImageRequest

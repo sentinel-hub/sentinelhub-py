@@ -22,7 +22,7 @@ from ..exceptions import (
     SHRuntimeWarning,
 )
 from ..io_utils import read_data
-from ..type_utils import JsonDict
+from ..types import JsonDict
 from .handlers import fail_user_errors, retry_temporary_errors
 from .models import DownloadRequest, DownloadResponse
 

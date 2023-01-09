@@ -19,7 +19,7 @@ from ..constants import MimeType, RequestType
 from ..decoding import decode_data
 from ..exceptions import SHRuntimeWarning
 from ..io_utils import read_data, write_data
-from ..type_utils import JsonDict
+from ..types import JsonDict
 
 
 @dataclass

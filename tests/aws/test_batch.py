@@ -13,7 +13,7 @@ from pytest_mock import MockerFixture
 from sentinelhub import BatchRequestStatus, BatchStatisticalRequest, SHConfig
 from sentinelhub.api.batch.statistical import BatchStatisticalRequestType
 from sentinelhub.aws import AwsBatchResults
-from sentinelhub.type_utils import JsonDict
+from sentinelhub.types import JsonDict
 
 
 class BatchInputType(Enum):

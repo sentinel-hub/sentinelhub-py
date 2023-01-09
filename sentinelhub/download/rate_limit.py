@@ -5,7 +5,7 @@ import time
 from enum import Enum
 from typing import Union
 
-from ..type_utils import JsonDict
+from ..types import JsonDict
 
 
 class PolicyType(Enum):

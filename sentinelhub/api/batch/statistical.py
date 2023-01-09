@@ -12,7 +12,7 @@ from dataclasses_json import CatchAll, LetterCase, Undefined
 from dataclasses_json import config as dataclass_config
 from dataclasses_json import dataclass_json
 
-from ...type_utils import Json, JsonDict
+from ...types import Json, JsonDict
 from ..base_request import InputDataDict
 from ..statistical import SentinelHubStatistical
 from ..utils import datetime_config, enum_config, remove_undefined

@@ -9,7 +9,7 @@ from requests_mock import Mocker
 from sentinelhub import SentinelHubSession, SHConfig, __version__
 from sentinelhub.download import SessionSharing, SessionSharingThread, collect_shared_session
 from sentinelhub.exceptions import DownloadFailedException, SHUserWarning
-from sentinelhub.type_utils import JsonDict
+from sentinelhub.types import JsonDict
 
 
 @pytest.fixture(name="fake_config")

@@ -6,7 +6,7 @@ from typing import Any, Dict, Optional, Tuple
 import pytest
 
 from sentinelhub import CRS, BBox, DataCollection, Geometry, SentinelHubStatistical
-from sentinelhub.type_utils import JsonDict
+from sentinelhub.types import JsonDict
 
 EVALSCRIPT = """
 //VERSION=3
