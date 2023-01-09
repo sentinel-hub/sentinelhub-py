@@ -8,7 +8,7 @@ from ..constants import MimeType
 from ..download.sentinelhub_statistical_client import SentinelHubStatisticalDownloadClient
 from ..geometry import BBox, Geometry
 from ..time_utils import parse_time_interval, serialize_time
-from ..type_utils import JsonDict, RawTimeIntervalType
+from ..types import JsonDict, RawTimeIntervalType
 from .base_request import InputDataDict, SentinelHubBaseApiRequest
 from .utils import _update_other_args, remove_undefined
 

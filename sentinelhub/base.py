@@ -8,7 +8,7 @@ from typing import Any, Callable, Generic, Iterable, List, Optional, Tuple, Type
 
 from .config import SHConfig
 from .download import DownloadClient, DownloadRequest
-from .type_utils import JsonDict
+from .types import JsonDict
 
 _T = TypeVar("_T")
 

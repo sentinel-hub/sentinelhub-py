@@ -17,7 +17,7 @@ from PIL import Image
 from .constants import MimeType
 from .decoding import decode_image_with_pillow, decode_jp2_image, decode_tar, get_data_format
 from .exceptions import SHUserWarning
-from .type_utils import Json
+from .types import Json
 
 LOGGER = logging.getLogger(__name__)
 

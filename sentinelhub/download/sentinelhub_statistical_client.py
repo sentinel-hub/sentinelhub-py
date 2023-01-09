@@ -8,7 +8,7 @@ import logging
 from typing import Any, Dict
 
 from ..exceptions import DownloadFailedException
-from ..type_utils import JsonDict
+from ..types import JsonDict
 from .models import DownloadRequest, DownloadResponse
 from .sentinelhub_client import SentinelHubDownloadClient
 

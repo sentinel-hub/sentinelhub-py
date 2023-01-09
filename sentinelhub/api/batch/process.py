@@ -15,7 +15,7 @@ from dataclasses_json import dataclass_json
 from ...constants import RequestType
 from ...data_collections import DataCollection
 from ...geometry import CRS, BBox, Geometry
-from ...type_utils import Json, JsonDict
+from ...types import Json, JsonDict
 from ..base import BaseCollection, SentinelHubFeatureIterator
 from ..process import SentinelHubRequest
 from ..utils import datetime_config, enum_config, remove_undefined

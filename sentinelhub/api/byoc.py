@@ -13,7 +13,7 @@ from dataclasses_json import dataclass_json
 from ..constants import MimeType, RequestType
 from ..data_collections import DataCollection
 from ..geometry import Geometry
-from ..type_utils import Json, JsonDict
+from ..types import Json, JsonDict
 from .base import BaseCollection, SentinelHubFeatureIterator, SentinelHubService
 from .utils import datetime_config, geometry_config, remove_undefined
 

@@ -9,7 +9,7 @@ from typing import DefaultDict, List, Optional, Union
 from tqdm.auto import tqdm
 
 from ...config import SHConfig
-from ...type_utils import JsonDict
+from ...types import JsonDict
 from .base import BatchRequestStatus
 from .process import BatchRequest, BatchTileStatus, SentinelHubBatch
 from .statistical import BatchStatisticalRequest, SentinelHubBatchStatistical

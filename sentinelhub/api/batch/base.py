@@ -6,7 +6,7 @@ from enum import Enum
 from typing import Generic, Iterable, Optional, Sequence, Type, TypeVar, Union
 
 from ...constants import RequestType
-from ...type_utils import Json, JsonDict
+from ...types import Json, JsonDict
 from ..base import SentinelHubService
 
 BatchRequestType = TypeVar("BatchRequestType", bound="BaseBatchRequest")  # pylint: disable=invalid-name

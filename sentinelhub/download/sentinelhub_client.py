@@ -13,7 +13,7 @@ from requests import Response
 from ..config import SHConfig
 from ..constants import SHConstants
 from ..exceptions import SHRateLimitWarning, SHRuntimeWarning
-from ..type_utils import JsonDict
+from ..types import JsonDict
 from .client import DownloadClient
 from .handlers import fail_user_errors, retry_temporary_errors
 from .models import DownloadRequest, DownloadResponse
