@@ -16,7 +16,6 @@ datetime_config = dataclass_config(
     letter_case=LetterCase.CAMEL,
 )
 
-
 geometry_config = dataclass_config(
     encoder=Geometry.get_geojson,
     decoder=lambda geojson: Geometry.from_geojson(geojson) if geojson else None,

@@ -1,12 +1,14 @@
 """
 Module defining constants and enumerate types used in the package
 """
+from __future__ import annotations
+
 import functools
 import mimetypes
 import re
 import warnings
 from enum import Enum, EnumMeta
-from typing import Any, Callable, Union
+from typing import Callable, Union
 
 import numpy as np
 import pyproj
@@ -54,22 +56,19 @@ class ServiceType(Enum):
     PROCESSING_API = "processing"
 
 
-class ResamplingTypeMeta(EnumMeta):
-    """Metaclass for ResamplingType so that it is not case sensitive."""
-
-    def __call__(cls, value: str, *args: Any, **kwargs: Any):  # type: ignore
-        if isinstance(value, str):
-            value = value.upper()
-
-        return super().__call__(value, *args, **kwargs)
-
-
-class ResamplingType(Enum, metaclass=ResamplingTypeMeta):
+class ResamplingType(Enum):
     """Enum constant class for type of resampling."""
 
     NEAREST = "NEAREST"
     BILINEAR = "BILINEAR"
     BICUBIC = "BICUBIC"
+
+    @classmethod
+    def _missing_(cls, value: object) -> ResamplingType:
+        # This triggers if value is not found, before raising an error (see Enum docs). Makes class case-insensitive.
+        if isinstance(value, str) and value.upper() in cls._value2member_map_:
+            return cls(value.upper())
+        return super()._missing_(value)
 
 
 class MosaickingOrder(Enum):
@@ -85,7 +84,7 @@ class CRSMeta(EnumMeta):
 
     _UNSUPPORTED_CRS = pyproj.CRS(4326)
 
-    def __new__(mcs, cls, bases, classdict):  # type: ignore
+    def __new__(mcs, cls, bases, classdict):  # type: ignore[no-untyped-def]
         """This is executed at the beginning of runtime when CRS class is created"""
         for direction, direction_value in [("N", "6"), ("S", "7")]:
             for zone in range(1, 61):
@@ -93,7 +92,7 @@ class CRSMeta(EnumMeta):
 
         return super().__new__(mcs, cls, bases, classdict)
 
-    def __call__(cls, crs_value, *args, **kwargs):  # type: ignore
+    def __call__(cls, crs_value, *args, **kwargs):  # type: ignore[no-untyped-def]
         """This is executed whenever CRS('something') is called"""
         # pylint: disable=signature-differs
         crs_value = cls._parse_crs(crs_value)
@@ -105,7 +104,7 @@ class CRSMeta(EnumMeta):
         return super().__call__(crs_value, *args, **kwargs)
 
     @staticmethod
-    def _parse_crs(value: Union[int, str, dict, pyproj.CRS]) -> str:
+    def _parse_crs(value: object) -> object:
         """Method for parsing different inputs representing the same CRS enum. Examples:
 
         - 4326
@@ -143,11 +142,14 @@ class CRSMeta(EnumMeta):
         if isinstance(value, str):
             if "urn:ogc:def:crs" in value.lower():
                 crs_template = re.compile(r"urn:ogc:def:crs:.+::(?P<code>.+)", re.IGNORECASE)
-                value = crs_template.match(value).group("code")  # type: ignore
+                match = crs_template.match(value)
+                if match is None:
+                    raise ValueError(f"The value {value} could not be parsed to a CRS.")
+                value = match.group("code")
             if value.upper() == "CRS84":
                 return "4326"
             return value.lower().strip("epsg: ")
-        return value  # type: ignore
+        return value
 
 
 class CRS(Enum, metaclass=CRSMeta):

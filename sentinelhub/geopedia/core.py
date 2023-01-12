@@ -5,7 +5,6 @@ from __future__ import annotations
 
 import datetime
 import hashlib
-import sys
 from typing import TYPE_CHECKING, Any, Iterable, Iterator, List, Optional, Union, overload
 
 from shapely.geometry import shape as geo_shape
@@ -17,15 +16,10 @@ from ..config import SHConfig
 from ..constants import CRS, MimeType
 from ..download import DownloadClient, DownloadRequest
 from ..geometry import BBox
-from ..types import JsonDict
+from ..types import JsonDict, Literal
 
 if TYPE_CHECKING:
     from .request import GeopediaImageRequest
-
-if sys.version_info < (3, 8):
-    from typing_extensions import Literal
-else:
-    from typing import Literal  # pylint: disable=ungrouped-imports
 
 
 class GeopediaService:

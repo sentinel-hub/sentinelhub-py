@@ -7,7 +7,7 @@ from typing import Any, Iterable, List, Optional, Tuple, TypeVar, Union, overloa
 import dateutil.parser
 import dateutil.tz
 
-from .types import RawTimeIntervalType, RawTimeType
+from .types import Literal, RawTimeIntervalType, RawTimeType
 
 TimeType = TypeVar("TimeType", dt.date, dt.datetime)  # pylint: disable=invalid-name
 
@@ -23,6 +23,38 @@ def is_valid_time(time: str) -> bool:
         return True
     except dateutil.parser.ParserError:
         return False
+
+
+@overload
+def parse_time(
+    time_input: RawTimeType,
+    *,
+    force_datetime: Literal[False] = False,
+    allow_undefined: Literal[False] = False,
+    **kwargs: Any
+) -> dt.date:
+    ...
+
+
+@overload
+def parse_time(
+    time_input: RawTimeType, *, force_datetime: Literal[True], allow_undefined: Literal[False] = False, **kwargs: Any
+) -> dt.datetime:
+    ...
+
+
+@overload
+def parse_time(
+    time_input: RawTimeType, *, force_datetime: Literal[False] = False, allow_undefined: bool = False, **kwargs: Any
+) -> Optional[dt.date]:
+    ...
+
+
+@overload
+def parse_time(
+    time_input: RawTimeType, *, force_datetime: Literal[True], allow_undefined: bool = False, **kwargs: Any
+) -> Optional[dt.datetime]:
+    ...
 
 
 def parse_time(
@@ -87,9 +119,9 @@ def parse_time_interval(
         parsed_time = parse_time(time, **kwargs)
         date_interval = parsed_time, parsed_time
     elif isinstance(time, (tuple, list)) and len(time) == 2:
-        date_interval = parse_time(time[0], allow_undefined=allow_undefined, **kwargs), parse_time(
-            time[1], allow_undefined=allow_undefined, **kwargs
-        )
+        start_date = parse_time(time[0], allow_undefined=allow_undefined, **kwargs)
+        end_date = parse_time(time[1], allow_undefined=allow_undefined, **kwargs)
+        date_interval = start_date, end_date
     else:
         raise ValueError("Time must be a string/datetime object or tuple/list of 2 strings/datetime objects")
 
