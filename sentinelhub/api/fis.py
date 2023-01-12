@@ -66,9 +66,11 @@ class FisRequest(OgcRequest):
         self.bins = bins
         self.histogram_type = HistogramType(histogram_type) if histogram_type else None
 
-        super().__init__(bbox=None, layer=layer, time=time, service_type=ServiceType.FIS, **kwargs)  # type: ignore
+        super().__init__(
+            bbox=None, layer=layer, time=time, service_type=ServiceType.FIS, **kwargs  # type: ignore[arg-type]
+        )
 
-    def create_request(self) -> None:  # type: ignore
+    def create_request(self) -> None:  # type: ignore[override]
         """Set download requests
 
         Create a list of DownloadRequests for all Sentinel-2 acquisitions within request's time interval and
@@ -102,7 +104,7 @@ class _FisService(OgcImageService):
 
         super().__init__(*args, **kwargs)
 
-    def get_request(self, request: FisRequest) -> List[DownloadRequest]:  # type: ignore
+    def get_request(self, request: FisRequest) -> List[DownloadRequest]:  # type: ignore[override]
         """Get download requests
 
         Create a list of DownloadRequests for all Sentinel-2 acquisitions within request's time interval and

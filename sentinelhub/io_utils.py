@@ -79,7 +79,7 @@ def _get_reader(data_format: MimeType) -> Callable[[str], Any]:
 def read_tar(filename: str) -> Dict[str, object]:
     """Read a tar from file"""
     with open(filename, "rb") as file:
-        return decode_tar(file)  # type: ignore
+        return decode_tar(file)  # type: ignore[arg-type]
 
 
 def read_tiff_image(filename: str) -> Any:

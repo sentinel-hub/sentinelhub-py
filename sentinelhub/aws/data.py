@@ -496,7 +496,7 @@ class AwsTile(AwsData):
         """
         self.tile_name = self.parse_tile_name(tile_name)
 
-        self.timestamp: dt.date = parse_time(time, ignoretz=True)  # type: ignore
+        self.timestamp: dt.date = parse_time(time, ignoretz=True)
         self.date = self.timestamp.date() if isinstance(self.timestamp, dt.datetime) else self.timestamp
 
         self.aws_index = aws_index

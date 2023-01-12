@@ -269,7 +269,7 @@ class SentinelHubBYOC(SentinelHubService):
     def _to_dict(data: object) -> dict:
         """Constructs dict from an object (either dataclass or dict)"""
         if isinstance(data, (ByocCollection, ByocTile, ByocCollectionAdditionalData, ByocCollectionBand)):
-            return data.to_dict()  # type: ignore[union-attr]
+            return data.to_dict()  # type: ignore[union-attr] # to_dict method comes from decorators and is undetectable
         if isinstance(data, dict):
             return data
         raise ValueError(f"Expected either a data class (e.g., ByocCollection and similar) or a dict, got {data}.")

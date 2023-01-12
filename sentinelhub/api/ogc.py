@@ -317,11 +317,11 @@ class OgcImageService:
         if request.service_type in (ServiceType.WMS, ServiceType.WCS):
             params = {**params, **self._get_wms_wcs_url_parameters(request, date)}
         if request.service_type is ServiceType.WMS:
-            params = {**params, **self._get_wms_url_parameters(request, size_x, size_y)}  # type: ignore
+            params = {**params, **self._get_wms_url_parameters(request, size_x, size_y)}  # type: ignore[arg-type]
         elif request.service_type is ServiceType.WCS:
-            params = {**params, **self._get_wcs_url_parameters(request, size_x, size_y)}  # type: ignore
+            params = {**params, **self._get_wcs_url_parameters(request, size_x, size_y)}  # type: ignore[arg-type]
         elif request.service_type is ServiceType.FIS:
-            params = {**params, **self._get_fis_parameters(request, geometry)}  # type: ignore
+            params = {**params, **self._get_fis_parameters(request, geometry)}  # type: ignore[arg-type]
 
         return f"{url}/{authority}?{urlencode(params)}"
 
@@ -331,7 +331,7 @@ class OgcImageService:
         :param request: OGC-type request with specified bounding box, cloud coverage for specific product.
         :return: base string for url to Sentinel Hub's OGC service for this product.
         """
-        url = f"{self._base_url}/{request.service_type.value}"  # type: ignore
+        url = f"{self._base_url}/{request.service_type.value}"  # type: ignore[union-attr]
 
         if hasattr(request, "data_collection") and request.data_collection.service_url:
             url = url.replace(self.config.sh_base_url, request.data_collection.service_url)
@@ -345,7 +345,7 @@ class OgcImageService:
         :param request: OGC-type request with specified bounding box, cloud coverage for specific product.
         :return: dictionary with parameters
         """
-        params = {"SERVICE": request.service_type.value, "WARNINGS": False}  # type: ignore
+        params = {"SERVICE": request.service_type.value, "WARNINGS": False}  # type: ignore[union-attr]
 
         if hasattr(request, "maxcc"):
             params["MAXCC"] = 100.0 * request.maxcc
@@ -446,7 +446,7 @@ class OgcImageService:
         params = {
             "CRS": CRS.ogc_string(geometry.crs),
             "LAYER": request.layer,
-            "RESOLUTION": request.resolution,  # type: ignore
+            "RESOLUTION": request.resolution,  # type: ignore[attr-defined]
             "TIME": f"{start_time}/{end_time}",
         }
 
@@ -462,11 +462,11 @@ class OgcImageService:
         else:
             params["BBOX"] = str(geometry)
 
-        if request.bins:  # type: ignore
-            params["BINS"] = request.bins  # type: ignore
+        if request.bins:  # type: ignore[attr-defined]
+            params["BINS"] = request.bins  # type: ignore[attr-defined]
 
-        if request.histogram_type:  # type: ignore
-            params["TYPE"] = request.histogram_type.value  # type: ignore
+        if request.histogram_type:  # type: ignore[attr-defined]
+            params["TYPE"] = request.histogram_type.value  # type: ignore[attr-defined]
 
         return params
 
@@ -499,10 +499,10 @@ class OgcImageService:
             self.wfs_iterator = request.wfs_iterator
 
         dates = self.wfs_iterator.get_dates()
-        dates = filter_times(dates, request.time_difference)  # type: ignore
+        dates = filter_times(dates, request.time_difference)  # type: ignore[type-var]
 
         LOGGER.debug("Initializing requests for dates: %s", dates)
-        return dates  # type: ignore
+        return dates  # type: ignore[return-value]
 
     @staticmethod
     def get_image_dimensions(request: OgcRequest) -> Tuple[Union[int, str], Union[int, str]]:
@@ -514,14 +514,14 @@ class OgcImageService:
         if request.service_type is ServiceType.WCS or (
             isinstance(request.size_x, int) and isinstance(request.size_y, int)
         ):
-            return request.size_x, request.size_y  # type: ignore
+            return request.size_x, request.size_y  # type: ignore[return-value]
         if not isinstance(request.size_x, int) and not isinstance(request.size_y, int):
             raise ValueError("At least one of parameters 'width' and 'height' must have an integer value")
         missing_dimension = get_image_dimension(
-            request.bbox, width=request.size_x, height=request.size_y  # type: ignore
+            request.bbox, width=request.size_x, height=request.size_y  # type: ignore[arg-type]
         )
         if request.size_x is None:
-            return missing_dimension, request.size_y  # type: ignore
+            return missing_dimension, request.size_y  # type: ignore[return-value]
         if request.size_y is None:
             return request.size_x, missing_dimension
         raise ValueError("Parameters 'width' and 'height' must be integers or None")

@@ -107,7 +107,7 @@ def _shallow_asdict(dataclass_instance: Any) -> Dict[str, Any]:
 class _DataCollectionMeta(EnumMeta):
     """Metaclass that builds DataCollection class enums"""
 
-    def __call__(cls, value, *args, **kwargs):  # type: ignore
+    def __call__(cls, value, *args, **kwargs):  # type: ignore[no-untyped-def]
         """This is executed whenever `DataCollection('something')` is called
 
         This solves a problem of pickling a custom DataCollection and unpickling it in another process
@@ -147,7 +147,7 @@ class DataCollectionDefinition:
     # The following parameter is used to preserve custom DataCollection name during pickling and unpickling process:
     _name: Optional[str] = field(default=None, compare=False)
 
-    def __post_init__(self):  # type: ignore
+    def __post_init__(self):  # type: ignore[no-untyped-def] # not typechecked because we mutate immutable dataclasses
         """In case a list of bands or metabands has been given this makes sure to cast it into a tuple"""
         if isinstance(self.bands, list):
             object.__setattr__(self, "bands", tuple(self.bands))

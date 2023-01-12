@@ -2,7 +2,7 @@
 Utility tools for writing unit tests for packages which rely on `sentinelhub-py`
 """
 import os
-from typing import Optional, Tuple
+from typing import Any, Callable, Dict, Optional, Tuple
 from warnings import warn
 
 import numpy as np
@@ -68,7 +68,7 @@ def assert_statistics_match(
     :param abs_delta: Precision of validation (absolute)
     """
 
-    stats_suite = {
+    stats_suite: Dict[str, Tuple[Callable[[np.ndarray], Any], Any]] = {
         "shape": (lambda array: array.shape, exp_shape),
         "dtype": (lambda array: array.dtype, exp_dtype),
         "min": (np.nanmin, exp_min),
@@ -80,10 +80,11 @@ def assert_statistics_match(
 
     is_precise = {"shape", "dtype"}
 
-    data_stats, exp_stats = {}, {}
+    data_stats: Dict[str, Any] = {}
+    exp_stats: Dict[str, Any] = {}
     for name, (func, expected) in stats_suite.items():
         if expected is not None:
-            data_stats[name] = func(data)  # type: ignore # unknown function
+            data_stats[name] = func(data)
             exp_stats[name] = expected if name in is_precise else approx(expected, rel=rel_delta, abs=abs_delta)
 
     assert data_stats == exp_stats, "Statistics differ from expected values"

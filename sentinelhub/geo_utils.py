@@ -3,7 +3,7 @@ Module for manipulation of geographical information
 """
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, List, Optional, Sequence, Tuple, Union
+from typing import TYPE_CHECKING, List, Optional, Sequence, Tuple, Union, cast
 
 from .constants import CRS
 
@@ -193,5 +193,5 @@ def transform_point(
     """
     if source_crs == target_crs:
         return point
-    old_x, old_y = point
-    return CRS.get_transform_function(source_crs, target_crs, always_xy=always_xy)(old_x, old_y)  # type: ignore
+    transform_function = CRS.get_transform_function(source_crs, target_crs, always_xy=always_xy)
+    return cast(Tuple[float, float], transform_function(*point))

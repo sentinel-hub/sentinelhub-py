@@ -102,7 +102,7 @@ def get_area_dates(bbox: BBox, date_interval: RawTimeIntervalType, maxcc: Option
     """
 
     area_info = get_area_info(bbox, date_interval, maxcc=maxcc)
-    return sorted({parse_time(tile_info["properties"]["startDate"]) for tile_info in area_info})  # type: ignore
+    return sorted({parse_time(tile_info["properties"]["startDate"]) for tile_info in area_info})
 
 
 def reduce_by_maxcc(result_list: Iterable[JsonDict], maxcc: float) -> List[JsonDict]:

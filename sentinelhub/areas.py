@@ -455,7 +455,7 @@ class CustomGridSplitter(AreaSplitter):
         return bbox_list, info_list
 
 
-class BaseUtmSplitter(AreaSplitter):
+class BaseUtmSplitter(AreaSplitter, metaclass=ABCMeta):
     """Base splitter that returns bboxes of fixed size aligned to UTM zones or UTM grid tiles as defined by the MGRS
 
     The generated bounding box grid will have coordinates in form of
@@ -485,7 +485,7 @@ class BaseUtmSplitter(AreaSplitter):
 
     @abstractmethod
     def _get_utm_polygons(self) -> List[Tuple[BaseGeometry, Dict[str, Any]]]:
-        raise NotImplementedError
+        """Find UTM grid zones overlapping with input area shape."""
 
     @staticmethod
     def _get_utm_from_props(utm_dict: Dict[str, Any]) -> CRS:
@@ -556,7 +556,9 @@ class BaseUtmSplitter(AreaSplitter):
 
         return bbox_list, info_list
 
-    def get_bbox_list(self, buffer: Union[None, float, Tuple[float, float]] = None) -> List[BBox]:  # type: ignore
+    def get_bbox_list(  # type: ignore[override]
+        self, buffer: Union[None, float, Tuple[float, float]] = None
+    ) -> List[BBox]:
         """Get list of bounding boxes.
 
         The CRS is fixed to the computed UTM CRS. This BBox splitter does not support reducing size of output
