@@ -130,17 +130,17 @@ class SHConfig:  # pylint: disable=too-many-instance-attributes
             if (param_type is float) and isinstance(value, numbers.Number):
                 continue
             if not isinstance(value, param_type):
-                raise ValueError(f"Value of parameter '{param}' must be of type {param_type.__name__}")
+                raise ValueError(f"Value of parameter `{param}` must be of type {param_type.__name__}")
         if self.max_wfs_records_per_query > 100:
-            raise ValueError("Value of config parameter 'max_wfs_records_per_query' must be at most 100")
+            raise ValueError("Value of config parameter `max_wfs_records_per_query` must be at most 100")
         if self.max_opensearch_records_per_query > 500:
-            raise ValueError("Value of config parameter 'max_opensearch_records_per_query' must be at most 500")
+            raise ValueError("Value of config parameter `max_opensearch_records_per_query` must be at most 500")
 
     def __getitem__(self, name: str) -> Union[str, int, float]:
         """Config parameters can also be accessed as items."""
         if name in self.CONFIG_PARAMS:
             return getattr(self, name)
-        raise KeyError(f"'{name}' is not a supported config parameter")
+        raise KeyError(f"`{name}` is not a supported config parameter")
 
     def __str__(self) -> str:
         """Content of SHConfig in json schema. If `hide_credentials` is set to `True` then credentials will be
@@ -245,7 +245,7 @@ class SHConfig:  # pylint: disable=too-many-instance-attributes
         :param param: A configuration parameter
         """
         if param not in self.get_params():
-            raise ValueError(f"Cannot reset unknown parameter '{param}'")
+            raise ValueError(f"Cannot reset unknown parameter `{param}`")
         setattr(self, param, getattr(default, param))
 
     def get_params(self) -> List[str]:
@@ -288,7 +288,7 @@ class SHConfig:  # pylint: disable=too-many-instance-attributes
         if not (param in self.CREDENTIALS and value):
             return value
         if not isinstance(value, str):
-            raise ValueError(f"Parameter '{param}' should be a string but {value} found")
+            raise ValueError(f"Parameter `{param}` should be a string but {value} found")
 
         hide_size = min(max(len(value) - 4, 10), len(value))
         return "*" * hide_size + value[hide_size:]
