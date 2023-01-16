@@ -31,7 +31,7 @@ def main_help() -> None:
 def _config_options(func: FC) -> FC:
     """A helper function which joins click.option functions of each parameter from config.json"""
     for param in SHConfig().get_params()[-1::-1]:
-        func = click.option(f"--{param}", param, help=f'Set new values to configuration parameter "{param}"')(func)
+        func = click.option(f"--{param}", param, help=f"Set new values to configuration parameter `{param}`")(func)
     return func
 
 
@@ -73,7 +73,7 @@ def config(show: bool, reset: bool, **params: Any) -> None:
             value = sh_config[param]
             if isinstance(value, str):
                 value = f"'{value}'"
-            click.echo(f"The value of parameter '{param}' was updated to {value}")
+            click.echo(f"The value of parameter `{param}` was updated to {value}")
 
     if show:
         click.echo(str(sh_config))

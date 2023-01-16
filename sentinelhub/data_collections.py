@@ -509,7 +509,7 @@ class DataCollection(Enum, metaclass=_DataCollectionMeta):
             return
 
         if is_name_defined:
-            raise ValueError(f"Data collection name '{name}' is already taken by another data collection")
+            raise ValueError(f"Data collection name `{name}` is already taken by another data collection")
 
         existing_collection = cls._value2member_map_[definition]
         raise ValueError(
