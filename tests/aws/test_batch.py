@@ -12,7 +12,7 @@ from pytest_mock import MockerFixture
 
 from sentinelhub import BatchRequestStatus, BatchStatisticalRequest, SHConfig
 from sentinelhub.api.batch.statistical import BatchStatisticalRequestType
-from sentinelhub.aws import AwsBatchResults
+from sentinelhub.aws import AwsBatchStatisticalResults
 from sentinelhub.types import JsonDict
 
 
@@ -56,7 +56,7 @@ def test_aws_batch_results(
     show_progress: bool,
     mocker: MockerFixture,
 ) -> None:
-    """This test mocks an S3 bucket and data on it. Then it runs AwsBatchResults and downloads results from it."""
+    """This test mocks an S3 bucket and data on it. Then it runs AwsBatchStatisticalResults and downloads results."""
     bucket_name = "mocked-test-bucket"
     batch_id = "fake-batch-id"
     prefix = "path/to/outputs/"
@@ -86,7 +86,7 @@ def test_aws_batch_results(
         batch_input = batch_request
 
     feature_ids_input = feature_ids if use_feature_ids else None
-    results = AwsBatchResults(batch_input, feature_ids=feature_ids_input, config=config)
+    results = AwsBatchStatisticalResults(batch_input, feature_ids=feature_ids_input, config=config)
     downloaded_data = results.get_data(show_progress=show_progress)
 
     assert downloaded_data == data

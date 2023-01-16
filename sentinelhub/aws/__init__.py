@@ -8,7 +8,7 @@ which can be installed with:
 
 """
 
-from .batch import AwsBatchResults
+from .batch import AwsBatchResults, AwsBatchStatisticalResults
 from .client import AwsDownloadClient
 from .constants import AwsConstants
 from .data import AwsProduct, AwsTile

@@ -90,7 +90,8 @@ def statistical_to_dataframe(result_data: List[JsonDict], exclude_stats: Optiona
     installed before using the function.
 
     :param result_data: An input representation of (Batch) Statistical API result returned from
-        `AwsBatchResults.get_data()`. Each JsonDict in the list is a Statistical API response of an input geometry.
+        `AwsBatchStatisticalResults.get_data()`. Each JsonDict in the list is a Statistical API response of an input
+        geometry.
     :param exclude_stats: The statistic names defined in this parameter will be excluded from the output DataFrame.
 
     :return: Statistical dataframe.
