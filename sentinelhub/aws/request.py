@@ -7,6 +7,7 @@ from typing import Any, Generic, List, Optional, Tuple, TypeVar, Union
 
 from ..base import DataRequest
 from ..data_collections import DataCollection
+from ..exceptions import deprecated_class
 from .client import AwsDownloadClient
 from .data import REQUESTER_PAYS_PARAMS, AwsProduct, AwsTile
 from .data_safe import SafeProduct, SafeTile
@@ -59,6 +60,7 @@ class _BaseAwsDataRequest(DataRequest, Generic[T]):
         return self.aws_service
 
 
+@deprecated_class(message_suffix="It will remain in the codebase for now, but won't be actively maintained.")
 class AwsProductRequest(_BaseAwsDataRequest[AwsProduct]):
     """AWS Service request class for an ESA product."""
 
@@ -94,6 +96,7 @@ class AwsProductRequest(_BaseAwsDataRequest[AwsProduct]):
         self.download_list, self.folder_list = self.aws_service.get_requests()
 
 
+@deprecated_class(message_suffix="It will remain in the codebase for now, but won't be actively maintained.")
 class AwsTileRequest(_BaseAwsDataRequest[AwsTile]):
     """AWS Service request class for an ESA tile."""
 
