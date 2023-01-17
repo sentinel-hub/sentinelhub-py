@@ -1,15 +1,14 @@
 """
 Module implementing utilities for collecting data, produced with Sentinel Hub Statistical Batch API, from an S3 bucket.
 """
-import warnings
-from typing import Any, List, Optional, Sequence, Union
+from typing import List, Optional, Sequence, Union
 
 from ..api.batch.statistical import BatchStatisticalRequest, BatchStatisticalRequestType, SentinelHubBatchStatistical
 from ..base import DataRequest
 from ..config import SHConfig
 from ..constants import MimeType
 from ..download.models import DownloadRequest
-from ..exceptions import SHDeprecationWarning
+from ..exceptions import deprecated_class
 from .client import AwsDownloadClient
 
 
@@ -92,13 +91,6 @@ class AwsBatchStatisticalResults(DataRequest):
         return filenames
 
 
+@deprecated_class(message_suffix="It has been renamed to `AwsBatchStatisticalResults`.")
 class AwsBatchResults(AwsBatchStatisticalResults):
     """Deprecated version of `AwsBatchStatisticalResults`."""
-
-    def __init__(self, *args: Any, **kwargs: Any):
-        warnings.warn(
-            "`AwsBatchResults` has been renamed to `AwsBatchStatisticalResults`.",
-            category=SHDeprecationWarning,
-            stacklevel=2,
-        )
-        super().__init__(*args, **kwargs)

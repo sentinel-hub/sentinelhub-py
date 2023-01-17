@@ -2,29 +2,13 @@
 Module for managing files and folders
 """
 import errno
-import functools
 import os
-import warnings
 from sys import platform
-from typing import Any, Callable, List
+from typing import List
 
-from .exceptions import SHDeprecationWarning
+from .exceptions import deprecated_function
 
-
-def deprecated(func: Callable) -> Callable:  # pylint: disable=missing-docstring
-    @functools.wraps(func)
-    def deprecated_func(*args: Any, **kwargs: Any) -> Any:
-        warnings.warn(
-            (
-                f"Function `{func.__name__}` is part of `sentinelhub.os_utils` module, which is deprecated and will be"
-                " removed in future version."
-            ),
-            category=SHDeprecationWarning,
-            stacklevel=2,
-        )
-        return func(*args, **kwargs)
-
-    return deprecated_func
+deprecated = deprecated_function(message_suffix="The module `os_utils` will be removed in a future version.")
 
 
 @deprecated
