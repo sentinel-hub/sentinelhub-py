@@ -3,12 +3,11 @@ Utility tools for writing unit tests for packages which rely on `sentinelhub-py`
 """
 import os
 from typing import Any, Callable, Dict, Optional, Tuple
-from warnings import warn
 
 import numpy as np
 from pytest import approx
 
-from .exceptions import SHDeprecationWarning
+from .exceptions import deprecated_function
 
 
 def get_input_folder(current_file: str) -> str:
@@ -21,6 +20,7 @@ def get_output_folder(current_file: str) -> str:
     return os.path.join(os.path.dirname(os.path.realpath(current_file)), "TestOutputs")
 
 
+@deprecated_function(message_suffix="Use `assert_statistics_match` instead.")
 def test_numpy_data(
     data: Optional[np.ndarray] = None,
     exp_shape: Optional[Tuple[int, ...]] = None,
@@ -32,10 +32,7 @@ def test_numpy_data(
     exp_std: Optional[float] = None,
     delta: float = 1e-4,
 ) -> None:
-    """Deprecated version of assert_statistics_match"""
-    warn(
-        "test_numpy_data` has been deprecated in favor of `assert_statistics_match", SHDeprecationWarning, stacklevel=2
-    )
+    """Deprecated version of `assert_statistics_match`."""
     if data is None:
         return
     assert_statistics_match(
