@@ -16,6 +16,7 @@ Modules
     sentinelhub.constants
     sentinelhub.data_collections
     sentinelhub.data_collections_bands
+    sentinelhub.data_utils
     sentinelhub.decoding
     sentinelhub.exceptions
     sentinelhub.download
@@ -26,4 +27,4 @@ Modules
     sentinelhub.os_utils
     sentinelhub.testing_utils
     sentinelhub.time_utils
-    sentinelhub.type_utils
+    sentinelhub.types
