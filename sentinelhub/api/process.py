@@ -6,7 +6,7 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 from ..constants import MimeType
 from ..download import SentinelHubDownloadClient
 from ..geometry import BBox, Geometry
-from ..type_utils import JsonDict
+from ..types import JsonDict
 from .base_request import InputDataDict, SentinelHubBaseApiRequest
 from .utils import _update_other_args
 

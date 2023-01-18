@@ -13,7 +13,7 @@ import pytest
 from pytest import approx
 
 from sentinelhub.download.rate_limit import PolicyBucket, PolicyType, SentinelHubRateLimit
-from sentinelhub.type_utils import JsonDict
+from sentinelhub.types import JsonDict
 
 
 class DummyService:

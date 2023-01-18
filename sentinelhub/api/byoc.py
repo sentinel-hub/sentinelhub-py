@@ -13,7 +13,7 @@ from dataclasses_json import dataclass_json
 from ..constants import MimeType, RequestType
 from ..data_collections import DataCollection
 from ..geometry import Geometry
-from ..type_utils import Json, JsonDict
+from ..types import Json, JsonDict
 from .base import BaseCollection, SentinelHubFeatureIterator, SentinelHubService
 from .utils import datetime_config, geometry_config, remove_undefined
 
@@ -269,7 +269,7 @@ class SentinelHubBYOC(SentinelHubService):
     def _to_dict(data: object) -> dict:
         """Constructs dict from an object (either dataclass or dict)"""
         if isinstance(data, (ByocCollection, ByocTile, ByocCollectionAdditionalData, ByocCollectionBand)):
-            return data.to_dict()  # type: ignore[union-attr]
+            return data.to_dict()  # type: ignore[union-attr] # to_dict method comes from decorators and is undetectable
         if isinstance(data, dict):
             return data
         raise ValueError(f"Expected either a data class (e.g., ByocCollection and similar) or a dict, got {data}.")

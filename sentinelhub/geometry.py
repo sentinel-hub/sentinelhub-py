@@ -379,7 +379,8 @@ class BBox(_BaseGeometry):
         :raises: TypeError
         """
         if len(bbox) == 4:
-            return tuple(map(float, bbox))  # type: ignore # iterator length
+            min_x, min_y, max_x, max_y = map(float, bbox)
+            return min_x, min_y, max_x, max_y
         if len(bbox) == 2 and all(isinstance(point, (list, tuple)) for point in bbox):
             return BBox._tuple_from_list_or_tuple(bbox[0] + bbox[1])
         raise TypeError("Expected a valid list or tuple representation of a bbox")
@@ -391,7 +392,11 @@ class BBox(_BaseGeometry):
         :param bbox: e.g. str of the form `min_x ,min_y  max_x, max_y`
         :return: tuple (min_x,min_y,max_x,max_y)
         """
-        return tuple(float(s) for s in bbox.replace(",", " ").split() if s)  # type: ignore # iterator length
+        string_parts = bbox.replace(",", " ").split()
+        if len(string_parts) != 4:
+            raise ValueError(f"Input {bbox} is not a valid string representation of a BBox.")
+        min_x, min_y, max_x, max_y = map(float, string_parts)
+        return min_x, min_y, max_x, max_y
 
     @staticmethod
     def _tuple_from_dict(bbox: dict) -> Tuple[float, float, float, float]:

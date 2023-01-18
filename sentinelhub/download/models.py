@@ -8,6 +8,7 @@ import functools
 import hashlib
 import json
 import os
+import platform
 import warnings
 from dataclasses import dataclass, field, fields
 from typing import Any, Dict, Optional, Tuple
@@ -18,8 +19,7 @@ from ..constants import MimeType, RequestType
 from ..decoding import decode_data
 from ..exceptions import SHRuntimeWarning
 from ..io_utils import read_data, write_data
-from ..os_utils import sys_is_windows
-from ..type_utils import JsonDict
+from ..types import JsonDict
 
 
 @dataclass
@@ -136,7 +136,7 @@ class DownloadRequest:
     def _check_path(file_path: str) -> None:
         """Checks file path and warns about potential problems during saving"""
         message_problem = None
-        if len(file_path) > 255 and sys_is_windows():
+        if len(file_path) > 255 and platform.system() == "Windows":
             message_problem = "File path"
         elif len(os.path.basename(file_path)) > 255:
             message_problem = "Filename of"

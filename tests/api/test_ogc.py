@@ -19,7 +19,7 @@ from sentinelhub import (
     WmsRequest,
 )
 from sentinelhub.api.ogc import OgcImageService, OgcRequest
-from sentinelhub.testing_utils import test_numpy_data
+from sentinelhub.testing_utils import assert_statistics_match
 
 pytestmark = pytest.mark.sh_integration
 
@@ -309,14 +309,14 @@ TEST_CASES = [
             layer="DEM",
             width=img_width,
             height=img_height,
-            bbox=wgs84_bbox,
+            bbox=wgs84_bbox_2,
         ),
         result_len=1,
-        img_min=-108.0,
-        img_max=1,
-        img_mean=-35.6049,
-        img_median=-8.5,
-        img_std=40.13309,
+        img_min=0,
+        img_max=74.16661,
+        img_mean=1.5549539,
+        img_median=1.0,
+        img_std=5.3555336,
     ),
     OgcTestCase(
         "MODIS Test",
@@ -492,13 +492,14 @@ def test_ogc(test_case: OgcTestCase, output_folder: str) -> None:
         else:
             assert not np.array_equal(data[0], data[-1]), "First and last output should be different"
 
-    test_numpy_data(
+    assert_statistics_match(
         data[0],
         exp_min=test_case.img_min,
         exp_max=test_case.img_max,
         exp_mean=test_case.img_mean,
         exp_median=test_case.img_median,
         exp_std=test_case.img_std,
+        rel_delta=1e-4,
     )
 
 

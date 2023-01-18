@@ -30,7 +30,8 @@ def test_info_with_different_deployments(config: SHConfig, data_collection: Data
     info = catalog.get_info()
 
     assert isinstance(info, dict)
-    assert all(link["href"].startswith(config.sh_base_url) for link in info["links"])
+    for link in info["links"]:
+        assert link["href"].startswith(config.sh_base_url) or link["href"].startswith("https://docs.sentinel-hub.com")
 
 
 def test_conformance(catalog: SentinelHubCatalog) -> None:

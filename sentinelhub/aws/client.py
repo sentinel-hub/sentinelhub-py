@@ -17,11 +17,12 @@ from ..config import SHConfig
 from ..download.client import DownloadClient
 from ..download.handlers import fail_missing_file
 from ..download.models import DownloadRequest, DownloadResponse
-from ..exceptions import AwsDownloadFailedException
+from ..exceptions import AwsDownloadFailedException, deprecated_class
 
 LOGGER = logging.getLogger(__name__)
 
 
+@deprecated_class(message_suffix="It will remain in the codebase for now, but won't be actively maintained.")
 class AwsDownloadClient(DownloadClient):
     """An AWS download client class"""
 

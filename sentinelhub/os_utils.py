@@ -1,13 +1,17 @@
 """
 Module for managing files and folders
 """
-
 import errno
 import os
 from sys import platform
 from typing import List
 
+from .exceptions import deprecated_function
 
+deprecated = deprecated_function(message_suffix="The module `os_utils` will be removed in a future version.")
+
+
+@deprecated
 def get_content_list(folder: str = ".") -> List[str]:
     """Get list of contents in input folder
 
@@ -17,6 +21,7 @@ def get_content_list(folder: str = ".") -> List[str]:
     return os.listdir(folder)
 
 
+@deprecated
 def get_folder_list(folder: str = ".") -> List[str]:
     """Get list of sub-folders contained in input folder
 
@@ -27,6 +32,7 @@ def get_folder_list(folder: str = ".") -> List[str]:
     return [f for f in dir_list if not os.path.isfile(os.path.join(folder, f))]
 
 
+@deprecated
 def get_file_list(folder: str = ".") -> List[str]:
     """Get list of files contained in input folder
 
@@ -37,6 +43,7 @@ def get_file_list(folder: str = ".") -> List[str]:
     return [f for f in dir_list if os.path.isfile(os.path.join(folder, f))]
 
 
+@deprecated
 def create_parent_folder(filename: str) -> None:
     """Create parent folder for input filename recursively
 
@@ -48,6 +55,7 @@ def create_parent_folder(filename: str) -> None:
         make_folder(path)
 
 
+@deprecated
 def make_folder(path: str) -> None:
     """Create folder at input path recursively
 
@@ -67,6 +75,7 @@ def make_folder(path: str) -> None:
                 ) from exception
 
 
+@deprecated
 def rename(old_path: str, new_path: str, edit_folders: bool = True) -> None:
     """Rename files or folders
 
@@ -80,6 +89,7 @@ def rename(old_path: str, new_path: str, edit_folders: bool = True) -> None:
         os.rename(old_path, new_path)
 
 
+@deprecated
 def size(pathname: str) -> int:
     """Returns size of a file or folder in Bytes
 
@@ -92,6 +102,7 @@ def size(pathname: str) -> int:
     return sum(size(f"{pathname}/{name}") for name in get_content_list(pathname))
 
 
+@deprecated
 def sys_is_windows() -> bool:
     """Check if user is running the code on Windows machine
 

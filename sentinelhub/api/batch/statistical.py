@@ -6,13 +6,13 @@ import datetime as dt
 import logging
 import sys
 from dataclasses import dataclass, field
-from typing import Any, List, Optional, Union
+from typing import Any, Optional, Sequence, Union
 
 from dataclasses_json import CatchAll, LetterCase, Undefined
 from dataclasses_json import config as dataclass_config
 from dataclasses_json import dataclass_json
 
-from ...type_utils import Json, JsonDict
+from ...types import Json, JsonDict
 from ..base_request import InputDataDict
 from ..statistical import SentinelHubStatistical
 from ..utils import datetime_config, enum_config, remove_undefined
@@ -59,7 +59,7 @@ class SentinelHubBatchStatistical(BaseBatchClient["BatchStatisticalRequest"]):
         self,
         *,
         input_features: AccessSpecification,
-        input_data: List[Union[JsonDict, InputDataDict]],
+        input_data: Sequence[Union[JsonDict, InputDataDict]],
         aggregation: JsonDict,
         calculations: Optional[JsonDict],
         output: AccessSpecification,
@@ -71,8 +71,14 @@ class SentinelHubBatchStatistical(BaseBatchClient["BatchStatisticalRequest"]):
         <https://docs.sentinel-hub.com/api/latest/reference/#operation/createNewBatchStatisticsRequest>`__
         """
 
+        # Data filter has to be set to {} if not provided. Ensure we do not mutate original data.
+        requested_data = list(input_data)
+        for i, data_request_dict in enumerate(requested_data):
+            if "dataFilter" not in data_request_dict:
+                requested_data[i] = {"dataFilter": {}, **data_request_dict}
+
         payload = {
-            "input": {"features": input_features, "data": input_data},
+            "input": {"features": input_features, "data": requested_data},
             "aggregation": aggregation,
             "calculations": calculations,
             "output": output,

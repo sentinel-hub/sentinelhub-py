@@ -15,7 +15,7 @@ from dataclasses_json import dataclass_json
 from ...constants import RequestType
 from ...data_collections import DataCollection
 from ...geometry import CRS, BBox, Geometry
-from ...type_utils import Json, JsonDict
+from ...types import Json, JsonDict
 from ..base import BaseCollection, SentinelHubFeatureIterator
 from ..process import SentinelHubRequest
 from ..utils import datetime_config, enum_config, remove_undefined
@@ -52,7 +52,7 @@ class SentinelHubBatch(BaseBatchClient):
 
     def create(
         self,
-        sentinelhub_request: Union[SentinelHubRequest, Dict[str, Any]],
+        sentinelhub_request: Union[SentinelHubRequest, JsonDict],
         tiling_grid: Dict[str, Any],
         output: Optional[Dict[str, Any]] = None,
         bucket_name: Optional[str] = None,
@@ -75,17 +75,20 @@ class SentinelHubBatch(BaseBatchClient):
         :param kwargs: Any other arguments to be added to a dictionary of parameters.
         :return: An instance of `SentinelHubBatch` object that represents a newly created batch request.
         """
-        if isinstance(sentinelhub_request, SentinelHubRequest):
-            sentinelhub_request = sentinelhub_request.download_list[0].post_values  # type: ignore[assignment]
 
-        if not isinstance(sentinelhub_request, dict):
+        if isinstance(sentinelhub_request, SentinelHubRequest):
+            request_dict = sentinelhub_request.download_list[0].post_values
+        else:
+            request_dict = sentinelhub_request
+
+        if not isinstance(request_dict, dict):
             raise ValueError(
                 "Parameter sentinelhub_request should be an instance of SentinelHubRequest or a "
                 "dictionary with a request payload"
             )
 
         payload = {
-            "processRequest": sentinelhub_request,
+            "processRequest": request_dict,
             "tilingGrid": tiling_grid,
             "output": output,
             "bucketName": bucket_name,

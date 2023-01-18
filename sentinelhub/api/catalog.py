@@ -2,21 +2,15 @@
 A client interface for `Sentinel Hub Catalog API <https://docs.sentinel-hub.com/api/latest/api/catalog>`__.
 """
 import datetime as dt
-import sys
 from typing import Any, Dict, Iterable, List, Optional, Union
 
 from ..base import FeatureIterator
 from ..data_collections import DataCollection, OrbitDirection
 from ..geometry import CRS, BBox, Geometry
 from ..time_utils import parse_time, parse_time_interval, serialize_time
-from ..type_utils import JsonDict, RawTimeIntervalType, RawTimeType
+from ..types import JsonDict, Literal, RawTimeIntervalType, RawTimeType
 from .base import SentinelHubService
 from .utils import remove_undefined
-
-if sys.version_info < (3, 8):
-    from typing_extensions import Literal
-else:
-    from typing import Literal  # pylint: disable=ungrouped-imports
 
 
 class SentinelHubCatalog(SentinelHubService):
@@ -251,12 +245,12 @@ class CatalogSearchIterator(FeatureIterator[JsonDict]):
 
         return new_features
 
-    def get_timestamps(self) -> List[dt.date]:
+    def get_timestamps(self) -> List[dt.datetime]:
         """Provides features timestamps
 
         :return: A list of sensing times
         """
-        return [parse_time(feature["properties"]["datetime"]) for feature in self]  # type: ignore[misc]
+        return [parse_time(feature["properties"]["datetime"], force_datetime=True) for feature in self]
 
     def get_geometries(self) -> List[Geometry]:
         """Provides features geometries

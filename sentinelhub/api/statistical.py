@@ -2,13 +2,13 @@
 Implementation of
 `Sentinel Hub Statistical API interface <https://docs.sentinel-hub.com/api/latest/api/statistical/>`__.
 """
-from typing import Any, List, Optional, Tuple, Union
+from typing import Any, Optional, Sequence, Tuple, Union
 
 from ..constants import MimeType
 from ..download.sentinelhub_statistical_client import SentinelHubStatisticalDownloadClient
 from ..geometry import BBox, Geometry
 from ..time_utils import parse_time_interval, serialize_time
-from ..type_utils import JsonDict, RawTimeIntervalType
+from ..types import JsonDict, RawTimeIntervalType
 from .base_request import InputDataDict, SentinelHubBaseApiRequest
 from .utils import _update_other_args, remove_undefined
 
@@ -25,7 +25,7 @@ class SentinelHubStatistical(SentinelHubBaseApiRequest):
     def __init__(
         self,
         aggregation: JsonDict,
-        input_data: List[Union[JsonDict, InputDataDict]],
+        input_data: Sequence[Union[JsonDict, InputDataDict]],
         bbox: Optional[BBox] = None,
         geometry: Optional[Geometry] = None,
         calculations: Optional[JsonDict] = None,
@@ -60,7 +60,7 @@ class SentinelHubStatistical(SentinelHubBaseApiRequest):
     @staticmethod
     def body(
         request_bounds: JsonDict,
-        request_data: List[JsonDict],
+        request_data: Sequence[JsonDict],
         aggregation: JsonDict,
         calculations: Optional[JsonDict],
         other_args: Optional[JsonDict] = None,
@@ -75,13 +75,13 @@ class SentinelHubStatistical(SentinelHubBaseApiRequest):
             by it.
         :returns: Request payload dictionary
         """
-        # Some parts of the payload have to be defined:
-        for input_data_payload in request_data:
-            if "dataFilter" not in input_data_payload:
-                input_data_payload["dataFilter"] = {}
+        requested_data = list(request_data)
+        for i, data_request_dict in enumerate(requested_data):
+            if "dataFilter" not in data_request_dict:
+                requested_data[i] = {"dataFilter": {}, **data_request_dict}
 
         request_body = {
-            "input": {"bounds": request_bounds, "data": request_data},
+            "input": {"bounds": request_bounds, "data": requested_data},
             "aggregation": aggregation,
             "calculations": calculations,
         }

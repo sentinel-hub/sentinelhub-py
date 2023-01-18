@@ -4,7 +4,7 @@ Module with statistics to dataframe transformation.
 from typing import Any, Dict, List, Optional, Tuple, Union
 
 from .time_utils import parse_time
-from .type_utils import JsonDict
+from .types import JsonDict
 
 _PANDAS_IMPORT_MESSAGE = (
     "To use this function you need to install the `pandas` library, which is not a dependency of sentinelhub-py."
@@ -90,7 +90,8 @@ def statistical_to_dataframe(result_data: List[JsonDict], exclude_stats: Optiona
     installed before using the function.
 
     :param result_data: An input representation of (Batch) Statistical API result returned from
-        `AwsBatchResults.get_data()`. Each JsonDict in the list is a Statistical API response of an input geometry.
+        `AwsBatchStatisticalResults.get_data()`. Each JsonDict in the list is a Statistical API response of an input
+        geometry.
     :param exclude_stats: The statistic names defined in this parameter will be excluded from the output DataFrame.
 
     :return: Statistical dataframe.

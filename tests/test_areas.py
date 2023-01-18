@@ -11,6 +11,7 @@ from sentinelhub import (
     BBoxSplitter,
     CustomGridSplitter,
     DataCollection,
+    Geometry,
     OsmSplitter,
     TileSplitter,
     UtmGridSplitter,
@@ -22,6 +23,7 @@ from sentinelhub.testing_utils import get_input_folder
 
 geojson = read_data(os.path.join(get_input_folder(__file__), "cies_islands.json"))
 AREA = shapely.geometry.shape(geojson)
+REPROJECTED_AREA = Geometry(AREA, crs=CRS.WGS84).transform(CRS("32629"))
 BBOX_GRID = [
     BBox((x / 10, y / 100, (x + 1) / 10, (y + 1) / 100), CRS.WGS84)
     for x, y in itertools.product(range(-90, -87), range(4200, 4250))
@@ -71,3 +73,18 @@ def test_return_type(constructor: Type[AreaSplitter], args: list, kwargs: Dict[s
         assert len(return_list) == bbox_len
         for return_item in return_list:
             assert isinstance(return_item, item_type)
+
+
+@pytest.mark.parametrize(
+    "args, kwargs, bbox_len",
+    [
+        [([REPROJECTED_AREA], CRS("32629")), dict(split_size=(2000, 4000), reduce_bbox_sizes=False), 4],
+        [([REPROJECTED_AREA], CRS("32629")), dict(split_size=(1000, 2000), reduce_bbox_sizes=True), 11],
+        [([AREA], CRS.WGS84), dict(split_size=1000, reduce_bbox_sizes=True), 1],
+        [([AREA], CRS("32629")), dict(split_size=1000, reduce_bbox_sizes=True), 1],
+    ],
+)
+def test_bbox_splitter_by_size(args: list, kwargs: Dict[str, Any], bbox_len: int) -> None:
+    splitter = BBoxSplitter(*args, **kwargs)
+    assert len(splitter.get_geometry_list()) == bbox_len
+    assert all(splitter.crs == bbox.crs for bbox in splitter.get_bbox_list())

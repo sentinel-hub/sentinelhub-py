@@ -9,7 +9,7 @@ from requests_mock import Mocker
 from sentinelhub import SentinelHubSession, SHConfig, __version__
 from sentinelhub.download import SessionSharing, SessionSharingThread, collect_shared_session
 from sentinelhub.exceptions import DownloadFailedException, SHUserWarning
-from sentinelhub.type_utils import JsonDict
+from sentinelhub.types import JsonDict
 
 
 @pytest.fixture(name="fake_config")
@@ -55,9 +55,11 @@ def test_token_info(session: SentinelHubSession) -> None:
 def test_session_content_and_headers(fake_config: SHConfig, fake_token: Dict[str, Any], requests_mock: Mocker) -> None:
     """Make sure correct content and headers are passed to the service."""
     requests_mock.post(url="/oauth/token", response_list=[{"json": fake_token}])
-
+    call_time = time.time()
     token = SentinelHubSession(config=fake_config).token
-    assert abs(token["expires_at"] - fake_token["expires_at"]) < 0.1  # Somehow oauthlib changes these times a bit
+    # "expires_at" is derived from "expires_in"  and not read from the response field "expires_at"
+    # this can cause a mismatch, but tokens are refreshed 120s before "expires_at" so a few seconds is fine
+    assert token["expires_at"] == pytest.approx(call_time + fake_token["expires_in"], 1.0)
     token["expires_at"] = fake_token["expires_at"]
     assert token == fake_token
 
@@ -88,7 +90,7 @@ def test_from_token(fake_token: JsonDict) -> None:
     assert session.token == fake_token
     assert session.refresh_before_expiry is None
 
-    fake_token["expires_at"] -= 1000
+    fake_token["expires_at"] -= fake_token["expires_in"]
     session = SentinelHubSession.from_token(fake_token)
     with pytest.warns(SHUserWarning):
         expired_token = session.token

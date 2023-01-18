@@ -17,7 +17,7 @@ from ..config import SHConfig
 from ..data_collections import DataCollection
 from ..download.sentinelhub_client import SentinelHubDownloadClient
 from ..exceptions import MissingDataInRequestException
-from ..type_utils import JsonDict
+from ..types import JsonDict
 from .utils import datetime_config, remove_undefined
 
 if sys.version_info < (3, 8):

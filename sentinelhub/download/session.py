@@ -21,7 +21,7 @@ from ..constants import SHConstants
 from ..download.handlers import fail_user_errors, retry_temporary_errors
 from ..download.models import DownloadRequest
 from ..exceptions import SHUserWarning
-from ..type_utils import JsonDict
+from ..types import JsonDict
 
 if sys.version_info < (3, 8):
     from shared_memory import SharedMemory
@@ -82,7 +82,7 @@ class SentinelHubSession:
         """
         for key in ["access_token", "expires_at"]:
             if key not in token:
-                raise ValueError(f"Given token should be a dictionary containing a key '{key}'")
+                raise ValueError(f"Given token should be a dictionary containing a key `{key}`")
 
         return cls(_token=token, refresh_before_expiry=None)
 
@@ -258,9 +258,11 @@ class SessionSharingThread(Thread):
             memory = self._create_shared_memory(encoded_token)
         except FileExistsError:
             warnings.warn(
-                f"A shared memory with a name '{self.memory_name}' already exists. It will be removed and allocated "
-                f"anew. Please make sure that every {self.__class__.__name__} instance is joined at the end. If you "
-                "are using multiple threads then specify different 'memory_name' parameter for each of them.",
+                (
+                    f"A shared memory with a name `{self.memory_name}` already exists. It will be removed and allocated"
+                    f" anew. Please make sure that every {self.__class__.__name__} instance is joined at the end. If"
+                    " you are using multiple threads then specify different 'memory_name' parameter for each of them."
+                ),
                 category=SHUserWarning,
             )
 
@@ -345,7 +347,7 @@ def collect_shared_session(memory_name: str = _DEFAULT_SESSION_MEMORY_NAME) -> S
         memory = SharedMemory(name=memory_name)
     except FileNotFoundError as exception:
         raise FileNotFoundError(
-            f"Couldn't obtain a shared session because a shared memory '{memory_name}' doesn't exist. Make sure that"
+            f"Couldn't obtain a shared session because a shared memory `{memory_name}` doesn't exist. Make sure that"
             " you are running session sharing when calling this function"
         ) from exception
 

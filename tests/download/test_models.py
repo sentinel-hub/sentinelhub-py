@@ -12,7 +12,7 @@ import pytest
 from sentinelhub import DownloadRequest, MimeType
 from sentinelhub.download.models import DownloadResponse
 from sentinelhub.exceptions import SHRuntimeWarning
-from sentinelhub.type_utils import JsonDict
+from sentinelhub.types import JsonDict
 
 
 def test_download_request() -> None:

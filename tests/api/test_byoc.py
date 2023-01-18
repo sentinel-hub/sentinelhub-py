@@ -9,7 +9,7 @@ import pytest
 from requests_mock import Mocker
 
 from sentinelhub import ByocCollection, ByocTile, DownloadFailedException, SentinelHubBYOC, SHConfig
-from sentinelhub.type_utils import JsonDict
+from sentinelhub.types import JsonDict
 
 pytestmark = pytest.mark.sh_integration
 
@@ -96,6 +96,7 @@ def tile_fixture() -> JsonDict:
         "created": "2020-06-22T12:33:36.081000Z",
         "sensingTime": None,
         "additionalData": {"minMetersPerPixel": 10.0, "maxMetersPerPixel": 160.0},
+        "ingestionStart": "2022-11-07T14:51:57.381758Z",
     }
 
 
@@ -147,7 +148,7 @@ def test_byoc_tile_other_data(tile: JsonDict) -> None:
 
     tile_object = ByocTile.from_dict(tile)
     assert isinstance(tile_object, ByocTile)
-    assert tile_object.other_data == {"FakeParam": "x"}
+    assert tile_object.other_data["FakeParam"] == "x"
 
     tile_dict = tile_object.to_dict()
     assert tile == tile_dict

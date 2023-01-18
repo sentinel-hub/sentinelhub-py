@@ -13,7 +13,7 @@ from ..config import SHConfig
 from ..constants import MimeType
 from ..data_collections import DataCollection
 from ..download import DownloadRequest
-from ..exceptions import AwsDownloadFailedException, SHUserWarning
+from ..exceptions import AwsDownloadFailedException, SHUserWarning, deprecated_class
 from ..time_utils import parse_time
 from .client import AwsDownloadClient
 from .constants import AwsConstants, EsaSafeType
@@ -185,9 +185,9 @@ class AwsData(metaclass=ABCMeta):
         :raises: ValueError
         """
         if hasattr(self, "tile_info"):
-            return self.tile_info["datastrip"]["id"][-5:]  # type: ignore[attr-defined]
+            return self.tile_info["datastrip"]["id"][-5:]
         if hasattr(self, "product_info"):
-            return self.product_info["datastrips"][0]["id"][-5:]  # type: ignore[attr-defined]
+            return self.product_info["datastrips"][0]["id"][-5:]
         raise ValueError("No info file has been obtained yet.")
 
     @staticmethod
@@ -320,6 +320,7 @@ class AwsData(metaclass=ABCMeta):
         )
 
 
+@deprecated_class(message_suffix="It will remain in the codebase for now, but won't be actively maintained.")
 class AwsProduct(AwsData):
     """Class for collecting Sentinel-2 products data from AWS."""
 
@@ -467,6 +468,7 @@ class AwsProduct(AwsData):
         return os.path.join(self.parent_folder, self.product_id, self.add_file_extension(filename)).replace(":", ".")
 
 
+@deprecated_class(message_suffix="It will remain in the codebase for now, but won't be actively maintained.")
 class AwsTile(AwsData):
     """Class for collecting Sentinel-2 tiles data from AWS."""
 
@@ -496,7 +498,7 @@ class AwsTile(AwsData):
         """
         self.tile_name = self.parse_tile_name(tile_name)
 
-        self.timestamp: dt.date = parse_time(time, ignoretz=True)  # type: ignore
+        self.timestamp: dt.date = parse_time(time, ignoretz=True)
         self.date = self.timestamp.date() if isinstance(self.timestamp, dt.datetime) else self.timestamp
 
         self.aws_index = aws_index

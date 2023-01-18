@@ -1,10 +1,11 @@
-"""
-Module with custom types and utilities.
-"""
-import datetime as dt
-from typing import Any, Dict, Tuple, Union
+"""Deprecated module for types, moved to `sentinelhub.types`."""
+from warnings import warn
 
-RawTimeType = Union[None, str, dt.date]
-RawTimeIntervalType = Tuple[RawTimeType, RawTimeType]
-JsonDict = Dict[str, Any]
-Json = Union[JsonDict, list, str, float, int, None]
+from .exceptions import SHDeprecationWarning
+from .types import *  # noqa # pylint: disable=wildcard-import,unused-wildcard-import
+
+warn(
+    "The module `sentinelhub.type_utils` is deprecated, use `sentinelhub.types` instead.",
+    category=SHDeprecationWarning,
+    stacklevel=2,
+)

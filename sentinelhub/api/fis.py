@@ -22,6 +22,11 @@ class FisRequest(OgcRequest):
     For more info check `FIS documentation <https://www.sentinel-hub.com/develop/api/ogc/fis-request/>`__.
     """
 
+    DEPRECATION_MESSAGE = (
+        "Fis service is being deprecated in favour of SentinelHubStatistical. Although no immediate action is needed as"
+        " FIS is still supported, consider switching to Statistical API because it provides additional functionalities."
+    )
+
     def __init__(
         self,
         layer: str,
@@ -66,14 +71,18 @@ class FisRequest(OgcRequest):
         self.bins = bins
         self.histogram_type = HistogramType(histogram_type) if histogram_type else None
 
-        super().__init__(bbox=None, layer=layer, time=time, service_type=ServiceType.FIS, **kwargs)  # type: ignore
+        super().__init__(
+            bbox=None, layer=layer, time=time, service_type=ServiceType.FIS, **kwargs  # type: ignore[arg-type]
+        )
 
-    def create_request(self) -> None:  # type: ignore
+    def create_request(self) -> None:  # type: ignore[override]
         """Set download requests
 
         Create a list of DownloadRequests for all Sentinel-2 acquisitions within request's time interval and
         acceptable cloud coverage.
         """
+
+        warnings.warn(self.DEPRECATION_MESSAGE, category=SHDeprecationWarning, stacklevel=2)
         fis_service = _FisService(config=self.config)
         self.download_list = fis_service.get_request(self)
 
@@ -92,17 +101,7 @@ class _FisService(OgcImageService):
     Intermediate layer between FIS requests and the Sentinel Hub FIS services.
     """
 
-    def __init__(self, *args: Any, **kwargs: Any):
-        message = (
-            "Fis service is being deprecated in favour of SentinelHubStatistical. "
-            "Although no immediate action is needed as FIS is still supported, consider switching to "
-            "Statistical API because it provides additional functionalities."
-        )
-        warnings.warn(message, category=SHDeprecationWarning)
-
-        super().__init__(*args, **kwargs)
-
-    def get_request(self, request: FisRequest) -> List[DownloadRequest]:  # type: ignore
+    def get_request(self, request: FisRequest) -> List[DownloadRequest]:  # type: ignore[override]
         """Get download requests
 
         Create a list of DownloadRequests for all Sentinel-2 acquisitions within request's time interval and

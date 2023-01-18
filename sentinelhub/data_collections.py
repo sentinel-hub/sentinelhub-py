@@ -28,6 +28,7 @@ class _CollectionType:
     DEM = "DEM"
     BYOC = "BYOC"
     BATCH = "BATCH"
+    HLS = "Harmonized Landsat Sentinel"
 
 
 class _SensorType:
@@ -106,7 +107,7 @@ def _shallow_asdict(dataclass_instance: Any) -> Dict[str, Any]:
 class _DataCollectionMeta(EnumMeta):
     """Metaclass that builds DataCollection class enums"""
 
-    def __call__(cls, value, *args, **kwargs):  # type: ignore
+    def __call__(cls, value, *args, **kwargs):  # type: ignore[no-untyped-def]
         """This is executed whenever `DataCollection('something')` is called
 
         This solves a problem of pickling a custom DataCollection and unpickling it in another process
@@ -146,7 +147,7 @@ class DataCollectionDefinition:
     # The following parameter is used to preserve custom DataCollection name during pickling and unpickling process:
     _name: Optional[str] = field(default=None, compare=False)
 
-    def __post_init__(self):  # type: ignore
+    def __post_init__(self):  # type: ignore[no-untyped-def] # not typechecked because we mutate immutable dataclasses
         """In case a list of bands or metabands has been given this makes sure to cast it into a tuple"""
         if isinstance(self.bands, list):
             object.__setattr__(self, "bands", tuple(self.bands))
@@ -389,6 +390,15 @@ class DataCollection(Enum, metaclass=_DataCollectionMeta):
         metabands=MetaBands.SENTINEL3_SLSTR,
         has_cloud_coverage=True,
     )
+    HARMONIZED_LANDSAT_SENTINEL = DataCollectionDefinition(
+        api_id="hls",
+        catalog_id="hls",
+        collection_type=_CollectionType.HLS,
+        service_url=ServiceUrl.USWEST,
+        bands=Bands.HARMONIZED_LANDSAT_SENTINEL,
+        metabands=MetaBands.HARMONIZED_LANDSAT_SENTINEL,
+        has_cloud_coverage=True,
+    )
 
     # pylint: disable=too-many-locals
     @classmethod
@@ -499,7 +509,7 @@ class DataCollection(Enum, metaclass=_DataCollectionMeta):
             return
 
         if is_name_defined:
-            raise ValueError(f"Data collection name '{name}' is already taken by another data collection")
+            raise ValueError(f"Data collection name `{name}` is already taken by another data collection")
 
         existing_collection = cls._value2member_map_[definition]
         raise ValueError(
