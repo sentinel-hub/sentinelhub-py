@@ -1,5 +1,3 @@
-"""
-Version of sentinelhub package
-"""
+"""Version of the sentinelhub package."""
 
 __version__ = "3.8.1"
