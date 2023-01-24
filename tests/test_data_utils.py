@@ -31,8 +31,8 @@ def test_statistical_to_dataframe() -> None:
     assert num_polys == 2
     assert num_columns == 12
     assert num_valid_rows == 2
-    for column, type in column_types.items():
-        assert isinstance(df[column].iloc[0], type)
+    for column, data_type in column_types.items():
+        assert isinstance(df[column].iloc[0], data_type)
 
 
 def test_get_failed_statistical_requests() -> None:
