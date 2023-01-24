@@ -5,6 +5,7 @@ codecov
 fs
 moto
 mypy>=0.990
+pandas
 pre-commit
 pylint>=2.14.0
 pytest>=4.0.0

@@ -30,7 +30,7 @@ def test_statistical_to_dataframe() -> None:
     num_valid_rows = len(df)
     assert num_polys == 2
     assert num_columns == 12
-    assert num_valid_rows == 4
+    assert num_valid_rows == 2
     for column, type in column_types.items():
         assert isinstance(df[column].iloc[0], type)
 
