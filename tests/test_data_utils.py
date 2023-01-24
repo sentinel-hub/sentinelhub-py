@@ -20,11 +20,6 @@ column_types = {
     "interval_to": dt.date,
     "identifier": str,
 }
-batch_stat_failed_results = read_data(
-    os.path.join(os.path.dirname(__file__), "TestInputs", "batch_stat_failed_results.json")
-)
-failed_requests = get_failed_statistical_requests(batch_stat_failed_results)
-print(failed_requests)
 
 
 def test_statistical_to_dataframe() -> None:
