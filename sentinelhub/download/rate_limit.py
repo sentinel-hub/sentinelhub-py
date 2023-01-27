@@ -3,7 +3,6 @@ Module implementing rate limiting logic for Sentinel Hub service
 """
 import time
 from enum import Enum
-from typing import Union
 
 from ..types import JsonDict
 
@@ -52,8 +51,7 @@ class SentinelHubRateLimit:
 
     def update(self, headers: dict) -> None:
         """Update the next possible download time if the service has responded with the rate limit"""
-        retry_after: float
-        retry_after = int(headers.get(self.RETRY_HEADER, 0))
+        retry_after: float = round(headers.get(self.RETRY_HEADER, 0))
         retry_after = retry_after / 1000
 
         if retry_after:
@@ -63,7 +61,7 @@ class SentinelHubRateLimit:
 class PolicyBucket:
     """A class representing Sentinel Hub policy bucket"""
 
-    def __init__(self, policy_type: Union[str, PolicyType], policy_payload: JsonDict):
+    def __init__(self, policy_type: PolicyType, policy_payload: JsonDict):
         """
         :param policy_type: A type of policy
         :param policy_payload: A dictionary of policy parameters
@@ -77,7 +75,7 @@ class PolicyBucket:
         # The following is the same as if we would interpret samplingPeriod string
         self.refill_per_second = 10**9 / policy_payload["nanosBetweenRefills"]
 
-        self._content = self.capacity
+        self.content = self.capacity
 
     def __repr__(self) -> str:
         """Representation of the bucket content"""
@@ -85,16 +83,6 @@ class PolicyBucket:
             f"{self.__class__.__name__}(policy_type={self.policy_type}, content={self.content}/{self.capacity}, "
             f"refill_period={self.refill_period}, refill_per_second={self.refill_per_second})"
         )
-
-    @property
-    def content(self) -> float:
-        """Variable `content` can be accessed as a property"""
-        return self._content
-
-    @content.setter
-    def content(self, value: float) -> None:
-        """Variable `content` can be modified by external classes"""
-        self._content = value
 
     def count_cost_per_second(self, elapsed_time: float, new_content: float) -> float:
         """Calculates the cost per second for the bucket given the elapsed time and the new content.
@@ -121,9 +109,7 @@ class PolicyBucket:
         expected_content = max(self.content + elapsed_time * self.refill_per_second - overall_completed_cost, 0)
 
         if self.is_fixed():
-            if expected_content < cost_per_request:
-                return -1
-            return 0
+            return -1 if expected_content < cost_per_request else 0
 
         return max(cost_per_request - expected_content + buffer_cost, 0) / self.refill_per_second
 
