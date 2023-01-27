@@ -7,7 +7,7 @@ import os
 import sys
 import warnings
 from concurrent.futures import Future, ThreadPoolExecutor, as_completed
-from typing import Any, List, Optional, Union, overload
+from typing import Any, Iterable, List, Optional, Union
 from xml.etree import ElementTree
 
 import requests
@@ -19,6 +19,7 @@ from ..exceptions import (
     DownloadFailedException,
     HashedNameCollisionException,
     MissingDataInRequestException,
+    SHDeprecationWarning,
     SHRuntimeWarning,
 )
 from ..io_utils import read_data
@@ -56,29 +57,9 @@ class DownloadClient:
 
         self.config = config or SHConfig()
 
-    @overload
     def download(
         self,
-        download_requests: DownloadRequest,
-        max_threads: Optional[int] = None,
-        decode_data: bool = True,
-        show_progress: bool = False,
-    ) -> Any:
-        ...
-
-    @overload
-    def download(
-        self,
-        download_requests: List[DownloadRequest],
-        max_threads: Optional[int] = None,
-        decode_data: bool = True,
-        show_progress: bool = False,
-    ) -> List[Any]:
-        ...
-
-    def download(
-        self,
-        download_requests: Union[DownloadRequest, List[DownloadRequest]],
+        download_requests: Iterable[DownloadRequest],
         max_threads: Optional[int] = None,
         decode_data: bool = True,
         show_progress: bool = False,
@@ -93,13 +74,23 @@ class DownloadClient:
         :param show_progress: Whether a progress bar should be displayed while downloading
         :return: A list of results or a single result, depending on input parameter `download_requests`
         """
-        downloads = [download_requests] if isinstance(download_requests, DownloadRequest) else download_requests
+        if isinstance(download_requests, DownloadRequest):
+            warnings.warn(
+                (
+                    "The parameter `download_requests` should be a sequence of requests. In future versions download of"
+                    " single requests will only be supported if provided as a singelton tuple or list."
+                ),
+                category=SHDeprecationWarning,
+            )
+            requests_list: List[DownloadRequest] = [download_requests]
+        else:
+            requests_list = list(download_requests)
 
-        data_list = [None] * len(downloads)
+        data_list = [None] * len(requests_list)
 
         single_download_method = self._single_download_decoded if decode_data else self._single_download
         with ThreadPoolExecutor(max_workers=max_threads) as executor:
-            download_list = [executor.submit(single_download_method, request) for request in downloads]
+            download_list = [executor.submit(single_download_method, request) for request in requests_list]
             future_order = {future: i for i, future in enumerate(download_list)}
 
             # Consider using tqdm.contrib.concurrent.thread_map in the future
