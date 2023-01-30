@@ -4,7 +4,6 @@ Module implementing the main download client class
 import json
 import logging
 import os
-import sys
 import warnings
 from concurrent.futures import Future, ThreadPoolExecutor, as_completed
 from typing import Any, Iterable, List, Optional, Union
@@ -113,8 +112,7 @@ class DownloadClient:
             return future.result()
         except DownloadFailedException as download_exception:
             if self.raise_download_errors:
-                traceback = sys.exc_info()[2]
-                raise download_exception.with_traceback(traceback)
+                raise download_exception
 
             warnings.warn(str(download_exception), category=SHRuntimeWarning)
             return None
