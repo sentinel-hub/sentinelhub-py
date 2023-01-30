@@ -86,7 +86,7 @@ class DownloadClient:
         else:
             requests_list = list(download_requests)
 
-        data_list = [None] * len(requests_list)
+        results = [None] * len(requests_list)
 
         single_download_method = self._single_download_decoded if decode_data else self._single_download
 
@@ -95,23 +95,22 @@ class DownloadClient:
             future_order = {future: i for i, future in enumerate(download_list)}
 
             progress_context = tqdm(total=len(download_list)) if show_progress else nullcontext()
-            with progress_context as pbar:
+            with progress_context as progress_bar:
                 for future in as_completed(download_list):
                     try:
-                        data_list[future_order[future]] = future.result()
+                        results[future_order[future]] = future.result()
                     except DownloadFailedException as download_exception:
                         if self.raise_download_errors:
                             raise download_exception
 
                         warnings.warn(str(download_exception), category=SHRuntimeWarning)
-                        data_list[future_order[future]] = None
 
-                    if pbar:
-                        pbar.update(1)
+                    if progress_bar:
+                        progress_bar.update(1)
 
         if isinstance(download_requests, DownloadRequest):
-            return data_list[0]  # type: ignore[return-value] # will be removed in future version
-        return data_list
+            return results[0]  # type: ignore[return-value] # will be removed in future version
+        return results
 
     def _single_download_decoded(self, request: DownloadRequest) -> Any:
         """Downloads a response and decodes it into data. By decoding a single response"""
