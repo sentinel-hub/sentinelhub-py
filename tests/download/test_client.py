@@ -16,7 +16,7 @@ def download_request_fixture(output_folder: str) -> DownloadRequest:
     return DownloadRequest(
         url="https://roda.sentinel-hub.com/sentinel-s2-l1c/tiles/1/C/CV/2017/1/14/0/tileInfo.json",
         headers={"Content-Type": MimeType.JSON.get_string()},
-        data_type="json",
+        data_type=MimeType.JSON,
         save_response=True,
         data_folder=output_folder,
         filename=None,
@@ -24,30 +24,22 @@ def download_request_fixture(output_folder: str) -> DownloadRequest:
     )
 
 
-def test_single_download(download_request: DownloadRequest) -> None:
+@pytest.mark.parametrize("num_requests", [0, 1, 2])
+@pytest.mark.parametrize("decode", [True, False])
+def test_download_return_values(num_requests: int, decode: bool, download_request: DownloadRequest) -> None:
     client = DownloadClient(redownload=False)
+    requests = [copy.copy(download_request) for _ in range(num_requests)]
 
-    result_list = client.download([download_request])
-    result = result_list[0]
+    results = client.download(requests, decode_data=decode)
 
-    assert isinstance(result, dict)
+    expected_element_type = dict if decode else DownloadResponse
+    assert isinstance(results, list) and len(results) == len(requests)
+    assert all(isinstance(result, expected_element_type) for result in results)
 
-    request_path, response_path = download_request.get_storage_paths()
-    assert os.path.isfile(request_path)
-    assert os.path.isfile(response_path)
-
-
-def test_download_without_decode_data(download_request: DownloadRequest) -> None:
-    client = DownloadClient(redownload=False)
-
-    response_list = client.download([download_request], decode_data=False)
-    response = response_list[0]
-    assert isinstance(response, DownloadResponse)
-
-    responses = client.download([download_request, download_request], decode_data=False)
-    assert isinstance(responses, list)
-    assert len(responses) == 2
-    assert all(isinstance(resp, DownloadResponse) for resp in responses)
+    for req in requests:
+        request_path, response_path = req.get_storage_paths()
+        assert request_path is not None and os.path.isfile(request_path)
+        assert response_path is not None and os.path.isfile(response_path)
 
 
 def test_download_with_custom_filename(download_request: DownloadRequest) -> None:
@@ -67,7 +59,7 @@ def test_download_with_custom_filename(download_request: DownloadRequest) -> Non
 
 
 @pytest.mark.parametrize("show_progress", [True, False])
-def test_multiple_downloads(download_request: DownloadRequest, show_progress: bool) -> None:
+def test_download_with_different_options(download_request: DownloadRequest, show_progress: bool) -> None:
     client = DownloadClient(redownload=True, raise_download_errors=False)
 
     request2 = copy.deepcopy(download_request)
@@ -91,23 +83,28 @@ def test_hash_collision(download_request: DownloadRequest) -> None:
     # Give all requests same hash
     download_request.get_hashed_name = lambda: "same_hash"
 
-    request2 = copy.deepcopy(download_request)
-    request3 = copy.deepcopy(download_request)
-    request3.post_values = {"zero": 0}
+    structurally_same_request = copy.deepcopy(download_request)
+    structurally_different_request = copy.deepcopy(download_request)
+    structurally_different_request.post_values = {"zero": 0}
 
     client.download([download_request])
-    client.download([request2])
+    client.download([structurally_same_request])
 
     with pytest.raises(HashedNameCollisionException):
-        client.download([request3])
+        client.download([structurally_different_request])
 
-    # Check that there are no issues with re-loading
-    request4 = copy.deepcopy(download_request)
-    request4.post_values = {"transformed-when-saved": [(1, 2)]}
 
-    request_path, _ = request4.get_storage_paths()
-    request_info = request4.get_request_params(include_metadata=True)
+def test_check_cached_request_is_matching(download_request: DownloadRequest) -> None:
+    """Checks that when the request is saved (and loaded) the method correctly recognizes it's matching.
+    Ensures no issues with false detections if the jsonification changes values."""
+    client = DownloadClient()
+
+    request = copy.deepcopy(download_request)
+    request.post_values = {"transformed-when-saved": [(1, 2)]}
+
+    request_path, _ = request.get_storage_paths()
+    request_info = request.get_request_params(include_metadata=True)
     write_data(request_path, request_info, data_format=MimeType.JSON)  # Copied from download client
 
     # pylint: disable=protected-access
-    client._check_cached_request_is_matching(request4, request_path)
+    client._check_cached_request_is_matching(request, request_path)
