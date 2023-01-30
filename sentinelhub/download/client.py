@@ -5,7 +5,8 @@ import json
 import logging
 import os
 import warnings
-from concurrent.futures import Future, ThreadPoolExecutor, as_completed
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from contextlib import nullcontext
 from typing import Any, Iterable, List, Optional, Union
 from xml.etree import ElementTree
 
@@ -62,7 +63,7 @@ class DownloadClient:
         max_threads: Optional[int] = None,
         decode_data: bool = True,
         show_progress: bool = False,
-    ) -> Union[List[Any], Any]:
+    ) -> List[Any]:
         """Download one or multiple requests, provided as a request list.
 
         :param download_requests: A list of requests or a single request to be executed.
@@ -88,34 +89,29 @@ class DownloadClient:
         data_list = [None] * len(requests_list)
 
         single_download_method = self._single_download_decoded if decode_data else self._single_download
+
         with ThreadPoolExecutor(max_workers=max_threads) as executor:
             download_list = [executor.submit(single_download_method, request) for request in requests_list]
             future_order = {future: i for i, future in enumerate(download_list)}
 
-            # Consider using tqdm.contrib.concurrent.thread_map in the future
-            if show_progress:
-                with tqdm(total=len(download_list)) as pbar:
-                    for future in as_completed(download_list):
-                        data_list[future_order[future]] = self._process_download_future(future)
-                        pbar.update(1)
-            else:
+            progress_context = tqdm(total=len(download_list)) if show_progress else nullcontext()
+            with progress_context as pbar:
                 for future in as_completed(download_list):
-                    data_list[future_order[future]] = self._process_download_future(future)
+                    try:
+                        data_list[future_order[future]] = future.result()
+                    except DownloadFailedException as download_exception:
+                        if self.raise_download_errors:
+                            raise download_exception
+
+                        warnings.warn(str(download_exception), category=SHRuntimeWarning)
+                        data_list[future_order[future]] = None
+
+                    if pbar:
+                        pbar.update(1)
 
         if isinstance(download_requests, DownloadRequest):
-            return data_list[0]
+            return data_list[0]  # type: ignore[return-value] # will be removed in future version
         return data_list
-
-    def _process_download_future(self, future: Future) -> Any:
-        """Unpacks the future and correctly handles exceptions"""
-        try:
-            return future.result()
-        except DownloadFailedException as download_exception:
-            if self.raise_download_errors:
-                raise download_exception
-
-            warnings.warn(str(download_exception), category=SHRuntimeWarning)
-            return None
 
     def _single_download_decoded(self, request: DownloadRequest) -> Any:
         """Downloads a response and decodes it into data. By decoding a single response"""
