@@ -27,7 +27,8 @@ def download_request_fixture(output_folder: str) -> DownloadRequest:
 def test_single_download(download_request: DownloadRequest) -> None:
     client = DownloadClient(redownload=False)
 
-    result = client.download(download_request)
+    result_list = client.download([download_request])
+    result = result_list[0]
 
     assert isinstance(result, dict)
 
@@ -39,7 +40,8 @@ def test_single_download(download_request: DownloadRequest) -> None:
 def test_download_without_decode_data(download_request: DownloadRequest) -> None:
     client = DownloadClient(redownload=False)
 
-    response = client.download(download_request, decode_data=False)
+    response_list = client.download([download_request], decode_data=False)
+    response = response_list[0]
     assert isinstance(response, DownloadResponse)
 
     responses = client.download([download_request, download_request], decode_data=False)
@@ -56,7 +58,7 @@ def test_download_with_custom_filename(download_request: DownloadRequest) -> Non
     client = DownloadClient(redownload=False)
 
     for _ in range(3):
-        client.download(download_request)
+        client.download([download_request])
 
     request_path, response_path = download_request.get_storage_paths()
     assert request_path is None
@@ -93,11 +95,11 @@ def test_hash_collision(download_request: DownloadRequest) -> None:
     request3 = copy.deepcopy(download_request)
     request3.post_values = {"zero": 0}
 
-    client.download(download_request)
-    client.download(request2)
+    client.download([download_request])
+    client.download([request2])
 
     with pytest.raises(HashedNameCollisionException):
-        client.download(request3)
+        client.download([request3])
 
     # Check that there are no issues with re-loading
     request4 = copy.deepcopy(download_request)
