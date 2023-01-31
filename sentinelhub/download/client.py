@@ -72,7 +72,7 @@ class DownloadClient:
         :param decode_data: If `True` it will decode data otherwise it will return it in form of a `DownloadResponse`
             objects which contain binary data and response metadata.
         :param show_progress: Whether a progress bar should be displayed while downloading
-        :return: A list of results or a single result, depending on input parameter `download_requests`
+        :return: A list of results
         """
         if isinstance(download_requests, DownloadRequest):
             warnings.warn(
