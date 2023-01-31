@@ -22,7 +22,7 @@ from .exceptions import SHUserWarning
 EXTERNAL_CRS: Tuple[Type, ...] = (pyproj.CRS,)
 
 if importlib.util.find_spec("fiona") is not None:
-    import fiona
+    import fiona  # pylint: disable=import-error
 
     if fiona.__version__ >= "1.9.0":
         EXTERNAL_CRS = (pyproj.CRS, fiona.crs.CRS)  # pylint: disable=c-extension-no-member
