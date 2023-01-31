@@ -4,13 +4,13 @@ Module defining constants and enumerate types used in the package
 from __future__ import annotations
 
 import functools
+import importlib.util
 import mimetypes
 import re
 import warnings
 from enum import Enum, EnumMeta
 from typing import Callable, Tuple, Type, Union, cast
 
-import fiona
 import numpy as np
 import pyproj
 import utm
@@ -19,10 +19,13 @@ from aenum import extend_enum
 from ._version import __version__
 from .exceptions import SHUserWarning
 
-if fiona.__version__ >= "1.9.0":
-    EXTERNAL_CRS: Tuple[Type, ...] = (pyproj.CRS, fiona.crs.CRS)  # pylint: disable=c-extension-no-member
-else:
-    EXTERNAL_CRS = (pyproj.CRS,)
+EXTERNAL_CRS: Tuple[Type, ...] = (pyproj.CRS,)
+
+if importlib.util.find_spec("fiona") is not None:
+    import fiona
+
+    if fiona.__version__ >= "1.9.0":
+        EXTERNAL_CRS = (pyproj.CRS, fiona.crs.CRS)  # pylint: disable=c-extension-no-member
 
 
 class PackageProps:
