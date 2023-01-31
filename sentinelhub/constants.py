@@ -8,8 +8,9 @@ import mimetypes
 import re
 import warnings
 from enum import Enum, EnumMeta
-from typing import Callable, Union
+from typing import Callable, Tuple, Type, Union, cast
 
+import fiona
 import numpy as np
 import pyproj
 import utm
@@ -17,6 +18,11 @@ from aenum import extend_enum
 
 from ._version import __version__
 from .exceptions import SHUserWarning
+
+if fiona.__version__ >= "1.9.0":
+    EXTERNAL_CRS: Tuple[Type, ...] = (pyproj.CRS, fiona.crs.CRS)  # pylint: disable=c-extension-no-member
+else:
+    EXTERNAL_CRS = (pyproj.CRS,)
 
 
 class PackageProps:
@@ -99,6 +105,7 @@ class CRSMeta(EnumMeta):
 
         if isinstance(crs_value, str) and not cls.has_value(crs_value) and crs_value.isdigit() and len(crs_value) >= 4:
             crs_name = f"EPSG_{crs_value}"
+            print("beep")
             extend_enum(cls, crs_name, crs_value)
 
         return super().__call__(crs_value, *args, **kwargs)
@@ -115,7 +122,8 @@ class CRSMeta(EnumMeta):
         """
         if isinstance(value, dict) and "init" in value:
             value = value["init"]
-        if isinstance(value, pyproj.CRS):
+        if isinstance(value, EXTERNAL_CRS):
+            value = cast(pyproj.CRS, value)  # the fiona.crs.CRS has a similar interface
             if value == CRSMeta._UNSUPPORTED_CRS:
                 message = (
                     "sentinelhub-py supports only WGS 84 coordinate reference system with "
@@ -148,7 +156,7 @@ class CRSMeta(EnumMeta):
                 value = match.group("code")
             if value.upper() == "CRS84":
                 return "4326"
-            return value.lower().strip("epsg: ")
+            return value.lower().replace("epsg:", "").strip()
         return value
 
 
