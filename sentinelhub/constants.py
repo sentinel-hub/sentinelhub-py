@@ -105,7 +105,6 @@ class CRSMeta(EnumMeta):
 
         if isinstance(crs_value, str) and not cls.has_value(crs_value) and crs_value.isdigit() and len(crs_value) >= 4:
             crs_name = f"EPSG_{crs_value}"
-            print("beep")
             extend_enum(cls, crs_name, crs_value)
 
         return super().__call__(crs_value, *args, **kwargs)
