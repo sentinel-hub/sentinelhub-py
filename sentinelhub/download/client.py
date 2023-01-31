@@ -66,13 +66,13 @@ class DownloadClient:
     ) -> List[Any]:
         """Download one or multiple requests, provided as a request list.
 
-        :param download_requests: A list of requests or a single request to be executed.
+        :param download_requests: A list of requests to be executed.
         :param max_threads: Maximum number of threads to be used for download in parallel. The default is
             `max_threads=None` which will use the number of processors on the system multiplied by 5.
         :param decode_data: If `True` it will decode data otherwise it will return it in form of a `DownloadResponse`
             objects which contain binary data and response metadata.
         :param show_progress: Whether a progress bar should be displayed while downloading
-        :return: A list of results or a single result, depending on input parameter `download_requests`
+        :return: A list of results
         """
         if isinstance(download_requests, DownloadRequest):
             warnings.warn(
