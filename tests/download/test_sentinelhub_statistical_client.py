@@ -47,7 +47,7 @@ def test_statistical_client_download_per_interval(download_request: DownloadRequ
 
     data = client.download([download_request])
 
-    assert data == {
+    assert data[0] == {
         "data": [
             {"interval": {"from": "2020-01-05", "to": "2020-01-05"}, "outputs": 0},
             {"interval": {"from": "2020-01-10", "to": "2020-01-10"}, "error": {"type": "BAD_REQUEST"}},
