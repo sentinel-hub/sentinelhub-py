@@ -1,0 +1,113 @@
+[
+    {
+        "id": 3,
+        "identifier": "SI21.FOI.6620269001",
+        "response": null
+    },
+    {
+        "id": 4,
+        "identifier": "SI21.FOI.6681475001",
+        "error": {
+            "type": "EXECUTION_ERROR"
+        }
+    },
+    {
+        "id": 5,
+        "identifier": "SI21.FOI.6828863001",
+        "response": {
+            "data": [
+                {
+                    "interval": {
+                        "from": "2020-06-09T00:00:00Z",
+                        "to": "2020-06-10T00:00:00Z"
+                    },
+                    "error": {
+                        "type": "EXECUTION_ERROR"
+                    }
+                },
+                {
+                    "interval": {
+                        "from": "2020-06-11T00:00:00Z",
+                        "to": "2020-06-12T00:00:00Z"
+                    },
+                    "outputs": {
+                        "ndvi": {
+                            "bands": {
+                                "B0": {
+                                    "stats": {
+                                        "min": 0.28503936529159546,
+                                        "max": 0.6191503405570984,
+                                        "mean": 0.41071487963199604,
+                                        "stDev": 0.06737269465911691,
+                                        "sampleCount": 48,
+                                        "noDataCount": 0,
+                                        "percentiles": {
+                                            "50.0": 0.4020618498325348
+                                        }
+                                    },
+                                    "histogram": {
+                                        "bins": [
+                                            {
+                                                "lowEdge": -1.0,
+                                                "highEdge": -0.8,
+                                                "count": 0
+                                            },
+                                            {
+                                                "lowEdge": -0.8,
+                                                "highEdge": -0.6,
+                                                "count": 0
+                                            },
+                                            {
+                                                "lowEdge": -0.6,
+                                                "highEdge": -0.399999999999999,
+                                                "count": 0
+                                            },
+                                            {
+                                                "lowEdge": -0.3999999999999999,
+                                                "highEdge": -0.19999999999999996,
+                                                "count": 0
+                                            },
+                                            {
+                                                "lowEdge": -0.19999999999999996,
+                                                "highEdge": 0.0,
+                                                "count": 0
+                                            },
+                                            {
+                                                "lowEdge": 0.0,
+                                                "highEdge": 0.20000000000000018,
+                                                "count": 0
+                                            },
+                                            {
+                                                "lowEdge": 0.20000000000000018,
+                                                "highEdge": 0.40000000000000013,
+                                                "count": 24
+                                            },
+                                            {
+                                                "lowEdge": 0.40000000000000013,
+                                                "highEdge": 0.6000000000000001,
+                                                "count": 23
+                                            },
+                                            {
+                                                "lowEdge": 0.6000000000000001,
+                                                "highEdge": 0.8,
+                                                "count": 1
+                                            },
+                                            {
+                                                "lowEdge": 0.8,
+                                                "highEdge": 1.0,
+                                                "count": 0
+                                            }
+                                        ],
+                                        "overflowCount": 0,
+                                        "underflowCount": 0
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            ],
+            "status": "OK"
+        }
+    }
+]

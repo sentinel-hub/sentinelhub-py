@@ -1,6 +1,7 @@
 """
 Module implementing error handlers which can occur during download procedure
 """
+import functools
 import logging
 import sys
 import time
@@ -36,6 +37,7 @@ LOGGER = logging.getLogger(__name__)
 def fail_user_errors(download_func: Callable[[Self, DownloadRequest], T]) -> Callable[[Self, DownloadRequest], T]:
     """Decorator function for handling user errors"""
 
+    @functools.wraps(download_func)
     def new_download_func(self: Self, request: DownloadRequest) -> T:
         try:
             return download_func(self, request)
@@ -58,14 +60,17 @@ def retry_temporary_errors(
     """Decorator function for handling server and connection errors"""
     backoff_coefficient = 3
 
+    @functools.wraps(download_func)
     def new_download_func(self: SelfWithConfig, request: DownloadRequest) -> T:
         download_attempts = self.config.max_download_attempts
         sleep_time = self.config.download_sleep_time
 
-        for attempt_num in range(download_attempts):
+        for attempt_idx in range(download_attempts):
             try:
                 return download_func(self, request)
+
             except requests.RequestException as exception:
+                attempts_left = download_attempts - (attempt_idx + 1)
                 if not (
                     _is_temporary_problem(exception)
                     or (
@@ -75,14 +80,14 @@ def retry_temporary_errors(
                 ):
                     raise exception from exception
 
-                if attempt_num == download_attempts - 1:
+                if attempts_left <= 0:
                     message = _create_download_failed_message(exception, request.url)
                     raise DownloadFailedException(message, request_exception=exception) from exception
 
                 LOGGER.debug(
                     "Download attempt failed: %s\n%d attempts left, will retry in %ds",
                     exception,
-                    download_attempts - attempt_num - 1,
+                    attempts_left,
                     sleep_time,
                 )
                 time.sleep(sleep_time)
@@ -98,6 +103,7 @@ def retry_temporary_errors(
 def fail_missing_file(download_func: Callable[[Self, DownloadRequest], T]) -> Callable[[Self, DownloadRequest], T]:
     """A decorator for raising an error if a file is missing"""
 
+    @functools.wraps(download_func)
     def new_download_func(self: Self, request: DownloadRequest) -> T:
         try:
             return download_func(self, request)
