@@ -4,12 +4,11 @@ Module defining constants and enumerate types used in the package
 from __future__ import annotations
 
 import functools
-import importlib.util
 import mimetypes
 import re
 import warnings
 from enum import Enum, EnumMeta
-from typing import Callable, Tuple, Type, Union, cast
+from typing import Callable, Union
 
 import numpy as np
 import pyproj
@@ -18,14 +17,6 @@ from aenum import extend_enum
 
 from ._version import __version__
 from .exceptions import SHUserWarning
-
-EXTERNAL_CRS: Tuple[Type, ...] = (pyproj.CRS,)
-
-if importlib.util.find_spec("fiona") is not None:
-    import fiona  # pylint: disable=import-error
-
-    if fiona.__version__ >= "1.9.0":
-        EXTERNAL_CRS = (pyproj.CRS, fiona.crs.CRS)  # pylint: disable=c-extension-no-member
 
 
 class PackageProps:
@@ -124,8 +115,7 @@ class CRSMeta(EnumMeta):
         """
         if isinstance(value, dict) and "init" in value:
             value = value["init"]
-        if isinstance(value, EXTERNAL_CRS):
-            value = cast(pyproj.CRS, value)  # the fiona.crs.CRS has a similar interface
+        if hasattr(value, "to_epsg"):
             if value == CRSMeta._UNSUPPORTED_CRS:
                 message = (
                     "sentinelhub-py supports only WGS 84 coordinate reference system with "
