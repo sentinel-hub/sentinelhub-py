@@ -14,6 +14,7 @@ from dataclasses_json import dataclass_json
 
 from ...constants import RequestType
 from ...data_collections import DataCollection
+from ...exceptions import deprecated_function
 from ...geometry import CRS, BBox, Geometry
 from ...types import Json, JsonDict
 from ..base import BaseCollection, SentinelHubFeatureIterator
@@ -358,6 +359,7 @@ class SentinelHubBatch(BaseBatchClient):
         url = self._get_tiles_url(request_id, tile_id=tile_id)
         return self.client.get_json_dict(url, use_session=True)
 
+    @deprecated_function(message_suffix="The service endpoint will be removed soon. Please use `restart_job` instead.")
     def reprocess_tile(self, batch_request: BatchRequestType, tile_id: Optional[int]) -> Json:
         """Reprocess a single failed tile
 
