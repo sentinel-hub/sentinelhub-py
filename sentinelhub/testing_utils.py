@@ -2,7 +2,7 @@
 Utility tools for writing unit tests for packages which rely on `sentinelhub-py`
 """
 import os
-from typing import Any, Callable, Dict, Optional, Tuple
+from typing import Any, Callable, Dict, Optional, Tuple, Union
 
 import numpy as np
 from pytest import approx
@@ -24,7 +24,7 @@ def get_output_folder(current_file: str) -> str:
 def test_numpy_data(
     data: Optional[np.ndarray] = None,
     exp_shape: Optional[Tuple[int, ...]] = None,
-    exp_dtype: Optional[np.dtype] = None,
+    exp_dtype: Union[None, type, np.dtype] = None,
     exp_min: Optional[float] = None,
     exp_max: Optional[float] = None,
     exp_mean: Optional[float] = None,
@@ -43,7 +43,7 @@ def test_numpy_data(
 def assert_statistics_match(
     data: np.ndarray,
     exp_shape: Optional[Tuple[int, ...]] = None,
-    exp_dtype: Optional[np.dtype] = None,
+    exp_dtype: Union[None, type, np.dtype] = None,
     exp_min: Optional[float] = None,
     exp_max: Optional[float] = None,
     exp_mean: Optional[float] = None,
