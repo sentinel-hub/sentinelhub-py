@@ -16,9 +16,10 @@ import utm
 from aenum import extend_enum
 
 from ._version import __version__
-from .exceptions import SHUserWarning
+from .exceptions import SHUserWarning, deprecated_class
 
 
+@deprecated_class()
 class PackageProps:
     """Class for obtaining package properties. Currently, it supports obtaining package version."""
 
@@ -451,4 +452,4 @@ class SHConstants:
     """
 
     LATEST = "latest"
-    HEADERS = {"User-Agent": f"sentinelhub-py/v{PackageProps.get_version()}"}
+    HEADERS = {"User-Agent": f"sentinelhub-py/v{__version__}"}
