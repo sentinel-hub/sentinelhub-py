@@ -4,10 +4,10 @@ Module implementing the main download client class
 import json
 import logging
 import os
-import sys
 import warnings
-from concurrent.futures import Future, ThreadPoolExecutor, as_completed
-from typing import Any, List, Optional, Union, overload
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from contextlib import nullcontext
+from typing import Any, Iterable, List, Optional, Union
 from xml.etree import ElementTree
 
 import requests
@@ -19,6 +19,7 @@ from ..exceptions import (
     DownloadFailedException,
     HashedNameCollisionException,
     MissingDataInRequestException,
+    SHDeprecationWarning,
     SHRuntimeWarning,
 )
 from ..io_utils import read_data
@@ -56,77 +57,60 @@ class DownloadClient:
 
         self.config = config or SHConfig()
 
-    @overload
     def download(
         self,
-        download_requests: DownloadRequest,
-        max_threads: Optional[int] = None,
-        decode_data: bool = True,
-        show_progress: bool = False,
-    ) -> Any:
-        ...
-
-    @overload
-    def download(
-        self,
-        download_requests: List[DownloadRequest],
+        download_requests: Iterable[DownloadRequest],
         max_threads: Optional[int] = None,
         decode_data: bool = True,
         show_progress: bool = False,
     ) -> List[Any]:
-        ...
-
-    def download(
-        self,
-        download_requests: Union[DownloadRequest, List[DownloadRequest]],
-        max_threads: Optional[int] = None,
-        decode_data: bool = True,
-        show_progress: bool = False,
-    ) -> Union[List[Any], Any]:
         """Download one or multiple requests, provided as a request list.
 
-        :param download_requests: A list of requests or a single request to be executed.
+        :param download_requests: A list of requests to be executed.
         :param max_threads: Maximum number of threads to be used for download in parallel. The default is
             `max_threads=None` which will use the number of processors on the system multiplied by 5.
         :param decode_data: If `True` it will decode data otherwise it will return it in form of a `DownloadResponse`
             objects which contain binary data and response metadata.
         :param show_progress: Whether a progress bar should be displayed while downloading
-        :return: A list of results or a single result, depending on input parameter `download_requests`
+        :return: A list of results
         """
-        downloads = [download_requests] if isinstance(download_requests, DownloadRequest) else download_requests
+        if isinstance(download_requests, DownloadRequest):
+            warnings.warn(
+                (
+                    "The parameter `download_requests` should be a sequence of requests. In future versions download of"
+                    " single requests will only be supported if provided as a singelton tuple or list."
+                ),
+                category=SHDeprecationWarning,
+            )
+            requests_list: List[DownloadRequest] = [download_requests]
+        else:
+            requests_list = list(download_requests)
 
-        data_list = [None] * len(downloads)
+        results = [None] * len(requests_list)
 
         single_download_method = self._single_download_decoded if decode_data else self._single_download
+
         with ThreadPoolExecutor(max_workers=max_threads) as executor:
-            download_list = [executor.submit(single_download_method, request) for request in downloads]
+            download_list = [executor.submit(single_download_method, request) for request in requests_list]
             future_order = {future: i for i, future in enumerate(download_list)}
 
-            # Consider using tqdm.contrib.concurrent.thread_map in the future
-            if show_progress:
-                with tqdm(total=len(download_list)) as pbar:
-                    for future in as_completed(download_list):
-                        data_list[future_order[future]] = self._process_download_future(future)
-                        pbar.update(1)
-            else:
+            progress_context = tqdm(total=len(download_list)) if show_progress else nullcontext()
+            with progress_context as progress_bar:
                 for future in as_completed(download_list):
-                    data_list[future_order[future]] = self._process_download_future(future)
+                    try:
+                        results[future_order[future]] = future.result()
+                    except DownloadFailedException as download_exception:
+                        if self.raise_download_errors:
+                            raise download_exception
+
+                        warnings.warn(str(download_exception), category=SHRuntimeWarning)
+
+                    if progress_bar:
+                        progress_bar.update(1)
 
         if isinstance(download_requests, DownloadRequest):
-            return data_list[0]
-        return data_list
-
-    def _process_download_future(self, future: Future) -> Any:
-        """Unpacks the future and correctly handles exceptions"""
-        try:
-            return future.result()
-        except DownloadFailedException as download_exception:
-            if self.raise_download_errors:
-                traceback = sys.exc_info()[2]
-                raise download_exception.with_traceback(traceback)
-
-            warnings.warn(str(download_exception), category=SHRuntimeWarning)
-            return None
+            return results[0]  # type: ignore[return-value] # will be removed in future version
+        return results
 
     def _single_download_decoded(self, request: DownloadRequest) -> Any:
         """Downloads a response and decodes it into data. By decoding a single response"""
