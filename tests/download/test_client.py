@@ -99,12 +99,11 @@ def test_check_cached_request_is_matching(download_request: DownloadRequest) -> 
     Ensures no issues with false detections if the jsonification changes values."""
     client = DownloadClient()
 
-    request = copy.deepcopy(download_request)
-    request.post_values = {"transformed-when-saved": [(1, 2)]}
+    download_request.post_values = {"transformed-when-saved": [(1, 2)]}
 
-    request_path, _ = request.get_storage_paths()
-    request_info = request.get_request_params(include_metadata=True)
+    request_path, _ = download_request.get_storage_paths()
+    request_info = download_request.get_request_params(include_metadata=True)
     write_data(request_path, request_info, data_format=MimeType.JSON)  # Copied from download client
 
     # pylint: disable=protected-access
-    client._check_cached_request_is_matching(request, request_path)
+    client._check_cached_request_is_matching(download_request, request_path)
