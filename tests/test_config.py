@@ -27,6 +27,7 @@ def mask_and_restore_config_fixture() -> Generator[None, None, None]:
 
     os.remove(config_path)
     shutil.move(cache_path, config_path)
+    SHConfig._cache = None  # makes sure the next invocation loads the SHConfig
 
 
 @pytest.fixture(name="restore_config_file")
