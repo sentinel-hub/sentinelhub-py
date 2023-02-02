@@ -1,7 +1,6 @@
 """
 Tests for constants.py module
 """
-from typing import Any, Type
 
 import numpy as np
 import pyproj
@@ -47,11 +46,10 @@ def test_crs_input(crs_input: object, expected: CRS) -> None:
     assert CRS(crs_input) is expected
 
 
-@pytest.mark.parametrize("crs_input, expected, warning", [(pyproj.CRS(4326), CRS.WGS84, SHUserWarning)])
-def test_crs_input_warn(crs_input: Any, expected: CRS, warning: Type[Warning]) -> None:
-    with pytest.warns(warning):
-        parsed_result = CRS(crs_input)
-        assert parsed_result == expected
+def test_crs_input_warn() -> None:
+    with pytest.warns(SHUserWarning):
+        parsed_result = CRS(pyproj.CRS(4326))
+        assert parsed_result == CRS.WGS84
 
 
 @pytest.mark.parametrize("bad_input", ["string", "12", -1, 999, None, 3035.5])
