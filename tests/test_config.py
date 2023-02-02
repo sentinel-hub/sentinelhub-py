@@ -20,7 +20,11 @@ def mask_and_restore_config_fixture() -> Generator[None, None, None]:
     cache_path = config_path.replace(".json", "_test_cache.json")
     shutil.move(config_path, cache_path)
 
+    # Create a mock config
     config = SHConfig(use_defaults=True)
+    config.geopedia_wms_url = "zero-drama-llama.com"
+    config.download_timeout_seconds = 100
+    config.max_download_attempts = 42
     config.save()
 
     yield
@@ -55,21 +59,22 @@ def test_fake_config_during_tests() -> None:
 
 
 @pytest.mark.dependency(depends=["test_fake_config_during_tests"])
-def test_config_file(test_config: SHConfig) -> None:
-    config_file = test_config.get_config_location()
+def test_config_file() -> None:
+    config = SHConfig()
+    config_file = config.get_config_location()
     assert os.path.isfile(config_file), f"Config file does not exist: {os.path.abspath(config_file)}"
 
     with open(config_file, "r") as file_handle:
         config_dict = json.load(file_handle)
 
     for param, value in config_dict.items():
-        if param in test_config.CREDENTIALS:
+        if param in config.CREDENTIALS:
             continue
 
         if isinstance(value, str):
             value = value.rstrip("/")
 
-        assert test_config[param] == value, f"Parameter {param} does not match it's equivalent in the config.json."
+        assert config[param] == value, f"Parameter {param} does not match it's equivalent in the config.json."
 
 
 @pytest.mark.dependency(depends=["test_fake_config_during_tests"])
