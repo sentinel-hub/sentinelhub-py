@@ -19,7 +19,7 @@ from .config import SHConfig
 from .constants import CRS
 from .data_collections import DataCollection
 from .geo_utils import transform_point
-from .geometry import BBox, BBoxCollection, Geometry, _BaseGeometry
+from .geometry import BBox, Geometry, _BaseGeometry
 from .types import JsonDict
 
 T = TypeVar("T", float, int)
@@ -407,7 +407,7 @@ class CustomGridSplitter(AreaSplitter):
         self,
         shape_list: Iterable[Union[Polygon, MultiPolygon, _BaseGeometry]],
         crs: CRS,
-        bbox_grid: Union[List[BBox], BBoxCollection],
+        bbox_grid: List[BBox],
         bbox_split_shape: Union[int, Tuple[int, int]] = 1,
         **kwargs: Any,
     ):
@@ -427,15 +427,13 @@ class CustomGridSplitter(AreaSplitter):
         super().__init__(shape_list, crs, **kwargs)
 
     @staticmethod
-    def _parse_bbox_grid(bbox_grid: Union[List[BBox], BBoxCollection]) -> BBoxCollection:
-        """Helper method for parsing bounding box grid. It will try to parse it into `BBoxCollection`"""
-        if isinstance(bbox_grid, BBoxCollection):
-            return bbox_grid
+    def _parse_bbox_grid(bbox_grid: List[BBox]) -> List[BBox]:
+        """Helper method for parsing bounding box grid. It will try to parse it into `List[BBox]`"""
 
         if isinstance(bbox_grid, list):
-            return BBoxCollection(bbox_grid)
+            return bbox_grid
 
-        raise ValueError(f"Parameter 'bbox_grid' should be an instance of {BBoxCollection}")
+        raise ValueError("Parameter 'bbox_grid' should be an instance of List[BBox]")
 
     def _make_split(self) -> Tuple[List[BBox], List[Dict[str, object]]]:
         bbox_list: List[BBox] = []

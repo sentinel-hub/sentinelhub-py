@@ -1,11 +1,11 @@
 import copy
-from typing import Any, List, Tuple, TypeVar, Union
+from typing import Any, List, Tuple, TypeVar
 
 import pytest
 import shapely.geometry
 from pytest import approx
 
-from sentinelhub import CRS, BBox, BBoxCollection, Geometry, get_utm_crs
+from sentinelhub import CRS, BBox, Geometry, get_utm_crs
 from sentinelhub.geometry import _BaseGeometry
 
 GeoType = TypeVar("GeoType", bound=_BaseGeometry)
@@ -18,9 +18,8 @@ polygon = shapely.geometry.Polygon([(0, 0), (0, 1), (1, 1), (1, 0), (0, 0)])
 GEOMETRY1 = Geometry(polygon, CRS(32633))
 GEOMETRY2 = Geometry(WKT_STRING, CRS.WGS84)
 BBOX = BBox(bbox=[14.00, 45.00, 14.03, 45.03], crs=CRS.WGS84)
-BBOX_COLLECTION = BBoxCollection([BBOX, BBox("46,13,47,20", CRS.WGS84)])
 
-GEOMETRY_LIST = [GEOMETRY1, GEOMETRY2, BBOX_COLLECTION, BBOX]
+GEOMETRY_LIST = [GEOMETRY1, GEOMETRY2, BBOX]
 
 
 def _round_point_coords(x: float, y: float, decimals: int = 1) -> Tuple[float, float]:
@@ -238,8 +237,8 @@ def test_wkt() -> None:
     assert GEOMETRY2.wkt == WKT_STRING, "New WKT string does not match the original"
 
 
-@pytest.mark.parametrize("geometry", [GEOMETRY1, GEOMETRY2, BBOX_COLLECTION])
-def test_bbox(geometry: Union[Geometry, BBoxCollection]) -> None:
+@pytest.mark.parametrize("geometry", [GEOMETRY1, GEOMETRY2])
+def test_bbox(geometry: Geometry) -> None:
     assert geometry.bbox == BBox(geometry.geometry, geometry.crs), "Failed bbox property"
 
 
@@ -250,10 +249,6 @@ def test_bbox(geometry: Union[Geometry, BBoxCollection]) -> None:
         (
             Geometry("POLYGON ((0 0, 1.001 0.99, -0.1 0.45, 0 0))", crs=CRS.WGS84),
             Geometry("POLYGON ((0 0, 1.0 1.0, -0.1 0.5, 0 0))", crs=CRS.WGS84),
-        ),
-        (
-            BBoxCollection([BBox((1.11, 0, 0.999, 0.05), crs=CRS.WGS84) for _ in range(3)]),
-            BBoxCollection([BBox((1.1, 0, 1.0, 0.1), crs=CRS.WGS84) for _ in range(3)]),
         ),
     ],
 )
