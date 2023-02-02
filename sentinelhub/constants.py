@@ -436,7 +436,7 @@ class MimeType(Enum):
 
 
 class RequestType(Enum):
-    """Enum constant class for GET/POST request type"""
+    """Enum constant class for GET/POST request type."""
 
     GET = "GET"
     POST = "POST"
@@ -446,10 +446,7 @@ class RequestType(Enum):
 
 
 class SHConstants:
-    """Initialisation of constants used by OGC request.
-
-    Constants are LATEST
-    """
+    """Common constants used in various requests."""
 
     LATEST = "latest"
     HEADERS = {"User-Agent": f"sentinelhub-py/v{__version__}"}

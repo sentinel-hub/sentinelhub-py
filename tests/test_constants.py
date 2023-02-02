@@ -1,35 +1,33 @@
 """
 Tests for constants.py module
 """
-from typing import Any, Type
 
 import numpy as np
 import pyproj
 import pytest
 
 from sentinelhub import CRS, MimeType
-from sentinelhub.constants import RequestType
+from sentinelhub.constants import RequestType, ResamplingType
 from sentinelhub.exceptions import SHUserWarning
 
 
 @pytest.mark.parametrize(
-    "lng, lat, epsg",
+    "lng, lat, expected_crs",
     [
-        (13, 46, "32633"),
-        (13, 0, "32633"),
-        (13, -45, "32733"),
-        (13, 0, "32633"),
-        (13, -0.0001, "32733"),
-        (13, -46, "32733"),
+        (13, 46, CRS("32633")),
+        (13, 0, CRS("32633")),
+        (13, -45, CRS("32733")),
+        (13, 0, CRS("32633")),
+        (13, -0.0001, CRS("32733")),
+        (13, -46, CRS("32733")),
     ],
 )
-def test_utm(lng: float, lat: float, epsg: str) -> None:
-    crs = CRS.get_utm_from_wgs84(lng, lat)
-    assert epsg == crs.value
+def test_utm_from_wgs84(lng: float, lat: float, expected_crs: CRS) -> None:
+    assert CRS.get_utm_from_wgs84(lng, lat) is expected_crs
 
 
 @pytest.mark.parametrize(
-    "parse_value, expected",
+    "crs_input, expected",
     [
         (4326, CRS.WGS84),
         (np.int64(4326), CRS.WGS84),
@@ -44,34 +42,32 @@ def test_utm(lng: float, lat: float, epsg: str) -> None:
         (pyproj.CRS(3857), CRS.POP_WEB),
     ],
 )
-def test_crs_parsing(parse_value: Any, expected: CRS) -> None:
-    parsed_result = CRS(parse_value)
-    assert parsed_result == expected
+def test_crs_input(crs_input: object, expected: CRS) -> None:
+    assert CRS(crs_input) is expected
 
 
-@pytest.mark.parametrize("parse_value, expected, warning", [(pyproj.CRS(4326), CRS.WGS84, SHUserWarning)])
-def test_crs_parsing_warn(parse_value: Any, expected: CRS, warning: Type[Warning]) -> None:
-    with pytest.warns(warning):
-        parsed_result = CRS(parse_value)
-        assert parsed_result == expected
+def test_crs_input_warn() -> None:
+    with pytest.warns(SHUserWarning):
+        parsed_result = CRS(pyproj.CRS(4326))
+        assert parsed_result == CRS.WGS84
+
+
+@pytest.mark.parametrize("bad_input", ["string", "12", -1, 999, None, 3035.5])
+def test_crs_faulty_input(bad_input: object) -> None:
+    with pytest.raises(ValueError):
+        CRS(bad_input)
 
 
 @pytest.mark.parametrize(
     "crs, epsg",
-    [
-        (CRS.POP_WEB, "EPSG:3857"),
-        (CRS.WGS84, "EPSG:4326"),
-        (CRS.UTM_33N, "EPSG:32633"),
-        (CRS.UTM_33S, "EPSG:32733"),
-    ],
+    [(CRS.POP_WEB, "EPSG:3857"), (CRS.WGS84, "EPSG:4326"), (CRS.UTM_33N, "EPSG:32633"), (CRS.UTM_33S, "EPSG:32733")],
 )
 def test_ogc_string(crs: CRS, epsg: str) -> None:
-    ogc_str = CRS.ogc_string(crs)
-    assert epsg == ogc_str
+    assert crs.ogc_string() == epsg
 
 
 @pytest.mark.parametrize(
-    "crs, crs_repr",
+    "crs, expected_repr",
     [
         (CRS.POP_WEB, "CRS('3857')"),
         (CRS.WGS84, "CRS('4326')"),
@@ -83,8 +79,8 @@ def test_ogc_string(crs: CRS, epsg: str) -> None:
         (CRS("32733"), "CRS('32733')"),
     ],
 )
-def test_crs_repr(crs: CRS, crs_repr: str) -> None:
-    assert crs_repr == repr(crs)
+def test_crs_repr(crs: CRS, expected_repr: str) -> None:
+    assert repr(crs) == expected_repr
 
 
 @pytest.mark.parametrize("crs", CRS)
@@ -92,19 +88,11 @@ def test_crs_has_value(crs: CRS) -> None:
     assert CRS.has_value(crs.value), f"Expected support for CRS {crs.value}"
 
 
-@pytest.mark.parametrize(
-    "value, fails",
-    [("string", True), (-1, True), (999, True), (None, True), (3035, False), ("EPSG:3035", False), (10000, False)],
-)
-def test_custom_crs(value: Any, fails: bool) -> None:
-    if fails:
-        with pytest.raises(ValueError):
-            CRS(value)
-    else:
-        CRS(CRS(value))
-
-        new_enum_value = str(value).lower().strip("epsg: ")
-        assert CRS.has_value(new_enum_value)
+@pytest.mark.parametrize("crs_input, crs_value", [(3035, "3035"), ("EPSG:3035", "3035"), (10000, "10000")])
+def test_crs_not_predefined(crs_input: object, crs_value: str) -> None:
+    crs = CRS(crs_input)
+    assert crs.value == crs_value
+    assert CRS.has_value(crs_value)
 
 
 @pytest.mark.parametrize("crs", [CRS.WGS84, CRS.POP_WEB, CRS.UTM_38N])
@@ -135,10 +123,16 @@ def test_mimetype_no_value_fail(faulty_arg: str) -> None:
         MimeType.from_string(faulty_arg)
 
 
-@pytest.mark.parametrize("ext", ["tif", "tiff", "jpg", "jpeg", "png", "jp2"])
-def test_is_image_format(ext: str) -> None:
-    mime_type = MimeType.from_string(ext)
-    assert MimeType.is_image_format(mime_type)
+@pytest.mark.parametrize("mime_type", MimeType)
+def test_is_image_format(mime_type: MimeType) -> None:
+    expected_to_be_image = mime_type in {MimeType.TIFF, MimeType.PNG, MimeType.JP2, MimeType.JPG}
+    assert MimeType.is_image_format(mime_type) == expected_to_be_image
+
+
+@pytest.mark.parametrize("mime_type", MimeType)
+def test_is_api_format(mime_type: MimeType) -> None:
+    expected_to_be_api_format = mime_type in {MimeType.JPG, MimeType.PNG, MimeType.TIFF, MimeType.JSON}
+    assert MimeType.is_api_format(mime_type) == expected_to_be_api_format
 
 
 @pytest.mark.parametrize(
@@ -163,7 +157,13 @@ def test_get_string(mime_type: MimeType, expected_string: str) -> None:
 
 @pytest.mark.parametrize(
     "mime_type, path, expected_answer",
-    [(MimeType.NPY, "some/path/file.npy", True), (MimeType.GPKG, "file.gpkg.gz", False)],
+    [
+        (MimeType.NPY, "some/path/file.npy", True),
+        (MimeType.PNG, "./file.png", True),
+        (MimeType.PNG, "./file.PNG", False),
+        (MimeType.GPKG, "file.gpkg.gz", False),
+        (MimeType.JSON, "path/to/file.geojson", False),
+    ],
 )
 def test_matches_extension(mime_type: MimeType, path: str, expected_answer: bool) -> None:
     assert mime_type.matches_extension(path) == expected_answer
@@ -172,6 +172,8 @@ def test_matches_extension(mime_type: MimeType, path: str, expected_answer: bool
 def test_get_expected_max_value() -> None:
     assert MimeType.TIFF.get_expected_max_value() == 65535
     assert MimeType.PNG.get_expected_max_value() == 255
+    assert MimeType.JPG.get_expected_max_value() == 255
+    assert MimeType.JP2.get_expected_max_value() == 10000
 
     with pytest.raises(ValueError):
         MimeType.TAR.get_expected_max_value()
@@ -187,3 +189,11 @@ def test_request_type() -> None:
     # check that this goes through without errors
     RequestType("POST")
     RequestType("GET")
+
+
+def test_resampling_type_not_case_sensitive() -> None:
+    ResamplingType("nearest")
+    ResamplingType("Nearest")
+    ResamplingType("NEAREST")
+    with pytest.raises(ValueError):
+        ResamplingType("nyearest")
