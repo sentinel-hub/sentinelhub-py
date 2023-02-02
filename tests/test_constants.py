@@ -161,7 +161,8 @@ def test_get_string(mime_type: MimeType, expected_string: str) -> None:
     "mime_type, path, expected_answer",
     [
         (MimeType.NPY, "some/path/file.npy", True),
-        (MimeType.PNG, "./file.PNG", True),
+        (MimeType.PNG, "./file.png", True),
+        (MimeType.PNG, "./file.PNG", False),
         (MimeType.GPKG, "file.gpkg.gz", False),
         (MimeType.JSON, "path/to/file.geojson", False),
     ],
