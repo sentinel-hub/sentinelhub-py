@@ -534,7 +534,7 @@ class Geometry(_BaseGeometry):
         return geometry
 
 
-@deprecated_class(message_suffix="You could use list of BBox in in its place.")
+@deprecated_class(message_suffix="Use sequences of BBox objects instead.")
 class BBoxCollection(_BaseGeometry):
     """A collection of bounding boxes"""
 
