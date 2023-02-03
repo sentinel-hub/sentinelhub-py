@@ -11,11 +11,11 @@ from typing import Callable, Iterator, List, Optional, Tuple, TypeVar, Union
 import shapely.geometry
 import shapely.ops
 import shapely.wkt
-from exceptions import deprecated_class
 from shapely.geometry import MultiPolygon, Polygon
 from shapely.geometry.base import BaseGeometry
 
 from .constants import CRS
+from .exceptions import deprecated_class
 from .geo_utils import transform_point
 
 Self = TypeVar("Self", bound="_BaseGeometry")
