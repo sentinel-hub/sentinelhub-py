@@ -407,7 +407,7 @@ class CustomGridSplitter(AreaSplitter):
         self,
         shape_list: Iterable[Union[Polygon, MultiPolygon, _BaseGeometry]],
         crs: CRS,
-        bbox_grid: List[BBox],
+        bbox_grid: Iterable[BBox],
         bbox_split_shape: Union[int, Tuple[int, int]] = 1,
         **kwargs: Any,
     ):
@@ -422,18 +422,9 @@ class CustomGridSplitter(AreaSplitter):
         :param reduce_bbox_sizes: If `True` it will reduce the sizes of bounding boxes so that they will tightly fit
             the given geometry in `shape_list`.
         """
-        self.bbox_grid = self._parse_bbox_grid(bbox_grid)
+        self.bbox_grid = bbox_grid
         self.bbox_split_shape = bbox_split_shape
         super().__init__(shape_list, crs, **kwargs)
-
-    @staticmethod
-    def _parse_bbox_grid(bbox_grid: List[BBox]) -> List[BBox]:
-        """Helper method for parsing bounding box grid. It will try to parse it into `List[BBox]`"""
-
-        if isinstance(bbox_grid, list):
-            return bbox_grid
-
-        raise ValueError("Parameter 'bbox_grid' should be an instance of List[BBox]")
 
     def _make_split(self) -> Tuple[List[BBox], List[Dict[str, object]]]:
         bbox_list: List[BBox] = []

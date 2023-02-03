@@ -76,7 +76,7 @@ from .geo_utils import (
     wgs84_to_pixel,
     wgs84_to_utm,
 )
-from .geometry import BBox, Geometry
+from .geometry import BBox, BBoxCollection, Geometry
 from .geopedia import GeopediaFeatureIterator, GeopediaImageRequest, GeopediaSession, GeopediaWmsRequest
 from .io_utils import read_data, write_data
 from .os_utils import create_parent_folder, get_content_list, get_file_list, get_folder_list, make_folder, rename, size
