@@ -15,6 +15,7 @@ from shapely.geometry import MultiPolygon, Polygon
 from shapely.geometry.base import BaseGeometry
 
 from .constants import CRS
+from .exceptions import deprecated_class
 from .geo_utils import transform_point
 
 Self = TypeVar("Self", bound="_BaseGeometry")
@@ -533,6 +534,7 @@ class Geometry(_BaseGeometry):
         return geometry
 
 
+@deprecated_class(message_suffix="Use sequences of BBox objects instead.")
 class BBoxCollection(_BaseGeometry):
     """A collection of bounding boxes"""
 
@@ -567,7 +569,6 @@ class BBoxCollection(_BaseGeometry):
     @property
     def bbox_list(self) -> List[BBox]:
         """Returns the list of bounding boxes from collection
-
         :return: The list of bounding boxes
         """
         return self._bbox_list
@@ -575,7 +576,6 @@ class BBoxCollection(_BaseGeometry):
     @property
     def geometry(self) -> MultiPolygon:
         """Returns shapely object representing geometry
-
         :return: A multipolygon of bounding boxes
         """
         return self._geometry
@@ -583,21 +583,18 @@ class BBoxCollection(_BaseGeometry):
     @property
     def bbox(self) -> BBox:
         """Returns BBox object representing bounding box around the geometry
-
         :return: A bounding box, with same CRS
         """
         return BBox(self.geometry, self.crs)
 
     def reverse(self) -> BBoxCollection:
         """Returns a new BBoxCollection object where all x and y coordinates are switched
-
         :return: New Geometry object with switched coordinates
         """
         return BBoxCollection([bbox.reverse() for bbox in self.bbox_list])
 
     def transform(self, crs: CRS, always_xy: bool = True) -> BBoxCollection:
         """Transforms BBoxCollection from current CRS to target CRS
-
         :param crs: target CRS
         :param always_xy: Parameter that is passed to `pyproj.Transformer` object and defines axis order for
             transformation. The default value `True` is in most cases the correct one.
