@@ -422,7 +422,7 @@ class CustomGridSplitter(AreaSplitter):
         :param reduce_bbox_sizes: If `True` it will reduce the sizes of bounding boxes so that they will tightly fit
             the given geometry in `shape_list`.
         """
-        self.bbox_grid = bbox_grid
+        self.bbox_grid = list(bbox_grid)
         self.bbox_split_shape = bbox_split_shape
         super().__init__(shape_list, crs, **kwargs)
 
