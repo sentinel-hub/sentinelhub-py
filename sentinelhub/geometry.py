@@ -143,7 +143,10 @@ class BBox(_BaseGeometry):
                 stacklevel=2,
             )
             return bbox.bounds
-        raise TypeError("Invalid bbox representation")
+        raise TypeError(
+            "Unable to process `BBox` input. Provide `(min_x, min_y, max_x, max_y)` or check documentation for other"
+            " valid forms of input."
+        )
 
     @staticmethod
     def _tuple_from_list_or_tuple(
