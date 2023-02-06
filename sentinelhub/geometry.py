@@ -401,12 +401,10 @@ class BBox(_BaseGeometry):
         return [
             [
                 BBox(
-                    [
-                        self.min_x + i * size_x,
-                        self.min_y + j * size_y,
-                        self.min_x + (i + 1) * size_x,
-                        self.min_y + (j + 1) * size_y,
-                    ],
+                    (
+                        (self.min_x + i * size_x, self.min_y + j * size_y),
+                        (self.min_x + (i + 1) * size_x, self.min_y + (j + 1) * size_y),
+                    ),
                     crs=self.crs,
                 )
                 for j in range(num_y)
