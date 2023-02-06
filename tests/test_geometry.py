@@ -29,25 +29,7 @@ def _round_point_coords(x: float, y: float, decimals: int = 1) -> Tuple[float, f
 
 def test_bbox_no_crs() -> None:
     with pytest.raises(TypeError):
-        BBox("46,13,47,20")  # type: ignore[call-arg]
-
-
-def test_bbox_from_string() -> None:
-    bbox_str = "46.07, 13.23, 46.24, 13.57"
-    bbox = BBox(bbox_str, CRS.WGS84)
-    assert bbox.lower_left == (46.07, 13.23)
-    assert bbox.upper_right == (46.24, 13.57)
-    assert bbox.crs == CRS.WGS84
-
-
-def test_bbox_from_bad_string() -> None:
-    with pytest.raises(ValueError):
-        # Too few coordinates
-        BBox("46.07, 13.23, 46.24", CRS.WGS84)
-
-    with pytest.raises(ValueError):
-        # Invalid string
-        BBox("46N,13E,45N,12E", CRS.WGS84)
+        BBox((46, 13, 47, 20))  # type: ignore[call-arg]
 
 
 @pytest.mark.parametrize(
@@ -74,7 +56,6 @@ def test_bbox_from_flat_list(bbox_coords: List[float]) -> None:
         ((46.07, 13.23), (46.24, 13.57)),
         [(46.07, 13.23), (46.24, 13.57)],
         {"min_x": 46.07, "min_y": 13.23, "max_x": 46.24, "max_y": 13.57},
-        BBox({"min_x": 46.07, "min_y": 13.23, "max_x": 46.24, "max_y": 13.57}, CRS.WGS84),
     ],
 )
 def test_bbox_different_input(bbox_input: Any) -> None:
@@ -88,18 +69,6 @@ def test_bbox_from_bad_dict() -> None:
     bbox_dict = {"x1": 46.07, "y1": 13.23, "x2": 46.24, "y2": 13.57}
     with pytest.raises(KeyError):
         BBox(bbox_dict, CRS.WGS84)
-
-
-@pytest.mark.parametrize(
-    "bbox_input",
-    [
-        shapely.geometry.LineString([(0, 0), (1, 1)]),
-        shapely.geometry.LinearRing([(1, 0), (1, 1), (0, 0)]),
-        shapely.geometry.Polygon([(1, 0), (1, 1), (0, 0)]),
-    ],
-)
-def test_bbox_from_shapely(bbox_input: Any) -> None:
-    assert BBox(bbox_input, CRS.WGS84) == BBox((0, 0, 1, 1), CRS.WGS84)
 
 
 def test_bbox_to_str() -> None:
@@ -238,8 +207,8 @@ def test_wkt() -> None:
 
 
 @pytest.mark.parametrize("geometry", [GEOMETRY1, GEOMETRY2])
-def test_bbox(geometry: Geometry) -> None:
-    assert geometry.bbox == BBox(geometry.geometry, geometry.crs), "Failed bbox property"
+def test_bbox_of_geometry(geometry: Geometry) -> None:
+    assert geometry.bbox == BBox(geometry.geometry.bounds, geometry.crs), "Failed bbox property"
 
 
 @pytest.mark.parametrize(

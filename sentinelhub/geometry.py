@@ -529,7 +529,7 @@ class Geometry(_BaseGeometry):
 
         :return: A bounding box, with same CRS
         """
-        return BBox(self.geometry, self.crs)
+        return BBox(self.geometry.bounds, self.crs)
 
     @staticmethod
     def _parse_geometry(geometry: Union[Polygon, MultiPolygon, dict, str]) -> Union[Polygon, MultiPolygon]:
