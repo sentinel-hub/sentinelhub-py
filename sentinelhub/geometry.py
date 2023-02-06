@@ -4,18 +4,19 @@ Module implementing geometry classes
 from __future__ import annotations
 
 import contextlib
+import warnings
 from abc import ABCMeta, abstractmethod
 from math import ceil
 from typing import Callable, Iterator, List, Optional, Tuple, TypeVar, Union
 
 import shapely.geometry
+import shapely.geometry.base
 import shapely.ops
 import shapely.wkt
 from shapely.geometry import MultiPolygon, Polygon
-from shapely.geometry.base import BaseGeometry
 
 from .constants import CRS
-from .exceptions import deprecated_class
+from .exceptions import SHDeprecationWarning, deprecated_class
 from .geo_utils import transform_point
 
 Self = TypeVar("Self", bound="_BaseGeometry")
@@ -87,27 +88,23 @@ class _BaseGeometry(metaclass=ABCMeta):
 class BBox(_BaseGeometry):
     """Class representing a bounding box in a given CRS.
 
-    Throughout the sentinelhub package this class serves as the canonical representation of a bounding
-    box. It can initialize itself from multiple representations:
+    Throughout the sentinelhub package this class serves as the canonical representation of a bounding box. It can be
+    initialized from multiple representations:
 
-        1) ``((min_x,min_y),(max_x,max_y))``,
-        2) ``(min_x,min_y,max_x,max_y)``,
-        3) ``[min_x,min_y,max_x,max_y]``,
-        4) ``[[min_x, min_y],[max_x,max_y]]``,
-        5) ``[(min_x, min_y),(max_x,max_y)]``,
-        6) ``([min_x, min_y],[max_x,max_y])``,
-        7) ``'min_x,min_y,max_x,max_y'``,
-        8) ``{'min_x':min_x, 'max_x':max_x, 'min_y':min_y, 'max_y':max_y}``,
-        9) ``bbox``, where ``bbox`` is an instance of ``BBox``.
+        1) `((min_x, min_y), (max_x, max_y))`
+        2) `(min_x, min_y, max_x, max_y)`
+        3) `{"min_x": min_x, "max_x": max_x, "min_y": min_y, "max_y": max_y}`
+        4) A `shapely` geometry, where
 
-    Note that BBox coordinate system depends on ``crs`` parameter:
+    In the above
+    Note that BBox coordinate system depends on `crs` parameter:
 
-    - In case of ``constants.CRS.WGS84`` axis x represents longitude and axis y represents latitude.
-    - In case of ``constants.CRS.POP_WEB`` axis x represents easting and axis y represents northing.
-    - In case of ``constants.CRS.UTM_*`` axis x represents easting and axis y represents northing.
+    - In case of `constants.CRS.WGS84` axis x represents longitude and axis y represents latitude.
+    - In case of `constants.CRS.POP_WEB` axis x represents easting and axis y represents northing.
+    - In case of `constants.CRS.UTM_*` axis x represents easting and axis y represents northing.
     """
 
-    def __init__(self, bbox: Union[BBox, tuple, list, dict, str, BaseGeometry], crs: CRS):
+    def __init__(self, bbox: Union[tuple, list, dict, shapely.geometry.base.BaseGeometry], crs: CRS):
         """
         :param bbox: A bbox in any valid representation
         :param crs: Coordinate reference system of the bounding box
@@ -119,6 +116,86 @@ class BBox(_BaseGeometry):
         self.max_y = max(y_fst, y_snd)
 
         super().__init__(crs)
+
+    @staticmethod
+    def _to_tuple(
+        bbox: Union[tuple, list, dict, shapely.geometry.base.BaseGeometry]
+    ) -> Tuple[float, float, float, float]:
+        """Converts the input bbox representation (see the constructor docstring for a list of valid representations)
+        into a flat tuple
+
+        :param bbox: A bbox in one of 7 forms listed in the class description.
+        :return: A flat tuple of size
+        :raises: TypeError
+        """
+        if isinstance(bbox, (list, tuple)):
+            return BBox._tuple_from_list_or_tuple(bbox)
+        if isinstance(bbox, str):
+            return BBox._tuple_from_str(bbox)
+        if isinstance(bbox, dict):
+            return BBox._tuple_from_dict(bbox)
+        if isinstance(bbox, BBox):
+            return BBox._tuple_from_bbox(bbox)
+        if isinstance(bbox, shapely.geometry.base.BaseGeometry):
+            return bbox.bounds
+        raise TypeError("Invalid bbox representation")
+
+    @staticmethod
+    def _tuple_from_list_or_tuple(bbox: Union[list, tuple]) -> Tuple[float, float, float, float]:
+        """Converts a list or tuple representation of a bbox into a flat tuple representation.
+
+        :param bbox: a list or tuple with 4 coordinates that is either flat or nested
+        :return: tuple (min_x,min_y,max_x,max_y)
+        :raises: TypeError
+        """
+        if len(bbox) == 4:
+            min_x, min_y, max_x, max_y = map(float, bbox)
+            return min_x, min_y, max_x, max_y
+        if len(bbox) == 2 and all(isinstance(point, (list, tuple)) for point in bbox):
+            return BBox._tuple_from_list_or_tuple(bbox[0] + bbox[1])
+        raise TypeError("Expected a valid list or tuple representation of a bbox")
+
+    @staticmethod
+    def _tuple_from_str(bbox: str) -> Tuple[float, float, float, float]:
+        """Parses a string of numbers separated by any combination of commas and spaces
+
+        :param bbox: e.g. str of the form `min_x ,min_y  max_x, max_y`
+        :return: tuple (min_x,min_y,max_x,max_y)
+        """
+        warnings.warn(
+            "Initializing `BBox` objects from strings will no longer be possible in future versions.",
+            category=SHDeprecationWarning,
+            stacklevel=2,
+        )
+        string_parts = bbox.replace(",", " ").split()
+        if len(string_parts) != 4:
+            raise ValueError(f"Input {bbox} is not a valid string representation of a BBox.")
+        min_x, min_y, max_x, max_y = map(float, string_parts)
+        return min_x, min_y, max_x, max_y
+
+    @staticmethod
+    def _tuple_from_dict(bbox: dict) -> Tuple[float, float, float, float]:
+        """Converts a dictionary representation of a bbox into a flat tuple representation
+
+        :param bbox: a dict with keys "min_x, "min_y", "max_x", and "max_y"
+        :return: tuple (min_x,min_y,max_x,max_y)
+        :raises: KeyError
+        """
+        return bbox["min_x"], bbox["min_y"], bbox["max_x"], bbox["max_y"]
+
+    @staticmethod
+    def _tuple_from_bbox(bbox: BBox) -> Tuple[float, float, float, float]:
+        """Converts a BBox instance into a tuple
+
+        :param bbox: An instance of the BBox type
+        :return: tuple (min_x, min_y, max_x, max_y)
+        """
+        warnings.warn(
+            "Initializing `BBox` objects from `BBox` objects will no longer be possible in future versions.",
+            category=SHDeprecationWarning,
+            stacklevel=2,
+        )
+        return bbox.lower_left + bbox.upper_right
 
     def __iter__(self) -> Iterator[float]:
         """This method enables iteration over coordinates of bounding box"""
@@ -350,74 +427,6 @@ class BBox(_BaseGeometry):
 
         raise TypeError(f"Resolution should be a float, got resolution of type {type(res)}")
 
-    @staticmethod
-    def _to_tuple(bbox: Union[BBox, tuple, list, dict, str, BaseGeometry]) -> Tuple[float, float, float, float]:
-        """Converts the input bbox representation (see the constructor docstring for a list of valid representations)
-        into a flat tuple
-
-        :param bbox: A bbox in one of 7 forms listed in the class description.
-        :return: A flat tuple of size
-        :raises: TypeError
-        """
-        if isinstance(bbox, (list, tuple)):
-            return BBox._tuple_from_list_or_tuple(bbox)
-        if isinstance(bbox, str):
-            return BBox._tuple_from_str(bbox)
-        if isinstance(bbox, dict):
-            return BBox._tuple_from_dict(bbox)
-        if isinstance(bbox, BBox):
-            return BBox._tuple_from_bbox(bbox)
-        if isinstance(bbox, BaseGeometry):
-            return bbox.bounds
-        raise TypeError("Invalid bbox representation")
-
-    @staticmethod
-    def _tuple_from_list_or_tuple(bbox: Union[list, tuple]) -> Tuple[float, float, float, float]:
-        """Converts a list or tuple representation of a bbox into a flat tuple representation.
-
-        :param bbox: a list or tuple with 4 coordinates that is either flat or nested
-        :return: tuple (min_x,min_y,max_x,max_y)
-        :raises: TypeError
-        """
-        if len(bbox) == 4:
-            min_x, min_y, max_x, max_y = map(float, bbox)
-            return min_x, min_y, max_x, max_y
-        if len(bbox) == 2 and all(isinstance(point, (list, tuple)) for point in bbox):
-            return BBox._tuple_from_list_or_tuple(bbox[0] + bbox[1])
-        raise TypeError("Expected a valid list or tuple representation of a bbox")
-
-    @staticmethod
-    def _tuple_from_str(bbox: str) -> Tuple[float, float, float, float]:
-        """Parses a string of numbers separated by any combination of commas and spaces
-
-        :param bbox: e.g. str of the form `min_x ,min_y  max_x, max_y`
-        :return: tuple (min_x,min_y,max_x,max_y)
-        """
-        string_parts = bbox.replace(",", " ").split()
-        if len(string_parts) != 4:
-            raise ValueError(f"Input {bbox} is not a valid string representation of a BBox.")
-        min_x, min_y, max_x, max_y = map(float, string_parts)
-        return min_x, min_y, max_x, max_y
-
-    @staticmethod
-    def _tuple_from_dict(bbox: dict) -> Tuple[float, float, float, float]:
-        """Converts a dictionary representation of a bbox into a flat tuple representation
-
-        :param bbox: a dict with keys "min_x, "min_y", "max_x", and "max_y"
-        :return: tuple (min_x,min_y,max_x,max_y)
-        :raises: KeyError
-        """
-        return bbox["min_x"], bbox["min_y"], bbox["max_x"], bbox["max_y"]
-
-    @staticmethod
-    def _tuple_from_bbox(bbox: BBox) -> Tuple[float, float, float, float]:
-        """Converts a BBox instance into a tuple
-
-        :param bbox: An instance of the BBox type
-        :return: tuple (min_x, min_y, max_x, max_y)
-        """
-        return bbox.lower_left + bbox.upper_right
-
 
 class Geometry(_BaseGeometry):
     """A class that combines shapely geometry with coordinate reference system. It currently supports polygons and
@@ -525,7 +534,7 @@ class Geometry(_BaseGeometry):
             geometry = shapely.wkt.loads(geometry)
         elif isinstance(geometry, dict):
             geometry = shapely.geometry.shape(geometry)
-        elif not isinstance(geometry, BaseGeometry):
+        elif not isinstance(geometry, shapely.geometry.base.BaseGeometry):
             raise TypeError("Unsupported geometry representation")
 
         if not isinstance(geometry, (Polygon, MultiPolygon)):
