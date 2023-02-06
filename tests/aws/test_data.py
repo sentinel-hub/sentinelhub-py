@@ -5,7 +5,7 @@ from pytest import approx
 from sentinelhub import DataCollection
 from sentinelhub.aws import AwsProductRequest, AwsTileRequest
 
-pytestmark = pytest.mark.filterwarnings("ignore::DeprecationWarning")
+pytestmark = [pytest.mark.aws_integration, pytest.mark.filterwarnings("ignore::DeprecationWarning")]
 
 
 def test_aws_tile(output_folder: str) -> None:
