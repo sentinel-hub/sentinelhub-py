@@ -139,7 +139,7 @@ class AreaSplitter(metaclass=ABCMeta):
         area_min_y = min(bbox.lower_left[1] for bbox in bbox_list)
         area_max_x = max(bbox.upper_right[0] for bbox in bbox_list)
         area_max_y = max(bbox.upper_right[1] for bbox in bbox_list)
-        bbox = BBox([area_min_x, area_min_y, area_max_x, area_max_y], crs=self.crs)
+        bbox = BBox((area_min_x, area_min_y, area_max_x, area_max_y), crs=self.crs)
         if crs is None:
             return bbox
         return bbox.transform(crs)
@@ -688,12 +688,12 @@ class BatchSplitter(AreaSplitter):
         width, height = self.tile_size
 
         return BBox(
-            [
+            (
                 upper_left_corner[0] - self.tile_buffer[0],
                 upper_left_corner[1] - height - self.tile_buffer[1],
                 upper_left_corner[0] + width + self.tile_buffer[0],
                 upper_left_corner[1] + self.tile_buffer[1],
-            ],
+            ),
             tile_crs,
         )
 

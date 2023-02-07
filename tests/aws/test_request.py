@@ -4,6 +4,8 @@ import pytest
 
 from sentinelhub.aws import AwsProductRequest
 
+pytestmark = pytest.mark.filterwarnings("ignore::DeprecationWarning")
+
 
 @pytest.mark.aws_integration
 def test_saving_responses(output_folder: str) -> None:

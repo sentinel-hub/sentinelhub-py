@@ -542,7 +542,7 @@ class BatchRequest(BaseBatchRequest):  # pylint: disable=abstract-method
         bbox, _, crs = self._parse_bounds_payload()
         if bbox is None:
             raise ValueError("Bounding box is not defined for this batch request")
-        return BBox(bbox, crs)
+        return BBox(bbox, crs)  # type: ignore[arg-type]
 
     @property
     def geometry(self) -> Geometry:
