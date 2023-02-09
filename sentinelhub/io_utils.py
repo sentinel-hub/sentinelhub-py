@@ -7,12 +7,13 @@ import json
 import logging
 import os
 import warnings
-from typing import Any, Callable, Dict, Optional
+from typing import IO, Any, Callable, Dict, Optional
 from xml.etree import ElementTree
 
 import numpy as np
 import tifffile as tiff
 from PIL import Image
+from typing_extensions import Literal
 
 from .constants import MimeType
 from .decoding import decode_image_with_pillow, decode_jp2_image, decode_tar, get_data_format
@@ -55,78 +56,39 @@ def read_data(filename: str, data_format: Optional[MimeType] = None) -> Any:
 def _get_reader(data_format: MimeType) -> Callable[[str], Any]:
     """Provides a function for reading data in a given data format"""
     if data_format is MimeType.TIFF:
-        return read_tiff_image
+        return tiff.imread
     if data_format is MimeType.JP2:
-        return read_jp2_image
+        return _open_file_and_read(decode_jp2_image, "rb")
     if data_format.is_image_format():
-        return read_image
-    try:
-        available_readers: Dict[MimeType, Callable[[str], Any]] = {
-            MimeType.TAR: read_tar,
-            MimeType.TXT: read_text,
-            MimeType.RAW: _read_binary,
-            MimeType.CSV: read_csv,
-            MimeType.JSON: read_json,
-            MimeType.XML: read_xml,
-            MimeType.GML: read_xml,
-            MimeType.SAFE: read_xml,
-        }
-        return available_readers[data_format]
-    except KeyError as exception:
-        raise ValueError(f"Reading data format {data_format} is not supported") from exception
+        return decode_image_with_pillow
+
+    available_readers: Dict[MimeType, Callable[[str], Any]] = {
+        MimeType.TAR: _open_file_and_read(decode_tar, "rb"),  # type: ignore[arg-type]
+        MimeType.TXT: _open_file_and_read(lambda file: file.read(), "r"),
+        MimeType.RAW: _open_file_and_read(lambda file: file.read(), "rb"),
+        MimeType.CSV: _read_csv,
+        MimeType.JSON: _open_file_and_read(json.load, "rb"),
+        MimeType.XML: ElementTree.parse,
+        MimeType.GML: ElementTree.parse,
+        MimeType.SAFE: ElementTree.parse,
+        MimeType.NPY: np.load,
+    }
+
+    if data_format not in available_readers:
+        raise ValueError(f"Reading data format {data_format} is not supported.")
+
+    return available_readers[data_format]
 
 
-def read_tar(filename: str) -> Dict[str, object]:
-    """Read a tar from file"""
-    with open(filename, "rb") as file:
-        return decode_tar(file)  # type: ignore[arg-type]
+def _open_file_and_read(reader: Callable[[IO], Any], mode: Literal["r", "rb"]) -> Callable[[str], Any]:
+    def new_reader(filename: str) -> Any:
+        with open(filename, mode) as file:
+            return reader(file)
+
+    return new_reader
 
 
-def read_tiff_image(filename: str) -> Any:
-    """Read data from TIFF file
-
-    :param filename: name of TIFF file to be read
-    :return: data stored in TIFF file
-    """
-    return tiff.imread(filename)
-
-
-def read_jp2_image(filename: str) -> np.ndarray:
-    """Read data from JPEG2000 file
-
-    :param filename: name of JPEG2000 file to be read
-    :return: data stored in JPEG2000 file
-    """
-    with open(filename, "rb") as file:
-        return decode_jp2_image(file)
-
-
-def read_image(filename: str) -> np.ndarray:
-    """Read data from PNG or JPG file
-
-    :param filename: name of PNG or JPG file to be read
-    :return: data stored in JPG file
-    """
-    return decode_image_with_pillow(filename)
-
-
-def read_text(filename: str) -> str:
-    """Read data from text file
-
-    :param filename: name of text file to be read
-    :return: data stored in text file
-    """
-    with open(filename, "r") as file:
-        return file.read()
-
-
-def _read_binary(filename: str) -> bytes:
-    """Reads data in bytes"""
-    with open(filename, "rb") as file:
-        return file.read()
-
-
-def read_csv(filename: str, delimiter: str = CSV_DELIMITER) -> list:
+def _read_csv(filename: str, delimiter: str = CSV_DELIMITER) -> list:
     """Read data from CSV file
 
     :param filename: name of CSV file to be read
@@ -135,34 +97,6 @@ def read_csv(filename: str, delimiter: str = CSV_DELIMITER) -> list:
     """
     with open(filename, "r") as file:
         return list(csv.reader(file, delimiter=delimiter))
-
-
-def read_json(filename: str) -> Any:
-    """Read data from JSON file
-
-    :param filename: name of JSON file to be read
-    :return: data stored in JSON file
-    """
-    with open(filename, "rb") as file:
-        return json.load(file)
-
-
-def read_xml(filename: str) -> ElementTree.ElementTree:
-    """Read data from XML or GML file
-
-    :param filename: name of XML or GML file to be read
-    :return: data stored in XML file
-    """
-    return ElementTree.parse(filename)
-
-
-def read_numpy(filename: str) -> np.ndarray:
-    """Read data from numpy file
-
-    :param filename: name of numpy file to be read
-    :return: data stored in file as numpy array
-    """
-    return np.load(filename)
 
 
 def _create_parent_folder(filename: str) -> None:
