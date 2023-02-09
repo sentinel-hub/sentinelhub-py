@@ -155,7 +155,7 @@ def test_geometry_repr(geometry: GeoType) -> None:
 @pytest.mark.parametrize("geometry", GEOMETRY_LIST)
 def test_geometry_eq(geometry: GeoType) -> None:
     assert geometry == copy.deepcopy(geometry), "Deep copied object should be equal to the original"
-    assert geometry is not None
+    assert geometry != geometry.geometry
 
 
 @pytest.mark.parametrize("geometry", GEOMETRY_LIST)
