@@ -388,8 +388,10 @@ class OgcImageService:
         :param date: acquisition date or None
         :return: dictionary with parameters
         """
+        bbox = request.bbox.reverse() if request.bbox.crs is CRS.WGS84 else request.bbox
+
         params = {
-            "BBOX": str(request.bbox.reverse()) if request.bbox.crs is CRS.WGS84 else str(request.bbox),
+            "BBOX": ",".join(map(str, bbox)),
             "FORMAT": MimeType.get_string(request.image_format),
             "CRS": CRS.ogc_string(request.bbox.crs),
         }

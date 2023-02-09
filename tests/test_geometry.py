@@ -1,4 +1,5 @@
 import copy
+import warnings
 from typing import Any, Tuple, TypeVar
 
 import pytest
@@ -6,6 +7,7 @@ import shapely.geometry
 from pytest import approx
 
 from sentinelhub import CRS, BBox, Geometry, get_utm_crs
+from sentinelhub.exceptions import SHDeprecationWarning
 
 GeoType = TypeVar("GeoType", BBox, Geometry)
 
@@ -51,8 +53,10 @@ def test_bbox_bad_input_options(coords: Any, crs: CRS) -> None:
 
 
 def test_bbox_to_str() -> None:
-    bbox = BBox(((45.0, 12.0, 47.0, 14.0)), CRS.WGS84)
-    assert str(bbox) == "45.0,12.0,47.0,14.0"
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", SHDeprecationWarning)
+        bbox = BBox(((45.0, 12.0, 47.0, 14.0)), CRS.WGS84)
+        assert str(bbox) == "45.0,12.0,47.0,14.0"
 
 
 @pytest.mark.parametrize(

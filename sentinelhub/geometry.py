@@ -220,6 +220,11 @@ class BBox(_BaseGeometry):
         :param reverse: `True` if x and y coordinates should be switched and `False` otherwise
         :return: String of coordinates
         """
+        warnings.warn(
+            "The string representation of `BBox` will change to match its `repr` representation.",
+            category=SHDeprecationWarning,
+            stacklevel=2,
+        )
         if reverse:
             return f"{self.min_y},{self.min_x},{self.max_y},{self.max_x}"
         return f"{self.min_x},{self.min_y},{self.max_x},{self.max_y}"
