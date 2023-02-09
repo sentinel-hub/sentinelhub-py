@@ -126,15 +126,21 @@ def test_bbox_geometry_attribute() -> None:
     assert bbox.geometry.equals(shapely.geometry.Polygon([[0, 0], [0, 1], [1, 1], [1, 0], [0, 0]]))
 
 
-def test_bbox_buffer() -> None:
-    bbox = BBox((46.05, 13.21, 47.40, 13.41), CRS.POP_WEB)
+@pytest.mark.parametrize(
+    "bbox, rel_buffered, abs_buffered",
+    [
+        [BBox((10, 10, 20, 20), CRS.WGS84), (5, 5, 25, 25), (9.8, 9.8, 20.2, 20.2)],
+        [BBox((46.05, 13.21, 47.40, 13.41), CRS.POP_WEB), (45.375, 13.11, 48.075, 13.51), (45.85, 13.01, 47.6, 13.61)],
+    ],
+)
+def test_bbox_buffer(bbox, rel_buffered, abs_buffered) -> None:
     for relative in (True, False):
-        assert bbox.buffer(3.7, relative=relative).crs == CRS.POP_WEB
+        assert bbox.buffer(3.7, relative=relative).crs == bbox.crs
 
     assert bbox.buffer(0) is not bbox and bbox.buffer(0) == bbox
 
-    assert tuple(bbox.buffer(1)) == approx((45.375, 13.11, 48.075, 13.51))
-    assert tuple(bbox.buffer(0.2, relative=False)) == approx((45.85, 13.01, 47.6, 13.61))
+    assert tuple(bbox.buffer(1)) == approx(rel_buffered)
+    assert tuple(bbox.buffer(0.2, relative=False)) == approx(abs_buffered)
 
     assert bbox == bbox.buffer((10, -0.1)).buffer((-10 / 11, 1 / 9))
     assert bbox == bbox.buffer((-0.01, 0.2), relative=False).buffer((0.01, -0.2), relative=False)
