@@ -1,7 +1,6 @@
 """
 Module implementing some utility functions not suitable for other utility modules
 """
-import sys
 from abc import ABCMeta, abstractmethod
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -11,6 +10,7 @@ from urllib.parse import urlencode
 from dataclasses_json import CatchAll, LetterCase, Undefined
 from dataclasses_json import config as dataclass_config
 from dataclasses_json import dataclass_json
+from typing_extensions import Protocol
 
 from ..base import FeatureIterator
 from ..config import SHConfig
@@ -19,11 +19,6 @@ from ..download.sentinelhub_client import SentinelHubDownloadClient
 from ..exceptions import MissingDataInRequestException
 from ..types import JsonDict
 from .utils import datetime_config, remove_undefined
-
-if sys.version_info < (3, 8):
-    from typing_extensions import Protocol
-else:
-    from typing import Protocol  # pylint: disable=ungrouped-imports
 
 
 class SentinelHubService(metaclass=ABCMeta):
