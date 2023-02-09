@@ -6,7 +6,6 @@ import csv
 import json
 import logging
 import os
-import warnings
 from typing import IO, Any, Callable, Dict, Optional
 from xml.etree import ElementTree
 
@@ -17,8 +16,6 @@ from typing_extensions import Literal
 
 from .constants import MimeType
 from .decoding import decode_image_with_pillow, decode_jp2_image, decode_tar, get_data_format
-from .exceptions import SHUserWarning
-from .types import Json
 
 LOGGER = logging.getLogger(__name__)
 
@@ -99,12 +96,6 @@ def _read_csv(filename: str, delimiter: str = CSV_DELIMITER) -> list:
         return list(csv.reader(file, delimiter=delimiter))
 
 
-def _create_parent_folder(filename: str) -> None:
-    path = os.path.dirname(filename)
-    if path != "":
-        os.makedirs(path, exist_ok=True)
-
-
 def write_data(
     filename: str, data: Any, data_format: Optional[MimeType] = None, compress: bool = False, add: bool = False
 ) -> None:
@@ -118,7 +109,7 @@ def write_data(
     :param data: image data to write to file
     :param data_format: format of output file. Default is `None`
     :param compress: whether to compress data or not. Default is `False`
-    :param add: whether to append to existing text file or not. Default is `False`
+    :param add: whether to append to existing file or not. Only supported for TXT. Default is `False`
     :raises: exception if numpy format is not supported or file cannot be written
     """
     _create_parent_folder(filename)
@@ -127,121 +118,40 @@ def write_data(
         data_format = get_data_format(filename)
 
     if data_format is MimeType.TIFF:
-        return write_tiff_image(filename, data, compress)
-    if data_format.is_image_format():
-        return write_image(filename, data)
-    if data_format is MimeType.TXT:
-        return write_text(filename, data, add=add)
+        tiff.imwrite(filename, data, compression=("lzma" if compress else None))
 
-    try:
-        available_writers: Dict[MimeType, Callable[[str, Any], None]] = {
-            MimeType.RAW: write_bytes,
-            MimeType.CSV: write_csv,
-            MimeType.JSON: write_json,
-            MimeType.XML: write_xml,
-            MimeType.GML: write_xml,
-        }
-        return available_writers[data_format](filename, data)
-    except KeyError as exception:
-        raise ValueError(f"Writing data format {data_format} is not supported") from exception
+    elif data_format.is_image_format():
+        Image.fromarray(data).save(filename)
 
+    elif data_format is MimeType.NPY:
+        np.save(filename, data)
 
-def write_tiff_image(filename: str, image: np.ndarray, compress: bool = False) -> None:
-    """Write image data to TIFF file
+    elif data_format in (MimeType.XML, MimeType.GML):
+        data.write(filename)
 
-    :param filename: name of file to write data to
-    :param image: image data to write to file
-    :param compress: whether to compress data. If `True`, lzma compression is used. Default is `False`
-    """
-    if compress:
-        return tiff.imwrite(filename, image, compression="lzma")  # lossless compression, works very well on masks
-    return tiff.imwrite(filename, image)
+    elif data_format is MimeType.TXT:
+        with open(filename, "a" if add else "w") as file:
+            print(data, end="", file=file)
 
+    elif data_format is MimeType.RAW:
+        with open(filename, "wb") as file:
+            file.write(data)
 
-def write_jp2_image(filename: str, image: np.ndarray) -> None:
-    """Write image data to JPEG2000 file
+    elif data_format is MimeType.CSV:
+        with open(filename, "w") as file:
+            csv_writer = csv.writer(file, delimiter=CSV_DELIMITER)
+            for line in data:
+                csv_writer.writerow(line)
 
-    :param filename: name of JPEG2000 file to write data to
-    :param image: image data to write to file
-    """
-    # Other options:
-    # return glymur.Jp2k(filename, data=image)
-    # cv2.imwrite(filename, image)
-    return write_image(filename, image)
+    elif data_format is MimeType.JSON:
+        with open(filename, "w") as file:
+            json.dump(data, file, indent=4, sort_keys=True)
+
+    else:
+        raise ValueError(f"Writing data format {data_format} is not supported")
 
 
-def write_image(filename: str, image: np.ndarray) -> None:
-    """Write image data to PNG, JPG file
-
-    :param filename: name of PNG or JPG file to write data to
-    :param image: image data to write to file
-    """
-    data_format = get_data_format(filename)
-    if data_format is MimeType.JPG:
-        warnings.warn("JPEG is a lossy format therefore saved data will be modified.", category=SHUserWarning)
-    return Image.fromarray(image).save(filename)
-
-
-def write_text(filename: str, data: np.ndarray, add: bool = False) -> None:
-    """Write image data to text file
-
-    :param filename: name of text file to write data to
-    :param data: image data to write to text file
-    :param add: whether to append to existing file or not. Default is `False`
-    """
-    write_type = "a" if add else "w"
-    with open(filename, write_type) as file:
-        print(data, end="", file=file)
-
-
-def write_csv(filename: str, data: np.ndarray, delimiter: str = CSV_DELIMITER) -> None:
-    """Write image data to CSV file
-
-    :param filename: name of CSV file to write data to
-    :param data: image data to write to CSV file
-    :param delimiter: delimiter used in CSV file. Default is ``;``
-    """
-    with open(filename, "w") as file:
-        csv_writer = csv.writer(file, delimiter=delimiter)
-        for line in data:
-            csv_writer.writerow(line)
-
-
-def write_json(filename: str, data: Json) -> None:
-    """Write data to JSON file
-
-    :param filename: name of JSON file to write data to
-    :param data: data to write to JSON file
-    """
-    with open(filename, "w") as file:
-        json.dump(data, file, indent=4, sort_keys=True)
-
-
-def write_xml(filename: str, element_tree: ElementTree.ElementTree) -> None:
-    """Write data to XML or GML file
-
-    :param filename: name of XML or GML file to write data to
-    :param element_tree: data as ElementTree object
-    """
-    return element_tree.write(filename)
-    # this will write declaration tag in first line:
-    # return element_tree.write(filename, encoding='utf-8', xml_declaration=True)
-
-
-def write_numpy(filename: str, data: np.ndarray) -> None:
-    """Write data as numpy file
-
-    :param filename: name of numpy file to write data to
-    :param data: data to write to numpy file
-    """
-    return np.save(filename, data)
-
-
-def write_bytes(filename: str, data: bytes) -> None:
-    """Write binary data into a file
-
-    :param filename: name of file to write the data to
-    :param data: binary data to write
-    """
-    with open(filename, "wb") as file:
-        file.write(data)
+def _create_parent_folder(filename: str) -> None:
+    path = os.path.dirname(filename)
+    if path != "":
+        os.makedirs(path, exist_ok=True)
