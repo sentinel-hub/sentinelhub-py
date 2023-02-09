@@ -69,7 +69,7 @@ class WebFeatureService(FeatureIterator[JsonDict]):
 
     def _build_service_url(self) -> str:
         """Creates a base URL for WFS service"""
-        base_url = self.config.get_sh_ogc_url()
+        base_url = f"{self.config.sh_base_url}/ogc"
 
         if self.data_collection.service_url:
             base_url = base_url.replace(self.config.sh_base_url, self.data_collection.service_url)
