@@ -12,5 +12,5 @@ shapely
 shared-memory38;python_version<"3.8"
 tifffile>=2020.9.30
 tqdm
-typing-extensions;python_version<"3.11"
+typing-extensions
 utm

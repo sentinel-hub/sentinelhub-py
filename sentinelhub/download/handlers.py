@@ -3,21 +3,16 @@ Module implementing error handlers which can occur during download procedure
 """
 import functools
 import logging
-import sys
 import time
 from typing import Callable, Optional, TypeVar
 
 import requests
+from typing_extensions import Protocol
 
 from ..config import SHConfig
 from ..decoding import decode_sentinelhub_err_msg
 from ..exceptions import DownloadFailedException
 from .models import DownloadRequest
-
-if sys.version_info < (3, 8):
-    from typing_extensions import Protocol
-else:
-    from typing import Protocol  # pylint: disable=ungrouped-imports
 
 
 class _HasConfig(Protocol):
