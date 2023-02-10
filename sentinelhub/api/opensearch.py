@@ -186,6 +186,6 @@ def _prepare_url_params(
         "startDate": serialize_time(start_date, use_tz=False) if start_date else None,
         "completionDate": serialize_time(end_date, use_tz=False) if end_date else None,
         "orbitNumber": absolute_orbit,
-        "box": bbox,
+        "box": ",".join(map(str, bbox)) if bbox else None,
     }
     return {key: str(value) for key, value in url_params.items() if value}

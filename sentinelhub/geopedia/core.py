@@ -372,7 +372,7 @@ class GeopediaFeatureIterator(FeatureIterator[JsonDict]):
             if bbox.crs is not CRS.POP_WEB:
                 bbox = bbox.transform(CRS.POP_WEB)
 
-            params[self.FILTER_EXPRESSION] = f'bbox({bbox},"EPSG:3857")'
+            params[self.FILTER_EXPRESSION] = f'bbox({",".join(map(str, bbox))},"EPSG:3857")'
 
         if query_filter is not None:
             if self.FILTER_EXPRESSION in params:

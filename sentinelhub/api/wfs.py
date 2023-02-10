@@ -79,12 +79,13 @@ class WebFeatureService(FeatureIterator[JsonDict]):
     def _build_request_params(self) -> JsonDict:
         """Builds URL parameters for WFS service"""
         start_time, end_time = serialize_time(self.time_interval, use_tz=True)
+        bbox = self.bbox.reverse() if self.bbox.crs is CRS.WGS84 else self.bbox
         return {
             "SERVICE": ServiceType.WFS.value,
             "WARNINGS": False,
             "REQUEST": "GetFeature",
             "TYPENAMES": self.data_collection.wfs_id,
-            "BBOX": str(self.bbox.reverse()) if self.bbox.crs is CRS.WGS84 else str(self.bbox),
+            "BBOX": ",".join(map(str, bbox)),
             "OUTPUTFORMAT": MimeType.JSON.get_string(),
             "SRSNAME": self.bbox.crs.ogc_string(),
             "TIME": f"{start_time}/{end_time}",
