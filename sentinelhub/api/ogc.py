@@ -271,7 +271,7 @@ class OgcImageService:
         self.config = config or SHConfig()
         self.config.raise_for_missing_instance_id()
 
-        self._base_url = self.config.get_sh_ogc_url()
+        self._base_url = f"{self.config.sh_base_url}/ogc"
         self.wfs_iterator: Optional[WebFeatureService] = None
 
     def get_request(self, request: OgcRequest) -> List[DownloadRequest]:
