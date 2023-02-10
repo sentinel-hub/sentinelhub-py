@@ -30,6 +30,8 @@ from .api import (
     monitor_batch_statistical_job,
     opensearch,
 )
+from .api.fis import HistogramType
+from .api.ogc import CustomUrlParam
 from .api.opensearch import get_area_dates, get_area_info, get_tile_info, get_tile_info_id
 from .areas import (
     BatchSplitter,
@@ -41,17 +43,7 @@ from .areas import (
     UtmZoneSplitter,
 )
 from .config import SHConfig
-from .constants import (
-    CRS,
-    CustomUrlParam,
-    HistogramType,
-    MimeType,
-    MosaickingOrder,
-    ResamplingType,
-    ServiceType,
-    ServiceUrl,
-    SHConstants,
-)
+from .constants import CRS, MimeType, MosaickingOrder, ResamplingType, ServiceType, ServiceUrl, SHConstants
 from .data_collections import DataCollection
 from .data_collections_bands import Band, Unit
 from .download import (
