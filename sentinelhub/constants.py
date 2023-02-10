@@ -271,55 +271,6 @@ class CRS(Enum, metaclass=CRSMeta):
         return "+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs" if self is CRS.WGS84 else self.ogc_string()
 
 
-class CustomUrlParam(Enum):
-    """Enum class to represent supported custom url parameters of OGC services
-
-    Supported parameters are `SHOWLOGO`, `EVALSCRIPT`, `EVALSCRIPTURL`, `PREVIEW`, `QUALITY`, `UPSAMPLING`,
-    `DOWNSAMPLING`, `GEOMETRY` and `WARNINGS`.
-
-    See `documentation <https://www.sentinel-hub.com/develop/api/ogc/custom-parameters/>`__ for more information.
-    """
-
-    SHOWLOGO = "ShowLogo"
-    EVALSCRIPT = "EvalScript"
-    EVALSCRIPTURL = "EvalScriptUrl"
-    PREVIEW = "Preview"
-    QUALITY = "Quality"
-    UPSAMPLING = "Upsampling"
-    DOWNSAMPLING = "Downsampling"
-    GEOMETRY = "Geometry"
-    MINQA = "MinQA"
-
-    @classmethod
-    def has_value(cls, value: str) -> bool:
-        """Tests whether CustomUrlParam contains a constant defined with a string `value`
-
-        :param value: The string representation of the enum constant
-        :return: `True` if there exists a constant with a string value `value`, `False` otherwise
-        """
-        return any(value.lower() == item.value.lower() for item in cls)
-
-    @staticmethod
-    def get_string(param: Enum) -> str:
-        """Get custom url parameter name as string
-
-        :param param: CustomUrlParam enum constant
-        :return: String describing the file format
-        """
-        return param.value
-
-
-class HistogramType(Enum):
-    """Enum class for types of histogram supported by Sentinel Hub FIS service
-
-    Supported histogram types are EQUALFREQUENCY, EQUIDISTANT and STREAMING
-    """
-
-    EQUALFREQUENCY = "equalfrequency"
-    EQUIDISTANT = "equidistant"
-    STREAMING = "streaming"
-
-
 class MimeType(Enum):
     """Enum class to represent supported file formats
 

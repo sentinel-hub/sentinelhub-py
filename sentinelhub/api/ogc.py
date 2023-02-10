@@ -2,16 +2,16 @@
 Module for working with Sentinel Hub OGC services
 `Sentinel Hub OGC services <https://www.sentinel-hub.com/develop/api/ogc/standard-parameters/>`__.
 """
-
 import datetime
 import logging
 from base64 import b64encode
+from enum import Enum
 from typing import Any, Dict, List, Optional, Tuple, Union
 from urllib.parse import urlencode
 
 from ..base import DataRequest
 from ..config import SHConfig
-from ..constants import CRS, CustomUrlParam, MimeType, ResamplingType, ServiceType
+from ..constants import CRS, MimeType, ResamplingType, ServiceType
 from ..data_collections import DataCollection
 from ..download import DownloadRequest, SentinelHubDownloadClient
 from ..geo_utils import get_image_dimension
@@ -20,6 +20,44 @@ from ..time_utils import RawTimeIntervalType, RawTimeType, filter_times, parse_t
 from .wfs import WebFeatureService
 
 LOGGER = logging.getLogger(__name__)
+
+
+class CustomUrlParam(Enum):
+    """Enum class to represent supported custom url parameters of OGC services
+
+    Supported parameters are `SHOWLOGO`, `EVALSCRIPT`, `EVALSCRIPTURL`, `PREVIEW`, `QUALITY`, `UPSAMPLING`,
+    `DOWNSAMPLING`, `GEOMETRY` and `WARNINGS`.
+
+    See `documentation <https://www.sentinel-hub.com/develop/api/ogc/custom-parameters/>`__ for more information.
+    """
+
+    SHOWLOGO = "ShowLogo"
+    EVALSCRIPT = "EvalScript"
+    EVALSCRIPTURL = "EvalScriptUrl"
+    PREVIEW = "Preview"
+    QUALITY = "Quality"
+    UPSAMPLING = "Upsampling"
+    DOWNSAMPLING = "Downsampling"
+    GEOMETRY = "Geometry"
+    MINQA = "MinQA"
+
+    @classmethod
+    def has_value(cls, value: str) -> bool:
+        """Tests whether CustomUrlParam contains a constant defined with a string `value`
+
+        :param value: The string representation of the enum constant
+        :return: `True` if there exists a constant with a string value `value`, `False` otherwise
+        """
+        return any(value.lower() == item.value.lower() for item in cls)
+
+    @staticmethod
+    def get_string(param: Enum) -> str:
+        """Get custom url parameter name as string
+
+        :param param: CustomUrlParam enum constant
+        :return: String describing the file format
+        """
+        return param.value
 
 
 class OgcRequest(DataRequest):
