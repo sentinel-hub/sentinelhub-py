@@ -19,11 +19,14 @@ def test_derive() -> None:
 
 
 def test_collection_string() -> None:
-    dcd = DataCollectionDefinition(api_id="X", _name="A")
-    assert str(dcd) == "DataCollectionDefinition(\n  api_id: X\n  is_timeless: False\n  has_cloud_coverage: False\n)"
+    collection_str = DataCollectionDefinition(api_id="X", _name="A")
+    assert (
+        str(collection_str)
+        == "DataCollectionDefinition(\n  api_id: X\n  is_timeless: False\n  has_cloud_coverage: False\n)"
+    )
 
 
-def test_compare() -> None:
+def test_collection_equality() -> None:
     def1 = DataCollectionDefinition(api_id="X", _name="A")
     def2 = DataCollectionDefinition(api_id="X", _name="B")
 
@@ -34,7 +37,10 @@ def test_define() -> None:
     data_collection = DataCollection.define("NEW", api_id="X", sensor_type="Sensor", bands=("B01",), is_timeless=True)
 
     assert data_collection == DataCollection.NEW
+    assert DataCollection.NEW.api_id == "X"
 
+
+def test_define_faild() -> None:
     with pytest.raises(ValueError):
         DataCollection.define("NEW_NEW", api_id="X", sensor_type="Sensor", bands=("B01",), is_timeless=True)
 
@@ -52,6 +58,7 @@ def test_define_from() -> None:
     assert data_collection.bands == tuple(bands)
 
 
+@pytest.mark.dependency()
 def test_define_byoc() -> None:
     byoc_id = "0000d273-7e89-4f00-971e-9024f89a0000"
     byoc = DataCollection.define_byoc(byoc_id, name="MY_BYOC")
@@ -61,6 +68,7 @@ def test_define_byoc() -> None:
     assert byoc.collection_id == byoc_id
 
 
+@pytest.mark.dependency()
 def test_define_batch() -> None:
     batch_id = "0000d273-7e89-4f00-971e-9024f89a0000"
     batch = DataCollection.define_batch(batch_id, name="MY_BATCH")
@@ -118,6 +126,12 @@ def test_sentinel_is_checks(collection: str, collection_type: str, expaected: bo
 def test_contains_orbit_direction(collection: str, direction: str, expaected: bool) -> None:
     data_collection = getattr(DataCollection, collection)
     assert data_collection.contains_orbit_direction(direction) == expaected
+
+
+@pytest.mark.dependency(depends=["test_define_batch, test_define_byoc"])
+def test_is_byoc_batch() -> None:
+    assert DataCollection.MY_BATCH.is_batch
+    assert DataCollection.MY_BYOC.is_byoc
 
 
 def test_get_available_collections() -> None:
