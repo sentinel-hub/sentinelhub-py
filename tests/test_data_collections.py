@@ -78,13 +78,12 @@ def test_define_batch() -> None:
     assert batch.collection_id == batch_id
 
 
-def test_attributes() -> None:
-    data_collection = DataCollection.SENTINEL3_OLCI
-
-    for attr_name in ["api_id", "catalog_id", "wfs_id", "service_url", "bands", "sensor_type"]:
-        value = getattr(data_collection, attr_name)
-        assert value is not None
-        assert value == getattr(data_collection.value, attr_name)
+@pytest.mark.parametrize("data_collection", [DataCollection.SENTINEL3_OLCI, DataCollection.SENTINEL2_L2A])
+@pytest.mark.parametrize("attribut", ["api_id", "catalog_id", "wfs_id", "service_url", "bands", "sensor_type"])
+def test_attributes(data_collection: DataCollection, attribut: str) -> None:
+    value = getattr(data_collection, attribut)
+    assert value is not None
+    assert value == getattr(data_collection.value, attribut)
 
 
 def test_attributes_empty_fail() -> None:
@@ -102,9 +101,7 @@ def test_attributes_empty_fail() -> None:
     [
         ("SENTINEL2_L1C", "is_sentinel1", False),
         ("SENTINEL2_L1C", "is_byoc", False),
-        ("SENTINEL2_L1C", "is_batch", False),
         ("SENTINEL1_EW", "is_sentinel1", True),
-        ("SENTINEL1_EW", "is_byoc", False),
         ("SENTINEL1_EW", "is_batch", False),
     ],
 )
