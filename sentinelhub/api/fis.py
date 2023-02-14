@@ -3,15 +3,27 @@ Module for working with Sentinel Hub FIS service
 """
 import datetime
 import warnings
+from enum import Enum
 from typing import Any, List, Optional, Union
 
-from ..constants import HistogramType, MimeType, RequestType, ServiceType
+from ..constants import MimeType, RequestType, ServiceType
 from ..download import DownloadRequest
 from ..exceptions import SHDeprecationWarning
 from ..geometry import BBox, Geometry
 from ..time_utils import RawTimeIntervalType, RawTimeType
 from .ogc import OgcImageService, OgcRequest
 from .wfs import WebFeatureService
+
+
+class HistogramType(Enum):
+    """Enum class for types of histogram supported by Sentinel Hub FIS service
+
+    Supported histogram types are EQUALFREQUENCY, EQUIDISTANT and STREAMING
+    """
+
+    EQUALFREQUENCY = "equalfrequency"
+    EQUIDISTANT = "equidistant"
+    STREAMING = "streaming"
 
 
 class FisRequest(OgcRequest):
