@@ -58,7 +58,6 @@ def test_define_from() -> None:
     assert data_collection.bands == tuple(bands)
 
 
-@pytest.mark.dependency()
 def test_define_byoc() -> None:
     byoc_id = "0000d273-7e89-4f00-971e-9024f89a0000"
     byoc = DataCollection.define_byoc(byoc_id, name="MY_BYOC")
@@ -67,8 +66,10 @@ def test_define_byoc() -> None:
     assert byoc.api_id.endswith(byoc_id)
     assert byoc.collection_id == byoc_id
 
+    assert DataCollection.MY_BYOC.is_byoc
+    assert not DataCollection.SENTINEL5P.is_byoc
 
-@pytest.mark.dependency()
+
 def test_define_batch() -> None:
     batch_id = "0000d273-7e89-4f00-971e-9024f89a0000"
     batch = DataCollection.define_batch(batch_id, name="MY_BATCH")
@@ -76,6 +77,9 @@ def test_define_batch() -> None:
     assert batch == DataCollection.MY_BATCH
     assert batch.api_id.endswith(batch_id)
     assert batch.collection_id == batch_id
+
+    assert DataCollection.MY_BATCH.is_batch
+    assert not DataCollection.SENTINEL2_L2A.is_batch
 
 
 @pytest.mark.parametrize("data_collection", [DataCollection.SENTINEL3_OLCI, DataCollection.SENTINEL2_L2A])
@@ -97,17 +101,15 @@ def test_attributes_empty_fail() -> None:
 
 
 @pytest.mark.parametrize(
-    "collection, collection_type, expaected",
+    "test_collection, expaected",
     [
-        ("SENTINEL2_L1C", "is_sentinel1", False),
-        ("SENTINEL2_L1C", "is_byoc", False),
-        ("SENTINEL1_EW", "is_sentinel1", True),
-        ("SENTINEL1_EW", "is_batch", False),
+        (DataCollection.SENTINEL2_L1C, False),
+        (DataCollection.SENTINEL1_EW, True),
+        (DataCollection.LANDSAT_TM_L1, False),
     ],
 )
-def test_sentinel_is_checks(collection: str, collection_type: str, expaected: bool) -> None:
-    data_collection = getattr(DataCollection, collection)
-    assert getattr(data_collection, collection_type) == expaected
+def test_is_sentinel1(test_collection: DataCollection, expaected: bool) -> None:
+    assert test_collection.is_sentinel1 == expaected
 
 
 @pytest.mark.parametrize(
@@ -123,12 +125,6 @@ def test_sentinel_is_checks(collection: str, collection_type: str, expaected: bo
 def test_contains_orbit_direction(collection: str, direction: str, expaected: bool) -> None:
     data_collection = getattr(DataCollection, collection)
     assert data_collection.contains_orbit_direction(direction) == expaected
-
-
-@pytest.mark.dependency(depends=["test_define_batch, test_define_byoc"])
-def test_is_byoc_batch() -> None:
-    assert DataCollection.MY_BATCH.is_batch
-    assert DataCollection.MY_BYOC.is_byoc
 
 
 def test_get_available_collections() -> None:
