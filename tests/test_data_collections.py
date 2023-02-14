@@ -1,7 +1,7 @@
 """
 Unit tests for data_collections module
 """
-from typing import Any
+from typing import Any, Dict
 
 import pytest
 
@@ -18,12 +18,22 @@ def test_derive() -> None:
     assert derived_definition.collection_type is None
 
 
-def test_collection_string() -> None:
-    collection_str = DataCollectionDefinition(api_id="X", _name="A")
-    assert (
-        str(collection_str)
-        == "DataCollectionDefinition(\n  api_id: X\n  is_timeless: False\n  has_cloud_coverage: False\n)"
-    )
+@pytest.mark.parametrize(
+    "definition_input, expected",
+    [
+        ({}, "DataCollectionDefinition(\n  is_timeless: False\n  has_cloud_coverage: False\n)"),
+        (
+            {"api_id": "X", "_name": "A"},
+            "DataCollectionDefinition(\n  api_id: X\n  is_timeless: False\n  has_cloud_coverage: False\n)",
+        ),
+        (
+            {"api_id": "Y", "is_timeless": True, "has_cloud_coverage": True},
+            "DataCollectionDefinition(\n  api_id: Y\n  is_timeless: True\n  has_cloud_coverage: True\n)",
+        ),
+    ],
+)
+def test_collection_string(definition_input: Dict[str, Any], expected: str) -> None:
+    assert str(DataCollectionDefinition(**definition_input)) == expected
 
 
 def test_collection_equality() -> None:
