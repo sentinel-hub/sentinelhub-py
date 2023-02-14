@@ -649,7 +649,6 @@ class DataCollection(Enum, metaclass=_DataCollectionMeta):
 
         :param orbit_direction: An orbit direction
         :return: `True` if data collection contains the orbit direction
-        :return: bool
         """
         defined_direction = self.orbit_direction
         if defined_direction is None or defined_direction.upper() == OrbitDirection.BOTH:
