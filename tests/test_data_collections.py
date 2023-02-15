@@ -49,8 +49,6 @@ def test_define() -> None:
     assert data_collection == DataCollection.NEW
     assert DataCollection.NEW.api_id == "X"
 
-
-def test_define_faild() -> None:
     with pytest.raises(ValueError):
         DataCollection.define("NEW_NEW", api_id="X", sensor_type="Sensor", bands=("B01",), is_timeless=True)
 
