@@ -37,24 +37,32 @@ def test_collection_repr(definition_input: Dict[str, Any], expected: str) -> Non
 
 
 @pytest.mark.parametrize(
-    "test_definition, equal_definition, expected",
+    "test_definition, equal_definition",
     [
-        ({"api_id": "X", "_name": "A"}, {"api_id": "X", "_name": "A"}, True),
-        ({"api_id": "X", "_name": "A"}, {"api_id": "X", "_name": "B"}, True),
-        ({"api_id": "X", "_name": "A"}, {"api_id": "Y", "_name": "A"}, False),
-        ({"api_id": "X", "is_timeless": False}, {"api_id": "X", "is_timeless": False, "_name": "B"}, True),
-        ({"api_id": "X", "is_timeless": False}, {"api_id": "X"}, True),
-        ({"api_id": "X", "is_timeless": True}, {"api_id": "X"}, False),
-        ({"api_id": "X", "wfs_id": 2132342143454364}, {"api_id": "X"}, False),
+        ({"api_id": "X", "_name": "A"}, {"api_id": "X", "_name": "A"}),
+        ({"api_id": "X", "_name": "A"}, {"api_id": "X", "_name": "B"}),
+        ({"api_id": "X", "is_timeless": False}, {"api_id": "X", "is_timeless": False, "_name": "B"}),
+        ({"api_id": "X", "is_timeless": False}, {"api_id": "X"}),
     ],
 )
-def test_collection_definition_equality(
-    test_definition: Dict[str, Any], equal_definition: Dict[str, Any], expected: bool
-) -> None:
+def test_collection_definitions_equal(test_definition: Dict[str, Any], equal_definition: Dict[str, Any]) -> None:
     def1 = DataCollectionDefinition(**test_definition)
     def2 = DataCollectionDefinition(**equal_definition)
-    equal = def1 == def2
-    assert equal if expected else not equal
+    assert def1 == def2
+
+
+@pytest.mark.parametrize(
+    "test_definition, equal_definition",
+    [
+        ({"api_id": "X", "_name": "A"}, {"api_id": "Y", "_name": "A"}),
+        ({"api_id": "X", "is_timeless": True}, {"api_id": "X"}),
+        ({"api_id": "X", "wfs_id": 2132342143454364}, {"api_id": "X"}),
+    ],
+)
+def test_collection_definitions_not_equal(test_definition: Dict[str, Any], equal_definition: Dict[str, Any]) -> None:
+    def1 = DataCollectionDefinition(**test_definition)
+    def2 = DataCollectionDefinition(**equal_definition)
+    assert def1 != def2
 
 
 def test_define() -> None:
@@ -63,9 +71,11 @@ def test_define() -> None:
     assert data_collection == DataCollection.NEW
     assert DataCollection.NEW.api_id == "X"
 
+    # Should fail because DataCollection with same api_id already exists.
     with pytest.raises(ValueError):
         DataCollection.define("NEW_NEW", api_id="X", sensor_type="Sensor", bands=("B01",), is_timeless=True)
 
+    # Should fail because DataCollection with same name already exists.
     with pytest.raises(ValueError):
         DataCollection.define("NEW", api_id="Y")
 
@@ -150,7 +160,13 @@ def test_contains_orbit_direction(collection: str, direction: str, expected: boo
 
 
 def test_get_available_collections() -> None:
+    number_of_collection = len(DataCollection.get_available_collections())
+    DataCollection.define("NEW_NEW", api_id="Z")
+    DataCollection.define_batch("batch_id", name="MY_BATCH")
+    DataCollection.define_byoc("byoc_id", name="MY_BYOC")
     collections = DataCollection.get_available_collections()
+
+    assert len(collections) == number_of_collection + 3
     assert all(isinstance(collection, DataCollection) for collection in collections)
 
 
