@@ -653,8 +653,9 @@ class BatchSplitter(AreaSplitter):
         self.tile_size = self._get_tile_size()
         self.tile_buffer = self._get_tile_buffer()
 
-        _, geom_def, _ = batch_request._parse_bounds_payload()
-        batch_geometry: _BaseGeometry = batch_request.geometry if geom_def else batch_request.bbox
+        batch_geometry: Optional[_BaseGeometry] = batch_request.geometry or batch_request.bbox
+        if batch_geometry is None:
+            raise ValueError("Batch request has both `bbox` and `geometry` set to `None`, which is invalid.")
 
         super().__init__([batch_geometry.geometry], batch_geometry.crs)
 
