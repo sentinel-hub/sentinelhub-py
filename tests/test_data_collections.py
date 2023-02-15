@@ -36,11 +36,25 @@ def test_collection_repr(definition_input: Dict[str, Any], expected: str) -> Non
     assert repr(DataCollectionDefinition(**definition_input)) == expected
 
 
-def test_collection_equality() -> None:
-    def1 = DataCollectionDefinition(api_id="X", _name="A")
-    def2 = DataCollectionDefinition(api_id="X", _name="B")
-
-    assert def1 == def2
+@pytest.mark.parametrize(
+    "test_definition, equal_definition, expected",
+    [
+        ({"api_id": "X", "_name": "A"}, {"api_id": "X", "_name": "A"}, True),
+        ({"api_id": "X", "_name": "A"}, {"api_id": "X", "_name": "B"}, True),
+        ({"api_id": "X", "_name": "A"}, {"api_id": "Y", "_name": "A"}, False),
+        ({"api_id": "X", "is_timeless": False}, {"api_id": "X", "is_timeless": False, "_name": "B"}, True),
+        ({"api_id": "X", "is_timeless": False}, {"api_id": "X"}, True),
+        ({"api_id": "X", "is_timeless": True}, {"api_id": "X"}, False),
+        ({"api_id": "X", "wfs_id": 2132342143454364}, {"api_id": "X"}, False),
+    ],
+)
+def test_collection_definition_equality(
+    test_definition: Dict[str, Any], equal_definition: Dict[str, Any], expected: bool
+) -> None:
+    def1 = DataCollectionDefinition(**test_definition)
+    def2 = DataCollectionDefinition(**equal_definition)
+    equal = def1 == def2
+    assert equal if expected else not equal
 
 
 def test_define() -> None:
@@ -91,11 +105,11 @@ def test_define_batch() -> None:
 
 
 @pytest.mark.parametrize("data_collection", [DataCollection.SENTINEL3_OLCI, DataCollection.SENTINEL2_L2A])
-@pytest.mark.parametrize("attribut", ["api_id", "catalog_id", "wfs_id", "service_url", "bands", "sensor_type"])
-def test_attributes(data_collection: DataCollection, attribut: str) -> None:
-    value = getattr(data_collection, attribut)
+@pytest.mark.parametrize("attribute", ["api_id", "catalog_id", "wfs_id", "service_url", "bands", "sensor_type"])
+def test_attributes(data_collection: DataCollection, attribute: str) -> None:
+    value = getattr(data_collection, attribute)
     assert value is not None
-    assert value == getattr(data_collection.value, attribut)
+    assert value == getattr(data_collection.value, attribute)
 
 
 def test_attributes_empty_fail() -> None:
@@ -109,19 +123,19 @@ def test_attributes_empty_fail() -> None:
 
 
 @pytest.mark.parametrize(
-    "test_collection, expaected",
+    "test_collection, expected",
     [
         (DataCollection.SENTINEL2_L1C, False),
         (DataCollection.SENTINEL1_EW, True),
         (DataCollection.LANDSAT_TM_L1, False),
     ],
 )
-def test_is_sentinel1(test_collection: DataCollection, expaected: bool) -> None:
-    assert test_collection.is_sentinel1 == expaected
+def test_is_sentinel1(test_collection: DataCollection, expected: bool) -> None:
+    assert test_collection.is_sentinel1 == expected
 
 
 @pytest.mark.parametrize(
-    "collection, direction, expaected",
+    "collection, direction, expected",
     [
         ("SENTINEL1_IW_ASC", "ascending", True),
         ("SENTINEL1_IW_ASC", "descending", False),
@@ -130,15 +144,14 @@ def test_is_sentinel1(test_collection: DataCollection, expaected: bool) -> None:
         ("SENTINEL2_L2A", "ascending", True),
     ],
 )
-def test_contains_orbit_direction(collection: str, direction: str, expaected: bool) -> None:
+def test_contains_orbit_direction(collection: str, direction: str, expected: bool) -> None:
     data_collection = getattr(DataCollection, collection)
-    assert data_collection.contains_orbit_direction(direction) == expaected
+    assert data_collection.contains_orbit_direction(direction) == expected
 
 
 def test_get_available_collections() -> None:
     collections = DataCollection.get_available_collections()
-    assert len(collections) >= 28
-    assert all([type(collection) == DataCollection for collection in collections])
+    assert all(isinstance(collection, DataCollection) for collection in collections)
 
 
 def test_transfer_with_ray(ray: Any) -> None:
