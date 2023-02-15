@@ -653,7 +653,9 @@ class BatchSplitter(AreaSplitter):
         self.tile_size = self._get_tile_size()
         self.tile_buffer = self._get_tile_buffer()
 
-        batch_geometry = batch_request.geometry
+        _, geom_def, _ = batch_request._parse_bounds_payload()
+        batch_geometry: _BaseGeometry = batch_request.geometry if geom_def else batch_request.bbox
+
         super().__init__([batch_geometry.geometry], batch_geometry.crs)
 
     def _get_tile_size(self) -> Tuple[float, float]:
