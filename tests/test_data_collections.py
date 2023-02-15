@@ -32,8 +32,8 @@ def test_derive() -> None:
         ),
     ],
 )
-def test_collection_string(definition_input: Dict[str, Any], expected: str) -> None:
-    assert str(DataCollectionDefinition(**definition_input)) == expected
+def test_collection_repr(definition_input: Dict[str, Any], expected: str) -> None:
+    assert repr(DataCollectionDefinition(**definition_input)) == expected
 
 
 def test_collection_equality() -> None:
