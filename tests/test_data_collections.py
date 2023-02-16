@@ -26,8 +26,8 @@ def test_derive(
 ) -> None:
     derived_definition = data_colection_def.derive(**derive_attributes)
 
-    for atribure, value in expected_attributes.items():
-        assert value == getattr(derived_definition, atribure)
+    for attribute, value in expected_attributes.items():
+        assert value == getattr(derived_definition, attribute)
 
 
 @pytest.mark.parametrize(
