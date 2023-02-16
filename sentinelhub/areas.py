@@ -653,7 +653,10 @@ class BatchSplitter(AreaSplitter):
         self.tile_size = self._get_tile_size()
         self.tile_buffer = self._get_tile_buffer()
 
-        batch_geometry = batch_request.geometry
+        batch_geometry: Optional[_BaseGeometry] = batch_request.geometry or batch_request.bbox
+        if batch_geometry is None:
+            raise ValueError("Batch request has both `bbox` and `geometry` set to `None`, which is invalid.")
+
         super().__init__([batch_geometry.geometry], batch_geometry.crs)
 
     def _get_tile_size(self) -> Tuple[float, float]:
