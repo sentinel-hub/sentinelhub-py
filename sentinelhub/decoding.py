@@ -5,9 +5,9 @@ import json
 import struct
 import tarfile
 import warnings
-from io import BytesIO, IOBase
+from io import BytesIO
 from json import JSONDecodeError
-from typing import Any, Dict, Union
+from typing import IO, Any, Dict, Union
 from xml.etree import ElementTree
 
 import numpy as np
@@ -71,7 +71,7 @@ def decode_image(data: bytes, image_type: MimeType) -> np.ndarray:
     return image
 
 
-def decode_image_with_pillow(stream: Union[IOBase, str]) -> np.ndarray:
+def decode_image_with_pillow(stream: Union[IO, str]) -> np.ndarray:
     """Decodes an image using `Pillow` package and handles potential warnings.
 
     :param stream: A binary stream format or a filename.
@@ -82,7 +82,7 @@ def decode_image_with_pillow(stream: Union[IOBase, str]) -> np.ndarray:
         return np.array(Image.open(stream))
 
 
-def decode_jp2_image(stream: IOBase) -> np.ndarray:
+def decode_jp2_image(stream: IO) -> np.ndarray:
     """Tries to decode a JPEG2000 image using the `Pillow` package.
 
     :param stream: A binary stream format.
@@ -146,7 +146,7 @@ def decode_sentinelhub_err_msg(response: Response) -> str:
         return response.text
 
 
-def get_jp2_bit_depth(stream: IOBase) -> int:
+def get_jp2_bit_depth(stream: IO) -> int:
     """Reads a bit encoding depth of jpeg2000 file in binary stream format
 
     :param stream: binary stream format

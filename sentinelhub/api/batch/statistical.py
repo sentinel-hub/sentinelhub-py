@@ -4,24 +4,19 @@ Module implementing an interface with
 """
 import datetime as dt
 import logging
-import sys
 from dataclasses import dataclass, field
 from typing import Any, Optional, Sequence, Union
 
 from dataclasses_json import CatchAll, LetterCase, Undefined
 from dataclasses_json import config as dataclass_config
 from dataclasses_json import dataclass_json
+from typing_extensions import NotRequired, TypedDict
 
 from ...types import Json, JsonDict
 from ..base_request import InputDataDict
 from ..statistical import SentinelHubStatistical
 from ..utils import datetime_config, enum_config, remove_undefined
 from .base import BaseBatchClient, BaseBatchRequest, BatchRequestStatus, BatchUserAction
-
-if sys.version_info < (3, 11):
-    from typing_extensions import NotRequired, TypedDict
-else:
-    from typing import NotRequired, TypedDict  # pylint: disable=ungrouped-imports
 
 LOGGER = logging.getLogger(__name__)
 

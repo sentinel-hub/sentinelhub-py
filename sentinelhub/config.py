@@ -9,6 +9,8 @@ import numbers
 import os
 from typing import Any, Dict, Iterable, List, Optional, Union
 
+from .exceptions import deprecated_function
+
 ConfigDict = Dict[str, Union[str, int, float]]
 
 
@@ -293,6 +295,7 @@ class SHConfig:  # pylint: disable=too-many-instance-attributes
         hide_size = min(max(len(value) - 4, 10), len(value))
         return "*" * hide_size + value[hide_size:]
 
+    @deprecated_function(message_suffix="Use `f'{config.sh_auth_base_url}/oauth/token'` instead.")
     def get_sh_oauth_url(self) -> str:
         """Provides URL for Sentinel Hub authentication endpoint
 
@@ -300,6 +303,7 @@ class SHConfig:  # pylint: disable=too-many-instance-attributes
         """
         return f"{self.sh_auth_base_url}/oauth/token"
 
+    @deprecated_function(message_suffix="Use `f'{config.sh_base_url}/api/v1/process'` instead.")
     def get_sh_process_api_url(self) -> str:
         """Provides URL for Sentinel Hub Process API endpoint
 
@@ -307,6 +311,7 @@ class SHConfig:  # pylint: disable=too-many-instance-attributes
         """
         return f"{self.sh_base_url}/api/v1/process"
 
+    @deprecated_function(message_suffix="Use `f'{config.sh_base_url}/ogc'` instead.")
     def get_sh_ogc_url(self) -> str:
         """Provides URL for Sentinel Hub OGC endpoint
 
@@ -314,6 +319,7 @@ class SHConfig:  # pylint: disable=too-many-instance-attributes
         """
         return f"{self.sh_base_url}/ogc"
 
+    @deprecated_function(message_suffix="Use `f'{config.sh_auth_base_url}/aux/ratelimit'` instead.")
     def get_sh_rate_limit_url(self) -> str:
         """Provides URL for Sentinel Hub rate limiting endpoint
 

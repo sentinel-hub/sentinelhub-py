@@ -88,8 +88,8 @@ setup(
         "Bug Tracker": "https://github.com/sentinel-hub/sentinelhub-py/issues",
         "Forum": "https://forum.sentinel-hub.com",
     },
-    author="Sinergise ltd.",
-    author_email="info@sentinel-hub.com",
+    author="Sinergise EO research team",
+    author_email="eoresearch@sinergise.com",
     license="MIT",
     packages=find_packages(),
     package_data={

@@ -3,6 +3,7 @@ Unit tests for config.py module
 """
 import json
 import os
+import shutil
 from typing import Any, Generator
 
 import pytest
@@ -10,24 +11,61 @@ import pytest
 from sentinelhub import SHConfig
 
 
-@pytest.fixture(name="restore_config")
-def restore_config_fixture() -> Generator[None, None, None]:
-    """A fixture that makes sure original config is restored after a test is executed. It restores the config even if
+@pytest.fixture(autouse=True, scope="module")
+def mask_and_restore_config_fixture() -> Generator[None, None, None]:
+    """A fixture that makes sure original config is restored after tests are executed. It restores the config even if
     a test has failed.
     """
-    original_config = SHConfig()
+    config_path = SHConfig.get_config_location()
+    cache_path = config_path.replace(".json", "_test_cache.json")
+    shutil.move(config_path, cache_path)
+
+    # Create a mock config
+    config = SHConfig(use_defaults=True)
+    config.geopedia_wms_url = "zero-drama-llama.com"
+    config.download_timeout_seconds = 100
+    config.max_download_attempts = 42
+    config.save()
+
     yield
-    original_config.save()
+
+    os.remove(config_path)
+    shutil.move(cache_path, config_path)
+    SHConfig._cache = None  # makes sure the next invocation loads the SHConfig
 
 
+@pytest.fixture(name="restore_config_file")
+def restore_config_file_fixture() -> Generator[None, None, None]:
+    """A fixture that ensures the config file is reset after the test."""
+    config = SHConfig()
+    yield
+    config.save()
+
+
+@pytest.fixture(name="test_config")
+def test_config_fixture() -> SHConfig:
+    config = SHConfig(use_defaults=True)
+    config.instance_id = "fake_instance_id"
+    config.sh_client_id = "tester"
+    config.sh_client_secret = "1_l1k3-p1n34ppl3*0n%p1224"
+    return config
+
+
+@pytest.mark.dependency()
+def test_fake_config_during_tests() -> None:
+    config = SHConfig()
+    credentials_removed = all(config[field] == "" for field in config.CREDENTIALS)
+    assert credentials_removed, "Credentials not properly removed for testing. Aborting tests."
+
+
+@pytest.mark.dependency(depends=["test_fake_config_during_tests"])
 def test_config_file() -> None:
     config = SHConfig()
-
     config_file = config.get_config_location()
     assert os.path.isfile(config_file), f"Config file does not exist: {os.path.abspath(config_file)}"
 
-    with open(config_file, "r") as fp:
-        config_dict = json.load(fp)
+    with open(config_file, "r") as file_handle:
+        config_dict = json.load(file_handle)
 
     for param, value in config_dict.items():
         if param in config.CREDENTIALS:
@@ -36,15 +74,16 @@ def test_config_file() -> None:
         if isinstance(value, str):
             value = value.rstrip("/")
 
-        assert config[param] == value
+        assert config[param] == value, f"Parameter {param} does not match it's equivalent in the config.json."
 
 
-def test_reset() -> None:
+@pytest.mark.dependency(depends=["test_fake_config_during_tests"])
+def test_set_and_reset_value() -> None:
     config = SHConfig()
-    default_config = SHConfig(use_defaults=True)
 
     old_value = config.instance_id
     new_value = "new"
+
     config.instance_id = new_value
     assert config.instance_id == new_value, "New value was not set"
     assert config["instance_id"] == new_value, "New value was not set"
@@ -55,10 +94,11 @@ def test_reset() -> None:
     assert config.instance_id == new_value, "Instance ID should not reset yet"
 
     config.reset()
-    assert config.instance_id == default_config.instance_id, "Instance ID should reset"
+    assert config.instance_id == "", "Instance ID should reset"
 
 
-def test_save(restore_config: None) -> None:
+@pytest.mark.dependency(depends=["test_fake_config_during_tests"])
+def test_save(restore_config_file: None) -> None:
     config = SHConfig()
     old_value = config.download_timeout_seconds
 
@@ -77,43 +117,47 @@ def test_save(restore_config: None) -> None:
     assert config.download_timeout_seconds == new_value, "Saved value should have changed"
 
 
-def test_copy() -> None:
-    config = SHConfig(hide_credentials=True)
+@pytest.mark.dependency(depends=["test_fake_config_during_tests"])
+@pytest.mark.parametrize("hide_credentials", [True, False])
+def test_copy(hide_credentials: bool) -> None:
+    config = SHConfig(hide_credentials=hide_credentials)
     config.instance_id = "a"
 
     copied_config = config.copy()
-    assert copied_config._hide_credentials
+    assert copied_config is not config
+    assert copied_config._hide_credentials == hide_credentials
     assert copied_config._cache is config._cache
     assert copied_config.instance_id == config.instance_id
 
     copied_config.instance_id = "b"
-    assert config.instance_id == "a"
+    assert config.instance_id == "a" and copied_config.instance_id == "b"
 
 
-def test_config_equality() -> None:
-    assert SHConfig() != 42
+@pytest.mark.dependency(depends=["test_fake_config_during_tests"])
+def test_config_equality(test_config: SHConfig) -> None:
+    assert test_config != 42
+    assert test_config != test_config.get_config_dict()
 
-    config1 = SHConfig(hide_credentials=False, use_defaults=True)
-    config2 = SHConfig(hide_credentials=True, use_defaults=True)
+    config1 = SHConfig(hide_credentials=False)
+    config2 = SHConfig(hide_credentials=True)
 
     assert config1 is not config2
     assert config1 == config2
 
-    config2.sh_client_id = "XXX"
+    config2.sh_client_id = "something_else"
     assert config1 != config2
 
 
-def test_raise_for_missing_instance_id() -> None:
-    config = SHConfig()
+@pytest.mark.dependency(depends=["test_fake_config_during_tests"])
+def test_raise_for_missing_instance_id(test_config: SHConfig) -> None:
+    test_config.raise_for_missing_instance_id()
 
-    config.instance_id = "xxx"
-    config.raise_for_missing_instance_id()
-
-    config.instance_id = ""
+    test_config.instance_id = ""
     with pytest.raises(ValueError):
-        config.raise_for_missing_instance_id()
+        test_config.raise_for_missing_instance_id()
 
 
+@pytest.mark.dependency(depends=["test_fake_config_during_tests"])
 @pytest.mark.parametrize("hide_credentials", [False, True])
 def test_config_repr(hide_credentials: bool) -> None:
     config = SHConfig(hide_credentials=hide_credentials)
@@ -130,6 +174,7 @@ def test_config_repr(hide_credentials: bool) -> None:
             assert f"{param}={repr(config[param])}" in config_repr
 
 
+@pytest.mark.dependency(depends=["test_fake_config_during_tests"])
 @pytest.mark.parametrize("hide_credentials", [False, True])
 def test_get_config_dict(hide_credentials: bool) -> None:
     config = SHConfig(hide_credentials=hide_credentials)
@@ -148,25 +193,24 @@ def test_get_config_dict(hide_credentials: bool) -> None:
         assert config_dict["aws_secret_access_key"] == config.aws_secret_access_key
 
 
-def test_transfer_with_ray(ray: Any) -> None:
+@pytest.mark.dependency(depends=["test_fake_config_during_tests"])
+def test_transfer_with_ray(test_config: SHConfig, ray: Any) -> None:
     """This test makes sure that the process of transferring SHConfig object to a Ray worker, working with it, and
     sending it back works correctly.
     """
-    config = SHConfig()
-    config.instance_id = "x"
 
     def _remote_ray_testing(remote_config: SHConfig) -> SHConfig:
         """Makes a few checks and modifications to the config object"""
         assert repr(remote_config).startswith("SHConfig")
         assert isinstance(remote_config.get_config_dict(), dict)
         assert os.path.exists(remote_config.get_config_location())
-        assert remote_config.instance_id == "x"
+        assert remote_config.instance_id == "fake_instance_id"
 
-        remote_config.instance_id = "y"
+        remote_config.instance_id = "new_fake_instance_id"
         return remote_config
 
-    config_future = ray.remote(_remote_ray_testing).remote(config)
+    config_future = ray.remote(_remote_ray_testing).remote(test_config)
     transferred_config = ray.get(config_future)
 
-    assert repr(config).startswith("SHConfig")
-    assert transferred_config.instance_id == "y"
+    assert repr(test_config).startswith("SHConfig")
+    assert transferred_config.instance_id == "new_fake_instance_id"

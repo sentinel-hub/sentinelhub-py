@@ -6,6 +6,8 @@ import pytest
 from sentinelhub import DataCollection, read_data
 from sentinelhub.aws import AwsConstants, AwsProductRequest, AwsTileRequest
 
+pytestmark = [pytest.mark.aws_integration, pytest.mark.filterwarnings("ignore::DeprecationWarning")]
+
 
 @pytest.fixture(name="safe_folder", scope="session")
 def safe_folder_fixture(input_folder: str) -> str:

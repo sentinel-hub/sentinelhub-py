@@ -9,6 +9,7 @@ from typing import TYPE_CHECKING, Any, Iterable, Iterator, List, Optional, Union
 
 from shapely.geometry import shape as geo_shape
 from shapely.geometry.base import BaseGeometry
+from typing_extensions import Literal
 
 from ..api.ogc import OgcImageService, OgcRequest
 from ..base import FeatureIterator
@@ -16,7 +17,7 @@ from ..config import SHConfig
 from ..constants import CRS, MimeType
 from ..download import DownloadClient, DownloadRequest
 from ..geometry import BBox
-from ..types import JsonDict, Literal
+from ..types import JsonDict
 
 if TYPE_CHECKING:
     from .request import GeopediaImageRequest
@@ -371,7 +372,7 @@ class GeopediaFeatureIterator(FeatureIterator[JsonDict]):
             if bbox.crs is not CRS.POP_WEB:
                 bbox = bbox.transform(CRS.POP_WEB)
 
-            params[self.FILTER_EXPRESSION] = f'bbox({bbox},"EPSG:3857")'
+            params[self.FILTER_EXPRESSION] = f'bbox({",".join(map(str, bbox))},"EPSG:3857")'
 
         if query_filter is not None:
             if self.FILTER_EXPRESSION in params:

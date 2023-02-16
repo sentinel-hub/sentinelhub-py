@@ -533,28 +533,24 @@ class BatchRequest(BaseBatchRequest):  # pylint: disable=abstract-method
         return self.process_request["evalscript"]
 
     @property
-    def bbox(self) -> BBox:
+    def bbox(self) -> Optional[BBox]:
         """Provides a bounding box used by a batch request
 
         :return: An area bounding box together with CRS
         :raises: ValueError
         """
         bbox, _, crs = self._parse_bounds_payload()
-        if bbox is None:
-            raise ValueError("Bounding box is not defined for this batch request")
-        return BBox(bbox, crs)
+        return None if bbox is None else BBox(bbox, crs)  # type: ignore[arg-type]
 
     @property
-    def geometry(self) -> Geometry:
+    def geometry(self) -> Optional[Geometry]:
         """Provides a geometry used by a batch request
 
         :return: An area geometry together with CRS
         :raises: ValueError
         """
         _, geometry, crs = self._parse_bounds_payload()
-        if geometry is None:
-            raise ValueError("Geometry is not defined for this batch request")
-        return Geometry(geometry, crs)
+        return None if geometry is None else Geometry(geometry, crs)
 
     def _parse_bounds_payload(self) -> Tuple[Optional[List[float]], Optional[list], CRS]:
         """Parses bbox, geometry and crs from batch request payload. If bbox or geometry don't exist it returns None

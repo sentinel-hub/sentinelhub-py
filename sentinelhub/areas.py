@@ -19,7 +19,7 @@ from .config import SHConfig
 from .constants import CRS
 from .data_collections import DataCollection
 from .geo_utils import transform_point
-from .geometry import BBox, BBoxCollection, Geometry, _BaseGeometry
+from .geometry import BBox, Geometry, _BaseGeometry
 from .types import JsonDict
 
 T = TypeVar("T", float, int)
@@ -139,7 +139,7 @@ class AreaSplitter(metaclass=ABCMeta):
         area_min_y = min(bbox.lower_left[1] for bbox in bbox_list)
         area_max_x = max(bbox.upper_right[0] for bbox in bbox_list)
         area_max_y = max(bbox.upper_right[1] for bbox in bbox_list)
-        bbox = BBox([area_min_x, area_min_y, area_max_x, area_max_y], crs=self.crs)
+        bbox = BBox((area_min_x, area_min_y, area_max_x, area_max_y), crs=self.crs)
         if crs is None:
             return bbox
         return bbox.transform(crs)
@@ -407,7 +407,7 @@ class CustomGridSplitter(AreaSplitter):
         self,
         shape_list: Iterable[Union[Polygon, MultiPolygon, _BaseGeometry]],
         crs: CRS,
-        bbox_grid: Union[List[BBox], BBoxCollection],
+        bbox_grid: Iterable[BBox],
         bbox_split_shape: Union[int, Tuple[int, int]] = 1,
         **kwargs: Any,
     ):
@@ -422,20 +422,9 @@ class CustomGridSplitter(AreaSplitter):
         :param reduce_bbox_sizes: If `True` it will reduce the sizes of bounding boxes so that they will tightly fit
             the given geometry in `shape_list`.
         """
-        self.bbox_grid = self._parse_bbox_grid(bbox_grid)
+        self.bbox_grid = list(bbox_grid)
         self.bbox_split_shape = bbox_split_shape
         super().__init__(shape_list, crs, **kwargs)
-
-    @staticmethod
-    def _parse_bbox_grid(bbox_grid: Union[List[BBox], BBoxCollection]) -> BBoxCollection:
-        """Helper method for parsing bounding box grid. It will try to parse it into `BBoxCollection`"""
-        if isinstance(bbox_grid, BBoxCollection):
-            return bbox_grid
-
-        if isinstance(bbox_grid, list):
-            return BBoxCollection(bbox_grid)
-
-        raise ValueError(f"Parameter 'bbox_grid' should be an instance of {BBoxCollection}")
 
     def _make_split(self) -> Tuple[List[BBox], List[Dict[str, object]]]:
         bbox_list: List[BBox] = []
@@ -664,7 +653,10 @@ class BatchSplitter(AreaSplitter):
         self.tile_size = self._get_tile_size()
         self.tile_buffer = self._get_tile_buffer()
 
-        batch_geometry = batch_request.geometry
+        batch_geometry: Optional[_BaseGeometry] = batch_request.geometry or batch_request.bbox
+        if batch_geometry is None:
+            raise ValueError("Batch request has both `bbox` and `geometry` set to `None`, which is invalid.")
+
         super().__init__([batch_geometry.geometry], batch_geometry.crs)
 
     def _get_tile_size(self) -> Tuple[float, float]:
@@ -699,12 +691,12 @@ class BatchSplitter(AreaSplitter):
         width, height = self.tile_size
 
         return BBox(
-            [
+            (
                 upper_left_corner[0] - self.tile_buffer[0],
                 upper_left_corner[1] - height - self.tile_buffer[1],
                 upper_left_corner[0] + width + self.tile_buffer[0],
                 upper_left_corner[1] + self.tile_buffer[1],
-            ],
+            ),
             tile_crs,
         )
 

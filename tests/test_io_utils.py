@@ -9,7 +9,8 @@ from pytest import approx
 from pytest_lazyfixture import lazy_fixture
 
 from sentinelhub import read_data, write_data
-from sentinelhub.exceptions import SHUserWarning
+
+BASIC_IMAGE = np.arange((5 * 6 * 3), dtype=np.uint8).reshape((5, 6, 3))
 
 
 @pytest.mark.parametrize(
@@ -31,6 +32,13 @@ def test_img_read(input_folder: str, filename: str, mean: float, shape: Tuple[in
     assert img.flags["WRITEABLE"], "Obtained numpy array is not writeable"
 
 
+def test_read_tar_with_folder(input_folder: str) -> None:
+    path = os.path.join(input_folder, "tar-folder.tar")
+    data = read_data(path)
+
+    assert data == {"tar-folder/simple.json": {"message": "test"}}
+
+
 @pytest.fixture
 def xml_testcase():
     xml_root = ET.Element("EOPatch")
@@ -43,11 +51,11 @@ def xml_testcase():
 @pytest.mark.parametrize(
     "filename, data",
     [
-        ("img.tif", np.arange(5 * 5 * 3).reshape((5, 5, 3))),
-        ("img.png", np.arange((5 * 5 * 3), dtype=np.uint8).reshape((5, 5, 3))),
-        ("img-8bit.jp2", np.arange((5 * 5 * 3), dtype=np.uint8).reshape((5, 5, 3))),
-        ("img-15bit.jp2", np.arange((5 * 5 * 3), dtype=np.uint8).reshape((5, 5, 3))),
-        ("img-16bit.jp2", np.arange((5 * 5 * 3), dtype=np.uint8).reshape((5, 5, 3))),
+        ("img.tif", np.arange(5 * 5 * 3).reshape((5, 5, 3))),  # not restricting dtype
+        ("img.png", BASIC_IMAGE),
+        ("img-8bit.jp2", BASIC_IMAGE),
+        ("img-15bit.jp2", BASIC_IMAGE),
+        ("img-16bit.jp2", BASIC_IMAGE),
         ("test-string.txt", "sentinelhub-py is often shortened to sh-py"),
         ("test-xml.xml", lazy_fixture("xml_testcase")),
     ],
@@ -68,16 +76,8 @@ def test_write_read(filename: str, data: Union[str, np.ndarray, ET.ElementTree])
 
 
 @pytest.mark.parametrize("filename", ["img.jpg"])
-def test_img_write_jpeg(input_folder: str, filename: str) -> None:
-    img = read_data(os.path.join(input_folder, filename))
+def test_img_write_jpg(filename: str) -> None:
+    # Cannot verify that data is written correctly because JPG is not a lossless format
     with TempFS() as filesystem:
         file_path = filesystem.getsyspath(filename)
-        with pytest.warns(SHUserWarning):
-            write_data(file_path, img)
-
-
-def test_read_tar_with_folder(input_folder: str) -> None:
-    path = os.path.join(input_folder, "tar-folder.tar")
-    data = read_data(path)
-
-    assert data == {"tar-folder/simple.json": {"message": "test"}}
+        write_data(file_path, BASIC_IMAGE)
