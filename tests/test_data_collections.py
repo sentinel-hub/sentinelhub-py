@@ -9,13 +9,25 @@ from sentinelhub import DataCollection
 from sentinelhub.data_collections import DataCollectionDefinition
 
 
-def test_derive() -> None:
-    definition = DataCollectionDefinition(api_id="X", wfs_id="Y")
-    derived_definition = definition.derive(wfs_id="Z")
+@pytest.mark.parametrize(
+    "data_colection_def, derive_attributes, expected_attributes",
+    [
+        (DataCollectionDefinition(), {}, {"api_id": None}),
+        (
+            DataCollectionDefinition(api_id="X", wfs_id="Y"),
+            {"wfs_id": "Z"},
+            {"api_id": "X", "wfs_id": "Z", "collection_type": None},
+        ),
+        (DataCollection.LANDSAT_MSS_L1.value, {"api_id": None}, {"api_id": None, "wfs_id": "DSS14"}),
+    ],
+)
+def test_derive(
+    data_colection_def: DataCollectionDefinition, derive_attributes: Dict[str, Any], expected_attributes: Dict[str, Any]
+) -> None:
+    derived_definition = data_colection_def.derive(**derive_attributes)
 
-    assert derived_definition.api_id == "X"
-    assert derived_definition.wfs_id == "Z"
-    assert derived_definition.collection_type is None
+    for atribure, value in expected_attributes.items():
+        assert value == getattr(derived_definition, atribure)
 
 
 @pytest.mark.parametrize(
@@ -162,8 +174,8 @@ def test_contains_orbit_direction(collection: str, direction: str, expected: boo
 def test_get_available_collections() -> None:
     number_of_collection = len(DataCollection.get_available_collections())
     DataCollection.define("NEW_NEW", api_id="Z")
-    DataCollection.define_batch("batch_id", name="MY_BATCH")
-    DataCollection.define_byoc("byoc_id", name="MY_BYOC")
+    DataCollection.define_batch("batch_id", name="MY_NEW_BATCH")
+    DataCollection.define_byoc("byoc_id", name="MY_NEW_BYOC")
     collections = DataCollection.get_available_collections()
 
     assert len(collections) == number_of_collection + 3
