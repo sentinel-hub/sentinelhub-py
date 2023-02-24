@@ -51,7 +51,7 @@ class SentinelHubRateLimit:
 
     def update(self, headers: dict) -> None:
         """Update the next possible download time if the service has responded with the rate limit"""
-        retry_after: float = round(headers.get(self.RETRY_HEADER, 0))
+        retry_after: float = int(headers.get(self.RETRY_HEADER, 0))  # can be a string representation of a number
         retry_after = retry_after / 1000
 
         if retry_after:
