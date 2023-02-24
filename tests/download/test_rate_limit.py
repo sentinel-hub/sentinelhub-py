@@ -82,7 +82,7 @@ class DummyService:
             )
             expected_wait_time = max(expected_request_wait_time, expected_units_wait_time)
 
-            headers[SentinelHubRateLimit.RETRY_HEADER] = int(1000 * expected_wait_time)
+            headers[SentinelHubRateLimit.RETRY_HEADER] = str(int(1000 * expected_wait_time))
 
         return headers
 
