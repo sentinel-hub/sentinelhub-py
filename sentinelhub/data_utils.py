@@ -9,7 +9,7 @@ from .types import JsonDict
 _PANDAS_IMPORT_MESSAGE = (
     "To use this function you need to install the `pandas` library, which is not a dependency of sentinelhub-py."
 )
-
+_FULL_TIME_RANGE_FAILED = {"Failed_intervals": "Full time range"}
 
 def _extract_hist(hist_data: List[Dict[str, float]]) -> Tuple[List[float], List[float]]:
     """Transform Statistical API histogram into sequences of bins and counts
@@ -82,6 +82,15 @@ def _extract_response_data(response_data: List[JsonDict], exclude_stats: List[st
 
     return df_entries
 
+def _is_batch_stat(result_data: List[JsonDict]) -> bool:
+    """Check statistical request type
+    
+    :param request_data: An input representation of (Batch) Statistical API result returned from `DataRequest.get_data()`.
+    :return: bool
+    """
+    if "id" in result_data[0].keys():
+        return True
+    return False
 
 def statistical_to_dataframe(result_data: List[JsonDict], exclude_stats: Optional[List[str]] = None) -> Any:
     """Transform (Batch) Statistical API results into a pandas.DataFrame
@@ -116,9 +125,7 @@ def statistical_to_dataframe(result_data: List[JsonDict], exclude_stats: Optiona
     return pandas.concat(dfs)
 
 
-def _get_failed_intervals(
-    identifier: str, response_data: List[JsonDict]
-) -> Optional[Dict[str, Union[str, List[Tuple[str, str]]]]]:
+def _get_failed_intervals(response_data: List[JsonDict]) -> Optional[Dict[str, List[Tuple[str, str]]]]:
     """Collect failed intervals of a partially failed request
 
     :param identifier: The identifier of the geometry.
@@ -130,7 +137,29 @@ def _get_failed_intervals(
         if "error" in interval:
             failed_intervals.append((interval["interval"]["from"], interval["interval"]["to"]))
 
-    return {"identifier": identifier, "failed_intervals": failed_intervals} if failed_intervals else None
+    return {"Failed_intervals": failed_intervals} if failed_intervals else None
+
+
+def _get_failed_batch_statistical_requests(result_data: List[JsonDict]) -> List[Dict[str, Union[str, List[Tuple[str, str]]]]]:
+    """Collect failed Batch Statistical requests
+    
+    :param request_data: An input representation of Batch Statistical API result returned from `AwsBatchStatisticalResults.get_data()`.
+    :return: Failed Batch Statistical requests.
+    """
+    failed_requests = []
+    for result in result_data:
+        failed_request = {"Identifier": result["identifier"]}
+        if "error" in result:
+            failed_requests.append(failed_request.update(_FULL_TIME_RANGE_FAILED))
+        else:
+            response = result["response"]
+            if not response:
+                failed_requests.append(failed_request.update(_FULL_TIME_RANGE_FAILED))
+            else:
+                failed_intervals = _get_failed_intervals(response["data"])
+                if failed_intervals:
+                    failed_requests.append(failed_request.update(failed_intervals))
+    return failed_requests
 
 
 def get_failed_statistical_requests(result_data: List[JsonDict]) -> List[Dict[str, Union[str, List[Tuple[str, str]]]]]:
@@ -139,14 +168,14 @@ def get_failed_statistical_requests(result_data: List[JsonDict]) -> List[Dict[st
     :param result_data: An input representation of (Batch) Statistical API result.
     :return: Failed requests of (Batch) Statistical Results.
     """
+    if _is_batch_stat(result_data):
+        return _get_failed_batch_statistical_requests(result_data)
+    
     failed_requests = []
-    for result in result_data:
-        identifier, response = result["identifier"], result["response"]
-        if not response:
-            failed_requests.append({"identifier": identifier})
-        else:
-            failed_intervals = _get_failed_intervals(identifier, response["data"])
-            if failed_intervals:
-                failed_requests.append(failed_intervals)
-
+    if "error" in result_data[0]:
+        failed_requests.append(_FULL_TIME_RANGE_FAILED)
+    else:
+        failed_intervals = _get_failed_intervals(result_data[0]["data"])
+        if failed_intervals:
+            failed_requests.append(failed_intervals)
     return failed_requests
