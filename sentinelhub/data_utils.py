@@ -64,7 +64,7 @@ def _extract_stats(interval_output: JsonDict, exclude_stats: List[str]) -> Dict[
     return stat_entry
 
 
-def _extract_response_data(response_data: List[JsonDict], exclude_stats: List[str]) -> List[Dict[str, Any]]:
+def _extract_response_data(response_data: List[JsonDict], exclude_stats: List[str]) -> List[JsonDict]:
     """Transform Statistical API response into a pandas.DataFrame
 
     :param response_data: An input representation of Statistical API response. The response is a list of JsonDict and
@@ -136,7 +136,7 @@ def _get_failed_intervals(response_data: List[JsonDict]) -> Optional[Dict[str, L
     :param response_data: An input representation of Statistical API response.
     :return: The identifier of a geometry that has a response status of PARTIAL and the failed intervals.
     """
-    failed_intervals = []
+    failed_intervals: List[Tuple[str, str]] = []
     for interval in response_data:
         if "error" in interval:
             failed_intervals.append((interval["interval"]["from"], interval["interval"]["to"]))
@@ -144,9 +144,7 @@ def _get_failed_intervals(response_data: List[JsonDict]) -> Optional[Dict[str, L
     return {"Failed_intervals": failed_intervals} if failed_intervals else None
 
 
-def _get_failed_batch_statistical_requests(
-    result_data: List[JsonDict],
-) -> List[Dict[str, Union[str, List[Tuple[str, str]]]]]:
+def _get_failed_batch_statistical_requests(result_data: List[JsonDict]) -> List[JsonDict]:
     """Collect failed Batch Statistical requests
 
     :param request_data: An input representation of Batch Statistical API result
@@ -157,19 +155,20 @@ def _get_failed_batch_statistical_requests(
     for result in result_data:
         failed_request = {"Identifier": result["identifier"]}
         if "error" in result:
-            failed_requests.append(failed_request.update(_FULL_TIME_RANGE_FAILED))
+            failed_intervals: Any = _FULL_TIME_RANGE_FAILED
         else:
             response = result["response"]
             if not response:
-                failed_requests.append(failed_request.update(_FULL_TIME_RANGE_FAILED))
+                failed_intervals = _FULL_TIME_RANGE_FAILED
             else:
                 failed_intervals = _get_failed_intervals(response["data"])
-                if failed_intervals:
-                    failed_requests.append(failed_request.update(failed_intervals))
+        if failed_intervals:
+            failed_request.update(failed_intervals)
+            failed_requests.append(failed_request)
     return failed_requests
 
 
-def get_failed_statistical_requests(result_data: List[JsonDict]) -> List[Dict[str, Union[str, List[Tuple[str, str]]]]]:
+def get_failed_statistical_requests(result_data: List[JsonDict]) -> List[JsonDict]:
     """Collect failed requests of (Batch) Statistical Results
 
     :param result_data: An input representation of (Batch) Statistical API result.
@@ -178,7 +177,7 @@ def get_failed_statistical_requests(result_data: List[JsonDict]) -> List[Dict[st
     if _is_batch_stat(result_data):
         return _get_failed_batch_statistical_requests(result_data)
 
-    failed_requests = []
+    failed_requests: List[Any] = []
     if "error" in result_data[0]:
         failed_requests.append(_FULL_TIME_RANGE_FAILED)
     else:
