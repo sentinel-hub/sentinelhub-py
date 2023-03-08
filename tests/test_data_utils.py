@@ -32,7 +32,7 @@ def test_statistical_to_dataframe(input_folder: str) -> None:
     [
         ("batch_stat_failed_results.json", 3),
         ("normal_stat_partial_result.json", 1),
-        ("normal_stat_failed_result.json", 1)
+        ("normal_stat_failed_result.json", 1),
     ],
 )
 def test_get_failed_statistical_requests(input_folder: str, result_file: str, expected_length: int) -> None:
