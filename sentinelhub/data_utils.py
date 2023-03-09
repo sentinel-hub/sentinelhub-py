@@ -9,7 +9,6 @@ from .types import JsonDict
 _PANDAS_IMPORT_MESSAGE = (
     "To use this function you need to install the `pandas` library, which is not a dependency of sentinelhub-py."
 )
-_FULL_TIME_RANGE_FAILED = {"Failed_intervals": "Full time range"}
 
 
 def _extract_hist(hist_data: List[Dict[str, float]]) -> Tuple[List[float], List[float]]:
@@ -91,9 +90,7 @@ def _is_batch_stat(result_data: List[JsonDict]) -> bool:
         returned from `DataRequest.get_data()`.
     :return: bool
     """
-    if "id" in result_data[0]:
-        return True
-    return False
+    return "id" in result_data[0]
 
 
 def statistical_to_dataframe(result_data: List[JsonDict], exclude_stats: Optional[List[str]] = None) -> Any:
@@ -129,19 +126,19 @@ def statistical_to_dataframe(result_data: List[JsonDict], exclude_stats: Optiona
     return pandas.concat(dfs)
 
 
-def _get_failed_intervals(response_data: List[JsonDict]) -> Optional[Dict[str, List[Tuple[str, str]]]]:
+def _get_failed_intervals(response_data: List[JsonDict]) -> List[Tuple[str, str]]:
     """Collect failed intervals of a partially failed request
 
     :param identifier: The identifier of the geometry.
     :param response_data: An input representation of Statistical API response.
     :return: The identifier of a geometry that has a response status of PARTIAL and the failed intervals.
     """
-    failed_intervals: List[Tuple[str, str]] = []
+    failed_intervals = []
     for interval in response_data:
         if "error" in interval:
             failed_intervals.append((interval["interval"]["from"], interval["interval"]["to"]))
 
-    return {"Failed_intervals": failed_intervals} if failed_intervals else None
+    return failed_intervals
 
 
 def _get_failed_batch_statistical_requests(result_data: List[JsonDict]) -> List[JsonDict]:
@@ -153,18 +150,15 @@ def _get_failed_batch_statistical_requests(result_data: List[JsonDict]) -> List[
     """
     failed_requests = []
     for result in result_data:
-        failed_request = {"Identifier": result["identifier"]}
-        if "error" in result:
-            failed_intervals: Any = _FULL_TIME_RANGE_FAILED
-        else:
-            response = result["response"]
-            if not response:
-                failed_intervals = _FULL_TIME_RANGE_FAILED
-            else:
-                failed_intervals = _get_failed_intervals(response["data"])
+        identifier = result["identifier"]
+        if "error" in result or not result["response"]:
+            failed_requests.append({"identifier": identifier, "failed_intervals": "full time range"})
+            continue
+
+        failed_intervals = _get_failed_intervals(result["response"]["data"])
         if failed_intervals:
-            failed_request.update(failed_intervals)
-            failed_requests.append(failed_request)
+            failed_requests.append({"identifier": identifier, "failed_intervals": failed_intervals})
+
     return failed_requests
 
 
@@ -177,11 +171,9 @@ def get_failed_statistical_requests(result_data: List[JsonDict]) -> List[JsonDic
     if _is_batch_stat(result_data):
         return _get_failed_batch_statistical_requests(result_data)
 
-    failed_requests: List[Any] = []
     if "error" in result_data[0]:
-        failed_requests.append(_FULL_TIME_RANGE_FAILED)
-    else:
-        failed_intervals = _get_failed_intervals(result_data[0]["data"])
-        if failed_intervals:
-            failed_requests.append(failed_intervals)
-    return failed_requests
+        return [{"failed_intervals": "full time range"}]
+
+    failed_intervals = _get_failed_intervals(result_data[0]["data"])
+
+    return [{"failed_intervals": failed_intervals}] if failed_intervals else []
