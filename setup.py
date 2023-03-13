@@ -32,7 +32,7 @@ setup(
     name="sentinelhub",
     python_requires=">=3.7",
     version=get_version(),
-    description="Sentinel Hub Utilities",
+    description="Python API for Sentinel Hub",
     long_description=get_long_description(),
     long_description_content_type="text/markdown",
     url="https://github.com/sentinel-hub/sentinelhub-py",
