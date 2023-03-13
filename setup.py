@@ -28,57 +28,11 @@ def get_long_description() -> str:
     return io.open("README.md", encoding="utf-8").read()
 
 
-def update_package_config() -> None:
-    """Every time sentinelhub package is installed entire config.json is overwritten. However, this function
-    will check if sentinelhub is already installed and try to copy those parameters from old config.json that are by
-    default set to an empty value (i.e. instance_id, aws_access_key_id and aws_secret_access_key) into new config.json
-    file.
-    """
-    try:
-        import importlib
-        import json
-        import sys
-
-        spec = importlib.machinery.PathFinder().find_spec("sentinelhub", sys.path[1:])
-        if spec is None or spec.submodule_search_locations is None:
-            return
-
-        path = spec.submodule_search_locations[0]
-        old_config_filename = os.path.join(path, "config.json")
-
-        with open(old_config_filename, "r") as file:
-            old_config = json.load(file)
-
-        from sentinelhub.config import SHConfig
-
-        config = SHConfig()
-        for attr, value in old_config.items():
-            if hasattr(config, attr) and not getattr(config, attr):
-                setattr(config, attr, value)
-
-        config.save()
-
-    except BaseException:
-        pass
-
-
-def try_create_config_file() -> None:
-    """After the package is installed it will try to trigger saving a config.json file"""
-    try:
-        from sentinelhub.config import SHConfig
-
-        SHConfig()
-    except BaseException:
-        pass
-
-
-update_package_config()
-
 setup(
     name="sentinelhub",
     python_requires=">=3.7",
     version=get_version(),
-    description="Sentinel Hub Utilities",
+    description="Python API for Sentinel Hub",
     long_description=get_long_description(),
     long_description_content_type="text/markdown",
     url="https://github.com/sentinel-hub/sentinelhub-py",
@@ -134,4 +88,3 @@ setup(
         "Topic :: Software Development",
     ],
 )
-try_create_config_file()
