@@ -83,14 +83,14 @@ def _extract_response_data(response_data: List[JsonDict], exclude_stats: List[st
     return df_entries
 
 
-def _is_batch_stat(result_data: List[JsonDict]) -> bool:
+def _is_batch_stat(result_data: JsonDict) -> bool:
     """Check statistical request type
 
     :param request_data: An input representation of (Batch) Statistical API result
         returned from `DataRequest.get_data()`.
     :return: bool
     """
-    return "id" in result_data[0]
+    return "id" in result_data
 
 
 def statistical_to_dataframe(result_data: List[JsonDict], exclude_stats: Optional[List[str]] = None) -> Any:
@@ -126,40 +126,32 @@ def statistical_to_dataframe(result_data: List[JsonDict], exclude_stats: Optiona
     return pandas.concat(dfs)
 
 
-def _get_failed_intervals(response_data: List[JsonDict]) -> List[Tuple[str, str]]:
-    """Collect failed intervals of a partially failed request
+def _get_failed_intervals(result_data: JsonDict) -> Union[str, List[Tuple[str, str]]]:
+    """Collect failed intervals of a single geometry from the (Batch) Statistical result
 
-    :param identifier: The identifier of the geometry.
-    :param response_data: An input representation of Statistical API response.
-    :return: The identifier of a geometry that has a response status of PARTIAL and the failed intervals.
+    :param result_data: An input representation of the (Batch) Statistical API result of a geometry.
+    :return: The failed intervals for a geometry.
     """
-    failed_intervals = []
-    for interval in response_data:
-        if "error" in interval:
-            failed_intervals.append((interval["interval"]["from"], interval["interval"]["to"]))
+    if _is_batch_stat(result_data):
+        return (
+            "full time range"
+            if "error" in result_data or not result_data["response"]
+            else [
+                (interval["interval"]["from"], interval["interval"]["to"])
+                for interval in result_data["response"]["data"]
+                if "error" in interval
+            ]
+        )
 
-    return failed_intervals
-
-
-def _get_failed_batch_statistical_requests(result_data: List[JsonDict]) -> List[JsonDict]:
-    """Collect failed Batch Statistical requests
-
-    :param request_data: An input representation of Batch Statistical API result
-        returned from `AwsBatchStatisticalResults.get_data()`.
-    :return: Failed Batch Statistical requests.
-    """
-    failed_requests = []
-    for result in result_data:
-        identifier = result["identifier"]
-        if "error" in result or not result["response"]:
-            failed_requests.append({"identifier": identifier, "failed_intervals": "full time range"})
-            continue
-
-        failed_intervals = _get_failed_intervals(result["response"]["data"])
-        if failed_intervals:
-            failed_requests.append({"identifier": identifier, "failed_intervals": failed_intervals})
-
-    return failed_requests
+    return (
+        "full time range"
+        if "error" in result_data
+        else [
+            (interval["interval"]["from"], interval["interval"]["to"])
+            for interval in result_data["data"]
+            if "error" in interval
+        ]
+    )
 
 
 def get_failed_statistical_requests(result_data: List[JsonDict]) -> List[JsonDict]:
@@ -168,12 +160,12 @@ def get_failed_statistical_requests(result_data: List[JsonDict]) -> List[JsonDic
     :param result_data: An input representation of (Batch) Statistical API result.
     :return: Failed requests of (Batch) Statistical Results.
     """
-    if _is_batch_stat(result_data):
-        return _get_failed_batch_statistical_requests(result_data)
+    if _is_batch_stat(result_data[0]):
+        return [
+            {"identifier": result["identifier"], "failed_intervals": _get_failed_intervals(result)}
+            for result in result_data
+            if _get_failed_intervals(result)
+        ]
 
-    if "error" in result_data[0]:
-        return [{"failed_intervals": "full time range"}]
-
-    failed_intervals = _get_failed_intervals(result_data[0]["data"])
-
+    failed_intervals = _get_failed_intervals(result_data[0])
     return [{"failed_intervals": failed_intervals}] if failed_intervals else []
