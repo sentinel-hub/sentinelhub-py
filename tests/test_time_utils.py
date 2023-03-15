@@ -105,8 +105,7 @@ def test_parse_time_interval(
     ],
 )
 def test_serialize_time(time_input: Any, params: Dict[str, Any], expected_output: Union[str, Tuple[str, ...]]) -> None:
-    serialized_result = time_utils.serialize_time(time_input, **params)
-    assert serialized_result == expected_output
+    assert time_utils.serialize_time(time_input, **params) == expected_output
 
 
 @pytest.mark.parametrize(
@@ -114,8 +113,7 @@ def test_serialize_time(time_input: Any, params: Dict[str, Any], expected_output
     [(TEST_DATE, None, TEST_TIME_START), (TEST_DATE, dt.time(hour=12, minute=32, second=14), TEST_DATETIME)],
 )
 def test_date_to_datetime(input_date: dt.date, input_time: Optional[dt.time], expected_output: dt.datetime) -> None:
-    result_datetime = time_utils.date_to_datetime(input_date, time=input_time)
-    assert result_datetime == expected_output
+    assert time_utils.date_to_datetime(input_date, time=input_time) == expected_output
 
 
 @pytest.mark.parametrize(
@@ -130,5 +128,4 @@ def test_date_to_datetime(input_date: dt.date, input_time: Optional[dt.time], ex
     ],
 )
 def test_filter_times(input_timestamps: Any, time_difference: dt.timedelta, expected_result: List[dt.date]) -> None:
-    result = time_utils.filter_times(input_timestamps, time_difference)
-    assert result == expected_result
+    assert time_utils.filter_times(input_timestamps, time_difference) == expected_result
