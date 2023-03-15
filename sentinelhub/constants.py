@@ -16,20 +16,7 @@ import utm
 from aenum import extend_enum
 
 from ._version import __version__
-from .exceptions import SHUserWarning, deprecated_class
-
-
-@deprecated_class()
-class PackageProps:
-    """Class for obtaining package properties. Currently, it supports obtaining package version."""
-
-    @staticmethod
-    def get_version() -> str:
-        """Returns package version
-
-        :return: package version
-        """
-        return __version__
+from .exceptions import SHUserWarning
 
 
 class ServiceUrl:
