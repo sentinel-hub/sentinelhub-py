@@ -33,7 +33,7 @@ DELTAS = [
 
 @pytest.mark.parametrize(
     "time_input,is_valid",
-    [("2017-01-32", False), ("2017-13-1", False), ("2017-02-29", False), ("2020-02-29", True), ("2020-02-30", False)],
+    [("2017-01-32", False), ("2017-13-01", False), ("2017-02-29", False), ("2020-02-29", True), ("2020-02-30", False)],
 )
 def test_is_valid_time(time_input: str, is_valid: bool) -> None:
     assert time_utils.is_valid_time(time_input) is is_valid
