@@ -14,7 +14,8 @@ TEST_DATETIME = dt.datetime(year=2015, month=4, day=12, hour=12, minute=32, seco
 TEST_DATETIME_TZ = dt.datetime(year=2015, month=4, day=12, hour=12, minute=32, second=14, tzinfo=dateutil.tz.tzutc())
 TEST_TIME_START = dt.datetime(year=2015, month=4, day=12)
 TEST_TIME_END = dt.datetime(year=2015, month=4, day=12, hour=23, minute=59, second=59)
-TEST_TIME_END_2017 = TEST_DATETIME.replace(year=2017)
+TEST_TIME_END_2017 = TEST_TIME_END.replace(year=2017)
+TEST_DATETIME_2017 = TEST_DATETIME.replace(year=2017)
 
 
 @pytest.mark.parametrize(
@@ -54,9 +55,9 @@ def test_parse_time(time_input: Any, params: Dict[str, Any], expected_output: Op
         ("2015.4.12T12:32:14", {}, (TEST_DATETIME, TEST_DATETIME)),
         ("2015.4.12T12:32:14Z", {}, (TEST_DATETIME_TZ, TEST_DATETIME_TZ)),
         (("2015-4-12", "2017-4-12"), {}, (TEST_TIME_START, TEST_TIME_END_2017)),
-        (("2015.4.12T12:32:14", "2017.4.12T12:32:14"), {}, (TEST_DATETIME, TEST_TIME_END_2017)),
+        (("2015.4.12T12:32:14", "2017.4.12T12:32:14"), {}, (TEST_DATETIME, TEST_DATETIME_2017)),
         ((TEST_DATE, TEST_DATE.replace(year=2017)), {}, (TEST_TIME_START, TEST_TIME_END_2017)),
-        ((TEST_DATETIME, TEST_DATETIME.replace(year=2017)), {}, (TEST_DATETIME, TEST_TIME_END_2017)),
+        ((TEST_DATETIME, TEST_DATETIME_2017), {}, (TEST_DATETIME, TEST_DATETIME_2017)),
         ("2015.4.12T12:32:14Z", {"ignoretz": True}, (TEST_DATETIME, TEST_DATETIME)),
         (None, {"allow_undefined": True}, (None, None)),
         ((None, None), {"allow_undefined": True}, (None, None)),
