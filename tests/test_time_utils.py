@@ -15,21 +15,6 @@ TEST_DATETIME_TZ = dt.datetime(year=2015, month=4, day=12, hour=12, minute=32, s
 TEST_TIME_START = dt.datetime(year=2015, month=4, day=12)
 TEST_TIME_END = dt.datetime(year=2015, month=4, day=12, hour=23, minute=59, second=59)
 
-TIMES = [
-    dt.datetime(year=2005, month=12, day=16, hour=2),
-    dt.datetime(year=2005, month=12, day=16, hour=10),
-    dt.datetime(year=2005, month=12, day=16, hour=23),
-    dt.datetime(year=2005, month=12, day=17, hour=2),
-    dt.datetime(year=2005, month=12, day=18, hour=2),
-]
-
-DELTAS = [
-    dt.timedelta(0),
-    dt.timedelta(hours=5),
-    dt.timedelta(hours=12),
-    dt.timedelta(days=1),
-]
-
 
 @pytest.mark.parametrize(
     "time_input,is_valid",
@@ -115,15 +100,19 @@ def test_date_to_datetime(input_date: dt.date, input_time: Optional[dt.time], ex
     assert time_utils.date_to_datetime(input_date, time=input_time) == expected_output
 
 
+TIMES = [dt.datetime(year=2005, month=12, day=16, hour=0) + idx * dt.timedelta(hours=6) for idx in range(6)]
+
+
 @pytest.mark.parametrize(
     "input_timestamps,time_difference,expected_result",
     [
-        ([TIMES[0]], DELTAS[1], [TIMES[0]]),
-        ([TIMES[0], TIMES[1]], DELTAS[0], [TIMES[0], TIMES[1]]),
-        ([TIMES[2], TIMES[0], TIMES[1], TIMES[1], TIMES[0]], DELTAS[2], [TIMES[0], TIMES[2]]),
-        ([TIMES[0], TIMES[3]], DELTAS[3], [TIMES[0]]),
-        ([TIMES[3], TIMES[4]], DELTAS[3], [TIMES[3]]),
-        ([TIMES[0], TIMES[3], TIMES[4]], DELTAS[3], [TIMES[0], TIMES[4]]),
+        ([TIMES[0], TIMES[1]], dt.timedelta(0), [TIMES[0], TIMES[1]]),
+        ([TIMES[0]], dt.timedelta(hours=5), [TIMES[0]]),
+        ([TIMES[0], TIMES[3]], dt.timedelta(days=1), [TIMES[0]]),
+        ([TIMES[3], TIMES[4]], dt.timedelta(days=1), [TIMES[3]]),
+        ([TIMES[0], TIMES[0], TIMES[1]], dt.timedelta(hours=5), [TIMES[0], TIMES[1]]),
+        ([TIMES[2], TIMES[0], TIMES[1]], dt.timedelta(hours=5), [TIMES[0], TIMES[1], TIMES[2]]),
+        ([TIMES[0], TIMES[2], TIMES[5]], dt.timedelta(days=1), [TIMES[0], TIMES[5]]),
     ],
 )
 def test_filter_times(input_timestamps: Any, time_difference: dt.timedelta, expected_result: List[dt.date]) -> None:
