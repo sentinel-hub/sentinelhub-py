@@ -5,12 +5,12 @@ Module implementing an interface with
 import datetime as dt
 import logging
 from dataclasses import dataclass, field
-from typing import Any, Optional, Sequence, Union
+from typing import Any, Optional, Sequence, TypedDict, Union
 
 from dataclasses_json import CatchAll, LetterCase, Undefined
 from dataclasses_json import config as dataclass_config
 from dataclasses_json import dataclass_json
-from typing_extensions import NotRequired, TypedDict
+from typing_extensions import NotRequired
 
 from ...types import Json, JsonDict
 from ..base_request import InputDataDict

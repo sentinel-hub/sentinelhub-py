@@ -2,9 +2,7 @@
 A client interface for `Sentinel Hub Catalog API <https://docs.sentinel-hub.com/api/latest/api/catalog>`__.
 """
 import datetime as dt
-from typing import Any, Dict, Iterable, List, Optional, Union
-
-from typing_extensions import Literal
+from typing import Any, Dict, Iterable, List, Literal, Optional, Union
 
 from ..base import FeatureIterator
 from ..data_collections import DataCollection, OrbitDirection

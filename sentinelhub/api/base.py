@@ -4,13 +4,12 @@ Module implementing some utility functions not suitable for other utility module
 from abc import ABCMeta, abstractmethod
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any, Dict, Iterable, Optional, Union
+from typing import Any, Dict, Iterable, Optional, Protocol, Union
 from urllib.parse import urlencode
 
 from dataclasses_json import CatchAll, LetterCase, Undefined
 from dataclasses_json import config as dataclass_config
 from dataclasses_json import dataclass_json
-from typing_extensions import Protocol
 
 from ..base import FeatureIterator
 from ..config import SHConfig
