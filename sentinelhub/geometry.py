@@ -616,6 +616,7 @@ class BBoxCollection(_BaseGeometry):
 
     def transform(self, crs: CRS, always_xy: bool = True) -> BBoxCollection:
         """Transforms BBoxCollection from current CRS to target CRS
+
         :param crs: target CRS
         :param always_xy: Parameter that is passed to `pyproj.Transformer` object and defines axis order for
             transformation. The default value `True` is in most cases the correct one.
