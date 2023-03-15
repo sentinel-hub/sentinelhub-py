@@ -5,11 +5,10 @@ from __future__ import annotations
 
 import datetime
 import hashlib
-from typing import TYPE_CHECKING, Any, Iterable, Iterator, List, Optional, Union, overload
+from typing import TYPE_CHECKING, Any, Iterable, Iterator, List, Literal, Optional, Union, overload
 
 from shapely.geometry import shape as geo_shape
 from shapely.geometry.base import BaseGeometry
-from typing_extensions import Literal
 
 from ..api.ogc import OgcImageService, OgcRequest
 from ..base import FeatureIterator

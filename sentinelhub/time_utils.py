@@ -2,11 +2,10 @@
 Module with useful time/date functions
 """
 import datetime as dt
-from typing import Any, Iterable, List, Optional, Tuple, TypeVar, Union, overload
+from typing import Any, Iterable, List, Literal, Optional, Tuple, TypeVar, Union, overload
 
 import dateutil.parser
 import dateutil.tz
-from typing_extensions import Literal
 
 from .types import RawTimeIntervalType, RawTimeType
 
