@@ -16,7 +16,7 @@ import platformdirs
 class SHConfig:  # pylint: disable=too-many-instance-attributes
     """A sentinelhub-py package configuration class.
 
-    The class reads during its first initialization the configurable settings from ``./config.json`` file:
+    The class reads the configurable settings from ``config.json`` file on initialization:
 
         - `instance_id`: An instance ID for Sentinel Hub service used for OGC requests.
         - `sh_client_id`: User's OAuth client ID for Sentinel Hub service
@@ -42,6 +42,9 @@ class SHConfig:  # pylint: disable=too-many-instance-attributes
           attempt this number exponentially increases with factor `3`.
         - `download_timeout_seconds`: Maximum number of seconds before download attempt is canceled.
         - `number_of_download_processes`: Number of download processes, used to calculate rate-limit sleep time.
+
+    For manual modification of `config.json` you can see the expected location of the file via
+    `SHConfig.get_config_location()`.
 
     Usage in the code:
 

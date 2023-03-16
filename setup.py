@@ -48,7 +48,6 @@ setup(
     packages=find_packages(),
     package_data={
         "sentinelhub": [
-            "sentinelhub/config.json",
             "sentinelhub/.utmzones.geojson",
             "sentinelhub/py.typed",
         ]
