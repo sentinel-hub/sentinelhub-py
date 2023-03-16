@@ -7,7 +7,7 @@ import copy
 import json
 import numbers
 import os
-from typing import Any, Dict, Iterable, List, Optional, Union
+from typing import Dict, Iterable, List, Optional, Union
 
 import platformdirs
 
@@ -82,13 +82,10 @@ class SHConfig:  # pylint: disable=too-many-instance-attributes
         "number_of_download_processes",
     ]
 
-    _cache: Optional[Dict[str, Any]] = None
-
-    def __init__(self, hide_credentials: bool = False, use_defaults: bool = False):
+    def __init__(self, hide_credentials: bool = True, use_defaults: bool = False):
         """
         :param hide_credentials: If `True` then methods that provide the entire content of the config object will mask
-            out all credentials. But credentials could still be accessed directly from config object attributes. The
-            default is `False`.
+            out all credentials. But credentials could still be accessed directly from config object attributes.
         :param use_defaults: Does not load the configuration file, returns config object with defaults only.
         """
 

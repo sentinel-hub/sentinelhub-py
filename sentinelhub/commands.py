@@ -48,7 +48,7 @@ def config(show: bool, reset: bool, **params: Any) -> None:
       sentinelhub.config --instance_id <new instance id>
       sentinelhub.config --max_download_attempts 5 --download_sleep_time 20 --download_timeout_seconds 120
     """
-    sh_config = SHConfig()
+    sh_config = SHConfig(hide_credentials=False)
 
     if reset:
         sh_config.reset()

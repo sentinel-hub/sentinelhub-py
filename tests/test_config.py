@@ -124,7 +124,6 @@ def test_copy(hide_credentials: bool) -> None:
     copied_config = config.copy()
     assert copied_config is not config
     assert copied_config._hide_credentials == hide_credentials
-    assert copied_config._cache is config._cache
     assert copied_config.instance_id == config.instance_id
 
     copied_config.instance_id = "b"
