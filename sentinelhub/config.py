@@ -116,8 +116,9 @@ class SHConfig:  # pylint: disable=too-many-instance-attributes
         self._hide_credentials = hide_credentials
 
         if not use_defaults:
-            for param, value in self._global_cache.items():
-                setattr(self, param, value)
+            loaded_instance = SHConfig.load(self.get_config_location())
+            for param in SHConfig.CONFIG_PARAMS:
+                setattr(self, param, getattr(loaded_instance, param))
 
     def _validate_values(self) -> None:
         """Ensures that the values are aligned with expectations."""
@@ -167,14 +168,6 @@ class SHConfig:  # pylint: disable=too-many-instance-attributes
             return False
         return all(getattr(self, param) == getattr(other, param) for param in self.CONFIG_PARAMS)
 
-    @property
-    def _global_cache(self) -> Dict[str, Any]:
-        """Uses a class attribute to store a global instance of a class with config parameters."""
-        if SHConfig._cache is None:
-            loaded_instance = SHConfig.load(self.get_config_location())
-            SHConfig._cache = {param: getattr(loaded_instance, param) for param in SHConfig.CONFIG_PARAMS}
-        return SHConfig._cache
-
     @classmethod
     def load(cls, filename: str) -> SHConfig:
         """Method that loads configuration parameters from a file. Does not affect global settings.
@@ -205,16 +198,9 @@ class SHConfig:  # pylint: disable=too-many-instance-attributes
         """
         self._validate_values()
 
-        is_changed = False
-        for param in self.CONFIG_PARAMS:
-            if getattr(self, param) != self._global_cache[param]:
-                is_changed = True
-                self._global_cache[param] = getattr(self, param)  # pylint: disable=unsupported-assignment-operation
-
-        if is_changed:
-            config_dict = {param: getattr(self, param) for param in self.CONFIG_PARAMS}
-            with open(filename or self.get_config_location(), "w") as cfg_file:
-                json.dump(config_dict, cfg_file, indent=2)
+        config_dict = {param: getattr(self, param) for param in self.CONFIG_PARAMS}
+        with open(filename or self.get_config_location(), "w") as cfg_file:
+            json.dump(config_dict, cfg_file, indent=2)
 
     def copy(self) -> SHConfig:
         """Makes a copy of an instance of `SHConfig`"""
