@@ -194,7 +194,9 @@ def test_create_tile(byoc: SentinelHubBYOC, collection: JsonDict, requests_mock:
     requests_mock.post("/oauth/token", real_http=True)
     mocked_url = f'/api/v1/byoc/collections/{collection["id"]}/tiles'
 
-    tile = ByocTile(path="mocked/path/mocked.tiff", sensing_time=datetime.now(tz=dateutil.tz.tzutc()))
+    tile = ByocTile(
+        path="mocked/path/mocked.tiff", sensing_time=datetime.now(tz=dateutil.tz.tzutc()), ingestion_start=None
+    )
     requests_mock.post(mocked_url, json={"data": tile.to_dict()})
 
     response = byoc.create_tile(collection=collection, tile=tile)
@@ -208,6 +210,7 @@ def test_update_tile(byoc: SentinelHubBYOC, collection: JsonDict, tile: JsonDict
 
     updated_tile = dict(tile)
     updated_tile["sensingTime"] = datetime.now().isoformat()
+    updated_tile["ingestionStart"] = datetime.now().date().isoformat()
 
     requests_mock.put(mocked_url, content=None)
 
