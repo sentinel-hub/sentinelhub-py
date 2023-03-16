@@ -9,6 +9,8 @@ import numbers
 import os
 from typing import Any, Dict, Iterable, List, Optional, Union
 
+import platformdirs
+
 ConfigDict = Dict[str, Union[str, int, float]]
 
 
@@ -274,7 +276,8 @@ class SHConfig:  # pylint: disable=too-many-instance-attributes
 
         :return: File path of `config.json` file
         """
-        config_file = os.path.join(os.path.dirname(__file__), "config.json")
+        config_folder = platformdirs.user_config_dir("sentinelhub")
+        config_file = os.path.join(config_folder, "config.json")
 
         if not os.path.isfile(config_file):
             with open(config_file, "w") as cfg_file:
