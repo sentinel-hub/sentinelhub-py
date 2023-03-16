@@ -7,6 +7,7 @@ import copy
 import json
 import numbers
 import os
+from pathlib import Path
 from typing import Dict, Iterable, List, Optional, Union
 
 import platformdirs
@@ -167,11 +168,17 @@ class SHConfig:  # pylint: disable=too-many-instance-attributes
 
         :param filename: Path to file from which to read configuration.
         """
-        filename = filename or cls.get_config_location()
+        config = cls(use_defaults=True)
+
+        if filename is None:
+            filename = cls.get_config_location()
+            if not os.path.exists(filename):  # nothing to load from disk
+                config.save()  # store default configuration to standard location
+                return config
+
         with open(filename, "r") as cfg_file:
             config_dict = json.load(cfg_file)
 
-        config = cls(use_defaults=True)
         for param, value in config_dict.items():
             if param in cls.CONFIG_PARAMS:
                 setattr(config, param, value)
@@ -188,7 +195,10 @@ class SHConfig:  # pylint: disable=too-many-instance-attributes
         self._validate_values()
 
         config_dict = {param: getattr(self, param) for param in self.CONFIG_PARAMS}
-        with open(filename or self.get_config_location(), "w") as cfg_file:
+        file_path = Path(filename or self.get_config_location())
+        file_path.parent.mkdir(parents=True, exist_ok=True)
+
+        with open(file_path, "w") as cfg_file:
             json.dump(config_dict, cfg_file, indent=2)
 
     def copy(self) -> SHConfig:
@@ -243,14 +253,7 @@ class SHConfig:  # pylint: disable=too-many-instance-attributes
     def get_config_location(cls) -> str:
         """Returns the default location of the user configuration file on disk."""
         config_folder = platformdirs.user_config_dir("sentinelhub")
-        config_file = os.path.join(config_folder, "config.json")
-
-        if not os.path.isfile(config_file):
-            with open(config_file, "w") as cfg_file:
-                default_dict = cls(use_defaults=True).get_config_dict()
-                json.dump(default_dict, cfg_file, indent=2)
-
-        return config_file
+        return os.path.join(config_folder, "config.json")
 
     def _mask_credentials(self, param: str, value: object) -> object:
         """In case a parameter that holds credentials is given it will mask its value"""
