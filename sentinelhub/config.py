@@ -11,8 +11,6 @@ from typing import Dict, Iterable, List, Optional, Union
 
 import platformdirs
 
-ConfigDict = Dict[str, Union[str, int, float]]
-
 
 class SHConfig:  # pylint: disable=too-many-instance-attributes
     """A sentinelhub-py package configuration class.
@@ -240,7 +238,7 @@ class SHConfig:  # pylint: disable=too-many-instance-attributes
         """
         return list(self.CONFIG_PARAMS)
 
-    def get_config_dict(self) -> ConfigDict:
+    def get_config_dict(self) -> Dict[str, Union[str, float]]:
         """Get a dictionary representation of `SHConfig` class. If `hide_credentials` is set to `True` then
         credentials will be masked.
 
