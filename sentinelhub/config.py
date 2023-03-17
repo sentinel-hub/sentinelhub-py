@@ -169,7 +169,7 @@ class SHConfig:  # pylint: disable=too-many-instance-attributes
         """Loads configuration parameters from a file. If a filename is not specified the configuration is loaded from
         the location specified by `SHConfig.get_config_location()`.
 
-        :param filename: Path to file from which to read configuration.
+        :param filename: Optional path of the configuration file to be loaded.
         """
         config = cls(use_defaults=True)
 
@@ -191,9 +191,9 @@ class SHConfig:  # pylint: disable=too-many-instance-attributes
 
     def save(self, filename: Optional[str] = None) -> None:
         """Saves configuration parameters to the user settings in the `config.json` file.  If a filename is not
-        specified the configuration is saved to the location specified by `SHConfig.get_config_location()`.
+        specified, the configuration is saved to the location specified by `SHConfig.get_config_location()`.
 
-        :param filename: Optional name of file to which to save configuration.
+        :param filename: Optional path of the configuration file to be saved.
         """
         self._validate_values()
 
