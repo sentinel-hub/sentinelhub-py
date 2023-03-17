@@ -110,7 +110,8 @@ def test_get_image_dimensions(input_bbox: BBox, height: int, width: int) -> None
     assert get_image_dimension(input_bbox, width=width) == height
 
 
-@pytest.mark.parametrize("input_bbox, expected_bbox", [(BBOX_WGS84, BBOX_UTM), (BBOX_POP_WEB, BBOX_UTM)])
+@pytest.mark.parametrize("input_bbox", [BBOX_WGS84, BBOX_UTM, BBOX_POP_WEB])
+@pytest.mark.parametrize("expected_bbox", [BBOX_WGS84, BBOX_UTM, BBOX_POP_WEB])
 def test_bbox_transform(input_bbox: BBox, expected_bbox: BBox) -> None:
     test_bbox = input_bbox.transform(expected_bbox.crs)
     assert tuple(test_bbox) == pytest.approx(tuple(expected_bbox), rel=1e-4)
