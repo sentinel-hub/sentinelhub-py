@@ -181,7 +181,7 @@ class SentinelHubBatchStatistical(BaseBatchClient["BatchStatisticalRequest"]):
         :param batch_request: It could be a batch request object, a raw batch request payload or only a batch
             request ID.
         """
-        return self._call_job(batch_request, "stop")
+        return self._call_job(batch_request, "cancel")
 
     def stop_job(self, batch_request: BatchStatisticalRequestType) -> Json:
         """Stop a batch job
