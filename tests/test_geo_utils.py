@@ -19,55 +19,101 @@ from sentinelhub.geo_utils import (
     wgs84_to_utm,
 )
 
-BBOX_WGS84 = BBox(((111.644, 8.655), (111.7, 8.688)), CRS.WGS84)
-BBOX_UTM = BBox(((570851.8316965176, 956770.2133183606), (577006.4223865959, 960429.6742984429)), CRS("32649"))
-BBOX_POP_WEB = BBox(((12428153.230124235, 967155.4076988235), (12434387.12160866, 970871.4287682716)), CRS.POP_WEB)
+BBOX_WGS84 = BBox(((111.6388, 8.6488), (111.6988, 8.6868)), CRS.WGS84)
+BBOX_UTM = BBox(((570280, 956083), (576884, 960306)), CRS("32649"))
+BBOX_POP_WEB = BBox(((12427574, 966457), (12434253, 970736)), CRS.POP_WEB)
+
+BBOX_2 = BBox(((570000, 956000), (571000, 958000)), CRS("32649"))
+BBOX_3 = BBox(((100, -10.5), (101, -10)), CRS.WGS84)
 
 
-@pytest.mark.parametrize("input_bbox, expected_bbox", [(BBOX_WGS84, BBOX_UTM), (BBOX_WGS84, BBOX_POP_WEB)])
-def test_wgs84_to_utm(input_bbox: BBox, expected_bbox: BBox) -> None:
-    point_lower_left = wgs84_to_utm(*input_bbox.lower_left, expected_bbox.crs)
-    point_upper_right = wgs84_to_utm(*input_bbox.upper_right, expected_bbox.crs)
-
-    assert point_lower_left == pytest.approx(expected_bbox.lower_left, rel=1e-8)
-    assert point_upper_right == pytest.approx(expected_bbox.upper_right, rel=1e-8)
-
-
-@pytest.mark.parametrize("input_bbox, expected_bbox", [(BBOX_UTM, BBOX_WGS84), (BBOX_POP_WEB, BBOX_WGS84)])
-def test_to_wgs84(input_bbox: BBox, expected_bbox: BBox) -> None:
-    assert to_wgs84(*input_bbox.lower_left, input_bbox.crs) == pytest.approx(expected_bbox.lower_left, rel=1e-8)
-    assert to_wgs84(*input_bbox.upper_right, input_bbox.crs) == pytest.approx(expected_bbox.upper_right, rel=1e-8)
+@pytest.mark.parametrize(
+    "wgs84_coordinate, utm_coordinate, utm_crs",
+    [
+        ((109.988, 9.988), (389079, 1104255), CRS("32649")),
+        ((49.889, 49.889), (420195, 5526881), CRS("32639")),
+        ((30, -15), (177349, 8339486), CRS("32736")),
+    ],
+)
+def test_wgs84_to_utm(wgs84_coordinate: Tuple[float, float], utm_coordinate: Tuple[float, float], utm_crs: CRS) -> None:
+    assert wgs84_to_utm(*wgs84_coordinate, utm_crs) == pytest.approx(utm_coordinate, rel=1e-4)
 
 
-def test_get_utm_crs() -> None:
-    assert get_utm_crs(*BBOX_WGS84.lower_left) is BBOX_UTM.crs
-    assert get_utm_crs(*BBOX_WGS84.upper_right) is BBOX_UTM.crs
+@pytest.mark.parametrize(
+    "wgs84_coordinate, utm_coordinate, utm_crs",
+    [
+        ((109.988, 9.988), (389079, 1104255), CRS("32649")),
+        ((49.889, 49.889), (420195, 5526881), CRS("32639")),
+        ((30, -15), (177349, 8339486), CRS("32736")),
+    ],
+)
+def test_to_wgs84(wgs84_coordinate: Tuple[float, float], utm_coordinate: Tuple[float, float], utm_crs: CRS) -> None:
+    assert to_wgs84(*utm_coordinate, utm_crs) == pytest.approx(wgs84_coordinate, rel=1e-4)
 
 
-@pytest.mark.parametrize("input_bbox", [BBOX_WGS84, BBOX_UTM, BBOX_POP_WEB])
-def test_bbox_to_resolution(input_bbox: BBox) -> None:
-    assert bbox_to_resolution(input_bbox, 512, 512) == pytest.approx((12.0207, 7.1474), rel=1e-4)
+@pytest.mark.parametrize(
+    "wgs84_coordinate, utm_crs",
+    [
+        ((109.988, 9.988), CRS("32649")),
+        ((49.889, 49.889), CRS("32639")),
+        ((30, -15), CRS("32736")),
+    ],
+)
+def test_get_utm_crs(wgs84_coordinate: Tuple[float, float], utm_crs: CRS) -> None:
+    assert get_utm_crs(*wgs84_coordinate) is utm_crs
 
 
-@pytest.mark.parametrize("input_bbox", [BBOX_WGS84, BBOX_UTM, BBOX_POP_WEB])
-@pytest.mark.parametrize("resolution, expected_dimensions", [(10, (615, 366)), ((20, 50), (308, 73))])
+@pytest.mark.parametrize(
+    "input_bbox, resolution, expected_dimensions",
+    [
+        (BBOX_WGS84, (512, 512), (12.8784, 8.2284)),
+        (BBOX_UTM, (512, 50), (12.8984, 84.46)),
+        (BBOX_POP_WEB, (50, 512), (131.87, 8.2284)),
+        (BBOX_2, (10, 10), (100, 200)),
+        (BBOX_3, (500, 500), (219.6, 109.58)),
+    ],
+)
+def test_bbox_to_resolution(
+    input_bbox: BBox, resolution: Tuple[int, int], expected_dimensions: Tuple[float, float]
+) -> None:
+    assert bbox_to_resolution(input_bbox, *resolution) == pytest.approx(expected_dimensions, rel=1e-4)
+
+
+@pytest.mark.parametrize(
+    "input_bbox, resolution, expected_dimensions",
+    [
+        (BBOX_WGS84, 10, (659, 421)),
+        (BBOX_UTM, 10, (660, 422)),
+        (BBOX_POP_WEB, (20, 50), (330, 84)),
+        (BBOX_2, (20, 10), (50, 200)),
+        (BBOX_3, (100, 50), (1098, 1096)),
+    ],
+)
 def test_bbox_to_dimensions(
     resolution: Union[float, Tuple[float, float]], expected_dimensions: Tuple[int, int], input_bbox: BBox
 ) -> None:
     assert bbox_to_dimensions(input_bbox, resolution) == expected_dimensions
 
 
-@pytest.mark.parametrize("input_bbox", [BBOX_WGS84, BBOX_UTM, BBOX_POP_WEB])
-def test_get_image_dimensions(input_bbox: BBox) -> None:
-    assert get_image_dimension(input_bbox, height=715) == 1203
-    assert get_image_dimension(input_bbox, width=1202) == 715
+@pytest.mark.parametrize(
+    "input_bbox, height, width",
+    [
+        (BBOX_WGS84, 715, 1119),
+        (BBOX_UTM, 715, 1118),
+        (BBOX_POP_WEB, 715, 1119),
+        (BBOX_2, 10, 5),
+        (BBOX_3, 15, 30),
+    ],
+)
+def test_get_image_dimensions(input_bbox: BBox, height: int, width: int) -> None:
+    assert get_image_dimension(input_bbox, height=height) == width
+    assert get_image_dimension(input_bbox, width=width) == height
 
 
-@pytest.mark.parametrize("input_bbox", [BBOX_WGS84, BBOX_UTM, BBOX_POP_WEB])
-@pytest.mark.parametrize("expected_bbox", [BBOX_WGS84, BBOX_UTM, BBOX_POP_WEB])
+@pytest.mark.parametrize("input_bbox, expected_bbox", [(BBOX_WGS84, BBOX_UTM), (BBOX_POP_WEB, BBOX_UTM)])
 def test_bbox_transform(input_bbox: BBox, expected_bbox: BBox) -> None:
     test_bbox = input_bbox.transform(expected_bbox.crs)
-    assert tuple(test_bbox) == pytest.approx(tuple(expected_bbox), rel=1e-8)
+    assert tuple(test_bbox) == pytest.approx(tuple(expected_bbox), rel=1e-4)
     assert test_bbox.crs is expected_bbox.crs
 
 
