@@ -84,14 +84,14 @@ def test_create_and_run_batch_request(
     )
     assert batch_request == derived_request
 
-    endpoints = ["analyse", "start", "cancel"]
+    endpoints = ["analyse", "start", "stop"]
     full_endpoints = [f"/api/v1/statistics/batch/{request_id}/{endpoint}" for endpoint in endpoints]
     for full_endpoint in full_endpoints:
         requests_mock.post(full_endpoint, [{"json": ""}])
 
     statistical_batch_client.start_analysis(batch_request)
     statistical_batch_client.start_job(batch_request)
-    statistical_batch_client.cancel_job(batch_request)
+    statistical_batch_client.stop_job(batch_request)
 
     for index, full_endpoint in enumerate(full_endpoints):
         assert requests_mock.request_history[index - len(full_endpoints)].url.endswith(full_endpoint)
