@@ -65,15 +65,8 @@ class SentinelHubBatchStatistical(BaseBatchClient["BatchStatisticalRequest"]):
         `Batch Statistical API reference
         <https://docs.sentinel-hub.com/api/latest/reference/#operation/createNewBatchStatisticsRequest>`__
         """
-
-        # Data filter has to be set to {} if not provided. Ensure we do not mutate original data.
-        requested_data = list(input_data)
-        for i, data_request_dict in enumerate(requested_data):
-            if "dataFilter" not in data_request_dict:
-                requested_data[i] = {"dataFilter": {}, **data_request_dict}
-
         payload = {
-            "input": {"features": input_features, "data": requested_data},
+            "input": {"features": input_features, "data": list(input_data)},
             "aggregation": aggregation,
             "calculations": calculations,
             "output": output,
