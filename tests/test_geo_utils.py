@@ -5,58 +5,117 @@ from typing import Tuple, Union
 
 import pytest
 
-from sentinelhub import CRS, BBox, geo_utils
+from sentinelhub import CRS, BBox
+from sentinelhub.geo_utils import (
+    bbox_to_dimensions,
+    bbox_to_resolution,
+    get_image_dimension,
+    get_utm_crs,
+    pixel_to_utm,
+    to_wgs84,
+    transform_point,
+    utm_to_pixel,
+    wgs84_to_pixel,
+    wgs84_to_utm,
+)
+
+BBOX_WGS84 = BBox(((111.6388, 8.6488), (111.6988, 8.6868)), CRS.WGS84)
+BBOX_UTM = BBox(((570280, 956083), (576884, 960306)), CRS("32649"))
+BBOX_POP_WEB = BBox(((12427574, 966457), (12434253, 970736)), CRS.POP_WEB)
+
+BBOX_2 = BBox(((570000, 956000), (571000, 958000)), CRS("32649"))
+BBOX_3 = BBox(((100, -10.5), (101, -10)), CRS.WGS84)
 
 
-def test_wgs84_to_utm() -> None:
-    x, y = geo_utils.wgs84_to_utm(15.525078, 44.1440478, CRS.UTM_33N)
-    assert (x, y) == pytest.approx((541995.694062, 4888006.132887), rel=1e-8)
+@pytest.mark.parametrize(
+    "wgs84_coordinate, utm_coordinate, utm_crs",
+    [
+        ((109.988, 9.988), (389079, 1104255), CRS("32649")),
+        ((49.889, 49.889), (420195, 5526881), CRS("32639")),
+        ((30, -15), (177349, 8339486), CRS("32736")),
+    ],
+)
+def test_wgs84_to_utm(wgs84_coordinate: Tuple[float, float], utm_coordinate: Tuple[float, float], utm_crs: CRS) -> None:
+    assert wgs84_to_utm(*wgs84_coordinate, utm_crs) == pytest.approx(utm_coordinate, rel=1e-4)
 
 
-def test_to_wgs84() -> None:
-    lng, lat = geo_utils.to_wgs84(541995.694062, 4888006.132887, CRS.UTM_33N)
-    assert (lng, lat) == pytest.approx((15.525078, 44.1440478), rel=1e-8)
+@pytest.mark.parametrize(
+    "wgs84_coordinate, utm_coordinate, utm_crs",
+    [
+        ((109.988, 9.988), (389079, 1104255), CRS("32649")),
+        ((49.889, 49.889), (420195, 5526881), CRS("32639")),
+        ((30, -15), (177349, 8339486), CRS("32736")),
+    ],
+)
+def test_to_wgs84(wgs84_coordinate: Tuple[float, float], utm_coordinate: Tuple[float, float], utm_crs: CRS) -> None:
+    assert to_wgs84(*utm_coordinate, utm_crs) == pytest.approx(wgs84_coordinate, rel=1e-4)
 
 
-def test_get_utm_crs() -> None:
-    lng, lat = 15.52, 44.14
-    crs = geo_utils.get_utm_crs(lng, lat)
-    assert crs is CRS.UTM_33N
+@pytest.mark.parametrize(
+    "wgs84_coordinate, utm_crs",
+    [
+        ((109.988, 9.988), CRS("32649")),
+        ((49.889, 49.889), CRS("32639")),
+        ((30, -15), CRS("32736")),
+    ],
+)
+def test_get_utm_crs(wgs84_coordinate: Tuple[float, float], utm_crs: CRS) -> None:
+    assert get_utm_crs(*wgs84_coordinate) is utm_crs
 
 
-def test_bbox_to_resolution() -> None:
-    bbox = BBox(((111.644, 8.655), (111.7, 8.688)), CRS.WGS84)
-    resx, resy = geo_utils.bbox_to_resolution(bbox, 512, 512)
-
-    assert (resx, resy) == pytest.approx((12.0207, 7.1474), rel=1e-4)
-
-
-@pytest.mark.parametrize("resolution, expected_dimensions", [(10, (615, 366)), ((20, 50), (308, 73))])
-def test_bbox_to_dimensions(
-    resolution: Union[float, Tuple[float, float]], expected_dimensions: Tuple[int, int]
+@pytest.mark.parametrize(
+    "input_bbox, resolution, expected_dimensions",
+    [
+        (BBOX_WGS84, (512, 512), (12.8784, 8.2284)),
+        (BBOX_UTM, (512, 50), (12.8984, 84.46)),
+        (BBOX_POP_WEB, (50, 512), (131.87, 8.2284)),
+        (BBOX_2, (10, 10), (100, 200)),
+        (BBOX_3, (500, 500), (219.6, 109.58)),
+    ],
+)
+def test_bbox_to_resolution(
+    input_bbox: BBox, resolution: Tuple[int, int], expected_dimensions: Tuple[float, float]
 ) -> None:
-    bbox = BBox(((111.644, 8.655), (111.7, 8.688)), CRS.WGS84)
-    dimensions = geo_utils.bbox_to_dimensions(bbox, resolution)
-
-    assert dimensions == expected_dimensions
+    assert bbox_to_resolution(input_bbox, *resolution) == pytest.approx(expected_dimensions, rel=1e-4)
 
 
-def test_get_image_dimensions() -> None:
-    bbox = BBox(((111.644, 8.655), (111.7, 8.688)), CRS.WGS84)
-    width = geo_utils.get_image_dimension(bbox, height=715)
-    height = geo_utils.get_image_dimension(bbox, width=1202)
+@pytest.mark.parametrize(
+    "input_bbox, resolution, expected_dimensions",
+    [
+        (BBOX_WGS84, 10, (659, 421)),
+        (BBOX_UTM, 10, (660, 422)),
+        (BBOX_POP_WEB, (20, 50), (330, 84)),
+        (BBOX_2, (20, 10), (50, 200)),
+        (BBOX_3, (100, 50), (1098, 1096)),
+    ],
+)
+def test_bbox_to_dimensions(
+    resolution: Union[float, Tuple[float, float]], expected_dimensions: Tuple[int, int], input_bbox: BBox
+) -> None:
+    assert bbox_to_dimensions(input_bbox, resolution) == expected_dimensions
 
-    assert width == 1203
-    assert height == 715
+
+@pytest.mark.parametrize(
+    "input_bbox, height, width",
+    [
+        (BBOX_WGS84, 715, 1119),
+        (BBOX_UTM, 715, 1118),
+        (BBOX_POP_WEB, 715, 1119),
+        (BBOX_2, 10, 5),
+        (BBOX_3, 15, 30),
+    ],
+)
+def test_get_image_dimensions(input_bbox: BBox, height: int, width: int) -> None:
+    assert get_image_dimension(input_bbox, height=height) == width
+    assert get_image_dimension(input_bbox, width=width) == height
 
 
-def test_bbox_transform() -> None:
-    bbox = BBox(((111.644, 8.655), (111.7, 8.688)), CRS.WGS84)
-    new_bbox = bbox.transform(CRS.POP_WEB)
-    expected_bbox = BBox((12428153.23, 967155.41, 12434387.12, 970871.43), CRS.POP_WEB)
-
-    assert tuple(new_bbox) == pytest.approx(tuple(expected_bbox), rel=1e-8)
-    assert new_bbox.crs is expected_bbox.crs
+@pytest.mark.parametrize("input_bbox", [BBOX_WGS84, BBOX_UTM, BBOX_POP_WEB])
+@pytest.mark.parametrize("expected_bbox", [BBOX_WGS84, BBOX_UTM, BBOX_POP_WEB])
+def test_bbox_transform(input_bbox: BBox, expected_bbox: BBox) -> None:
+    test_bbox = input_bbox.transform(expected_bbox.crs)
+    assert tuple(test_bbox) == pytest.approx(tuple(expected_bbox), rel=1e-4)
+    assert test_bbox.crs is expected_bbox.crs
 
 
 @pytest.mark.parametrize(
@@ -72,8 +131,52 @@ def test_bbox_transform() -> None:
 def test_transform_point(
     point: Tuple[float, float], source_crs: CRS, target_crs: CRS, target_point: Tuple[float, float]
 ) -> None:
-    new_point = geo_utils.transform_point(point, source_crs, target_crs)
-    new_source_point = geo_utils.transform_point(new_point, target_crs, source_crs)
+    new_point = transform_point(point, source_crs, target_crs)
 
     assert new_point == pytest.approx(target_point, rel=1e-8)
-    assert new_source_point == pytest.approx(point, rel=1e-8)
+    assert transform_point(new_point, target_crs, source_crs) == pytest.approx(point, rel=1e-8)
+
+
+GEOREFERENCING_TRANSFORM = (570851.8316965176, 512, 0, 960429.6742984429, 0, -512)
+
+
+@pytest.mark.parametrize(
+    "coordinate, expected_pixel",
+    [
+        ((111.644, 8.688), (0, 0)),
+        ((111.7, 8.688), (0, 12)),
+        ((111.66, 8.672), (3, 3)),
+        ((111.644, 8.655), (7, 0)),
+        ((111.7, 8.655), (7, 12)),
+    ],
+)
+def test_wgs84_to_pixel(coordinate: Tuple[float, float], expected_pixel: Tuple[int, int]) -> None:
+    assert wgs84_to_pixel(*coordinate, GEOREFERENCING_TRANSFORM) == expected_pixel
+
+
+@pytest.mark.parametrize(
+    "coordinate, expected_pixel",
+    [
+        ((570851, 960429), (0, 0)),
+        ((577006, 960429), (0, 12)),
+        ((572351, 958770), (3, 3)),
+        ((570851, 956770), (7, 0)),
+        ((577006, 956770), (7, 12)),
+    ],
+)
+def test_utm_to_pixel(coordinate: Tuple[float, float], expected_pixel: Tuple[int, int]) -> None:
+    assert utm_to_pixel(*coordinate, GEOREFERENCING_TRANSFORM) == expected_pixel
+
+
+@pytest.mark.parametrize(
+    "pixel, expected_coordinate",
+    [
+        ((0, 0), (570851, 960429)),
+        ((0, 12), (576995, 960429)),
+        ((3, 3), (572387, 958893)),
+        ((7, 0), (570851, 956845)),
+        ((7, 12), (576995, 956845)),
+    ],
+)
+def test_pixel_to_utm(pixel: Tuple[int, int], expected_coordinate: Tuple[float, float]) -> None:
+    assert pixel_to_utm(*pixel, GEOREFERENCING_TRANSFORM) == pytest.approx(expected_coordinate, abs=1)
