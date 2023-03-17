@@ -12,6 +12,7 @@ from dataclasses_json import config as dataclass_config
 from dataclasses_json import dataclass_json
 from typing_extensions import NotRequired
 
+from ...exceptions import deprecated_function
 from ...types import Json, JsonDict
 from ..base_request import InputDataDict
 from ..statistical import SentinelHubStatistical
@@ -170,6 +171,7 @@ class SentinelHubBatchStatistical(BaseBatchClient["BatchStatisticalRequest"]):
         """
         return self._call_job(batch_request, "start")
 
+    @deprecated_function(message_suffix="The service endpoint will be removed soon. Please use `stop_job` instead.")
     def cancel_job(self, batch_request: BatchStatisticalRequestType) -> Json:
         """Cancels a batch job
 
@@ -179,7 +181,18 @@ class SentinelHubBatchStatistical(BaseBatchClient["BatchStatisticalRequest"]):
         :param batch_request: It could be a batch request object, a raw batch request payload or only a batch
             request ID.
         """
-        return self._call_job(batch_request, "cancel")
+        return self._call_job(batch_request, "stop")
+
+    def stop_job(self, batch_request: BatchStatisticalRequestType) -> Json:
+        """Stop a batch job
+
+        `Batch Statistical API reference
+        <https://docs.sentinel-hub.com/api/latest/reference/#tag/batch_statistical/operation/batchStopStatisticalRequest>`__
+
+        :param batch_request: It could be a batch request object, a raw batch request payload or only a batch
+            request ID.
+        """
+        return self._call_job(batch_request, "stop")
 
 
 @dataclass_json(letter_case=LetterCase.CAMEL, undefined=Undefined.INCLUDE)
