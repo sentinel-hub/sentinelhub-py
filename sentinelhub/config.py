@@ -10,8 +10,6 @@ import os
 from pathlib import Path
 from typing import Dict, Iterable, List, Optional, Union
 
-import platformdirs
-
 
 class SHConfig:  # pylint: disable=too-many-instance-attributes
     """A sentinelhub-py package configuration class.
@@ -255,8 +253,8 @@ class SHConfig:  # pylint: disable=too-many-instance-attributes
     @classmethod
     def get_config_location(cls) -> str:
         """Returns the default location of the user configuration file on disk."""
-        config_folder = platformdirs.user_config_dir("sentinelhub")
-        return os.path.join(config_folder, "config.json")
+        user_folder = os.path.expanduser("~")
+        return os.path.join(user_folder, ".config", "sentinelhub", "config.json")
 
     def _mask_credentials(self, param: str, value: object) -> object:
         """In case a parameter that holds credentials is given it will mask its value"""
