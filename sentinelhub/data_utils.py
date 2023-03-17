@@ -9,6 +9,7 @@ from .types import JsonDict
 _PANDAS_IMPORT_MESSAGE = (
     "To use this function you need to install the `pandas` library, which is not a dependency of sentinelhub-py."
 )
+_FULL_TIME_RANGE = "full time range"
 
 
 def _extract_hist(hist_data: List[Dict[str, float]]) -> Tuple[List[float], List[float]]:
@@ -84,7 +85,7 @@ def _extract_response_data(response_data: List[JsonDict], exclude_stats: List[st
 
 
 def _is_batch_stat(result_data: JsonDict) -> bool:
-    """Check statistical request type
+    """Identifies whether the resulting data belongs to a batch statistical request or not
 
     :param request_data: An input representation of (Batch) Statistical API result
         returned from `DataRequest.get_data()`.
@@ -126,32 +127,26 @@ def statistical_to_dataframe(result_data: List[JsonDict], exclude_stats: Optiona
     return pandas.concat(dfs)
 
 
-def _get_failed_intervals(result_data: JsonDict) -> Union[str, List[Tuple[str, str]]]:
+def _get_failed_intervals(response_data: List[JsonDict]) -> List[Tuple[str, str]]:
     """Collect failed intervals of a single geometry from the (Batch) Statistical result
 
-    :param result_data: An input representation of the (Batch) Statistical API result of a geometry.
+    :param response_data: An input representation of the (Batch) Statistical API response of a geometry.
     :return: The failed intervals for a geometry.
     """
-    if _is_batch_stat(result_data):
-        return (
-            "full time range"
-            if "error" in result_data or not result_data["response"]
-            else [
-                (interval["interval"]["from"], interval["interval"]["to"])
-                for interval in result_data["response"]["data"]
-                if "error" in interval
-            ]
-        )
+    return [
+        (interval["interval"]["from"], interval["interval"]["to"]) for interval in response_data if "error" in interval
+    ]
 
-    return (
-        "full time range"
-        if "error" in result_data
-        else [
-            (interval["interval"]["from"], interval["interval"]["to"])
-            for interval in result_data["data"]
-            if "error" in interval
-        ]
-    )
+
+def _get_failed_batch_response(result_data: JsonDict) -> Union[str, List[Tuple[str, str]]]:
+    """Collect failed responses
+
+    :param result_data: An input representation of the (Batch) Statistical API result of a geometry.
+    :return: Failed responses and responses with failed intervals
+    """
+    if "error" in result_data or not result_data["response"]:
+        return _FULL_TIME_RANGE
+    return _get_failed_intervals(result_data["response"]["data"])
 
 
 def get_failed_statistical_requests(result_data: List[JsonDict]) -> List[JsonDict]:
@@ -161,11 +156,12 @@ def get_failed_statistical_requests(result_data: List[JsonDict]) -> List[JsonDic
     :return: Failed requests of (Batch) Statistical Results.
     """
     if _is_batch_stat(result_data[0]):
+        batch_failed_response = ((result["identifier"], _get_failed_batch_response(result)) for result in result_data)
         return [
-            {"identifier": result["identifier"], "failed_intervals": _get_failed_intervals(result)}
-            for result in result_data
-            if _get_failed_intervals(result)
+            {"identifier": ident, "failed_intervals": intervals}
+            for ident, intervals in batch_failed_response
+            if intervals != []
         ]
 
-    failed_intervals = _get_failed_intervals(result_data[0])
-    return [{"failed_intervals": failed_intervals}] if failed_intervals else []
+    failed_intervals = _FULL_TIME_RANGE if "error" in result_data[0] else _get_failed_intervals(result_data[0]["data"])
+    return [{"failed_intervals": failed_intervals}] if failed_intervals != [] else []
