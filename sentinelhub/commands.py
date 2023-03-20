@@ -69,8 +69,8 @@ def config(show: bool, reset: bool, **params: Any) -> None:
     sh_config.save()
 
     for param in sh_config.get_params():
-        if getattr(sh_config, param) != getattr(old_config, param):
-            value = getattr(sh_config, param)
+        value = getattr(sh_config, param)
+        if value != getattr(old_config, param):
             if isinstance(value, str):
                 value = f"'{value}'"
             click.echo(f"The value of parameter `{param}` was updated to {value}")

@@ -131,7 +131,7 @@ def test_copy(hide_credentials: bool) -> None:
 @pytest.mark.dependency(depends=["test_fake_config_during_tests"])
 def test_config_equality(test_config: SHConfig) -> None:
     assert test_config != 42
-    assert test_config != test_config.get_config_dict()
+    assert test_config != test_config.to_dict()
 
     config1 = SHConfig(hide_credentials=False)
     config2 = SHConfig(hide_credentials=True)
@@ -171,12 +171,12 @@ def test_config_repr(hide_credentials: bool) -> None:
 
 @pytest.mark.dependency(depends=["test_fake_config_during_tests"])
 @pytest.mark.parametrize("hide_credentials", [False, True])
-def test_get_config_dict(hide_credentials: bool) -> None:
+def test_transformation_to_dict(hide_credentials: bool) -> None:
     config = SHConfig(hide_credentials=hide_credentials)
     config.sh_client_secret = "x" * 15
     config.aws_secret_access_key = "y" * 10
 
-    config_dict = config.get_config_dict()
+    config_dict = config.to_dict(hide_credentials)
     assert isinstance(config_dict, dict)
     assert tuple(config_dict) == config.get_params()
 
@@ -197,7 +197,7 @@ def test_transfer_with_ray(test_config: SHConfig, ray: Any) -> None:
     def _remote_ray_testing(remote_config: SHConfig) -> SHConfig:
         """Makes a few checks and modifications to the config object"""
         assert repr(remote_config).startswith("SHConfig")
-        assert isinstance(remote_config.get_config_dict(), dict)
+        assert isinstance(remote_config.to_dict(), dict)
         assert os.path.exists(remote_config.get_config_location())
         assert remote_config.instance_id == "fake_instance_id"
 

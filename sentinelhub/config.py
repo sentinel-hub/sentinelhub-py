@@ -10,6 +10,8 @@ import os
 from pathlib import Path
 from typing import Dict, Iterable, Optional, Tuple, Union
 
+from .exceptions import deprecated_function
+
 
 class SHConfig:  # pylint: disable=too-many-instance-attributes
     """A sentinelhub-py package configuration class.
@@ -78,8 +80,8 @@ class SHConfig:  # pylint: disable=too-many-instance-attributes
 
     def __init__(self, hide_credentials: bool = True, use_defaults: bool = False):
         """
-        :param hide_credentials: If `True` then methods that provide the entire content of the config object will mask
-            out all credentials. But credentials could still be accessed directly from config object attributes.
+        :param hide_credentials: If `True` then credentials will be masked when transforming the dictionary to a string.
+            Credentials can still be accessed directly from config object attributes.
         :param use_defaults: Does not load the configuration file, returns config object with defaults only.
         """
 
@@ -133,13 +135,13 @@ class SHConfig:  # pylint: disable=too-many-instance-attributes
 
     def __str__(self) -> str:
         """Content of SHConfig in json schema. If `hide_credentials` is set to `True` then credentials are masked."""
-        return json.dumps(self.get_config_dict(), indent=2)
+        return json.dumps(self.to_dict(hide_credentials=self._hide_credentials), indent=2)
 
     def __repr__(self) -> str:
         """Representation of SHConfig parameters. If `hide_credentials` is set to `True` then credentials are masked."""
         repr_list = [f"{self.__class__.__name__}("]
 
-        for key, value in self.get_config_dict().items():
+        for key, value in self.to_dict(hide_credentials=self._hide_credentials).items():
             repr_list.append(f"{key}={repr(value)},")
 
         return "\n  ".join(repr_list).strip(",") + "\n)"
@@ -184,12 +186,11 @@ class SHConfig:  # pylint: disable=too-many-instance-attributes
         """
         self._validate_values()
 
-        config_dict = {param: getattr(self, param) for param in self.get_params()}
         file_path = Path(filename or self.get_config_location())
         file_path.parent.mkdir(parents=True, exist_ok=True)
 
         with open(file_path, "w") as cfg_file:
-            json.dump(config_dict, cfg_file, indent=2)
+            json.dump(self.to_dict(hide_credentials=False), cfg_file, indent=2)
 
     def copy(self) -> SHConfig:
         """Makes a copy of an instance of `SHConfig`"""
@@ -227,34 +228,39 @@ class SHConfig:  # pylint: disable=too-many-instance-attributes
         """Returns a list of parameter names."""
         return cls.CREDENTIALS + cls.OTHER_PARAMS
 
+    @deprecated_function(message_suffix="Use `to_dict` instead.")
     def get_config_dict(self) -> Dict[str, Union[str, float]]:
         """Get a dictionary representation of `SHConfig` class. If `hide_credentials` is set to `True` then
         credentials will be masked.
 
         :return: A dictionary with configuration parameters
         """
+        return self.to_dict(hide_credentials=self._hide_credentials)
+
+    def to_dict(self, hide_credentials: bool = True) -> Dict[str, Union[str, float]]:
+        """Get a dictionary representation of `SHConfig` class.
+
+        :param hide_credentials: Wether to mask fields containing credentials.
+        :return: A dictionary with configuration parameters
+        """
         config_params = {param: getattr(self, param) for param in self.get_params()}
 
-        if self._hide_credentials:
-            config_params = {param: self._mask_credentials(param, value) for param, value in config_params.items()}
+        if hide_credentials:
+            for param in self.CREDENTIALS:
+                config_params[param] = self._mask_credentials(config_params[param])
 
         return config_params
+
+    def _mask_credentials(self, value: str) -> str:
+        """In case a parameter that holds credentials is given it will mask its value"""
+        hide_size = min(max(len(value) - 4, 10), len(value))
+        return "*" * hide_size + value[hide_size:]
 
     @classmethod
     def get_config_location(cls) -> str:
         """Returns the default location of the user configuration file on disk."""
         user_folder = os.path.expanduser("~")
         return os.path.join(user_folder, ".config", "sentinelhub", "config.json")
-
-    def _mask_credentials(self, param: str, value: object) -> object:
-        """In case a parameter that holds credentials is given it will mask its value"""
-        if not (param in self.CREDENTIALS and value):
-            return value
-        if not isinstance(value, str):
-            raise ValueError(f"Parameter `{param}` should be a string but {value} found")
-
-        hide_size = min(max(len(value) - 4, 10), len(value))
-        return "*" * hide_size + value[hide_size:]
 
     def raise_for_missing_instance_id(self) -> None:
         """In case Sentinel Hub instance ID is missing it raises an informative error
