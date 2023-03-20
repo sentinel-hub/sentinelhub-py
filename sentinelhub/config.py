@@ -7,15 +7,14 @@ import copy
 import json
 import numbers
 import os
-from typing import Any, Dict, Iterable, List, Optional, Union
-
-ConfigDict = Dict[str, Union[str, int, float]]
+from pathlib import Path
+from typing import Dict, Iterable, List, Optional, Union
 
 
 class SHConfig:  # pylint: disable=too-many-instance-attributes
     """A sentinelhub-py package configuration class.
 
-    The class reads during its first initialization the configurable settings from ``./config.json`` file:
+    The class reads the configurable settings from ``config.json`` file on initialization:
 
         - `instance_id`: An instance ID for Sentinel Hub service used for OGC requests.
         - `sh_client_id`: User's OAuth client ID for Sentinel Hub service
@@ -41,6 +40,9 @@ class SHConfig:  # pylint: disable=too-many-instance-attributes
           attempt this number exponentially increases with factor `3`.
         - `download_timeout_seconds`: Maximum number of seconds before download attempt is canceled.
         - `number_of_download_processes`: Number of download processes, used to calculate rate-limit sleep time.
+
+    For manual modification of `config.json` you can see the expected location of the file via
+    `SHConfig.get_config_location()`.
 
     Usage in the code:
 
@@ -80,13 +82,10 @@ class SHConfig:  # pylint: disable=too-many-instance-attributes
         "number_of_download_processes",
     ]
 
-    _cache: Optional[Dict[str, Any]] = None
-
-    def __init__(self, hide_credentials: bool = False, use_defaults: bool = False):
+    def __init__(self, hide_credentials: bool = True, use_defaults: bool = False):
         """
         :param hide_credentials: If `True` then methods that provide the entire content of the config object will mask
-            out all credentials. But credentials could still be accessed directly from config object attributes. The
-            default is `False`.
+            out all credentials. But credentials could still be accessed directly from config object attributes.
         :param use_defaults: Does not load the configuration file, returns config object with defaults only.
         """
 
@@ -114,12 +113,14 @@ class SHConfig:  # pylint: disable=too-many-instance-attributes
         self._hide_credentials = hide_credentials
 
         if not use_defaults:
-            for param, value in self._global_cache.items():
-                setattr(self, param, value)
+            loaded_instance = SHConfig.load()  # user parameters validated in here already
+            for param in SHConfig.CONFIG_PARAMS:
+                setattr(self, param, getattr(loaded_instance, param))
 
     def _validate_values(self) -> None:
         """Ensures that the values are aligned with expectations."""
         default = SHConfig(use_defaults=True)
+
         for param in self.CONFIG_PARAMS:
             value = getattr(self, param)
             default_value = getattr(default, param)
@@ -136,22 +137,18 @@ class SHConfig:  # pylint: disable=too-many-instance-attributes
         if self.max_opensearch_records_per_query > 500:
             raise ValueError("Value of config parameter `max_opensearch_records_per_query` must be at most 500")
 
-    def __getitem__(self, name: str) -> Union[str, int, float]:
+    def __getitem__(self, name: str) -> Union[str, float]:
         """Config parameters can also be accessed as items."""
         if name in self.CONFIG_PARAMS:
             return getattr(self, name)
         raise KeyError(f"`{name}` is not a supported config parameter")
 
     def __str__(self) -> str:
-        """Content of SHConfig in json schema. If `hide_credentials` is set to `True` then credentials will be
-        masked.
-        """
+        """Content of SHConfig in json schema. If `hide_credentials` is set to `True` then credentials are masked."""
         return json.dumps(self.get_config_dict(), indent=2)
 
     def __repr__(self) -> str:
-        """Representation of SHConfig parameters. If `hide_credentials` is set to `True` then credentials will be
-        masked.
-        """
+        """Representation of SHConfig parameters. If `hide_credentials` is set to `True` then credentials are masked."""
         repr_list = [f"{self.__class__.__name__}("]
 
         for key, value in self.get_config_dict().items():
@@ -165,24 +162,24 @@ class SHConfig:  # pylint: disable=too-many-instance-attributes
             return False
         return all(getattr(self, param) == getattr(other, param) for param in self.CONFIG_PARAMS)
 
-    @property
-    def _global_cache(self) -> Dict[str, Any]:
-        """Uses a class attribute to store a global instance of a class with config parameters."""
-        if SHConfig._cache is None:
-            loaded_instance = SHConfig.load(self.get_config_location())
-            SHConfig._cache = {param: getattr(loaded_instance, param) for param in SHConfig.CONFIG_PARAMS}
-        return SHConfig._cache
-
     @classmethod
-    def load(cls, filename: str) -> SHConfig:
-        """Method that loads configuration parameters from a file. Does not affect global settings.
+    def load(cls, filename: Optional[str] = None) -> SHConfig:
+        """Loads configuration parameters from a file. If a filename is not specified the configuration is loaded from
+        the location specified by `SHConfig.get_config_location()`.
 
-        :param filename: Path to file from which to read configuration.
+        :param filename: Optional path of the configuration file to be loaded.
         """
+        config = cls(use_defaults=True)
+
+        if filename is None:
+            filename = cls.get_config_location()
+            if not os.path.exists(filename):  # nothing to load from disk
+                config.save()  # store default configuration to standard location
+                return config
+
         with open(filename, "r") as cfg_file:
             config_dict = json.load(cfg_file)
 
-        config = cls(use_defaults=True)
         for param, value in config_dict.items():
             if param in cls.CONFIG_PARAMS:
                 setattr(config, param, value)
@@ -191,71 +188,56 @@ class SHConfig:  # pylint: disable=too-many-instance-attributes
         return config
 
     def save(self, filename: Optional[str] = None) -> None:
-        """Method that saves configuration parameter changes from instance of SHConfig class to global config class and
-        to `config.json` file.
+        """Saves configuration parameters to the user settings in the `config.json` file.  If a filename is not
+        specified, the configuration is saved to the location specified by `SHConfig.get_config_location()`.
 
-        :param filename: Optional name of file to which to save configuration. If not specified saves to global default.
-
-        :Example:
-            ``my_config = SHConfig()`` \n
-            ``my_config.instance_id = '<new instance id>'`` \n
-            ``my_config.save()``
+        :param filename: Optional path of the configuration file to be saved.
         """
         self._validate_values()
 
-        is_changed = False
-        for param in self.CONFIG_PARAMS:
-            if getattr(self, param) != self._global_cache[param]:
-                is_changed = True
-                self._global_cache[param] = getattr(self, param)  # pylint: disable=unsupported-assignment-operation
+        config_dict = {param: getattr(self, param) for param in self.CONFIG_PARAMS}
+        file_path = Path(filename or self.get_config_location())
+        file_path.parent.mkdir(parents=True, exist_ok=True)
 
-        if is_changed:
-            config_dict = {param: getattr(self, param) for param in self.CONFIG_PARAMS}
-            with open(filename or self.get_config_location(), "w") as cfg_file:
-                json.dump(config_dict, cfg_file, indent=2)
+        with open(file_path, "w") as cfg_file:
+            json.dump(config_dict, cfg_file, indent=2)
 
     def copy(self) -> SHConfig:
         """Makes a copy of an instance of `SHConfig`"""
         return copy.copy(self)
 
     def reset(self, params: Union[str, Iterable[str], object] = ...) -> None:
-        """Resets configuration class to initial values. Use `SHConfig.save()` method in order to save this change.
+        """Resets configuration class to default values. Does not save unless the `save` method is called afterwards.
 
-        :param params: Parameters which will be reset. Parameters can be specified with a list of names, e.g.
-            ``['instance_id', 'aws_access_key_id', 'aws_secret_access_key']``, or as a single name, e.g.
-            ``'sh_base_url'``. By default, all parameters will be reset and default value is ``Ellipsis``.
+        Parameters can be specified as a list of names, e.g. ``['instance_id', 'aws_access_key_id']``, or as a single
+        name, e.g. ``'sh_base_url'``. By default, all parameters will be reset.
+
+        :param params: Parameters to reset to default values.
         """
-        default = SHConfig(use_defaults=True)
+        default_config = SHConfig(use_defaults=True)
 
         if params is ...:
             params = self.get_params()
-        if isinstance(params, str):
-            self._reset_param(params, default)
-        elif isinstance(params, Iterable):
+        elif isinstance(params, str):
+            params = [params]
+
+        if isinstance(params, Iterable):
             for param in params:
-                self._reset_param(param, default)
+                self._reset_param(param, default_config)
         else:
-            raise ValueError(
-                f"Parameters must be specified in form of a list of strings or as a single string, instead got {params}"
-            )
+            raise ValueError(f"Parameters must be a list of strings or as a single string, got {params}")
 
-    def _reset_param(self, param: str, default: SHConfig) -> None:
-        """Resets a single parameter
-
-        :param param: A configuration parameter
-        """
+    def _reset_param(self, param: str, default_config: SHConfig) -> None:
+        """Resets a single parameter."""
         if param not in self.get_params():
             raise ValueError(f"Cannot reset unknown parameter `{param}`")
-        setattr(self, param, getattr(default, param))
+        setattr(self, param, getattr(default_config, param))
 
     def get_params(self) -> List[str]:
-        """Returns a list of parameter names
-
-        :return: List of parameter names
-        """
+        """Returns a list of parameter names."""
         return list(self.CONFIG_PARAMS)
 
-    def get_config_dict(self) -> ConfigDict:
+    def get_config_dict(self) -> Dict[str, Union[str, float]]:
         """Get a dictionary representation of `SHConfig` class. If `hide_credentials` is set to `True` then
         credentials will be masked.
 
@@ -270,18 +252,9 @@ class SHConfig:  # pylint: disable=too-many-instance-attributes
 
     @classmethod
     def get_config_location(cls) -> str:
-        """Returns location of configuration file on disk
-
-        :return: File path of `config.json` file
-        """
-        config_file = os.path.join(os.path.dirname(__file__), "config.json")
-
-        if not os.path.isfile(config_file):
-            with open(config_file, "w") as cfg_file:
-                default_dict = cls(use_defaults=True).get_config_dict()
-                json.dump(default_dict, cfg_file, indent=2)
-
-        return config_file
+        """Returns the default location of the user configuration file on disk."""
+        user_folder = os.path.expanduser("~")
+        return os.path.join(user_folder, ".config", "sentinelhub", "config.json")
 
     def _mask_credentials(self, param: str, value: object) -> object:
         """In case a parameter that holds credentials is given it will mask its value"""

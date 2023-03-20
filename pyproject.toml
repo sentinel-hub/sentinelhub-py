@@ -50,7 +50,6 @@ source = [
 
 [tool.coverage.report]
 omit = [
-    "config.json",
     ".utmzones.geojson"
 ]
 

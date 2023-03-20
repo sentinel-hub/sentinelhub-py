@@ -31,7 +31,6 @@ def mask_and_restore_config_fixture() -> Generator[None, None, None]:
 
     os.remove(config_path)
     shutil.move(cache_path, config_path)
-    SHConfig._cache = None  # makes sure the next invocation loads the SHConfig
 
 
 @pytest.fixture(name="restore_config_file")
@@ -81,13 +80,11 @@ def test_config_file() -> None:
 def test_set_and_reset_value() -> None:
     config = SHConfig()
 
-    old_value = config.instance_id
     new_value = "new"
 
     config.instance_id = new_value
     assert config.instance_id == new_value, "New value was not set"
     assert config["instance_id"] == new_value, "New value was not set"
-    assert config._cache["instance_id"] == old_value, "Private value has changed"
 
     config.reset("sh_base_url")
     config.reset(["aws_access_key_id", "aws_secret_access_key"])
@@ -126,7 +123,6 @@ def test_copy(hide_credentials: bool) -> None:
     copied_config = config.copy()
     assert copied_config is not config
     assert copied_config._hide_credentials == hide_credentials
-    assert copied_config._cache is config._cache
     assert copied_config.instance_id == config.instance_id
 
     copied_config.instance_id = "b"
