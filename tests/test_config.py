@@ -179,7 +179,7 @@ def test_get_config_dict(hide_credentials: bool) -> None:
 
     config_dict = config.get_config_dict()
     assert isinstance(config_dict, dict)
-    assert list(config_dict) == config.get_params()
+    assert tuple(config_dict) == config.get_params()
 
     if hide_credentials:
         assert config_dict["sh_client_secret"] == "*" * 11 + "x" * 4

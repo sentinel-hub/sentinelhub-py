@@ -8,7 +8,7 @@ import json
 import numbers
 import os
 from pathlib import Path
-from typing import Dict, Iterable, List, Optional, Union
+from typing import Dict, Iterable, Optional, Tuple, Union
 
 
 class SHConfig:  # pylint: disable=too-many-instance-attributes
@@ -51,25 +51,19 @@ class SHConfig:  # pylint: disable=too-many-instance-attributes
 
     """
 
-    CREDENTIALS = {
+    CREDENTIALS = (
         "instance_id",
         "sh_client_id",
         "sh_client_secret",
         "aws_access_key_id",
         "aws_secret_access_key",
         "aws_session_token",
-    }
-    CONFIG_PARAMS = [
-        "instance_id",
-        "sh_client_id",
-        "sh_client_secret",
+    )
+    OTHER_PARAMS = (
         "sh_base_url",
         "sh_auth_base_url",
         "geopedia_wms_url",
         "geopedia_rest_url",
-        "aws_access_key_id",
-        "aws_secret_access_key",
-        "aws_session_token",
         "aws_metadata_url",
         "aws_s3_l1c_bucket",
         "aws_s3_l2a_bucket",
@@ -80,7 +74,7 @@ class SHConfig:  # pylint: disable=too-many-instance-attributes
         "download_sleep_time",
         "download_timeout_seconds",
         "number_of_download_processes",
-    ]
+    )
 
     def __init__(self, hide_credentials: bool = True, use_defaults: bool = False):
         """
@@ -114,14 +108,14 @@ class SHConfig:  # pylint: disable=too-many-instance-attributes
 
         if not use_defaults:
             loaded_instance = SHConfig.load()  # user parameters validated in here already
-            for param in SHConfig.CONFIG_PARAMS:
+            for param in SHConfig.get_params():
                 setattr(self, param, getattr(loaded_instance, param))
 
     def _validate_values(self) -> None:
         """Ensures that the values are aligned with expectations."""
         default = SHConfig(use_defaults=True)
 
-        for param in self.CONFIG_PARAMS:
+        for param in self.get_params():
             value = getattr(self, param)
             default_value = getattr(default, param)
             param_type = type(default_value)
@@ -160,7 +154,7 @@ class SHConfig:  # pylint: disable=too-many-instance-attributes
         """Two instances of `SHConfig` are equal if all values of their parameters are equal."""
         if not isinstance(other, SHConfig):
             return False
-        return all(getattr(self, param) == getattr(other, param) for param in self.CONFIG_PARAMS)
+        return all(getattr(self, param) == getattr(other, param) for param in self.get_params())
 
     @classmethod
     def load(cls, filename: Optional[str] = None) -> SHConfig:
@@ -180,8 +174,9 @@ class SHConfig:  # pylint: disable=too-many-instance-attributes
         with open(filename, "r") as cfg_file:
             config_dict = json.load(cfg_file)
 
+        config_fields = cls.get_params()
         for param, value in config_dict.items():
-            if param in cls.CONFIG_PARAMS:
+            if param in config_fields:
                 setattr(config, param, value)
 
         config._validate_values()
@@ -195,7 +190,7 @@ class SHConfig:  # pylint: disable=too-many-instance-attributes
         """
         self._validate_values()
 
-        config_dict = {param: getattr(self, param) for param in self.CONFIG_PARAMS}
+        config_dict = {param: getattr(self, param) for param in self.get_params()}
         file_path = Path(filename or self.get_config_location())
         file_path.parent.mkdir(parents=True, exist_ok=True)
 
@@ -233,9 +228,10 @@ class SHConfig:  # pylint: disable=too-many-instance-attributes
             raise ValueError(f"Cannot reset unknown parameter `{param}`")
         setattr(self, param, getattr(default_config, param))
 
-    def get_params(self) -> List[str]:
+    @classmethod
+    def get_params(cls) -> Tuple[str, ...]:
         """Returns a list of parameter names."""
-        return list(self.CONFIG_PARAMS)
+        return cls.CREDENTIALS + cls.OTHER_PARAMS
 
     def get_config_dict(self) -> Dict[str, Union[str, float]]:
         """Get a dictionary representation of `SHConfig` class. If `hide_credentials` is set to `True` then
@@ -243,7 +239,7 @@ class SHConfig:  # pylint: disable=too-many-instance-attributes
 
         :return: A dictionary with configuration parameters
         """
-        config_params = {param: getattr(self, param) for param in self.CONFIG_PARAMS}
+        config_params = {param: getattr(self, param) for param in self.get_params()}
 
         if self._hide_credentials:
             config_params = {param: self._mask_credentials(param, value) for param, value in config_params.items()}
