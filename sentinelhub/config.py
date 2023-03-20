@@ -131,12 +131,6 @@ class SHConfig:  # pylint: disable=too-many-instance-attributes
         if self.max_opensearch_records_per_query > 500:
             raise ValueError("Value of config parameter `max_opensearch_records_per_query` must be at most 500")
 
-    def __getitem__(self, name: str) -> Union[str, float]:
-        """Config parameters can also be accessed as items."""
-        if name in self.CONFIG_PARAMS:
-            return getattr(self, name)
-        raise KeyError(f"`{name}` is not a supported config parameter")
-
     def __str__(self) -> str:
         """Content of SHConfig in json schema. If `hide_credentials` is set to `True` then credentials are masked."""
         return json.dumps(self.get_config_dict(), indent=2)

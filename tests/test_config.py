@@ -53,7 +53,7 @@ def test_config_fixture() -> SHConfig:
 @pytest.mark.dependency()
 def test_fake_config_during_tests() -> None:
     config = SHConfig()
-    credentials_removed = all(config[field] == "" for field in config.CREDENTIALS)
+    credentials_removed = all(getattr(config, field) == "" for field in config.CREDENTIALS)
     assert credentials_removed, "Credentials not properly removed for testing. Aborting tests."
 
 
@@ -73,7 +73,7 @@ def test_config_file() -> None:
         if isinstance(value, str):
             value = value.rstrip("/")
 
-        assert config[param] == value, f"Parameter {param} does not match it's equivalent in the config.json."
+        assert getattr(config, param) == value, f"Parameter {param} does not match it's equivalent in the config.json."
 
 
 @pytest.mark.dependency(depends=["test_fake_config_during_tests"])
@@ -84,7 +84,6 @@ def test_set_and_reset_value() -> None:
 
     config.instance_id = new_value
     assert config.instance_id == new_value, "New value was not set"
-    assert config["instance_id"] == new_value, "New value was not set"
 
     config.reset("sh_base_url")
     config.reset(["aws_access_key_id", "aws_secret_access_key"])
@@ -167,7 +166,7 @@ def test_config_repr(hide_credentials: bool) -> None:
         assert "*" * 16 + "a" * 4 in config_repr
     else:
         for param in config.get_params():
-            assert f"{param}={repr(config[param])}" in config_repr
+            assert f"{param}={repr(getattr(config, param))}" in config_repr
 
 
 @pytest.mark.dependency(depends=["test_fake_config_during_tests"])
