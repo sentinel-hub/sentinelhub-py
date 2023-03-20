@@ -114,14 +114,12 @@ def test_save(restore_config_file: None) -> None:
 
 
 @pytest.mark.dependency(depends=["test_fake_config_during_tests"])
-@pytest.mark.parametrize("hide_credentials", [True, False])
-def test_copy(hide_credentials: bool) -> None:
-    config = SHConfig(hide_credentials=hide_credentials)
+def test_copy() -> None:
+    config = SHConfig()
     config.instance_id = "a"
 
     copied_config = config.copy()
     assert copied_config is not config
-    assert copied_config._hide_credentials == hide_credentials
     assert copied_config.instance_id == config.instance_id
 
     copied_config.instance_id = "b"
@@ -133,8 +131,8 @@ def test_config_equality(test_config: SHConfig) -> None:
     assert test_config != 42
     assert test_config != test_config.to_dict()
 
-    config1 = SHConfig(hide_credentials=False)
-    config2 = SHConfig(hide_credentials=True)
+    config1 = SHConfig()
+    config2 = SHConfig()
 
     assert config1 is not config2
     assert config1 == config2
@@ -153,26 +151,24 @@ def test_raise_for_missing_instance_id(test_config: SHConfig) -> None:
 
 
 @pytest.mark.dependency(depends=["test_fake_config_during_tests"])
-@pytest.mark.parametrize("hide_credentials", [False, True])
-def test_config_repr(hide_credentials: bool) -> None:
-    config = SHConfig(hide_credentials=hide_credentials)
+def test_config_repr() -> None:
+    config = SHConfig()
     config.instance_id = "a" * 20
     config_repr = repr(config)
 
     assert config_repr.startswith(SHConfig.__name__)
 
-    if hide_credentials:
-        assert config.instance_id not in config_repr
-        assert "*" * 16 + "a" * 4 in config_repr
-    else:
-        for param in config.get_params():
-            assert f"{param}={repr(getattr(config, param))}" in config_repr
+    assert config.instance_id not in config_repr, "Credentials are not masked properly."
+    assert "*" * 16 + "a" * 4 in config_repr, "Credentials are not masked properly."
+
+    for param in SHConfig.OTHER_PARAMS:
+        assert f"{param}={repr(getattr(config, param))}" in config_repr
 
 
 @pytest.mark.dependency(depends=["test_fake_config_during_tests"])
 @pytest.mark.parametrize("hide_credentials", [False, True])
 def test_transformation_to_dict(hide_credentials: bool) -> None:
-    config = SHConfig(hide_credentials=hide_credentials)
+    config = SHConfig()
     config.sh_client_secret = "x" * 15
     config.aws_secret_access_key = "y" * 10
 

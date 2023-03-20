@@ -78,10 +78,8 @@ class SHConfig:  # pylint: disable=too-many-instance-attributes
         "number_of_download_processes",
     )
 
-    def __init__(self, hide_credentials: bool = True, use_defaults: bool = False):
+    def __init__(self, *, use_defaults: bool = False):
         """
-        :param hide_credentials: If `True` then credentials will be masked when transforming the dictionary to a string.
-            Credentials can still be accessed directly from config object attributes.
         :param use_defaults: Does not load the configuration file, returns config object with defaults only.
         """
 
@@ -105,8 +103,6 @@ class SHConfig:  # pylint: disable=too-many-instance-attributes
         self.download_sleep_time: float = 5.0
         self.download_timeout_seconds: float = 120.0
         self.number_of_download_processes: int = 1
-
-        self._hide_credentials = hide_credentials
 
         if not use_defaults:
             loaded_instance = SHConfig.load()  # user parameters validated in here already
@@ -134,17 +130,14 @@ class SHConfig:  # pylint: disable=too-many-instance-attributes
             raise ValueError("Value of config parameter `max_opensearch_records_per_query` must be at most 500")
 
     def __str__(self) -> str:
-        """Content of SHConfig in json schema. If `hide_credentials` is set to `True` then credentials are masked."""
-        return json.dumps(self.to_dict(hide_credentials=self._hide_credentials), indent=2)
+        """Content of SHConfig in json schema. Credentials are masked for safety."""
+        return json.dumps(self.to_dict(mask_credentials=True), indent=2)
 
     def __repr__(self) -> str:
-        """Representation of SHConfig parameters. If `hide_credentials` is set to `True` then credentials are masked."""
-        repr_list = [f"{self.__class__.__name__}("]
-
-        for key, value in self.to_dict(hide_credentials=self._hide_credentials).items():
-            repr_list.append(f"{key}={repr(value)},")
-
-        return "\n  ".join(repr_list).strip(",") + "\n)"
+        """Representation of SHConfig parameters. Credentials are masked for safety."""
+        config_dict = self.to_dict(mask_credentials=True)
+        content = ",\n  ".join(f"{key}={repr(value)}" for key, value in config_dict.items())
+        return f"{self.__class__.__name__}(\n  {content},\n)"
 
     def __eq__(self, other: object) -> bool:
         """Two instances of `SHConfig` are equal if all values of their parameters are equal."""
@@ -190,7 +183,7 @@ class SHConfig:  # pylint: disable=too-many-instance-attributes
         file_path.parent.mkdir(parents=True, exist_ok=True)
 
         with open(file_path, "w") as cfg_file:
-            json.dump(self.to_dict(hide_credentials=False), cfg_file, indent=2)
+            json.dump(self.to_dict(mask_credentials=False), cfg_file, indent=2)
 
     def copy(self) -> SHConfig:
         """Makes a copy of an instance of `SHConfig`"""
@@ -235,9 +228,9 @@ class SHConfig:  # pylint: disable=too-many-instance-attributes
 
         :return: A dictionary with configuration parameters
         """
-        return self.to_dict(hide_credentials=self._hide_credentials)
+        return self.to_dict()
 
-    def to_dict(self, hide_credentials: bool = True) -> Dict[str, Union[str, float]]:
+    def to_dict(self, mask_credentials: bool = True) -> Dict[str, Union[str, float]]:
         """Get a dictionary representation of `SHConfig` class.
 
         :param hide_credentials: Wether to mask fields containing credentials.
@@ -245,7 +238,7 @@ class SHConfig:  # pylint: disable=too-many-instance-attributes
         """
         config_params = {param: getattr(self, param) for param in self.get_params()}
 
-        if hide_credentials:
+        if mask_credentials:
             for param in self.CREDENTIALS:
                 config_params[param] = self._mask_credentials(config_params[param])
 
