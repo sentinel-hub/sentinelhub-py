@@ -10,8 +10,6 @@ import os
 from pathlib import Path
 from typing import Dict, Iterable, Optional, Tuple, Union
 
-from .exceptions import deprecated_function
-
 
 class SHConfig:  # pylint: disable=too-many-instance-attributes
     """A sentinelhub-py package configuration class.
@@ -220,15 +218,6 @@ class SHConfig:  # pylint: disable=too-many-instance-attributes
     def get_params(cls) -> Tuple[str, ...]:
         """Returns a list of parameter names."""
         return cls.CREDENTIALS + cls.OTHER_PARAMS
-
-    @deprecated_function(message_suffix="Use `to_dict` instead.")
-    def get_config_dict(self) -> Dict[str, Union[str, float]]:
-        """Get a dictionary representation of `SHConfig` class. If `hide_credentials` is set to `True` then
-        credentials will be masked.
-
-        :return: A dictionary with configuration parameters
-        """
-        return self.to_dict()
 
     def to_dict(self, mask_credentials: bool = True) -> Dict[str, Union[str, float]]:
         """Get a dictionary representation of `SHConfig` class.
