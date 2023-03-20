@@ -2,6 +2,7 @@
 Module that implements command line interface for the package
 """
 
+import json
 from typing import Any, Callable, TypeVar
 
 import click
@@ -48,7 +49,7 @@ def config(show: bool, reset: bool, **params: Any) -> None:
       sentinelhub.config --instance_id <new instance id>
       sentinelhub.config --max_download_attempts 5 --download_sleep_time 20 --download_timeout_seconds 120
     """
-    sh_config = SHConfig(hide_credentials=False)
+    sh_config = SHConfig()
 
     if reset:
         sh_config.reset()
@@ -69,14 +70,15 @@ def config(show: bool, reset: bool, **params: Any) -> None:
     sh_config.save()
 
     for param in sh_config.get_params():
-        if sh_config[param] != old_config[param]:
-            value = sh_config[param]
+        value = getattr(sh_config, param)
+        if value != getattr(old_config, param):
             if isinstance(value, str):
                 value = f"'{value}'"
             click.echo(f"The value of parameter `{param}` was updated to {value}")
 
     if show:
-        click.echo(str(sh_config))
+        unmasked_str_repr = json.dumps(sh_config.to_dict(mask_credentials=False), indent=2)
+        click.echo(unmasked_str_repr)
         click.echo(f"Configuration file location: {sh_config.get_config_location()}")
 
 
