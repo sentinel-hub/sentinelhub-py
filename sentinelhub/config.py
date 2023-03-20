@@ -238,7 +238,7 @@ class SHConfig:  # pylint: disable=too-many-instance-attributes
         return self.to_dict(hide_credentials=self._hide_credentials)
 
     def to_dict(self, hide_credentials: bool = True) -> Dict[str, Union[str, float]]:
-        """Get a dictionary representation of `SHConfig` class.
+        """Get a dictionary representation of the `SHConfig` class.
 
         :param hide_credentials: Wether to mask fields containing credentials.
         :return: A dictionary with configuration parameters
