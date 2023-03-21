@@ -1,5 +1,5 @@
 """
-Module for managing configuration data from `config.json`
+Module for managing configuration data from `config.toml`
 """
 from __future__ import annotations
 
@@ -19,7 +19,7 @@ DEFAULT_PROFILE = "default"
 class SHConfig:  # pylint: disable=too-many-instance-attributes
     """A sentinelhub-py package configuration class.
 
-    The class reads the configurable settings from ``config.json`` file on initialization:
+    The class reads the configurable settings from ``config.toml`` file on initialization:
 
         - `instance_id`: An instance ID for Sentinel Hub service used for OGC requests.
         - `sh_client_id`: User's OAuth client ID for Sentinel Hub service
@@ -46,7 +46,7 @@ class SHConfig:  # pylint: disable=too-many-instance-attributes
         - `download_timeout_seconds`: Maximum number of seconds before download attempt is canceled.
         - `number_of_download_processes`: Number of download processes, used to calculate rate-limit sleep time.
 
-    For manual modification of `config.json` you can see the expected location of the file via
+    For manual modification of `config.toml` you can see the expected location of the file via
     `SHConfig.get_config_location()`.
 
     Usage in the code:
@@ -179,7 +179,7 @@ class SHConfig:  # pylint: disable=too-many-instance-attributes
         return config
 
     def save(self, filename: Optional[str] = None, profile: str = DEFAULT_PROFILE) -> None:
-        """Saves configuration parameters to the user settings in the `config.json` file.  If a filename is not
+        """Saves configuration parameters to the user settings in the `config.toml` file.  If a filename is not
         specified, the configuration is saved to the location specified by `SHConfig.get_config_location()`.
 
         :param filename: Optional path of the configuration file to be saved.
@@ -269,6 +269,6 @@ class SHConfig:  # pylint: disable=too-many-instance-attributes
         if not self.instance_id:
             raise ValueError(
                 "Sentinel Hub instance ID is missing. "
-                "Either provide it with SHConfig object or save it into config.json configuration file. "
+                "Either provide it with SHConfig object or save it into config.toml configuration file. "
                 "Check https://sentinelhub-py.readthedocs.io/en/latest/configure.html for more info."
             )
