@@ -142,15 +142,6 @@ def test_config_equality(test_config: SHConfig) -> None:
 
 
 @pytest.mark.dependency(depends=["test_fake_config_during_tests"])
-def test_raise_for_missing_instance_id(test_config: SHConfig) -> None:
-    test_config.raise_for_missing_instance_id()
-
-    test_config.instance_id = ""
-    with pytest.raises(ValueError):
-        test_config.raise_for_missing_instance_id()
-
-
-@pytest.mark.dependency(depends=["test_fake_config_during_tests"])
 def test_config_repr() -> None:
     config = SHConfig()
     config.instance_id = "a" * 20
