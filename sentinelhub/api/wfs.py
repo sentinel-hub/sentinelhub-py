@@ -46,7 +46,12 @@ class WebFeatureService(FeatureIterator[JsonDict]):
         :param config: A custom instance of config class to override parameters from the saved configuration.
         """
         self.config = config or SHConfig()
-        self.config.raise_for_missing_instance_id()
+        if not self.config.instance_id:
+            raise ValueError(
+                "Sentinel Hub instance ID is missing. "
+                "Either provide it with SHConfig object or save it into config.json configuration file. "
+                "Check https://sentinelhub-py.readthedocs.io/en/latest/configure.html for more info."
+            )
 
         self.bbox = bbox
 
