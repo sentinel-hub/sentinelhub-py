@@ -101,6 +101,31 @@ def test_save(restore_config_file: None) -> None:
 
 
 @pytest.mark.dependency(depends=["test_fake_config_during_tests"])
+def test_profiles(restore_config_file: None) -> None:
+    config = SHConfig()
+    config.instance_id = "beepbeep"
+    config.save(profile="beep")
+
+    config.instance_id = "boopboop"
+    config.save(profile="boop")
+
+    beep_config = SHConfig(profile="beep")
+    assert beep_config.instance_id == "beepbeep"
+    assert SHConfig.load(profile="boop").instance_id == "boopboop"
+
+    # save an existing profile
+    beep_config.instance_id = "bap"
+    assert SHConfig(profile="beep").instance_id == "beepbeep"
+    beep_config.save(profile="beep")
+    assert SHConfig(profile="beep").instance_id == "bap"
+
+
+def test_loading_unknown_profile_fails() -> None:
+    with pytest.raises(KeyError):
+        SHConfig.load(profile="does not exist")
+
+
+@pytest.mark.dependency(depends=["test_fake_config_during_tests"])
 def test_copy() -> None:
     config = SHConfig()
     config.instance_id = "a"
