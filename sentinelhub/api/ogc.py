@@ -309,8 +309,7 @@ class OgcImageService:
         self.config = config or SHConfig()
         if not self.config.instance_id:
             raise ValueError(
-                "Sentinel Hub instance ID is missing. "
-                "Either provide it with SHConfig object or save it into config.json configuration file. "
+                "Sentinel Hub instance ID should be provided with SHConfig or saved into the configuration file."
                 "Check https://sentinelhub-py.readthedocs.io/en/latest/configure.html for more info."
             )
 
