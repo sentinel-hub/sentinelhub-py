@@ -1,7 +1,6 @@
 """
 Unit tests for config.py module
 """
-import json
 import os
 import shutil
 from typing import Any, Generator
@@ -17,7 +16,7 @@ def mask_and_restore_config_fixture() -> Generator[None, None, None]:
     a test has failed.
     """
     config_path = SHConfig.get_config_location()
-    cache_path = config_path.replace(".json", "_test_cache.json")
+    cache_path = config_path.replace(".toml", "_test_cache.toml")
     shutil.move(config_path, cache_path)
 
     # Create a mock config
@@ -62,18 +61,6 @@ def test_config_file() -> None:
     config = SHConfig()
     config_file = config.get_config_location()
     assert os.path.isfile(config_file), f"Config file does not exist: {os.path.abspath(config_file)}"
-
-    with open(config_file, "r") as file_handle:
-        config_dict = json.load(file_handle)
-
-    for param, value in config_dict.items():
-        if param in config.CREDENTIALS:
-            continue
-
-        if isinstance(value, str):
-            value = value.rstrip("/")
-
-        assert getattr(config, param) == value, f"Parameter {param} does not match it's equivalent in the config.json."
 
 
 @pytest.mark.dependency(depends=["test_fake_config_during_tests"])

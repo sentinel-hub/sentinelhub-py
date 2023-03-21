@@ -10,6 +10,11 @@ import os
 from pathlib import Path
 from typing import Dict, Iterable, Optional, Tuple, Union
 
+import tomli
+import tomli_w
+
+DEFAULT_PROFILE = "default"
+
 
 class SHConfig:  # pylint: disable=too-many-instance-attributes
     """A sentinelhub-py package configuration class.
@@ -76,7 +81,7 @@ class SHConfig:  # pylint: disable=too-many-instance-attributes
         "number_of_download_processes",
     )
 
-    def __init__(self, *, use_defaults: bool = False):
+    def __init__(self, profile: str = DEFAULT_PROFILE, *, use_defaults: bool = False):
         """
         :param use_defaults: Does not load the configuration file, returns config object with defaults only.
         """
@@ -103,7 +108,7 @@ class SHConfig:  # pylint: disable=too-many-instance-attributes
         self.number_of_download_processes: int = 1
 
         if not use_defaults:
-            loaded_instance = SHConfig.load()  # user parameters validated in here already
+            loaded_instance = SHConfig.load(profile=profile)  # user parameters validated in here already
             for param in SHConfig.get_params():
                 setattr(self, param, getattr(loaded_instance, param))
 
@@ -144,44 +149,56 @@ class SHConfig:  # pylint: disable=too-many-instance-attributes
         return all(getattr(self, param) == getattr(other, param) for param in self.get_params())
 
     @classmethod
-    def load(cls, filename: Optional[str] = None) -> SHConfig:
+    def load(cls, filename: Optional[str] = None, profile: str = DEFAULT_PROFILE) -> SHConfig:
         """Loads configuration parameters from a file. If a filename is not specified the configuration is loaded from
         the location specified by `SHConfig.get_config_location()`.
 
         :param filename: Optional path of the configuration file to be loaded.
+        :param profile: Which profile to load from the configuration file.
         """
         config = cls(use_defaults=True)
 
         if filename is None:
             filename = cls.get_config_location()
             if not os.path.exists(filename):  # nothing to load from disk
-                config.save()  # store default configuration to standard location
+                config.save(profile)  # store default configuration to standard location
                 return config
 
-        with open(filename, "r") as cfg_file:
-            config_dict = json.load(cfg_file)
+        with open(filename, "rb") as cfg_file:
+            configurations_dict = tomli.load(cfg_file)
+
+        if profile not in configurations_dict:
+            raise KeyError(f"Profile {profile} not found in configuration file.")
 
         config_fields = cls.get_params()
-        for param, value in config_dict.items():
+        for param, value in configurations_dict[profile].items():
             if param in config_fields:
                 setattr(config, param, value)
 
         config._validate_values()
         return config
 
-    def save(self, filename: Optional[str] = None) -> None:
+    def save(self, filename: Optional[str] = None, profile: str = DEFAULT_PROFILE) -> None:
         """Saves configuration parameters to the user settings in the `config.json` file.  If a filename is not
         specified, the configuration is saved to the location specified by `SHConfig.get_config_location()`.
 
         :param filename: Optional path of the configuration file to be saved.
+        :param profile: Under which profile to save the configuration.
         """
         self._validate_values()
 
         file_path = Path(filename or self.get_config_location())
         file_path.parent.mkdir(parents=True, exist_ok=True)
 
-        with open(file_path, "w") as cfg_file:
-            json.dump(self.to_dict(mask_credentials=False), cfg_file, indent=2)
+        if file_path.exists():
+            with open(file_path, "rb") as cfg_file:
+                current_configuration = tomli.load(cfg_file)
+        else:
+            current_configuration = {}
+
+        current_configuration[profile] = self.to_dict(mask_credentials=False)
+        with open(file_path, "wb") as cfg_file:
+            tomli_w.dump(current_configuration, cfg_file)
 
     def copy(self) -> SHConfig:
         """Makes a copy of an instance of `SHConfig`"""
@@ -242,7 +259,7 @@ class SHConfig:  # pylint: disable=too-many-instance-attributes
     def get_config_location(cls) -> str:
         """Returns the default location of the user configuration file on disk."""
         user_folder = os.path.expanduser("~")
-        return os.path.join(user_folder, ".config", "sentinelhub", "config.json")
+        return os.path.join(user_folder, ".config", "sentinelhub", "config.toml")
 
     def raise_for_missing_instance_id(self) -> None:
         """In case Sentinel Hub instance ID is missing it raises an informative error

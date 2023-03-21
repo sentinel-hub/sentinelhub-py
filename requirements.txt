@@ -10,6 +10,8 @@ requests>=2.27.0
 requests-oauthlib>=1.0.0
 shapely
 tifffile>=2020.9.30
+tomli
+tomli_w
 tqdm
 typing-extensions
 utm
