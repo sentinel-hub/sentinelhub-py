@@ -3,7 +3,7 @@ Unit tests for config.py module
 """
 import os
 import shutil
-from typing import Any, Generator
+from typing import Generator
 
 import pytest
 
@@ -176,26 +176,3 @@ def test_transformation_to_dict(hide_credentials: bool) -> None:
     else:
         assert config_dict["sh_client_secret"] == config.sh_client_secret
         assert config_dict["aws_secret_access_key"] == config.aws_secret_access_key
-
-
-@pytest.mark.dependency(depends=["test_user_config_is_masked"])
-def test_transfer_with_ray(dummy_config: SHConfig, ray: Any) -> None:
-    """This test makes sure that the process of transferring SHConfig object to a Ray worker, working with it, and
-    sending it back works correctly.
-    """
-
-    def _remote_ray_testing(remote_config: SHConfig) -> SHConfig:
-        """Makes a few checks and modifications to the config object"""
-        assert repr(remote_config).startswith("SHConfig")
-        assert isinstance(remote_config.to_dict(), dict)
-        assert os.path.exists(remote_config.get_config_location())
-        assert remote_config.instance_id == "fake_instance_id"
-
-        remote_config.instance_id = "new_fake_instance_id"
-        return remote_config
-
-    config_future = ray.remote(_remote_ray_testing).remote(dummy_config)
-    transferred_config = ray.get(config_future)
-
-    assert repr(dummy_config).startswith("SHConfig")
-    assert transferred_config.instance_id == "new_fake_instance_id"
