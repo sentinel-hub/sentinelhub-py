@@ -243,15 +243,3 @@ class SHConfig:  # pylint: disable=too-many-instance-attributes
         """Returns the default location of the user configuration file on disk."""
         user_folder = os.path.expanduser("~")
         return os.path.join(user_folder, ".config", "sentinelhub", "config.json")
-
-    def raise_for_missing_instance_id(self) -> None:
-        """In case Sentinel Hub instance ID is missing it raises an informative error
-
-        :raises: ValueError
-        """
-        if not self.instance_id:
-            raise ValueError(
-                "Sentinel Hub instance ID is missing. "
-                "Either provide it with SHConfig object or save it into config.json configuration file. "
-                "Check https://sentinelhub-py.readthedocs.io/en/latest/configure.html for more info."
-            )
