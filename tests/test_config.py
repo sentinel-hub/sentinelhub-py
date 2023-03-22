@@ -1,7 +1,6 @@
 """
 Unit tests for config.py module
 """
-import json
 import os
 import shutil
 from typing import Any, Generator
@@ -17,7 +16,7 @@ def mask_and_restore_config_fixture() -> Generator[None, None, None]:
     a test has failed.
     """
     config_path = SHConfig.get_config_location()
-    cache_path = config_path.replace(".json", "_test_cache.json")
+    cache_path = config_path.replace(".toml", "_test_cache.toml")
     shutil.move(config_path, cache_path)
 
     # Create a mock config
@@ -63,18 +62,6 @@ def test_config_file() -> None:
     config_file = config.get_config_location()
     assert os.path.isfile(config_file), f"Config file does not exist: {os.path.abspath(config_file)}"
 
-    with open(config_file, "r") as file_handle:
-        config_dict = json.load(file_handle)
-
-    for param, value in config_dict.items():
-        if param in config.CREDENTIALS:
-            continue
-
-        if isinstance(value, str):
-            value = value.rstrip("/")
-
-        assert getattr(config, param) == value, f"Parameter {param} does not match it's equivalent in the config.json."
-
 
 @pytest.mark.dependency(depends=["test_fake_config_during_tests"])
 def test_set_and_reset_value() -> None:
@@ -111,6 +98,31 @@ def test_save(restore_config_file: None) -> None:
     config.save()
     config = SHConfig()
     assert config.download_timeout_seconds == new_value, "Saved value should have changed"
+
+
+@pytest.mark.dependency(depends=["test_fake_config_during_tests"])
+def test_profiles(restore_config_file: None) -> None:
+    config = SHConfig()
+    config.instance_id = "beepbeep"
+    config.save(profile="beep")
+
+    config.instance_id = "boopboop"
+    config.save(profile="boop")
+
+    beep_config = SHConfig(profile="beep")
+    assert beep_config.instance_id == "beepbeep"
+    assert SHConfig.load(profile="boop").instance_id == "boopboop"
+
+    # save an existing profile
+    beep_config.instance_id = "bap"
+    assert SHConfig(profile="beep").instance_id == "beepbeep"
+    beep_config.save(profile="beep")
+    assert SHConfig(profile="beep").instance_id == "bap"
+
+
+def test_loading_unknown_profile_fails() -> None:
+    with pytest.raises(KeyError):
+        SHConfig.load(profile="does not exist")
 
 
 @pytest.mark.dependency(depends=["test_fake_config_during_tests"])
