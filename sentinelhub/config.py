@@ -201,7 +201,7 @@ class SHConfig:  # pylint: disable=too-many-instance-attributes
             tomli_w.dump(current_configuration, cfg_file)
 
     def _get_dict_of_diffs_from_defaults(self) -> Dict[str, Union[str, float]]:
-        """Returns a dictionary that only contains key: value pairs for parameters that do not have default values."""
+        """Returns a dictionary containing key: value pairs for parameters that have values different from defaults."""
         current_profile_config = self.to_dict(mask_credentials=False)
         default_values = SHConfig(use_defaults=True).to_dict(mask_credentials=False)
         return {key: value for key, value in current_profile_config.items() if default_values[key] != value}
