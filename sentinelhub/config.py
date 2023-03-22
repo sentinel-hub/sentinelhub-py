@@ -13,7 +13,7 @@ from typing import Dict, Iterable, Optional, Tuple, Union
 import tomli
 import tomli_w
 
-DEFAULT_PROFILE = "default"
+DEFAULT_PROFILE = "default-profile"
 
 
 class SHConfig:  # pylint: disable=too-many-instance-attributes
@@ -196,9 +196,15 @@ class SHConfig:  # pylint: disable=too-many-instance-attributes
         else:
             current_configuration = {}
 
-        current_configuration[profile] = self.to_dict(mask_credentials=False)
+        current_configuration[profile] = self._get_dict_of_diffs_from_defaults()
         with open(file_path, "wb") as cfg_file:
             tomli_w.dump(current_configuration, cfg_file)
+
+    def _get_dict_of_diffs_from_defaults(self) -> Dict[str, Union[str, float]]:
+        """Returns a dictionary that only contains key: value pairs for parameters that do not have default values."""
+        current_profile_config = self.to_dict(mask_credentials=False)
+        default_values = SHConfig(use_defaults=True).to_dict(mask_credentials=False)
+        return {key: value for key, value in current_profile_config.items() if default_values[key] != value}
 
     def copy(self) -> SHConfig:
         """Makes a copy of an instance of `SHConfig`"""
