@@ -6,6 +6,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, List, Optional, Sequence, Tuple, Union, cast
 
 from .constants import CRS
+from .exceptions import deprecated_function
 
 if TYPE_CHECKING:
     from .geometry import BBox
@@ -81,6 +82,7 @@ def to_utm_bbox(bbox: BBox) -> BBox:
     return bbox.transform(utm_crs)
 
 
+@deprecated_function()
 def get_utm_bbox(img_bbox: Sequence[float], transform: Sequence[float]) -> List[float]:
     """Get UTM coordinates given a bounding box in pixels and a transform
 
@@ -93,6 +95,7 @@ def get_utm_bbox(img_bbox: Sequence[float], transform: Sequence[float]) -> List[
     return [east1, north1, east2, north2]
 
 
+@deprecated_function(message_suffix="Use `transform_point` and `get_utm_crs` instead.")
 def wgs84_to_utm(lng: float, lat: float, utm_crs: Optional[CRS] = None) -> Tuple[float, float]:
     """Convert WGS84 coordinates to UTM. If UTM CRS is not set it will be calculated automatically.
 
@@ -106,6 +109,7 @@ def wgs84_to_utm(lng: float, lat: float, utm_crs: Optional[CRS] = None) -> Tuple
     return transform_point((lng, lat), CRS.WGS84, utm_crs)
 
 
+@deprecated_function(message_suffix="Use `transform_point` instead.")
 def to_wgs84(east: float, north: float, crs: CRS) -> Tuple[float, float]:
     """Convert any CRS with (east, north) coordinates to WGS84
 
@@ -148,6 +152,7 @@ def pixel_to_utm(row: float, column: float, transform: Sequence[float]) -> Tuple
     return east, north
 
 
+@deprecated_function()
 def wgs84_to_pixel(
     lng: float, lat: float, transform: Sequence[float], utm_epsg: Optional[CRS] = None, truncate: bool = True
 ) -> Union[Tuple[float, float], Tuple[int, int]]:

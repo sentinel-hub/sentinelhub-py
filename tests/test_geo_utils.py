@@ -12,11 +12,8 @@ from sentinelhub.geo_utils import (
     get_image_dimension,
     get_utm_crs,
     pixel_to_utm,
-    to_wgs84,
     transform_point,
     utm_to_pixel,
-    wgs84_to_pixel,
-    wgs84_to_utm,
 )
 
 BBOX_WGS84 = BBox(((111.6388, 8.6488), (111.6988, 8.6868)), CRS.WGS84)
@@ -26,29 +23,7 @@ BBOX_POP_WEB = BBox(((12427574, 966457), (12434253, 970736)), CRS.POP_WEB)
 BBOX_2 = BBox(((570000, 956000), (571000, 958000)), CRS("32649"))
 BBOX_3 = BBox(((100, -10.5), (101, -10)), CRS.WGS84)
 
-
-@pytest.mark.parametrize(
-    "wgs84_coordinate, utm_coordinate, utm_crs",
-    [
-        ((109.988, 9.988), (389079, 1104255), CRS("32649")),
-        ((49.889, 49.889), (420195, 5526881), CRS("32639")),
-        ((30, -15), (177349, 8339486), CRS("32736")),
-    ],
-)
-def test_wgs84_to_utm(wgs84_coordinate: Tuple[float, float], utm_coordinate: Tuple[float, float], utm_crs: CRS) -> None:
-    assert wgs84_to_utm(*wgs84_coordinate, utm_crs) == pytest.approx(utm_coordinate, rel=1e-4)
-
-
-@pytest.mark.parametrize(
-    "wgs84_coordinate, utm_coordinate, utm_crs",
-    [
-        ((109.988, 9.988), (389079, 1104255), CRS("32649")),
-        ((49.889, 49.889), (420195, 5526881), CRS("32639")),
-        ((30, -15), (177349, 8339486), CRS("32736")),
-    ],
-)
-def test_to_wgs84(wgs84_coordinate: Tuple[float, float], utm_coordinate: Tuple[float, float], utm_crs: CRS) -> None:
-    assert to_wgs84(*utm_coordinate, utm_crs) == pytest.approx(wgs84_coordinate, rel=1e-4)
+GEOREFERENCING_TRANSFORM = (570851.8316965176, 512, 0, 960429.6742984429, 0, -512)
 
 
 @pytest.mark.parametrize(
@@ -135,23 +110,6 @@ def test_transform_point(
 
     assert new_point == pytest.approx(target_point, rel=1e-8)
     assert transform_point(new_point, target_crs, source_crs) == pytest.approx(point, rel=1e-8)
-
-
-GEOREFERENCING_TRANSFORM = (570851.8316965176, 512, 0, 960429.6742984429, 0, -512)
-
-
-@pytest.mark.parametrize(
-    "coordinate, expected_pixel",
-    [
-        ((111.644, 8.688), (0, 0)),
-        ((111.7, 8.688), (0, 12)),
-        ((111.66, 8.672), (3, 3)),
-        ((111.644, 8.655), (7, 0)),
-        ((111.7, 8.655), (7, 12)),
-    ],
-)
-def test_wgs84_to_pixel(coordinate: Tuple[float, float], expected_pixel: Tuple[int, int]) -> None:
-    assert wgs84_to_pixel(*coordinate, GEOREFERENCING_TRANSFORM) == expected_pixel
 
 
 @pytest.mark.parametrize(
