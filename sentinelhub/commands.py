@@ -7,7 +7,7 @@ from typing import Any, Callable, TypeVar
 
 import click
 
-from .config import SHConfig
+from .config import DEFAULT_PROFILE, SHConfig
 from .download import DownloadClient, DownloadRequest
 
 FC = TypeVar("FC", bound=Callable[..., Any])
@@ -39,8 +39,9 @@ def _config_options(func: FC) -> FC:
 @click.command()
 @click.option("--show", is_flag=True, default=False, help="Show current configuration")
 @click.option("--reset", is_flag=True, default=False, help="Reset configuration to initial state")
+@click.option("--profile", default=DEFAULT_PROFILE, help="Selects profile to show/configure.")
 @_config_options
-def config(show: bool, reset: bool, **params: Any) -> None:
+def config(show: bool, reset: bool, profile: str, **params: Any) -> None:
     """Inspect and configure parameters in your local sentinelhub configuration file
 
     \b
@@ -49,7 +50,8 @@ def config(show: bool, reset: bool, **params: Any) -> None:
       sentinelhub.config --instance_id <new instance id>
       sentinelhub.config --max_download_attempts 5 --download_sleep_time 20 --download_timeout_seconds 120
     """
-    sh_config = SHConfig()
+    sh_config = SHConfig(profile=profile)
+    old_config = sh_config.copy()
 
     if reset:
         sh_config.reset()
@@ -66,8 +68,7 @@ def config(show: bool, reset: bool, **params: Any) -> None:
             if getattr(sh_config, param) != value:
                 setattr(sh_config, param, value)
 
-    old_config = SHConfig()
-    sh_config.save()
+    sh_config.save(profile=profile)
 
     for param in sh_config.get_params():
         value = getattr(sh_config, param)

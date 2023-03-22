@@ -3,6 +3,7 @@ import subprocess
 
 import pytest
 
+from sentinelhub.config import DEFAULT_PROFILE
 from sentinelhub.testing_utils import get_output_folder
 
 OUTPUT_FOLDER = get_output_folder(__file__)
@@ -27,6 +28,7 @@ URL = "https://roda.sentinel-hub.com/sentinel-s2-l1c/tiles/54/H/VH/2017/4/14/0/m
             marks=pytest.mark.sh_integration,
         ),
         "sentinelhub.config --show",
+        f"sentinelhub.config --show --profile {DEFAULT_PROFILE}",
         "sentinelhub --help",
         "sentinelhub.aws --help",
         "sentinelhub.config --help",
