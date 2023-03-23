@@ -1,7 +1,7 @@
 """
 Module with statistics to dataframe transformation.
 """
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, Generator, List, Optional, Tuple, Union
 
 from .time_utils import parse_time
 from .types import JsonDict
@@ -151,18 +151,13 @@ def get_failed_statistical_requests(result_data: List[JsonDict]) -> List[JsonDic
     :return: Failed requests of (Batch) Statistical Results.
     """
     if _is_batch_stat(result_data[0]):
-        batch_failed_response = ((result["identifier"], _get_failed_batch_response(result)) for result in result_data)
-        return [
-            {"identifier": ident, "failed_intervals": intervals}
-            for ident, intervals in batch_failed_response
-            if intervals != []
-        ]
-
-    normal_failed_intervals = (
-        _FULL_TIME_RANGE if "error" in result else _get_failed_intervals(result["data"]) for result in result_data
-    )
+        failed_responses: Union[enumerate, Generator] = (
+            (result["identifier"], _get_failed_batch_response(result)) for result in result_data
+        )
+    else:
+        failed_responses = enumerate(
+            _FULL_TIME_RANGE if "error" in result else _get_failed_intervals(result["data"]) for result in result_data
+        )
     return [
-        {"identifier": index, "failed_intervals": intervals}
-        for index, intervals in enumerate(normal_failed_intervals)
-        if intervals != []
+        {"identifier": idx, "failed_intervals": intervals} for idx, intervals in failed_responses if intervals != []
     ]
