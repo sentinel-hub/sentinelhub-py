@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import copy
 import json
+import logging
 import numbers
 import os
 from pathlib import Path
@@ -13,7 +14,12 @@ from typing import Dict, Iterable, Optional, Tuple, Union
 import tomli
 import tomli_w
 
+LOGGER = logging.getLogger(__name__)
+
 DEFAULT_PROFILE = "default-profile"
+SH_PROFILE_ENV_VAR = "SH_PROFILE"
+SH_CLIENT_ID_ENV_VAR = "SH_CLIENT_ID"
+SH_CLIENT_SECRET_ENV_VAR = "SH_CLIENT_SECRET"
 
 
 class SHConfig:  # pylint: disable=too-many-instance-attributes
@@ -22,8 +28,10 @@ class SHConfig:  # pylint: disable=too-many-instance-attributes
     The class reads the configurable settings from ``config.toml`` file on initialization:
 
         - `instance_id`: An instance ID for Sentinel Hub service used for OGC requests.
-        - `sh_client_id`: User's OAuth client ID for Sentinel Hub service
-        - `sh_client_secret`: User's OAuth client secret for Sentinel Hub service
+        - `sh_client_id`: User's OAuth client ID for Sentinel Hub service. Can be set via SH_CLIENT_ID environment
+          variable.
+        - `sh_client_secret`: User's OAuth client secret for Sentinel Hub service. Can be set via SH_CLIENT_SECRET
+          environment variable.
         - `sh_base_url`: There exist multiple deployed instances of Sentinel Hub service, this parameter defines the
           location of a specific service instance.
         - `sh_auth_base_url`: Base url for Sentinel Hub Authentication service. Authentication is typically sent to the
@@ -83,6 +91,8 @@ class SHConfig:  # pylint: disable=too-many-instance-attributes
 
     def __init__(self, profile: str = DEFAULT_PROFILE, *, use_defaults: bool = False):
         """
+        :param profile: Specifies which profile to load form the configuration file. The environment variable
+            SH_USER_PROFILE has precedence.
         :param use_defaults: Does not load the configuration file, returns config object with defaults only.
         """
 
@@ -107,10 +117,25 @@ class SHConfig:  # pylint: disable=too-many-instance-attributes
         self.download_timeout_seconds: float = 120.0
         self.number_of_download_processes: int = 1
 
+        profile = self._override_with_environment(SH_PROFILE_ENV_VAR, profile)
+
         if not use_defaults:
+            # load from config.toml
             loaded_instance = SHConfig.load(profile=profile)  # user parameters validated in here already
             for param in SHConfig.get_params():
                 setattr(self, param, getattr(loaded_instance, param))
+
+            # check env
+            self.sh_client_id = self._override_with_environment(SH_CLIENT_ID_ENV_VAR, self.sh_client_id)
+            self.sh_client_secret = self._override_with_environment(SH_CLIENT_SECRET_ENV_VAR, self.sh_client_secret)
+
+    @staticmethod
+    def _override_with_environment(env_var_name: str, default_value: str) -> str:
+        env_value = os.environ.get(env_var_name)
+        if env_value is None:
+            return default_value
+        LOGGER.debug("Overriding settings with environment variable %s.", env_var_name)
+        return env_value
 
     def _validate_values(self) -> None:
         """Ensures that the values are aligned with expectations."""
