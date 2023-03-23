@@ -11,11 +11,11 @@ reset-config:
 
 upload:
 	rm -r dist | true
-	$(PYTHON) setup.py sdist
+	$(PYTHON) setup.py sdist bdist_wheel
 	twine upload --skip-existing dist/*
 
 # For testing:
 test-upload:
 	rm -r dist | true
-	$(PYTHON) setup.py sdist
+	$(PYTHON) setup.py sdist bdist_wheel
 	twine upload --repository testpypi --skip-existing dist/*
