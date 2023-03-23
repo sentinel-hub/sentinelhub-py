@@ -85,12 +85,7 @@ def _extract_response_data(response_data: List[JsonDict], exclude_stats: List[st
 
 
 def _is_batch_stat(result_data: JsonDict) -> bool:
-    """Identifies whether the resulting data belongs to a batch statistical request or not
-
-    :param request_data: An input representation of (Batch) Statistical API result
-        returned from `DataRequest.get_data()`.
-    :return: bool
-    """
+    """Identifies whether the resulting data belongs to a batch statistical request or not"""
     return "id" in result_data
 
 
@@ -163,5 +158,11 @@ def get_failed_statistical_requests(result_data: List[JsonDict]) -> List[JsonDic
             if intervals != []
         ]
 
-    failed_intervals = _FULL_TIME_RANGE if "error" in result_data[0] else _get_failed_intervals(result_data[0]["data"])
-    return [{"failed_intervals": failed_intervals}] if failed_intervals != [] else []
+    normal_failed_intervals = (
+        _FULL_TIME_RANGE if "error" in result else _get_failed_intervals(result["data"]) for result in result_data
+    )
+    return [
+        {"identifier": index, "failed_intervals": intervals}
+        for index, intervals in enumerate(normal_failed_intervals)
+        if intervals != []
+    ]

@@ -31,12 +31,14 @@ def test_statistical_to_dataframe(input_folder: str) -> None:
     "result_file, expected_length",
     [
         ("batch_stat_failed_results.json", 3),
+        ("batch_stat_results.json", 0),
         ("normal_stat_partial_result.json", 1),
         ("normal_stat_failed_result.json", 1),
+        ("normal_stat_result.json", 0),
     ],
 )
 def test_get_failed_statistical_requests(input_folder: str, result_file: str, expected_length: int) -> None:
     stat_failed_results_path = os.path.join(input_folder, result_file)
     stat_failed_results = read_data(stat_failed_results_path)
     failed_requests = get_failed_statistical_requests(stat_failed_results)
-    assert len(failed_requests) == expected_length, "Wrong nuber of failed requests"
+    assert len(failed_requests) == expected_length, "Wrong number of failed requests"
