@@ -8,7 +8,7 @@ import json
 import numbers
 import os
 from pathlib import Path
-from typing import Dict, Iterable, Optional, Tuple, Union
+from typing import Dict, Optional, Tuple, Union
 
 import tomli
 import tomli_w
@@ -223,33 +223,6 @@ class SHConfig:  # pylint: disable=too-many-instance-attributes
     def copy(self) -> SHConfig:
         """Makes a copy of an instance of `SHConfig`"""
         return copy.copy(self)
-
-    def reset(self, params: Union[str, Iterable[str], object] = ...) -> None:
-        """Resets configuration class to default values. Does not save unless the `save` method is called afterwards.
-
-        Parameters can be specified as a list of names, e.g. ``['instance_id', 'aws_access_key_id']``, or as a single
-        name, e.g. ``'sh_base_url'``. By default, all parameters will be reset.
-
-        :param params: Parameters to reset to default values.
-        """
-        default_config = SHConfig(use_defaults=True)
-
-        if params is ...:
-            params = self.get_params()
-        elif isinstance(params, str):
-            params = [params]
-
-        if isinstance(params, Iterable):
-            for param in params:
-                self._reset_param(param, default_config)
-        else:
-            raise ValueError(f"Parameters must be a list of strings or as a single string, got {params}")
-
-    def _reset_param(self, param: str, default_config: SHConfig) -> None:
-        """Resets a single parameter."""
-        if param not in self.get_params():
-            raise ValueError(f"Cannot reset unknown parameter `{param}`")
-        setattr(self, param, getattr(default_config, param))
 
     @classmethod
     def get_params(cls) -> Tuple[str, ...]:

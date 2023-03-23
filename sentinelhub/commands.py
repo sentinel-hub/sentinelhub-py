@@ -38,10 +38,9 @@ def _config_options(func: FC) -> FC:
 
 @click.command()
 @click.option("--show", is_flag=True, default=False, help="Show current configuration")
-@click.option("--reset", is_flag=True, default=False, help="Reset configuration to initial state")
 @click.option("--profile", default=DEFAULT_PROFILE, help="Selects profile to show/configure.")
 @_config_options
-def config(show: bool, reset: bool, profile: str, **params: Any) -> None:
+def config(show: bool, profile: str, **params: Any) -> None:
     """Inspect and configure parameters in your local sentinelhub configuration file
 
     \b
@@ -52,9 +51,6 @@ def config(show: bool, reset: bool, profile: str, **params: Any) -> None:
     """
     sh_config = SHConfig(profile=profile)
     old_config = sh_config.copy()
-
-    if reset:
-        sh_config.reset()
 
     for param, value in params.items():
         if value is not None:

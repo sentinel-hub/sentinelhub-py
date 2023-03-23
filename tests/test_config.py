@@ -67,20 +67,6 @@ def test_config_file_exists() -> None:
 
 
 @pytest.mark.dependency(depends=["test_user_config_is_masked"])
-def test_set_and_reset_value(dummy_config: SHConfig) -> None:
-    new_value = "new_instance_id"
-    dummy_config.instance_id = new_value
-    assert dummy_config.instance_id == new_value
-
-    dummy_config.reset("sh_base_url")
-    dummy_config.reset(["aws_access_key_id", "aws_secret_access_key"])
-    assert dummy_config.instance_id == new_value, "Instance ID should not reset yet"
-
-    dummy_config.reset()
-    assert dummy_config.instance_id == ""
-
-
-@pytest.mark.dependency(depends=["test_user_config_is_masked"])
 def test_save(restore_config_file: None) -> None:
     config = SHConfig()
     old_value = config.download_timeout_seconds
