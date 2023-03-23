@@ -8,6 +8,7 @@ from typing import Generator
 import pytest
 
 from sentinelhub import SHConfig
+from sentinelhub.config import DEFAULT_PROFILE, SH_CLIENT_ID_ENV_VAR, SH_CLIENT_SECRET_ENV_VAR, SH_PROFILE_ENV_VAR
 
 
 @pytest.fixture(autouse=True, scope="module")
@@ -35,9 +36,11 @@ def switch_and_restore_config() -> Generator[None, None, None]:
 @pytest.fixture(name="restore_config_file")
 def restore_config_file_fixture() -> Generator[None, None, None]:
     """A fixture that ensures the config file is reset after the test."""
-    old_config = SHConfig()
+    with open(SHConfig.get_config_location()) as file:
+        content = file.read()
     yield
-    old_config.save()
+    with open(SHConfig.get_config_location(), "w") as file:
+        file.write(content)
 
 
 @pytest.fixture(name="dummy_config")
@@ -98,6 +101,22 @@ def test_save(restore_config_file: None) -> None:
 
 
 @pytest.mark.dependency(depends=["test_user_config_is_masked"])
+def test_environment_variables(restore_config_file: None, monkeypatch) -> None:
+    """We use `monkeypatch` to avoid modifying global environment."""
+    config = SHConfig()
+    config.sh_client_id = "beepbeep"
+    config.sh_client_secret = "imasheep"
+    config.save()
+
+    monkeypatch.setenv(SH_CLIENT_ID_ENV_VAR, "beekeeper")
+    monkeypatch.setenv(SH_CLIENT_SECRET_ENV_VAR, "bees-are-very-friendly")
+
+    config = SHConfig()
+    assert config.sh_client_id == "beekeeper"
+    assert config.sh_client_secret == "bees-are-very-friendly"
+
+
+@pytest.mark.dependency(depends=["test_user_config_is_masked"])
 def test_profiles(restore_config_file: None) -> None:
     config = SHConfig()
     config.instance_id = "beepbeep"
@@ -115,6 +134,21 @@ def test_profiles(restore_config_file: None) -> None:
     assert SHConfig(profile="beep").instance_id == "beepbeep"
     beep_config.save(profile="beep")
     assert SHConfig(profile="beep").instance_id == "bap"
+
+
+@pytest.mark.dependency(depends=["test_user_config_is_masked"])
+def test_profiles_from_env(restore_config_file: None, monkeypatch) -> None:
+    """We use `monkeypatch` to avoid modifying global environment."""
+    config = SHConfig()
+    config.instance_id = "bee"
+    config.save(profile="beekeeper")
+
+    assert SHConfig("beekeeper").instance_id == "bee"
+    assert SHConfig().instance_id == ""
+
+    monkeypatch.setenv(SH_PROFILE_ENV_VAR, "beekeeper")
+    assert SHConfig().instance_id == "bee", "Environment profile is not used."
+    assert SHConfig(profile=DEFAULT_PROFILE).instance_id == "bee", "Environment should override explicit profile."
 
 
 def test_loading_unknown_profile_fails() -> None:
