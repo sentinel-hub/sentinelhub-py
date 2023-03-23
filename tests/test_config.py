@@ -102,6 +102,7 @@ def test_save(restore_config_file: None) -> None:
 
 @pytest.mark.dependency(depends=["test_user_config_is_masked"])
 def test_environment_variables(restore_config_file: None, monkeypatch) -> None:
+    """We use `monkeypatch` to avoid modifying global environment."""
     config = SHConfig()
     config.sh_client_id = "beepbeep"
     config.sh_client_secret = "imasheep"
