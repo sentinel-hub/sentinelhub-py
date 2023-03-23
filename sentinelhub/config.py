@@ -29,9 +29,9 @@ class SHConfig:  # pylint: disable=too-many-instance-attributes
 
         - `instance_id`: An instance ID for Sentinel Hub service used for OGC requests.
         - `sh_client_id`: User's OAuth client ID for Sentinel Hub service. Can be set via SH_CLIENT_ID environment
-          variable.
+          variable. The environment variable has precedence.
         - `sh_client_secret`: User's OAuth client secret for Sentinel Hub service. Can be set via SH_CLIENT_SECRET
-          environment variable.
+          environment variable. The environment variable has precedence.
         - `sh_base_url`: There exist multiple deployed instances of Sentinel Hub service, this parameter defines the
           location of a specific service instance.
         - `sh_auth_base_url`: Base url for Sentinel Hub Authentication service. Authentication is typically sent to the
@@ -117,7 +117,7 @@ class SHConfig:  # pylint: disable=too-many-instance-attributes
         self.download_timeout_seconds: float = 120.0
         self.number_of_download_processes: int = 1
 
-        profile = self._override_with_environment(SH_PROFILE_ENV_VAR, profile)
+        profile = self._override_with_env_var(SH_PROFILE_ENV_VAR, profile)
 
         if not use_defaults:
             # load from config.toml
@@ -126,14 +126,15 @@ class SHConfig:  # pylint: disable=too-many-instance-attributes
                 setattr(self, param, getattr(loaded_instance, param))
 
             # check env
-            self.sh_client_id = self._override_with_environment(SH_CLIENT_ID_ENV_VAR, self.sh_client_id)
-            self.sh_client_secret = self._override_with_environment(SH_CLIENT_SECRET_ENV_VAR, self.sh_client_secret)
+            self.sh_client_id = self._override_with_env_var(SH_CLIENT_ID_ENV_VAR, self.sh_client_id)
+            self.sh_client_secret = self._override_with_env_var(SH_CLIENT_SECRET_ENV_VAR, self.sh_client_secret)
 
     @staticmethod
-    def _override_with_environment(env_var_name: str, default_value: str) -> str:
+    def _override_with_env_var(env_var_name: str, default_value: str) -> str:
         env_value = os.environ.get(env_var_name)
         if env_value is None:
             return default_value
+        # make sure you don't log the value!
         LOGGER.debug("Overriding settings with environment variable %s.", env_var_name)
         return env_value
 
