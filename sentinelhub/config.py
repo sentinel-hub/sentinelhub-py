@@ -5,7 +5,6 @@ from __future__ import annotations
 
 import copy
 import json
-import logging
 import numbers
 import os
 from pathlib import Path
@@ -13,8 +12,6 @@ from typing import Dict, Iterable, Optional, Tuple, Union
 
 import tomli
 import tomli_w
-
-LOGGER = logging.getLogger(__name__)
 
 DEFAULT_PROFILE = "default-profile"
 SH_PROFILE_ENV_VAR = "SH_PROFILE"
@@ -117,7 +114,7 @@ class SHConfig:  # pylint: disable=too-many-instance-attributes
         self.download_timeout_seconds: float = 120.0
         self.number_of_download_processes: int = 1
 
-        profile = self._override_with_env_var(SH_PROFILE_ENV_VAR, profile)
+        profile = os.environ.get(SH_PROFILE_ENV_VAR, default=profile)
 
         if not use_defaults:
             # load from config.toml
@@ -126,17 +123,8 @@ class SHConfig:  # pylint: disable=too-many-instance-attributes
                 setattr(self, param, getattr(loaded_instance, param))
 
             # check env
-            self.sh_client_id = self._override_with_env_var(SH_CLIENT_ID_ENV_VAR, self.sh_client_id)
-            self.sh_client_secret = self._override_with_env_var(SH_CLIENT_SECRET_ENV_VAR, self.sh_client_secret)
-
-    @staticmethod
-    def _override_with_env_var(env_var_name: str, default_value: str) -> str:
-        env_value = os.environ.get(env_var_name)
-        if env_value is None:
-            return default_value
-        # make sure you don't log the value!
-        LOGGER.debug("Overriding settings with environment variable %s.", env_var_name)
-        return env_value
+            self.sh_client_id = os.environ.get(SH_CLIENT_ID_ENV_VAR, default=self.sh_client_id)
+            self.sh_client_secret = os.environ.get(SH_CLIENT_SECRET_ENV_VAR, default=self.sh_client_secret)
 
     def _validate_values(self) -> None:
         """Ensures that the values are aligned with expectations."""
