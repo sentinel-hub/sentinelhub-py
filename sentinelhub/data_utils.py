@@ -1,7 +1,7 @@
 """
 Module with statistics to dataframe transformation.
 """
-from typing import Any, Dict, Generator, List, Optional, Tuple, Union
+from typing import Any, Dict, Iterable, List, Optional, Tuple, Union
 
 from .time_utils import parse_time
 from .types import JsonDict
@@ -150,10 +150,9 @@ def get_failed_statistical_requests(result_data: List[JsonDict]) -> List[JsonDic
     :param result_data: An input representation of (Batch) Statistical API result.
     :return: Failed requests of (Batch) Statistical Results.
     """
+    failed_responses: Iterable[Tuple[Any, Union[str, List[Tuple[str, str]]]]]
     if _is_batch_stat(result_data[0]):
-        failed_responses: Union[enumerate, Generator] = (
-            (result["identifier"], _get_failed_batch_response(result)) for result in result_data
-        )
+        failed_responses = ((result["identifier"], _get_failed_batch_response(result)) for result in result_data)
     else:
         failed_responses = enumerate(
             _FULL_TIME_RANGE if "error" in result else _get_failed_intervals(result["data"]) for result in result_data
