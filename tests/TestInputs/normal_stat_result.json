@@ -1,0 +1,88 @@
+[
+    {
+        "data": [
+            {
+                "interval": {
+                    "from": "2020-06-11T00:00:00Z",
+                    "to": "2020-06-12T00:00:00Z"
+                },
+                "outputs": {
+                    "ndvi": {
+                        "bands": {
+                            "B0": {
+                                "stats": {
+                                    "min": 0.23480869829654694,
+                                    "max": 0.7734549045562744,
+                                    "mean": 0.38401383599010064,
+                                    "stDev": 0.11153442042832748,
+                                    "sampleCount": 112,
+                                    "noDataCount": 3,
+                                    "percentiles": {
+                                        "50.0": 0.3445783257484436
+                                    }
+                                },
+                                "histogram": {
+                                    "bins": [
+                                        {
+                                            "lowEdge": -1.0,
+                                            "highEdge": -0.8,
+                                            "count": 0
+                                        },
+                                        {
+                                            "lowEdge": -0.8,
+                                            "highEdge": -0.6,
+                                            "count": 0
+                                        },
+                                        {
+                                            "lowEdge": -0.6,
+                                            "highEdge": -0.3999999999999999,
+                                            "count": 0
+                                        },
+                                        {
+                                            "lowEdge": -0.3999999999999999,
+                                            "highEdge": -0.19999999999999996,
+                                            "count": 0
+                                        },
+                                        {
+                                            "lowEdge": -0.19999999999999996,
+                                            "highEdge": 0.0,
+                                            "count": 0
+                                        },
+                                        {
+                                            "lowEdge": 0.0,
+                                            "highEdge": 0.20000000000000018,
+                                            "count": 0
+                                        },
+                                        {
+                                            "lowEdge": 0.20000000000000018,
+                                            "highEdge": 0.40000000000000013,
+                                            "count": 68
+                                        },
+                                        {
+                                            "lowEdge": 0.40000000000000013,
+                                            "highEdge": 0.6000000000000001,
+                                            "count": 35
+                                        },
+                                        {
+                                            "lowEdge": 0.6000000000000001,
+                                            "highEdge": 0.8,
+                                            "count": 6
+                                        },
+                                        {
+                                            "lowEdge": 0.8,
+                                            "highEdge": 1.0,
+                                            "count": 0
+                                        }
+                                    ],
+                                    "overflowCount": 0,
+                                    "underflowCount": 0
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        ],
+        "status": "OK"
+    }
+]
