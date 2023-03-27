@@ -19,6 +19,6 @@ from .byoc import ByocCollection, ByocCollectionAdditionalData, ByocCollectionBa
 from .catalog import SentinelHubCatalog
 from .fis import FisRequest
 from .ogc import WcsRequest, WmsRequest
-from .process import SentinelHubRequest
+from .process import AsyncProcessRequest, SentinelHubRequest
 from .statistical import SentinelHubStatistical
 from .wfs import WebFeatureService
