@@ -8,7 +8,7 @@ from ..download import SentinelHubDownloadClient
 from ..geometry import BBox, Geometry
 from ..types import JsonDict
 from .base_request import InputDataDict, SentinelHubBaseApiRequest
-from .utils import S3Specification, _update_other_args, remove_undefined, s3_specification
+from .utils import AccessSpecification, _update_other_args, remove_undefined, s3_specification
 
 
 class SentinelHubRequest(SentinelHubBaseApiRequest):
@@ -149,10 +149,10 @@ class AsyncProcessRequest(SentinelHubBaseApiRequest):
         self,
         *,
         evalscript: Optional[str] = None,
-        evalscript_reference: Optional[S3Specification] = None,
+        evalscript_reference: Optional[AccessSpecification] = None,
         input_data: List[Union[JsonDict, InputDataDict]],
         responses: List[JsonDict],
-        delivery: S3Specification,
+        delivery: AccessSpecification,
         bbox: Optional[BBox] = None,
         geometry: Optional[Geometry] = None,
         size: Optional[Tuple[int, int]] = None,
@@ -202,7 +202,7 @@ class AsyncProcessRequest(SentinelHubBaseApiRequest):
         request_bounds: JsonDict,
         request_data: List[JsonDict],
         evalscript: Optional[str],
-        evalscript_reference: Optional[S3Specification],
+        evalscript_reference: Optional[AccessSpecification],
         request_output: Optional[JsonDict] = None,
         other_args: Optional[JsonDict] = None,
     ) -> JsonDict:
@@ -250,7 +250,7 @@ class AsyncProcessRequest(SentinelHubBaseApiRequest):
     @staticmethod
     def output(
         responses: List[JsonDict],
-        delivery: S3Specification,
+        delivery: AccessSpecification,
         size: Optional[Tuple[int, int]] = None,
         resolution: Optional[Tuple[float, float]] = None,
         other_args: Optional[Dict] = None,
