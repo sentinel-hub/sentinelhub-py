@@ -5,38 +5,22 @@ Module implementing an interface with
 import datetime as dt
 import logging
 from dataclasses import dataclass, field
-from typing import Any, Optional, Sequence, TypedDict, Union
+from typing import Any, Optional, Sequence, Union
 
 from dataclasses_json import CatchAll, LetterCase, Undefined
 from dataclasses_json import config as dataclass_config
 from dataclasses_json import dataclass_json
-from typing_extensions import NotRequired
 
 from ...exceptions import deprecated_function
 from ...types import Json, JsonDict
 from ..base_request import InputDataDict
 from ..statistical import SentinelHubStatistical
-from ..utils import datetime_config, enum_config, remove_undefined
+from ..utils import AccessSpecification, datetime_config, enum_config, remove_undefined, s3_specification
 from .base import BaseBatchClient, BaseBatchRequest, BatchRequestStatus, BatchUserAction
 
 LOGGER = logging.getLogger(__name__)
 
 BatchStatisticalRequestType = Union[str, dict, "BatchStatisticalRequest"]
-
-
-class S3Specification(TypedDict):
-    """Specification of a S3 path."""
-
-    url: str
-    accessKey: str
-    secretAccessKey: str
-    region: NotRequired[str]
-
-
-class AccessSpecification(TypedDict):
-    """Specification of a S3 input or output."""
-
-    s3: S3Specification
 
 
 class SentinelHubBatchStatistical(BaseBatchClient["BatchStatisticalRequest"]):
@@ -45,6 +29,8 @@ class SentinelHubBatchStatistical(BaseBatchClient["BatchStatisticalRequest"]):
     Check `Batch Statistical API <https://docs.sentinel-hub.com/api/latest/reference/#tag/batch_statistical>`__ for more
     information.
     """
+
+    s3_specification = s3_specification
 
     @staticmethod
     def _get_service_url(base_url: str) -> str:
@@ -105,24 +91,6 @@ class SentinelHubBatchStatistical(BaseBatchClient["BatchStatisticalRequest"]):
             output=output,
             **kwargs,
         )
-
-    @staticmethod
-    def s3_specification(
-        url: str, access_key: str, secret_access_key: str, region: Optional[str] = None
-    ) -> AccessSpecification:
-        """A helper method to build a dictionary used for specifying S3 paths
-
-        :param url: A URL pointing to an S3 bucket or an object in an S3 bucket.
-        :param access_key: AWS access key that allows programmatic access to the S3 bucket specified in the `url` field.
-        :param secret_access_key: AWS secret access key which must correspond to the AWS access key.
-        :param region: The region where the S3 bucket is located. If omitted, the region of the Sentinel Hub deployment
-            that the request is submitted to is assumed.
-        :return: A dictionary of S3 specifications used by the Batch Statistical API
-        """
-        s3_access: S3Specification = {"url": url, "accessKey": access_key, "secretAccessKey": secret_access_key}
-        if region is not None:
-            s3_access["region"] = region
-        return {"s3": s3_access}
 
     def get_request(self, batch_request: BatchStatisticalRequestType) -> "BatchStatisticalRequest":
         """Collects information about a single batch request
