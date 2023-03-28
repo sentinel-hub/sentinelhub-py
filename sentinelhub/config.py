@@ -5,10 +5,10 @@ from __future__ import annotations
 
 import copy
 import json
-import numbers
 import os
+from dataclasses import asdict, dataclass
 from pathlib import Path
-from typing import Dict, Optional, Tuple, Union
+from typing import Any, Dict, Optional, Union
 
 import tomli
 import tomli_w
@@ -19,7 +19,37 @@ SH_CLIENT_ID_ENV_VAR = "SH_CLIENT_ID"
 SH_CLIENT_SECRET_ENV_VAR = "SH_CLIENT_SECRET"
 
 
-class SHConfig:  # pylint: disable=too-many-instance-attributes
+@dataclass(repr=False)
+class _SHConfig:
+    instance_id: str = ""
+    sh_client_id: str = ""
+    sh_client_secret: str = ""
+    sh_base_url: str = "https://services.sentinel-hub.com"
+    sh_auth_base_url: str = "https://services.sentinel-hub.com"
+    geopedia_wms_url: str = "https://service.geopedia.world"
+    geopedia_rest_url: str = "https://www.geopedia.world/rest"
+    aws_access_key_id: str = ""
+    aws_secret_access_key: str = ""
+    aws_session_token: str = ""
+    aws_metadata_url: str = "https://roda.sentinel-hub.com"
+    aws_s3_l1c_bucket: str = "sentinel-s2-l1c"
+    aws_s3_l2a_bucket: str = "sentinel-s2-l2a"
+    opensearch_url: str = "http://opensearch.sentinel-hub.com/resto/api/collections/Sentinel2"
+    max_wfs_records_per_query: int = 100
+    max_opensearch_records_per_query: int = 500  # pylint: disable=invalid-name
+    max_download_attempts: int = 4
+    download_sleep_time: float = 5.0
+    download_timeout_seconds: float = 120.0
+    number_of_download_processes: int = 1
+
+    def __post_init__(self) -> None:
+        if self.max_wfs_records_per_query > 100:
+            raise ValueError("Value of config parameter `max_wfs_records_per_query` must be at most 100")
+        if self.max_opensearch_records_per_query > 500:
+            raise ValueError("Value of config parameter `max_opensearch_records_per_query` must be at most 500")
+
+
+class SHConfig(_SHConfig):  # pylint: disable=too-many-instance-attributes
     """A sentinelhub-py package configuration class.
 
     The class reads the configurable settings from ``config.toml`` file on initialization:
@@ -69,82 +99,25 @@ class SHConfig:  # pylint: disable=too-many-instance-attributes
         "aws_secret_access_key",
         "aws_session_token",
     )
-    OTHER_PARAMS = (
-        "sh_base_url",
-        "sh_auth_base_url",
-        "geopedia_wms_url",
-        "geopedia_rest_url",
-        "aws_metadata_url",
-        "aws_s3_l1c_bucket",
-        "aws_s3_l2a_bucket",
-        "opensearch_url",
-        "max_wfs_records_per_query",
-        "max_opensearch_records_per_query",
-        "max_download_attempts",
-        "download_sleep_time",
-        "download_timeout_seconds",
-        "number_of_download_processes",
-    )
 
-    def __init__(self, profile: str = DEFAULT_PROFILE, *, use_defaults: bool = False):
+    def __init__(self, profile: str = DEFAULT_PROFILE, *, use_defaults: bool = False, **kwargs: Any):
         """
         :param profile: Specifies which profile to load form the configuration file. The environment variable
             SH_USER_PROFILE has precedence.
         :param use_defaults: Does not load the configuration file, returns config object with defaults only.
         """
-
-        self.instance_id: str = ""
-        self.sh_client_id: str = ""
-        self.sh_client_secret: str = ""
-        self.sh_base_url: str = "https://services.sentinel-hub.com"
-        self.sh_auth_base_url: str = "https://services.sentinel-hub.com"
-        self.geopedia_wms_url: str = "https://service.geopedia.world"
-        self.geopedia_rest_url: str = "https://www.geopedia.world/rest"
-        self.aws_access_key_id: str = ""
-        self.aws_secret_access_key: str = ""
-        self.aws_session_token: str = ""
-        self.aws_metadata_url: str = "https://roda.sentinel-hub.com"
-        self.aws_s3_l1c_bucket: str = "sentinel-s2-l1c"
-        self.aws_s3_l2a_bucket: str = "sentinel-s2-l2a"
-        self.opensearch_url: str = "http://opensearch.sentinel-hub.com/resto/api/collections/Sentinel2"
-        self.max_wfs_records_per_query: int = 100
-        self.max_opensearch_records_per_query: int = 500  # pylint: disable=invalid-name
-        self.max_download_attempts: int = 4
-        self.download_sleep_time: float = 5.0
-        self.download_timeout_seconds: float = 120.0
-        self.number_of_download_processes: int = 1
-
         profile = os.environ.get(SH_PROFILE_ENV_VAR, default=profile)
 
         if not use_defaults:
             # load from config.toml
             loaded_instance = SHConfig.load(profile=profile)  # user parameters validated in here already
-            for param in SHConfig.get_params():
-                setattr(self, param, getattr(loaded_instance, param))
+            kwargs.update(asdict(loaded_instance))
 
             # check env
-            self.sh_client_id = os.environ.get(SH_CLIENT_ID_ENV_VAR, default=self.sh_client_id)
-            self.sh_client_secret = os.environ.get(SH_CLIENT_SECRET_ENV_VAR, default=self.sh_client_secret)
+            kwargs["sh_client_id"] = os.environ.get(SH_CLIENT_ID_ENV_VAR, default=kwargs["sh_client_id"])
+            kwargs["sh_client_secret"] = os.environ.get(SH_CLIENT_SECRET_ENV_VAR, default=kwargs["sh_client_secret"])
 
-    def _validate_values(self) -> None:
-        """Ensures that the values are aligned with expectations."""
-        default = SHConfig(use_defaults=True)
-
-        for param in self.get_params():
-            value = getattr(self, param)
-            default_value = getattr(default, param)
-            param_type = type(default_value)
-
-            if isinstance(value, str) and value.startswith("http"):
-                value = value.rstrip("/")
-            if (param_type is float) and isinstance(value, numbers.Number):
-                continue
-            if not isinstance(value, param_type):
-                raise ValueError(f"Value of parameter `{param}` must be of type {param_type.__name__}")
-        if self.max_wfs_records_per_query > 100:
-            raise ValueError("Value of config parameter `max_wfs_records_per_query` must be at most 100")
-        if self.max_opensearch_records_per_query > 500:
-            raise ValueError("Value of config parameter `max_opensearch_records_per_query` must be at most 500")
+        super().__init__(**kwargs)
 
     def __str__(self) -> str:
         """Content of SHConfig in json schema. Credentials are masked for safety."""
@@ -156,12 +129,6 @@ class SHConfig:  # pylint: disable=too-many-instance-attributes
         content = ",\n  ".join(f"{key}={repr(value)}" for key, value in config_dict.items())
         return f"{self.__class__.__name__}(\n  {content},\n)"
 
-    def __eq__(self, other: object) -> bool:
-        """Two instances of `SHConfig` are equal if all values of their parameters are equal."""
-        if not isinstance(other, SHConfig):
-            return False
-        return all(getattr(self, param) == getattr(other, param) for param in self.get_params())
-
     @classmethod
     def load(cls, filename: Optional[str] = None, profile: str = DEFAULT_PROFILE) -> SHConfig:
         """Loads configuration parameters from a file. If a filename is not specified the configuration is loaded from
@@ -170,13 +137,10 @@ class SHConfig:  # pylint: disable=too-many-instance-attributes
         :param filename: Optional path of the configuration file to be loaded.
         :param profile: Which profile to load from the configuration file.
         """
-        config = cls(use_defaults=True)
-
         if filename is None:
             filename = cls.get_config_location()
             if not os.path.exists(filename):  # nothing to load from disk
-                config.save(profile)  # store default configuration to standard location
-                return config
+                cls(use_defaults=True).save(profile)  # store default configuration to standard location
 
         with open(filename, "rb") as cfg_file:
             configurations_dict = tomli.load(cfg_file)
@@ -184,13 +148,7 @@ class SHConfig:  # pylint: disable=too-many-instance-attributes
         if profile not in configurations_dict:
             raise KeyError(f"Profile {profile} not found in configuration file.")
 
-        config_fields = cls.get_params()
-        for param, value in configurations_dict[profile].items():
-            if param in config_fields:
-                setattr(config, param, value)
-
-        config._validate_values()
-        return config
+        return cls(use_defaults=True, **configurations_dict[profile])
 
     def save(self, filename: Optional[str] = None, profile: str = DEFAULT_PROFILE) -> None:
         """Saves configuration parameters to the user settings in the `config.toml` file.  If a filename is not
@@ -199,8 +157,6 @@ class SHConfig:  # pylint: disable=too-many-instance-attributes
         :param filename: Optional path of the configuration file to be saved.
         :param profile: Under which profile to save the configuration.
         """
-        self._validate_values()
-
         file_path = Path(filename or self.get_config_location())
         file_path.parent.mkdir(parents=True, exist_ok=True)
 
@@ -224,18 +180,13 @@ class SHConfig:  # pylint: disable=too-many-instance-attributes
         """Makes a copy of an instance of `SHConfig`"""
         return copy.copy(self)
 
-    @classmethod
-    def get_params(cls) -> Tuple[str, ...]:
-        """Returns a list of parameter names."""
-        return cls.CREDENTIALS + cls.OTHER_PARAMS
-
     def to_dict(self, mask_credentials: bool = True) -> Dict[str, Union[str, float]]:
         """Get a dictionary representation of the `SHConfig` class.
 
         :param hide_credentials: Wether to mask fields containing credentials.
         :return: A dictionary with configuration parameters
         """
-        config_params = {param: getattr(self, param) for param in self.get_params()}
+        config_params = asdict(self)
 
         if mask_credentials:
             for param in self.CREDENTIALS:
