@@ -1,5 +1,4 @@
-"""
-A module that tests an interface for Sentinel Hub Batch processing
+""" Tests for the Async Process API requests
 """
 import datetime as dt
 
@@ -12,8 +11,8 @@ from sentinelhub.api.process import AsyncProcessRequest
 pytestmark = pytest.mark.sh_integration
 
 
-def test_create_and_run_batch_request(requests_mock: Mocker) -> None:
-    """A test that mocks creation and execution of a new batch request"""
+def test_async_process_request_response(requests_mock: Mocker) -> None:
+    """A test that mocks the response of the async process request."""
     evalscript = "some evalscript"
     time_interval = dt.date(year=2020, month=6, day=1), dt.date(year=2020, month=6, day=10)
     bbox = BBox((14.0, 45.8, 14.2, 46.0), crs=CRS.WGS84)
