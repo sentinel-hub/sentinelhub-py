@@ -7,7 +7,7 @@ import requests
 from requests_mock import Mocker
 
 from sentinelhub import CRS, BBox, DataCollection, MimeType, SentinelHubRequest, SHConfig
-from sentinelhub.api.process import AsyncProcessRequest, which_async_requests_are_running
+from sentinelhub.api.process import AsyncProcessRequest, get_async_running_status
 
 pytestmark = pytest.mark.sh_integration
 
@@ -59,5 +59,5 @@ def test_which_async_requests_running(requests_mock: Mocker, config: SHConfig) -
             f"/api/v1/async/process/{request_id}", exc=requests.exceptions.HTTPError(response=response_404)
         )
 
-    results = which_async_requests_are_running("abcde", config=config)
+    results = get_async_running_status("abcde", config=config)
     assert results == {"a": True, "c": True, "d": True, "b": False, "e": False}

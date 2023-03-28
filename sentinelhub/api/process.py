@@ -290,7 +290,7 @@ class AsyncProcessRequest(SentinelHubBaseApiRequest):
         return request_output
 
 
-def which_async_requests_are_running(ids: Iterable[str], config: Optional[SHConfig] = None) -> Dict[str, bool]:
+def get_async_running_status(ids: Iterable[str], config: Optional[SHConfig] = None) -> Dict[str, bool]:
     """Returns a mapping that describes which requests are running.
 
     :param ids: A collection of async request IDs.
