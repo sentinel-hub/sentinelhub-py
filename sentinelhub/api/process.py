@@ -143,6 +143,12 @@ class SentinelHubRequest(SentinelHubBaseApiRequest):
 
 
 class AsyncProcessRequest(SentinelHubBaseApiRequest):
+    """Sentinel Hub Async Process API interface
+
+    For more information check
+    `Async Process API documentation <https://docs.sentinel-hub.com/api/latest/api/async-process/>`__.
+    """
+
     _SERVICE_ENDPOINT = "async/process"
 
     def __init__(
