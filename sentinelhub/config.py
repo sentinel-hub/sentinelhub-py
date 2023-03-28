@@ -49,7 +49,7 @@ class _SHConfig:
             raise ValueError("Value of config parameter `max_opensearch_records_per_query` must be at most 500")
 
 
-class SHConfig(_SHConfig):  # pylint: disable=too-many-instance-attributes
+class SHConfig(_SHConfig):
     """A sentinelhub-py package configuration class.
 
     The class reads the configurable settings from ``config.toml`` file on initialization:
