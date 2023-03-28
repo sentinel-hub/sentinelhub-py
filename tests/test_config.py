@@ -98,7 +98,18 @@ def test_environment_variables(restore_config_file: None, monkeypatch) -> None:
     assert config.sh_client_secret == "bees-are-very-friendly"
 
 
-# @pytest.mark.dependency(depends=["test_user_config_is_masked"])
+@pytest.mark.dependency(depends=["test_user_config_is_masked"])
+def test_initialization_with_params(monkeypatch) -> None:
+    loaded_config = SHConfig()
+    monkeypatch.setenv(SH_CLIENT_ID_ENV_VAR, "beekeeper")
+
+    config = SHConfig(sh_client_id="me", instance_id="beep", geopedia_wms_url="123")
+    assert config.instance_id == "beep"
+    assert config.geopedia_wms_url != loaded_config.geopedia_wms_url, "Does not override settings from config.toml"
+    assert config.sh_client_id == "beekeeper", "Overrides environment."
+
+
+@pytest.mark.dependency(depends=["test_user_config_is_masked"])
 def test_profiles(restore_config_file: None) -> None:
     config = SHConfig()
     config.instance_id = "beepbeep"

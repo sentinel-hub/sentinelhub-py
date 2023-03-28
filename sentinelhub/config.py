@@ -81,14 +81,7 @@ class SHConfig(_SHConfig):  # pylint: disable=too-many-instance-attributes
         - `download_timeout_seconds`: Maximum number of seconds before download attempt is canceled.
         - `number_of_download_processes`: Number of download processes, used to calculate rate-limit sleep time.
 
-    For manual modification of `config.toml` you can see the expected location of the file via
-    `SHConfig.get_config_location()`.
-
-    Usage in the code:
-
-        * ``SHConfig().sh_base_url``
-        * ``SHConfig().instance_id``
-
+    The location of `config.toml` for manual modification can be found with `SHConfig.get_config_location()`.
     """
 
     CREDENTIALS = (
@@ -105,13 +98,15 @@ class SHConfig(_SHConfig):  # pylint: disable=too-many-instance-attributes
         :param profile: Specifies which profile to load form the configuration file. The environment variable
             SH_USER_PROFILE has precedence.
         :param use_defaults: Does not load the configuration file, returns config object with defaults only.
+        :param kwargs: Any fields of SHConfig to be updated. Overrides settings from `config.toml` but not the
+          credentials set in the environment.
         """
         profile = os.environ.get(SH_PROFILE_ENV_VAR, default=profile)
 
         if not use_defaults:
             # load from config.toml
-            loaded_instance = SHConfig.load(profile=profile)  # user parameters validated in here already
-            kwargs.update(asdict(loaded_instance))
+            loaded_kwargs = SHConfig.load(profile=profile).to_dict(mask_credentials=False)
+            kwargs = {**loaded_kwargs, **kwargs}  # a "returning" version of `loaded_kwargs.update(kwargs)`
 
             # check env
             kwargs["sh_client_id"] = os.environ.get(SH_CLIENT_ID_ENV_VAR, default=kwargs["sh_client_id"])
@@ -120,11 +115,11 @@ class SHConfig(_SHConfig):  # pylint: disable=too-many-instance-attributes
         super().__init__(**kwargs)
 
     def __str__(self) -> str:
-        """Content of SHConfig in json schema. Credentials are masked for safety."""
+        """Content of `SHConfig` in json schema. Credentials are masked for safety."""
         return json.dumps(self.to_dict(mask_credentials=True), indent=2)
 
     def __repr__(self) -> str:
-        """Representation of SHConfig parameters. Credentials are masked for safety."""
+        """Representation of `SHConfig`. Credentials are masked for safety."""
         config_dict = self.to_dict(mask_credentials=True)
         content = ",\n  ".join(f"{key}={repr(value)}" for key, value in config_dict.items())
         return f"{self.__class__.__name__}(\n  {content},\n)"
