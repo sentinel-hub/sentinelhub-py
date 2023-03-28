@@ -290,8 +290,13 @@ class AsyncProcessRequest(SentinelHubBaseApiRequest):
         return request_output
 
 
-def which_async_requests_running(ids: Iterable[str], config: Optional[SHConfig] = None) -> Dict[str, bool]:
-    """Returns a mapping that describes which requests are running."""
+def which_async_requests_are_running(ids: Iterable[str], config: Optional[SHConfig] = None) -> Dict[str, bool]:
+    """Returns a mapping that describes which requests are running.
+
+    :param ids: A collection of async request IDs.
+    :param config: A custom instance of config class to override parameters from the saved configuration.
+    :return: A mapping that specifies whether a process is running for each of the IDs.
+    """
     config = config or SHConfig()
     client = SentinelHubDownloadClient(config=config)
     result = {}
