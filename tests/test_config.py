@@ -105,8 +105,8 @@ def test_initialization_with_params(monkeypatch) -> None:
 
     config = SHConfig(sh_client_id="me", instance_id="beep", geopedia_wms_url="123")
     assert config.instance_id == "beep"
-    assert config.geopedia_wms_url != loaded_config.geopedia_wms_url, "Does not override settings from config.toml"
-    assert config.sh_client_id == "beekeeper", "Overrides environment."
+    assert config.geopedia_wms_url != loaded_config.geopedia_wms_url, "Should override settings from config.toml"
+    assert config.sh_client_id == "me", "Should override environment variable."
 
 
 @pytest.mark.dependency(depends=["test_user_config_is_masked"])
@@ -142,7 +142,7 @@ def test_profiles_from_env(restore_config_file: None, monkeypatch) -> None:
 
     monkeypatch.setenv(SH_PROFILE_ENV_VAR, "beekeeper")
     assert SHConfig().instance_id == "bee", "Environment profile is not used."
-    assert SHConfig(profile=DEFAULT_PROFILE).instance_id == "bee", "Environment should override explicit profile."
+    assert SHConfig(profile=DEFAULT_PROFILE).instance_id == "", "Explicit profile overrides environment."
 
 
 def test_loading_unknown_profile_fails() -> None:

@@ -8,7 +8,7 @@ import json
 import os
 from dataclasses import asdict, dataclass
 from pathlib import Path
-from typing import Any, Dict, Union
+from typing import Any, Dict, Optional, Union
 
 import tomli
 import tomli_w
@@ -93,24 +93,27 @@ class SHConfig(_SHConfig):
         "aws_session_token",
     )
 
-    def __init__(self, profile: str = DEFAULT_PROFILE, *, use_defaults: bool = False, **kwargs: Any):
+    def __init__(self, profile: Optional[str] = None, *, use_defaults: bool = False, **kwargs: Any):
         """
-        :param profile: Specifies which profile to load from the configuration file. The environment variable
-            SH_USER_PROFILE has precedence.
+        :param profile: Specifies which profile to load from the configuration file. Has precedence over the environment
+            variable `SH_USER_PROFILE`.
         :param use_defaults: Does not load the configuration file, returns config object with defaults only.
-        :param kwargs: Any fields of SHConfig to be updated. Overrides settings from `config.toml` but not the
-          credentials set in the environment.
+        :param kwargs: Any fields of `SHConfig` to be updated. Overrides settings from `config.toml` and environment.
         """
-        profile = os.environ.get(SH_PROFILE_ENV_VAR, default=profile)
+        if profile is None:
+            profile = os.environ.get(SH_PROFILE_ENV_VAR, default=DEFAULT_PROFILE)
 
         if not use_defaults:
+            env_kwargs = {
+                "sh_client_id": os.environ.get(SH_CLIENT_ID_ENV_VAR),
+                "sh_client_secret": os.environ.get(SH_CLIENT_SECRET_ENV_VAR),
+            }
+            env_kwargs = {k: v for k, v in env_kwargs.items() if v is not None}
+
             # load from config.toml
             loaded_kwargs = SHConfig.load(profile=profile).to_dict(mask_credentials=False)
-            kwargs = {**loaded_kwargs, **kwargs}  # a "returning" version of `loaded_kwargs.update(kwargs)`
 
-            # check env
-            kwargs["sh_client_id"] = os.environ.get(SH_CLIENT_ID_ENV_VAR, default=kwargs["sh_client_id"])
-            kwargs["sh_client_secret"] = os.environ.get(SH_CLIENT_SECRET_ENV_VAR, default=kwargs["sh_client_secret"])
+            kwargs = {**loaded_kwargs, **env_kwargs, **kwargs}  # precedence: init params > env > loaded
 
         super().__init__(**kwargs)
 
