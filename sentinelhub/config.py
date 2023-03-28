@@ -8,7 +8,7 @@ import json
 import numbers
 import os
 from pathlib import Path
-from typing import Dict, Optional, Tuple, Union
+from typing import Dict, Tuple, Union
 
 import tomli
 import tomli_w
@@ -163,20 +163,16 @@ class SHConfig:  # pylint: disable=too-many-instance-attributes
         return all(getattr(self, param) == getattr(other, param) for param in self.get_params())
 
     @classmethod
-    def load(cls, filename: Optional[str] = None, profile: str = DEFAULT_PROFILE) -> SHConfig:
-        """Loads configuration parameters from a file. If a filename is not specified the configuration is loaded from
-        the location specified by `SHConfig.get_config_location()`.
+    def load(cls, profile: str = DEFAULT_PROFILE) -> SHConfig:
+        """Loads configuration parameters from the config file at `SHConfig.get_config_location()`.
 
-        :param filename: Optional path of the configuration file to be loaded.
         :param profile: Which profile to load from the configuration file.
         """
         config = cls(use_defaults=True)
 
-        if filename is None:
-            filename = cls.get_config_location()
-            if not os.path.exists(filename):  # nothing to load from disk
-                config.save(profile)  # store default configuration to standard location
-                return config
+        filename = cls.get_config_location()
+        if not os.path.exists(filename):
+            config.save(profile)  # store default configuration to standard location
 
         with open(filename, "rb") as cfg_file:
             configurations_dict = tomli.load(cfg_file)
@@ -192,16 +188,14 @@ class SHConfig:  # pylint: disable=too-many-instance-attributes
         config._validate_values()
         return config
 
-    def save(self, filename: Optional[str] = None, profile: str = DEFAULT_PROFILE) -> None:
-        """Saves configuration parameters to the user settings in the `config.toml` file.  If a filename is not
-        specified, the configuration is saved to the location specified by `SHConfig.get_config_location()`.
+    def save(self, profile: str = DEFAULT_PROFILE) -> None:
+        """Saves configuration parameters to the config file at `SHConfig.get_config_location()`.
 
-        :param filename: Optional path of the configuration file to be saved.
         :param profile: Under which profile to save the configuration.
         """
         self._validate_values()
 
-        file_path = Path(filename or self.get_config_location())
+        file_path = Path(self.get_config_location())
         file_path.parent.mkdir(parents=True, exist_ok=True)
 
         if file_path.exists():
