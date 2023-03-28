@@ -1,8 +1,13 @@
 """
 Implementation of `Sentinel Hub Process API interface <https://docs.sentinel-hub.com/api/latest/api/process/>`__.
 """
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, Iterable, List, Optional, Tuple, Union
 
+import requests
+
+from sentinelhub.exceptions import DownloadFailedException
+
+from ..config import SHConfig
 from ..constants import MimeType
 from ..download import SentinelHubDownloadClient
 from ..geometry import BBox, Geometry
@@ -29,7 +34,7 @@ class SentinelHubRequest(SentinelHubBaseApiRequest):
         geometry: Optional[Geometry] = None,
         size: Optional[Tuple[int, int]] = None,
         resolution: Optional[Tuple[float, float]] = None,
-        **kwargs: Any
+        **kwargs: Any,
     ):
         """
         For details of certain parameters check the
@@ -163,7 +168,7 @@ class AsyncProcessRequest(SentinelHubBaseApiRequest):
         geometry: Optional[Geometry] = None,
         size: Optional[Tuple[int, int]] = None,
         resolution: Optional[Tuple[float, float]] = None,
-        **kwargs: Any
+        **kwargs: Any,
     ):
         """
         For details of certain parameters check the
@@ -283,3 +288,24 @@ class AsyncProcessRequest(SentinelHubBaseApiRequest):
             _update_other_args(request_output, other_args)
 
         return request_output
+
+
+def which_async_requests_running(ids: Iterable[str], config: Optional[SHConfig] = None) -> Dict[str, bool]:
+    """Returns a mapping that describes which requests are running."""
+    config = config or SHConfig()
+    client = SentinelHubDownloadClient(config=config)
+    result = {}
+    for request_id in ids:
+        try:
+            client.get_json_dict(f"{config.sh_base_url}/api/v1/async/process/{request_id}", use_session=True)
+            # A successful request means it's running
+            result[request_id] = True
+        except DownloadFailedException as exception:
+            code_not_found = requests.status_codes.codes.NOT_FOUND
+            # A 404 means it's not running
+            if exception.request_exception and exception.request_exception.response.status_code == code_not_found:
+                result[request_id] = False
+            else:
+                raise exception from exception
+
+    return result
