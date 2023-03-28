@@ -71,10 +71,6 @@ def test_save(restore_config_file: None) -> None:
     config = SHConfig()
     old_value = config.download_timeout_seconds
 
-    config.download_timeout_seconds = "abcd"  # type: ignore[assignment]
-    with pytest.raises(ValueError):
-        config.save()
-
     new_value = 150.5
     config.download_timeout_seconds = new_value
 
@@ -103,9 +99,21 @@ def test_environment_variables(restore_config_file: None, monkeypatch) -> None:
 
 
 @pytest.mark.dependency(depends=["test_user_config_is_masked"])
+def test_initialization_with_params(monkeypatch) -> None:
+    loaded_config = SHConfig()
+    monkeypatch.setenv(SH_CLIENT_ID_ENV_VAR, "beekeeper")
+
+    config = SHConfig(sh_client_id="me", instance_id="beep", geopedia_wms_url="123")
+    assert config.instance_id == "beep"
+    assert config.geopedia_wms_url != loaded_config.geopedia_wms_url, "Should override settings from config.toml"
+    assert config.sh_client_id == "me", "Should override environment variable."
+
+
+@pytest.mark.dependency(depends=["test_user_config_is_masked"])
 def test_profiles(restore_config_file: None) -> None:
     config = SHConfig()
     config.instance_id = "beepbeep"
+    config.sh_client_id = "beepbeep"  # also some tests with a credentials field
     config.save(profile="beep")
 
     config.instance_id = "boopboop"
@@ -116,10 +124,10 @@ def test_profiles(restore_config_file: None) -> None:
     assert SHConfig.load(profile="boop").instance_id == "boopboop"
 
     # save an existing profile
-    beep_config.instance_id = "bap"
-    assert SHConfig(profile="beep").instance_id == "beepbeep"
+    beep_config.sh_client_id = "bap"
+    assert SHConfig(profile="beep").sh_client_id == "beepbeep"
     beep_config.save(profile="beep")
-    assert SHConfig(profile="beep").instance_id == "bap"
+    assert SHConfig(profile="beep").sh_client_id == "bap"
 
 
 @pytest.mark.dependency(depends=["test_user_config_is_masked"])
@@ -134,7 +142,7 @@ def test_profiles_from_env(restore_config_file: None, monkeypatch) -> None:
 
     monkeypatch.setenv(SH_PROFILE_ENV_VAR, "beekeeper")
     assert SHConfig().instance_id == "bee", "Environment profile is not used."
-    assert SHConfig(profile=DEFAULT_PROFILE).instance_id == "bee", "Environment should override explicit profile."
+    assert SHConfig(profile=DEFAULT_PROFILE).instance_id == "", "Explicit profile overrides environment."
 
 
 def test_loading_unknown_profile_fails() -> None:
@@ -175,8 +183,9 @@ def test_config_repr() -> None:
     assert config.instance_id not in config_repr, "Credentials are not masked properly."
     assert "*" * 16 + "a" * 4 in config_repr, "Credentials are not masked properly."
 
-    for param in SHConfig.OTHER_PARAMS:
-        assert f"{param}={repr(getattr(config, param))}" in config_repr
+    for param in config.to_dict():
+        if param not in SHConfig.CREDENTIALS:
+            assert f"{param}={repr(getattr(config, param))}" in config_repr
 
 
 @pytest.mark.dependency(depends=["test_user_config_is_masked"])
@@ -188,7 +197,6 @@ def test_transformation_to_dict(hide_credentials: bool) -> None:
 
     config_dict = config.to_dict(hide_credentials)
     assert isinstance(config_dict, dict)
-    assert tuple(config_dict) == config.get_params()
 
     if hide_credentials:
         assert config_dict["sh_client_secret"] == "*" * 11 + "x" * 4

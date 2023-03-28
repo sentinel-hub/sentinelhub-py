@@ -20,7 +20,7 @@ OUTPUT_FOLDER = get_output_folder(__file__)
 
 def pytest_configure(config: Config) -> None:
     shconfig = SHConfig()
-    for param in shconfig.get_params():
+    for param in shconfig.to_dict():
         env_variable = param.upper()
         if os.environ.get(env_variable):
             setattr(shconfig, param, os.environ.get(env_variable))
