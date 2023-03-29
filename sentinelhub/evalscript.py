@@ -74,7 +74,7 @@ def generate_evalscript(
 
     :param data_collection: A collection of requested satellite data.
     :param bands: A list of band names to use in the evalscript. Defaults to using all bands provided by the collection.
-    :param bands: A list of meta band names to use in the evalscript. By default no meta bands are added.
+    :param meta_bands: A list of meta band names to use in the evalscript. By default no meta bands are added.
     :param merged_output: If provided, bands will be concatenated into a single multi-band tiff with this name.
     :param use_dn: Use DN units if possible. Default is True. If DN units are not available, the default units for each
         specific band are used. DN units will be used regardless of the flag if they are the only possible choice.
