@@ -1,3 +1,109 @@
+[build-system]
+requires = ['hatchling']
+build-backend = 'hatchling.build'
+
+[tool.hatch.version]
+path = 'sentinelhub/_version.py'
+
+[tool.hatch.build.targets.sdist]
+include = ['/README.md', '/LICENSE.md', '/sentinelhub']
+
+[project]
+name = "sentinelhub"
+dynamic = ["version"]
+description = "Python API for Sentinel Hub"
+readme = "README.md"
+requires-python = ">= 3.8"
+license = { file = "LICENSE.md" }
+authors = [
+    { name = "Sinergise EO research team", email = "eoresearch@sinergise.com" },
+]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Education",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: MacOS",
+    "Operating System :: Microsoft :: Windows",
+    "Operating System :: Unix",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Topic :: Scientific/Engineering",
+    "Topic :: Software Development",
+]
+dependencies = [
+    "aenum>=2.1.4",
+    "click",
+    "dataclasses-json",
+    "numpy",
+    "oauthlib",
+    "pillow>=9.2.0",
+    "pyproj>=2.2.0",
+    "python-dateutil",
+    "requests>=2.27.0",
+    "requests-oauthlib>=1.0.0",
+    "shapely",
+    "tifffile>=2020.9.30",
+    "tomli",
+    "tomli_w",
+    "tqdm",
+    "typing-extensions",
+    "utm",
+]
+
+[project.optional-dependencies]
+docs = [
+    "docutils",
+    "ipython",
+    "matplotlib",
+    "nbsphinx",
+    "sphinx",
+    "sphinx_mdinclude",
+    "sphinx_rtd_theme",
+]
+dev = [
+    "basemap",
+    "boto3-stubs>=1.20.0",
+    "build",
+    "click>=8.0.0",
+    "codecov",
+    "fs",
+    "mypy>=0.990",
+    "moto",
+    "pandas",
+    "pre-commit",
+    "pylint>=2.14.0",
+    "pytest>=4.0.0",
+    "pytest-cov",
+    "pytest-dependency",
+    "pytest-lazy-fixture",
+    "pytest-mock",
+    "ray[default]",
+    "requests-mock",
+    "twine",
+    "types-python-dateutil",
+    "types-requests",
+    "types-urllib3",
+]
+aws = ["boto3", "botocore"]
+
+[project.urls]
+Homepage = "https://github.com/sentinel-hub/sentinelhub-py"
+Documentation = "https://sentinelhub-py.readthedocs.io"
+Issues = "https://github.com/sentinel-hub/sentinelhub-py/issues"
+Source = "https://github.com/sentinel-hub/sentinelhub-py"
+Forum = "https://forum.sentinel-hub.com"
+
+[project.scripts]
+"sentinelhub" = "sentinelhub.commands:main_help"
+"sentinelhub.aws" = "sentinelhub.aws.commands:aws"
+"sentinelhub.config" = "sentinelhub.commands:config"
+"sentinelhub.download" = "sentinelhub.commands:download"
+
 [tool.black]
 line-length = 120
 preview = true
@@ -21,7 +127,7 @@ disable = [
     "invalid-unary-operand-type",
     "unspecified-encoding",
     "unnecessary-ellipsis",
-    "use-dict-literal"
+    "use-dict-literal",
 ]
 
 [tool.pylint.design]
@@ -40,18 +146,14 @@ valid-metaclass-classmethod-first-arg = "mcs"
 markers = [
     "aws_integration: marks AWS integration tests.",
     "geopedia_integration: marks Geopedia integration tests.",
-    "sh_integration: marks Sentinel Hub integration tests."
+    "sh_integration: marks Sentinel Hub integration tests.",
 ]
 
 [tool.coverage.run]
-source = [
-    "sentinelhub"
-]
+source = ["sentinelhub"]
 
 [tool.coverage.report]
-omit = [
-    ".utmzones.geojson"
-]
+omit = [".utmzones.geojson"]
 
 [tool.mypy]
 follow_imports = "normal"
@@ -68,6 +170,4 @@ strict_equality = true
 pretty = true
 
 [tool.nbqa.addopts]
-flake8 = [
-    "--extend-ignore=E402"
-]
+flake8 = ["--extend-ignore=E402"]
