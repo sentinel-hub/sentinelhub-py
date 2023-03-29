@@ -1,7 +1,0 @@
-docutils
-ipython
-matplotlib
-nbsphinx
-sphinx
-sphinx_mdinclude
-sphinx_rtd_theme
