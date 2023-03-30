@@ -29,7 +29,7 @@ class _BaseAwsDataRequest(DataRequest, Generic[T]):
         bands: Union[None, str, List[str]] = None,
         metafiles: Union[None, str, List[str]] = None,
         safe_format: bool = False,
-        **kwargs: Any
+        **kwargs: Any,
     ):
         """
         :param bands: List of Sentinel-2 bands for request. If `None` all bands will be obtained
@@ -107,7 +107,7 @@ class AwsTileRequest(_BaseAwsDataRequest[AwsTile]):
         tile: Optional[str] = None,
         time: Optional[str] = None,
         aws_index: Optional[int] = None,
-        **kwargs: Any
+        **kwargs: Any,
     ):
         """
         :param data_collection: A collection of requested AWS data. Supported collections are Sentinel-2 L1C and

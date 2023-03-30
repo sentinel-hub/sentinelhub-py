@@ -29,7 +29,7 @@ class SentinelHubStatistical(SentinelHubBaseApiRequest):
         bbox: Optional[BBox] = None,
         geometry: Optional[Geometry] = None,
         calculations: Optional[JsonDict] = None,
-        **kwargs: Any
+        **kwargs: Any,
     ):
         """
         For details of certain parameters check the
