@@ -1,9 +1,10 @@
-from typing import List
+from typing import List, Optional
 
 import pytest
 
-from sentinelhub import DataCollection
-from sentinelhub.evalscript import generate_evalscript
+from sentinelhub import CRS, BBox, DataCollection, MimeType, SentinelHubRequest, generate_evalscript
+
+pytestmark = pytest.mark.sh_integration
 
 
 @pytest.mark.parametrize("data_collection", [DataCollection.SENTINEL2_L1C, DataCollection.SENTINEL1_IW])
@@ -96,3 +97,40 @@ def test_sample_type_merged(use_dn: bool) -> None:
 
     expected_float_count = 1 if not use_dn else 0
     assert evalscript.count('"FLOAT32"') == expected_float_count
+
+
+@pytest.mark.parametrize("data_collection", [DataCollection.LANDSAT_TM_L2, DataCollection.SENTINEL2_L2A])
+@pytest.mark.parametrize("merged_output", [None, "bands"])
+@pytest.mark.parametrize("use_dn", [True, False])
+def test_valid_evalscript(data_collection: DataCollection, merged_output: Optional[str], use_dn: bool) -> None:
+    bands = ["B05", "B04", "B03"]
+    meta_bands = ["dataMask"]
+    evalscript = generate_evalscript(
+        data_collection=data_collection,
+        bands=bands,
+        meta_bands=meta_bands,
+        merged_output=merged_output,
+        use_dn=use_dn,
+    )
+    if merged_output is not None:
+        responses = [SentinelHubRequest.output_response(merged_output, MimeType.TIFF)]
+        responses.extend([SentinelHubRequest.output_response(band, MimeType.TIFF) for band in meta_bands])
+    else:
+        responses = [SentinelHubRequest.output_response(band, MimeType.TIFF) for band in bands + meta_bands]
+
+    request = SentinelHubRequest(
+        evalscript=evalscript,
+        input_data=[
+            SentinelHubRequest.input_data(
+                data_collection=data_collection,
+                time_interval=("2017-12-15T07:12:03", "2017-12-15T07:12:04"),
+                maxcc=0.8,
+            )
+        ],
+        responses=responses,
+        bbox=BBox(bbox=(14.51, 46.05, 14.51, 46.05), crs=CRS.WGS84),
+        size=(10, 20),
+    )
+
+    # test passes if request doesn't fail
+    request.get_data(max_threads=3)
