@@ -89,9 +89,7 @@ def test_sample_type(use_dn: bool) -> None:
 
 @pytest.mark.parametrize("use_dn", [True, False], ids=lambda x: f"use_dn: {x}")
 def test_sample_type_merged(use_dn: bool) -> None:
-    merged_output = "merged_bands"
-    data_collection = DataCollection.SENTINEL2_L1C
-    evalscript = generate_evalscript(data_collection=data_collection, merged_output=merged_output, use_dn=use_dn)
+    evalscript = generate_evalscript(data_collection=DataCollection.SENTINEL2_L1C, merged_output="bands", use_dn=use_dn)
 
     expected_uint_count = 1 if use_dn else 0
     assert evalscript.count('"UINT16"') == expected_uint_count
