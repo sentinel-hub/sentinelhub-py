@@ -31,7 +31,7 @@ def parse_time(
     *,
     force_datetime: Literal[False] = False,
     allow_undefined: Literal[False] = False,
-    **kwargs: Any
+    **kwargs: Any,
 ) -> dt.date:
     ...
 
