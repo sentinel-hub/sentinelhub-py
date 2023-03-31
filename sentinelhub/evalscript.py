@@ -67,7 +67,7 @@ def generate_evalscript(
     bands: Optional[List[str]] = None,
     meta_bands: Optional[List[str]] = None,
     merged_output: Optional[str] = None,
-    use_dn: bool = True,
+    prioritize_dn: bool = True,
 ) -> str:
     """Generate an evalscript based on the provided specifications. This utility supports generating only evalscripts
     with the mosaicking option set to `SIMPLE`.
@@ -76,8 +76,9 @@ def generate_evalscript(
     :param bands: A list of band names to use in the evalscript. Defaults to using all bands provided by the collection.
     :param meta_bands: A list of meta band names to use in the evalscript. By default no meta bands are added.
     :param merged_output: If provided, bands will be concatenated into a single multi-band tiff with this name.
-    :param use_dn: Use DN units if possible. Default is True. If DN units are not available, the default units for each
-        specific band are used. DN units will be used regardless of the flag if they are the only possible choice.
+    :param prioritize_dn: Use DN units if possible. Default is True. If DN units are not available, the default units
+        for each specific band are used. DN units will be used regardless of the flag if they are the only possible
+        choice.
     """
 
     band_names = bands if bands is not None else [band.name for band in data_collection.bands]
@@ -86,7 +87,7 @@ def generate_evalscript(
     input_names, input_units, output_spec, return_spec = [], [], [], []
     requested_bands = parse_data_collection_bands(data_collection, band_names + meta_band_names)
     for band in requested_bands:
-        unit_choice = band.units.index(Unit.DN) if (use_dn and Unit.DN in band.units) else 0
+        unit_choice = band.units.index(Unit.DN) if (prioritize_dn and Unit.DN in band.units) else 0
         sample_type = DTYPE_TO_SAMPLE_TYPE[band.output_types[unit_choice]]
 
         input_names.append(f'"{band.name}"')
@@ -102,7 +103,7 @@ def generate_evalscript(
 
     if merged_output is not None:
         band = data_collection.bands[0]
-        unit_choice = band.units.index(Unit.DN) if (use_dn and Unit.DN in band.units) else 0
+        unit_choice = band.units.index(Unit.DN) if (prioritize_dn and Unit.DN in band.units) else 0
         sample_type = DTYPE_TO_SAMPLE_TYPE[band.output_types[unit_choice]]
         output_spec.append(f'{{ id: "{merged_output}", bands: {len(band_names)}, sampleType: "{sample_type}" }}')
         return_spec.append(f"{merged_output}: [{', '.join(f'sample.{band}' for band in band_names)}]")

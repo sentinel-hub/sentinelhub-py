@@ -69,7 +69,7 @@ def test_units() -> None:
     assert evalscript_dn.count('"DN"') == len(bands)
     assert evalscript_dn.count('"REFLECTANCE"') == 0
 
-    evalscript_reflectance = generate_evalscript(data_collection=data_collection, bands=bands, use_dn=False)
+    evalscript_reflectance = generate_evalscript(data_collection=data_collection, bands=bands, prioritize_dn=False)
     assert evalscript_reflectance.count('"REFLECTANCE"') == len(bands)
     assert evalscript_reflectance.count('"DN"') == 0
 
@@ -77,7 +77,7 @@ def test_units() -> None:
 @pytest.mark.parametrize("use_dn", [True, False], ids=lambda x: f"use_dn: {x}")
 def test_sample_type(use_dn: bool) -> None:
     data_collection = DataCollection.SENTINEL2_L1C
-    evalscript = generate_evalscript(data_collection=data_collection, use_dn=use_dn)
+    evalscript = generate_evalscript(data_collection=data_collection, prioritize_dn=use_dn)
 
     expected_uint_count = len(data_collection.bands) if use_dn else 0
     assert evalscript.count('"UINT16"') == expected_uint_count
@@ -88,7 +88,9 @@ def test_sample_type(use_dn: bool) -> None:
 
 @pytest.mark.parametrize("use_dn", [True, False], ids=lambda x: f"use_dn: {x}")
 def test_sample_type_merged(use_dn: bool) -> None:
-    evalscript = generate_evalscript(data_collection=DataCollection.SENTINEL2_L1C, merged_output="bands", use_dn=use_dn)
+    evalscript = generate_evalscript(
+        data_collection=DataCollection.SENTINEL2_L1C, merged_output="bands", prioritize_dn=use_dn
+    )
 
     expected_uint_count = 1 if use_dn else 0
     assert evalscript.count('"UINT16"') == expected_uint_count
@@ -109,7 +111,7 @@ def test_valid_evalscript(data_collection: DataCollection, merged_output: Option
         bands=bands,
         meta_bands=meta_bands,
         merged_output=merged_output,
-        use_dn=use_dn,
+        prioritize_dn=use_dn,
     )
     if merged_output is not None:
         responses = [SentinelHubRequest.output_response(merged_output, MimeType.TIFF)]
