@@ -84,29 +84,29 @@ def generate_evalscript(
     band_names = bands if bands is not None else [band.name for band in data_collection.bands]
     meta_band_names = meta_bands if meta_bands is not None else []
 
-    input_names, input_units, output_spec, return_spec = [], [], [], []
+    input_names, input_units = [], []
+    sample_type_map: Dict[str, str] = {}
     requested_bands = parse_data_collection_bands(data_collection, band_names + meta_band_names)
+
     for band in requested_bands:
-        unit_choice = band.units.index(Unit.DN) if (prioritize_dn and Unit.DN in band.units) else 0
-        sample_type = DTYPE_TO_SAMPLE_TYPE[band.output_types[unit_choice]]
+        unit_choice_idx = band.units.index(Unit.DN) if (prioritize_dn and Unit.DN in band.units) else 0
+        sample_type_map[band.name] = DTYPE_TO_SAMPLE_TYPE[band.output_types[unit_choice_idx]]
 
         input_names.append(f'"{band.name}"')
-        input_units.append(f'"{band.units[unit_choice].value}"')
+        input_units.append(f'"{band.units[unit_choice_idx].value}"')
 
-        # skip bands, since they will be provided as a single object
-        if merged_output is not None and band.name in band_names:
+    output_spec, return_spec = [], []
+    if merged_output is not None:
+        sample_type = sample_type_map[band_names[0]]
+        output_spec.append(f'{{id: "{merged_output}", bands: {len(band_names)}, sampleType: "{sample_type}"}}')
+        return_spec.append(f"{merged_output}: [{', '.join(f'sample.{band_name}' for band_name in band_names)}]")
+
+    for band_name, sample_type in sample_type_map.items():
+        if merged_output is not None and band_name in band_names:
             continue
 
-        # keep for meta_bands
-        output_spec.append(f'{{ id: "{band.name}", bands: 1, sampleType: "{sample_type}" }}')
-        return_spec.append(f"{band.name}: [sample.{band.name}]")
-
-    if merged_output is not None:
-        band = data_collection.bands[0]
-        unit_choice = band.units.index(Unit.DN) if (prioritize_dn and Unit.DN in band.units) else 0
-        sample_type = DTYPE_TO_SAMPLE_TYPE[band.output_types[unit_choice]]
-        output_spec.append(f'{{ id: "{merged_output}", bands: {len(band_names)}, sampleType: "{sample_type}" }}')
-        return_spec.append(f"{merged_output}: [{', '.join(f'sample.{band}' for band in band_names)}]")
+        output_spec.append(f'{{id: "{band_name}", bands: 1, sampleType: "{sample_type}"}}')
+        return_spec.append(f"{band_name}: [sample.{band_name}]")
 
     evalscript = EVALSCRIPT_TEMPLATE.format(
         input_names=", ".join(input_names),
