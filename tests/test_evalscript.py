@@ -4,8 +4,6 @@ import pytest
 
 from sentinelhub import CRS, BBox, DataCollection, MimeType, SentinelHubRequest, generate_evalscript
 
-pytestmark = pytest.mark.sh_integration
-
 
 @pytest.mark.parametrize("data_collection", [DataCollection.SENTINEL2_L1C, DataCollection.SENTINEL1_IW])
 def test_collection_bands(data_collection: DataCollection) -> None:
@@ -99,6 +97,7 @@ def test_sample_type_merged(use_dn: bool) -> None:
     assert evalscript.count('"FLOAT32"') == expected_float_count
 
 
+@pytest.mark.sh_integration
 @pytest.mark.parametrize("data_collection", [DataCollection.LANDSAT_TM_L2, DataCollection.SENTINEL2_L2A])
 @pytest.mark.parametrize("merged_output", [None, "bands"])
 @pytest.mark.parametrize("use_dn", [True, False])
