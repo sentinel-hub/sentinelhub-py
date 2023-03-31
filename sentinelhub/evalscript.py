@@ -84,7 +84,6 @@ def generate_evalscript(
     band_names = bands if bands is not None else [band.name for band in data_collection.bands]
     meta_band_names = meta_bands if meta_bands is not None else []
 
-    merged_output_in_output_spec = False
     input_names, input_units, output_spec, return_spec = [], [], [], []
     requested_bands = parse_data_collection_bands(data_collection, band_names + meta_band_names)
     for band in requested_bands:
@@ -94,16 +93,20 @@ def generate_evalscript(
         input_names.append(f'"{band.name}"')
         input_units.append(f'"{band.units[unit_choice].value}"')
 
-        # skip bands if specified to be provided as a single object
+        # skip bands, since they will be provided as a single object
         if merged_output is not None and band.name in band_names:
-            if not merged_output_in_output_spec:
-                output_spec.append(f'{{id: "{merged_output}", bands: {len(band_names)}, sampleType: "{sample_type}"}}')
-                return_spec.append(f"{merged_output}: [{', '.join(f'sample.{band}' for band in band_names)}]")
-                merged_output_in_output_spec = True
             continue
 
+        # keep for meta_bands
         output_spec.append(f'{{ id: "{band.name}", bands: 1, sampleType: "{sample_type}" }}')
         return_spec.append(f"{band.name}: [sample.{band.name}]")
+
+    if merged_output is not None:
+        band = data_collection.bands[0]
+        unit_choice = band.units.index(Unit.DN) if (prioritize_dn and Unit.DN in band.units) else 0
+        sample_type = DTYPE_TO_SAMPLE_TYPE[band.output_types[unit_choice]]
+        output_spec.append(f'{{ id: "{merged_output}", bands: {len(band_names)}, sampleType: "{sample_type}" }}')
+        return_spec.append(f"{merged_output}: [{', '.join(f'sample.{band}' for band in band_names)}]")
 
     evalscript = EVALSCRIPT_TEMPLATE.format(
         input_names=", ".join(input_names),
