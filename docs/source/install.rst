@@ -1,7 +1,7 @@
 Installation
 ============
 
-This package requires Python >=3.8 and can be installed with PyPI package manager::
+This package requires Python >=3.8 and can be installed with the PyPI package manager::
 
 $ pip install sentinelhub
 
@@ -16,11 +16,6 @@ $ conda install -c conda-forge sentinelhub
 In order to install the latest (development) version clone the GitHub_ repository and install::
 
 $ pip install -e . --upgrade
-
-or manually::
-
-$ python setup.py build
-$ python setup.py install
 
 Before installing ``sentinelhub-py`` on **Windows** it is recommended to install ``shapely`` package from
 Unofficial Windows wheels repository (link_).
