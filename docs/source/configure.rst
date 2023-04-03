@@ -29,7 +29,7 @@ Whenever a new ``SHConfig`` object is created, the default values of the fields 
 
 The configuration file can be found at ``~/.config/sentinelhub/config.toml``. On Windows this usually translates to ``C:/Users/<USERNAME>/.config/sentinelhub/config.toml``. You can get the precise location of the file by calling ``SHConfig.get_config_location()``.
 
-The file follows the standard TOML structure. The sections are denoted by profile name and the following lines specify ``key=value`` pairs for any fields that should be updated, for example:
+The configuration file follows the standard TOML structure. Sections are denoted by the profile name in square brackets, while the following lines specify ``key=value`` pairs for any fields that should be updated, for example:
 
 .. code-block:: toml
 
@@ -62,7 +62,7 @@ We generally suggest using the configuration file, but we offer limited support 
 
 The ``SHConfig`` class reads the following environmental variables during initialization:
 
-- ``SH_PROFILE`` that dictates which profile is loaded if not explicitly provided.
+- ``SH_PROFILE`` that dictates which profile should be used when not explicitly provided.
 - ``SH_CLIENT_ID`` and ``SH_CLIENT_SECRET`` for setting the SentinelHub credentials.
 
 
@@ -99,7 +99,7 @@ Amazon S3 Configuration
 ***********************
 
 The package enables downloading Sentinel-2 L1C and L2A data from `Amazon S3`_ storage buckets. The data is contained in
-Requester Pays buckets therefore `AWS credentials`_ are required to use these capabilities. The credentials
+Requester Pays buckets, therefore `AWS credentials`_ are required to use these capabilities. The credentials
 can be set in the package configuration file with parameters ``aws_access_key_id`` and ``aws_secret_access_key``.
 
 In case the credentials are not set, the package will instead automatically try to use **locally stored AWS credentials**,
