@@ -176,7 +176,7 @@ class SHConfig(_SHConfig):
     def to_dict(self, mask_credentials: bool = True) -> Dict[str, Union[str, float]]:
         """Get a dictionary representation of the `SHConfig` class.
 
-        :param hide_credentials: Wether to mask fields containing credentials.
+        :param mask_credentials: Wether to mask fields containing credentials.
         :return: A dictionary with configuration parameters
         """
         config_params = asdict(self)
