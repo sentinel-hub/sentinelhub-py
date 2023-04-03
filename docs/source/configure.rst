@@ -1,7 +1,7 @@
 Configuration
 =============
 
-Part of the package configuration is represented by the :class:`~sentinelhub.config.SHConfig` class. It can be adjusted and passed to most of the functions and constructors of the `sentinelhub` package to either provide credentials or modify behavior such as the number download processes.
+Part of the package configuration is represented by the :class:`~sentinelhub.config.SHConfig` class. It can be adjusted and passed to most of the functions and constructors of the ``sentinelhub`` package to either provide credentials or modify behavior such as the number download processes.
 
 .. code-block:: python
 
@@ -20,16 +20,16 @@ Part of the package configuration is represented by the :class:`~sentinelhub.con
     >    ...
     > )
 
-To avoid the need of constant reconfiguration in the code, we also support adjusting the values in a `config.toml` file.
+To avoid the need of constant reconfiguration in the code, we also support adjusting the values in a ``config.toml`` file.
 
 Configuration File
 ******************
 
-Whenever a new `SHConfig` object is created, the default values of the fields are updated with the contents of the configuration file. The configuration file also supports multiple profiles, which can be used with `SHConfig("myprofile")`. If no profile is specified, the default profile is used (`sentinelhub.config.DEFAULT_PROFILE`, at the time of writing this is `"default-profile"`). This is also used whenever no explicit `SHConfig` was provided to a function/class.
+Whenever a new ``SHConfig`` object is created, the default values of the fields are updated with the contents of the configuration file. The configuration file also supports multiple profiles, which can be used with ``SHConfig("myprofile")``. If no profile is specified, the default profile is used (``sentinelhub.config.DEFAULT_PROFILE``, at the time of writing this is ``"default-profile"``). This is also used whenever no explicit ``SHConfig`` was provided to a function/class.
 
-The configuration file can be found at `~/.config/sentinelhub/config.toml`. On Windows that usually translates to `C:/Users/<USERNAME>/.config/sentinelhub/config.toml`. You can get the precise location of the file by calling `SHConfig.get_config_location()`.
+The configuration file can be found at ``~/.config/sentinelhub/config.toml``. On Windows that usually translates to ``C:/Users/<USERNAME>/.config/sentinelhub/config.toml``. You can get the precise location of the file by calling ``SHConfig.get_config_location()``.
 
-The file follows the standard TOML structure. The sections are denoted by profile name and the following lines specify `key=value` pairs for any fields that should be updated, for example:
+The file follows the standard TOML structure. The sections are denoted by profile name and the following lines specify ``key=value`` pairs for any fields that should be updated, for example:
 
 .. code-block:: toml
 
@@ -40,7 +40,7 @@ The file follows the standard TOML structure. The sections are denoted by profil
     [custom-profile]
     instance_id = "something-else"
 
-The file can also be updated programmatically by using the `save` method.
+The file can also be updated programmatically by using the ``save`` method.
 
 .. code-block:: python
 
@@ -60,9 +60,10 @@ Environment Variables
 
 We generally suggest using the configuration file, but we offer limited support for environmental variables to simplify situations such as building docker images.
 
-The `SHConfig` reads from the environment:
-- `sentinelhub.config.SH_PROFILE_ENV_VAR` (currently "SH_PROFILE") that dictates which profile is loaded if not explicitly provided.
-- `sentinelhub.config.SH_CLIENT_ID_ENV_VAR` (currently "SH_CLIENT_ID") and `sentinelhub.config.SH_CLIENT_SECRET_ENV_VAR` (currently "SH_CLIENT_SECRET") for setting the SentinelHub credentials.
+The ``SHConfig`` reads from the environment:
+
+- ``SH_PROFILE`` that dictates which profile is loaded if not explicitly provided.
+- ``SH_CLIENT_ID`` and ``SH_CLIENT_SECRET`` for setting the SentinelHub credentials.
 
 
 Precedence
@@ -70,11 +71,9 @@ Precedence
 
 The general precedence order is:
 
-```
-explicit parameters > environment > configuration file > defaults
-```
+``explicit parameters > environment > configuration file > defaults``
 
-This means that `SHConfig(profile="my-profile", sh_client_id="my-id")` will be taken into account over `SH_PROFILE` and `SH_CLIENT_ID` environment variables, which would take precedence over what is specified in the `configuration.toml`.
+This means that ``SHConfig(profile="my-profile", sh_client_id="my-id")`` will be taken into account over ``SH_PROFILE`` and ``SH_CLIENT_ID`` environment variables, which would take precedence over what is specified in the ``configuration.toml``.
 
 
 Sentinel Hub Configuration
@@ -85,10 +84,10 @@ In order to use Sentinel Hub services you will need a Sentinel Hub account. If y
 create a free trial account at `Sentinel Hub`_. If you are a researcher you can even apply for a free non-commercial
 account at `ESA OSEO page`_. The following configurations are then linked to your account.
 
-Parameter `instance_id` is used when using OGC endpoints of the `Sentinel Hub services`_. It is the identifier of a
+Parameter ``instance_id`` is used when using OGC endpoints of the `Sentinel Hub services`_. It is the identifier of a
 configuration users can set up in the `Sentinel Hub Dashboard`_ under "Configuration Utility".
 
-The `sh_client_id` and `sh_client_secret` parameters can also be created in the `Sentinel Hub Dashboard`_ under
+The ``sh_client_id`` and ``sh_client_secret`` parameters can also be created in the `Sentinel Hub Dashboard`_ under
 "User settings". The two parameters are needed when accessing protected endpoints of the service (Process, Catalog,
 Batch, BYOC, and other APIs). There is "OAuth clients" frame where we can create a new OAuth client.
 
@@ -103,7 +102,7 @@ Amazon S3 Configuration
 
 The package enables downloading Sentinel-2 L1C and L2A data from `Amazon S3`_ storage buckets. The data is contained in
 Requester Pays buckets therefore `AWS credentials`_ are required to use these capabilities. The credentials
-can be set in the package configuration file with parameters `aws_access_key_id` and `aws_secret_access_key`.
+can be set in the package configuration file with parameters ``aws_access_key_id`` and ``aws_secret_access_key``.
 
 In case the credentials are not set, the package will instead automatically try to use **locally stored AWS credentials**,
 if they were configured according to `AWS configuration instructions`_. Any other configuration parameters (e.g. region)
