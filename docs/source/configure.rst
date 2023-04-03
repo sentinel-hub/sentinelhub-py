@@ -1,7 +1,7 @@
 Configuration
 =============
 
-Part of the package configuration is represented by the :class:`~sentinelhub.config.SHConfig` class. It can be adjusted and passed to most of the functions and constructors of the ``sentinelhub`` package to either provide credentials or modify behavior such as the number download processes.
+Part of the package configuration is represented by the :class:`~sentinelhub.config.SHConfig` class. It can be adjusted and passed to most of the functions and constructors of the ``sentinelhub`` package to either provide credentials or modify behavior such as the number of download processes.
 
 .. code-block:: python
 
@@ -25,9 +25,9 @@ To avoid the need of constant reconfiguration in the code, we also support adjus
 Configuration File
 ******************
 
-Whenever a new ``SHConfig`` object is created, the default values of the fields are updated with the contents of the configuration file. The configuration file also supports multiple profiles, which can be used with ``SHConfig("myprofile")``. If no profile is specified, the default profile is used (``sentinelhub.config.DEFAULT_PROFILE``, at the time of writing this is ``"default-profile"``). This is also used whenever no explicit ``SHConfig`` was provided to a function/class.
+Whenever a new ``SHConfig`` object is created, the default values of the fields are updated with the contents of the configuration file. The configuration file also supports multiple profiles, which can be used with ``SHConfig("myprofile")``. If no profile is specified, the default profile is used (``sentinelhub.config.DEFAULT_PROFILE``, currently set to ``"default-profile"``). This is also used whenever no explicit ``SHConfig`` is provided to a function/class, unless the preferred profile is set via the `SH_PROFILE` environment variable (more about that in a later section).
 
-The configuration file can be found at ``~/.config/sentinelhub/config.toml``. On Windows that usually translates to ``C:/Users/<USERNAME>/.config/sentinelhub/config.toml``. You can get the precise location of the file by calling ``SHConfig.get_config_location()``.
+The configuration file can be found at ``~/.config/sentinelhub/config.toml``. On Windows this usually translates to ``C:/Users/<USERNAME>/.config/sentinelhub/config.toml``. You can get the precise location of the file by calling ``SHConfig.get_config_location()``.
 
 The file follows the standard TOML structure. The sections are denoted by profile name and the following lines specify ``key=value`` pairs for any fields that should be updated, for example:
 
