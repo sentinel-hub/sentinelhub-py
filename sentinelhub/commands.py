@@ -30,7 +30,7 @@ def main_help() -> None:
 
 
 def _config_options(func: FC) -> FC:
-    """A helper function which joins click.option functions of each parameter from config.json"""
+    """A helper function which joins `click.option` functions of each parameter from `SHConfig`."""
     for param in list(SHConfig().to_dict())[-1::-1]:
         func = click.option(f"--{param}", param, help=f"Set new values to configuration parameter `{param}`")(func)
     return func

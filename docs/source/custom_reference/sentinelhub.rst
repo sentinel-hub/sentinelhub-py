@@ -24,7 +24,6 @@ Modules
     sentinelhub.geometry
     sentinelhub.geopedia
     sentinelhub.io_utils
-    sentinelhub.os_utils
     sentinelhub.testing_utils
     sentinelhub.time_utils
     sentinelhub.types
