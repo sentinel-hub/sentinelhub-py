@@ -60,7 +60,7 @@ Environment Variables
 
 We generally suggest using the configuration file, but we offer limited support for environmental variables to simplify situations such as building docker images.
 
-The ``SHConfig`` reads from the environment:
+The ``SHConfig`` class reads the following environmental variables during initialization:
 
 - ``SH_PROFILE`` that dictates which profile is loaded if not explicitly provided.
 - ``SH_CLIENT_ID`` and ``SH_CLIENT_SECRET`` for setting the SentinelHub credentials.
@@ -69,9 +69,7 @@ The ``SHConfig`` reads from the environment:
 Precedence
 **********
 
-The general precedence order is:
-
-``explicit parameters > environment > configuration file > defaults``
+The general precedence order is ``explicit parameters > environment > configuration file > defaults``.
 
 This means that ``SHConfig(profile="my-profile", sh_client_id="my-id")`` will be taken into account over ``SH_PROFILE`` and ``SH_CLIENT_ID`` environment variables, which would take precedence over what is specified in the ``configuration.toml``.
 
