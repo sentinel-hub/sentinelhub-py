@@ -51,7 +51,7 @@ def test_explicit_meta_bands(meta_bands: List[str]) -> None:
 def test_merged_output(data_collection: DataCollection, bands: List[str], meta_bands: List[str]) -> None:
     merged_output = "merged_bands"
     evalscript = generate_evalscript(
-        data_collection=data_collection, bands=bands, meta_bands=meta_bands, merged_output=merged_output
+        data_collection=data_collection, bands=bands, meta_bands=meta_bands, merged_bands_output=merged_output
     )
 
     expected_bands_output_spec = "{" + f'id: "{merged_output}", bands: {len(bands)}'
@@ -89,7 +89,7 @@ def test_sample_type(use_dn: bool) -> None:
 @pytest.mark.parametrize("use_dn", [True, False], ids=lambda x: f"use_dn: {x}")
 def test_sample_type_merged(use_dn: bool) -> None:
     evalscript = generate_evalscript(
-        data_collection=DataCollection.SENTINEL2_L1C, merged_output="bands", prioritize_dn=use_dn
+        data_collection=DataCollection.SENTINEL2_L1C, merged_bands_output="bands", prioritize_dn=use_dn
     )
 
     expected_uint_count = 1 if use_dn else 0
@@ -110,7 +110,7 @@ def test_valid_evalscript(data_collection: DataCollection, merged_output: Option
         data_collection=data_collection,
         bands=bands,
         meta_bands=meta_bands,
-        merged_output=merged_output,
+        merged_bands_output=merged_output,
         prioritize_dn=use_dn,
     )
     if merged_output is not None:

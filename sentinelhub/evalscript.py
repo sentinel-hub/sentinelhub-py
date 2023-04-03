@@ -66,7 +66,7 @@ def generate_evalscript(
     data_collection: DataCollection,
     bands: Optional[List[str]] = None,
     meta_bands: Optional[List[str]] = None,
-    merged_output: Optional[str] = None,
+    merged_bands_output: Optional[str] = None,
     prioritize_dn: bool = True,
 ) -> str:
     """Generate an evalscript based on the provided specifications. This utility supports generating only evalscripts
@@ -75,7 +75,7 @@ def generate_evalscript(
     :param data_collection: A collection of requested satellite data.
     :param bands: A list of band names to use in the evalscript. Defaults to using all bands provided by the collection.
     :param meta_bands: A list of meta band names to use in the evalscript. By default no meta bands are added.
-    :param merged_output: If provided, bands will be concatenated into a single multi-band tiff with this name.
+    :param merged_bands_output: If provided, bands will be concatenated into a single multi-band tiff with this name.
     :param prioritize_dn: Use DN units if possible. Default is True. If DN units are not available, the default units
         for each specific band are used. DN units will be used regardless of the flag if they are the only possible
         choice.
@@ -96,13 +96,13 @@ def generate_evalscript(
         input_units.append(f'"{band.units[unit_choice_idx].value}"')
 
     output_spec, return_spec = [], []
-    if merged_output is not None:
+    if merged_bands_output is not None:
         sample_type = sample_type_map[band_names[0]]
-        output_spec.append(f'{{id: "{merged_output}", bands: {len(band_names)}, sampleType: "{sample_type}"}}')
-        return_spec.append(f"{merged_output}: [{', '.join(f'sample.{band_name}' for band_name in band_names)}]")
+        output_spec.append(f'{{id: "{merged_bands_output}", bands: {len(band_names)}, sampleType: "{sample_type}"}}')
+        return_spec.append(f"{merged_bands_output}: [{', '.join(f'sample.{band_name}' for band_name in band_names)}]")
 
     for band_name, sample_type in sample_type_map.items():
-        if merged_output is not None and band_name in band_names:
+        if merged_bands_output is not None and band_name in band_names:
             continue
 
         output_spec.append(f'{{id: "{band_name}", bands: 1, sampleType: "{sample_type}"}}')
