@@ -91,7 +91,6 @@ def generate_evalscript(
     for band in requested_bands:
         unit_choice_idx = band.units.index(Unit.DN) if (prioritize_dn and Unit.DN in band.units) else 0
         sample_type_map[band.name] = DTYPE_TO_SAMPLE_TYPE[band.output_types[unit_choice_idx]]
-
         input_names.append(f'"{band.name}"')
         input_units.append(f'"{band.units[unit_choice_idx].value}"')
 
@@ -102,6 +101,7 @@ def generate_evalscript(
         return_spec.append(f"{merged_bands_output}: [{', '.join(f'sample.{band_name}' for band_name in band_names)}]")
 
     for band_name, sample_type in sample_type_map.items():
+        # potentially skip bands if merged bands output specified, but still run for meta bands
         if merged_bands_output is not None and band_name in band_names:
             continue
 
