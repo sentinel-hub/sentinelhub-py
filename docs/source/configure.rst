@@ -40,6 +40,8 @@ The configuration file follows the standard TOML structure. Sections are denoted
     [custom-profile]
     instance_id = "something-else"
 
+One can also view the settings for a given profile in the CLI with the command ``sentinelhub.config --profile my-profile --show``.
+
 The file can also be updated programmatically by using the ``save`` method.
 
 .. code-block:: python
