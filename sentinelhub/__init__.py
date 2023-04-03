@@ -55,6 +55,7 @@ from .download import (
     SentinelHubSession,
     SentinelHubStatisticalDownloadClient,
 )
+from .evalscript import generate_evalscript, parse_data_collection_bands
 from .exceptions import AwsDownloadFailedException, DownloadFailedException
 from .geo_utils import (
     bbox_to_dimensions,
