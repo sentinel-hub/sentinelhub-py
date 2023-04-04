@@ -4,10 +4,9 @@ Module implementing error handlers which can occur during download procedure
 import functools
 import logging
 import time
-from typing import Callable, Optional, TypeVar
+from typing import Callable, Optional, Protocol, TypeVar
 
 import requests
-from typing_extensions import Protocol
 
 from ..config import SHConfig
 from ..decoding import decode_sentinelhub_err_msg

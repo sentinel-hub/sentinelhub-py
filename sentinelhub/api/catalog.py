@@ -2,14 +2,13 @@
 A client interface for `Sentinel Hub Catalog API <https://docs.sentinel-hub.com/api/latest/api/catalog>`__.
 """
 import datetime as dt
-from typing import Any, Dict, Iterable, List, Optional, Union
-
-from typing_extensions import Literal
+from typing import Any, Dict, Iterable, List, Literal, Optional, Union
 
 from ..base import FeatureIterator
+from ..config import SHConfig
 from ..data_collections import DataCollection, OrbitDirection
 from ..geometry import CRS, BBox, Geometry
-from ..time_utils import parse_time, parse_time_interval, serialize_time
+from ..time_utils import filter_times, parse_time, parse_time_interval, serialize_time
 from ..types import JsonDict, RawTimeIntervalType, RawTimeType
 from .base import SentinelHubService
 from .utils import remove_undefined
@@ -267,3 +266,47 @@ class CatalogSearchIterator(FeatureIterator[JsonDict]):
         :return: A list of IDs
         """
         return [feature["id"] for feature in self]
+
+
+def get_available_timestamps(
+    bbox: BBox,
+    time_interval: Optional[RawTimeIntervalType],
+    data_collection: DataCollection,
+    *,
+    time_difference: Optional[dt.timedelta] = None,
+    ignore_tz: bool = True,
+    maxcc: Optional[float] = 1.0,
+    config: Optional[SHConfig] = None,
+) -> List[dt.datetime]:
+    """Helper function to search for all available timestamps for a given area and query parameters.
+
+    :param bbox: A bounding box of the search area.
+    :param data_collection: A collection specifying the satellite data source for finding available timestamps.
+    :param time_interval: A time interval from which to provide the timestamps.
+    :param time_difference: Shortest allowed time difference. Consecutive timestamps will be skipped if too close to
+        the previous one. Defaults to keeping all timestamps.
+    :param ignore_tz: Ignore the time zone part in the returned timestamps. Default is True.
+    :param maxcc: Maximum cloud coverage filter from interval [0, 1]. Default is None.
+    :param config: The SH configuration object.
+    :return: A list of timestamps of available observations.
+    """
+    query_filter = None
+    time_difference = time_difference if time_difference is not None else dt.timedelta(seconds=-1)
+    fields = {"include": ["properties.datetime"], "exclude": []}
+
+    if maxcc is not None and data_collection.has_cloud_coverage:
+        if isinstance(maxcc, (int, float)) and (maxcc < 0 or maxcc > 1):
+            raise ValueError('Maximum cloud coverage "maxcc" parameter should be a float on an interval [0, 1]')
+        query_filter = f"eo:cloud_cover < {int(maxcc * 100)}"
+
+    if data_collection.service_url is not None:
+        config = config.copy() if config else SHConfig()
+        config.sh_base_url = data_collection.service_url
+
+    catalog = SentinelHubCatalog(config=config)
+    search_iterator = catalog.search(
+        collection=data_collection, bbox=bbox, time=time_interval, filter=query_filter, fields=fields
+    )
+
+    timestamps = [parse_time(ts, force_datetime=True, ignoretz=ignore_tz) for ts in search_iterator.get_timestamps()]
+    return filter_times(timestamps, time_difference)

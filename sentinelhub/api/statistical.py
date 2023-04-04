@@ -29,7 +29,7 @@ class SentinelHubStatistical(SentinelHubBaseApiRequest):
         bbox: Optional[BBox] = None,
         geometry: Optional[Geometry] = None,
         calculations: Optional[JsonDict] = None,
-        **kwargs: Any
+        **kwargs: Any,
     ):
         """
         For details of certain parameters check the
@@ -75,13 +75,8 @@ class SentinelHubStatistical(SentinelHubBaseApiRequest):
             by it.
         :returns: Request payload dictionary
         """
-        requested_data = list(request_data)
-        for i, data_request_dict in enumerate(requested_data):
-            if "dataFilter" not in data_request_dict:
-                requested_data[i] = {"dataFilter": {}, **data_request_dict}
-
         request_body = {
-            "input": {"bounds": request_bounds, "data": requested_data},
+            "input": {"bounds": request_bounds, "data": list(request_data)},
             "aggregation": aggregation,
             "calculations": calculations,
         }

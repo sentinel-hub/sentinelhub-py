@@ -14,7 +14,6 @@ from dataclasses_json import dataclass_json
 
 from ...constants import RequestType
 from ...data_collections import DataCollection
-from ...exceptions import deprecated_function
 from ...geometry import CRS, BBox, Geometry
 from ...types import Json, JsonDict
 from ..base import BaseCollection, SentinelHubFeatureIterator
@@ -358,18 +357,6 @@ class SentinelHubBatch(BaseBatchClient):
         request_id = self._parse_request_id(batch_request)
         url = self._get_tiles_url(request_id, tile_id=tile_id)
         return self.client.get_json_dict(url, use_session=True)
-
-    @deprecated_function(message_suffix="The service endpoint will be removed soon. Please use `restart_job` instead.")
-    def reprocess_tile(self, batch_request: BatchRequestType, tile_id: Optional[int]) -> Json:
-        """Reprocess a single failed tile
-
-        `Batch API reference <https://docs.sentinel-hub.com/api/latest/reference/#operation/restartBatchTileById>`__
-
-        :param batch_request: It could be a batch request object, a raw batch request payload or only a batch
-            request ID.
-        :param tile_id: An ID of a tile
-        """
-        return self._call_job(batch_request, f"tiles/{tile_id}/restart")
 
     def iter_collections(self, search: Optional[str] = None, **kwargs: Any) -> SentinelHubFeatureIterator:
         """Iterate over batch collections

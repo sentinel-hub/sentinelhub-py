@@ -2,15 +2,17 @@
 Tests for the module with Catalog API interface
 """
 import datetime as dt
+from functools import partial
 from typing import Union
 
 import dateutil.tz
+import numpy as np
 import pytest
 
-from sentinelhub import CRS, BBox, DataCollection, Geometry, SentinelHubCatalog, SHConfig
-from sentinelhub.api.catalog import CatalogSearchIterator
+from sentinelhub import CRS, BBox, DataCollection, Geometry, SentinelHubCatalog, SHConfig, parse_time
+from sentinelhub.api.catalog import CatalogSearchIterator, get_available_timestamps
 
-TEST_BBOX = BBox([46.16, -16.15, 46.51, -15.58], CRS.WGS84)
+TEST_BBOX = BBox((46.16, -16.15, 46.51, -15.58), CRS.WGS84)
 
 pytestmark = pytest.mark.sh_integration
 
@@ -196,3 +198,35 @@ def test_search_with_ids(config: SHConfig) -> None:
     results = list(search_iterator)
     assert len(results) == 1
     assert results[0]["id"] == tile_id
+
+
+@pytest.mark.parametrize(
+    "data_collection, time_difference_hours, maxcc, n_timestamps",
+    [
+        (DataCollection.SENTINEL1_IW, 2, None, 4),
+        (DataCollection.SENTINEL2_L2A, 1, 0.7, 8),
+        (DataCollection.SENTINEL2_L2A, 2 * 30 * 24, None, 1),
+        (DataCollection.SENTINEL2_L1C.define_from("COLLECTION_WITHOUT_URL", service_url=None), -1, None, 10),
+    ],
+)
+def test_get_available_timestamps(
+    data_collection: DataCollection, time_difference_hours: int, maxcc: int, n_timestamps: int
+) -> None:
+    interval_start, interval_end = "2019-04-20", "2019-06-09"
+    get_test_timestamps = partial(
+        get_available_timestamps,
+        bbox=TEST_BBOX,
+        data_collection=data_collection,
+        time_difference=dt.timedelta(hours=time_difference_hours),
+        time_interval=(interval_start, interval_end),
+        maxcc=maxcc,
+    )
+
+    timestamps = get_test_timestamps(ignore_tz=True)
+    assert len(timestamps) == n_timestamps
+    assert all(ts >= parse_time(interval_start, force_datetime=True) for ts in timestamps)
+    assert all(ts <= parse_time(interval_end, force_datetime=True) for ts in timestamps)
+    assert all(ts_diff.total_seconds() / 3600 > time_difference_hours for ts_diff in np.diff(np.array(timestamps)))
+
+    timestamps_with_tz = get_test_timestamps(ignore_tz=False)
+    assert all(timestamp.tzinfo is not None for timestamp in timestamps_with_tz)

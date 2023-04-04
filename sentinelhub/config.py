@@ -1,27 +1,64 @@
 """
-Module for managing configuration data from `config.json`
+Module for managing configuration data from `config.toml`
 """
 from __future__ import annotations
 
 import copy
 import json
-import numbers
 import os
-from typing import Any, Dict, Iterable, List, Optional, Union
+from dataclasses import asdict, dataclass
+from pathlib import Path
+from typing import Any, Dict, Optional, Union
 
-from .exceptions import deprecated_function
+import tomli
+import tomli_w
 
-ConfigDict = Dict[str, Union[str, int, float]]
+DEFAULT_PROFILE = "default-profile"
+SH_PROFILE_ENV_VAR = "SH_PROFILE"
+SH_CLIENT_ID_ENV_VAR = "SH_CLIENT_ID"
+SH_CLIENT_SECRET_ENV_VAR = "SH_CLIENT_SECRET"
 
 
-class SHConfig:  # pylint: disable=too-many-instance-attributes
+@dataclass(repr=False)
+class _SHConfig:
+    instance_id: str = ""
+    sh_client_id: str = ""
+    sh_client_secret: str = ""
+    sh_base_url: str = "https://services.sentinel-hub.com"
+    sh_auth_base_url: str = "https://services.sentinel-hub.com"
+    geopedia_wms_url: str = "https://service.geopedia.world"
+    geopedia_rest_url: str = "https://www.geopedia.world/rest"
+    aws_access_key_id: str = ""
+    aws_secret_access_key: str = ""
+    aws_session_token: str = ""
+    aws_metadata_url: str = "https://roda.sentinel-hub.com"
+    aws_s3_l1c_bucket: str = "sentinel-s2-l1c"
+    aws_s3_l2a_bucket: str = "sentinel-s2-l2a"
+    opensearch_url: str = "http://opensearch.sentinel-hub.com/resto/api/collections/Sentinel2"
+    max_wfs_records_per_query: int = 100
+    max_opensearch_records_per_query: int = 500  # pylint: disable=invalid-name
+    max_download_attempts: int = 4
+    download_sleep_time: float = 5.0
+    download_timeout_seconds: float = 120.0
+    number_of_download_processes: int = 1
+
+    def __post_init__(self) -> None:
+        if self.max_wfs_records_per_query > 100:
+            raise ValueError("Value of config parameter `max_wfs_records_per_query` must be at most 100")
+        if self.max_opensearch_records_per_query > 500:
+            raise ValueError("Value of config parameter `max_opensearch_records_per_query` must be at most 500")
+
+
+class SHConfig(_SHConfig):
     """A sentinelhub-py package configuration class.
 
-    The class reads during its first initialization the configurable settings from ``./config.json`` file:
+    The class reads the configurable settings from ``config.toml`` file on initialization:
 
         - `instance_id`: An instance ID for Sentinel Hub service used for OGC requests.
-        - `sh_client_id`: User's OAuth client ID for Sentinel Hub service
-        - `sh_client_secret`: User's OAuth client secret for Sentinel Hub service
+        - `sh_client_id`: User's OAuth client ID for Sentinel Hub service. Can be set via SH_CLIENT_ID environment
+          variable. The environment variable has precedence.
+        - `sh_client_secret`: User's OAuth client secret for Sentinel Hub service. Can be set via SH_CLIENT_SECRET
+          environment variable. The environment variable has precedence.
         - `sh_base_url`: There exist multiple deployed instances of Sentinel Hub service, this parameter defines the
           location of a specific service instance.
         - `sh_auth_base_url`: Base url for Sentinel Hub Authentication service. Authentication is typically sent to the
@@ -44,297 +81,119 @@ class SHConfig:  # pylint: disable=too-many-instance-attributes
         - `download_timeout_seconds`: Maximum number of seconds before download attempt is canceled.
         - `number_of_download_processes`: Number of download processes, used to calculate rate-limit sleep time.
 
-    Usage in the code:
-
-        * ``SHConfig().sh_base_url``
-        * ``SHConfig().instance_id``
-
+    The location of `config.toml` for manual modification can be found with `SHConfig.get_config_location()`.
     """
 
-    CREDENTIALS = {
+    CREDENTIALS = (
         "instance_id",
         "sh_client_id",
         "sh_client_secret",
         "aws_access_key_id",
         "aws_secret_access_key",
         "aws_session_token",
-    }
-    CONFIG_PARAMS = [
-        "instance_id",
-        "sh_client_id",
-        "sh_client_secret",
-        "sh_base_url",
-        "sh_auth_base_url",
-        "geopedia_wms_url",
-        "geopedia_rest_url",
-        "aws_access_key_id",
-        "aws_secret_access_key",
-        "aws_session_token",
-        "aws_metadata_url",
-        "aws_s3_l1c_bucket",
-        "aws_s3_l2a_bucket",
-        "opensearch_url",
-        "max_wfs_records_per_query",
-        "max_opensearch_records_per_query",
-        "max_download_attempts",
-        "download_sleep_time",
-        "download_timeout_seconds",
-        "number_of_download_processes",
-    ]
+    )
 
-    _cache: Optional[Dict[str, Any]] = None
-
-    def __init__(self, hide_credentials: bool = False, use_defaults: bool = False):
+    def __init__(self, profile: Optional[str] = None, *, use_defaults: bool = False, **kwargs: Any):
         """
-        :param hide_credentials: If `True` then methods that provide the entire content of the config object will mask
-            out all credentials. But credentials could still be accessed directly from config object attributes. The
-            default is `False`.
+        :param profile: Specifies which profile to load from the configuration file. Has precedence over the environment
+            variable `SH_USER_PROFILE`.
         :param use_defaults: Does not load the configuration file, returns config object with defaults only.
+        :param kwargs: Any fields of `SHConfig` to be updated. Overrides settings from `config.toml` and environment.
         """
-
-        self.instance_id: str = ""
-        self.sh_client_id: str = ""
-        self.sh_client_secret: str = ""
-        self.sh_base_url: str = "https://services.sentinel-hub.com"
-        self.sh_auth_base_url: str = "https://services.sentinel-hub.com"
-        self.geopedia_wms_url: str = "https://service.geopedia.world"
-        self.geopedia_rest_url: str = "https://www.geopedia.world/rest"
-        self.aws_access_key_id: str = ""
-        self.aws_secret_access_key: str = ""
-        self.aws_session_token: str = ""
-        self.aws_metadata_url: str = "https://roda.sentinel-hub.com"
-        self.aws_s3_l1c_bucket: str = "sentinel-s2-l1c"
-        self.aws_s3_l2a_bucket: str = "sentinel-s2-l2a"
-        self.opensearch_url: str = "http://opensearch.sentinel-hub.com/resto/api/collections/Sentinel2"
-        self.max_wfs_records_per_query: int = 100
-        self.max_opensearch_records_per_query: int = 500  # pylint: disable=invalid-name
-        self.max_download_attempts: int = 4
-        self.download_sleep_time: float = 5.0
-        self.download_timeout_seconds: float = 120.0
-        self.number_of_download_processes: int = 1
-
-        self._hide_credentials = hide_credentials
+        if profile is None:
+            profile = os.environ.get(SH_PROFILE_ENV_VAR, default=DEFAULT_PROFILE)
 
         if not use_defaults:
-            for param, value in self._global_cache.items():
-                setattr(self, param, value)
+            env_kwargs = {
+                "sh_client_id": os.environ.get(SH_CLIENT_ID_ENV_VAR),
+                "sh_client_secret": os.environ.get(SH_CLIENT_SECRET_ENV_VAR),
+            }
+            env_kwargs = {k: v for k, v in env_kwargs.items() if v is not None}
 
-    def _validate_values(self) -> None:
-        """Ensures that the values are aligned with expectations."""
-        default = SHConfig(use_defaults=True)
-        for param in self.CONFIG_PARAMS:
-            value = getattr(self, param)
-            default_value = getattr(default, param)
-            param_type = type(default_value)
+            # load from config.toml
+            loaded_kwargs = SHConfig.load(profile=profile).to_dict(mask_credentials=False)
 
-            if isinstance(value, str) and value.startswith("http"):
-                value = value.rstrip("/")
-            if (param_type is float) and isinstance(value, numbers.Number):
-                continue
-            if not isinstance(value, param_type):
-                raise ValueError(f"Value of parameter `{param}` must be of type {param_type.__name__}")
-        if self.max_wfs_records_per_query > 100:
-            raise ValueError("Value of config parameter `max_wfs_records_per_query` must be at most 100")
-        if self.max_opensearch_records_per_query > 500:
-            raise ValueError("Value of config parameter `max_opensearch_records_per_query` must be at most 500")
+            kwargs = {**loaded_kwargs, **env_kwargs, **kwargs}  # precedence: init params > env > loaded
 
-    def __getitem__(self, name: str) -> Union[str, int, float]:
-        """Config parameters can also be accessed as items."""
-        if name in self.CONFIG_PARAMS:
-            return getattr(self, name)
-        raise KeyError(f"`{name}` is not a supported config parameter")
+        super().__init__(**kwargs)
 
     def __str__(self) -> str:
-        """Content of SHConfig in json schema. If `hide_credentials` is set to `True` then credentials will be
-        masked.
-        """
-        return json.dumps(self.get_config_dict(), indent=2)
+        """Content of `SHConfig` in json schema. Credentials are masked for safety."""
+        return json.dumps(self.to_dict(mask_credentials=True), indent=2)
 
     def __repr__(self) -> str:
-        """Representation of SHConfig parameters. If `hide_credentials` is set to `True` then credentials will be
-        masked.
-        """
-        repr_list = [f"{self.__class__.__name__}("]
-
-        for key, value in self.get_config_dict().items():
-            repr_list.append(f"{key}={repr(value)},")
-
-        return "\n  ".join(repr_list).strip(",") + "\n)"
-
-    def __eq__(self, other: object) -> bool:
-        """Two instances of `SHConfig` are equal if all values of their parameters are equal."""
-        if not isinstance(other, SHConfig):
-            return False
-        return all(getattr(self, param) == getattr(other, param) for param in self.CONFIG_PARAMS)
-
-    @property
-    def _global_cache(self) -> Dict[str, Any]:
-        """Uses a class attribute to store a global instance of a class with config parameters."""
-        if SHConfig._cache is None:
-            loaded_instance = SHConfig.load(self.get_config_location())
-            SHConfig._cache = {param: getattr(loaded_instance, param) for param in SHConfig.CONFIG_PARAMS}
-        return SHConfig._cache
+        """Representation of `SHConfig`. Credentials are masked for safety."""
+        config_dict = self.to_dict(mask_credentials=True)
+        content = ",\n  ".join(f"{key}={repr(value)}" for key, value in config_dict.items())
+        return f"{self.__class__.__name__}(\n  {content},\n)"
 
     @classmethod
-    def load(cls, filename: str) -> SHConfig:
-        """Method that loads configuration parameters from a file. Does not affect global settings.
+    def load(cls, profile: str = DEFAULT_PROFILE) -> SHConfig:
+        """Loads configuration parameters from the config file at `SHConfig.get_config_location()`.
 
-        :param filename: Path to file from which to read configuration.
+        :param profile: Which profile to load from the configuration file.
         """
-        with open(filename, "r") as cfg_file:
-            config_dict = json.load(cfg_file)
+        filename = cls.get_config_location()
+        if not os.path.exists(filename):
+            cls(use_defaults=True).save(profile)  # store default configuration to standard location
 
-        config = cls(use_defaults=True)
-        for param, value in config_dict.items():
-            if param in cls.CONFIG_PARAMS:
-                setattr(config, param, value)
+        with open(filename, "rb") as cfg_file:
+            configurations_dict = tomli.load(cfg_file)
 
-        config._validate_values()
-        return config
+        if profile not in configurations_dict:
+            raise KeyError(f"Profile {profile} not found in configuration file.")
 
-    def save(self, filename: Optional[str] = None) -> None:
-        """Method that saves configuration parameter changes from instance of SHConfig class to global config class and
-        to `config.json` file.
+        return cls(use_defaults=True, **configurations_dict[profile])
 
-        :param filename: Optional name of file to which to save configuration. If not specified saves to global default.
+    def save(self, profile: str = DEFAULT_PROFILE) -> None:
+        """Saves configuration parameters to the config file at `SHConfig.get_config_location()`.
 
-        :Example:
-            ``my_config = SHConfig()`` \n
-            ``my_config.instance_id = '<new instance id>'`` \n
-            ``my_config.save()``
+        :param profile: Under which profile to save the configuration.
         """
-        self._validate_values()
+        file_path = Path(self.get_config_location())
+        file_path.parent.mkdir(parents=True, exist_ok=True)
 
-        is_changed = False
-        for param in self.CONFIG_PARAMS:
-            if getattr(self, param) != self._global_cache[param]:
-                is_changed = True
-                self._global_cache[param] = getattr(self, param)  # pylint: disable=unsupported-assignment-operation
+        if file_path.exists():
+            with open(file_path, "rb") as cfg_file:
+                current_configuration = tomli.load(cfg_file)
+        else:
+            current_configuration = {}
 
-        if is_changed:
-            config_dict = {param: getattr(self, param) for param in self.CONFIG_PARAMS}
-            with open(filename or self.get_config_location(), "w") as cfg_file:
-                json.dump(config_dict, cfg_file, indent=2)
+        current_configuration[profile] = self._get_dict_of_diffs_from_defaults()
+        with open(file_path, "wb") as cfg_file:
+            tomli_w.dump(current_configuration, cfg_file)
+
+    def _get_dict_of_diffs_from_defaults(self) -> Dict[str, Union[str, float]]:
+        """Returns a dictionary containing key: value pairs for parameters that have values different from defaults."""
+        current_profile_config = self.to_dict(mask_credentials=False)
+        default_values = SHConfig(use_defaults=True).to_dict(mask_credentials=False)
+        return {key: value for key, value in current_profile_config.items() if default_values[key] != value}
 
     def copy(self) -> SHConfig:
         """Makes a copy of an instance of `SHConfig`"""
         return copy.copy(self)
 
-    def reset(self, params: Union[str, Iterable[str], object] = ...) -> None:
-        """Resets configuration class to initial values. Use `SHConfig.save()` method in order to save this change.
+    def to_dict(self, mask_credentials: bool = True) -> Dict[str, Union[str, float]]:
+        """Get a dictionary representation of the `SHConfig` class.
 
-        :param params: Parameters which will be reset. Parameters can be specified with a list of names, e.g.
-            ``['instance_id', 'aws_access_key_id', 'aws_secret_access_key']``, or as a single name, e.g.
-            ``'sh_base_url'``. By default, all parameters will be reset and default value is ``Ellipsis``.
-        """
-        default = SHConfig(use_defaults=True)
-
-        if params is ...:
-            params = self.get_params()
-        if isinstance(params, str):
-            self._reset_param(params, default)
-        elif isinstance(params, Iterable):
-            for param in params:
-                self._reset_param(param, default)
-        else:
-            raise ValueError(
-                f"Parameters must be specified in form of a list of strings or as a single string, instead got {params}"
-            )
-
-    def _reset_param(self, param: str, default: SHConfig) -> None:
-        """Resets a single parameter
-
-        :param param: A configuration parameter
-        """
-        if param not in self.get_params():
-            raise ValueError(f"Cannot reset unknown parameter `{param}`")
-        setattr(self, param, getattr(default, param))
-
-    def get_params(self) -> List[str]:
-        """Returns a list of parameter names
-
-        :return: List of parameter names
-        """
-        return list(self.CONFIG_PARAMS)
-
-    def get_config_dict(self) -> ConfigDict:
-        """Get a dictionary representation of `SHConfig` class. If `hide_credentials` is set to `True` then
-        credentials will be masked.
-
+        :param mask_credentials: Wether to mask fields containing credentials.
         :return: A dictionary with configuration parameters
         """
-        config_params = {param: getattr(self, param) for param in self.CONFIG_PARAMS}
+        config_params = asdict(self)
 
-        if self._hide_credentials:
-            config_params = {param: self._mask_credentials(param, value) for param, value in config_params.items()}
+        if mask_credentials:
+            for param in self.CREDENTIALS:
+                config_params[param] = self._mask_credentials(config_params[param])
 
         return config_params
 
-    @classmethod
-    def get_config_location(cls) -> str:
-        """Returns location of configuration file on disk
-
-        :return: File path of `config.json` file
-        """
-        config_file = os.path.join(os.path.dirname(__file__), "config.json")
-
-        if not os.path.isfile(config_file):
-            with open(config_file, "w") as cfg_file:
-                default_dict = cls(use_defaults=True).get_config_dict()
-                json.dump(default_dict, cfg_file, indent=2)
-
-        return config_file
-
-    def _mask_credentials(self, param: str, value: object) -> object:
+    def _mask_credentials(self, value: str) -> str:
         """In case a parameter that holds credentials is given it will mask its value"""
-        if not (param in self.CREDENTIALS and value):
-            return value
-        if not isinstance(value, str):
-            raise ValueError(f"Parameter `{param}` should be a string but {value} found")
-
         hide_size = min(max(len(value) - 4, 10), len(value))
         return "*" * hide_size + value[hide_size:]
 
-    @deprecated_function(message_suffix="Use `f'{config.sh_auth_base_url}/oauth/token'` instead.")
-    def get_sh_oauth_url(self) -> str:
-        """Provides URL for Sentinel Hub authentication endpoint
-
-        :return: A URL endpoint
-        """
-        return f"{self.sh_auth_base_url}/oauth/token"
-
-    @deprecated_function(message_suffix="Use `f'{config.sh_base_url}/api/v1/process'` instead.")
-    def get_sh_process_api_url(self) -> str:
-        """Provides URL for Sentinel Hub Process API endpoint
-
-        :return: A URL endpoint
-        """
-        return f"{self.sh_base_url}/api/v1/process"
-
-    @deprecated_function(message_suffix="Use `f'{config.sh_base_url}/ogc'` instead.")
-    def get_sh_ogc_url(self) -> str:
-        """Provides URL for Sentinel Hub OGC endpoint
-
-        :return: A URL endpoint
-        """
-        return f"{self.sh_base_url}/ogc"
-
-    @deprecated_function(message_suffix="Use `f'{config.sh_auth_base_url}/aux/ratelimit'` instead.")
-    def get_sh_rate_limit_url(self) -> str:
-        """Provides URL for Sentinel Hub rate limiting endpoint
-
-        :return: A URL endpoint
-        """
-        return f"{self.sh_auth_base_url}/aux/ratelimit"
-
-    def raise_for_missing_instance_id(self) -> None:
-        """In case Sentinel Hub instance ID is missing it raises an informative error
-
-        :raises: ValueError
-        """
-        if not self.instance_id:
-            raise ValueError(
-                "Sentinel Hub instance ID is missing. "
-                "Either provide it with SHConfig object or save it into config.json configuration file. "
-                "Check https://sentinelhub-py.readthedocs.io/en/latest/configure.html for more info."
-            )
+    @classmethod
+    def get_config_location(cls) -> str:
+        """Returns the default location of the user configuration file on disk."""
+        user_folder = os.path.expanduser("~")
+        return os.path.join(user_folder, ".config", "sentinelhub", "config.toml")

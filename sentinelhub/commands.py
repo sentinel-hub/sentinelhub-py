@@ -2,11 +2,12 @@
 Module that implements command line interface for the package
 """
 
+import json
 from typing import Any, Callable, TypeVar
 
 import click
 
-from .config import SHConfig
+from .config import DEFAULT_PROFILE, SHConfig
 from .download import DownloadClient, DownloadRequest
 
 FC = TypeVar("FC", bound=Callable[..., Any])
@@ -29,17 +30,17 @@ def main_help() -> None:
 
 
 def _config_options(func: FC) -> FC:
-    """A helper function which joins click.option functions of each parameter from config.json"""
-    for param in SHConfig().get_params()[-1::-1]:
+    """A helper function which joins `click.option` functions of each parameter from `SHConfig`."""
+    for param in list(SHConfig().to_dict())[-1::-1]:
         func = click.option(f"--{param}", param, help=f"Set new values to configuration parameter `{param}`")(func)
     return func
 
 
 @click.command()
 @click.option("--show", is_flag=True, default=False, help="Show current configuration")
-@click.option("--reset", is_flag=True, default=False, help="Reset configuration to initial state")
+@click.option("--profile", default=DEFAULT_PROFILE, help="Selects profile to show/configure.")
 @_config_options
-def config(show: bool, reset: bool, **params: Any) -> None:
+def config(show: bool, profile: str, **params: Any) -> None:
     """Inspect and configure parameters in your local sentinelhub configuration file
 
     \b
@@ -48,10 +49,8 @@ def config(show: bool, reset: bool, **params: Any) -> None:
       sentinelhub.config --instance_id <new instance id>
       sentinelhub.config --max_download_attempts 5 --download_sleep_time 20 --download_timeout_seconds 120
     """
-    sh_config = SHConfig()
-
-    if reset:
-        sh_config.reset()
+    sh_config = SHConfig(profile=profile)
+    old_config = sh_config.copy()
 
     for param, value in params.items():
         if value is not None:
@@ -65,18 +64,15 @@ def config(show: bool, reset: bool, **params: Any) -> None:
             if getattr(sh_config, param) != value:
                 setattr(sh_config, param, value)
 
-    old_config = SHConfig()
-    sh_config.save()
+    sh_config.save(profile=profile)
 
-    for param in sh_config.get_params():
-        if sh_config[param] != old_config[param]:
-            value = sh_config[param]
-            if isinstance(value, str):
-                value = f"'{value}'"
-            click.echo(f"The value of parameter `{param}` was updated to {value}")
+    for param, value in sh_config.to_dict(mask_credentials=False).items():
+        if value != getattr(old_config, param):
+            click.echo(f"The value of parameter `{param}` was updated to {repr(value)}")
 
     if show:
-        click.echo(str(sh_config))
+        unmasked_str_repr = json.dumps(sh_config.to_dict(mask_credentials=False), indent=2)
+        click.echo(unmasked_str_repr)
         click.echo(f"Configuration file location: {sh_config.get_config_location()}")
 
 

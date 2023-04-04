@@ -65,6 +65,7 @@ class ByocTile:
     cover_geometry: Optional[Geometry] = field(metadata=geometry_config, default=None)
     created: Optional[datetime] = field(metadata=datetime_config, default=None)
     sensing_time: Optional[datetime] = field(metadata=datetime_config, default=None)
+    ingestion_start: Optional[datetime] = field(metadata=datetime_config, default=None)
     additional_data: Optional[dict] = None
     other_data: CatchAll = field(default_factory=dict)
 

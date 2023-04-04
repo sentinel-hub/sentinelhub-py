@@ -86,7 +86,7 @@ class AwsDownloadClient(DownloadClient):
         except NoCredentialsError as exception:
             raise ValueError(
                 "The requested data is in Requester Pays AWS bucket. In order to download the data please set "
-                "your access key either in AWS credentials file or in sentinelhub config.json file using "
+                "your access key either in the AWS credentials file or in the sentinelhub config.toml file using "
                 "command line:\n"
                 "$ sentinelhub.config --aws_access_key_id <your AWS key> --aws_secret_access_key "
                 "<your AWS secret key>"

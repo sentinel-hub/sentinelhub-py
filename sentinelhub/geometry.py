@@ -15,7 +15,7 @@ from shapely.geometry import MultiPolygon, Polygon
 from typing_extensions import TypeAlias
 
 from .constants import CRS
-from .exceptions import SHDeprecationWarning, deprecated_class
+from .exceptions import SHDeprecationWarning
 from .geo_utils import transform_point
 
 Self = TypeVar("Self", bound="_BaseGeometry")
@@ -553,101 +553,3 @@ class Geometry(_BaseGeometry):
             raise ValueError(f"Supported geometry types are polygon and multipolygon, got {type(geometry)}")
 
         return geometry
-
-
-@deprecated_class(message_suffix="Use sequences of BBox objects instead.")
-class BBoxCollection(_BaseGeometry):
-    """A collection of bounding boxes"""
-
-    def __init__(self, bbox_list: Union[BBoxCollection, List[BBox]]):
-        """
-        :param bbox_list: A list of BBox objects which have to be in the same CRS
-        """
-        self._bbox_list, crs = self._parse_bbox_list(bbox_list)
-        self._geometry = self._get_geometry()
-
-        super().__init__(crs)
-
-    def __repr__(self) -> str:
-        """Method for class representation"""
-        bbox_list_repr = ", ".join([repr(bbox) for bbox in self.bbox_list])
-        return f"{self.__class__.__name__}({bbox_list_repr})"
-
-    def __eq__(self, other: object) -> bool:
-        """Method for comparing two BBoxCollection classes"""
-        if isinstance(other, BBoxCollection):
-            return (
-                self.crs is other.crs
-                and len(self.bbox_list) == len(other.bbox_list)
-                and all(bbox == other_bbox for bbox, other_bbox in zip(self, other))
-            )
-        return False
-
-    def __iter__(self) -> Iterator[BBox]:
-        """This method enables iteration over bounding boxes in collection"""
-        return iter(self.bbox_list)
-
-    @property
-    def bbox_list(self) -> List[BBox]:
-        """Returns the list of bounding boxes from collection
-        :return: The list of bounding boxes
-        """
-        return self._bbox_list
-
-    @property
-    def geometry(self) -> MultiPolygon:
-        """Returns shapely object representing geometry
-        :return: A multipolygon of bounding boxes
-        """
-        return self._geometry
-
-    @property
-    def bbox(self) -> BBox:
-        """Returns BBox object representing bounding box around the geometry
-        :return: A bounding box, with same CRS
-        """
-        return BBox(self.geometry, self.crs)
-
-    def reverse(self) -> BBoxCollection:
-        """Returns a new BBoxCollection object where all x and y coordinates are switched
-        :return: New Geometry object with switched coordinates
-        """
-        return BBoxCollection([bbox.reverse() for bbox in self.bbox_list])
-
-    def transform(self, crs: CRS, always_xy: bool = True) -> BBoxCollection:
-        """Transforms BBoxCollection from current CRS to target CRS
-        :param crs: target CRS
-        :param always_xy: Parameter that is passed to `pyproj.Transformer` object and defines axis order for
-            transformation. The default value `True` is in most cases the correct one.
-        :return: BBoxCollection in target CRS
-        """
-        return BBoxCollection([bbox.transform(crs, always_xy=always_xy) for bbox in self.bbox_list])
-
-    def apply(self, operation: Callable[[float, float], Tuple[float, float]]) -> BBoxCollection:
-        """Applies a function to lower-left and upper-right pairs of coordinates of each bounding box in the collection
-        to create a new collection of modified bounding boxes."""
-        return BBoxCollection([bbox.apply(operation) for bbox in self.bbox_list])
-
-    def _get_geometry(self) -> MultiPolygon:
-        """Creates a multipolygon of bounding box polygons"""
-        return MultiPolygon([bbox.geometry for bbox in self.bbox_list])
-
-    @staticmethod
-    def _parse_bbox_list(bbox_list: Union[BBoxCollection, List[BBox]]) -> Tuple[List[BBox], CRS]:
-        """Helper method for parsing a list of bounding boxes"""
-        if isinstance(bbox_list, BBoxCollection):
-            return bbox_list.bbox_list, bbox_list.crs
-
-        if not isinstance(bbox_list, list) or not bbox_list:
-            raise ValueError("Expected non-empty list of BBox objects")
-
-        for bbox in bbox_list:
-            if not isinstance(bbox, BBox):
-                raise ValueError(f"Elements in the list should be of type {BBox.__name__}, got {type(bbox)}")
-
-        crs = bbox_list[0].crs
-        for bbox in bbox_list:
-            if bbox.crs is not crs:
-                raise ValueError("All bounding boxes should have the same CRS")
-
-        return bbox_list, crs

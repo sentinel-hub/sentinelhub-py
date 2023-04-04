@@ -55,7 +55,7 @@ jobs:
         run: pip install -e .[AWS,DEV]
 
       - name: Run mypy
-        run: mypy sentinelhub setup.py
+        run: mypy sentinelhub
 
       - name: Run pylint
         run: pylint sentinelhub

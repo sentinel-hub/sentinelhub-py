@@ -22,7 +22,7 @@ from typing import Any, Dict, Optional
 
 # General information about the project.
 project = "Sentinel Hub"
-project_copyright = "2018, Sentinel Hub"
+project_copyright = "2017, Sinergise"
 author = "Sinergise EO research team"
 doc_title = "sentinelhub Documentation"
 
@@ -58,9 +58,9 @@ extensions = [
     "sphinx.ext.coverage",
     "sphinx.ext.mathjax",
     "sphinx.ext.githubpages",
+    "sphinx_mdinclude",
     "nbsphinx",
     "sphinx_rtd_theme",
-    "m2r2",
 ]
 
 # Include typehints in descriptions

@@ -8,7 +8,6 @@ from ..base import DataRequest
 from ..config import SHConfig
 from ..constants import MimeType
 from ..download.models import DownloadRequest
-from ..exceptions import deprecated_class
 from .client import AwsDownloadClient
 
 
@@ -89,8 +88,3 @@ class AwsBatchStatisticalResults(DataRequest):
                     filenames.append(key_name)
 
         return filenames
-
-
-@deprecated_class(message_suffix="It has been renamed to `AwsBatchStatisticalResults`.")
-class AwsBatchResults(AwsBatchStatisticalResults):
-    """Deprecated version of `AwsBatchStatisticalResults`."""

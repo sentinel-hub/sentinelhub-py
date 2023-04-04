@@ -7,8 +7,6 @@ from typing import Any, Callable, Dict, Optional, Tuple, Union
 import numpy as np
 from pytest import approx
 
-from .exceptions import deprecated_function
-
 
 def get_input_folder(current_file: str) -> str:
     """Use fixtures if possible. This is meant only for test cases"""
@@ -18,26 +16,6 @@ def get_input_folder(current_file: str) -> str:
 def get_output_folder(current_file: str) -> str:
     """Use fixtures if possible. This is meant only for test cases"""
     return os.path.join(os.path.dirname(os.path.realpath(current_file)), "TestOutputs")
-
-
-@deprecated_function(message_suffix="Use `assert_statistics_match` instead.")
-def test_numpy_data(
-    data: Optional[np.ndarray] = None,
-    exp_shape: Optional[Tuple[int, ...]] = None,
-    exp_dtype: Union[None, type, np.dtype] = None,
-    exp_min: Optional[float] = None,
-    exp_max: Optional[float] = None,
-    exp_mean: Optional[float] = None,
-    exp_median: Optional[float] = None,
-    exp_std: Optional[float] = None,
-    delta: float = 1e-4,
-) -> None:
-    """Deprecated version of `assert_statistics_match`."""
-    if data is None:
-        return
-    assert_statistics_match(
-        data, exp_shape, exp_dtype, exp_min, exp_max, exp_mean, exp_median, exp_std, rel_delta=delta
-    )
 
 
 def assert_statistics_match(

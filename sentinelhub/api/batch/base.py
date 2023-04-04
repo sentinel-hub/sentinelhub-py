@@ -25,6 +25,7 @@ class BatchRequestStatus(Enum):
     FAILED = "FAILED"
     PARTIAL = "PARTIAL"
     CANCELED = "CANCELED"
+    STOPPED = "STOPPED"
 
 
 class BatchUserAction(Enum):
@@ -34,6 +35,7 @@ class BatchUserAction(Enum):
     ANALYSE = "ANALYSE"
     NONE = "NONE"
     CANCEL = "CANCEL"
+    STOP = "STOP"
 
 
 class BaseBatchClient(SentinelHubService, Generic[BatchRequestType], metaclass=ABCMeta):  # noqa: B024

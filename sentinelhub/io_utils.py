@@ -6,13 +6,12 @@ import csv
 import json
 import logging
 import os
-from typing import IO, Any, Callable, Dict, Optional
+from typing import IO, Any, Callable, Dict, Literal, Optional
 from xml.etree import ElementTree
 
 import numpy as np
 import tifffile as tiff
 from PIL import Image
-from typing_extensions import Literal
 
 from .constants import MimeType
 from .decoding import decode_image_with_pillow, decode_jp2_image, decode_tar, get_data_format

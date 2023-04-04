@@ -8,7 +8,6 @@ Because of that the tests are very strict. If you break them make sure to unders
 changing the code or the tests.
 """
 import random
-import sys
 from collections import defaultdict
 from typing import Callable, Dict, List, Sequence, Tuple
 
@@ -28,7 +27,6 @@ from sentinelhub import (
 )
 
 
-@pytest.mark.skipif(sys.version < "3.8", reason="Mocking check for call.args doesn't work correctly for Python 3.7")
 @pytest.mark.parametrize(
     "tile_status_sequence",
     [
@@ -117,7 +115,6 @@ def _tile_status_counts_to_tiles(tile_status_counts: Dict[BatchTileStatus, int])
     return tiles
 
 
-@pytest.mark.skipif(sys.version < "3.8", reason="Mocking check for call.args doesn't work correctly for Python 3.7")
 @pytest.mark.parametrize("batch_status", [BatchRequestStatus.PROCESSING, BatchRequestStatus.ANALYSIS_DONE])
 @pytest.mark.parametrize(
     "progress_sequence",
@@ -181,7 +178,6 @@ def test_monitor_batch_job_sleep_time_error(monitor_function: Callable, sleep_ti
         monitor_function("x", analysis_sleep_time=4)
 
 
-@pytest.mark.skipif(sys.version < "3.8", reason="Mocking check for call.args doesn't work correctly for Python 3.7")
 @pytest.mark.parametrize(
     "status_sequence",
     [
@@ -236,7 +232,6 @@ def test_monitor_batch_analysis(
     assert logging_mock.call_count == sleep_loop_counts
 
 
-@pytest.mark.skipif(sys.version < "3.8", reason="Mocking check for call.args doesn't work correctly for Python 3.7")
 @pytest.mark.parametrize(
     "status_sequence",
     [
