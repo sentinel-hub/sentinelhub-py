@@ -4,8 +4,6 @@ A client interface for `Sentinel Hub Catalog API <https://docs.sentinel-hub.com/
 import datetime as dt
 from typing import Any, Dict, Iterable, List, Literal, Optional, Union
 
-import numpy as np
-
 from ..base import FeatureIterator
 from ..config import SHConfig
 from ..data_collections import DataCollection, OrbitDirection
@@ -297,7 +295,7 @@ def get_available_timestamps(
     fields = {"include": ["properties.datetime"], "exclude": []}
 
     if maxcc is not None and data_collection.has_cloud_coverage:
-        if np.issubdtype(type(maxcc), np.integer):
+        if isinstance(maxcc, (int, float)) and (maxcc < 0 or maxcc > 1):
             raise ValueError('Maximum cloud coverage "maxcc" parameter should be a float on an interval [0, 1]')
         query_filter = f"eo:cloud_cover < {int(maxcc * 100)}"
 
