@@ -16,27 +16,27 @@ DTYPE_TO_SAMPLE_TYPE: Dict[type, str] = {
 }
 
 EVALSCRIPT_TEMPLATE = """
-    //VERSION=3
+//VERSION=3
 
-    function setup() {{
-        return {{
-            input: [{{
-                bands: [{input_names}],
-                units: [{input_units}]
-            }}],
-            output: [{output_spec}]
-        }}
+function setup() {{
+    return {{
+        input: [{{
+            bands: [{input_names}],
+            units: [{input_units}]
+        }}],
+        output: [{output_spec}]
     }}
+}}
 
-    function updateOutputMetadata(scenes, inputMetadata, outputMetadata) {{
-        outputMetadata.userData = {{
-            "norm_factor":  inputMetadata.normalizationFactor
-        }}
+function updateOutputMetadata(scenes, inputMetadata, outputMetadata) {{
+    outputMetadata.userData = {{
+        "norm_factor":  inputMetadata.normalizationFactor
     }}
+}}
 
-    function evaluatePixel(sample) {{
-        return {{ {return_spec} }};
-    }}
+function evaluatePixel(sample) {{
+    return {{ {return_spec} }};
+}}
 """
 
 
