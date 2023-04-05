@@ -275,7 +275,7 @@ def get_available_timestamps(
     *,
     time_difference: Optional[dt.timedelta] = None,
     ignore_tz: bool = True,
-    maxcc: Optional[float] = 1.0,
+    maxcc: Optional[float] = None, 
     config: Optional[SHConfig] = None,
 ) -> List[dt.datetime]:
     """Helper function to search for all available timestamps for a given area and query parameters.
