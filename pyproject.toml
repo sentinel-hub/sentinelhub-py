@@ -70,7 +70,6 @@ dev = [
     "boto3-stubs>=1.20.0",
     "build",
     "click>=8.0.0",
-    "codecov",
     "fs",
     "mypy>=0.990",
     "moto",
