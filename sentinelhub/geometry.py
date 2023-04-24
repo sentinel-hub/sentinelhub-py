@@ -11,6 +11,7 @@ import shapely.geometry
 import shapely.geometry.base
 import shapely.ops
 import shapely.wkt
+from shapely.errors import GeometryTypeError
 from shapely.geometry import MultiPolygon, Polygon
 from typing_extensions import TypeAlias
 
@@ -544,10 +545,11 @@ class Geometry(_BaseGeometry):
         """
         if isinstance(geometry, str):
             geometry = shapely.wkt.loads(geometry)
-        elif isinstance(geometry, dict):
-            geometry = shapely.geometry.shape(geometry)
-        elif not isinstance(geometry, shapely.geometry.base.BaseGeometry):
-            raise TypeError("Unsupported geometry representation")
+        else:
+            try:
+                geometry = shapely.geometry.shape(geometry)
+            except (GeometryTypeError, AttributeError) as exception:
+                raise ValueError(f"Unable to parse value {geometry} as a geometry.") from exception
 
         if not isinstance(geometry, (Polygon, MultiPolygon)):
             raise ValueError(f"Supported geometry types are polygon and multipolygon, got {type(geometry)}")
