@@ -2,13 +2,17 @@
 Module defining data collections
 """
 from dataclasses import dataclass, field, fields
-from enum import Enum, EnumMeta
-from typing import Any, Dict, List, Optional, Tuple
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple
 
 from aenum import extend_enum
 
 from .constants import ServiceUrl
 from .data_collections_bands import Band, Bands, MetaBands
+
+if TYPE_CHECKING:
+    from enum import Enum, EnumMeta  # mypy has a custom plugin for enum but not aenum
+else:
+    from aenum import Enum, EnumMeta
 
 
 class _CollectionType:
