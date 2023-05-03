@@ -26,6 +26,7 @@ class _SHConfig:
     sh_client_secret: str = ""
     sh_base_url: str = "https://services.sentinel-hub.com"
     sh_auth_base_url: str = "https://services.sentinel-hub.com"
+    sh_auth_url: str = "https://services.sentinel-hub.com/oauth/token"
     geopedia_wms_url: str = "https://service.geopedia.world"
     geopedia_rest_url: str = "https://www.geopedia.world/rest"
     aws_access_key_id: str = ""
