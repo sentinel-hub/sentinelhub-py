@@ -6,12 +6,15 @@ from __future__ import annotations
 import copy
 import json
 import os
+import warnings
 from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any, Dict, Optional, Union
 
 import tomli
 import tomli_w
+
+from .exceptions import SHDeprecationWarning
 
 DEFAULT_PROFILE = "default-profile"
 SH_PROFILE_ENV_VAR = "SH_PROFILE"
@@ -25,7 +28,7 @@ class _SHConfig:
     sh_client_id: str = ""
     sh_client_secret: str = ""
     sh_base_url: str = "https://services.sentinel-hub.com"
-    sh_auth_base_url: str = "https://services.sentinel-hub.com"
+    sh_auth_base_url: Optional[str] = None
     sh_auth_url: str = "https://services.sentinel-hub.com/oauth/token"
     geopedia_wms_url: str = "https://service.geopedia.world"
     geopedia_rest_url: str = "https://www.geopedia.world/rest"
@@ -44,6 +47,17 @@ class _SHConfig:
     number_of_download_processes: int = 1
 
     def __post_init__(self) -> None:
+        if self.sh_auth_base_url is not None:
+            self.sh_auth_url = self.sh_auth_base_url + "/oauth/token"
+            warnings.warn(
+                (
+                    "The parameter `sh_auth_base_url` of `SHConfig` has been replaced with `sh_auth_url`. Please update"
+                    " your configuration, for now the parameters were automatically adjusted to `sh_auth_url ="
+                    " sh_auth_base_url + '/oauth/token'`."
+                ),
+                category=SHDeprecationWarning,
+            )
+
         if self.max_wfs_records_per_query > 100:
             raise ValueError("Value of config parameter `max_wfs_records_per_query` must be at most 100")
         if self.max_opensearch_records_per_query > 500:
@@ -62,8 +76,8 @@ class SHConfig(_SHConfig):
           environment variable. The environment variable has precedence.
         - `sh_base_url`: There exist multiple deployed instances of Sentinel Hub service, this parameter defines the
           location of a specific service instance.
-        - `sh_auth_base_url`: Base url for Sentinel Hub Authentication service. Authentication is typically sent to the
-          main service deployment even if `sh_base_url` points to another deployment.
+        - `sh_auth_url`: Url for Sentinel Hub Authentication service. Authentication is typically sent to the main
+          service deployment even if `sh_base_url` points to another deployment.
         - `geopedia_wms_url`: Base url for Geopedia WMS services.
         - `geopedia_rest_url`: Base url for Geopedia REST services.
         - `aws_access_key_id`: Access key for AWS Requester Pays buckets.
