@@ -112,7 +112,7 @@ class SentinelHubSession:
         return json.loads(decoded_string)
 
     @property
-    def session_headers(self) -> Dict[str, str]:
+    def session_headers(self) -> Dict[int, str]:
         """Provides session authorization headers
 
         :return: A dictionary with authorization headers.
