@@ -58,6 +58,7 @@ jobs:
         run: mypy sentinelhub
 
       - name: Run pylint
+        if: success() || failure() # always() has the issue that it also runs when cancelled
         run: pylint sentinelhub
 
   test-on-github:
@@ -67,6 +68,7 @@ jobs:
         python-version:
           - "3.9"
           - "3.10"
+          - "3.11"
         include:
           # A flag marks whether full or partial tests should be run
           # We don't run integration tests on pull requests from outside repos, because they don't have secrets
@@ -101,7 +103,7 @@ jobs:
             --aws_secret_access_key "${{ secrets.AWS_SECRET_ACCESS_KEY }}"
           pytest --cov --cov-report=term --cov-report=xml
 
-      - name: Run pylint and reduced tests
+      - name: Run reduced tests
         if: ${{ !matrix.full_test_suite }}
         run: |
           pytest -m "not sh_integration and not aws_integration"
