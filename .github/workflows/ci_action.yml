@@ -19,37 +19,33 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout branch
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           ref: ${{ env.CHECKOUT_BRANCH }}
 
       - name: Setup Python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4
         with:
           python-version: "3.8"
-          architecture: x64
+          cache: pip
 
-      - name: Prepare pre-commit validators
-        run: |
-          pip install pre-commit
-          pre-commit install
-
-      - name: Check code compliance with pre-commit validators
-        run: pre-commit run --all-files
+      - uses: pre-commit/action@v3.0.0
+        with:
+          extra_args: --all-files --verbose
 
   check-code-pylint-and-mypy:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout branch
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           ref: ${{ env.CHECKOUT_BRANCH }}
 
       - name: Setup Python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4
         with:
           python-version: "3.8"
-          architecture: x64
+          cache: pip
 
       - name: Install packages
         run: pip install -e .[AWS,DEV]
@@ -76,15 +72,15 @@ jobs:
             full_test_suite: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}
     steps:
       - name: Checkout branch
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           ref: ${{ env.CHECKOUT_BRANCH }}
 
       - name: Setup Python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
-          architecture: x64
+          cache: pip
 
       - name: Install packages
         run: |
