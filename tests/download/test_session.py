@@ -66,7 +66,7 @@ def test_session_content_and_headers(fake_config: SHConfig, fake_token: Dict[str
     assert len(requests_mock.request_history) == 1
     mocked_request = requests_mock.request_history[0]
 
-    assert mocked_request.url == fake_config.sh_auth_url
+    assert mocked_request.url == fake_config.sh_token_url
     assert mocked_request.headers["User-Agent"] == f"sentinelhub-py/v{__version__}"
     assert mocked_request.headers["Content-Type"] == "application/x-www-form-urlencoded"
 

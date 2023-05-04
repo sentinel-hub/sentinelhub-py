@@ -125,7 +125,7 @@ class SentinelHubSession:
         Note that the `DownloadRequest` object is created only because retry decorators of `_fetch_token` method
         require it.
         """
-        request = DownloadRequest(url=f"{self.config.sh_auth_url}")
+        request = DownloadRequest(url=f"{self.config.sh_token_url}")
         return self._fetch_token(request)
 
     @retry_temporary_errors
