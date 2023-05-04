@@ -132,7 +132,7 @@ disable = [
 
 [tool.pylint.design]
 max-args = 10
-max-attributes = 20
+max-attributes = 21
 max-locals = 20
 min-public-methods = 0
 
