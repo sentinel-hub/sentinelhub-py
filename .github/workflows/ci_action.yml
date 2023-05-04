@@ -11,7 +11,7 @@ on:
     - cron: "5 0 * * *"
 
 concurrency:
-  # This will cancel outdated runs on the same pull-request, but wont touch runs for other triggers
+  # This will cancel outdated runs on the same pull-request, but not runs for other triggers
   group: ${{ github.head_ref || github.run_id }}
   cancel-in-progress: true
 
