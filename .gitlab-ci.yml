@@ -1,14 +1,25 @@
-image: python:3.9
-
 stages:
+  - update
   - test
+
+update_base_image:
+  stage: update
+  image: docker:latest
+  rules:
+    - if: '$UPDATE_BASE_IMAGE == "true"'
+  script:
+    - docker login -u gitlab-ci-token -p "$CI_JOB_TOKEN" "$CI_REGISTRY"
+    - docker build --file=".gitlab/docker/Dockerfile" --tag="$BASE_IMAGE" .
+    - docker push "$BASE_IMAGE"
 
 run_sh_integration_tests:
   stage: test
-  when: always
-  before_script:
-    - apt-get update
-    - apt-get install -y build-essential libgdal-dev proj-bin gcc libproj-dev libspatialindex-dev libopenjp2-7
+  image: "$BASE_IMAGE"
+  dependencies: [ ]
+  needs: [ ]
+  rules:
+    - when: always
+      if: '$UPDATE_BASE_IMAGE != "true"'
   script:
     - pip install -e .[AWS,DEV]
     - pytest -m "sh_integration"
