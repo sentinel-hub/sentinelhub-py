@@ -32,7 +32,6 @@ jobs:
         uses: actions/setup-python@v4
         with:
           python-version: "3.8"
-          cache: pip
 
       - uses: pre-commit/action@v3.0.0
         with:
@@ -50,7 +49,7 @@ jobs:
         uses: actions/setup-python@v4
         with:
           python-version: "3.8"
-          cache: pip
+          cache: pip # caching the entire environment is faster when cache exists but slower for cache creation
 
       - name: Install packages
         run: pip install --upgrade --upgrade-strategy eager -e .[AWS,DEV]
@@ -59,7 +58,7 @@ jobs:
         run: mypy sentinelhub
 
       - name: Run pylint
-        if: success() || failure() # always() has the issue that it also runs when cancelled
+        if: success() || failure() # always() has the issue that it also runs when the workflow is cancelled
         run: pylint sentinelhub
 
   test-on-github:
