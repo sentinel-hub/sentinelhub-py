@@ -16,13 +16,24 @@ column_type_pairs = [
 ]
 
 
-def test_statistical_to_dataframe(input_folder: str) -> None:
-    batch_stat_results_path = os.path.join(input_folder, "batch_stat_results.json")
+@pytest.mark.parametrize(
+    "result_file, expected_npolygons, expected_ncolumns, expected_nrows",
+    [
+        ("batch_stat_results.json", 2, 12, 2),
+        ("batch_stat_failed_results.json", 1, 12, 1),
+        ("normal_stat_result.json", 1, 12, 1),
+        ("normal_stat_partial_result.json", 1, 12, 1),
+    ],
+)
+def test_statistical_to_dataframe(
+    input_folder: str, result_file: str, expected_npolygons: int, expected_ncolumns: int, expected_nrows: int
+) -> None:
+    batch_stat_results_path = os.path.join(input_folder, result_file)
     batch_stat_results = read_data(batch_stat_results_path)
     df = statistical_to_dataframe(batch_stat_results)
-    assert len(set(df["identifier"])) == 2, "Wrong number of polygons"
-    assert len(df.columns) == 12, "Wrong number of columns"
-    assert len(df) == 2, "Wrong number of valid rows"
+    assert len(set(df["identifier"])) == expected_npolygons, "Wrong number of polygons"
+    assert len(df.columns) == expected_ncolumns, "Wrong number of columns"
+    assert len(df) == expected_nrows, "Wrong number of valid rows"
     for data_type, columns in column_type_pairs:
         assert all(isinstance(df[column].iloc[0], data_type) for column in columns), "Wrong data type of columns"
 
