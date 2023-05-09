@@ -89,6 +89,11 @@ def _is_batch_stat(result_data: JsonDict) -> bool:
     return "id" in result_data
 
 
+def _is_valid_batch_response(result_data: JsonDict) -> bool:
+    """Identifies whether there is a valid batch response"""
+    return "error" not in result_data and result_data["response"]["status"] == "OK"
+
+
 def statistical_to_dataframe(result_data: List[JsonDict], exclude_stats: Optional[List[str]] = None) -> Any:
     """Transform (Batch) Statistical API results into a pandas.DataFrame
 
@@ -112,13 +117,21 @@ def statistical_to_dataframe(result_data: List[JsonDict], exclude_stats: Optiona
     nresults = len(result_data)
     dfs = [None] * nresults
     for idx in range(nresults):
-        identifier, response = result_data[idx]["identifier"], result_data[idx]["response"]
-        if response:
-            result_entries = _extract_response_data(response["data"], exclude_stats)
-            result_df = pandas.DataFrame(result_entries)
-            result_df["identifier"] = identifier
-            dfs[idx] = result_df
+        result = result_data[idx]
 
+        # valid batch stat response
+        if _is_batch_stat(result) and _is_valid_batch_response(result):
+            identifier, response_data = result["identifier"], result["response"]["data"]
+
+        # valid normal stat response
+        elif not _is_batch_stat(result) and "data" in result:
+            identifier, response_data = str(idx), result["data"]
+        else:
+            continue
+        result_entries = _extract_response_data(response_data, exclude_stats)
+        result_df = pandas.DataFrame(result_entries)
+        result_df["identifier"] = identifier
+        dfs[idx] = result_df
     return pandas.concat(dfs)
 
 
@@ -139,7 +152,7 @@ def _get_failed_batch_response(result_data: JsonDict) -> Union[str, List[Tuple[s
     :param result_data: An input representation of the (Batch) Statistical API result of a geometry.
     :return: Failed responses and responses with failed intervals
     """
-    if "error" in result_data or not result_data["response"]:
+    if "error" in result_data or result_data["response"]["status"] == "FAILED":
         return _FULL_TIME_RANGE
     return _get_failed_intervals(result_data["response"]["data"])
 

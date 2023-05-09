@@ -2,7 +2,7 @@
     {
         "id": 3,
         "identifier": "SI21.FOI.6620269001",
-        "response": null
+        "response": {"data":null,"status":"FAILED"}
     },
     {
         "id": 4,
