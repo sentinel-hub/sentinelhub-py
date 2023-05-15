@@ -2,11 +2,12 @@
 Module implementing some common utility functions
 """
 from enum import Enum
-from typing import Any, Dict, Optional, Type, TypedDict, cast
+from typing import Any, Dict, Optional, Type, TypedDict
 
 from dataclasses_json import LetterCase
 from dataclasses_json import config as dataclass_config
-from typing_extensions import NotRequired
+
+from sentinelhub.types import JsonDict
 
 from ..geometry import Geometry
 from ..time_utils import parse_time, serialize_time
@@ -51,20 +52,10 @@ def remove_undefined(payload: dict) -> dict:
     return {name: value for name, value in payload.items() if value is not None}
 
 
-class S3Specification(TypedDict):
-    """Specification of a S3 path."""
-
-    url: str
-    accessKey: Optional[str]
-    secretAccessKey: Optional[str]
-    iamRoleARN: Optional[str]
-    region: NotRequired[str]
-
-
 class AccessSpecification(TypedDict):
     """Specification of a S3 input or output."""
 
-    s3: S3Specification
+    s3: JsonDict
 
 
 def s3_specification(
@@ -91,14 +82,12 @@ def s3_specification(
     """
     if (iam_role_arn is None) == (access_key is None or secret_access_key is None):
         raise ValueError("Either specify `iam_role_arn` or both `access_key` and `secret_access_key`.")
-    s3_access = remove_undefined(
-        {
-            "url": url,
-            "accessKey": access_key,
-            "secretAccessKey": secret_access_key,
-            "iamRoleARN": iam_role_arn,
-            "region": region,
-        }
-    )
+    s3_access = {
+        "url": url,
+        "accessKey": access_key,
+        "secretAccessKey": secret_access_key,
+        "iamRoleARN": iam_role_arn,
+        "region": region,
+    }
 
-    return {"s3": cast(S3Specification, s3_access)}
+    return {"s3": remove_undefined(s3_access)}
