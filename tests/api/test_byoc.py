@@ -111,6 +111,8 @@ def test_get_collection(byoc: SentinelHubBYOC, collection: JsonDict) -> None:
     sh_collection = byoc.get_collection(collection)
 
     assert isinstance(sh_collection, dict)
+    assert "accountId" in sh_collection
+    del sh_collection["accountId"]
     assert ByocCollection.from_dict(sh_collection) == ByocCollection.from_dict(collection)
 
 
