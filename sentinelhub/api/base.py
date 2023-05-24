@@ -1,10 +1,12 @@
 """
 Module implementing some utility functions not suitable for other utility modules
 """
+from __future__ import annotations
+
 from abc import ABCMeta, abstractmethod
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any, Dict, Iterable, Optional, Protocol, Union
+from typing import Any, Iterable, Protocol
 from urllib.parse import urlencode
 
 from dataclasses_json import CatchAll, LetterCase, Undefined, dataclass_json
@@ -22,7 +24,7 @@ from .utils import datetime_config, remove_undefined
 class SentinelHubService(metaclass=ABCMeta):
     """A base class for classes interacting with different Sentinel Hub APIs"""
 
-    def __init__(self, config: Optional[SHConfig] = None):
+    def __init__(self, config: SHConfig | None = None):
         """
         :param config: A configuration object with required parameters `sh_client_id`, `sh_client_secret`, and
             `sh_auth_base_url` which is used for authentication and `sh_base_url` which defines the service
@@ -44,14 +46,14 @@ class SentinelHubService(metaclass=ABCMeta):
 class SentinelHubFeatureIterator(FeatureIterator[JsonDict]):
     """Feature iterator for the most common implementation of feature pagination at Sentinel Hub services"""
 
-    def __init__(self, *args: Any, exception_message: Optional[str] = None, **kwargs: Any):
+    def __init__(self, *args: Any, exception_message: str | None = None, **kwargs: Any):
         """
         :param args: Arguments passed to FeatureIterator
         :param exception_message: A message to be raised if no features are found
         :param kwargs: Keyword arguments passed to FeatureIterator
         """
         self.exception_message = exception_message or "No data found"
-        self.next: Optional[JsonDict] = None
+        self.next: JsonDict | None = None
 
         super().__init__(*args, **kwargs)
 
@@ -75,7 +77,7 @@ class SentinelHubFeatureIterator(FeatureIterator[JsonDict]):
 class _AdditionalData(Protocol):
     """Describes minimum requirements for additional data passed to BaseCollection"""
 
-    bands: Optional[Dict[str, Any]]
+    bands: dict[str, Any] | None
 
 
 @dataclass_json(letter_case=LetterCase.CAMEL, undefined=Undefined.INCLUDE)
@@ -85,11 +87,11 @@ class BaseCollection:
 
     name: str
     s3_bucket: str
-    additional_data: Optional[_AdditionalData]
-    collection_id: Optional[str] = field(metadata=dataclass_config(field_name="id"), default=None)
-    user_id: Optional[str] = None
-    created: Optional[datetime] = field(metadata=datetime_config, default=None)
-    no_data: Optional[Union[int, float]] = None
+    additional_data: _AdditionalData | None
+    collection_id: str | None = field(metadata=dataclass_config(field_name="id"), default=None)
+    user_id: str | None = None
+    created: datetime | None = field(metadata=datetime_config, default=None)
+    no_data: int | float | None = None
     other_data: CatchAll = field(default_factory=dict)
 
     def to_data_collection(self) -> DataCollection:

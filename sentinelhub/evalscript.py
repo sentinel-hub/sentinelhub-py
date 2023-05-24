@@ -1,14 +1,14 @@
 """
 Module defining evalscript generation utilities
 """
-from typing import Dict, List, Optional
+from __future__ import annotations
 
 import numpy as np
 
 from .data_collections import DataCollection
 from .data_collections_bands import Band, Unit
 
-DTYPE_TO_SAMPLE_TYPE: Dict[type, str] = {
+DTYPE_TO_SAMPLE_TYPE: dict[type, str] = {
     bool: "UINT8",
     np.uint8: "UINT8",
     np.uint16: "UINT16",
@@ -40,7 +40,7 @@ function evaluatePixel(sample) {{
 """
 
 
-def parse_data_collection_bands(data_collection: DataCollection, bands: List[str]) -> List[Band]:
+def parse_data_collection_bands(data_collection: DataCollection, bands: list[str]) -> list[Band]:
     """Checks that all requested bands are available and returns the band information for further processing
 
     :param data_collection: A collection of requested satellite data.
@@ -64,9 +64,9 @@ def parse_data_collection_bands(data_collection: DataCollection, bands: List[str
 
 def generate_evalscript(
     data_collection: DataCollection,
-    bands: Optional[List[str]] = None,
-    meta_bands: Optional[List[str]] = None,
-    merged_bands_output: Optional[str] = None,
+    bands: list[str] | None = None,
+    meta_bands: list[str] | None = None,
+    merged_bands_output: str | None = None,
     prioritize_dn: bool = True,
 ) -> str:
     """Generate an evalscript based on the provided specifications. This utility supports generating only evalscripts
@@ -85,7 +85,7 @@ def generate_evalscript(
     meta_band_names = meta_bands if meta_bands is not None else []
 
     input_names, input_units = [], []
-    sample_type_map: Dict[str, str] = {}
+    sample_type_map: dict[str, str] = {}
     requested_bands = parse_data_collection_bands(data_collection, band_names + meta_band_names)
 
     for band in requested_bands:

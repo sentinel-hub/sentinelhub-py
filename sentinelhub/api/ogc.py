@@ -2,11 +2,13 @@
 Module for working with Sentinel Hub OGC services
 `Sentinel Hub OGC services <https://www.sentinel-hub.com/develop/api/ogc/standard-parameters/>`__.
 """
+from __future__ import annotations
+
 import datetime
 import logging
 from base64 import b64encode
 from enum import Enum
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any
 from urllib.parse import urlencode
 
 from ..base import DataRequest
@@ -69,13 +71,13 @@ class OgcRequest(DataRequest):
         bbox: BBox,
         *,
         data_collection: DataCollection,
-        time: Union[RawTimeType, RawTimeIntervalType] = "latest",
-        service_type: Optional[ServiceType] = None,
-        size_x: Union[None, str, int] = None,
-        size_y: Union[None, str, int] = None,
+        time: RawTimeType | RawTimeIntervalType = "latest",
+        service_type: ServiceType | None = None,
+        size_x: None | str | int = None,
+        size_y: None | str | int = None,
         maxcc: float = 1.0,
         image_format: MimeType = MimeType.PNG,
-        custom_url_params: Optional[Dict[CustomUrlParam, Any]] = None,
+        custom_url_params: dict[CustomUrlParam, Any] | None = None,
         time_difference: datetime.timedelta = datetime.timedelta(seconds=-1),
         **kwargs: Any,
     ):
@@ -127,7 +129,7 @@ class OgcRequest(DataRequest):
 
         self._check_custom_url_parameters()
 
-        self.wfs_iterator: Optional[WebFeatureService] = None
+        self.wfs_iterator: WebFeatureService | None = None
 
         super().__init__(SentinelHubDownloadClient, **kwargs)
 
@@ -163,7 +165,7 @@ class OgcRequest(DataRequest):
         self.download_list = ogc_service.get_request(self)
         self.wfs_iterator = ogc_service.get_wfs_iterator()
 
-    def get_dates(self) -> List[Optional[datetime.datetime]]:
+    def get_dates(self) -> list[datetime.datetime | None]:
         """Get list of dates
 
         List of all available Sentinel-2 acquisitions for given bbox with max cloud coverage and the specified
@@ -176,7 +178,7 @@ class OgcRequest(DataRequest):
         """
         return OgcImageService(config=self.config).get_dates(self)
 
-    def get_tiles(self) -> Optional[WebFeatureService]:
+    def get_tiles(self) -> WebFeatureService | None:
         """Returns iterator over info about all satellite tiles used for the OgcRequest
 
         :return: Iterator of dictionaries containing info about all satellite tiles used in the request. In case of
@@ -200,7 +202,7 @@ class WmsRequest(OgcRequest):
     For more info check `WMS documentation <https://www.sentinel-hub.com/develop/api/ogc/standard-parameters/wms/>`__.
     """
 
-    def __init__(self, *, width: Optional[int] = None, height: Optional[int] = None, **kwargs: Any):
+    def __init__(self, *, width: int | None = None, height: int | None = None, **kwargs: Any):
         """
         :param width: width (number of columns) of the returned image (array)
         :param height: height (number of rows) of the returned image (array)
@@ -302,7 +304,7 @@ class OgcImageService:
     services.
     """
 
-    def __init__(self, config: Optional[SHConfig] = None):
+    def __init__(self, config: SHConfig | None = None):
         """
         :param config: A custom instance of config class to override parameters from the saved configuration.
         """
@@ -314,9 +316,9 @@ class OgcImageService:
             )
 
         self._base_url = f"{self.config.sh_base_url}/ogc"
-        self.wfs_iterator: Optional[WebFeatureService] = None
+        self.wfs_iterator: WebFeatureService | None = None
 
-    def get_request(self, request: OgcRequest) -> List[DownloadRequest]:
+    def get_request(self, request: OgcRequest) -> list[DownloadRequest]:
         """Get download requests
 
         Create a list of DownloadRequests for all Sentinel-2 acquisitions within request's time interval and
@@ -339,10 +341,10 @@ class OgcImageService:
         self,
         request: OgcRequest,
         *,
-        date: Optional[datetime.datetime] = None,
-        size_x: Union[None, str, int] = None,
-        size_y: Union[None, str, int] = None,
-        geometry: Union[None, BBox, Geometry] = None,
+        date: datetime.datetime | None = None,
+        size_x: None | str | int = None,
+        size_y: None | str | int = None,
+        geometry: None | BBox | Geometry = None,
     ) -> str:
         """Returns url to Sentinel Hub's OGC service for the product specified by the OgcRequest and date.
 
@@ -381,7 +383,7 @@ class OgcImageService:
         return url
 
     @staticmethod
-    def _get_common_url_parameters(request: OgcRequest) -> Dict[str, Any]:
+    def _get_common_url_parameters(request: OgcRequest) -> dict[str, Any]:
         """Returns parameters common dictionary for WMS, WCS and FIS request.
 
         :param request: OGC-type request with specified bounding box, cloud coverage for specific product.
@@ -423,7 +425,7 @@ class OgcImageService:
         return params
 
     @staticmethod
-    def _get_wms_wcs_url_parameters(request: OgcRequest, date: Optional[datetime.datetime]) -> Dict[str, Any]:
+    def _get_wms_wcs_url_parameters(request: OgcRequest, date: datetime.datetime | None) -> dict[str, Any]:
         """Returns parameters common dictionary for WMS and WCS request.
 
         :param request: OGC-type request with specified bounding box, cloud coverage for specific product.
@@ -452,9 +454,7 @@ class OgcImageService:
         return params
 
     @staticmethod
-    def _get_wms_url_parameters(
-        request: OgcRequest, size_x: Union[int, str], size_y: Union[int, str]
-    ) -> Dict[str, Any]:
+    def _get_wms_url_parameters(request: OgcRequest, size_x: int | str, size_y: int | str) -> dict[str, Any]:
         """Returns parameters dictionary for WMS request.
 
         :param request: OGC-type request with specified bounding box, cloud coverage for specific product.
@@ -465,9 +465,7 @@ class OgcImageService:
         return {"WIDTH": size_x, "HEIGHT": size_y, "LAYERS": request.layer, "REQUEST": "GetMap", "VERSION": "1.3.0"}
 
     @staticmethod
-    def _get_wcs_url_parameters(
-        request: OgcRequest, size_x: Union[int, str], size_y: Union[int, str]
-    ) -> Dict[str, Any]:
+    def _get_wcs_url_parameters(request: OgcRequest, size_x: int | str, size_y: int | str) -> dict[str, Any]:
         """Returns parameters dictionary for WCS request.
 
         :param request: OGC-type request with specified bounding box, cloud coverage for specific product.
@@ -478,7 +476,7 @@ class OgcImageService:
         return {"RESX": size_x, "RESY": size_y, "COVERAGE": request.layer, "REQUEST": "GetCoverage", "VERSION": "1.1.2"}
 
     @staticmethod
-    def _get_fis_parameters(request: OgcRequest, geometry: Union[BBox, Geometry]) -> Dict[str, Any]:
+    def _get_fis_parameters(request: OgcRequest, geometry: BBox | Geometry) -> dict[str, Any]:
         """Returns parameters dictionary for FIS request.
 
         :param request: OGC-type request with specified bounding box, cloud coverage for specific product.
@@ -514,7 +512,7 @@ class OgcImageService:
 
         return params
 
-    def get_dates(self, request: OgcRequest) -> List[Optional[datetime.datetime]]:
+    def get_dates(self, request: OgcRequest) -> list[datetime.datetime | None]:
         """Get available Sentinel-2 acquisitions at least time_difference apart
 
         List of all available Sentinel-2 acquisitions for given bbox with max cloud coverage and the specified
@@ -549,7 +547,7 @@ class OgcImageService:
         return dates  # type: ignore[return-value]
 
     @staticmethod
-    def get_image_dimensions(request: OgcRequest) -> Tuple[Union[int, str], Union[int, str]]:
+    def get_image_dimensions(request: OgcRequest) -> tuple[int | str, int | str]:
         """Verifies or calculates image dimensions.
 
         :param request: OGC-type request
@@ -570,7 +568,7 @@ class OgcImageService:
             return request.size_x, missing_dimension
         raise ValueError("Parameters 'width' and 'height' must be integers or None")
 
-    def get_wfs_iterator(self) -> Optional[WebFeatureService]:
+    def get_wfs_iterator(self) -> WebFeatureService | None:
         """Returns iterator over info about all satellite tiles used for the request
 
         :return: Iterator of dictionaries containing info about all satellite tiles used in the request. In case of

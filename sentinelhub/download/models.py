@@ -11,7 +11,7 @@ import os
 import platform
 import warnings
 from dataclasses import dataclass, field, fields
-from typing import Any, Dict, Optional, Tuple
+from typing import Any
 
 from requests import Response
 
@@ -44,17 +44,17 @@ class DownloadRequest:
     :param extra_params: Any additional parameters.
     """
 
-    url: Optional[str] = None
+    url: str | None = None
     headers: JsonDict = field(default_factory=dict)
     request_type: RequestType = RequestType.GET
-    post_values: Optional[JsonDict] = None
+    post_values: JsonDict | None = None
     use_session: bool = False
     data_type: MimeType = MimeType.RAW
     save_response: bool = False
-    data_folder: Optional[str] = None
-    filename: Optional[str] = None
+    data_folder: str | None = None
+    filename: str | None = None
     return_data: bool = True
-    extra_params: Dict[str, Any] = field(default_factory=dict)
+    extra_params: dict[str, Any] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
         """Additional parsing of init parameters."""
@@ -97,7 +97,7 @@ class DownloadRequest:
 
         return hashlib.md5(hashable.encode("utf-8")).hexdigest()
 
-    def get_relative_paths(self) -> Tuple[Optional[str], str]:
+    def get_relative_paths(self) -> tuple[str | None, str]:
         """A method that calculates file paths relative to `data_folder`
 
         :return: Returns a pair of file paths, a request payload path and a response path. If request path is not
@@ -114,7 +114,7 @@ class DownloadRequest:
 
         return request_path, response_path
 
-    def get_storage_paths(self) -> Tuple[Optional[str], Optional[str]]:
+    def get_storage_paths(self) -> tuple[str | None, str | None]:
         """A method that calculates file paths where request payload and response will be saved.
 
         :return: Returns a pair of file paths, a request payload path and a response path. Each of them can also be
@@ -163,8 +163,8 @@ class DownloadResponse:
     request: DownloadRequest
     content: bytes
     headers: JsonDict = field(default_factory=dict)
-    status_code: Optional[int] = None
-    elapsed: Optional[float] = None
+    status_code: int | None = None
+    elapsed: float | None = None
 
     @classmethod
     def from_response(cls, response: Response, request: DownloadRequest) -> DownloadResponse:

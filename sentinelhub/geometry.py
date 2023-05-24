@@ -5,7 +5,7 @@ import contextlib
 import warnings
 from abc import ABCMeta, abstractmethod
 from math import ceil
-from typing import Callable, Dict, Iterator, List, Optional, Tuple, TypeVar, Union, cast
+from typing import Callable, Dict, Iterator, Tuple, TypeVar, Union, cast
 
 import shapely.geometry
 import shapely.geometry.base
@@ -44,7 +44,7 @@ class _BaseGeometry(metaclass=ABCMeta):
 
     @property
     @abstractmethod
-    def geometry(self) -> Union[Polygon, MultiPolygon]:
+    def geometry(self) -> Polygon | MultiPolygon:
         """An abstract property - every subclass must implement geometry property"""
 
     @property
@@ -84,7 +84,7 @@ class _BaseGeometry(metaclass=ABCMeta):
         """Transforms geometry from current CRS to target CRS."""
 
     @abstractmethod
-    def apply(self: Self, operation: Callable[[float, float], Tuple[float, float]]) -> Self:
+    def apply(self: Self, operation: Callable[[float, float], tuple[float, float]]) -> Self:
         """Applies a function to each vertex of a geometry object."""
 
 
@@ -118,7 +118,7 @@ class BBox(_BaseGeometry):
         super().__init__(crs)
 
     @classmethod
-    def _to_tuple(cls, bbox: BBoxInputType) -> Tuple[float, float, float, float]:
+    def _to_tuple(cls, bbox: BBoxInputType) -> tuple[float, float, float, float]:
         """Converts the input bbox representation (see the constructor docstring for a list of valid representations)
         into a flat tuple. Also supports `list` objects in places where `tuple` is expected.
 
@@ -151,8 +151,8 @@ class BBox(_BaseGeometry):
 
     @staticmethod
     def _tuple_from_list_or_tuple(
-        bbox: Union[Tuple[float, float, float, float], Tuple[Tuple[float, float], Tuple[float, float]]]
-    ) -> Tuple[float, float, float, float]:
+        bbox: tuple[float, float, float, float] | tuple[tuple[float, float], tuple[float, float]]
+    ) -> tuple[float, float, float, float]:
         """Converts a list or tuple representation of a bbox into a flat tuple representation.
 
         :param bbox: a list or tuple with 4 coordinates that is either flat or nested
@@ -166,7 +166,7 @@ class BBox(_BaseGeometry):
         return float(min_x), float(min_y), float(max_x), float(max_y)
 
     @staticmethod
-    def _tuple_from_str(bbox: str) -> Tuple[float, float, float, float]:
+    def _tuple_from_str(bbox: str) -> tuple[float, float, float, float]:
         """Parses a string of numbers separated by any combination of commas and spaces
 
         :param bbox: e.g. str of the form `min_x ,min_y  max_x, max_y`
@@ -184,7 +184,7 @@ class BBox(_BaseGeometry):
         return min_x, min_y, max_x, max_y
 
     @staticmethod
-    def _tuple_from_dict(bbox: dict) -> Tuple[float, float, float, float]:
+    def _tuple_from_dict(bbox: dict) -> tuple[float, float, float, float]:
         """Converts a dictionary representation of a bbox into a flat tuple representation
 
         :param bbox: a dict with keys "min_x, "min_y", "max_x", and "max_y"
@@ -194,7 +194,7 @@ class BBox(_BaseGeometry):
         return bbox["min_x"], bbox["min_y"], bbox["max_x"], bbox["max_y"]
 
     @staticmethod
-    def _tuple_from_bbox(bbox: BBox) -> Tuple[float, float, float, float]:
+    def _tuple_from_bbox(bbox: BBox) -> tuple[float, float, float, float]:
         """Converts a BBox instance into a tuple
 
         :param bbox: An instance of the BBox type
@@ -241,7 +241,7 @@ class BBox(_BaseGeometry):
         return False
 
     @property
-    def lower_left(self) -> Tuple[float, float]:
+    def lower_left(self) -> tuple[float, float]:
         """Returns the lower left vertex of the bounding box
 
         :return: min_x, min_y
@@ -249,7 +249,7 @@ class BBox(_BaseGeometry):
         return self.min_x, self.min_y
 
     @property
-    def upper_right(self) -> Tuple[float, float]:
+    def upper_right(self) -> tuple[float, float]:
         """Returns the upper right vertex of the bounding box
 
         :return: max_x, max_y
@@ -257,7 +257,7 @@ class BBox(_BaseGeometry):
         return self.max_x, self.max_y
 
     @property
-    def middle(self) -> Tuple[float, float]:
+    def middle(self) -> tuple[float, float]:
         """Returns the middle point of the bounding box
 
         :return: middle point
@@ -308,12 +308,12 @@ class BBox(_BaseGeometry):
         bbox_geometry = bbox_geometry.transform(crs, always_xy=always_xy)
         return bbox_geometry.bbox
 
-    def apply(self, operation: Callable[[float, float], Tuple[float, float]]) -> BBox:
+    def apply(self, operation: Callable[[float, float], tuple[float, float]]) -> BBox:
         """Applies a function to lower left and upper right pairs of coordinates of the bounding box to create a new
         bounding box."""
         return BBox((operation(*self.lower_left), operation(*self.upper_right)), crs=self.crs)
 
-    def buffer(self, buffer: Union[float, Tuple[float, float]], *, relative: bool = True) -> BBox:
+    def buffer(self, buffer: float | tuple[float, float], *, relative: bool = True) -> BBox:
         """Provides a new bounding box with a size that is changed either by a relative or an absolute buffer.
 
         :param buffer: The buffer can be provided either as a single number or a tuple of 2 numbers, one for buffer in
@@ -353,7 +353,7 @@ class BBox(_BaseGeometry):
             self.crs,
         )
 
-    def get_polygon(self, reverse: bool = False) -> Tuple[Tuple[float, float], ...]:
+    def get_polygon(self, reverse: bool = False) -> tuple[tuple[float, float], ...]:
         """Returns a tuple of coordinates of 5 points describing a polygon. Points are listed in clockwise order, first
         point is the same as the last.
 
@@ -379,11 +379,11 @@ class BBox(_BaseGeometry):
 
     def get_partition(
         self,
-        num_x: Optional[int] = None,
-        num_y: Optional[int] = None,
-        size_x: Optional[float] = None,
-        size_y: Optional[float] = None,
-    ) -> List[List[BBox]]:
+        num_x: int | None = None,
+        num_y: int | None = None,
+        size_x: float | None = None,
+        size_y: float | None = None,
+    ) -> list[list[BBox]]:
         """Partitions bounding box into smaller bounding boxes of the same size.
 
         If `num_x` and `num_y` are specified, the total number of BBoxes is know but not the size. If `size_x` and
@@ -417,7 +417,7 @@ class BBox(_BaseGeometry):
             for i in range(num_x)
         ]
 
-    def get_transform_vector(self, resx: float, resy: float) -> Tuple[float, float, float, float, float, float]:
+    def get_transform_vector(self, resx: float, resy: float) -> tuple[float, float, float, float, float, float]:
         """Given resolution it returns a transformation vector
 
         :param resx: Resolution in x direction
@@ -427,7 +427,7 @@ class BBox(_BaseGeometry):
         return self.min_x, self._parse_resolution(resx), 0, self.max_y, 0, -self._parse_resolution(resy)
 
     @staticmethod
-    def _parse_resolution(res: Union[str, int, float]) -> float:
+    def _parse_resolution(res: str | int | float) -> float:
         """Helper method for parsing given resolution. It will also try to parse a string into float
 
         :return: A float value of resolution
@@ -450,7 +450,7 @@ class Geometry(_BaseGeometry):
     - A WKT string with (multi)polygon coordinates
     """
 
-    def __init__(self, geometry: Union[Polygon, MultiPolygon, dict, str], crs: CRS):
+    def __init__(self, geometry: Polygon | MultiPolygon | dict | str, crs: CRS):
         """
         :param geometry: A polygon or multipolygon in any valid representation
         :param crs: Coordinate reference system of the geometry
@@ -497,12 +497,12 @@ class Geometry(_BaseGeometry):
 
         return Geometry(geometry, crs=new_crs)
 
-    def apply(self, operation: Callable[[float, float], Tuple[float, float]]) -> Geometry:
+    def apply(self, operation: Callable[[float, float], tuple[float, float]]) -> Geometry:
         """Applies a function to each pair of vertex coordinates of the geometry to create a new geometry."""
         return Geometry(shapely.ops.transform(operation, self.geometry), crs=self.crs)
 
     @classmethod
-    def from_geojson(cls, geojson: dict, crs: Optional[CRS] = None) -> Geometry:
+    def from_geojson(cls, geojson: dict, crs: CRS | None = None) -> Geometry:
         """Create Geometry object from geojson. It will parse crs from geojson (if info is available),
         otherwise it will be set to crs (WGS84 if parameter is empty)
 
@@ -519,7 +519,7 @@ class Geometry(_BaseGeometry):
         return cls(geojson, crs=crs)
 
     @property
-    def geometry(self) -> Union[Polygon, MultiPolygon]:
+    def geometry(self) -> Polygon | MultiPolygon:
         """Returns shapely object representing geometry in this class
 
         :return: A polygon or a multipolygon in shapely format
@@ -535,7 +535,7 @@ class Geometry(_BaseGeometry):
         return BBox(self.geometry.bounds, self.crs)
 
     @staticmethod
-    def _parse_geometry(geometry: Union[Polygon, MultiPolygon, dict, str]) -> Union[Polygon, MultiPolygon]:
+    def _parse_geometry(geometry: Polygon | MultiPolygon | dict | str) -> Polygon | MultiPolygon:
         """Parses given geometry into shapely object
 
         :param geometry: A representation of the geometry

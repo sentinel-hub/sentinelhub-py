@@ -1,8 +1,10 @@
 """
 Implementation of base Sentinel Hub interfaces
 """
+from __future__ import annotations
+
 from abc import ABCMeta, abstractmethod
-from typing import Any, Dict, Optional
+from typing import Any
 
 from ..base import DataRequest
 from ..constants import MimeType, MosaickingOrder, RequestType, ResamplingType
@@ -17,7 +19,7 @@ class SentinelHubBaseApiRequest(DataRequest, metaclass=ABCMeta):
     """A base class for Sentinel Hub interfaces"""
 
     _SERVICE_ENDPOINT = ""
-    payload: Dict[str, Any] = {}
+    payload: dict[str, Any] = {}
 
     @property
     @abstractmethod
@@ -45,14 +47,14 @@ class SentinelHubBaseApiRequest(DataRequest, metaclass=ABCMeta):
     def input_data(
         data_collection: DataCollection,
         *,
-        identifier: Optional[str] = None,
-        time_interval: Optional[RawTimeIntervalType] = None,
-        maxcc: Optional[float] = None,
-        mosaicking_order: Optional[MosaickingOrder] = None,
-        upsampling: Optional[ResamplingType] = None,
-        downsampling: Optional[ResamplingType] = None,
-        other_args: Optional[Dict[str, Any]] = None,
-    ) -> "InputDataDict":
+        identifier: str | None = None,
+        time_interval: RawTimeIntervalType | None = None,
+        maxcc: float | None = None,
+        mosaicking_order: MosaickingOrder | None = None,
+        upsampling: ResamplingType | None = None,
+        downsampling: ResamplingType | None = None,
+        other_args: dict[str, Any] | None = None,
+    ) -> InputDataDict:
         """Generate the `input data` part of the request body
 
         :param data_collection: One of supported Process API data collections.
@@ -69,7 +71,7 @@ class SentinelHubBaseApiRequest(DataRequest, metaclass=ABCMeta):
             by it.
         :return: A dictionary-like object that also contains additional attributes
         """
-        input_data_dict: Dict[str, Any] = {
+        input_data_dict: dict[str, Any] = {
             "type": data_collection.api_id,
         }
         if identifier:
@@ -90,8 +92,8 @@ class SentinelHubBaseApiRequest(DataRequest, metaclass=ABCMeta):
 
     @staticmethod
     def bounds(
-        bbox: Optional[BBox] = None, geometry: Optional[Geometry] = None, other_args: Optional[Dict[str, Any]] = None
-    ) -> Dict[str, Any]:
+        bbox: BBox | None = None, geometry: Geometry | None = None, other_args: dict[str, Any] | None = None
+    ) -> dict[str, Any]:
         """Generate a `bound` part of the API request
 
         :param bbox: Bounding box describing the area of interest.
@@ -113,7 +115,7 @@ class SentinelHubBaseApiRequest(DataRequest, metaclass=ABCMeta):
 
         crs = bbox.crs if bbox else geometry.crs  # type: ignore[union-attr]
 
-        request_bounds: Dict[str, Any] = {"properties": {"crs": crs.opengis_string}}
+        request_bounds: dict[str, Any] = {"properties": {"crs": crs.opengis_string}}
 
         if bbox:
             request_bounds["bbox"] = list(bbox)
@@ -159,7 +161,7 @@ class SentinelHubBaseApiRequest(DataRequest, metaclass=ABCMeta):
 class InputDataDict(dict):
     """An input data dictionary which also holds additional attributes"""
 
-    def __init__(self, input_data_dict: Dict[str, Any], *, service_url: Optional[str] = None):
+    def __init__(self, input_data_dict: dict[str, Any], *, service_url: str | None = None):
         """
         :param input_data_dict: A normal dictionary with input parameters
         :param service_url: A service URL defined by a data collection
@@ -175,12 +177,12 @@ class InputDataDict(dict):
 
 def _get_data_filters(
     data_collection: DataCollection,
-    time_interval: Optional[RawTimeIntervalType],
-    maxcc: Optional[float],
-    mosaicking_order: Optional[MosaickingOrder],
-) -> Dict[str, Any]:
+    time_interval: RawTimeIntervalType | None,
+    maxcc: float | None,
+    mosaicking_order: MosaickingOrder | None,
+) -> dict[str, Any]:
     """Builds a dictionary of data filters for Process API"""
-    data_filter: Dict[str, Any] = {}
+    data_filter: dict[str, Any] = {}
 
     if time_interval:
         start_time, end_time = serialize_time(parse_time_interval(time_interval, allow_undefined=True), use_tz=True)
@@ -198,9 +200,9 @@ def _get_data_filters(
     return {**data_filter, **_get_data_collection_filters(data_collection)}
 
 
-def _get_data_collection_filters(data_collection: DataCollection) -> Dict[str, Any]:
+def _get_data_collection_filters(data_collection: DataCollection) -> dict[str, Any]:
     """Builds a dictionary of filters for Process API from a data collection definition"""
-    filters: Dict[str, Any] = {}
+    filters: dict[str, Any] = {}
 
     if data_collection.swath_mode:
         filters["acquisitionMode"] = data_collection.swath_mode.upper()
@@ -223,11 +225,9 @@ def _get_data_collection_filters(data_collection: DataCollection) -> Dict[str, A
     return filters
 
 
-def _get_processing_params(
-    upsampling: Optional[ResamplingType], downsampling: Optional[ResamplingType]
-) -> Dict[str, Any]:
+def _get_processing_params(upsampling: ResamplingType | None, downsampling: ResamplingType | None) -> dict[str, Any]:
     """Builds a dictionary of processing parameters for Process API"""
-    processing_params: Dict[str, Any] = {}
+    processing_params: dict[str, Any] = {}
 
     if upsampling:
         processing_params["upsampling"] = ResamplingType(upsampling).value

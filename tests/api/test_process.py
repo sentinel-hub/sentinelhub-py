@@ -1,7 +1,9 @@
 """ Tests for the Process API requests
 """
+from __future__ import annotations
+
 import json
-from typing import Any, Dict
+from typing import Any
 
 import pytest
 from oauthlib.oauth2.rfc6749.errors import CustomOAuth2Error
@@ -463,7 +465,7 @@ def test_bad_credentials() -> None:
                     return [2.5 * sample.B04, 2.5 * sample.B03, 2.5 * sample.B02];
                 }
             """
-    request_params: Dict[str, Any] = dict(
+    request_params: dict[str, Any] = dict(
         evalscript=evalscript,
         input_data=[
             SentinelHubRequest.input_data(
@@ -566,7 +568,7 @@ def test_conflicting_service_url_restrictions(config: SHConfig) -> None:
     collections.
     """
     config.sh_base_url = ServiceUrl.MAIN
-    request_params: Dict[str, Any] = dict(
+    request_params: dict[str, Any] = dict(
         evalscript="",
         input_data=[
             SentinelHubRequest.input_data(data_collection=DataCollection.LANDSAT_OT_L2),

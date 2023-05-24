@@ -1,11 +1,13 @@
 """
 Download process for Sentinel Hub Statistical API
 """
+from __future__ import annotations
+
 import concurrent.futures
 import copy
 import json
 import logging
-from typing import Any, Dict
+from typing import Any
 
 from ..exceptions import DownloadFailedException
 from ..types import JsonDict
@@ -40,7 +42,7 @@ class SentinelHubStatisticalDownloadClient(SentinelHubDownloadClient):
         which download failed."""
         stats_response = response.decode()
 
-        failed_time_intervals: Dict[int, Any] = {}
+        failed_time_intervals: dict[int, Any] = {}
         for index, stat_info in enumerate(stats_response["data"]):
             if self._has_retriable_error(stat_info):
                 failed_time_intervals[index] = stat_info["interval"]
@@ -61,7 +63,7 @@ class SentinelHubStatisticalDownloadClient(SentinelHubDownloadClient):
         new_content = json.dumps(stats_response).encode("utf-8")
         return response.derive(content=new_content)
 
-    def _download_per_interval(self, request: DownloadRequest, time_intervals: Dict[int, Any]) -> dict:
+    def _download_per_interval(self, request: DownloadRequest, time_intervals: dict[int, Any]) -> dict:
         """Download statistics per each time interval"""
         interval_requests = []
         for time_interval in time_intervals.values():

@@ -3,7 +3,7 @@ Module for manipulation of geographical information
 """
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, List, Optional, Sequence, Tuple, Union, cast
+from typing import TYPE_CHECKING, Sequence, Tuple, cast
 
 from .constants import CRS
 from .exceptions import deprecated_function
@@ -14,7 +14,7 @@ if TYPE_CHECKING:
 ERR = 0.1
 
 
-def bbox_to_dimensions(bbox: BBox, resolution: Union[float, Tuple[float, float]]) -> Tuple[int, int]:
+def bbox_to_dimensions(bbox: BBox, resolution: float | tuple[float, float]) -> tuple[int, int]:
     """Calculates width and height in pixels for a given bbox of a given pixel resolution (in meters). The result is
     rounded to the nearest integers.
 
@@ -32,7 +32,7 @@ def bbox_to_dimensions(bbox: BBox, resolution: Union[float, Tuple[float, float]]
     return round(abs(east2 - east1) / resx), round(abs(north2 - north1) / resy)
 
 
-def bbox_to_resolution(bbox: BBox, width: int, height: int, meters: bool = True) -> Tuple[float, float]:
+def bbox_to_resolution(bbox: BBox, width: int, height: int, meters: bool = True) -> tuple[float, float]:
     """Calculates pixel resolution for a given bbox of a given width and height. By default, it returns result in
     meters.
 
@@ -50,7 +50,7 @@ def bbox_to_resolution(bbox: BBox, width: int, height: int, meters: bool = True)
     return abs(east2 - east1) / width, abs(north2 - north1) / height
 
 
-def get_image_dimension(bbox: BBox, width: Optional[int] = None, height: Optional[int] = None) -> int:
+def get_image_dimension(bbox: BBox, width: int | None = None, height: int | None = None) -> int:
     """Given bounding box and one of the parameters width or height it will return the other parameter that will best
     fit the bounding box dimensions
 
@@ -83,7 +83,7 @@ def to_utm_bbox(bbox: BBox) -> BBox:
 
 
 @deprecated_function()
-def get_utm_bbox(img_bbox: Sequence[float], transform: Sequence[float]) -> List[float]:
+def get_utm_bbox(img_bbox: Sequence[float], transform: Sequence[float]) -> list[float]:
     """Get UTM coordinates given a bounding box in pixels and a transform
 
     :param img_bbox: boundaries of bounding box in pixels as `[row1, col1, row2, col2]`
@@ -96,7 +96,7 @@ def get_utm_bbox(img_bbox: Sequence[float], transform: Sequence[float]) -> List[
 
 
 @deprecated_function(message_suffix="Use `transform_point` and `get_utm_crs` instead.")
-def wgs84_to_utm(lng: float, lat: float, utm_crs: Optional[CRS] = None) -> Tuple[float, float]:
+def wgs84_to_utm(lng: float, lat: float, utm_crs: CRS | None = None) -> tuple[float, float]:
     """Convert WGS84 coordinates to UTM. If UTM CRS is not set it will be calculated automatically.
 
     :param lng: longitude in WGS84 system
@@ -110,7 +110,7 @@ def wgs84_to_utm(lng: float, lat: float, utm_crs: Optional[CRS] = None) -> Tuple
 
 
 @deprecated_function(message_suffix="Use `transform_point` instead.")
-def to_wgs84(east: float, north: float, crs: CRS) -> Tuple[float, float]:
+def to_wgs84(east: float, north: float, crs: CRS) -> tuple[float, float]:
     """Convert any CRS with (east, north) coordinates to WGS84
 
     :param east: east coordinate
@@ -123,7 +123,7 @@ def to_wgs84(east: float, north: float, crs: CRS) -> Tuple[float, float]:
 
 def utm_to_pixel(
     east: float, north: float, transform: Sequence[float], truncate: bool = True
-) -> Union[Tuple[float, float], Tuple[int, int]]:
+) -> tuple[float, float] | tuple[int, int]:
     """Convert a UTM coordinate to image coordinate given a transform
 
     :param east: east coordinate of point
@@ -139,7 +139,7 @@ def utm_to_pixel(
     return row, column
 
 
-def pixel_to_utm(row: float, column: float, transform: Sequence[float]) -> Tuple[float, float]:
+def pixel_to_utm(row: float, column: float, transform: Sequence[float]) -> tuple[float, float]:
     """Convert pixel coordinate to UTM coordinate given a transform
 
     :param row: row pixel coordinate
@@ -154,8 +154,8 @@ def pixel_to_utm(row: float, column: float, transform: Sequence[float]) -> Tuple
 
 @deprecated_function()
 def wgs84_to_pixel(
-    lng: float, lat: float, transform: Sequence[float], utm_epsg: Optional[CRS] = None, truncate: bool = True
-) -> Union[Tuple[float, float], Tuple[int, int]]:
+    lng: float, lat: float, transform: Sequence[float], utm_epsg: CRS | None = None, truncate: bool = True
+) -> tuple[float, float] | tuple[int, int]:
     """Convert WGS84 coordinates to pixel image coordinates given transform and UTM CRS. If no CRS is given it will be
     calculated it automatically.
 
@@ -185,8 +185,8 @@ def get_utm_crs(lng: float, lat: float, source_crs: CRS = CRS.WGS84) -> CRS:
 
 
 def transform_point(
-    point: Tuple[float, float], source_crs: CRS, target_crs: CRS, always_xy: bool = True
-) -> Tuple[float, float]:
+    point: tuple[float, float], source_crs: CRS, target_crs: CRS, always_xy: bool = True
+) -> tuple[float, float]:
     """Maps point form src_crs to tgt_crs
 
     :param point: a tuple `(x, y)`

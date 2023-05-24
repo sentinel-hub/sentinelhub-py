@@ -8,7 +8,7 @@ import mimetypes
 import re
 import warnings
 from enum import Enum, EnumMeta
-from typing import Callable, Union
+from typing import Callable
 
 import numpy as np
 import pyproj
@@ -223,7 +223,7 @@ class CRS(Enum, metaclass=CRSMeta):
         return pyproj.CRS(self._get_pyproj_projection_def())
 
     @functools.lru_cache(maxsize=512)  # noqa: B019
-    def get_transform_function(self, other: "CRS", always_xy: bool = True) -> Callable[..., tuple]:
+    def get_transform_function(self, other: CRS, always_xy: bool = True) -> Callable[..., tuple]:
         """Returns a function for transforming geometrical objects from one CRS to another. The function will support
         transformations between any objects that pyproj supports.
 
@@ -239,7 +239,7 @@ class CRS(Enum, metaclass=CRSMeta):
         return pyproj.Transformer.from_proj(self.projection(), other.projection(), always_xy=always_xy).transform
 
     @staticmethod
-    def get_utm_from_wgs84(lng: float, lat: float) -> "CRS":
+    def get_utm_from_wgs84(lng: float, lat: float) -> CRS:
         """Convert from WGS84 to UTM coordinate system
 
         :param lng: Longitude
@@ -294,7 +294,7 @@ class MimeType(Enum):
         return self.value
 
     @staticmethod
-    def from_string(mime_type_str: str) -> "MimeType":
+    def from_string(mime_type_str: str) -> MimeType:
         """Parses mime type from a file extension string
 
         :param mime_type_str: A file extension string
@@ -361,7 +361,7 @@ class MimeType(Enum):
         """
         return path.endswith(f".{self.extension}")
 
-    def get_expected_max_value(self) -> Union[float, int]:
+    def get_expected_max_value(self) -> float | int:
         """Returns max value of image `MimeType` format and raises an error if it is not an image format
 
         :return: A maximum value of specified image format

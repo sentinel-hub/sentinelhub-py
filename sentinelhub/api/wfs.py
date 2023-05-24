@@ -2,8 +2,10 @@
 Interface of
 `Sentinel Hub Web Feature Service (WFS) <https://www.sentinel-hub.com/develop/api/ogc/standard-parameters/wfs/>`__.
 """
+from __future__ import annotations
+
 import datetime as dt
-from typing import Iterable, List, Optional, Tuple, Union
+from typing import Iterable
 from urllib.parse import urlencode
 
 import shapely.geometry
@@ -31,11 +33,11 @@ class WebFeatureService(FeatureIterator[JsonDict]):
     def __init__(
         self,
         bbox: BBox,
-        time_interval: Union[RawTimeType, RawTimeIntervalType],
+        time_interval: RawTimeType | RawTimeIntervalType,
         *,
         data_collection: DataCollection,
         maxcc: float = 1.0,
-        config: Optional[SHConfig] = None,
+        config: SHConfig | None = None,
     ):
         """
         :param bbox: Bounding box of the requested image. Coordinates must be in the specified coordinate reference
@@ -117,12 +119,12 @@ class WebFeatureService(FeatureIterator[JsonDict]):
         ]
         return new_features
 
-    def get_dates(self) -> List[Optional[dt.date]]:
+    def get_dates(self) -> list[dt.date | None]:
         """Returns a list of acquisition times from tile info data
 
         :return: List of acquisition times in the order returned by WFS service.
         """
-        tile_dates: List[Optional[dt.date]] = []
+        tile_dates: list[dt.date | None] = []
 
         for tile_info in self:
             if not tile_info["properties"]["date"]:  # could be True for custom (BYOC) data collections
@@ -134,14 +136,14 @@ class WebFeatureService(FeatureIterator[JsonDict]):
 
         return tile_dates
 
-    def get_geometries(self) -> List[shapely.geometry.MultiPolygon]:
+    def get_geometries(self) -> list[shapely.geometry.MultiPolygon]:
         """Returns a list of geometries from tile info data
 
         :return: List of multipolygon geometries in the order returned by WFS service.
         """
         return [shapely.geometry.shape(tile_info["geometry"]) for tile_info in self]
 
-    def get_tiles(self) -> List[Tuple[str, str, int]]:
+    def get_tiles(self) -> list[tuple[str, str, int]]:
         """Returns list of tiles with tile name, date and AWS index
 
         :return: List of tiles in form of (tile_name, date, aws_index)
@@ -149,7 +151,7 @@ class WebFeatureService(FeatureIterator[JsonDict]):
         return [self._parse_tile_url(tile_info["properties"]["path"]) for tile_info in self]
 
     @staticmethod
-    def _parse_tile_url(tile_url: str) -> Tuple[str, str, int]:
+    def _parse_tile_url(tile_url: str) -> tuple[str, str, int]:
         """Extracts tile name, data and AWS index from tile URL
 
         :param tile_url: Location of tile at AWS

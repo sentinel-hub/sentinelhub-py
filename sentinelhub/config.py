@@ -9,7 +9,7 @@ import os
 import warnings
 from dataclasses import asdict, dataclass
 from pathlib import Path
-from typing import Any, Dict, Optional, Union
+from typing import Any
 
 import tomli
 import tomli_w
@@ -28,7 +28,7 @@ class _SHConfig:
     sh_client_id: str = ""
     sh_client_secret: str = ""
     sh_base_url: str = "https://services.sentinel-hub.com"
-    sh_auth_base_url: Optional[str] = None
+    sh_auth_base_url: str | None = None
     sh_token_url: str = "https://services.sentinel-hub.com/oauth/token"
     geopedia_wms_url: str = "https://service.geopedia.world"
     geopedia_rest_url: str = "https://www.geopedia.world/rest"
@@ -108,7 +108,7 @@ class SHConfig(_SHConfig):
         "aws_session_token",
     )
 
-    def __init__(self, profile: Optional[str] = None, *, use_defaults: bool = False, **kwargs: Any):
+    def __init__(self, profile: str | None = None, *, use_defaults: bool = False, **kwargs: Any):
         """
         :param profile: Specifies which profile to load from the configuration file. Has precedence over the environment
             variable `SH_USER_PROFILE`.
@@ -178,7 +178,7 @@ class SHConfig(_SHConfig):
         with open(file_path, "wb") as cfg_file:
             tomli_w.dump(current_configuration, cfg_file)
 
-    def _get_dict_of_diffs_from_defaults(self) -> Dict[str, Union[str, float]]:
+    def _get_dict_of_diffs_from_defaults(self) -> dict[str, str | float]:
         """Returns a dictionary containing key: value pairs for parameters that have values different from defaults."""
         current_profile_config = self.to_dict(mask_credentials=False)
         default_values = SHConfig(use_defaults=True).to_dict(mask_credentials=False)
@@ -188,7 +188,7 @@ class SHConfig(_SHConfig):
         """Makes a copy of an instance of `SHConfig`"""
         return copy.copy(self)
 
-    def to_dict(self, mask_credentials: bool = True) -> Dict[str, Union[str, float]]:
+    def to_dict(self, mask_credentials: bool = True) -> dict[str, str | float]:
         """Get a dictionary representation of the `SHConfig` class.
 
         :param mask_credentials: Wether to mask fields containing credentials.

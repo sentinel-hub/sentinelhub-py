@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-  # noqa: UP009
 #
 # Configuration file for the Sphinx documentation builder.
 #
@@ -230,7 +230,7 @@ os.mkdir(MARKDOWNS_FOLDER)
 
 def process_readme():
     """Function which will process README.md file and create INTRO.md"""
-    with open("../../README.md", "r") as file:
+    with open("../../README.md") as file:
         readme = file.read()
 
     readme = readme.replace("[`", "[").replace("`]", "]")

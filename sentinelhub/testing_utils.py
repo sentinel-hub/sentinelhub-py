@@ -1,8 +1,10 @@
 """
 Utility tools for writing unit tests for packages which rely on `sentinelhub-py`
 """
+from __future__ import annotations
+
 import os
-from typing import Any, Callable, Dict, Optional, Tuple, Union
+from typing import Any, Callable
 
 import numpy as np
 import pytest
@@ -20,15 +22,15 @@ def get_output_folder(current_file: str) -> str:
 
 def assert_statistics_match(
     data: np.ndarray,
-    exp_shape: Optional[Tuple[int, ...]] = None,
-    exp_dtype: Union[None, type, np.dtype] = None,
-    exp_min: Optional[float] = None,
-    exp_max: Optional[float] = None,
-    exp_mean: Optional[float] = None,
-    exp_median: Optional[float] = None,
-    exp_std: Optional[float] = None,
-    rel_delta: Optional[float] = None,
-    abs_delta: Optional[float] = None,
+    exp_shape: tuple[int, ...] | None = None,
+    exp_dtype: None | type | np.dtype = None,
+    exp_min: float | None = None,
+    exp_max: float | None = None,
+    exp_mean: float | None = None,
+    exp_median: float | None = None,
+    exp_std: float | None = None,
+    rel_delta: float | None = None,
+    abs_delta: float | None = None,
 ) -> None:
     """Validates basic statistics of data array
     :param data: Data array
@@ -43,7 +45,7 @@ def assert_statistics_match(
     :param abs_delta: Precision of validation (absolute)
     """
 
-    stats_suite: Dict[str, Tuple[Callable[[np.ndarray], Any], Any]] = {
+    stats_suite: dict[str, tuple[Callable[[np.ndarray], Any], Any]] = {
         "shape": (lambda array: array.shape, exp_shape),
         "dtype": (lambda array: array.dtype, exp_dtype),
         "min": (np.nanmin, exp_min),
@@ -55,8 +57,8 @@ def assert_statistics_match(
 
     is_precise = {"shape", "dtype"}
 
-    data_stats: Dict[str, Any] = {}
-    exp_stats: Dict[str, Any] = {}
+    data_stats: dict[str, Any] = {}
+    exp_stats: dict[str, Any] = {}
     for name, (func, expected) in stats_suite.items():
         if expected is not None:
             data_stats[name] = func(data)

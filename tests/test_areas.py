@@ -1,6 +1,8 @@
+from __future__ import annotations
+
 import itertools
 import os
-from typing import Any, Dict, List, Tuple, Type, Union
+from typing import Any
 
 import pytest
 import shapely.geometry
@@ -60,10 +62,10 @@ BBOX_GRID = [
         ),
     ],
 )
-def test_return_type(constructor: Type[AreaSplitter], args: list, kwargs: Dict[str, Any], bbox_len: int) -> None:
+def test_return_type(constructor: type[AreaSplitter], args: list, kwargs: dict[str, Any], bbox_len: int) -> None:
     splitter = constructor(*args, **kwargs)
 
-    return_lists: List[Tuple[list, Union[Type, Tuple[Type, ...]]]] = [
+    return_lists: list[tuple[list, type | tuple[type, ...]]] = [
         (splitter.get_bbox_list(buffer=0.2), BBox),
         (splitter.get_info_list(), dict),
         (splitter.get_geometry_list(), (shapely.geometry.Polygon, shapely.geometry.MultiPolygon)),
@@ -84,7 +86,7 @@ def test_return_type(constructor: Type[AreaSplitter], args: list, kwargs: Dict[s
         (([AREA], CRS("32629")), dict(split_size=1000, reduce_bbox_sizes=True), 1),
     ],
 )
-def test_bbox_splitter_by_size(args: list, kwargs: Dict[str, Any], bbox_len: int) -> None:
+def test_bbox_splitter_by_size(args: list, kwargs: dict[str, Any], bbox_len: int) -> None:
     splitter = BBoxSplitter(*args, **kwargs)
     assert len(splitter.get_geometry_list()) == bbox_len
     assert all(splitter.crs == bbox.crs for bbox in splitter.get_bbox_list())

@@ -1,8 +1,10 @@
 """
 Module with useful time/date functions
 """
+from __future__ import annotations
+
 import datetime as dt
-from typing import Any, Iterable, List, Literal, Optional, Tuple, TypeVar, Union, overload
+from typing import Any, Iterable, Literal, TypeVar, overload
 
 import dateutil.parser
 import dateutil.tz
@@ -46,20 +48,20 @@ def parse_time(
 @overload
 def parse_time(
     time_input: RawTimeType, *, force_datetime: Literal[False] = False, allow_undefined: bool = False, **kwargs: Any
-) -> Optional[dt.date]:
+) -> dt.date | None:
     ...
 
 
 @overload
 def parse_time(
     time_input: RawTimeType, *, force_datetime: Literal[True], allow_undefined: bool = False, **kwargs: Any
-) -> Optional[dt.datetime]:
+) -> dt.datetime | None:
     ...
 
 
 def parse_time(
     time_input: RawTimeType, *, force_datetime: bool = False, allow_undefined: bool = False, **kwargs: Any
-) -> Optional[dt.date]:
+) -> dt.date | None:
     """Parse input time/date string
 
     :param time_input: An input representation of a time.
@@ -91,8 +93,8 @@ def parse_time(
 
 
 def parse_time_interval(
-    time: Union[RawTimeType, RawTimeIntervalType], allow_undefined: bool = False, **kwargs: Any
-) -> Tuple[Optional[dt.datetime], Optional[dt.datetime]]:
+    time: RawTimeType | RawTimeIntervalType, allow_undefined: bool = False, **kwargs: Any
+) -> tuple[dt.datetime | None, dt.datetime | None]:
     """Parse input into an interval of two times, specifying start and end time, into datetime objects.
 
     The input time can have the following formats, which will be parsed as:
@@ -111,7 +113,7 @@ def parse_time_interval(
     :return: A pair of datetime objects defining the time interval.
     :raises: ValueError
     """
-    date_interval: Tuple[Optional[dt.date], Optional[dt.date]]
+    date_interval: tuple[dt.date | None, dt.date | None]
 
     if allow_undefined and time in [None, ".."]:
         date_interval = None, None
@@ -138,18 +140,18 @@ def parse_time_interval(
 
 
 @overload
-def serialize_time(timestamp_input: Optional[dt.date], *, use_tz: bool = False) -> str:
+def serialize_time(timestamp_input: dt.date | None, *, use_tz: bool = False) -> str:
     ...
 
 
 @overload
-def serialize_time(timestamp_input: Iterable[Optional[dt.date]], *, use_tz: bool = False) -> Tuple[str, ...]:
+def serialize_time(timestamp_input: Iterable[dt.date | None], *, use_tz: bool = False) -> tuple[str, ...]:
     ...
 
 
 def serialize_time(
-    timestamp_input: Union[None, dt.date, Iterable[Optional[dt.date]]], *, use_tz: bool = False
-) -> Union[str, Tuple[str, ...]]:
+    timestamp_input: None | dt.date | Iterable[dt.date | None], *, use_tz: bool = False
+) -> str | tuple[str, ...]:
     """Transforms datetime objects into ISO 8601 strings.
 
     :param timestamp_input: A datetime object or a tuple of datetime objects.
@@ -181,7 +183,7 @@ def serialize_time(
     return timestamp_input.isoformat().replace("+00:00", "Z")
 
 
-def date_to_datetime(date: dt.date, time: Optional[dt.time] = None) -> dt.datetime:
+def date_to_datetime(date: dt.date, time: dt.time | None = None) -> dt.datetime:
     """Converts a date object into datetime object.
 
     :param date: A date object.
@@ -193,7 +195,7 @@ def date_to_datetime(date: dt.date, time: Optional[dt.time] = None) -> dt.dateti
     return dt.datetime.combine(date, time)
 
 
-def filter_times(timestamps: Iterable[TimeType], time_difference: dt.timedelta) -> List[TimeType]:
+def filter_times(timestamps: Iterable[TimeType], time_difference: dt.timedelta) -> list[TimeType]:
     """Filters out timestamps within time_difference, preserving only the oldest timestamp.
 
     :param timestamps: A list of timestamps.
@@ -202,7 +204,7 @@ def filter_times(timestamps: Iterable[TimeType], time_difference: dt.timedelta) 
     """
     timestamps = sorted(set(timestamps))
 
-    filtered_timestamps: List[TimeType] = []
+    filtered_timestamps: list[TimeType] = []
     for current_timestamp in timestamps:
         if not filtered_timestamps or current_timestamp - filtered_timestamps[-1] > time_difference:
             filtered_timestamps.append(current_timestamp)

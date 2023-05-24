@@ -2,8 +2,10 @@
 Data request interface for Geopedia services
 """
 
+from __future__ import annotations
+
 from abc import abstractmethod
-from typing import Any, Optional, Union
+from typing import Any
 
 from ..base import DataRequest
 from ..constants import CRS, MimeType, ServiceType
@@ -17,11 +19,11 @@ class GeopediaRequest(DataRequest):
 
     def __init__(
         self,
-        layer: Union[str, int],
+        layer: str | int,
         service_type: ServiceType,
         *,
         bbox: BBox,
-        theme: Optional[str] = None,
+        theme: str | None = None,
         image_format: MimeType = MimeType.PNG,
         **kwargs: Any,
     ):
@@ -63,12 +65,12 @@ class GeopediaWmsRequest(GeopediaRequest):
 
     def __init__(
         self,
-        layer: Union[str, int],
+        layer: str | int,
         theme: str,
         bbox: BBox,
         *,
-        width: Optional[int] = None,
-        height: Optional[int] = None,
+        width: int | None = None,
+        height: int | None = None,
         **kwargs: Any,
     ):
         """
@@ -105,7 +107,7 @@ class GeopediaImageRequest(GeopediaRequest):
         *,
         image_field_name: str,
         keep_image_names: bool = True,
-        gpd_session: Optional[GeopediaSession] = None,
+        gpd_session: GeopediaSession | None = None,
         **kwargs: Any,
     ):
         """
@@ -127,7 +129,7 @@ class GeopediaImageRequest(GeopediaRequest):
         self.keep_image_names = keep_image_names
         self.gpd_session = gpd_session
 
-        self.gpd_iterator: Optional[GeopediaFeatureIterator] = None
+        self.gpd_iterator: GeopediaFeatureIterator | None = None
 
         super().__init__(service_type=ServiceType.IMAGE, **kwargs)
 
@@ -148,7 +150,7 @@ class GeopediaImageRequest(GeopediaRequest):
         self.download_list = gpd_service.get_request(self)
         self.gpd_iterator = gpd_service.get_gpd_iterator()
 
-    def get_items(self) -> Optional[GeopediaFeatureIterator]:
+    def get_items(self) -> GeopediaFeatureIterator | None:
         """Returns iterator over info about data used for this request
 
         :return: Iterator of dictionaries containing info about data used in
