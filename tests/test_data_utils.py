@@ -17,7 +17,7 @@ column_type_pairs = [
 
 
 @pytest.mark.parametrize(
-    "result_file, expected_npolygons, expected_ncolumns, expected_nrows",
+    ("result_file", "expected_npolygons", "expected_ncolumns", "expected_nrows"),
     [
         ("batch_stat_results.json", 2, 12, 2),
         ("batch_stat_failed_results.json", 1, 12, 1),
@@ -39,7 +39,7 @@ def test_statistical_to_dataframe(
 
 
 @pytest.mark.parametrize(
-    "result_file, expected_length",
+    ("result_file", "expected_length"),
     [
         ("batch_stat_failed_results.json", 3),
         ("batch_stat_results.json", 0),

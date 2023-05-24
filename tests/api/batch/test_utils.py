@@ -169,7 +169,9 @@ def test_monitor_batch_statistical_job(
     assert logging_mock.call_count == int(is_processing_logged)
 
 
-@pytest.mark.parametrize("monitor_function, sleep_time", [(monitor_batch_job, 59), (monitor_batch_statistical_job, 14)])
+@pytest.mark.parametrize(
+    ("monitor_function", "sleep_time"), [(monitor_batch_job, 59), (monitor_batch_statistical_job, 14)]
+)
 def test_monitor_batch_job_sleep_time_error(monitor_function: Callable, sleep_time: int) -> None:
     with pytest.raises(ValueError):
         monitor_function("x", sleep_time=sleep_time)

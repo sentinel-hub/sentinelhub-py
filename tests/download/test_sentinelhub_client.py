@@ -15,7 +15,7 @@ FAST_SH_ENDPOINT = "https://services.sentinel-hub.com/api/v1/catalog/collections
 # ruff: noqa: SLF001
 
 
-@pytest.mark.sh_integration
+@pytest.mark.sh_integration()
 def test_client_with_fixed_session(session: SentinelHubSession) -> None:
     blank_config = SHConfig(use_defaults=True)
     client = SentinelHubDownloadClient(session=session, config=blank_config)
@@ -30,7 +30,7 @@ def test_client_with_fixed_session(session: SentinelHubSession) -> None:
         SentinelHubDownloadClient(session=blank_config, config=blank_config)  # type: ignore[arg-type]
 
 
-@pytest.mark.sh_integration
+@pytest.mark.sh_integration()
 def test_client_headers(session: SentinelHubSession, requests_mock: Mocker) -> None:
     """Makes sure user agent headers are always sent by the client."""
     blank_config = SHConfig(use_defaults=True)
@@ -48,7 +48,7 @@ def test_client_headers(session: SentinelHubSession, requests_mock: Mocker) -> N
     assert mocked_request.headers["User-Agent"] == f"sentinelhub-py/v{__version__}"
 
 
-@pytest.mark.sh_integration
+@pytest.mark.sh_integration()
 @pytest.mark.parametrize("client_object", [SentinelHubDownloadClient, SentinelHubDownloadClient()])
 def test_session_caching_and_clearing(
     client_object: Union[SentinelHubDownloadClient, Type[SentinelHubDownloadClient]], session: SentinelHubSession
@@ -64,7 +64,7 @@ def test_session_caching_and_clearing(
     assert {} == SentinelHubDownloadClient._CACHED_SESSIONS
 
 
-@pytest.mark.sh_integration
+@pytest.mark.sh_integration()
 def test_double_session_caching(session: SentinelHubSession) -> None:
     another_session = SentinelHubSession()
 
@@ -82,7 +82,7 @@ def test_double_session_caching(session: SentinelHubSession) -> None:
     assert client_with_fixed_session.get_session() is session
 
 
-@pytest.mark.sh_integration
+@pytest.mark.sh_integration()
 def test_session_caching_on_subclass(session: SentinelHubSession) -> None:
     statistical_client = SentinelHubStatisticalDownloadClient()
     statistical_client.cache_session(session)
@@ -95,7 +95,7 @@ def test_session_caching_on_subclass(session: SentinelHubSession) -> None:
     assert obtained_session is session
 
 
-@pytest.mark.sh_integration
+@pytest.mark.sh_integration()
 def test_universal_session_caching(session: SentinelHubSession) -> None:
     SentinelHubDownloadClient.clear_cache()
 

@@ -32,7 +32,7 @@ PARSED_HTML = "HTTP ERROR 500 Problem accessing /oauth/tokeninfo. Reason: Reques
 
 
 @pytest.mark.parametrize(
-    "content, expected_message",
+    ("content", "expected_message"),
     [
         (None, ""),
         (False, ""),

@@ -7,7 +7,7 @@ from sentinelhub.aws import AwsProductRequest
 pytestmark = pytest.mark.filterwarnings("ignore::DeprecationWarning")
 
 
-@pytest.mark.aws_integration
+@pytest.mark.aws_integration()
 def test_saving_responses(output_folder: str) -> None:
     product_id = "S2A_MSIL1C_20180113T001101_N0206_R073_T55KGP_20180113T013328.SAFE"
     metafiles = "inspire "

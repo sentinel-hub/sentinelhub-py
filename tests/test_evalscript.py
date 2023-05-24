@@ -13,7 +13,7 @@ def test_collection_bands(data_collection: DataCollection) -> None:
 
 
 @pytest.mark.parametrize(
-    "data_collection, bands",
+    ("data_collection", "bands"),
     [
         (DataCollection.SENTINEL2_L2A, ["B04", "B03", "B02"]),
         (DataCollection.SENTINEL1_IW, ["VV", "VH"]),
@@ -41,7 +41,7 @@ def test_explicit_meta_bands(meta_bands: List[str]) -> None:
 
 
 @pytest.mark.parametrize(
-    "data_collection, bands, meta_bands",
+    ("data_collection", "bands", "meta_bands"),
     [
         (DataCollection.LANDSAT_TM_L2, ["B05", "B04", "B03", "B02"], ["BQA"]),
         (DataCollection.SENTINEL2_L2A, ["B04", "B03", "B02"], ["CLP", "SCL"]),
@@ -99,7 +99,7 @@ def test_sample_type_merged(use_dn: bool) -> None:
     assert evalscript.count('"FLOAT32"') == expected_float_count
 
 
-@pytest.mark.sh_integration
+@pytest.mark.sh_integration()
 @pytest.mark.parametrize("data_collection", [DataCollection.LANDSAT_TM_L2, DataCollection.SENTINEL2_L2A])
 @pytest.mark.parametrize("merged_output", [None, "bands"])
 @pytest.mark.parametrize("use_dn", [True, False])

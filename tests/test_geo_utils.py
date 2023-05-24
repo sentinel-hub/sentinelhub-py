@@ -27,7 +27,7 @@ GEOREFERENCING_TRANSFORM = (570851.8316965176, 512, 0, 960429.6742984429, 0, -51
 
 
 @pytest.mark.parametrize(
-    "wgs84_coordinate, utm_crs",
+    ("wgs84_coordinate", "utm_crs"),
     [
         ((109.988, 9.988), CRS("32649")),
         ((49.889, 49.889), CRS("32639")),
@@ -39,7 +39,7 @@ def test_get_utm_crs(wgs84_coordinate: Tuple[float, float], utm_crs: CRS) -> Non
 
 
 @pytest.mark.parametrize(
-    "input_bbox, resolution, expected_dimensions",
+    ("input_bbox", "resolution", "expected_dimensions"),
     [
         (BBOX_WGS84, (512, 512), (12.8784, 8.2284)),
         (BBOX_UTM, (512, 50), (12.8984, 84.46)),
@@ -55,7 +55,7 @@ def test_bbox_to_resolution(
 
 
 @pytest.mark.parametrize(
-    "input_bbox, resolution, expected_dimensions",
+    ("input_bbox", "resolution", "expected_dimensions"),
     [
         (BBOX_WGS84, 10, (659, 421)),
         (BBOX_UTM, 10, (660, 422)),
@@ -71,7 +71,7 @@ def test_bbox_to_dimensions(
 
 
 @pytest.mark.parametrize(
-    "input_bbox, height, width",
+    ("input_bbox", "height", "width"),
     [
         (BBOX_WGS84, 715, 1119),
         (BBOX_UTM, 715, 1118),
@@ -94,7 +94,7 @@ def test_bbox_transform(input_bbox: BBox, expected_bbox: BBox) -> None:
 
 
 @pytest.mark.parametrize(
-    "point, source_crs, target_crs, target_point",
+    ("point", "source_crs", "target_crs", "target_point"),
     [
         ((111.644, 8.655), CRS.WGS84, CRS.POP_WEB, (12428153.23, 967155.41)),
         ((360000.0, 4635040.0), CRS.UTM_31N, CRS.WGS84, (1.313392213, 41.854888581)),
@@ -113,7 +113,7 @@ def test_transform_point(
 
 
 @pytest.mark.parametrize(
-    "coordinate, expected_pixel",
+    ("coordinate", "expected_pixel"),
     [
         ((570851, 960429), (0, 0)),
         ((577006, 960429), (0, 12)),
@@ -127,7 +127,7 @@ def test_utm_to_pixel(coordinate: Tuple[float, float], expected_pixel: Tuple[int
 
 
 @pytest.mark.parametrize(
-    "pixel, expected_coordinate",
+    ("pixel", "expected_coordinate"),
     [
         ((0, 0), (570851, 960429)),
         ((0, 12), (576995, 960429)),

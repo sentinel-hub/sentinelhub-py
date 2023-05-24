@@ -33,13 +33,16 @@ def test_download_return_values(num_requests: int, decode: bool, download_reques
     results = client.download(requests, decode_data=decode)
 
     expected_element_type = dict if decode else DownloadResponse
-    assert isinstance(results, list) and len(results) == len(requests)
+    assert isinstance(results, list)
+    assert len(results) == len(requests)
     assert all(isinstance(result, expected_element_type) for result in results)
 
     for req in requests:
         request_path, response_path = req.get_storage_paths()
-        assert request_path is not None and os.path.isfile(request_path)
-        assert response_path is not None and os.path.isfile(response_path)
+        assert request_path is not None
+        assert os.path.isfile(request_path)
+        assert response_path is not None
+        assert os.path.isfile(response_path)
 
 
 def test_download_with_custom_filename(download_request: DownloadRequest) -> None:
@@ -74,7 +77,8 @@ def test_download_with_different_options(download_request: DownloadRequest, show
 
     assert isinstance(results, list)
     assert len(results) == 3
-    assert results[1] is None and results[2] is None
+    assert results[1] is None
+    assert results[2] is None
 
 
 def test_hash_collision(download_request: DownloadRequest) -> None:

@@ -71,8 +71,8 @@ TEST_CASES = [
 ]
 
 
-@pytest.mark.aws_integration
-@pytest.mark.parametrize("test_name, product_id, params", TEST_CASES)
+@pytest.mark.aws_integration()
+@pytest.mark.parametrize(("test_name", "product_id", "params"), TEST_CASES)
 def test_safe_struct(test_name: str, product_id: str, params: Dict[str, Any], safe_folder: str) -> None:
     params = dict(
         safe_format=True,

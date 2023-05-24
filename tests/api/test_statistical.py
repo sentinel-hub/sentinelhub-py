@@ -50,7 +50,7 @@ BBOX = BBox((460750.0, 5092550.0, 461250.0, 5093050.0), crs=CRS.UTM_33N)
 GEOMETRY = Geometry(BBOX.geometry, crs=BBOX.crs)
 
 
-@pytest.mark.sh_integration
+@pytest.mark.sh_integration()
 @pytest.mark.parametrize(
     argnames=(
         "evalscript, bbox, geometry, time_interval, resolution, aggregation_interval, data_collection, "

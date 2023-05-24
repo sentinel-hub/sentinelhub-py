@@ -12,7 +12,7 @@ from sentinelhub.exceptions import SHUserWarning
 
 
 @pytest.mark.parametrize(
-    "lng, lat, expected_crs",
+    ("lng", "lat", "expected_crs"),
     [
         (13, 46, CRS("32633")),
         (13, 0, CRS("32633")),
@@ -27,7 +27,7 @@ def test_utm_from_wgs84(lng: float, lat: float, expected_crs: CRS) -> None:
 
 
 @pytest.mark.parametrize(
-    "crs_input, expected",
+    ("crs_input", "expected"),
     [
         (4326, CRS.WGS84),
         (np.int64(4326), CRS.WGS84),
@@ -59,7 +59,7 @@ def test_crs_faulty_input(bad_input: object) -> None:
 
 
 @pytest.mark.parametrize(
-    "crs, epsg",
+    ("crs", "epsg"),
     [(CRS.POP_WEB, "EPSG:3857"), (CRS.WGS84, "EPSG:4326"), (CRS.UTM_33N, "EPSG:32633"), (CRS.UTM_33S, "EPSG:32733")],
 )
 def test_ogc_string(crs: CRS, epsg: str) -> None:
@@ -67,7 +67,7 @@ def test_ogc_string(crs: CRS, epsg: str) -> None:
 
 
 @pytest.mark.parametrize(
-    "crs, expected_repr",
+    ("crs", "expected_repr"),
     [
         (CRS.POP_WEB, "CRS('3857')"),
         (CRS.WGS84, "CRS('4326')"),
@@ -88,7 +88,7 @@ def test_crs_has_value(crs: CRS) -> None:
     assert CRS.has_value(crs.value), f"Expected support for CRS {crs.value}"
 
 
-@pytest.mark.parametrize("crs_input, crs_value", [(3035, "3035"), ("EPSG:3035", "3035"), (10000, "10000")])
+@pytest.mark.parametrize(("crs_input", "crs_value"), [(3035, "3035"), ("EPSG:3035", "3035"), (10000, "10000")])
 def test_crs_not_predefined(crs_input: object, crs_value: str) -> None:
     crs = CRS(crs_input)
     assert crs.value == crs_value
@@ -102,7 +102,7 @@ def test_pyproj_methods(crs: CRS) -> None:
 
 
 @pytest.mark.parametrize(
-    "ext, mime_type",
+    ("ext", "mime_type"),
     [
         ("tif", MimeType.TIFF),
         ("jpeg", MimeType.JPG),
@@ -136,7 +136,7 @@ def test_is_api_format(mime_type: MimeType) -> None:
 
 
 @pytest.mark.parametrize(
-    "mime_type, expected_string",
+    ("mime_type", "expected_string"),
     [
         (MimeType.PNG, "image/png"),
         (MimeType.JPG, "image/jpeg"),
@@ -156,7 +156,7 @@ def test_get_string(mime_type: MimeType, expected_string: str) -> None:
 
 
 @pytest.mark.parametrize(
-    "mime_type, path, expected_answer",
+    ("mime_type", "path", "expected_answer"),
     [
         (MimeType.NPY, "some/path/file.npy", True),
         (MimeType.PNG, "./file.png", True),

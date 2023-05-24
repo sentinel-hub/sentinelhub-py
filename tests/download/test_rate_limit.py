@@ -104,7 +104,15 @@ FIXED_BUCKETS = [
 
 
 @pytest.mark.parametrize(
-    "bucket_defs, process_num, units_per_request, process_time, request_num, max_elapsed_time, max_rate_limit_hits",
+    (
+        "bucket_defs",
+        "process_num",
+        "units_per_request",
+        "process_time",
+        "request_num",
+        "max_elapsed_time",
+        "max_rate_limit_hits",
+    ),
     [
         (TRIAL_POLICY_BUCKETS, 5, 5, 0.5, 10, 6, 0),
         (TRIAL_POLICY_BUCKETS, 5, 5, 0.5, 14, 12, 10),

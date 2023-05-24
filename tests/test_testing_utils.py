@@ -7,7 +7,7 @@ from sentinelhub.testing_utils import assert_statistics_match
 
 
 @pytest.mark.parametrize(
-    "data, expected_statistics",
+    ("data", "expected_statistics"),
     (
         [
             np.arange(100).reshape(10, 10, 1),
@@ -28,7 +28,7 @@ def test_assert_statistics_match(data: np.array, expected_statistics: Dict) -> N
 
 
 @pytest.mark.parametrize(
-    "data, expected_statistics",
+    ("data", "expected_statistics"),
     (
         [
             np.arange(100).reshape(10, 10, 1),

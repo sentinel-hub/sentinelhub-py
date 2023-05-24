@@ -159,17 +159,20 @@ def test_copy(dummy_config: SHConfig) -> None:
     dummy_config.instance_id = "a"
 
     copied_config = dummy_config.copy()
-    assert copied_config is not dummy_config and copied_config == dummy_config
+    assert copied_config is not dummy_config
+    assert copied_config == dummy_config
 
     copied_config.instance_id = "b"
-    assert dummy_config.instance_id == "a" and copied_config.instance_id == "b"
+    assert dummy_config.instance_id == "a"
+    assert copied_config.instance_id == "b"
 
 
 @pytest.mark.dependency(depends=["test_user_config_is_masked"])
 def test_config_equality() -> None:
     config1, config2 = SHConfig(), SHConfig()
 
-    assert config1 is not config2 and config1 == config2
+    assert config1 is not config2
+    assert config1 == config2
     assert config1 != config1.to_dict(mask_credentials=False)
 
     config2.sh_client_id = "something_else"

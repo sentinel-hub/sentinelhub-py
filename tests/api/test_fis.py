@@ -108,7 +108,7 @@ TEST_CASES = [
 ]
 
 
-@pytest.mark.sh_integration
+@pytest.mark.sh_integration()
 @pytest.mark.parametrize("test_case", TEST_CASES)
 def test_fis(output_folder: str, test_case: FisTestCase) -> None:
     with pytest.warns(SHDeprecationWarning):

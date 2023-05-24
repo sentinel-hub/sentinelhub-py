@@ -14,7 +14,7 @@ BASIC_IMAGE = np.arange((5 * 6 * 3), dtype=np.uint8).reshape((5, 6, 3))
 
 
 @pytest.mark.parametrize(
-    "filename, mean, shape",
+    ("filename", "mean", "shape"),
     [
         ("img.tif", 13577.494856, (2048, 2048, 3)),
         ("img.png", 52.33736, (2048, 2048, 3)),
@@ -39,7 +39,7 @@ def test_read_tar_with_folder(input_folder: str) -> None:
     assert data == {"tar-folder/simple.json": {"message": "test"}}
 
 
-@pytest.fixture
+@pytest.fixture()
 def xml_testcase():
     xml_root = ElementTree.Element("EOPatch")
     xml_data = ElementTree.SubElement(xml_root, "data")
@@ -49,7 +49,7 @@ def xml_testcase():
 
 
 @pytest.mark.parametrize(
-    "filename, data",
+    ("filename", "data"),
     [
         ("img.tif", np.arange(5 * 5 * 3).reshape((5, 5, 3))),  # not restricting dtype
         ("img.png", BASIC_IMAGE),

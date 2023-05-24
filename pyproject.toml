@@ -136,7 +136,7 @@ select = [
     "G",   # logging format
     "PIE", # flake8-pie
     "T20", # print statements
-    # "PT",  # pytest style
+    "PT",  # pytest style
     "RET", # returns
     "SLF", # private member access
     "SIM", # simplifications
@@ -151,14 +151,14 @@ select = [
     # "FA",  # checks where future import of annotations would make types nicer
 ]
 fix = false
-fixable = [
-    "I",     # sort imports
-    "F401",  # remove redundant imports
-    "UP007", # use new-style union type annotations
-    "UP006", # use new-style built-in type annotations
-    "UP037", # remove quotes around types when not necessary
-    "FA100", # import future annotations where necessary (not autofixable ATM)
-]
+# fixable = [
+#     "I",     # sort imports
+#     "F401",  # remove redundant imports
+#     "UP007", # use new-style union type annotations
+#     "UP006", # use new-style built-in type annotations
+#     "UP037", # remove quotes around types when not necessary
+#     "FA100", # import future annotations where necessary (not autofixable ATM)
+# ]
 ignore = [
     "C408",   # complains about `dict()` calls, we use them to avoid too many " in the code
     "SIM117", # wants to always combine `with` statements, gets ugly for us

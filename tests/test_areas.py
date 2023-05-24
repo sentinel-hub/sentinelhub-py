@@ -31,7 +31,7 @@ BBOX_GRID = [
 
 
 @pytest.mark.parametrize(
-    "constructor, args, kwargs, bbox_len",
+    ("constructor", "args", "kwargs", "bbox_len"),
     [
         [BBoxSplitter, ([AREA], CRS.WGS84, 5), dict(reduce_bbox_sizes=True), 19],
         [OsmSplitter, ([AREA], CRS.WGS84, 15), dict(reduce_bbox_sizes=True), 24],
@@ -76,7 +76,7 @@ def test_return_type(constructor: Type[AreaSplitter], args: list, kwargs: Dict[s
 
 
 @pytest.mark.parametrize(
-    "args, kwargs, bbox_len",
+    ("args", "kwargs", "bbox_len"),
     [
         [([REPROJECTED_AREA], CRS("32629")), dict(split_size=(2000, 4000), reduce_bbox_sizes=False), 4],
         [([REPROJECTED_AREA], CRS("32629")), dict(split_size=(1000, 2000), reduce_bbox_sizes=True), 11],
