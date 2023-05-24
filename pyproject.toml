@@ -146,7 +146,7 @@ select = [
     "FLY", # flynt
     "RUF", # ruff rules
     "NPY", # numpy
-    # "I",   # isort
+    "I",   # isort
     # "UP",  # pyupgrade
     # "FA",  # checks where future import of annotations would make types nicer
 ]
@@ -184,8 +184,10 @@ section-order = [
     "third-party",
     "first-party",
     "local-folder",
+    "notebook-utilities",
 ]
 known-first-party = ["sentinelhub"]
+sections = { notebook-utilities = ["utils"] }
 
 
 [tool.pylint.format]

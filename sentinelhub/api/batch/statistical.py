@@ -7,9 +7,8 @@ import logging
 from dataclasses import dataclass, field
 from typing import Any, Optional, Sequence, Union
 
-from dataclasses_json import CatchAll, LetterCase, Undefined
+from dataclasses_json import CatchAll, LetterCase, Undefined, dataclass_json
 from dataclasses_json import config as dataclass_config
-from dataclasses_json import dataclass_json
 
 from ...exceptions import deprecated_function
 from ...types import Json, JsonDict

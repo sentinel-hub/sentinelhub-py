@@ -8,9 +8,8 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, Dict, Iterator, List, Optional, Tuple, Union
 
-from dataclasses_json import CatchAll, LetterCase, Undefined
+from dataclasses_json import CatchAll, LetterCase, Undefined, dataclass_json
 from dataclasses_json import config as dataclass_config
-from dataclasses_json import dataclass_json
 
 from ...constants import RequestType
 from ...data_collections import DataCollection

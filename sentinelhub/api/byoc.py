@@ -6,9 +6,8 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any, Dict, Optional, Union
 
-from dataclasses_json import CatchAll, LetterCase, Undefined
+from dataclasses_json import CatchAll, LetterCase, Undefined, dataclass_json
 from dataclasses_json import config as dataclass_config
-from dataclasses_json import dataclass_json
 
 from ..constants import MimeType, RequestType
 from ..data_collections import DataCollection
