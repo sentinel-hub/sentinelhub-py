@@ -108,14 +108,6 @@ Forum = "https://forum.sentinel-hub.com"
 line-length = 120
 preview = true
 
-[tool.isort]
-profile = "black"
-known_absolute = "sentinelhub"
-known_local_folder = "utils"
-sections = ["FUTURE", "STDLIB", "THIRDPARTY", "ABSOLUTE", "LOCALFOLDER"]
-line_length = 120
-
-
 [tool.ruff]
 line-length = 120
 target-version = "py38"
@@ -167,7 +159,7 @@ ignore = [
     "COM812", # trailing comma missing, fights with black
     "PD011",  # suggests `.to_numpy` instead of `.values`, also does this for non-pandas objects...
     # potentially fixable
-    "N818",   # we use the 'Exception' suffix but PEP suggests 'Error'
+    "N818",  # we use the 'Exception' suffix but PEP suggests 'Error'
     "B904",  # want `raise ... from None` instead of just `raise ...`
     "B028",  # always demands a stacklevel argument when warning
     "PT011", # complains for `pytest.raises(ValueError)` but we use it a lot
@@ -188,7 +180,6 @@ section-order = [
 ]
 known-first-party = ["sentinelhub"]
 sections = { notebook-utilities = ["utils"] }
-
 
 [tool.pylint.format]
 max-line-length = 120
@@ -245,7 +236,6 @@ strict_equality = true
 pretty = true
 
 [tool.nbqa.addopts]
-flake8 = ["--extend-ignore=E402"]
 ruff = ["--extend-ignore=E402,T201,B015,B018,NPY002,UP,FA"]
 # E402 -> imports on top
 # T201 -> print found
