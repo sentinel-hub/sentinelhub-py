@@ -87,7 +87,7 @@ class SentinelHubCatalog(SentinelHubService):
         bbox: Optional[BBox] = None,
         geometry: Optional[Geometry] = None,
         ids: Optional[List[str]] = None,
-        filter: Union[None, str, JsonDict] = None,  # pylint: disable=redefined-builtin
+        filter: Union[None, str, JsonDict] = None,  # pylint: disable=redefined-builtin # noqa: A002
         filter_lang: Literal["cql2-text", "cql2-json"] = "cql2-text",
         filter_crs: Optional[str] = None,
         fields: Optional[JsonDict] = None,

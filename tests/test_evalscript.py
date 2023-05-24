@@ -54,7 +54,7 @@ def test_merged_output(data_collection: DataCollection, bands: List[str], meta_b
         data_collection=data_collection, bands=bands, meta_bands=meta_bands, merged_bands_output=merged_output
     )
 
-    expected_bands_output_spec = "{" + f'id: "{merged_output}", bands: {len(bands)}'
+    expected_bands_output_spec = f'{{id: "{merged_output}", bands: {len(bands)}'
     assert expected_bands_output_spec in evalscript
 
     expected_bands_return_spec = f"{merged_output}: [" + ", ".join(f"sample.{b}" for b in bands) + "]"

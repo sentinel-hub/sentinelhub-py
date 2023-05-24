@@ -108,7 +108,7 @@ def statistical_to_dataframe(result_data: List[JsonDict], exclude_stats: Optiona
     :return: Statistical dataframe.
     """
     try:
-        import pandas  # pylint: disable=import-outside-toplevel
+        import pandas as pd  # pylint: disable=import-outside-toplevel
     except ImportError as exception:
         raise ImportError(_PANDAS_IMPORT_MESSAGE) from exception
 
@@ -129,10 +129,10 @@ def statistical_to_dataframe(result_data: List[JsonDict], exclude_stats: Optiona
         else:
             continue
         result_entries = _extract_response_data(response_data, exclude_stats)
-        result_df = pandas.DataFrame(result_entries)
+        result_df = pd.DataFrame(result_entries)
         result_df["identifier"] = identifier
         dfs[idx] = result_df
-    return pandas.concat(dfs)
+    return pd.concat(dfs)
 
 
 def _get_failed_intervals(response_data: List[JsonDict]) -> List[Tuple[str, str]]:

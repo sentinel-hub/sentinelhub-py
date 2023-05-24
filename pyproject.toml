@@ -126,14 +126,14 @@ select = [
     "C90", # mccabe
     "N",   # naming
     "YTT", # flake-2020
-    # "B",   # bugbear
-    # "A",   # built-ins
-    # "COM", # commas
-    # "C4",  # comprehensions
-    # "T10", # debugger statements
-    # "ISC", # implicit string concatenation
-    # "ICN", # import conventions
-    # "G",   # logging format
+    "B",   # bugbear
+    "A",   # built-ins
+    "COM", # commas
+    "C4",  # comprehensions
+    "T10", # debugger statements
+    "ISC", # implicit string concatenation
+    "ICN", # import conventions
+    "G",   # logging format
     # "PIE", # flake8-pie
     # "T20", # print statements
     # "PT",  # pytest style
