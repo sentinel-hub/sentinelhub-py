@@ -139,7 +139,7 @@ class SHConfig(_SHConfig):
     def __repr__(self) -> str:
         """Representation of `SHConfig`. Credentials are masked for safety."""
         config_dict = self.to_dict(mask_credentials=True)
-        content = ",\n  ".join(f"{key}={repr(value)}" for key, value in config_dict.items())
+        content = ",\n  ".join(f"{key}={value!r}" for key, value in config_dict.items())
         return f"{self.__class__.__name__}(\n  {content},\n)"
 
     @classmethod

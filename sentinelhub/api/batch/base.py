@@ -38,7 +38,7 @@ class BatchUserAction(Enum):
     STOP = "STOP"
 
 
-class BaseBatchClient(SentinelHubService, Generic[BatchRequestType], metaclass=ABCMeta):  # noqa: B024
+class BaseBatchClient(SentinelHubService, Generic[BatchRequestType], metaclass=ABCMeta):
     """Class containing common methods and helper functions for Batch Client classes"""
 
     def _call_job(self, batch_request: RequestSpec, endpoint_name: str) -> Json:

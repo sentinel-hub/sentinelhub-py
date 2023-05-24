@@ -189,7 +189,7 @@ def test_config_repr() -> None:
 
     for param in config.to_dict():
         if param not in SHConfig.CREDENTIALS:
-            assert f"{param}={repr(getattr(config, param))}" in config_repr
+            assert f"{param}={getattr(config, param)!r}" in config_repr
 
 
 @pytest.mark.dependency(depends=["test_user_config_is_masked"])

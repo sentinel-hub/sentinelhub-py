@@ -66,7 +66,7 @@ extensions = [
 # Include typehints in descriptions
 autodoc_typehints = "description"
 
-# Both the class’ and the __init__ method’s docstring are concatenated and inserted.
+# Both the class' and the __init__ method's docstring are concatenated and inserted.
 autoclass_content = "both"
 
 # Content is in the same order as in module

@@ -141,11 +141,11 @@ select = [
     "SLF", # private member access
     "SIM", # simplifications
     "ARG", # unused arguments
-    # "PD",  # pandas
-    # "PGH", # pygrep hooks (useless noqa comments, eval statements etc.)
-    # "FLY", # flynt
-    # "RUF", # ruff rules
-    # "NPY", # numpy
+    "PD",  # pandas
+    "PGH", # pygrep hooks (useless noqa comments, eval statements etc.)
+    "FLY", # flynt
+    "RUF", # ruff rules
+    "NPY", # numpy
     # "I",   # isort
     # "UP",  # pyupgrade
     # "FA",  # checks where future import of annotations would make types nicer

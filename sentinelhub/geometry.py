@@ -213,7 +213,7 @@ class BBox(_BaseGeometry):
 
     def __repr__(self) -> str:
         """Class representation"""
-        return f"{self.__class__.__name__}(({self.lower_left}, {self.upper_right}), crs={repr(self.crs)})"
+        return f"{self.__class__.__name__}(({self.lower_left}, {self.upper_right}), crs={self.crs!r})"
 
     def __str__(self, reverse: bool = False) -> str:
         """Transforms bounding box into a string of coordinates
@@ -461,7 +461,7 @@ class Geometry(_BaseGeometry):
 
     def __repr__(self) -> str:
         """Method for class representation"""
-        return f"{self.__class__.__name__}({self.wkt}, crs={repr(self.crs)})"
+        return f"{self.__class__.__name__}({self.wkt}, crs={self.crs!r})"
 
     def __eq__(self, other: object) -> bool:
         """Method for comparing two Geometry classes

@@ -119,7 +119,7 @@ class CRSMeta(EnumMeta):
             if value == CRS.WGS84.pyproj_crs():
                 return "4326"
 
-            error_message = f"Failed to determine an EPSG code of the given CRS:\n{repr(value)}"
+            error_message = f"Failed to determine an EPSG code of the given CRS:\n{value!r}"
             maybe_epsg = value.to_epsg(min_confidence=0)
             if maybe_epsg is not None:
                 error_message = f"{error_message}\nIt might be EPSG {maybe_epsg} but pyproj is not confident enough."
