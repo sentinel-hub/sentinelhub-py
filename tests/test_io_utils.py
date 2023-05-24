@@ -1,6 +1,6 @@
 import os
 from typing import Tuple, Union
-from xml.etree import ElementTree as ET
+from xml.etree import ElementTree
 
 import numpy as np
 import pytest
@@ -41,11 +41,11 @@ def test_read_tar_with_folder(input_folder: str) -> None:
 
 @pytest.fixture
 def xml_testcase():
-    xml_root = ET.Element("EOPatch")
-    xml_data = ET.SubElement(xml_root, "data")
-    ET.SubElement(xml_data, "field1", name="BANDS-S2-L1C").text = "some value1"
-    ET.SubElement(xml_data, "field2", name="CLP").text = "some value2"
-    return ET.ElementTree(xml_root)
+    xml_root = ElementTree.Element("EOPatch")
+    xml_data = ElementTree.SubElement(xml_root, "data")
+    ElementTree.SubElement(xml_data, "field1", name="BANDS-S2-L1C").text = "some value1"
+    ElementTree.SubElement(xml_data, "field2", name="CLP").text = "some value2"
+    return ElementTree.ElementTree(xml_root)
 
 
 @pytest.mark.parametrize(
@@ -60,7 +60,7 @@ def xml_testcase():
         ("test-xml.xml", lazy_fixture("xml_testcase")),
     ],
 )
-def test_write_read(filename: str, data: Union[str, np.ndarray, ET.ElementTree]) -> None:
+def test_write_read(filename: str, data: Union[str, np.ndarray, ElementTree.ElementTree]) -> None:
     with TempFS() as filesystem:
         file_path = filesystem.getsyspath(filename)
         write_data(file_path, data)
@@ -69,7 +69,7 @@ def test_write_read(filename: str, data: Union[str, np.ndarray, ET.ElementTree])
 
         if isinstance(data, np.ndarray):
             assert np.array_equal(data, new_data), "Original and saved image are not the same"
-        elif isinstance(data, ET.ElementTree):
+        elif isinstance(data, ElementTree.ElementTree):
             assert set(data.getroot().itertext()) == set(new_data.getroot().itertext())
         else:
             assert data == new_data

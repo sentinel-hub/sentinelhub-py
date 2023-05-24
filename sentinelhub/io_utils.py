@@ -95,7 +95,7 @@ def _read_csv(filename: str, delimiter: str = CSV_DELIMITER) -> list:
         return list(csv.reader(file, delimiter=delimiter))
 
 
-def write_data(
+def write_data(  # noqa: C901
     filename: str, data: Any, data_format: Optional[MimeType] = None, compress: bool = False, add: bool = False
 ) -> None:
     """Write image data to file

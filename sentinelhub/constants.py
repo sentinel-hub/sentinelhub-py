@@ -72,7 +72,7 @@ class CRSMeta(EnumMeta):
 
     _UNSUPPORTED_CRS = pyproj.CRS(4326)
 
-    def __new__(mcs, cls, bases, classdict):  # type: ignore[no-untyped-def]
+    def __new__(mcs, cls, bases, classdict):  # type: ignore[no-untyped-def] # noqa: N804
         """This is executed at the beginning of runtime when CRS class is created"""
         for direction, direction_value in [("N", "6"), ("S", "7")]:
             for zone in range(1, 61):
@@ -80,7 +80,7 @@ class CRSMeta(EnumMeta):
 
         return super().__new__(mcs, cls, bases, classdict)
 
-    def __call__(cls, crs_value, *args, **kwargs):  # type: ignore[no-untyped-def]
+    def __call__(cls, crs_value, *args, **kwargs):  # type: ignore[no-untyped-def] # noqa: N805
         """This is executed whenever CRS('something') is called"""
         # pylint: disable=signature-differs
         crs_value = cls._parse_crs(crs_value)
@@ -92,7 +92,7 @@ class CRSMeta(EnumMeta):
         return super().__call__(crs_value, *args, **kwargs)
 
     @staticmethod
-    def _parse_crs(value: object) -> object:
+    def _parse_crs(value: object) -> object:  # noqa: C901
         """Method for parsing different inputs representing the same CRS enum. Examples:
 
         - 4326

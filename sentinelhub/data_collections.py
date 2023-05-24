@@ -111,7 +111,7 @@ def _shallow_asdict(dataclass_instance: Any) -> Dict[str, Any]:
 class _DataCollectionMeta(EnumMeta):
     """Metaclass that builds DataCollection class enums"""
 
-    def __call__(cls, value, *args, **kwargs):  # type: ignore[no-untyped-def]
+    def __call__(cls, value, *args, **kwargs):  # type: ignore[no-untyped-def] # noqa: N805
         """This is executed whenever `DataCollection('something')` is called
 
         This solves a problem of pickling a custom DataCollection and unpickling it in another process
