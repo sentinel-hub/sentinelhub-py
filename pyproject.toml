@@ -134,13 +134,13 @@ select = [
     "ISC", # implicit string concatenation
     "ICN", # import conventions
     "G",   # logging format
-    # "PIE", # flake8-pie
-    # "T20", # print statements
+    "PIE", # flake8-pie
+    "T20", # print statements
     # "PT",  # pytest style
-    # "RET", # returns
-    # "SLF", # private member access
-    # "SIM", # simplifications
-    # "ARG", # unused arguments
+    "RET", # returns
+    "SLF", # private member access
+    "SIM", # simplifications
+    "ARG", # unused arguments
     # "PD",  # pandas
     # "PGH", # pygrep hooks (useless noqa comments, eval statements etc.)
     # "FLY", # flynt
@@ -174,7 +174,7 @@ ignore = [
     "UP024", # wants to switch IOError with OSError
 ]
 per-file-ignores = { "__init__.py" = ["F401"] }
-exclude = [".git", "__pycache__", "build", "dist"]
+exclude = [".git", "__pycache__", "build", "dist", "sentinelhub/aws/*"]
 
 
 [tool.ruff.isort]

@@ -116,8 +116,8 @@ class _DataCollectionMeta(EnumMeta):
 
         This solves a problem of pickling a custom DataCollection and unpickling it in another process
         """
-        if isinstance(value, DataCollectionDefinition) and value not in cls._value2member_map_ and value._name:
-            cls._try_add_data_collection(value._name, value)
+        if isinstance(value, DataCollectionDefinition) and value not in cls._value2member_map_ and value._name:  # noqa
+            cls._try_add_data_collection(value._name, value)  # noqa: SLF001
 
         return super().__call__(value, *args, **kwargs)
 

@@ -57,9 +57,7 @@ class DummyService:
                 for bucket, new_content in zip(self.policy_buckets, new_content_list):
                     bucket.content = new_content
 
-            headers = self._get_headers(is_rate_limited)
-
-        return headers
+            return self._get_headers(is_rate_limited)
 
     def _get_new_bucket_content(self) -> List[float]:
         """Calculates the new content of buckets"""

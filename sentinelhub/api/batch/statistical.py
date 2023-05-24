@@ -114,8 +114,7 @@ class SentinelHubBatchStatistical(BaseBatchClient["BatchStatisticalRequest"]):
         """
         request_id = self._parse_request_id(batch_request)
         endpoint_url = f"{self._get_processing_url(request_id)}/status"
-        request_info = self.client.get_json_dict(url=endpoint_url, use_session=True)
-        return request_info
+        return self.client.get_json_dict(url=endpoint_url, use_session=True)
 
     def start_analysis(self, batch_request: BatchStatisticalRequestType) -> Json:
         """Starts analysis of a batch job request

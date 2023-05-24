@@ -200,8 +200,8 @@ class GeopediaSession(GeopediaService):
             self._make_login(self._session_info)
 
         if self.is_global:
-            GeopediaSession._global_session_info = self._session_info
-            GeopediaSession._global_session_start = self._session_start
+            GeopediaSession._global_session_info = self._session_info  # noqa: SLF001
+            GeopediaSession._global_session_start = self._session_start  # noqa: SLF001
 
     def _make_login(self, session_info: dict) -> None:
         """Private method that makes login"""

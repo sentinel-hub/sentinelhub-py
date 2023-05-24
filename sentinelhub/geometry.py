@@ -111,14 +111,14 @@ class BBox(_BaseGeometry):
         :param bbox: A bbox in any valid representation
         :param crs: Coordinate reference system of the bounding box
         """
-        x_fst, y_fst, x_snd, y_snd = BBox._to_tuple(bbox)
+        x_fst, y_fst, x_snd, y_snd = self._to_tuple(bbox)
         self.min_x, self.max_x = min(x_fst, x_snd), max(x_fst, x_snd)
         self.min_y, self.max_y = min(y_fst, y_snd), max(y_fst, y_snd)
 
         super().__init__(crs)
 
-    @staticmethod
-    def _to_tuple(bbox: BBoxInputType) -> Tuple[float, float, float, float]:
+    @classmethod
+    def _to_tuple(cls, bbox: BBoxInputType) -> Tuple[float, float, float, float]:
         """Converts the input bbox representation (see the constructor docstring for a list of valid representations)
         into a flat tuple. Also supports `list` objects in places where `tuple` is expected.
 
@@ -127,13 +127,13 @@ class BBox(_BaseGeometry):
         :raises: TypeError
         """
         if isinstance(bbox, (tuple, list)):
-            return BBox._tuple_from_list_or_tuple(bbox)
+            return cls._tuple_from_list_or_tuple(bbox)
         if isinstance(bbox, str):  # type: ignore[unreachable]
-            return BBox._tuple_from_str(bbox)  # type: ignore[unreachable]
+            return cls._tuple_from_str(bbox)  # type: ignore[unreachable]
         if isinstance(bbox, dict):
-            return BBox._tuple_from_dict(bbox)
+            return cls._tuple_from_dict(bbox)
         if isinstance(bbox, BBox):  # type: ignore[unreachable]
-            return BBox._tuple_from_bbox(bbox)
+            return cls._tuple_from_bbox(bbox)
         if isinstance(bbox, shapely.geometry.base.BaseGeometry):
             warnings.warn(
                 (
@@ -361,14 +361,13 @@ class BBox(_BaseGeometry):
         :return: `((x_1, y_1), ... , (x_5, y_5))`
         """
         bbox = self.reverse() if reverse else self
-        polygon = (
+        return (
             (bbox.min_x, bbox.min_y),
             (bbox.min_x, bbox.max_y),
             (bbox.max_x, bbox.max_y),
             (bbox.max_x, bbox.min_y),
             (bbox.min_x, bbox.min_y),
         )
-        return polygon
 
     @property
     def geometry(self) -> shapely.geometry.Polygon:

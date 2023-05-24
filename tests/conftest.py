@@ -7,7 +7,6 @@ import shutil
 from typing import Any, Generator
 
 import pytest
-from pytest import Config
 
 from sentinelhub import SentinelHubSession, SHConfig
 
@@ -18,7 +17,7 @@ INPUT_FOLDER = get_input_folder(__file__)
 OUTPUT_FOLDER = get_output_folder(__file__)
 
 
-def pytest_configure(config: Config) -> None:
+def pytest_configure() -> None:
     shconfig = SHConfig()
     for param in shconfig.to_dict():
         env_variable = param.upper()

@@ -106,4 +106,4 @@ def test_check_cached_request_is_matching(download_request: DownloadRequest) -> 
     write_data(request_path, request_info, data_format=MimeType.JSON)  # Copied from download client
 
     # pylint: disable=protected-access
-    client._check_cached_request_is_matching(download_request, request_path)
+    client._check_cached_request_is_matching(download_request, request_path)  # noqa: SLF001

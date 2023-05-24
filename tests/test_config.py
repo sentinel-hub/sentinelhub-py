@@ -67,7 +67,8 @@ def test_config_file_exists() -> None:
 
 
 @pytest.mark.dependency(depends=["test_user_config_is_masked"])
-def test_save(restore_config_file: None) -> None:
+@pytest.mark.usefixtures("restore_config_file")
+def test_save() -> None:
     config = SHConfig()
     old_value = config.download_timeout_seconds
 
@@ -83,7 +84,8 @@ def test_save(restore_config_file: None) -> None:
 
 
 @pytest.mark.dependency(depends=["test_user_config_is_masked"])
-def test_environment_variables(restore_config_file: None, monkeypatch) -> None:
+@pytest.mark.usefixtures("restore_config_file")
+def test_environment_variables(monkeypatch) -> None:
     """We use `monkeypatch` to avoid modifying global environment."""
     config = SHConfig()
     config.sh_client_id = "beepbeep"
@@ -110,7 +112,8 @@ def test_initialization_with_params(monkeypatch) -> None:
 
 
 @pytest.mark.dependency(depends=["test_user_config_is_masked"])
-def test_profiles(restore_config_file: None) -> None:
+@pytest.mark.usefixtures("restore_config_file")
+def test_profiles() -> None:
     config = SHConfig()
     config.instance_id = "beepbeep"
     config.sh_client_id = "beepbeep"  # also some tests with a credentials field
@@ -131,7 +134,8 @@ def test_profiles(restore_config_file: None) -> None:
 
 
 @pytest.mark.dependency(depends=["test_user_config_is_masked"])
-def test_profiles_from_env(restore_config_file: None, monkeypatch) -> None:
+@pytest.mark.usefixtures("restore_config_file")
+def test_profiles_from_env(monkeypatch) -> None:
     """We use `monkeypatch` to avoid modifying global environment."""
     config = SHConfig()
     config.instance_id = "bee"

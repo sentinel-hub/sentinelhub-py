@@ -246,13 +246,7 @@ def process_readme():
 
     chapters = ["\n".join(chapter) for chapter in chapters]
 
-    intro = "\n".join(
-        [
-            chapter
-            for chapter in chapters
-            if not (chapter.startswith("## Install") or chapter.startswith("## Documentation"))
-        ]
-    )
+    intro = "\n".join([chapter for chapter in chapters if not (chapter.startswith(("## Install", "## Documentation")))])
 
     with open(os.path.join(MARKDOWNS_FOLDER, "INTRO.md"), "w") as file:
         file.write(intro)

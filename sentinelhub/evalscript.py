@@ -108,11 +108,9 @@ def generate_evalscript(
         output_spec.append(f'{{id: "{band_name}", bands: 1, sampleType: "{sample_type}"}}')
         return_spec.append(f"{band_name}: [sample.{band_name}]")
 
-    evalscript = EVALSCRIPT_TEMPLATE.format(
+    return EVALSCRIPT_TEMPLATE.format(
         input_names=", ".join(input_names),
         input_units=", ".join(input_units),
         output_spec=", ".join(output_spec),
         return_spec=", ".join(return_spec),
     )
-
-    return evalscript
