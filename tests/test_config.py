@@ -12,7 +12,7 @@ from sentinelhub.config import DEFAULT_PROFILE, SH_CLIENT_ID_ENV_VAR, SH_CLIENT_
 
 
 @pytest.fixture(autouse=True, scope="module")
-def switch_and_restore_config() -> Generator[None, None, None]:
+def _switch_and_restore_config() -> Generator[None, None, None]:
     """A fixture that makes sure original config is restored after tests are executed. It restores the config even if
     a test has failed.
     """
@@ -33,8 +33,8 @@ def switch_and_restore_config() -> Generator[None, None, None]:
     shutil.move(cache_path, config_path)
 
 
-@pytest.fixture(name="restore_config_file")
-def restore_config_file_fixture() -> Generator[None, None, None]:
+@pytest.fixture(name="_restore_config_file")
+def _restore_config_file_fixture() -> Generator[None, None, None]:
     """A fixture that ensures the config file is reset after the test."""
     with open(SHConfig.get_config_location()) as file:
         content = file.read()
@@ -67,7 +67,7 @@ def test_config_file_exists() -> None:
 
 
 @pytest.mark.dependency(depends=["test_user_config_is_masked"])
-@pytest.mark.usefixtures("restore_config_file")
+@pytest.mark.usefixtures("_restore_config_file")
 def test_save() -> None:
     config = SHConfig()
     old_value = config.download_timeout_seconds
@@ -84,8 +84,8 @@ def test_save() -> None:
 
 
 @pytest.mark.dependency(depends=["test_user_config_is_masked"])
-@pytest.mark.usefixtures("restore_config_file")
-def test_environment_variables(monkeypatch) -> None:
+@pytest.mark.usefixtures("_restore_config_file")
+def test_environment_variables(monkeypatch: pytest.MonkeyPatch) -> None:
     """We use `monkeypatch` to avoid modifying global environment."""
     config = SHConfig()
     config.sh_client_id = "beepbeep"
@@ -101,7 +101,7 @@ def test_environment_variables(monkeypatch) -> None:
 
 
 @pytest.mark.dependency(depends=["test_user_config_is_masked"])
-def test_initialization_with_params(monkeypatch) -> None:
+def test_initialization_with_params(monkeypatch: pytest.MonkeyPatch) -> None:
     loaded_config = SHConfig()
     monkeypatch.setenv(SH_CLIENT_ID_ENV_VAR, "beekeeper")
 
@@ -112,7 +112,7 @@ def test_initialization_with_params(monkeypatch) -> None:
 
 
 @pytest.mark.dependency(depends=["test_user_config_is_masked"])
-@pytest.mark.usefixtures("restore_config_file")
+@pytest.mark.usefixtures("_restore_config_file")
 def test_profiles() -> None:
     config = SHConfig()
     config.instance_id = "beepbeep"
@@ -134,8 +134,8 @@ def test_profiles() -> None:
 
 
 @pytest.mark.dependency(depends=["test_user_config_is_masked"])
-@pytest.mark.usefixtures("restore_config_file")
-def test_profiles_from_env(monkeypatch) -> None:
+@pytest.mark.usefixtures("_restore_config_file")
+def test_profiles_from_env(monkeypatch: pytest.MonkeyPatch) -> None:
     """We use `monkeypatch` to avoid modifying global environment."""
     config = SHConfig()
     config.instance_id = "bee"

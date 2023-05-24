@@ -5,7 +5,7 @@ import os
 from typing import Any, Callable, Dict, Optional, Tuple, Union
 
 import numpy as np
-from pytest import approx
+import pytest
 
 
 def get_input_folder(current_file: str) -> str:
@@ -60,6 +60,6 @@ def assert_statistics_match(
     for name, (func, expected) in stats_suite.items():
         if expected is not None:
             data_stats[name] = func(data)
-            exp_stats[name] = expected if name in is_precise else approx(expected, rel=rel_delta, abs=abs_delta)
+            exp_stats[name] = expected if name in is_precise else pytest.approx(expected, rel=rel_delta, abs=abs_delta)
 
     assert data_stats == exp_stats, "Statistics differ from expected values"

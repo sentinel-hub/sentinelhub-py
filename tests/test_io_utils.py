@@ -5,7 +5,6 @@ from xml.etree import ElementTree
 import numpy as np
 import pytest
 from fs.tempfs import TempFS
-from pytest import approx
 from pytest_lazyfixture import lazy_fixture
 
 from sentinelhub import read_data, write_data
@@ -28,7 +27,7 @@ def test_img_read(input_folder: str, filename: str, mean: float, shape: Tuple[in
     img = read_data(os.path.join(input_folder, filename))
 
     assert img.shape == shape
-    assert np.mean(img) == approx(mean, abs=1e-4)
+    assert np.mean(img) == pytest.approx(mean, abs=1e-4)
     assert img.flags["WRITEABLE"], "Obtained numpy array is not writeable"
 
 

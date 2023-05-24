@@ -1,6 +1,5 @@
 import numpy as np
 import pytest
-from pytest import approx
 
 from sentinelhub import DataCollection
 from sentinelhub.aws import AwsProductRequest, AwsTileRequest
@@ -21,7 +20,7 @@ def test_aws_tile(output_folder: str) -> None:
     data = request.get_data(redownload=True, data_filter=[0, *range(2, 7)])
     assert isinstance(data, list)
     assert len(data) == 6
-    assert np.mean(data[0]) == approx(1357.99, abs=1e-1)
+    assert np.mean(data[0]) == pytest.approx(1357.99, abs=1e-1)
 
 
 def test_aws_product(output_folder: str) -> None:
@@ -69,4 +68,4 @@ def test_l2a_product(output_folder: str) -> None:
 
     assert isinstance(data, list)
     assert len(data) == 1
-    assert np.mean(data[0]) == approx(16.91783, abs=1e-4)
+    assert np.mean(data[0]) == pytest.approx(16.91783, abs=1e-4)

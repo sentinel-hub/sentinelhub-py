@@ -5,7 +5,6 @@ from typing import Any, Dict
 
 import pytest
 from oauthlib.oauth2.rfc6749.errors import CustomOAuth2Error
-from pytest import approx
 from shapely.geometry import Polygon
 
 from sentinelhub import (
@@ -445,7 +444,7 @@ def test_multipart_geometry() -> None:
     assert "rgb_ratios" in json_data
 
     expected_ratios = [0.29098381560041126, 0.3227735909047216, 0.3862425934948671]
-    assert json_data["rgb_ratios"] == approx(expected_ratios)
+    assert json_data["rgb_ratios"] == pytest.approx(expected_ratios)
 
 
 def test_bad_credentials() -> None:

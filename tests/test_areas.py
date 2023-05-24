@@ -33,17 +33,17 @@ BBOX_GRID = [
 @pytest.mark.parametrize(
     ("constructor", "args", "kwargs", "bbox_len"),
     [
-        [BBoxSplitter, ([AREA], CRS.WGS84, 5), dict(reduce_bbox_sizes=True), 19],
-        [OsmSplitter, ([AREA], CRS.WGS84, 15), dict(reduce_bbox_sizes=True), 24],
-        [
+        (BBoxSplitter, ([AREA], CRS.WGS84, 5), dict(reduce_bbox_sizes=True), 19),
+        (OsmSplitter, ([AREA], CRS.WGS84, 15), dict(reduce_bbox_sizes=True), 24),
+        (
             CustomGridSplitter,
             ([AREA], CRS.WGS84, BBOX_GRID),
             dict(bbox_split_shape=(3, 4), reduce_bbox_sizes=False),
             41,
-        ],
-        [UtmGridSplitter, ([AREA], CRS.WGS84), dict(bbox_size=(1200, 1200)), 16],
-        [UtmZoneSplitter, ([AREA], CRS.WGS84), dict(bbox_size=(1000, 1000)), 19],
-        [UtmZoneSplitter, ([AREA], CRS.WGS84), dict(bbox_size=(1000, 1000), offset=(500, 500)), 21],
+        ),
+        (UtmGridSplitter, ([AREA], CRS.WGS84), dict(bbox_size=(1200, 1200)), 16),
+        (UtmZoneSplitter, ([AREA], CRS.WGS84), dict(bbox_size=(1000, 1000)), 19),
+        (UtmZoneSplitter, ([AREA], CRS.WGS84), dict(bbox_size=(1000, 1000), offset=(500, 500)), 21),
         pytest.param(
             TileSplitter,
             ([AREA], CRS.WGS84, ("2017-10-01", "2018-03-01")),
@@ -78,10 +78,10 @@ def test_return_type(constructor: Type[AreaSplitter], args: list, kwargs: Dict[s
 @pytest.mark.parametrize(
     ("args", "kwargs", "bbox_len"),
     [
-        [([REPROJECTED_AREA], CRS("32629")), dict(split_size=(2000, 4000), reduce_bbox_sizes=False), 4],
-        [([REPROJECTED_AREA], CRS("32629")), dict(split_size=(1000, 2000), reduce_bbox_sizes=True), 11],
-        [([AREA], CRS.WGS84), dict(split_size=1000, reduce_bbox_sizes=True), 1],
-        [([AREA], CRS("32629")), dict(split_size=1000, reduce_bbox_sizes=True), 1],
+        (([REPROJECTED_AREA], CRS("32629")), dict(split_size=(2000, 4000), reduce_bbox_sizes=False), 4),
+        (([REPROJECTED_AREA], CRS("32629")), dict(split_size=(1000, 2000), reduce_bbox_sizes=True), 11),
+        (([AREA], CRS.WGS84), dict(split_size=1000, reduce_bbox_sizes=True), 1),
+        (([AREA], CRS("32629")), dict(split_size=1000, reduce_bbox_sizes=True), 1),
     ],
 )
 def test_bbox_splitter_by_size(args: list, kwargs: Dict[str, Any], bbox_len: int) -> None:

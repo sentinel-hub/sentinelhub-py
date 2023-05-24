@@ -10,7 +10,6 @@ from threading import Lock
 from typing import Any, Dict, List, Tuple
 
 import pytest
-from pytest import approx
 
 from sentinelhub.download.rate_limit import PolicyBucket, PolicyType, SentinelHubRateLimit
 from sentinelhub.types import JsonDict
@@ -262,9 +261,9 @@ def test_basic_bucket_methods(test_case: PolicyBucketTestCase) -> None:
     assert bucket.content == original_content
 
     real_cost_per_second = bucket.count_cost_per_second(test_case.elapsed_time, test_case.new_content)
-    assert real_cost_per_second == approx(test_case.cost_per_second, abs=1e-6)
+    assert real_cost_per_second == pytest.approx(test_case.cost_per_second, abs=1e-6)
 
     wait_time = bucket.get_wait_time(
         test_case.elapsed_time, process_num=2, cost_per_request=10, requests_completed=test_case.requests_completed
     )
-    assert wait_time == approx(test_case.wait_time, abs=1e-6)
+    assert wait_time == pytest.approx(test_case.wait_time, abs=1e-6)

@@ -286,7 +286,7 @@ def test_monitor_batch_statistical_analysis(
     assert logging_mock.call_count == len(status_sequence) - 1
 
 
-@pytest.mark.parametrize("monitor_function", (monitor_batch_analysis, monitor_batch_statistical_analysis))
+@pytest.mark.parametrize("monitor_function", [monitor_batch_analysis, monitor_batch_statistical_analysis])
 def test_monitor_batch_analysis_sleep_time_error(monitor_function: Callable) -> None:
     with pytest.raises(ValueError):
         monitor_function("x", sleep_time=4)
