@@ -98,13 +98,13 @@ def deprecated_class(
         if message_suffix:
             message += " " + message_suffix
 
-        old_init = class_object.__init__
+        old_init = class_object.__init__  # type: ignore[misc]
 
         def warn_and_init(self: Any, *args: Any, **kwargs: Any) -> None:
             warnings.warn(message, category=category, stacklevel=2)
             old_init(self, *args, **kwargs)
 
-        class_object.__init__ = warn_and_init
+        class_object.__init__ = warn_and_init  # type: ignore[misc]
         return class_object
 
     return deco
