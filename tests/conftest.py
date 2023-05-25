@@ -7,18 +7,17 @@ import shutil
 from typing import Any, Generator
 
 import pytest
-from pytest import Config
 
 from sentinelhub import SentinelHubSession, SHConfig
 
 pytest.register_assert_rewrite("sentinelhub.testing_utils")
-from sentinelhub.testing_utils import get_input_folder, get_output_folder  # noqa
+from sentinelhub.testing_utils import get_input_folder, get_output_folder  # noqa: E402
 
 INPUT_FOLDER = get_input_folder(__file__)
 OUTPUT_FOLDER = get_output_folder(__file__)
 
 
-def pytest_configure(config: Config) -> None:
+def pytest_configure() -> None:
     shconfig = SHConfig()
     for param in shconfig.to_dict():
         env_variable = param.upper()

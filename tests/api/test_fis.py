@@ -10,7 +10,7 @@ from sentinelhub import CRS, BBox, CustomUrlParam, DataCollection, FisRequest, G
 from sentinelhub.exceptions import SHDeprecationWarning
 
 EXPECTED_RESULTS_PATH = os.path.join(os.path.dirname(__file__), "..", "TestInputs", "test_fis_results.txt")
-with open(EXPECTED_RESULTS_PATH, "r") as file:
+with open(EXPECTED_RESULTS_PATH) as file:
     RESULTS = [ast.literal_eval(line.strip()) for line in file]
 
 BBOX = BBox([14.00, 45.00, 14.03, 45.03], crs=CRS.WGS84)
@@ -108,7 +108,7 @@ TEST_CASES = [
 ]
 
 
-@pytest.mark.sh_integration
+@pytest.mark.sh_integration()
 @pytest.mark.parametrize("test_case", TEST_CASES)
 def test_fis(output_folder: str, test_case: FisTestCase) -> None:
     with pytest.warns(SHDeprecationWarning):

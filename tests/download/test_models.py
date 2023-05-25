@@ -95,12 +95,13 @@ def test_download_response(output_folder: str) -> None:
     assert os.path.exists(response_path)
 
     new_response = DownloadResponse.from_local(request)
-    assert new_response == response and new_response is not response
+    assert new_response == response
+    assert new_response is not response
     assert new_response.decode() == data
 
 
 @pytest.mark.parametrize(
-    "data_type, headers, expected_response_type",
+    ("data_type", "headers", "expected_response_type"),
     [
         (MimeType.JSON, None, MimeType.JSON),
         (MimeType.RAW, {"Content-Type": "application/json"}, MimeType.JSON),

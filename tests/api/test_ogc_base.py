@@ -12,7 +12,7 @@ def wcs_request_fixture(output_folder: str) -> WcsRequest:
     )
 
 
-@pytest.mark.sh_integration
+@pytest.mark.sh_integration()
 def test_init(output_folder: str, wcs_request: WcsRequest) -> None:
     wcs_request.create_request(reset_wfs_iterator=True)  # This method is used by s2cloudless, don't rename it
 
@@ -29,7 +29,7 @@ def test_init(output_folder: str, wcs_request: WcsRequest) -> None:
     assert wcs_request.is_valid_request()
 
 
-@pytest.mark.sh_integration
+@pytest.mark.sh_integration()
 def test_encoded_latest_result(wcs_request: WcsRequest) -> None:
     result_list = wcs_request.get_data(decode_data=False, save_data=True)
 

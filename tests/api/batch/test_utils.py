@@ -7,9 +7,11 @@ how many interactions with Sentinel Hub service they make, how much time they sl
 Because of that the tests are very strict. If you break them make sure to understand what is happening before either
 changing the code or the tests.
 """
+from __future__ import annotations
+
 import random
 from collections import defaultdict
-from typing import Callable, Dict, List, Sequence, Tuple
+from typing import Callable, Sequence
 
 import pytest
 from pytest_mock import MockerFixture
@@ -43,7 +45,7 @@ from sentinelhub import (
 @pytest.mark.parametrize("config", [SHConfig(), None])
 @pytest.mark.parametrize("sleep_time", [60, 1000])
 def test_monitor_batch_process_job(
-    tile_status_sequence: Tuple[Dict[BatchTileStatus, int], ...],
+    tile_status_sequence: tuple[dict[BatchTileStatus, int], ...],
     batch_status: BatchRequestStatus,
     config: SHConfig,
     sleep_time: int,
@@ -99,14 +101,14 @@ def test_monitor_batch_process_job(
     assert logging_mock.call_count == int(is_processing_logged) + int(is_failure_logged)
 
 
-def _tile_status_counts_to_tiles(tile_status_counts: Dict[BatchTileStatus, int]) -> List[Dict[str, str]]:
+def _tile_status_counts_to_tiles(tile_status_counts: dict[BatchTileStatus, int]) -> list[dict[str, str]]:
     """From the info about how many tiles should have certain status it generates a list of tile payloads with these
     statuses.
 
     Each payload should be approximately what Sentinel Hub service returns but because we don't need all parameters we
     just return status. At the end we randomly shuffle the list just to make it more general.
     """
-    tiles: List[Dict[str, str]] = []
+    tiles: list[dict[str, str]] = []
     for tile_status, count in tile_status_counts.items():
         for _ in range(count):
             tiles.append({"status": tile_status.value})
@@ -169,7 +171,9 @@ def test_monitor_batch_statistical_job(
     assert logging_mock.call_count == int(is_processing_logged)
 
 
-@pytest.mark.parametrize("monitor_function, sleep_time", [(monitor_batch_job, 59), (monitor_batch_statistical_job, 14)])
+@pytest.mark.parametrize(
+    ("monitor_function", "sleep_time"), [(monitor_batch_job, 59), (monitor_batch_statistical_job, 14)]
+)
 def test_monitor_batch_job_sleep_time_error(monitor_function: Callable, sleep_time: int) -> None:
     with pytest.raises(ValueError):
         monitor_function("x", sleep_time=sleep_time)
@@ -190,7 +194,7 @@ def test_monitor_batch_job_sleep_time_error(monitor_function: Callable, sleep_ti
 @pytest.mark.parametrize("config", [SHConfig(), None])
 @pytest.mark.parametrize("sleep_time", [5, 1000])
 def test_monitor_batch_analysis(
-    status_sequence: Tuple[BatchRequestStatus, ...], config: SHConfig, sleep_time: int, mocker: MockerFixture
+    status_sequence: tuple[BatchRequestStatus, ...], config: SHConfig, sleep_time: int, mocker: MockerFixture
 ) -> None:
     """This test mocks:
 
@@ -244,7 +248,7 @@ def test_monitor_batch_analysis(
 @pytest.mark.parametrize("config", [SHConfig(), None])
 @pytest.mark.parametrize("sleep_time", [5, 1000])
 def test_monitor_batch_statistical_analysis(
-    status_sequence: Tuple[BatchRequestStatus, ...], config: SHConfig, sleep_time: int, mocker: MockerFixture
+    status_sequence: tuple[BatchRequestStatus, ...], config: SHConfig, sleep_time: int, mocker: MockerFixture
 ) -> None:
     """This test mocks:
 
@@ -284,7 +288,7 @@ def test_monitor_batch_statistical_analysis(
     assert logging_mock.call_count == len(status_sequence) - 1
 
 
-@pytest.mark.parametrize("monitor_function", (monitor_batch_analysis, monitor_batch_statistical_analysis))
+@pytest.mark.parametrize("monitor_function", [monitor_batch_analysis, monitor_batch_statistical_analysis])
 def test_monitor_batch_analysis_sleep_time_error(monitor_function: Callable) -> None:
     with pytest.raises(ValueError):
         monitor_function("x", sleep_time=4)

@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-  # noqa: UP009
 #
 # Configuration file for the Sphinx documentation builder.
 #
@@ -66,7 +66,7 @@ extensions = [
 # Include typehints in descriptions
 autodoc_typehints = "description"
 
-# Both the class’ and the __init__ method’s docstring are concatenated and inserted.
+# Both the class' and the __init__ method's docstring are concatenated and inserted.
 autoclass_content = "both"
 
 # Content is in the same order as in module
@@ -230,7 +230,7 @@ os.mkdir(MARKDOWNS_FOLDER)
 
 def process_readme():
     """Function which will process README.md file and create INTRO.md"""
-    with open("../../README.md", "r") as file:
+    with open("../../README.md") as file:
         readme = file.read()
 
     readme = readme.replace("[`", "[").replace("`]", "]")
@@ -246,13 +246,7 @@ def process_readme():
 
     chapters = ["\n".join(chapter) for chapter in chapters]
 
-    intro = "\n".join(
-        [
-            chapter
-            for chapter in chapters
-            if not (chapter.startswith("## Install") or chapter.startswith("## Documentation"))
-        ]
-    )
+    intro = "\n".join([chapter for chapter in chapters if not (chapter.startswith(("## Install", "## Documentation")))])
 
     with open(os.path.join(MARKDOWNS_FOLDER, "INTRO.md"), "w") as file:
         file.write(intro)

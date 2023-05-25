@@ -1,11 +1,13 @@
 """
 Module implementing a rate-limited multithreaded download client for downloading from Sentinel Hub service
 """
+from __future__ import annotations
+
 import logging
 import time
 import warnings
 from threading import Lock
-from typing import Any, Callable, Dict, Optional, Tuple, TypeVar, Union
+from typing import Any, Callable, TypeVar
 
 import requests
 from requests import Response
@@ -28,10 +30,10 @@ T = TypeVar("T")
 class SentinelHubDownloadClient(DownloadClient):
     """Download client specifically configured for download from Sentinel Hub service"""
 
-    _CACHED_SESSIONS: Dict[Tuple[str, str], SentinelHubSession] = {}
+    _CACHED_SESSIONS: dict[tuple[str, str], SentinelHubSession] = {}
     _UNIVERSAL_CACHE_KEY = "universal-user", "default-url"
 
-    def __init__(self, *, session: Optional[SentinelHubSession] = None, **kwargs: Any):
+    def __init__(self, *, session: SentinelHubSession | None = None, **kwargs: Any):
         """
         :param session: If a session object is provided here then this client instance will always use only the
             provided session. Otherwise, it will either use a cached session or create a new session and cache
@@ -48,7 +50,7 @@ class SentinelHubDownloadClient(DownloadClient):
         self.session = session
 
         self.rate_limit = SentinelHubRateLimit(num_processes=self.config.number_of_download_processes)
-        self.lock: Optional[Lock] = None
+        self.lock: Lock | None = None
 
     def download(self, *args: Any, **kwargs: Any) -> Any:
         """The main download method
@@ -178,7 +180,7 @@ class SentinelHubDownloadClient(DownloadClient):
         SentinelHubDownloadClient._CACHED_SESSIONS[cache_key] = session
 
     @staticmethod
-    def _get_cache_key(config_or_session: Union[SentinelHubSession, SHConfig]) -> Tuple[str, str]:
+    def _get_cache_key(config_or_session: SentinelHubSession | SHConfig) -> tuple[str, str]:
         """Calculates a cache key for the given session or config object. The key consists of an OAuth client ID and
         a base service URL.
         """

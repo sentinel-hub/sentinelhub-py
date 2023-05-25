@@ -25,7 +25,7 @@ def fake_token_fixture() -> JsonDict:
     return {"access_token": "x", "expires_in": 1000, "expires_at": time.time() + 1000}
 
 
-@pytest.mark.sh_integration
+@pytest.mark.sh_integration()
 def test_session(session: SentinelHubSession) -> None:
     token = session.token
     headers = session.session_headers
@@ -44,7 +44,7 @@ def test_session(session: SentinelHubSession) -> None:
     assert token["access_token"] != new_token["access_token"], "The token has not been refreshed"
 
 
-@pytest.mark.sh_integration
+@pytest.mark.sh_integration()
 def test_token_info(session: SentinelHubSession) -> None:
     info = session.info()
 
@@ -97,7 +97,7 @@ def test_from_token(fake_token: JsonDict) -> None:
     assert expired_token == fake_token
 
 
-@pytest.mark.sh_integration
+@pytest.mark.sh_integration()
 def test_refreshing_procedure(fake_token: JsonDict, fake_config: SHConfig) -> None:
     fake_token["expires_at"] -= 500
 
@@ -112,7 +112,7 @@ def test_refreshing_procedure(fake_token: JsonDict, fake_config: SHConfig) -> No
 
 @pytest.mark.parametrize("status_code", [400, 404])
 @pytest.mark.parametrize(
-    "response_payload, expected_exception",
+    ("response_payload", "expected_exception"),
     [
         ({"error": "Mocked error message", "access_token": "xxx"}, CustomOAuth2Error),
         ({"access_token": "xxx"}, DownloadFailedException),

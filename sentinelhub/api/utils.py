@@ -1,6 +1,8 @@
 """
 Module implementing some common utility functions
 """
+# ruff: noqa: FA100
+# do not use `from __future__ import annotations`, it clashes with `dataclass_json`
 from enum import Enum
 from typing import Any, Dict, Optional, Type, TypedDict
 

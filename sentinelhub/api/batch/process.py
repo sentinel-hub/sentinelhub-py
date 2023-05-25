@@ -2,15 +2,16 @@
 Module implementing an interface with
 `Sentinel Hub Batch Processing API <https://docs.sentinel-hub.com/api/latest/api/batch/>`__.
 """
+# ruff: noqa: FA100
+# do not use `from __future__ import annotations`, it clashes with `dataclass_json`
 import datetime as dt
 import logging
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, Dict, Iterator, List, Optional, Tuple, Union
 
-from dataclasses_json import CatchAll, LetterCase, Undefined
+from dataclasses_json import CatchAll, LetterCase, Undefined, dataclass_json
 from dataclasses_json import config as dataclass_config
-from dataclasses_json import dataclass_json
 
 from ...constants import RequestType
 from ...data_collections import DataCollection

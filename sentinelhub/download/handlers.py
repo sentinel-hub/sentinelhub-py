@@ -1,10 +1,12 @@
 """
 Module implementing error handlers which can occur during download procedure
 """
+from __future__ import annotations
+
 import functools
 import logging
 import time
-from typing import Callable, Optional, Protocol, TypeVar
+from typing import Callable, Protocol, TypeVar
 
 import requests
 
@@ -121,7 +123,7 @@ def _is_temporary_problem(exception: Exception) -> bool:
     return isinstance(exception, (requests.ConnectionError, requests.Timeout, requests.exceptions.ChunkedEncodingError))
 
 
-def _create_download_failed_message(exception: Exception, url: Optional[str]) -> str:
+def _create_download_failed_message(exception: Exception, url: str | None) -> str:
     """Creates message describing why download has failed
 
     :param exception: Exception raised during download

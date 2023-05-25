@@ -13,7 +13,7 @@ pytestmark = pytest.mark.sh_integration
 
 
 @pytest.mark.parametrize(
-    "args, kwargs, expected_len",
+    ("args", "kwargs", "expected_len"),
     [
         (
             [

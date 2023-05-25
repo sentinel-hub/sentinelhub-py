@@ -1,6 +1,8 @@
 """
 Module containing shared code of Batch Process API and Batch Statistical API
 """
+# ruff: noqa: FA100
+# do not use `from __future__ import annotations`, it clashes with `dataclass_json` (even through inheritance)
 from abc import ABCMeta
 from enum import Enum
 from typing import Generic, Iterable, Optional, Sequence, Type, TypeVar, Union
@@ -38,7 +40,7 @@ class BatchUserAction(Enum):
     STOP = "STOP"
 
 
-class BaseBatchClient(SentinelHubService, Generic[BatchRequestType], metaclass=ABCMeta):  # noqa: B024
+class BaseBatchClient(SentinelHubService, Generic[BatchRequestType], metaclass=ABCMeta):
     """Class containing common methods and helper functions for Batch Client classes"""
 
     def _call_job(self, batch_request: RequestSpec, endpoint_name: str) -> Json:

@@ -81,4 +81,5 @@ def test_statistical_client_runs_out_of_retries(download_request: DownloadReques
 
     with pytest.raises(DownloadFailedException) as exception_info:
         client.download([download_request])
-        assert str(exception_info.value) == "No more interval retries available, download unsuccessful"
+
+    assert str(exception_info.value) == "No more interval retries available, download unsuccessful"

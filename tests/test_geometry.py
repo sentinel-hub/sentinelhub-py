@@ -4,7 +4,6 @@ from typing import Any, Tuple, TypeVar
 
 import pytest
 import shapely.geometry
-from pytest import approx
 
 from sentinelhub import CRS, BBox, Geometry, get_utm_crs
 from sentinelhub.exceptions import SHDeprecationWarning
@@ -23,7 +22,7 @@ GEOMETRY_LIST = [GEOMETRY1, GEOMETRY2, BBOX]
 
 
 @pytest.mark.parametrize(
-    "coords, crs",
+    ("coords", "crs"),
     [
         ([[46.07, 13.23], [46.24, 13.57]], CRS.WGS84),
         ((46.07, 13.23, 46.24, 13.57), CRS.POP_WEB),
@@ -40,7 +39,7 @@ def test_bbox_different_input_options(coords: Any, crs: CRS) -> None:
 
 
 @pytest.mark.parametrize(
-    "coords, crs",
+    ("coords", "crs"),
     [
         ({"x1": 46.07, "y1": 13.23, "x2": 46.24, "y2": 13.57}, CRS.WGS84),
         ((46.07, 13.23, 46.24, 13.57), None),
@@ -60,7 +59,7 @@ def test_bbox_to_str() -> None:
 
 
 @pytest.mark.parametrize(
-    "coords, crs, expected",
+    ("coords", "crs", "expected"),
     [
         ((46.07, 13.23, 46.24, 13.57), CRS(4326), "BBox(((46.07, 13.23), (46.24, 13.57)), crs=CRS('4326'))"),
         (((42, 13.23), (47.453, 18.57)), CRS.POP_WEB, "BBox(((42.0, 13.23), (47.453, 18.57)), crs=CRS('3857'))"),
@@ -76,11 +75,11 @@ def test_bbox_iter() -> None:
 
 
 @pytest.mark.parametrize(
-    "bbox1, bbox2",
+    ("bbox1", "bbox2"),
     [
-        [BBOX, BBOX],
-        [BBox([46.07, 13.23, 46.24, 13.57], CRS.WGS84), BBox(((46.07, 13.23), (46.24, 13.57)), crs=CRS(4326))],
-        [BBox(((0, 0), (1, 1)), CRS(1234)), BBox({"min_x": 0, "min_y": 0, "max_x": 1, "max_y": 1}, CRS("epsg:1234"))],
+        (BBOX, BBOX),
+        (BBox([46.07, 13.23, 46.24, 13.57], CRS.WGS84), BBox(((46.07, 13.23), (46.24, 13.57)), crs=CRS(4326))),
+        (BBox(((0, 0), (1, 1)), CRS(1234)), BBox({"min_x": 0, "min_y": 0, "max_x": 1, "max_y": 1}, CRS("epsg:1234"))),
     ],
 )
 def test_bbox_eq_true(bbox1: BBox, bbox2: BBox) -> None:
@@ -88,7 +87,7 @@ def test_bbox_eq_true(bbox1: BBox, bbox2: BBox) -> None:
 
 
 @pytest.mark.parametrize(
-    "bbox1, bbox2",
+    ("bbox1", "bbox2"),
     [
         pytest.param(BBox((0, 0, 1, 1), CRS(1234)), (0, 0, 1, 1), id="different_types"),
         pytest.param(BBox((0, 0, 1, 1), CRS(1234)), BBox((0, 0, 1, 1), CRS(4321)), id="different_CRS"),
@@ -104,11 +103,11 @@ def test_bbox_transform() -> None:
     transformed_bbox = original_bbox.transform(CRS.POP_WEB)
 
     assert transformed_bbox.crs == CRS.POP_WEB
-    assert list(transformed_bbox) == approx([5128488.941, 1486021.486, 5147413.254, 1524929.4087], rel=1e-10)
+    assert list(transformed_bbox) == pytest.approx([5128488.941, 1486021.486, 5147413.254, 1524929.4087], rel=1e-10)
 
     reconstructed_bbox = transformed_bbox.transform(CRS.WGS84)
 
-    assert list(original_bbox) == approx(list(reconstructed_bbox), rel=1e-10)
+    assert list(original_bbox) == pytest.approx(list(reconstructed_bbox), rel=1e-10)
     assert original_bbox.crs == reconstructed_bbox.crs
 
 
@@ -131,26 +130,27 @@ def test_bbox_geometry_attribute() -> None:
 
 
 @pytest.mark.parametrize(
-    "bbox, rel_buffered, abs_buffered",
+    ("bbox", "rel_buffered", "abs_buffered"),
     [
-        [BBox((10, 10, 20, 20), CRS.WGS84), (5, 5, 25, 25), (9.8, 9.8, 20.2, 20.2)],
-        [BBox((46.05, 13.21, 47.40, 13.41), CRS.POP_WEB), (45.375, 13.11, 48.075, 13.51), (45.85, 13.01, 47.6, 13.61)],
+        (BBox((10, 10, 20, 20), CRS.WGS84), (5, 5, 25, 25), (9.8, 9.8, 20.2, 20.2)),
+        (BBox((46.05, 13.21, 47.40, 13.41), CRS.POP_WEB), (45.375, 13.11, 48.075, 13.51), (45.85, 13.01, 47.6, 13.61)),
     ],
 )
 def test_bbox_buffer(bbox, rel_buffered, abs_buffered) -> None:
     for relative in (True, False):
         assert bbox.buffer(3.7, relative=relative).crs == bbox.crs
 
-    assert bbox.buffer(0) is not bbox and bbox.buffer(0) == bbox
+    assert bbox.buffer(0) is not bbox
+    assert bbox.buffer(0) == bbox
 
-    assert tuple(bbox.buffer(1)) == approx(rel_buffered)
-    assert tuple(bbox.buffer(0.2, relative=False)) == approx(abs_buffered)
+    assert tuple(bbox.buffer(1)) == pytest.approx(rel_buffered)
+    assert tuple(bbox.buffer(0.2, relative=False)) == pytest.approx(abs_buffered)
 
     assert bbox == bbox.buffer((10, -0.1)).buffer((-10 / 11, 1 / 9))
     assert bbox == bbox.buffer((-0.01, 0.2), relative=False).buffer((0.01, -0.2), relative=False)
 
 
-@pytest.mark.parametrize("buffer, relative", [(-1, True), ((1, -0.5), False)])
+@pytest.mark.parametrize(("buffer", "relative"), [(-1, True), ((1, -0.5), False)])
 def test_bbox_buffer_fault_input(buffer, relative) -> None:
     bbox = BBox((46.05, 13.21, 47.40, 13.41), CRS.POP_WEB)
     with pytest.raises(ValueError):
@@ -220,7 +220,7 @@ def test_bbox_of_geometry(geometry: Geometry) -> None:
 
 
 @pytest.mark.parametrize(
-    "input_geometry, expected_output_geometry",
+    ("input_geometry", "expected_output_geometry"),
     [
         (BBox((1.11, 0, 0.999, 0.05), crs=CRS.WGS84), BBox((1.1, 0, 1.0, 0.1), crs=CRS.WGS84)),
         (

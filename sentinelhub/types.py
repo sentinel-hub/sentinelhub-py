@@ -2,7 +2,9 @@
 import datetime as dt
 from typing import Any, Dict, Tuple, Union
 
-RawTimeType = Union[None, str, dt.date]
-RawTimeIntervalType = Tuple[RawTimeType, RawTimeType]
-JsonDict = Dict[str, Any]
-Json = Union[JsonDict, list, str, float, int, None]
+from typing_extensions import TypeAlias
+
+RawTimeType: TypeAlias = Union[None, str, dt.date]
+RawTimeIntervalType: TypeAlias = Tuple[RawTimeType, RawTimeType]
+JsonDict: TypeAlias = Dict[str, Any]
+Json: TypeAlias = Union[JsonDict, list, str, float, int, None]

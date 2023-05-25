@@ -144,7 +144,7 @@ def test_search_geometry_and_iterator_methods(catalog: SentinelHubCatalog) -> No
 
 
 @pytest.mark.parametrize(
-    "data_collection, feature_id",
+    ("data_collection", "feature_id"),
     [
         (DataCollection.SENTINEL2_L1C, "S2A_MSIL1C_20210113T071211_N0209_R020_T38LPH_20210113T075941"),
         ("sentinel-2-l1c", "S2A_MSIL1C_20210113T071211_N0209_R020_T38LPH_20210113T075941"),
@@ -201,7 +201,7 @@ def test_search_with_ids(config: SHConfig) -> None:
 
 
 @pytest.mark.parametrize(
-    "data_collection, time_difference_hours, maxcc, n_timestamps",
+    ("data_collection", "time_difference_hours", "maxcc", "n_timestamps"),
     [
         (DataCollection.SENTINEL1_IW, 2, None, 4),
         (DataCollection.SENTINEL2_L2A, 1, 0.7, 8),

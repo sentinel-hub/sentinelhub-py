@@ -2,14 +2,15 @@
 Module implementing an interface with
 `Sentinel Hub Batch Processing API <https://docs.sentinel-hub.com/api/latest/api/batch-statistical/>`__.
 """
+# ruff: noqa: FA100
+# do not use `from __future__ import annotations`, it clashes with `dataclass_json`
 import datetime as dt
 import logging
 from dataclasses import dataclass, field
 from typing import Any, Optional, Sequence, Union
 
-from dataclasses_json import CatchAll, LetterCase, Undefined
+from dataclasses_json import CatchAll, LetterCase, Undefined, dataclass_json
 from dataclasses_json import config as dataclass_config
-from dataclasses_json import dataclass_json
 
 from ...exceptions import deprecated_function
 from ...types import Json, JsonDict
@@ -114,8 +115,7 @@ class SentinelHubBatchStatistical(BaseBatchClient["BatchStatisticalRequest"]):
         """
         request_id = self._parse_request_id(batch_request)
         endpoint_url = f"{self._get_processing_url(request_id)}/status"
-        request_info = self.client.get_json_dict(url=endpoint_url, use_session=True)
-        return request_info
+        return self.client.get_json_dict(url=endpoint_url, use_session=True)
 
     def start_analysis(self, batch_request: BatchStatisticalRequestType) -> Json:
         """Starts analysis of a batch job request

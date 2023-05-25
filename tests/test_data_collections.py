@@ -10,7 +10,7 @@ from sentinelhub.data_collections import DataCollectionDefinition
 
 
 @pytest.mark.parametrize(
-    "data_colection_def, derive_attributes, expected_attributes",
+    ("data_colection_def", "derive_attributes", "expected_attributes"),
     [
         (DataCollectionDefinition(), {}, {"api_id": None}),
         (
@@ -31,7 +31,7 @@ def test_derive(
 
 
 @pytest.mark.parametrize(
-    "definition_input, expected",
+    ("definition_input", "expected"),
     [
         ({}, "DataCollectionDefinition(\n  is_timeless: False\n  has_cloud_coverage: False\n)"),
         (
@@ -49,7 +49,7 @@ def test_collection_repr(definition_input: Dict[str, Any], expected: str) -> Non
 
 
 @pytest.mark.parametrize(
-    "test_definition, equal_definition",
+    ("test_definition", "equal_definition"),
     [
         ({"api_id": "X", "_name": "A"}, {"api_id": "X", "_name": "A"}),
         ({"api_id": "X", "_name": "A"}, {"api_id": "X", "_name": "B"}),
@@ -64,7 +64,7 @@ def test_collection_definitions_equal(test_definition: Dict[str, Any], equal_def
 
 
 @pytest.mark.parametrize(
-    "test_definition, equal_definition",
+    ("test_definition", "equal_definition"),
     [
         ({"api_id": "X", "_name": "A"}, {"api_id": "Y", "_name": "A"}),
         ({"api_id": "X", "is_timeless": True}, {"api_id": "X"}),
@@ -145,7 +145,7 @@ def test_attributes_empty_fail() -> None:
 
 
 @pytest.mark.parametrize(
-    "test_collection, expected",
+    ("test_collection", "expected"),
     [
         (DataCollection.SENTINEL2_L1C, False),
         (DataCollection.SENTINEL1_EW, True),
@@ -157,7 +157,7 @@ def test_is_sentinel1(test_collection: DataCollection, expected: bool) -> None:
 
 
 @pytest.mark.parametrize(
-    "collection, direction, expected",
+    ("collection", "direction", "expected"),
     [
         ("SENTINEL1_IW_ASC", "ascending", True),
         ("SENTINEL1_IW_ASC", "descending", False),
