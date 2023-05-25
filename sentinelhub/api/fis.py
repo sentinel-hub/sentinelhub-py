@@ -1,10 +1,12 @@
 """
 Module for working with Sentinel Hub FIS service
 """
+from __future__ import annotations
+
 import datetime
 import warnings
 from enum import Enum
-from typing import Any, List, Optional, Union
+from typing import Any
 
 from ..constants import MimeType, RequestType, ServiceType
 from ..download import DownloadRequest
@@ -42,12 +44,12 @@ class FisRequest(OgcRequest):
     def __init__(
         self,
         layer: str,
-        time: Union[RawTimeType, RawTimeIntervalType],
-        geometry_list: List[Union[Geometry, BBox]],
+        time: RawTimeType | RawTimeIntervalType,
+        geometry_list: list[Geometry | BBox],
         *,
         resolution: str = "10m",
-        bins: Optional[str] = None,
-        histogram_type: Optional[HistogramType] = None,
+        bins: str | None = None,
+        histogram_type: HistogramType | None = None,
         **kwargs: Any,
     ):
         """
@@ -98,11 +100,11 @@ class FisRequest(OgcRequest):
         fis_service = _FisService(config=self.config)
         self.download_list = fis_service.get_request(self)
 
-    def get_dates(self) -> List[Optional[datetime.datetime]]:
+    def get_dates(self) -> list[datetime.datetime | None]:
         """This method is not supported for FIS request"""
         raise NotImplementedError
 
-    def get_tiles(self) -> Optional[WebFeatureService]:
+    def get_tiles(self) -> WebFeatureService | None:
         """This method is not supported for FIS request"""
         raise NotImplementedError
 
@@ -113,7 +115,7 @@ class _FisService(OgcImageService):
     Intermediate layer between FIS requests and the Sentinel Hub FIS services.
     """
 
-    def get_request(self, request: FisRequest) -> List[DownloadRequest]:  # type: ignore[override]
+    def get_request(self, request: FisRequest) -> list[DownloadRequest]:  # type: ignore[override]
         """Get download requests
 
         Create a list of DownloadRequests for all Sentinel-2 acquisitions within request's time interval and
@@ -125,7 +127,7 @@ class _FisService(OgcImageService):
 
         return [self._create_request(request=request, geometry=geometry) for geometry in request.geometry_list]
 
-    def _create_request(self, request: FisRequest, geometry: Union[BBox, Geometry]) -> DownloadRequest:
+    def _create_request(self, request: FisRequest, geometry: BBox | Geometry) -> DownloadRequest:
         url = self.get_base_url(request)
 
         post_data = {**self._get_common_url_parameters(request), **self._get_fis_parameters(request, geometry)}

@@ -1,7 +1,9 @@
 """Module defining custom package exceptions."""
+from __future__ import annotations
+
 import functools
 import warnings
-from typing import Any, Callable, Optional, Type
+from typing import Any, Callable
 
 import requests
 
@@ -13,7 +15,7 @@ class BaseSentinelHubException(Exception):
 class DownloadFailedException(BaseSentinelHubException):
     """General exception which is raised whenever download fails"""
 
-    def __init__(self, msg: str, *, request_exception: Optional[requests.RequestException] = None) -> None:
+    def __init__(self, msg: str, *, request_exception: requests.RequestException | None = None) -> None:
         super().__init__(msg)
         self.request_exception = request_exception
 
@@ -61,7 +63,7 @@ warnings.simplefilter("always", SHRateLimitWarning)
 
 
 def deprecated_function(
-    category: Type[DeprecationWarning] = SHDeprecationWarning, message_suffix: Optional[str] = None
+    category: type[DeprecationWarning] = SHDeprecationWarning, message_suffix: str | None = None
 ) -> Callable[[Callable], Callable]:
     """A parametrized function decorator, which signals that the function has been deprecated when called.
 
@@ -84,14 +86,14 @@ def deprecated_function(
 
 
 def deprecated_class(
-    category: Type[DeprecationWarning] = SHDeprecationWarning, message_suffix: Optional[str] = None
-) -> Callable[[Type], Type]:
+    category: type[DeprecationWarning] = SHDeprecationWarning, message_suffix: str | None = None
+) -> Callable[[type], type]:
     """A parametrized class decorator, which signals that the class has been deprecated when initialized.
 
     Has to use paranthesis even when no custom parameters are used, e.g. `@deprecated_class()`.
     """
 
-    def deco(class_object: Type) -> Type:
+    def deco(class_object: type) -> type:
         message = f"Class `{class_object.__name__}` has been deprecated."
         if message_suffix:
             message += " " + message_suffix

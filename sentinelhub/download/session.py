@@ -1,6 +1,8 @@
 """
 Module implementing Sentinel Hub session object
 """
+from __future__ import annotations
+
 import base64
 import json
 import logging
@@ -8,7 +10,7 @@ import sys
 import time
 import warnings
 from threading import Event, Thread
-from typing import Any, Dict, Optional
+from typing import Any
 
 import requests
 from oauthlib.oauth2 import BackendApplicationClient
@@ -47,10 +49,10 @@ class SentinelHubSession:
 
     def __init__(
         self,
-        config: Optional[SHConfig] = None,
-        refresh_before_expiry: Optional[float] = DEFAULT_SECONDS_BEFORE_EXPIRY,
+        config: SHConfig | None = None,
+        refresh_before_expiry: float | None = DEFAULT_SECONDS_BEFORE_EXPIRY,
         *,
-        _token: Optional[JsonDict] = None,
+        _token: JsonDict | None = None,
     ):
         """
         :param config: A config object containing Sentinel Hub OAuth credentials and the base URL of the service.
@@ -75,7 +77,7 @@ class SentinelHubSession:
         self._token = self._collect_new_token() if _token is None else _token
 
     @classmethod
-    def from_token(cls, token: JsonDict) -> "SentinelHubSession":
+    def from_token(cls, token: JsonDict) -> SentinelHubSession:
         """Create a session object from the given token. The created session is configured not to refresh its token.
 
         :param token: A dictionary containing token object.
@@ -112,7 +114,7 @@ class SentinelHubSession:
         return json.loads(decoded_string)
 
     @property
-    def session_headers(self) -> Dict[str, str]:
+    def session_headers(self) -> dict[str, str]:
         """Provides session authorization headers
 
         :return: A dictionary with authorization headers.
@@ -287,7 +289,7 @@ class SessionSharingThread(Thread):
             name=self.memory_name,
         )
 
-    def join(self, timeout: Optional[float] = None) -> None:
+    def join(self, timeout: float | None = None) -> None:
         """The method stops the thread that would otherwise run indefinitely and joins it with the main thread.
 
         :param timeout: Parameter that is propagated to `threading.Thread.join` method.

@@ -1,7 +1,8 @@
 """ Contains information about data collections used by SH """
+from __future__ import annotations
+
 from dataclasses import dataclass
 from enum import Enum
-from typing import Tuple
 
 import numpy as np
 
@@ -39,8 +40,8 @@ class Band:
     """
 
     name: str
-    units: Tuple[Unit, ...]
-    output_types: Tuple[type, ...]
+    units: tuple[Unit, ...]
+    output_types: tuple[type, ...]
 
 
 class Bands:
