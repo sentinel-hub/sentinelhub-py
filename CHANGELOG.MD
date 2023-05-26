@@ -1,3 +1,124 @@
+## [Version 3.9.1] - 2023-05-04
+
+- The parameter `sh_auth_base_url` has been replaced with `sh_token_url` to allow authentication on endpoints with suffixes other than `oauth/token`. For the new parameter the address must be provided in full, e.g. `https://services.sentinel-hub.com/oauth/token` instead of `https://services.sentinel-hub.com`. The change only affects users who manually adjusted this field.
+- The package has been adjusted to fully support Python 3.11. In the process base class of  `DataCollection` was switched from `enum.Enum` to `aenum.Enum`, but we expect no behavioral changes.
+- Various minor adjustments
+
+
+## [Version 3.9.0] - 2023-04-04
+
+This release focuses mostly on the changes regarding the Sentinel Hub configuration file (`SHConfig`) moving into the direction of a more common config usage:
+- The format of the config file has been changed from JSON to TOML, which offers a more intuitive overview
+- The config parameters can now be provided as input in the class constructor
+- The location of the config file has been changed to `~/.config/sentinelhub/config.toml` on Linux/MacOS and `C:/Users/<USERNAME>/.config/sentinelhub/config.toml` on Windows, which means that the configs are now separated from the repo location
+  - all environments where `sentinelhub-py` is installed now use the configuration from the same source
+  - installing new versions now doesn't reset the configuration
+- The option of having multiple configuration files was removed
+- Profiles were introduced, allowing users to define and use multiple profiles defined in the same location
+  - only the updated fields are present in the configuration, the rest are equal to the default configuration parameters
+- A limited support of environment variables was introduced.
+  - `SH_PROFILE` that dictates which profile should be used when not explicitly provided.
+  - `SH_CLIENT_ID` and `SH_CLIENT_SECRET` for setting the SentinelHub credentials.
+- The general precedence order of the provided parameters is `explicit parameters > environment > configuration file > defaults`.
+
+For more information about the configuration updates, check the Configuration section in the [readthedocs](https://sentinelhub-py.readthedocs.io/en/latest/configure.html).
+
+Other changes in this release include:
+- Removed support for Python 3.7. This should help with an easier Conda installation
+- The package is now released as a wheel
+- Added support for [Async Process API](https://docs.sentinel-hub.com/api/latest/api/async-process/)
+- Switched to a `pyproject.toml` based install, enabling a lighter package with fewer install files
+- Increased tests performance and cleaned up deprecated functions
+
+
+## [Version 3.8.4] - 2023-02-24
+
+- Fixed a rate-limit bug that was introduced in version 3.8.2
+
+
+## [Version 3.8.3] - 2023-02-16
+
+- The properties `bbox` and `geometries` of `BatchRequest` no longer raise an exception and instead return `None` when not defined.
+- `BatchSplitter` adjusted so it also works for batch requests that only have `bbox` specified.
+- `BBoxCollection` has been marked as deprecated.
+- The option to construct a `BBox` from strings, other `BBox` objects, and `shapely` geometries has been deprecated.
+- The string representation of a `BBox` was marked to be changed in a future update. It will match the `repr` representation.
+- Many unused minor functions were removed from `io_utils`, however `read_data` and `write_data` now support a few more formats.
+- Some `url` fetching methods of `SHConfig` have been marked as deprecated (with hints for replacement).
+- Large improvements to test suite.
+
+
+## [Version 3.8.2] - 2023-01-31
+
+- Generalized the `CRS` class to accept `fiona.crs.CRS` as input.
+- Added warning to `SentinelHubBatch.reprocess_tile`, because the service endpoint will be removed.
+- Deprecation warning is triggered for single request input to `DownloadClient.download`. In future versions only sequences of requests will be supported. A single request will need to be passed as a singleton list or tuple.
+- Deprecated `PackageProps` class, will be removed in future version.
+- Various improvements to code and tests.
+
+
+## [Version 3.8.1] - 2023-01-18
+
+- Added Harmonized Landsat Sentinel collection
+- Due to recent changes the `aws` module no longer works reliably. We decided to stop maintaining it, but we updated the [AWS example notebook](https://github.com/sentinel-hub/sentinelhub-py/blob/master/examples/aws_request.ipynb) on workarounds for issues.
+- Updated [BYOC example notebook](https://github.com/sentinel-hub/sentinelhub-py/blob/master/examples/byoc_request.ipynb) with information on manual configuration of collections.
+- Updated [Large area utilities notebook](https://github.com/sentinel-hub/sentinelhub-py/blob/master/examples/large_area_utilities.ipynb) to show how one can use the obtained BBoxes to download data.
+- Improved `BBoxSplitter` to allow splitting by size, contributed by @ColinMoldenhauer.
+- Added `dataFilter` defaults to Batch Statistical (to match regular Statistical requests)
+- Fixed OGC bug with parameters being encoded twice
+- Module `type_utils` renamed to `types`
+- Deprecated `os_utils` module
+- Various minor code and test improvements
+
+
+## [Version 3.8.0] - 2022-10-06
+
+- (**codebreaking**) Switched to newly deployed Catalog 1.0.0. Main changes:
+    * Slight changes in structure of results.
+    * The `query` parameter is replaced with `filter`, which uses the CQL2 language for querying/filtering results.
+- Added utility function `statistical_to_dataframe` for transforming results of (batch) statistical API to a dataframe. It is located in the new `sentinelhub.data_utils` module and requires the user to additionally install the `pandas` package.
+- Fixed conditionals in batch client that caused issues when requesting tiling grid with id 0.
+- Included an [example notebook](https://sentinelhub-py.readthedocs.io/en/latest/examples/reading_pu_from_headers.html) that describes how to obtain response headers. This can be used to access information about PU.
+- Added pre-commit hooks to repository for easier development.
+- Various minor improvements.
+
+
+## [Version 3.7.0] - 2022-08-16
+
+- Official support for [Sentinel Hub Batch Statistical API](https://docs.sentinel-hub.com/api/latest/api/batch-statistical/):
+  * Implemented `SentinelHubBatchStatistical` and `BatchStatisticalRequest` classes to serve as an interface for the API.
+  * Implemented `monitor_batch_statistical_job` and `monitor_batch_statistical_analysis` utility functions for monitoring batch statistical jobs.
+  * Implemented `AwsBatchResults` utility class for efficient loading of batch results from an S3 bucke.
+  * Prepared a [tutorial notebook](https://sentinelhub-py.readthedocs.io/en/latest/examples/batch_statistical.html).
+  * Various minor improvements of batch-related functionalities and added more tests.
+- Upgrade of download procedure to support better access to information about responses:
+  * Implemented `DownloadResponse` object.
+  * Changed the structure of `response.json` files in cached data to include info about response.
+  * Changed the effect of `decode_data=False` parameter that is passed to `DownloadClient.download` and `DataRequest.get_data` methods. It used to provide raw response in bytes but now it provides instances of `DownloadResponse` object containing raw response, response headers, and more information about a response.
+  * Larger changes in the internal structure of download clients.
+- Parameter `show_progress` is now available for all `DataRequest.get_data` and `DataRequest.save_data` method calls.
+- Added `SHConfig.__eq__` method that compares object values.
+- Added `BBox.apply`, `Geometry.apply`, and `BBoxCollection.apply` methods.
+- Improved handling of User-Agent headers - `SentinelHubDownloadClient` now always includes them.
+- Removed references to rate limit headers that don't exist anymore from `SentinelHubRateLimit`.
+- Changed how the request payer is configured in `AwsDownloadClient` - parameter `RequestPayer="requester"` is not hardcoded anymore.
+- Removed deprecated `DataSource` class, old Landsat `DataCollection` names, and `base_url` parameter.
+- Various minor improvements in code, tests, and documentation.
+
+
+## [Version 3.6.4] - 2022-07-27
+
+- Increased minimal `Pillow` version to `9.2.0` and removed a fallback to `rasterio` when decoding JP2 images.
+- Various minor improvements in docstrings, example notebooks, and tests.
+
+
+## [Version 3.6.3] - 2022-06-21
+
+- Fixed and issue with missing `bufferX` and `bufferY` parameters in `BatchSplitter`.
+- Updated minimal version of `requests` package in requirements to avoid issues with failed `JSONDecodeError` import.
+- Added `flake8` style checker for code and notebooks and `isort` formatting for notebooks.
+
+
 ## [Version 3.6.2] - 2022-06-13
 
 - `BatchSplitter` is now returning bounding boxes with a correct buffer and without numerical errors. This change is **code-breaking**.
