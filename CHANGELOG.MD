@@ -1,3 +1,112 @@
+## [Version 3.4.0] - 2021-09-10
+
+- **Code-breaking** change of Sentinel Hub Batch API interface (i.e. `SentinelHubBatch`). Check updated [example notebook](https://sentinelhub-py.readthedocs.io/en/latest/examples/batch_processing.html) for more info. Related changes:
+  * support for Batch collections endpoints,
+  * support for endpoint to update a batch request,
+  * added utility function `monitor_batch_job`,
+  * **code-breaking** change of `BatchSplitter` class.
+- Renamed Landsat `DataCollection` enums to be in line with Sentinel Hub service. Old names are deprecated.
+- Better support for data fusion and added an example in [documentation](https://sentinelhub-py.readthedocs.io/en/latest/examples/data_collections.html#Data-fusion).
+- Official support for Python 3.9.
+- Logging improvements:
+  * more logging in download procedure,
+  * added a [documentation page](https://sentinelhub-py.readthedocs.io/en/latest/logging.html) about logging.
+- Download improvements:
+  * option to show progress bar during download,
+  * checking for hash collisions of cached downloaded data.
+- Option to hide credentials from `SHConfig` representation.
+- `SentinelHubCatalog` now correctly supports searching by collection id.
+- Change representation of geometry objects in notebooks.
+- Removed various functions and parameters which have been deprecated in earlier versions.
+- Converted all package tests from `unittest` to `pytest`.
+- A larger update of package Readme.
+- Minor fixes and improvements.
+
+
+## [Version 3.3.2] - 2021-07-19
+
+- Added new data collection enums:
+  * `DataCollection.LANDSAT7_L1`,
+  * `DataCollection.LANDSAT7_L2`,
+  * `DataCollection.LANDSAT15_L1`.
+- Fixed an issue where user-defined `DataCollection` objects couldn't be passed to a distributed environment.
+- Fixed an issue with projections from uncommon CRS and added an optional `always_xy` parameter.
+- Improvements in the [documentation notebook about Sentinel Hub BYOC](https://sentinelhub-py.readthedocs.io/en/latest/examples/byoc_request.html).
+- Minor improvements in code style and documentation.
+
+
+## [Version 3.3.1] - 2021-06-15
+
+- Added new data collection enums:
+  - `DataCollection.LANDSAT8_L1`,
+  - `DataCollection.LANDSAT8_L2`,
+  - `DataCollection.LANDSAT45_L1`,
+  - `DataCollection.LANDSAT45_L2`.
+- Added support for downloading Sentinel-2 L2A products with a special baseline `00.01` from AWS. Contributed by @marcosdejesus
+- Added an optional `offset` parameter to `UtmGridSplitter` and `UtmZoneSplitter`.
+- Minor updates and fixes to support changes of Sentinel Hub services.
+- Various documentation and code style improvements and fixes.
+
+
+## [Version 3.3.0] - 2021-05-12
+
+- Added support for [Sentinel Hub Statistical API](https://docs.sentinel-hub.com/api/latest/api/statistical/) and a [tutorial notebook](https://sentinelhub-py.readthedocs.io/en/latest/examples/statistical_request.html) explaining how to use it.
+- Minor code and documentation updates.
+
+
+## [Version 3.2.1] - 2021-03-26
+
+- Added new data collection enums:
+  * `DataCollection.DEM_MAPZEN`,
+  * `DataCollection.DEM_COPERNICUS_30`,
+  * `DataCollection.DEM_COPERNICUS_90`
+- `SentinelHubCatalog.search` now correctly uses filters defined on `DataCollection` objects
+- Fixed a bug in `GeopediaFeatureIterator`
+- Various documentation improvements
+
+
+## [Version 3.2.0] - 2021-03-05
+
+- Added support for [Sentinel Hub Catalog API](https://docs.sentinel-hub.com/api/latest/api/catalog/) and a [tutorial notebook](https://sentinelhub-py.readthedocs.io/en/latest/examples/data_search.html) explaining how to use it.
+- Added support for [Sentinel Hub BYOC API](https://docs.sentinel-hub.com/api/latest/api/byoc/) and a [tutorial notebook](https://sentinelhub-py.readthedocs.io/en/latest/examples/byoc_request.html) explaining how to use it.
+- Removed enums `MimeType.TIFF_d8`, `MimeType.TIFF_d16`, and `MimeType.TIFF_d32f` as they are not supported by Sentinel Hub service anymore. Use `MimeType.TIFF` instead.
+- Removed enums `CustomUrlParam.ATMFILTER`, `CustomUrlParam.TRANSPARENT`, and `CustomUrlParam.BGCOLOR` as they are not supported by Sentinel Hub service anymore.
+- Improved how time parameters are handled in the package and refactored `time_utils.py` module.
+- Various documentation improvements, better [instructions about configuring Sentinel Hub credentials](https://sentinelhub-py.readthedocs.io/en/latest/configure.html#sentinel-hub-configuration).
+- Added methods `BBox.transform_bounds` and `Geometry.from_geojson`.
+- Unified implementation of feature iterators throughout the package.
+- Various minor improvements and fixes.
+
+
+## [Version 3.1.0] - 2020-10-19
+
+- Added support for [**Sentinel Hub Batch service**](https://docs.sentinel-hub.com/api/latest/api/batch/) and [a tutorial notebook](https://sentinelhub-py.readthedocs.io/en/latest/examples/batch_processing.html) explaining how to use it.
+- Changed "data source" terminology to "data collection" to keep in sync with the Sentinel Hub service. Because of that `DataSource` has been renamed to `DataCollection` and `data_source` parameters renamed to `data_collection`. The old names became deprecated.
+- Large improvements in the implementation of `DataCollection` class (i.e. ex `DataSource` class) and supporting different deployments of Sentinel Hub service. Added [a tutorial notebook](https://sentinelhub-py.readthedocs.io/en/latest/examples/data_collections.html) explaining how to use the new `DataCollection` functionalities.
+- Improved parameter handling in `SentinelHubRequest.input_data` method. Added optional parameters `upsampling` and `downsampling`.
+- Deprecated `sentinelhub.download.client.get_json` function and replaced it with a method `sentinelhub.download.client.DownloadClient.get_json`.
+- A `config.json` is now being generated on-the-fly instead of being committed in the repository.
+- Minor improvements and fixes.
+
+
+## [Version 3.0.5] - 2020-08-03
+
+- A minor enhancement of `other_args` parameter in `SentinelHubRequest.input_data` method.
+
+
+## [Version 3.0.4] - 2020-05-24
+
+- Updated documentation examples
+  * Improved [examples](https://sentinelhub-py.readthedocs.io/en/latest/examples/processing_api_request.html) of how to use Sentinel Hub [Processing API service](https://docs.sentinel-hub.com/api/latest/#/API/),
+  * Deprecated [examples](https://sentinelhub-py.readthedocs.io/en/latest/examples/ogc_request.html) of how to use Sentinel Hub OGC service
+- Fixed an issue of `SentinelHubRequest` not using `config` parameter correctly.
+
+
+## [Version 3.0.3] - 2020-05-02
+
+- A fix for accessing Sentinel-5p data from Creodias
+
+
 ## [Version 3.0.2] - 2020-03-04
 
 - Added a notebook with examples of how to use the `SentinelHubRequest` interface of Sentinel Hub Processing API. The notebook is also available in [documentation](https://sentinelhub-py.readthedocs.io/en/latest/examples/sentinelhub_request.html).
