@@ -1,3 +1,95 @@
+## [Version 3.0.2] - 2020-03-04
+
+- Added a notebook with examples of how to use the `SentinelHubRequest` interface of Sentinel Hub Processing API. The notebook is also available in [documentation](https://sentinelhub-py.readthedocs.io/en/latest/examples/sentinelhub_request.html).
+- OGC requests are now sending additional parameter `warnings=false` to better catch errors when requesting a too large image. (Note: this changes filenames of locally stored data.)
+- Improvements in when a session is created in the download procedure.
+- Improvements in `CRS` class, added `CRS.pyproj_crs` method.
+
+
+## [Version 3.0.1] - 2020-02-26
+
+- `SentinelHubDownloadClient` is now caching `SentinelHubSession` instances,
+- `SentinelHubSession` now uses retry logic on failed authentication requests,
+- removed unnecessary warnings about credentials,
+- added handling of `requests.exceptions.ChunkedEncodingError`.
+
+
+## [Version 3.0.0] - 2020-02-17
+
+- Large changes in Sentinel Hub rate-limiting object that improve download performance.
+- Added `SentinelHubRequest` class as an interface class for [Sentinel Hub API](https://docs.sentinel-hub.com/api/latest/#/API/).
+- Changed the filename convention of downloaded data.
+- Improvements in download procedure and `DownloadRequest` class.
+- Added support for Python 3.8, dropped support for Python 3.5.
+- `DataRequest` classes now work with an optional parameter `config` instead of `instance_id`.
+- `sentinelhub.CRS` now enables using any custom CRS.
+- Resolved `pyproj` warnings.
+- Removed deprecated methods of `BBox` and `Geometry` classes and `transform_bbox` function.
+- Various other improvements and fixes.
+
+
+## [Version 3.0.0b1] - 2019-11-18
+
+The main changes:
+- Support for new Sentinel Hub API
+- Download utilities refactored
+- Added an algorithm for handling rate-limiting when downloading from Sentinel Hub service
+- A new procedure of caching downloaded data
+- Changes of parameters in `config.json`
+
+More will be added soon.
+
+
+## [Version 2.6.1] - 2019-11-11
+
+- Added support for custom Sentinel Hub BYOC data sources
+- Sentinel Hub `FisRequest` now collects data with POST requests instead of GET requests
+
+
+## [Version 2.6.0] - 2019-07-31
+
+- Added support for Sentinel-1 orbit direction ([code example](https://sentinelhub-py.readthedocs.io/en/latest/examples/ogc_request.html#Example-16:-Sentinel-1,-ascending-orbit-direction)).
+- Added new utilities for splitting large areas - `UtmGridSplitter` and `UtmZoneSplitter` ([code example](https://sentinelhub-py.readthedocs.io/en/latest/examples/large_area_utilities.html#Splitting-into-UTM-grid-zones)).
+- Renamed module `test_utils` to `testing_utils`.
+- Added code coverage.
+
+
+## [Version 2.5.3] - 2019-05-07
+
+- Performance improvements of geometrical transformations with `pyproj`. Using `pyproj>=2.0.0` should now be as fast as with older versions of `pyproj`.
+- Structural changes of `sentinelhub.CRS` class.
+- Extended support for downloading Sentinel-2 data into .SAFE format. Now supporting L1C baselines up to 02.07 and L2A up to 02.11. Contributed by @rouault
+- Fixed bug in `sentinelhub.BBox.get_transform_vector` method, contributed by @ds2268
+- Fixed bug in `sentinelhub.opensearch.get_tile_info` function, contributed by @dhepper
+- Minor improvements in code and documentation
+
+
+## [Version 2.5.1] - 2019-02-14
+
+- Improvements of `GeopediaSession` class:
+    - support for authentication (login with Geopedia credentials)
+    - storing all session info
+- `GeopediaImageRequest` and `GeopediaFeatureIterator` now have an optional parameter for specifying a custom instance of `GeopediaSession`. Therefore they can access private Geopedia layers.
+
+
+## [Version 2.5.0] - 2019-02-01
+
+- Added support for Sentinel Hub Feature Info Service (FIS). It is available with `FisRequest` class.
+- Added notebook with examples how to use `FisRequest` - [link](https://sentinelhub-py.readthedocs.io/en/latest/examples/fis_request.html)
+- Module `sentinelhub.common` renamed to `sentinelhub.geometry`, added `Geometry` and `BBoxCollection` classes, introduced properties
+- **Code breaking change**: `sentinelhub.BBox.transform` method does not change the object itself anymore but instead returns a copy of the object in new CRS.
+- Deprecated `transform_bbox` utility function as `sentinelhub.BBox.transform` can be used instead
+- Added `bbox_to_dimensions` utility function to `geo_utils` module. Contributed by @daviddemeij
+- Added `CustomGridSplitter` and new examples about it in [Large area utilities notebook](https://sentinelhub-py.readthedocs.io/en/latest/examples/large_area_utilities.html)
+- Fixed problems with `numpy` version `1.16.0`.
+
+
+## [Version 2.4.7] - 2018-12-10
+
+- `DataSource` class does not have subclasses anymore and therefore can be pickled and used during multiprocessing
+- `GeopediaFeatureIterator` now has an optional `query_filter` init parameter and method `get_size()`
+
+
 ## [Version 2.4.6] - 2018-11-27
 
 - Added module `test_utils` with utilities for writing unit tests and adjusted to work with `sentinelhub-py` package.
