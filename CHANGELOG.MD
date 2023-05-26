@@ -1,3 +1,97 @@
+## [Version 3.6.2] - 2022-06-13
+
+- `BatchSplitter` is now returning bounding boxes with a correct buffer and without numerical errors. This change is **code-breaking**.
+- Fixed an issue where failed authentication to Sentinel Hub would raise a misleading `MissingTokenError`. Now a correct error is being raised.
+- Improved parsing of error messages obtained from Sentinel Hub.
+- A few minor improvements.
+
+
+## [Version 3.6.1] - 2022-06-03
+
+- Improvements of Sentinel Hub authentication session sharing:
+  * `sentinelhub.download.SessionSharingThread` can now handle previously undeleted shared memory files and warn about them.
+  * Added a high-level utility `sentinelhub.download.SessionSharing` that ensures thread joining at the end. The tutorial notebook has been updated accordingly.
+- Minor Pylint updates.
+
+
+## [Version 3.6.0] - 2022-05-27
+
+- Official support for sharing Sentinel Hub authentication session between parallel Python processes:
+  * improved interfaces of `SentinelHubSession` and `SentinelHubDownloadClient`,
+  * implemented utilities `sentinelhub.download.SessionSharingThread` and `sentinelhub.download.collect_shared_session` for sharing session with standard Python multiprocessing,
+  * added a [tutorial notebook](https://sentinelhub-py.readthedocs.io/en/latest/examples/session_sharing.html) explaining the process and providing prototype implementations for different parallelization frameworks.
+- The package is now fully typed and `mypy` checks are performed in CI.
+- Refactored internal functionalities of `SHConfig` class.
+- `DownloadFailedException` now carries an optional instance of `requests.RequestException`.
+- Removed support for an old prototype EOCloud deployment of Sentinel Hub OGC services.
+- Documentation build improvements - package content pages are now being auto-generated. Some documentation links changed because of that.
+- Various minor improvements and fixes. Contributions by @sebastianclarke and @apazga
+
+
+## [Version 3.5.2] - 2022-05-03
+
+- Fixed an issue with parsing WGS84 in `sentinelhub.CRS` class.
+- Fixed an issue with using `SHConfig` class in Ray workers. A few minor changes in `SHConfig` class.
+- Renamed `sentinelhub.geometry.BaseGeometry` to a private class `sentinelhub.geometry._BaseGeometry`.
+- Added type annotations for some modules.
+
+
+## [Version 3.5.1] - 2022-04-21
+
+- New enums `MosaickingOrder` and `ResamplingType` with better parsing of parameters for mosaicking order, downsampling, and upsampling.
+- `BBox.buffer` method now has an option to apply an absolute buffer. Default is still a relative buffer.
+- Added `monitor_batch_analysis` utility function.
+- Added `ByocCollectionBand` dataclass for better deserialization of payloads from Sentinel Hub BYOC service.
+- Added `SentinelHubSession.info` method for obtaining session token information.
+- Increased cache size for `CRS.projection`, `CRS.pyproj_crs`, and `CRS.get_transform_function` methods.
+- Fixed an issue with a progress bar in download clients.
+- Added `py.typed` file.
+- Various minor improvements in code and documentation.
+
+
+## [Version 3.5.0] - 2022-03-24
+
+- Larger change of internal package structure:
+  * some modules were grouped into subfolders `api`, `aws`, `download`, and `geopedia`,
+  * package dependencies for working with AWS are not installed by default anymore, instead they require `sentinelhub[AWS]` extension,
+  * AWS functionalities can now be imported only from `sentinelhub.aws`
+  * documentation and tests were updated to reflect these changes.
+- Downloading of Sentinel-2 data from AWS into .SAFE format was updated. Now all baselines, including `04.00`, are correctly supported. Contributions by @anthony-scarth and @sebastianclarke.
+- Dependency `Pillow>=9.0.0` is now officially supported. Because new versions incorrectly read 15-bit JPEG2000 images a warning is raised in such cases. The warning suggests to install `rasterio` which in `sentinelhub-py` now has priority over `Pillow` for reading JPEG2000 format.
+- Fixed an issue in DownloadClient cache checking.
+- Applied `black` and `isort` formatting on the entire repository.
+- Various minor updates in the code and documentation.
+
+
+## [Version 3.4.4] - 2022-02-16
+
+- Improved handling of AWS credentials
+- Corrected LandSat units for bands with surface temperature
+- Added deprecation warning for Fis service
+- Various minor improvements
+
+
+## [Version 3.4.3] - 2022-01-06
+
+- Dropped support for Python `3.6` and added support for Python `3.10`.
+- Added a few new `MimeType` enums constants and `MimeType.matches_extension` method.
+
+
+## [Version 3.4.2] - 2021-12-06
+
+- `TileSplitter` utility now works for any `DataCollection` enum. Its implementation changed from using Sentinel Hub WFS to using Sentinel Hub Catalog to collect data about tiles. Consequentially, some initialization parameters and some output information changed. These changes are **code-breaking**.
+- A couple of fixes in definitions of meta-bands for a few `DataCollection` enums.
+
+
+## [Version 3.4.1] - 2021-10-27
+
+- **Code-breaking** change of attribute `bands` of class `DataCollection`. Switched from a list of band names to a list of band information (name, units, output types). `DataCollection` now also contains information about metabands (e.g. `dataMask`).
+- Fixed an issue with false hash collision detection
+- The `time` parameter in `SentinelHubCatalog` is now optional
+- `SentinelHubBYOC` now provides `reingest_tile` method
+- Minor fixes and improvements
+
+
 ## [Version 3.4.0] - 2021-09-10
 
 - **Code-breaking** change of Sentinel Hub Batch API interface (i.e. `SentinelHubBatch`). Check updated [example notebook](https://sentinelhub-py.readthedocs.io/en/latest/examples/batch_processing.html) for more info. Related changes:
