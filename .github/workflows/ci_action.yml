@@ -96,7 +96,10 @@ jobs:
             --instance_id "${{ secrets.INSTANCE_ID }}" \
             --aws_access_key_id "${{ secrets.AWS_ACCESS_KEY_ID }}" \
             --aws_secret_access_key "${{ secrets.AWS_SECRET_ACCESS_KEY }}"
-          pytest --cov --cov-report=term --cov-report=xml
+          if [ ${{ github.event_name }} == 'push' ]; then
+            pytest --cov --cov-report=term --cov-report=xml
+          else
+            pytest
 
       - name: Run reduced tests
         if: ${{ !matrix.full_test_suite }}
