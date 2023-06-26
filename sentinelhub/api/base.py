@@ -68,7 +68,7 @@ class SentinelHubFeatureIterator(FeatureIterator[JsonDict]):
         if new_features is None:
             raise MissingDataInRequestException(self.exception_message)
 
-        self.next = json_response["links"].get("nextToken")
+        self.next = json_response.get("links", {}).get("nextToken")
         self.finished = self.next is None or not new_features
 
         return new_features
