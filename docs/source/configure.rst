@@ -82,7 +82,7 @@ Sentinel Hub Configuration
 
 In order to use Sentinel Hub services you will need a Sentinel Hub account. If you do not have one yet, you can
 create a free trial account at `Sentinel Hub`_. If you are a researcher you can even apply for a free non-commercial
-account at `ESA OSEO page`_. The following configurations are then linked to your account.
+account through `ESA Network of Resources`_. The following configurations are then linked to your account.
 
 Parameter ``instance_id`` is used when using OGC endpoints of the `Sentinel Hub services`_. It is the identifier of a
 configuration users can set up in the `Sentinel Hub Dashboard`_ under "Configuration Utility".
@@ -130,7 +130,7 @@ $ sentinelhub.config --help
 
 
 .. _`Sentinel Hub`: https://www.sentinel-hub.com/trial
-.. _`ESA OSEO page`: https://earth.esa.int/aos/OSEO
+.. _`ESA Network of Resources`: https://www.sentinel-hub.com/Network-of-Resources/
 .. _`Sentinel Hub Dashboard`: https://apps.sentinel-hub.com/dashboard/
 .. _`Sentinel Hub services`: https://www.sentinel-hub.com/develop/documentation/api/ogc_api/
 .. _`Sentinel Hub webinar`: https://www.youtube.com/watch?v=CBIlTOl2po4&t=1760s
