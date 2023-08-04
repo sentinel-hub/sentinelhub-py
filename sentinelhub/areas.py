@@ -324,7 +324,7 @@ class TileSplitter(AreaSplitter):
     data collection. Additionally, it can further split these geometries into smaller parts.
     """
 
-    _CATALOG_FILTER: ClassVar[str, list[str]] = {
+    _CATALOG_FILTER: ClassVar[dict[str, list[str]]] = {
         "include": ["id", "geometry", "properties.datetime", "properties.proj:bbox", "properties.proj:epsg"],
         "exclude": [],
     }
