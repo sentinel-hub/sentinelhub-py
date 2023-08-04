@@ -1,8 +1,9 @@
 """
 Tests for sh_utils.py module
 """
+from __future__ import annotations
+
 import math
-from typing import List
 
 import pytest
 
@@ -24,7 +25,7 @@ class DummyIterator(FeatureIterator):
         self.feature_fetch_count = 0
         super().__init__(client=DownloadClient(), url="")
 
-    def _fetch_features(self) -> List[int]:
+    def _fetch_features(self) -> list[int]:
         start_interval = len(self.features)
         end_interval = min(start_interval + self.limit, self.total)
 

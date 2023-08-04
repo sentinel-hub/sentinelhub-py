@@ -1,5 +1,7 @@
+from __future__ import annotations
+
 import os
-from typing import Any, Dict
+from typing import Any
 
 import pytest
 
@@ -73,7 +75,7 @@ TEST_CASES = [
 
 @pytest.mark.aws_integration()
 @pytest.mark.parametrize(("test_name", "product_id", "params"), TEST_CASES)
-def test_safe_struct(test_name: str, product_id: str, params: Dict[str, Any], safe_folder: str) -> None:
+def test_safe_struct(test_name: str, product_id: str, params: dict[str, Any], safe_folder: str) -> None:
     params = dict(
         safe_format=True,
         **params,

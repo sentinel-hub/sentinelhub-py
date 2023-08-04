@@ -76,10 +76,8 @@ class DownloadClient:
         """
         if isinstance(download_requests, DownloadRequest):
             warnings.warn(
-                (
-                    "The parameter `download_requests` should be a sequence of requests. In future versions download of"
-                    " single requests will only be supported if provided as a singelton tuple or list."
-                ),
+                "The parameter `download_requests` should be a sequence of requests. In future versions download of"
+                " single requests will only be supported if provided as a singelton tuple or list.",
                 category=SHDeprecationWarning,
             )
             requests_list: list[DownloadRequest] = [download_requests]

@@ -136,10 +136,8 @@ class BBox(_BaseGeometry):
             return cls._tuple_from_bbox(bbox)
         if isinstance(bbox, shapely.geometry.base.BaseGeometry):
             warnings.warn(
-                (
-                    "Initializing `BBox` objects from `shapely` geometries will no longer be possible in future"
-                    " versions. Use the `bounds` property of the `shapely` geometry to initialize the `BBox` instead."
-                ),
+                "Initializing `BBox` objects from `shapely` geometries will no longer be possible in future"
+                " versions. Use the `bounds` property of the `shapely` geometry to initialize the `BBox` instead.",
                 category=SHDeprecationWarning,
                 stacklevel=2,
             )

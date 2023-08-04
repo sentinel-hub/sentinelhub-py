@@ -1,4 +1,4 @@
-from typing import List, Optional
+from __future__ import annotations
 
 import pytest
 
@@ -20,7 +20,7 @@ def test_collection_bands(data_collection: DataCollection) -> None:
     ],
     ids=str,
 )
-def test_explicit_bands(data_collection: DataCollection, bands: List[str]) -> None:
+def test_explicit_bands(data_collection: DataCollection, bands: list[str]) -> None:
     evalscript = generate_evalscript(data_collection=data_collection, bands=bands)
     expected_bands_str = "bands: [" + ", ".join(f'"{b}"' for b in bands) + "]"
     assert expected_bands_str in evalscript
@@ -31,7 +31,7 @@ def test_explicit_bands(data_collection: DataCollection, bands: List[str]) -> No
     [["CLM"], ["CLP", "dataMask"]],
     ids=str,
 )
-def test_explicit_meta_bands(meta_bands: List[str]) -> None:
+def test_explicit_meta_bands(meta_bands: list[str]) -> None:
     data_collection = DataCollection.SENTINEL2_L1C
     evalscript = generate_evalscript(data_collection=data_collection, meta_bands=meta_bands)
 
@@ -48,7 +48,7 @@ def test_explicit_meta_bands(meta_bands: List[str]) -> None:
     ],
     ids=str,
 )
-def test_merged_output(data_collection: DataCollection, bands: List[str], meta_bands: List[str]) -> None:
+def test_merged_output(data_collection: DataCollection, bands: list[str], meta_bands: list[str]) -> None:
     merged_output = "merged_bands"
     evalscript = generate_evalscript(
         data_collection=data_collection, bands=bands, meta_bands=meta_bands, merged_bands_output=merged_output
@@ -103,7 +103,7 @@ def test_sample_type_merged(use_dn: bool) -> None:
 @pytest.mark.parametrize("data_collection", [DataCollection.LANDSAT_TM_L2, DataCollection.SENTINEL2_L2A])
 @pytest.mark.parametrize("merged_output", [None, "bands"])
 @pytest.mark.parametrize("use_dn", [True, False])
-def test_valid_evalscript(data_collection: DataCollection, merged_output: Optional[str], use_dn: bool) -> None:
+def test_valid_evalscript(data_collection: DataCollection, merged_output: str | None, use_dn: bool) -> None:
     bands = ["B05", "B04", "B03"]
     meta_bands = ["dataMask"]
     evalscript = generate_evalscript(

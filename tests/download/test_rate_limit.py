@@ -1,13 +1,15 @@
 """
 Tests for utilities that implement rate-limiting in the package
 """
+from __future__ import annotations
+
 import concurrent.futures
 import itertools as it
 import time
 from dataclasses import dataclass
 from logging import Logger
 from threading import Lock
-from typing import Any, Dict, List, Tuple
+from typing import Any
 
 import pytest
 
@@ -20,7 +22,7 @@ class DummyService:
     purposes
     """
 
-    def __init__(self, policy_buckets: List[PolicyBucket], units_per_request: float, process_time: float):
+    def __init__(self, policy_buckets: list[PolicyBucket], units_per_request: float, process_time: float):
         """
         :param policy_buckets: A list of policy buckets on the service
         :param units_per_request: Number of processing units each request would cost. It assumes that each request will
@@ -58,7 +60,7 @@ class DummyService:
 
             return self._get_headers(is_rate_limited)
 
-    def _get_new_bucket_content(self) -> List[float]:
+    def _get_new_bucket_content(self) -> list[float]:
         """Calculates the new content of buckets"""
         costs = ((1 if bucket.is_request_bucket() else self.units_per_request) for bucket in self.policy_buckets)
 
@@ -121,7 +123,7 @@ FIXED_BUCKETS = [
 )
 def test_scenarios(
     logger: Logger,
-    bucket_defs: List[Tuple[PolicyType, Dict[str, Any]]],
+    bucket_defs: list[tuple[PolicyType, dict[str, Any]]],
     process_num: int,
     units_per_request: float,
     process_time: float,

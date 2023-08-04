@@ -8,7 +8,7 @@ import mimetypes
 import re
 import warnings
 from enum import Enum, EnumMeta
-from typing import Callable
+from typing import Callable, ClassVar
 
 import numpy as np
 import pyproj
@@ -387,4 +387,4 @@ class SHConstants:
     """Common constants used in various requests."""
 
     LATEST = "latest"
-    HEADERS = {"User-Agent": f"sentinelhub-py/v{__version__}"}
+    HEADERS: ClassVar[dict[str, str]] = {"User-Agent": f"sentinelhub-py/v{__version__}"}

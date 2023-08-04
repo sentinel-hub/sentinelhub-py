@@ -1,5 +1,6 @@
+from __future__ import annotations
+
 import os
-from typing import Union
 
 import numpy as np
 import pytest
@@ -42,7 +43,7 @@ PARSED_HTML = "HTTP ERROR 500 Problem accessing /oauth/tokeninfo. Reason: Reques
         (HTML_RESPONSE, PARSED_HTML),
     ],
 )
-def test_decode_sentinelhub_err_msg(content: Union[str, bool, None], expected_message: str) -> None:
+def test_decode_sentinelhub_err_msg(content: str | bool | None, expected_message: str) -> None:
     response = Response()
     response._content = content.encode() if isinstance(content, str) else content  # noqa: SLF001
 

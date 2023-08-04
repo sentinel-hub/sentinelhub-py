@@ -1,6 +1,8 @@
+from __future__ import annotations
+
 import time
 from concurrent.futures import ProcessPoolExecutor
-from typing import Any, Dict, Optional, Type
+from typing import Any
 
 import pytest
 from oauthlib.oauth2.rfc6749.errors import CustomOAuth2Error
@@ -52,7 +54,7 @@ def test_token_info(session: SentinelHubSession) -> None:
         assert key in info
 
 
-def test_session_content_and_headers(fake_config: SHConfig, fake_token: Dict[str, Any], requests_mock: Mocker) -> None:
+def test_session_content_and_headers(fake_config: SHConfig, fake_token: dict[str, Any], requests_mock: Mocker) -> None:
     """Make sure correct content and headers are passed to the service."""
     requests_mock.post(url="/oauth/token", response_list=[{"json": fake_token}])
     call_time = time.time()
@@ -122,8 +124,8 @@ def test_refreshing_procedure(fake_token: JsonDict, fake_config: SHConfig) -> No
 def test_oauth_compliance_hook_4xx(
     requests_mock: Mocker,
     status_code: int,
-    response_payload: Optional[JsonDict],
-    expected_exception: Type[Exception],
+    response_payload: JsonDict | None,
+    expected_exception: type[Exception],
     fake_config: SHConfig,
 ) -> None:
     requests_mock.post(
@@ -147,7 +149,7 @@ def test_oauth_compliance_hook_4xx(
     ],
 )
 def test_oauth_compliance_hook_5xx(
-    requests_mock: Mocker, status_code: int, response_payload: Optional[JsonDict], fake_config: SHConfig
+    requests_mock: Mocker, status_code: int, response_payload: JsonDict | None, fake_config: SHConfig
 ) -> None:
     requests_mock.post(
         "https://services.sentinel-hub.com/oauth/token",
@@ -164,9 +166,7 @@ def test_oauth_compliance_hook_5xx(
 
 
 @pytest.mark.parametrize("memory_name", [None, "test-name"])
-def test_session_sharing_single_process(
-    fake_token: JsonDict, fake_config: SHConfig, memory_name: Optional[str]
-) -> None:
+def test_session_sharing_single_process(fake_token: JsonDict, fake_config: SHConfig, memory_name: str | None) -> None:
     session = SentinelHubSession(config=fake_config, refresh_before_expiry=0, _token=fake_token)
 
     kwargs = {} if memory_name is None else {"memory_name": memory_name}
@@ -183,7 +183,7 @@ def test_session_sharing_single_process(
 
 
 @pytest.mark.parametrize("memory_name", [None, "test-name"])
-def test_session_sharing_multiprocess(fake_token: JsonDict, fake_config: SHConfig, memory_name: Optional[str]) -> None:
+def test_session_sharing_multiprocess(fake_token: JsonDict, fake_config: SHConfig, memory_name: str | None) -> None:
     session = SentinelHubSession(config=fake_config, refresh_before_expiry=0, _token=fake_token)
 
     kwargs = {} if memory_name is None else {"memory_name": memory_name}
@@ -201,7 +201,7 @@ def test_session_sharing_multiprocess(fake_token: JsonDict, fake_config: SHConfi
 
 
 @pytest.mark.parametrize("memory_name", [None, "test-name"])
-def test_session_sharing_object(fake_token: JsonDict, fake_config: SHConfig, memory_name: Optional[str]) -> None:
+def test_session_sharing_object(fake_token: JsonDict, fake_config: SHConfig, memory_name: str | None) -> None:
     session = SentinelHubSession(config=fake_config, refresh_before_expiry=0, _token=fake_token)
 
     kwargs = {} if memory_name is None else {"memory_name": memory_name}

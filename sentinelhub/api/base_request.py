@@ -19,7 +19,7 @@ class SentinelHubBaseApiRequest(DataRequest, metaclass=ABCMeta):
     """A base class for Sentinel Hub interfaces"""
 
     _SERVICE_ENDPOINT = ""
-    payload: dict[str, Any] = {}
+    payload: dict[str, Any] = {}  # noqa: RUF012
 
     @property
     @abstractmethod

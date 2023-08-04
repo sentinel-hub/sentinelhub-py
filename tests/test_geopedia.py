@@ -1,6 +1,8 @@
+from __future__ import annotations
+
 import datetime
 from dataclasses import dataclass
-from typing import Any, Dict, Optional
+from typing import Any
 
 import numpy as np
 import pytest
@@ -52,7 +54,7 @@ def test_session_timeout() -> None:
         dict(username="some_user", password="some_password", password_md5="md5_encoded"),
     ],
 )
-def test_false_initialization(bad_kwargs: Dict[str, Any]) -> None:
+def test_false_initialization(bad_kwargs: dict[str, Any]) -> None:
     with pytest.raises(ValueError):
         GeopediaSession(**bad_kwargs)
 
@@ -93,7 +95,7 @@ def test_geopedia_image_request(output_folder: str) -> None:
     )
 
     filenames = gpd_request.get_filename_list()
-    image_stats = list(gpd_request.get_items())[0]["properties"][image_field_name]
+    image_stats = next(iter(gpd_request.get_items()))["properties"][image_field_name]
 
     for filename, image_stat in zip(filenames, image_stats):
         assert filename == image_stat["niceName"]
@@ -104,7 +106,7 @@ class GeopediaFeatureIteratorTestCase:
     name: str
     params: dict
     min_features: int
-    min_size: Optional[int] = None
+    min_size: int | None = None
 
 
 BBOX = BBox(bbox=[(2947363, 4629723), (3007595, 4669471)], crs=CRS.POP_WEB).transform(CRS.WGS84)

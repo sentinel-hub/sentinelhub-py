@@ -112,12 +112,11 @@ class WebFeatureService(FeatureIterator[JsonDict]):
             self.next += self.max_features_per_request
 
         is_sentinel1 = self.data_collection.is_sentinel1
-        new_features = [
+        return [
             feature_info
             for feature_info in new_features
             if not is_sentinel1 or self._sentinel1_product_check(feature_info)
         ]
-        return new_features
 
     def get_dates(self) -> list[dt.date | None]:
         """Returns a list of acquisition times from tile info data
