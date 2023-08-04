@@ -1,4 +1,4 @@
-from typing import Dict
+from __future__ import annotations
 
 import numpy as np
 import pytest
@@ -23,7 +23,7 @@ from sentinelhub.testing_utils import assert_statistics_match
         ),
     ],
 )
-def test_assert_statistics_match(data: np.array, expected_statistics: Dict) -> None:
+def test_assert_statistics_match(data: np.array, expected_statistics: dict) -> None:
     assert_statistics_match(data, **expected_statistics)
 
 
@@ -49,6 +49,6 @@ def test_assert_statistics_match(data: np.array, expected_statistics: Dict) -> N
         ),
     ],
 )
-def test_assert_statistics_match_fa(data: np.array, expected_statistics: Dict) -> None:
+def test_assert_statistics_match_fa(data: np.array, expected_statistics: dict) -> None:
     with pytest.raises(AssertionError):
         assert_statistics_match(data, **expected_statistics)

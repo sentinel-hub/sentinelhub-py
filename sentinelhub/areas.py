@@ -8,7 +8,7 @@ import json
 import math
 import os
 from abc import ABCMeta, abstractmethod
-from typing import Any, Iterable, TypeVar, cast
+from typing import Any, ClassVar, Iterable, TypeVar, cast
 
 import shapely
 import shapely.geometry
@@ -324,7 +324,7 @@ class TileSplitter(AreaSplitter):
     data collection. Additionally, it can further split these geometries into smaller parts.
     """
 
-    _CATALOG_FILTER = {
+    _CATALOG_FILTER: ClassVar[str, list[str]] = {
         "include": ["id", "geometry", "properties.datetime", "properties.proj:bbox", "properties.proj:epsg"],
         "exclude": [],
     }

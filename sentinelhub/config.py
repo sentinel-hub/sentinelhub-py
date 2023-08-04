@@ -50,11 +50,9 @@ class _SHConfig:
         if self.sh_auth_base_url is not None:
             self.sh_token_url = self.sh_auth_base_url + "/oauth/token"
             warnings.warn(
-                (
-                    "The parameter `sh_auth_base_url` of `SHConfig` has been replaced with `sh_token_url`. Please"
-                    " update your configuration, for now the parameters were automatically adjusted to `sh_token_url ="
-                    " sh_auth_base_url + '/oauth/token'`."
-                ),
+                "The parameter `sh_auth_base_url` of `SHConfig` has been replaced with `sh_token_url`. Please"
+                " update your configuration, for now the parameters were automatically adjusted to `sh_token_url ="
+                " sh_auth_base_url + '/oauth/token'`.",
                 category=SHDeprecationWarning,
             )
 

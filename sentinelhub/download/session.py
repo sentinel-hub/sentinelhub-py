@@ -10,7 +10,7 @@ import sys
 import time
 import warnings
 from threading import Event, Thread
-from typing import Any
+from typing import Any, ClassVar
 
 import requests
 from oauthlib.oauth2 import BackendApplicationClient
@@ -45,7 +45,8 @@ class SentinelHubSession:
     """
 
     DEFAULT_SECONDS_BEFORE_EXPIRY = 120
-    DEFAULT_HEADERS = {"Content-Type": "application/x-www-form-urlencoded"}  # Following SH API documentation
+    # Following SH API documentation
+    DEFAULT_HEADERS: ClassVar[dict[str, str]] = {"Content-Type": "application/x-www-form-urlencoded"}
 
     def __init__(
         self,
@@ -260,11 +261,9 @@ class SessionSharingThread(Thread):
             memory = self._create_shared_memory(encoded_token)
         except FileExistsError:
             warnings.warn(
-                (
-                    f"A shared memory with a name `{self.memory_name}` already exists. It will be removed and allocated"
-                    f" anew. Please make sure that every {self.__class__.__name__} instance is joined at the end. If"
-                    " you are using multiple threads then specify different 'memory_name' parameter for each of them."
-                ),
+                f"A shared memory with a name `{self.memory_name}` already exists. It will be removed and allocated"
+                f" anew. Please make sure that every {self.__class__.__name__} instance is joined at the end. If"
+                " you are using multiple threads then specify different 'memory_name' parameter for each of them.",
                 category=SHUserWarning,
             )
 

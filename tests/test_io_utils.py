@@ -1,5 +1,6 @@
+from __future__ import annotations
+
 import os
-from typing import Tuple, Union
 from xml.etree import ElementTree
 
 import numpy as np
@@ -23,7 +24,7 @@ BASIC_IMAGE = np.arange((5 * 6 * 3), dtype=np.uint8).reshape((5, 6, 3))
         ("img-16bit.jp2", 0.3041897, (1830, 1830)),
     ],
 )
-def test_img_read(input_folder: str, filename: str, mean: float, shape: Tuple[int, ...]) -> None:
+def test_img_read(input_folder: str, filename: str, mean: float, shape: tuple[int, ...]) -> None:
     img = read_data(os.path.join(input_folder, filename))
 
     assert img.shape == shape
@@ -59,7 +60,7 @@ def xml_testcase():
         ("test-xml.xml", lazy_fixture("xml_testcase")),
     ],
 )
-def test_write_read(filename: str, data: Union[str, np.ndarray, ElementTree.ElementTree]) -> None:
+def test_write_read(filename: str, data: str | np.ndarray | ElementTree.ElementTree) -> None:
     with TempFS() as filesystem:
         file_path = filesystem.getsyspath(filename)
         write_data(file_path, data)

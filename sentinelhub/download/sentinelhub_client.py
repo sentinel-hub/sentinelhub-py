@@ -7,7 +7,7 @@ import logging
 import time
 import warnings
 from threading import Lock
-from typing import Any, Callable, TypeVar
+from typing import Any, Callable, ClassVar, TypeVar
 
 import requests
 from requests import Response
@@ -30,7 +30,7 @@ T = TypeVar("T")
 class SentinelHubDownloadClient(DownloadClient):
     """Download client specifically configured for download from Sentinel Hub service"""
 
-    _CACHED_SESSIONS: dict[tuple[str, str], SentinelHubSession] = {}
+    _CACHED_SESSIONS: ClassVar[dict[tuple[str, str], SentinelHubSession]] = {}
     _UNIVERSAL_CACHE_KEY = "universal-user", "default-url"
 
     def __init__(self, *, session: SentinelHubSession | None = None, **kwargs: Any):

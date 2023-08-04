@@ -165,7 +165,7 @@ ignore = [
     "PT011", # complains for `pytest.raises(ValueError)` but we use it a lot
     "UP024", # wants to switch IOError with OSError
 ]
-per-file-ignores = { "__init__.py" = ["F401"] }
+per-file-ignores = { "__init__.py" = ["F401"], "conf.py" = ["FA100"] }
 exclude = [".git", "__pycache__", "build", "dist", "sentinelhub/aws/*"]
 
 

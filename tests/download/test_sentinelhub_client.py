@@ -1,4 +1,4 @@
-from typing import Type, Union
+from __future__ import annotations
 
 import pytest
 from requests_mock import Mocker
@@ -51,7 +51,7 @@ def test_client_headers(session: SentinelHubSession, requests_mock: Mocker) -> N
 @pytest.mark.sh_integration()
 @pytest.mark.parametrize("client_object", [SentinelHubDownloadClient, SentinelHubDownloadClient()])
 def test_session_caching_and_clearing(
-    client_object: Union[SentinelHubDownloadClient, Type[SentinelHubDownloadClient]], session: SentinelHubSession
+    client_object: SentinelHubDownloadClient | type[SentinelHubDownloadClient], session: SentinelHubSession
 ) -> None:
     client_object.clear_cache()
     assert {} == SentinelHubDownloadClient._CACHED_SESSIONS

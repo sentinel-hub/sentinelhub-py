@@ -1,7 +1,9 @@
 """
 Tests for the module with Statistical API
 """
-from typing import Any, Dict, Optional, Tuple
+from __future__ import annotations
+
+from typing import Any
 
 import pytest
 
@@ -86,14 +88,14 @@ GEOMETRY = Geometry(BBOX.geometry, crs=BBOX.crs)
 )
 def test_statistical_api(
     evalscript: str,
-    bbox: Optional[BBox],
-    geometry: Optional[Geometry],
-    time_interval: Tuple[str, str],
-    resolution: Tuple[float, float],
+    bbox: BBox | None,
+    geometry: Geometry | None,
+    time_interval: tuple[str, str],
+    resolution: tuple[float, float],
     aggregation_interval: str,
     data_collection: DataCollection,
-    data_filters: Dict[str, Any],
-    calculations: Optional[JsonDict],
+    data_filters: dict[str, Any],
+    calculations: JsonDict | None,
     results: JsonDict,
 ) -> None:
     aggregation = SentinelHubStatistical.aggregation(

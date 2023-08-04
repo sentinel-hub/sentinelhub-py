@@ -1,6 +1,8 @@
+from __future__ import annotations
+
 import copy
 import warnings
-from typing import Any, Tuple, TypeVar
+from typing import Any, TypeVar
 
 import pytest
 import shapely.geometry
@@ -230,7 +232,7 @@ def test_bbox_of_geometry(geometry: Geometry) -> None:
     ],
 )
 def test_geometry_apply_method(input_geometry: GeoType, expected_output_geometry: GeoType) -> None:
-    def _round_point_coords(x: float, y: float, decimals: int = 1) -> Tuple[float, float]:
+    def _round_point_coords(x: float, y: float, decimals: int = 1) -> tuple[float, float]:
         return round(x, decimals), round(y, decimals)
 
     rounded_geometry = input_geometry.apply(_round_point_coords)
