@@ -308,11 +308,10 @@ def get_async_running_status(ids: Iterable[str], config: SHConfig | None = None)
             # A successful request means it's running
             result[request_id] = True
         except DownloadFailedException as exception:
-            code_not_found = requests.status_codes.codes.NOT_FOUND
             # A 404 means it's not running
-            request_ex = exception.request_exception
-            if request_ex is not None and request_ex.response.status_code == code_not_found:
-                result[request_id] = False
+            if exception.request_exception and exception.request_exception.response:
+                if exception.request_exception.response.status_code == requests.status_codes.codes.NOT_FOUND:
+                    result[request_id] = False
             else:
                 raise exception from exception
 
