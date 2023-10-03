@@ -65,6 +65,7 @@ class CustomUrlParam(Enum):
 class OgcRequest(DataRequest):
     """The base class for OGC-type requests (WMS and WCS) where all common parameters are defined"""
 
+    # pylint: disable=too-many-arguments
     def __init__(
         self,
         layer: str,

@@ -408,7 +408,7 @@ class DataCollection(Enum, metaclass=_DataCollectionMeta):
         has_cloud_coverage=True,
     )
 
-    # pylint: disable=too-many-locals
+    # pylint: disable=too-many-locals, too-many-arguments
     @classmethod
     def define(
         cls,
