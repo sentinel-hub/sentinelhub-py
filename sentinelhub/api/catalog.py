@@ -81,6 +81,7 @@ class SentinelHubCatalog(SentinelHubService):
         url = f"{self.service_url}/collections/{collection_id}/items/{feature_id}"
         return self.client.get_json_dict(url, use_session=True)
 
+    # pylint: disable=too-many-arguments
     def search(
         self,
         collection: DataCollection | str,
