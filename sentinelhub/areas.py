@@ -711,7 +711,7 @@ def _parse_to_pair(parameter: T | tuple[T, T], allowed_types: tuple[type, ...], 
 
     parameter = cast(T, parameter)
     if isinstance(parameter, allowed_types):
-        return parameter, parameter
+        return parameter, parameter  # type: ignore[return-value]  # mypy 1.6 fails to do type narrowing here
 
     raise ValueError(
         f"Parameter {param_name} must be a single instance or a pair, with allowed types {allowed_types}, but"
