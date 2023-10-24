@@ -2,11 +2,13 @@
 Utility functions to read/write image data from/to file
 """
 
+from __future__ import annotations
+
 import csv
 import json
 import logging
 import os
-from typing import IO, Any, Callable, Dict, Literal, Optional
+from typing import IO, Any, Callable, Literal
 from xml.etree import ElementTree
 
 import numpy as np
@@ -21,7 +23,7 @@ LOGGER = logging.getLogger(__name__)
 CSV_DELIMITER = ";"
 
 
-def read_data(filename: str, data_format: Optional[MimeType] = None) -> Any:
+def read_data(filename: str, data_format: MimeType | None = None) -> Any:
     """Read image data from file
 
     This function reads input data from file. The format of the file
@@ -58,7 +60,7 @@ def _get_reader(data_format: MimeType) -> Callable[[str], Any]:
     if data_format.is_image_format():
         return decode_image_with_pillow
 
-    available_readers: Dict[MimeType, Callable[[str], Any]] = {
+    available_readers: dict[MimeType, Callable[[str], Any]] = {
         MimeType.TAR: _open_file_and_read(decode_tar, "rb"),  # type: ignore[arg-type]
         MimeType.TXT: _open_file_and_read(lambda file: file.read(), "r"),
         MimeType.RAW: _open_file_and_read(lambda file: file.read(), "rb"),
@@ -91,12 +93,12 @@ def _read_csv(filename: str, delimiter: str = CSV_DELIMITER) -> list:
     :param delimiter: type of CSV delimiter. Default is ``;``
     :return: data stored in CSV file as list
     """
-    with open(filename, "r") as file:
+    with open(filename) as file:
         return list(csv.reader(file, delimiter=delimiter))
 
 
-def write_data(
-    filename: str, data: Any, data_format: Optional[MimeType] = None, compress: bool = False, add: bool = False
+def write_data(  # noqa: C901
+    filename: str, data: Any, data_format: MimeType | None = None, compress: bool = False, add: bool = False
 ) -> None:
     """Write image data to file
 

@@ -1,16 +1,18 @@
 """
 Tests for utilities that implement rate-limiting in the package
 """
+
+from __future__ import annotations
+
 import concurrent.futures
 import itertools as it
 import time
 from dataclasses import dataclass
 from logging import Logger
 from threading import Lock
-from typing import Any, Dict, List, Tuple
+from typing import Any
 
 import pytest
-from pytest import approx
 
 from sentinelhub.download.rate_limit import PolicyBucket, PolicyType, SentinelHubRateLimit
 from sentinelhub.types import JsonDict
@@ -21,7 +23,7 @@ class DummyService:
     purposes
     """
 
-    def __init__(self, policy_buckets: List[PolicyBucket], units_per_request: float, process_time: float):
+    def __init__(self, policy_buckets: list[PolicyBucket], units_per_request: float, process_time: float):
         """
         :param policy_buckets: A list of policy buckets on the service
         :param units_per_request: Number of processing units each request would cost. It assumes that each request will
@@ -57,11 +59,9 @@ class DummyService:
                 for bucket, new_content in zip(self.policy_buckets, new_content_list):
                     bucket.content = new_content
 
-            headers = self._get_headers(is_rate_limited)
+            return self._get_headers(is_rate_limited)
 
-        return headers
-
-    def _get_new_bucket_content(self) -> List[float]:
+    def _get_new_bucket_content(self) -> list[float]:
         """Calculates the new content of buckets"""
         costs = ((1 if bucket.is_request_bucket() else self.units_per_request) for bucket in self.policy_buckets)
 
@@ -106,7 +106,15 @@ FIXED_BUCKETS = [
 
 
 @pytest.mark.parametrize(
-    "bucket_defs, process_num, units_per_request, process_time, request_num, max_elapsed_time, max_rate_limit_hits",
+    (
+        "bucket_defs",
+        "process_num",
+        "units_per_request",
+        "process_time",
+        "request_num",
+        "max_elapsed_time",
+        "max_rate_limit_hits",
+    ),
     [
         (TRIAL_POLICY_BUCKETS, 5, 5, 0.5, 10, 6, 0),
         (TRIAL_POLICY_BUCKETS, 5, 5, 0.5, 14, 12, 10),
@@ -116,7 +124,7 @@ FIXED_BUCKETS = [
 )
 def test_scenarios(
     logger: Logger,
-    bucket_defs: List[Tuple[PolicyType, Dict[str, Any]]],
+    bucket_defs: list[tuple[PolicyType, dict[str, Any]]],
     process_num: int,
     units_per_request: float,
     process_time: float,
@@ -256,9 +264,9 @@ def test_basic_bucket_methods(test_case: PolicyBucketTestCase) -> None:
     assert bucket.content == original_content
 
     real_cost_per_second = bucket.count_cost_per_second(test_case.elapsed_time, test_case.new_content)
-    assert real_cost_per_second == approx(test_case.cost_per_second, abs=1e-6)
+    assert real_cost_per_second == pytest.approx(test_case.cost_per_second, abs=1e-6)
 
     wait_time = bucket.get_wait_time(
         test_case.elapsed_time, process_num=2, cost_per_request=10, requests_completed=test_case.requests_completed
     )
-    assert wait_time == approx(test_case.wait_time, abs=1e-6)
+    assert wait_time == pytest.approx(test_case.wait_time, abs=1e-6)

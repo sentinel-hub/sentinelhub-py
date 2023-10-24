@@ -1,11 +1,13 @@
 """ Tests for the Process API requests
 """
+
+from __future__ import annotations
+
 import json
-from typing import Any, Dict
+from typing import Any
 
 import pytest
 from oauthlib.oauth2.rfc6749.errors import CustomOAuth2Error
-from pytest import approx
 from shapely.geometry import Polygon
 
 from sentinelhub import (
@@ -445,7 +447,7 @@ def test_multipart_geometry() -> None:
     assert "rgb_ratios" in json_data
 
     expected_ratios = [0.29098381560041126, 0.3227735909047216, 0.3862425934948671]
-    assert json_data["rgb_ratios"] == approx(expected_ratios)
+    assert json_data["rgb_ratios"] == pytest.approx(expected_ratios)
 
 
 def test_bad_credentials() -> None:
@@ -464,7 +466,7 @@ def test_bad_credentials() -> None:
                     return [2.5 * sample.B04, 2.5 * sample.B03, 2.5 * sample.B02];
                 }
             """
-    request_params: Dict[str, Any] = dict(
+    request_params: dict[str, Any] = dict(
         evalscript=evalscript,
         input_data=[
             SentinelHubRequest.input_data(
@@ -567,7 +569,7 @@ def test_conflicting_service_url_restrictions(config: SHConfig) -> None:
     collections.
     """
     config.sh_base_url = ServiceUrl.MAIN
-    request_params: Dict[str, Any] = dict(
+    request_params: dict[str, Any] = dict(
         evalscript="",
         input_data=[
             SentinelHubRequest.input_data(data_collection=DataCollection.LANDSAT_OT_L2),

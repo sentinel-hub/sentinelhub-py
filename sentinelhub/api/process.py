@@ -1,7 +1,10 @@
 """
 Implementation of `Sentinel Hub Process API interface <https://docs.sentinel-hub.com/api/latest/api/process/>`__.
 """
-from typing import Any, Dict, Iterable, List, Optional, Tuple, Union
+
+from __future__ import annotations
+
+from typing import Any, Iterable
 
 import requests
 
@@ -28,12 +31,12 @@ class SentinelHubRequest(SentinelHubBaseApiRequest):
     def __init__(
         self,
         evalscript: str,
-        input_data: List[Union[JsonDict, InputDataDict]],
-        responses: List[JsonDict],
-        bbox: Optional[BBox] = None,
-        geometry: Optional[Geometry] = None,
-        size: Optional[Tuple[int, int]] = None,
-        resolution: Optional[Tuple[float, float]] = None,
+        input_data: list[JsonDict | InputDataDict],
+        responses: list[JsonDict],
+        bbox: BBox | None = None,
+        geometry: Geometry | None = None,
+        size: tuple[int, int] | None = None,
+        resolution: tuple[float, float] | None = None,
         **kwargs: Any,
     ):
         """
@@ -74,10 +77,10 @@ class SentinelHubRequest(SentinelHubBaseApiRequest):
     @staticmethod
     def body(
         request_bounds: JsonDict,
-        request_data: List[JsonDict],
+        request_data: list[JsonDict],
         evalscript: str,
-        request_output: Optional[JsonDict] = None,
-        other_args: Optional[JsonDict] = None,
+        request_output: JsonDict | None = None,
+        other_args: JsonDict | None = None,
     ) -> JsonDict:
         """Generate the Process API request body
 
@@ -100,7 +103,7 @@ class SentinelHubRequest(SentinelHubBaseApiRequest):
 
     @staticmethod
     def output_response(
-        identifier: str, response_format: Union[str, MimeType], other_args: Optional[JsonDict] = None
+        identifier: str, response_format: str | MimeType, other_args: JsonDict | None = None
     ) -> JsonDict:
         """Generate an element of `output.responses` as described in the Process API reference.
 
@@ -118,10 +121,10 @@ class SentinelHubRequest(SentinelHubBaseApiRequest):
 
     @staticmethod
     def output(
-        responses: List[JsonDict],
-        size: Optional[Tuple[int, int]] = None,
-        resolution: Optional[Tuple[float, float]] = None,
-        other_args: Optional[Dict] = None,
+        responses: list[JsonDict],
+        size: tuple[int, int] | None = None,
+        resolution: tuple[float, float] | None = None,
+        other_args: dict | None = None,
     ) -> JsonDict:
         """Generate an `output` part of the request as described in the Process API reference
 
@@ -159,15 +162,15 @@ class AsyncProcessRequest(SentinelHubBaseApiRequest):
     def __init__(
         self,
         *,
-        evalscript: Optional[str] = None,
-        evalscript_reference: Optional[AccessSpecification] = None,
-        input_data: List[Union[JsonDict, InputDataDict]],
-        responses: List[JsonDict],
+        evalscript: str | None = None,
+        evalscript_reference: AccessSpecification | None = None,
+        input_data: list[JsonDict | InputDataDict],
+        responses: list[JsonDict],
         delivery: AccessSpecification,
-        bbox: Optional[BBox] = None,
-        geometry: Optional[Geometry] = None,
-        size: Optional[Tuple[int, int]] = None,
-        resolution: Optional[Tuple[float, float]] = None,
+        bbox: BBox | None = None,
+        geometry: Geometry | None = None,
+        size: tuple[int, int] | None = None,
+        resolution: tuple[float, float] | None = None,
         **kwargs: Any,
     ):
         """
@@ -211,11 +214,11 @@ class AsyncProcessRequest(SentinelHubBaseApiRequest):
     @staticmethod
     def body(
         request_bounds: JsonDict,
-        request_data: List[JsonDict],
-        evalscript: Optional[str],
-        evalscript_reference: Optional[AccessSpecification],
-        request_output: Optional[JsonDict] = None,
-        other_args: Optional[JsonDict] = None,
+        request_data: list[JsonDict],
+        evalscript: str | None,
+        evalscript_reference: AccessSpecification | None,
+        request_output: JsonDict | None = None,
+        other_args: JsonDict | None = None,
     ) -> JsonDict:
         """Generate the Async Process API request body
 
@@ -242,7 +245,7 @@ class AsyncProcessRequest(SentinelHubBaseApiRequest):
 
     @staticmethod
     def output_response(
-        identifier: str, response_format: Union[str, MimeType], other_args: Optional[JsonDict] = None
+        identifier: str, response_format: str | MimeType, other_args: JsonDict | None = None
     ) -> JsonDict:
         """Generate an element of `output.responses` as described in the Async Process API reference.
 
@@ -260,11 +263,11 @@ class AsyncProcessRequest(SentinelHubBaseApiRequest):
 
     @staticmethod
     def output(
-        responses: List[JsonDict],
+        responses: list[JsonDict],
         delivery: AccessSpecification,
-        size: Optional[Tuple[int, int]] = None,
-        resolution: Optional[Tuple[float, float]] = None,
-        other_args: Optional[Dict] = None,
+        size: tuple[int, int] | None = None,
+        resolution: tuple[float, float] | None = None,
+        other_args: dict | None = None,
     ) -> JsonDict:
         """Generate an `output` part of the request as described in the Async Process API reference
 
@@ -290,7 +293,7 @@ class AsyncProcessRequest(SentinelHubBaseApiRequest):
         return request_output
 
 
-def get_async_running_status(ids: Iterable[str], config: Optional[SHConfig] = None) -> Dict[str, bool]:
+def get_async_running_status(ids: Iterable[str], config: SHConfig | None = None) -> dict[str, bool]:
     """Returns a mapping that describes which requests are running.
 
     :param ids: A collection of async request IDs.
@@ -306,10 +309,10 @@ def get_async_running_status(ids: Iterable[str], config: Optional[SHConfig] = No
             # A successful request means it's running
             result[request_id] = True
         except DownloadFailedException as exception:
-            code_not_found = requests.status_codes.codes.NOT_FOUND
             # A 404 means it's not running
-            if exception.request_exception and exception.request_exception.response.status_code == code_not_found:
-                result[request_id] = False
+            if exception.request_exception is not None and exception.request_exception.response is not None:
+                if exception.request_exception.response.status_code == requests.status_codes.codes.NOT_FOUND:
+                    result[request_id] = False
             else:
                 raise exception from exception
 

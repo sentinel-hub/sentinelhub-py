@@ -1,6 +1,7 @@
 """
 Constants related to AWS functionalities of the package
 """
+
 import itertools as it
 from enum import Enum
 

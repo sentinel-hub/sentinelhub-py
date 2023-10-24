@@ -1,10 +1,13 @@
 """
 Module implementing utilities for working with batch jobs.
 """
+
+from __future__ import annotations
+
 import logging
 import time
 from collections import defaultdict
-from typing import DefaultDict, List, Optional, Union
+from typing import Union
 
 from tqdm.auto import tqdm
 
@@ -30,10 +33,10 @@ _DEFAULT_ANALYSIS_SLEEP_TIME = 10
 
 def monitor_batch_job(
     batch_request: BatchProcessRequestSpec,
-    config: Optional[SHConfig] = None,
+    config: SHConfig | None = None,
     sleep_time: int = _DEFAULT_SLEEP_TIME,
     analysis_sleep_time: int = _DEFAULT_ANALYSIS_SLEEP_TIME,
-) -> DefaultDict[BatchTileStatus, List[dict]]:
+) -> defaultdict[BatchTileStatus, list[dict]]:
     """A utility function that keeps checking for number of processed tiles until the given batch request finishes.
     During the process it shows a progress bar and at the end it reports information about finished and failed tiles.
 
@@ -95,7 +98,7 @@ def monitor_batch_job(
 
 def _get_batch_tiles_per_status(
     batch_request: BatchRequest, batch_client: SentinelHubBatch
-) -> DefaultDict[BatchTileStatus, List[dict]]:
+) -> defaultdict[BatchTileStatus, list[dict]]:
     """A helper function that queries information about batch tiles and returns information about tiles, grouped by
     tile status.
 
@@ -112,7 +115,7 @@ def _get_batch_tiles_per_status(
 
 def monitor_batch_statistical_job(
     batch_request: BatchStatisticalRequestSpec,
-    config: Optional[SHConfig] = None,
+    config: SHConfig | None = None,
     sleep_time: int = _DEFAULT_STAT_SLEEP_TIME,
     analysis_sleep_time: int = _DEFAULT_ANALYSIS_SLEEP_TIME,
 ) -> JsonDict:
@@ -157,7 +160,7 @@ def monitor_batch_statistical_job(
 
 def monitor_batch_analysis(
     batch_request: BatchProcessRequestSpec,
-    config: Optional[SHConfig] = None,
+    config: SHConfig | None = None,
     sleep_time: int = _DEFAULT_ANALYSIS_SLEEP_TIME,
 ) -> BatchRequest:
     """A utility function that is waiting until analysis phase of a batch job finishes and regularly checks its status.
@@ -189,7 +192,7 @@ def monitor_batch_analysis(
 
 def monitor_batch_statistical_analysis(
     batch_request: BatchStatisticalRequestSpec,
-    config: Optional[SHConfig] = None,
+    config: SHConfig | None = None,
     sleep_time: int = _DEFAULT_ANALYSIS_SLEEP_TIME,
 ) -> BatchStatisticalRequest:
     """A utility function that is waiting until analysis phase of a batch job finishes and regularly checks its status.

@@ -1,12 +1,15 @@
 """
 Module for working with large geographical areas
 """
+
+from __future__ import annotations
+
 import itertools
 import json
 import math
 import os
 from abc import ABCMeta, abstractmethod
-from typing import Any, Dict, Iterable, List, Optional, Tuple, TypeVar, Union, cast
+from typing import Any, ClassVar, Iterable, TypeVar, cast
 
 import shapely
 import shapely.geometry
@@ -32,7 +35,7 @@ class AreaSplitter(metaclass=ABCMeta):
 
     def __init__(
         self,
-        shape_list: Iterable[Union[Polygon, MultiPolygon, _BaseGeometry]],
+        shape_list: Iterable[Polygon | MultiPolygon | _BaseGeometry],
         crs: CRS,
         reduce_bbox_sizes: bool = False,
     ):
@@ -51,7 +54,7 @@ class AreaSplitter(metaclass=ABCMeta):
         self.bbox_list, self.info_list = self._make_split()
 
     @staticmethod
-    def _parse_shape(shape: Union[Polygon, MultiPolygon, _BaseGeometry], crs: CRS) -> Union[Polygon, MultiPolygon]:
+    def _parse_shape(shape: Polygon | MultiPolygon | _BaseGeometry, crs: CRS) -> Polygon | MultiPolygon:
         """Helper method for parsing input shapes"""
         if isinstance(shape, (Polygon, MultiPolygon)):
             return shape
@@ -62,7 +65,7 @@ class AreaSplitter(metaclass=ABCMeta):
         )
 
     @staticmethod
-    def _join_shape_list(shape_list: List[Union[Polygon, MultiPolygon]]) -> MultiPolygon:
+    def _join_shape_list(shape_list: list[Polygon | MultiPolygon]) -> MultiPolygon:
         """Joins a list of shapes together into one shape
 
         :param shape_list: A list of geometrical shapes describing the area of interest
@@ -73,15 +76,15 @@ class AreaSplitter(metaclass=ABCMeta):
         return shapely.ops.cascaded_union(shape_list)
 
     @abstractmethod
-    def _make_split(self) -> Tuple[List[BBox], List[Dict[str, object]]]:
+    def _make_split(self) -> tuple[list[BBox], list[dict[str, object]]]:
         """The abstract method where the splitting will happen"""
 
     def get_bbox_list(
         self,
-        crs: Optional[CRS] = None,
-        buffer: Union[None, float, Tuple[float, float]] = None,
-        reduce_bbox_sizes: Optional[bool] = None,
-    ) -> List[BBox]:
+        crs: CRS | None = None,
+        buffer: None | float | tuple[float, float] = None,
+        reduce_bbox_sizes: bool | None = None,
+    ) -> list[BBox]:
         """Returns a list of bounding boxes that are the result of the split
 
         :param crs: Coordinate reference system in which the bounding boxes should be returned. If `None` the CRS will
@@ -104,7 +107,7 @@ class AreaSplitter(metaclass=ABCMeta):
             return [bbox.transform(crs) for bbox in bbox_list]
         return bbox_list
 
-    def get_geometry_list(self) -> List[Union[Polygon, MultiPolygon]]:
+    def get_geometry_list(self) -> list[Polygon | MultiPolygon]:
         """For each bounding box an intersection with the shape of entire given area is calculated. CRS of the returned
         shapes is the same as CRS of the given area.
 
@@ -112,7 +115,7 @@ class AreaSplitter(metaclass=ABCMeta):
         """
         return [self._intersection_area(bbox) for bbox in self.bbox_list]
 
-    def get_info_list(self) -> List[Dict[str, object]]:
+    def get_info_list(self) -> list[dict[str, object]]:
         """Returns a list of dictionaries containing information about bounding boxes obtained in split. The order in
         the list matches the order of the list of bounding boxes.
 
@@ -127,7 +130,7 @@ class AreaSplitter(metaclass=ABCMeta):
         """
         return self.area_shape
 
-    def get_area_bbox(self, crs: Optional[CRS] = None) -> BBox:
+    def get_area_bbox(self, crs: CRS | None = None) -> BBox:
         """Returns a bounding box of the entire area
 
         :param crs: Coordinate reference system in which the bounding box should be returned. If `None` the CRS will
@@ -152,7 +155,7 @@ class AreaSplitter(metaclass=ABCMeta):
         """
         return self._bbox_to_area_polygon(bbox).intersects(self.area_shape)
 
-    def _intersection_area(self, bbox: BBox) -> Union[Polygon, MultiPolygon]:
+    def _intersection_area(self, bbox: BBox) -> Polygon | MultiPolygon:
         """Calculates the intersection of a given bounding box and the entire area
 
         :param bbox: A bounding box
@@ -169,7 +172,7 @@ class AreaSplitter(metaclass=ABCMeta):
         projected_bbox = bbox.transform(self.crs)
         return projected_bbox.geometry
 
-    def _reduce_sizes(self, bbox_list: List[BBox]) -> List[BBox]:
+    def _reduce_sizes(self, bbox_list: list[BBox]) -> list[BBox]:
         """Reduces sizes of bounding boxes"""
         return [BBox(self._intersection_area(bbox).bounds, self.crs).transform(bbox.crs) for bbox in bbox_list]
 
@@ -182,10 +185,10 @@ class BBoxSplitter(AreaSplitter):
 
     def __init__(
         self,
-        shape_list: Iterable[Union[Polygon, MultiPolygon, _BaseGeometry]],
+        shape_list: Iterable[Polygon | MultiPolygon | _BaseGeometry],
         crs: CRS,
-        split_shape: Union[None, int, Tuple[int, int]] = None,
-        split_size: Union[None, int, Tuple[int, int]] = None,
+        split_shape: None | int | tuple[int, int] = None,
+        split_size: None | int | tuple[int, int] = None,
         **kwargs: Any,
     ):
         """
@@ -209,7 +212,7 @@ class BBoxSplitter(AreaSplitter):
             raise ValueError("Exactly one of 'split_shape' or 'split_size' needs to be specified.")
         super().__init__(shape_list, crs, **kwargs)
 
-    def _make_split(self) -> Tuple[List[BBox], List[Dict[str, object]]]:
+    def _make_split(self) -> tuple[list[BBox], list[dict[str, object]]]:
         mode, split_params = self.split_params
         if mode == "shape":
             columns, rows = split_params
@@ -240,7 +243,7 @@ class OsmSplitter(AreaSplitter):
 
     def __init__(
         self,
-        shape_list: Iterable[Union[Polygon, MultiPolygon, _BaseGeometry]],
+        shape_list: Iterable[Polygon | MultiPolygon | _BaseGeometry],
         crs: CRS,
         zoom_level: int,
         **kwargs: Any,
@@ -258,7 +261,7 @@ class OsmSplitter(AreaSplitter):
         self.zoom_level = zoom_level
         super().__init__(shape_list, crs, **kwargs)
 
-    def _make_split(self) -> Tuple[List[BBox], List[Dict[str, object]]]:
+    def _make_split(self) -> tuple[list[BBox], list[dict[str, object]]]:
         self.area_bbox = self.get_area_bbox(CRS.POP_WEB)
         self._check_area_bbox()
 
@@ -293,7 +296,7 @@ class OsmSplitter(AreaSplitter):
         zoom_level: int,
         column: int,
         row: int,
-    ) -> Tuple[List[BBox], List[Dict[str, object]]]:
+    ) -> tuple[list[BBox], list[dict[str, object]]]:
         """Method that recursively creates bounding boxes of OSM grid that intersect the area.
 
         :param bbox: Bounding box
@@ -322,19 +325,19 @@ class TileSplitter(AreaSplitter):
     data collection. Additionally, it can further split these geometries into smaller parts.
     """
 
-    _CATALOG_FILTER = {
+    _CATALOG_FILTER: ClassVar[dict[str, list[str]]] = {
         "include": ["id", "geometry", "properties.datetime", "properties.proj:bbox", "properties.proj:epsg"],
         "exclude": [],
     }
 
     def __init__(
         self,
-        shape_list: Iterable[Union[Polygon, MultiPolygon, _BaseGeometry]],
+        shape_list: Iterable[Polygon | MultiPolygon | _BaseGeometry],
         crs: CRS,
-        time_interval: Tuple[str, str],
+        time_interval: tuple[str, str],
         data_collection: DataCollection,
-        tile_split_shape: Union[int, Tuple[int, int]] = 1,
-        config: Optional[SHConfig] = None,
+        tile_split_shape: int | tuple[int, int] = 1,
+        config: SHConfig | None = None,
         **kwargs: Any,
     ):
         """
@@ -360,8 +363,8 @@ class TileSplitter(AreaSplitter):
         self.catalog = SentinelHubCatalog(config=sh_config)
         super().__init__(shape_list, crs, **kwargs)
 
-    def _make_split(self) -> Tuple[List[BBox], List[Dict[str, object]]]:
-        tile_dict: Dict[Tuple[Tuple[float, ...], int], Dict[str, Any]] = {}
+    def _make_split(self) -> tuple[list[BBox], list[dict[str, object]]]:
+        tile_dict: dict[tuple[tuple[float, ...], int], dict[str, Any]] = {}
 
         search_iterator = self.catalog.search(
             self.data_collection, time=self.time_interval, bbox=self.area_bbox, fields=self._CATALOG_FILTER
@@ -405,10 +408,10 @@ class CustomGridSplitter(AreaSplitter):
 
     def __init__(
         self,
-        shape_list: Iterable[Union[Polygon, MultiPolygon, _BaseGeometry]],
+        shape_list: Iterable[Polygon | MultiPolygon | _BaseGeometry],
         crs: CRS,
         bbox_grid: Iterable[BBox],
-        bbox_split_shape: Union[int, Tuple[int, int]] = 1,
+        bbox_split_shape: int | tuple[int, int] = 1,
         **kwargs: Any,
     ):
         """
@@ -426,9 +429,9 @@ class CustomGridSplitter(AreaSplitter):
         self.bbox_split_shape = bbox_split_shape
         super().__init__(shape_list, crs, **kwargs)
 
-    def _make_split(self) -> Tuple[List[BBox], List[Dict[str, object]]]:
-        bbox_list: List[BBox] = []
-        info_list: List[Dict[str, object]] = []
+    def _make_split(self) -> tuple[list[BBox], list[dict[str, object]]]:
+        bbox_list: list[BBox] = []
+        info_list: list[dict[str, object]] = []
 
         for grid_idx, grid_bbox in enumerate(self.bbox_grid):
             if self._intersects_area(grid_bbox):
@@ -453,10 +456,10 @@ class BaseUtmSplitter(AreaSplitter, metaclass=ABCMeta):
 
     def __init__(
         self,
-        shape_list: Iterable[Union[Polygon, MultiPolygon, _BaseGeometry]],
+        shape_list: Iterable[Polygon | MultiPolygon | _BaseGeometry],
         crs: CRS,
-        bbox_size: Union[float, Tuple[float, float]],
-        offset: Optional[Tuple[float, float]] = None,
+        bbox_size: float | tuple[float, float],
+        offset: tuple[float, float] | None = None,
     ):
         """
         :param shape_list: A list of geometrical shapes describing the area of interest
@@ -473,11 +476,11 @@ class BaseUtmSplitter(AreaSplitter, metaclass=ABCMeta):
         super().__init__(shape_list, crs)
 
     @abstractmethod
-    def _get_utm_polygons(self) -> List[Tuple[BaseGeometry, Dict[str, Any]]]:
+    def _get_utm_polygons(self) -> list[tuple[BaseGeometry, dict[str, Any]]]:
         """Find UTM grid zones overlapping with input area shape."""
 
     @staticmethod
-    def _get_utm_from_props(utm_dict: Dict[str, Any]) -> CRS:
+    def _get_utm_from_props(utm_dict: dict[str, Any]) -> CRS:
         """Return the UTM CRS corresponding to the UTM described by the properties dictionary
 
         :param utm_dict: Dictionary reporting name of the UTM zone and MGRS grid
@@ -502,11 +505,11 @@ class BaseUtmSplitter(AreaSplitter, metaclass=ABCMeta):
 
         return BBox(((aligned_x, aligned_y), bbox.upper_right), crs=bbox.crs)
 
-    def _make_split(self) -> Tuple[List[BBox], List[Dict[str, object]]]:
+    def _make_split(self) -> tuple[list[BBox], list[dict[str, object]]]:
         """Split each UTM grid into equally sized bboxes in correct UTM zone"""
         size_x, size_y = self.bbox_size
-        bbox_list: List[BBox] = []
-        info_list: List[Dict[str, object]] = []
+        bbox_list: list[BBox] = []
+        info_list: list[dict[str, object]] = []
 
         index = 0
         shape_geometry = Geometry(self.area_shape, self.crs).transform(CRS.WGS84)
@@ -545,9 +548,7 @@ class BaseUtmSplitter(AreaSplitter, metaclass=ABCMeta):
 
         return bbox_list, info_list
 
-    def get_bbox_list(  # type: ignore[override]
-        self, buffer: Union[None, float, Tuple[float, float]] = None
-    ) -> List[BBox]:
+    def get_bbox_list(self, buffer: None | float | tuple[float, float] = None) -> list[BBox]:  # type: ignore[override]
         """Get list of bounding boxes.
 
         The CRS is fixed to the computed UTM CRS. This BBox splitter does not support reducing size of output
@@ -562,7 +563,7 @@ class BaseUtmSplitter(AreaSplitter, metaclass=ABCMeta):
 class UtmGridSplitter(BaseUtmSplitter):
     """Splitter that returns bounding boxes of fixed size aligned to the UTM MGRS grid"""
 
-    def _get_utm_polygons(self) -> List[Tuple[BaseGeometry, Dict[str, Any]]]:
+    def _get_utm_polygons(self) -> list[tuple[BaseGeometry, dict[str, Any]]]:
         """Find UTM grid zones overlapping with input area shape
 
         :return: List of geometries and properties of UTM grid zones overlapping with input area shape
@@ -595,7 +596,7 @@ class UtmZoneSplitter(BaseUtmSplitter):
     LNG_MIN, LNG_MAX, LNG_UTM = -180, 180, 6
     LAT_MIN, LAT_MAX, LAT_EQ = -80, 84, 0
 
-    def _get_utm_polygons(self) -> List[Tuple[BaseGeometry, Dict[str, Any]]]:
+    def _get_utm_polygons(self) -> list[tuple[BaseGeometry, dict[str, Any]]]:
         """Find UTM zones overlapping with input area shape
 
         The returned geometry corresponds to a triangle ranging from the equator to the North/South Pole
@@ -632,9 +633,9 @@ class BatchSplitter(AreaSplitter):
     def __init__(
         self,
         *,
-        request_id: Optional[str] = None,
-        batch_request: Optional[BatchRequest] = None,
-        config: Optional[SHConfig] = None,
+        request_id: str | None = None,
+        batch_request: BatchRequest | None = None,
+        config: SHConfig | None = None,
     ):
         """
         :param request_id: An ID of a batch request
@@ -653,26 +654,26 @@ class BatchSplitter(AreaSplitter):
         self.tile_size = self._get_tile_size()
         self.tile_buffer = self._get_tile_buffer()
 
-        batch_geometry: Optional[_BaseGeometry] = batch_request.geometry or batch_request.bbox
+        batch_geometry: _BaseGeometry | None = batch_request.geometry or batch_request.bbox
         if batch_geometry is None:
             raise ValueError("Batch request has both `bbox` and `geometry` set to `None`, which is invalid.")
 
         super().__init__([batch_geometry.geometry], batch_geometry.crs)
 
-    def _get_tile_size(self) -> Tuple[float, float]:
+    def _get_tile_size(self) -> tuple[float, float]:
         """Collects a tile size from the tiling grid info in units of the grid CRS."""
         tiling_grid_id = self.batch_request.tiling_grid["id"]
         grid_info = self.batch_client.get_tiling_grid(tiling_grid_id)
 
         return grid_info["properties"]["tileWidth"], grid_info["properties"]["tileHeight"]
 
-    def _get_tile_buffer(self) -> Tuple[float, float]:
+    def _get_tile_buffer(self) -> tuple[float, float]:
         """Calculates tile buffer in units of the grid CRS."""
         grid_info = self.batch_request.tiling_grid
         resolution = grid_info["resolution"]
         return grid_info.get("bufferX", 0) * resolution, grid_info.get("bufferY", 0) * resolution
 
-    def _make_split(self) -> Tuple[List[BBox], List[Dict[str, object]]]:
+    def _make_split(self) -> tuple[list[BBox], list[dict[str, object]]]:
         """This method actually loads bounding boxes from the service and prepares the lists"""
         tile_info_list = list(self.batch_client.iter_tiles(self.batch_request))
 
@@ -701,9 +702,7 @@ class BatchSplitter(AreaSplitter):
         )
 
 
-def _parse_to_pair(
-    parameter: Union[T, Tuple[T, T]], allowed_types: Tuple[type, ...], param_name: str = ""
-) -> Tuple[T, T]:
+def _parse_to_pair(parameter: T | tuple[T, T], allowed_types: tuple[type, ...], param_name: str = "") -> tuple[T, T]:
     """Parses the parameters defining the splitting of the BBox."""
 
     if isinstance(parameter, (tuple, list)) and len(parameter) == 2:
@@ -713,7 +712,7 @@ def _parse_to_pair(
 
     parameter = cast(T, parameter)
     if isinstance(parameter, allowed_types):
-        return parameter, parameter
+        return parameter, parameter  # type: ignore[return-value]  # mypy 1.6 fails to do type narrowing here
 
     raise ValueError(
         f"Parameter {param_name} must be a single instance or a pair, with allowed types {allowed_types}, but"

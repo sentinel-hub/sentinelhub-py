@@ -1,8 +1,11 @@
 """
 A client interface for `Sentinel Hub Catalog API <https://docs.sentinel-hub.com/api/latest/api/catalog>`__.
 """
+
+from __future__ import annotations
+
 import datetime as dt
-from typing import Any, Dict, Iterable, List, Literal, Optional, Union
+from typing import Any, Iterable, Literal
 
 from ..base import FeatureIterator
 from ..config import SHConfig
@@ -45,7 +48,7 @@ class SentinelHubCatalog(SentinelHubService):
         """
         return self.client.get_json_dict(f"{self.service_url}/conformance")
 
-    def get_collections(self) -> List[JsonDict]:
+    def get_collections(self) -> list[JsonDict]:
         """Provides a list of collections that are available to a user
 
         `Catalog API reference <https://docs.sentinel-hub.com/api/latest/reference/#operation/getCollections>`__
@@ -54,7 +57,7 @@ class SentinelHubCatalog(SentinelHubService):
         """
         return self.client.get_json_dict(f"{self.service_url}/collections", use_session=True)["collections"]
 
-    def get_collection(self, collection: Union[DataCollection, str]) -> JsonDict:
+    def get_collection(self, collection: DataCollection | str) -> JsonDict:
         """Provides information about given collection
 
         `Catalog API reference <https://docs.sentinel-hub.com/api/latest/reference/#operation/describeCollection>`__
@@ -79,22 +82,23 @@ class SentinelHubCatalog(SentinelHubService):
         url = f"{self.service_url}/collections/{collection_id}/items/{feature_id}"
         return self.client.get_json_dict(url, use_session=True)
 
+    # pylint: disable=too-many-arguments
     def search(
         self,
-        collection: Union[DataCollection, str],
+        collection: DataCollection | str,
         *,
-        time: Union[RawTimeType, RawTimeIntervalType] = None,
-        bbox: Optional[BBox] = None,
-        geometry: Optional[Geometry] = None,
-        ids: Optional[List[str]] = None,
-        filter: Union[None, str, JsonDict] = None,  # pylint: disable=redefined-builtin
+        time: RawTimeType | RawTimeIntervalType = None,
+        bbox: BBox | None = None,
+        geometry: Geometry | None = None,
+        ids: list[str] | None = None,
+        filter: None | str | JsonDict = None,  # pylint: disable=redefined-builtin # noqa: A002
         filter_lang: Literal["cql2-text", "cql2-json"] = "cql2-text",
-        filter_crs: Optional[str] = None,
-        fields: Optional[JsonDict] = None,
-        distinct: Optional[str] = None,
+        filter_crs: str | None = None,
+        fields: JsonDict | None = None,
+        distinct: str | None = None,
         limit: int = 100,
         **kwargs: Any,
-    ) -> "CatalogSearchIterator":
+    ) -> CatalogSearchIterator:
         """Catalog STAC search
 
         `Catalog API reference <https://docs.sentinel-hub.com/api/latest/reference/#operation/postSearchSTAC>`__
@@ -156,7 +160,7 @@ class SentinelHubCatalog(SentinelHubService):
         return CatalogSearchIterator(self.client, url, payload)
 
     @staticmethod
-    def _parse_collection_id(collection: Union[str, DataCollection]) -> str:
+    def _parse_collection_id(collection: str | DataCollection) -> str:
         """Extracts catalog collection id from an object defining a collection."""
         if isinstance(collection, DataCollection):
             return collection.catalog_id
@@ -166,10 +170,10 @@ class SentinelHubCatalog(SentinelHubService):
 
     def _prepare_filters(
         self,
-        filter_query: Union[None, str, JsonDict],
-        collection: Union[DataCollection, str],
+        filter_query: None | str | JsonDict,
+        collection: DataCollection | str,
         filter_lang: Literal["cql2-text", "cql2-json"],
-    ) -> Union[None, str, JsonDict]:
+    ) -> None | str | JsonDict:
         """Asserts that the input coincides with the selected filter language and adds any collection filters."""
         input_missmatch_msg = f"Filter query is {filter_query} but the filter language is set to {filter_lang}."
 
@@ -200,11 +204,11 @@ class SentinelHubCatalog(SentinelHubService):
         )
 
     @staticmethod
-    def _get_data_collection_filters(data_collection: Union[DataCollection, str]) -> Dict[str, str]:
+    def _get_data_collection_filters(data_collection: DataCollection | str) -> dict[str, str]:
         """Builds a `field: value` dictionary to create filters for catalog API corresponding to a data collection
         definition.
         """
-        filters: Dict[str, str] = {}
+        filters: dict[str, str] = {}
 
         if isinstance(data_collection, str):
             return filters
@@ -232,7 +236,7 @@ class CatalogSearchIterator(FeatureIterator[JsonDict]):
 
     def __init__(self, *args: Any, **kwargs: Any):
         super().__init__(*args, **kwargs)
-        self.next: Optional[JsonDict] = None
+        self.next: JsonDict | None = None
 
     def _fetch_features(self) -> Iterable[JsonDict]:
         """Collects more results from the service"""
@@ -246,21 +250,21 @@ class CatalogSearchIterator(FeatureIterator[JsonDict]):
 
         return new_features
 
-    def get_timestamps(self) -> List[dt.datetime]:
+    def get_timestamps(self) -> list[dt.datetime]:
         """Provides features timestamps
 
         :return: A list of sensing times
         """
         return [parse_time(feature["properties"]["datetime"], force_datetime=True) for feature in self]
 
-    def get_geometries(self) -> List[Geometry]:
+    def get_geometries(self) -> list[Geometry]:
         """Provides features geometries
 
         :return: A list of geometry objects with CRS
         """
         return [Geometry.from_geojson(feature["geometry"]) for feature in self]
 
-    def get_ids(self) -> List[str]:
+    def get_ids(self) -> list[str]:
         """Provides features IDs
 
         :return: A list of IDs
@@ -270,14 +274,14 @@ class CatalogSearchIterator(FeatureIterator[JsonDict]):
 
 def get_available_timestamps(
     bbox: BBox,
-    time_interval: Optional[RawTimeIntervalType],
+    time_interval: RawTimeIntervalType | None,
     data_collection: DataCollection,
     *,
-    time_difference: Optional[dt.timedelta] = None,
+    time_difference: dt.timedelta | None = None,
     ignore_tz: bool = True,
-    maxcc: Optional[float] = None,
-    config: Optional[SHConfig] = None,
-) -> List[dt.datetime]:
+    maxcc: float | None = None,
+    config: SHConfig | None = None,
+) -> list[dt.datetime]:
     """Helper function to search for all available timestamps for a given area and query parameters.
 
     :param bbox: A bounding box of the search area.

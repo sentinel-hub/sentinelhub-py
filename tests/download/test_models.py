@@ -1,11 +1,14 @@
 """
 Unit tests for DownloadRequest object
 """
+
+from __future__ import annotations
+
 import datetime as dt
 import json
 import os
 from dataclasses import dataclass
-from typing import Any, Dict, Optional
+from typing import Any
 
 import pytest
 
@@ -95,12 +98,13 @@ def test_download_response(output_folder: str) -> None:
     assert os.path.exists(response_path)
 
     new_response = DownloadResponse.from_local(request)
-    assert new_response == response and new_response is not response
+    assert new_response == response
+    assert new_response is not response
     assert new_response.decode() == data
 
 
 @pytest.mark.parametrize(
-    "data_type, headers, expected_response_type",
+    ("data_type", "headers", "expected_response_type"),
     [
         (MimeType.JSON, None, MimeType.JSON),
         (MimeType.RAW, {"Content-Type": "application/json"}, MimeType.JSON),
@@ -109,7 +113,7 @@ def test_download_response(output_folder: str) -> None:
     ],
 )
 def test_download_response_decoding(
-    data_type: MimeType, headers: Optional[JsonDict], expected_response_type: MimeType
+    data_type: MimeType, headers: JsonDict | None, expected_response_type: MimeType
 ) -> None:
     data = {"foo": "bar"}
     response = DownloadResponse(
@@ -130,7 +134,7 @@ def test_download_response_decoding(
         {},
     ],
 )
-def test_download_response_derive(new_params: Dict[str, Any]) -> None:
+def test_download_response_derive(new_params: dict[str, Any]) -> None:
     response = DownloadResponse(request=DownloadRequest(), content=b"", headers={"x": 1})
 
     derived_response = response.derive(**new_params)

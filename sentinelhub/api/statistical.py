@@ -2,7 +2,10 @@
 Implementation of
 `Sentinel Hub Statistical API interface <https://docs.sentinel-hub.com/api/latest/api/statistical/>`__.
 """
-from typing import Any, Optional, Sequence, Tuple, Union
+
+from __future__ import annotations
+
+from typing import Any, Sequence
 
 from ..constants import MimeType
 from ..download.sentinelhub_statistical_client import SentinelHubStatisticalDownloadClient
@@ -25,10 +28,10 @@ class SentinelHubStatistical(SentinelHubBaseApiRequest):
     def __init__(
         self,
         aggregation: JsonDict,
-        input_data: Sequence[Union[JsonDict, InputDataDict]],
-        bbox: Optional[BBox] = None,
-        geometry: Optional[Geometry] = None,
-        calculations: Optional[JsonDict] = None,
+        input_data: Sequence[JsonDict | InputDataDict],
+        bbox: BBox | None = None,
+        geometry: Geometry | None = None,
+        calculations: JsonDict | None = None,
         **kwargs: Any,
     ):
         """
@@ -62,8 +65,8 @@ class SentinelHubStatistical(SentinelHubBaseApiRequest):
         request_bounds: JsonDict,
         request_data: Sequence[JsonDict],
         aggregation: JsonDict,
-        calculations: Optional[JsonDict],
-        other_args: Optional[JsonDict] = None,
+        calculations: JsonDict | None,
+        other_args: JsonDict | None = None,
     ) -> JsonDict:
         """Generate the Process API request body
 
@@ -91,9 +94,9 @@ class SentinelHubStatistical(SentinelHubBaseApiRequest):
         evalscript: str,
         time_interval: RawTimeIntervalType,
         aggregation_interval: str,
-        size: Optional[Tuple[int, int]] = None,
-        resolution: Optional[Tuple[float, float]] = None,
-        other_args: Optional[JsonDict] = None,
+        size: tuple[int, int] | None = None,
+        resolution: tuple[float, float] | None = None,
+        other_args: JsonDict | None = None,
     ) -> JsonDict:
         """Generate the `aggregation` part of the Statistical API request body
 

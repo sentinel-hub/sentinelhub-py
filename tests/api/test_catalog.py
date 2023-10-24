@@ -1,9 +1,11 @@
 """
 Tests for the module with Catalog API interface
 """
+
+from __future__ import annotations
+
 import datetime as dt
 from functools import partial
-from typing import Union
 
 import dateutil.tz
 import numpy as np
@@ -51,7 +53,7 @@ def test_get_collections(catalog: SentinelHubCatalog) -> None:
 
 
 @pytest.mark.parametrize("collection_input", ["sentinel-2-l1c", DataCollection.SENTINEL1_IW])
-def test_get_collection(catalog: SentinelHubCatalog, collection_input: Union[DataCollection, str]) -> None:
+def test_get_collection(catalog: SentinelHubCatalog, collection_input: DataCollection | str) -> None:
     """Test endpoint for a single collection info"""
     collection_info = catalog.get_collection(collection_input)
     assert isinstance(collection_info, dict)
@@ -144,7 +146,7 @@ def test_search_geometry_and_iterator_methods(catalog: SentinelHubCatalog) -> No
 
 
 @pytest.mark.parametrize(
-    "data_collection, feature_id",
+    ("data_collection", "feature_id"),
     [
         (DataCollection.SENTINEL2_L1C, "S2A_MSIL1C_20210113T071211_N0209_R020_T38LPH_20210113T075941"),
         ("sentinel-2-l1c", "S2A_MSIL1C_20210113T071211_N0209_R020_T38LPH_20210113T075941"),
@@ -167,9 +169,7 @@ def test_search_geometry_and_iterator_methods(catalog: SentinelHubCatalog) -> No
         ),
     ],
 )
-def test_search_for_data_collection(
-    config: SHConfig, data_collection: Union[DataCollection, str], feature_id: str
-) -> None:
+def test_search_for_data_collection(config: SHConfig, data_collection: DataCollection | str, feature_id: str) -> None:
     """Tests search functionality for each data collection to confirm compatibility between DataCollection parameters
     and Catalog API
     """
@@ -201,7 +201,7 @@ def test_search_with_ids(config: SHConfig) -> None:
 
 
 @pytest.mark.parametrize(
-    "data_collection, time_difference_hours, maxcc, n_timestamps",
+    ("data_collection", "time_difference_hours", "maxcc", "n_timestamps"),
     [
         (DataCollection.SENTINEL1_IW, 2, None, 4),
         (DataCollection.SENTINEL2_L2A, 1, 0.7, 8),

@@ -1,8 +1,11 @@
 """
 Module defining data collections
 """
+
+from __future__ import annotations
+
 from dataclasses import dataclass, field, fields
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple
+from typing import TYPE_CHECKING, Any
 
 from aenum import extend_enum
 
@@ -13,6 +16,8 @@ if TYPE_CHECKING:
     from enum import Enum, EnumMeta  # mypy has a custom plugin for enum but not aenum
 else:
     from aenum import Enum, EnumMeta
+
+# ruff: noqa: SLF001
 
 
 class _CollectionType:
@@ -102,7 +107,7 @@ class OrbitDirection:
     BOTH = "BOTH"
 
 
-def _shallow_asdict(dataclass_instance: Any) -> Dict[str, Any]:
+def _shallow_asdict(dataclass_instance: Any) -> dict[str, Any]:
     """Returns a dictionary of fields and values, but is not recursive and does not deepcopy like `asdict`"""
     # This definition needs to be above the class definitions in the file
     return {field.name: getattr(dataclass_instance, field.name) for field in fields(dataclass_instance)}
@@ -111,7 +116,7 @@ def _shallow_asdict(dataclass_instance: Any) -> Dict[str, Any]:
 class _DataCollectionMeta(EnumMeta):
     """Metaclass that builds DataCollection class enums"""
 
-    def __call__(cls, value, *args, **kwargs):  # type: ignore[no-untyped-def]
+    def __call__(cls, value, *args, **kwargs):  # type: ignore[no-untyped-def] # noqa: N805
         """This is executed whenever `DataCollection('something')` is called
 
         This solves a problem of pickling a custom DataCollection and unpickling it in another process
@@ -130,26 +135,26 @@ class DataCollectionDefinition:
     """
 
     # pylint: disable=too-many-instance-attributes
-    api_id: Optional[str] = None
-    catalog_id: Optional[str] = None
-    wfs_id: Optional[str] = None
-    service_url: Optional[str] = None
-    collection_type: Optional[str] = None
-    sensor_type: Optional[str] = None
-    processing_level: Optional[str] = None
-    swath_mode: Optional[str] = None
-    polarization: Optional[str] = None
-    resolution: Optional[str] = None
-    orbit_direction: Optional[str] = None
-    timeliness: Optional[str] = None
-    bands: Optional[Tuple[Band, ...]] = None
-    metabands: Optional[Tuple[Band, ...]] = None
-    collection_id: Optional[str] = None
+    api_id: str | None = None
+    catalog_id: str | None = None
+    wfs_id: str | None = None
+    service_url: str | None = None
+    collection_type: str | None = None
+    sensor_type: str | None = None
+    processing_level: str | None = None
+    swath_mode: str | None = None
+    polarization: str | None = None
+    resolution: str | None = None
+    orbit_direction: str | None = None
+    timeliness: str | None = None
+    bands: tuple[Band, ...] | None = None
+    metabands: tuple[Band, ...] | None = None
+    collection_id: str | None = None
     is_timeless: bool = False
     has_cloud_coverage: bool = False
-    dem_instance: Optional[str] = None
+    dem_instance: str | None = None
     # The following parameter is used to preserve custom DataCollection name during pickling and unpickling process:
-    _name: Optional[str] = field(default=None, compare=False)
+    _name: str | None = field(default=None, compare=False)
 
     def __post_init__(self):  # type: ignore[no-untyped-def] # not typechecked because we mutate immutable dataclasses
         """In case a list of bands or metabands has been given this makes sure to cast it into a tuple"""
@@ -164,7 +169,7 @@ class DataCollectionDefinition:
         params_repr = "\n  ".join(f"{name}: {value}" for name, value in valid_params.items() if name != "_name")
         return f"{self.__class__.__name__}(\n  {params_repr}\n)"
 
-    def derive(self, **params: Any) -> "DataCollectionDefinition":
+    def derive(self, **params: Any) -> DataCollectionDefinition:
         """Create a new data collection definition from current definition and parameters that override current
         parameters
 
@@ -404,31 +409,31 @@ class DataCollection(Enum, metaclass=_DataCollectionMeta):
         has_cloud_coverage=True,
     )
 
-    # pylint: disable=too-many-locals
+    # pylint: disable=too-many-locals, too-many-arguments
     @classmethod
     def define(
         cls,
         name: str,
         *,
-        api_id: Optional[str] = None,
-        catalog_id: Optional[str] = None,
-        wfs_id: Optional[str] = None,
-        service_url: Optional[str] = None,
-        collection_type: Optional[str] = None,
-        sensor_type: Optional[str] = None,
-        processing_level: Optional[str] = None,
-        swath_mode: Optional[str] = None,
-        polarization: Optional[str] = None,
-        resolution: Optional[str] = None,
-        orbit_direction: Optional[str] = None,
-        timeliness: Optional[str] = None,
-        bands: Optional[Tuple[Band, ...]] = None,
-        metabands: Optional[Tuple[Band, ...]] = None,
-        collection_id: Optional[str] = None,
+        api_id: str | None = None,
+        catalog_id: str | None = None,
+        wfs_id: str | None = None,
+        service_url: str | None = None,
+        collection_type: str | None = None,
+        sensor_type: str | None = None,
+        processing_level: str | None = None,
+        swath_mode: str | None = None,
+        polarization: str | None = None,
+        resolution: str | None = None,
+        orbit_direction: str | None = None,
+        timeliness: str | None = None,
+        bands: tuple[Band, ...] | None = None,
+        metabands: tuple[Band, ...] | None = None,
+        collection_id: str | None = None,
         is_timeless: bool = False,
         has_cloud_coverage: bool = False,
-        dem_instance: Optional[str] = None,
-    ) -> "DataCollection":
+        dem_instance: str | None = None,
+    ) -> DataCollection:
         """Define a new data collection
 
         Note that all parameters, except `name` are optional. If a data collection definition won't be used for a
@@ -482,7 +487,7 @@ class DataCollection(Enum, metaclass=_DataCollectionMeta):
         cls._try_add_data_collection(name, definition)
         return cls(definition)
 
-    def define_from(self, name: str, **params: Any) -> "DataCollection":
+    def define_from(self, name: str, **params: Any) -> DataCollection:
         """Define a new data collection from an existing one
 
         :param name: A name of a new data collection
@@ -522,7 +527,7 @@ class DataCollection(Enum, metaclass=_DataCollectionMeta):
         )
 
     @classmethod
-    def define_byoc(cls, collection_id: str, **params: Any) -> "DataCollection":
+    def define_byoc(cls, collection_id: str, **params: Any) -> DataCollection:
         """Defines a BYOC data collection
 
         :param collection_id: An ID of a data collection
@@ -538,7 +543,7 @@ class DataCollection(Enum, metaclass=_DataCollectionMeta):
         return cls.define(**params)
 
     @classmethod
-    def define_batch(cls, collection_id: str, **params: Any) -> "DataCollection":
+    def define_batch(cls, collection_id: str, **params: Any) -> DataCollection:
         """Defines a BATCH data collection
 
         :param collection_id: An ID of a data collection
@@ -590,7 +595,7 @@ class DataCollection(Enum, metaclass=_DataCollectionMeta):
         return self.value.wfs_id
 
     @property
-    def bands(self) -> Tuple[Band, ...]:
+    def bands(self) -> tuple[Band, ...]:
         """Provides band information available for the data collection
 
         :return: A tuple of band info
@@ -601,7 +606,7 @@ class DataCollection(Enum, metaclass=_DataCollectionMeta):
         return self.value.bands
 
     @property
-    def metabands(self) -> Tuple[Band, ...]:
+    def metabands(self) -> tuple[Band, ...]:
         """Provides metaband information available for the data collection
 
         :return: A tuple of metaband info
@@ -660,7 +665,7 @@ class DataCollection(Enum, metaclass=_DataCollectionMeta):
         return orbit_direction.upper() == defined_direction.upper()
 
     @classmethod
-    def get_available_collections(cls) -> List["DataCollection"]:
+    def get_available_collections(cls) -> list[DataCollection]:
         """Returns which data collections are available for configured Sentinel Hub OGC URL
 
         :return: List of available data collections

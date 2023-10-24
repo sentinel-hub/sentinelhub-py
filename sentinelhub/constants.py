@@ -1,6 +1,7 @@
 """
 Module defining constants and enumerate types used in the package
 """
+
 from __future__ import annotations
 
 import functools
@@ -8,7 +9,7 @@ import mimetypes
 import re
 import warnings
 from enum import Enum, EnumMeta
-from typing import Callable, Union
+from typing import Callable, ClassVar
 
 import numpy as np
 import pyproj
@@ -72,7 +73,7 @@ class CRSMeta(EnumMeta):
 
     _UNSUPPORTED_CRS = pyproj.CRS(4326)
 
-    def __new__(mcs, cls, bases, classdict):  # type: ignore[no-untyped-def]
+    def __new__(mcs, cls, bases, classdict):  # type: ignore[no-untyped-def] # noqa: N804
         """This is executed at the beginning of runtime when CRS class is created"""
         for direction, direction_value in [("N", "6"), ("S", "7")]:
             for zone in range(1, 61):
@@ -80,7 +81,7 @@ class CRSMeta(EnumMeta):
 
         return super().__new__(mcs, cls, bases, classdict)
 
-    def __call__(cls, crs_value, *args, **kwargs):  # type: ignore[no-untyped-def]
+    def __call__(cls, crs_value, *args, **kwargs):  # type: ignore[no-untyped-def] # noqa: N805
         """This is executed whenever CRS('something') is called"""
         # pylint: disable=signature-differs
         crs_value = cls._parse_crs(crs_value)
@@ -92,7 +93,7 @@ class CRSMeta(EnumMeta):
         return super().__call__(crs_value, *args, **kwargs)
 
     @staticmethod
-    def _parse_crs(value: object) -> object:
+    def _parse_crs(value: object) -> object:  # noqa: C901
         """Method for parsing different inputs representing the same CRS enum. Examples:
 
         - 4326
@@ -119,7 +120,7 @@ class CRSMeta(EnumMeta):
             if value == CRS.WGS84.pyproj_crs():
                 return "4326"
 
-            error_message = f"Failed to determine an EPSG code of the given CRS:\n{repr(value)}"
+            error_message = f"Failed to determine an EPSG code of the given CRS:\n{value!r}"
             maybe_epsg = value.to_epsg(min_confidence=0)
             if maybe_epsg is not None:
                 error_message = f"{error_message}\nIt might be EPSG {maybe_epsg} but pyproj is not confident enough."
@@ -223,7 +224,7 @@ class CRS(Enum, metaclass=CRSMeta):
         return pyproj.CRS(self._get_pyproj_projection_def())
 
     @functools.lru_cache(maxsize=512)  # noqa: B019
-    def get_transform_function(self, other: "CRS", always_xy: bool = True) -> Callable[..., tuple]:
+    def get_transform_function(self, other: CRS, always_xy: bool = True) -> Callable[..., tuple]:
         """Returns a function for transforming geometrical objects from one CRS to another. The function will support
         transformations between any objects that pyproj supports.
 
@@ -239,7 +240,7 @@ class CRS(Enum, metaclass=CRSMeta):
         return pyproj.Transformer.from_proj(self.projection(), other.projection(), always_xy=always_xy).transform
 
     @staticmethod
-    def get_utm_from_wgs84(lng: float, lat: float) -> "CRS":
+    def get_utm_from_wgs84(lng: float, lat: float) -> CRS:
         """Convert from WGS84 to UTM coordinate system
 
         :param lng: Longitude
@@ -294,7 +295,7 @@ class MimeType(Enum):
         return self.value
 
     @staticmethod
-    def from_string(mime_type_str: str) -> "MimeType":
+    def from_string(mime_type_str: str) -> MimeType:
         """Parses mime type from a file extension string
 
         :param mime_type_str: A file extension string
@@ -361,7 +362,7 @@ class MimeType(Enum):
         """
         return path.endswith(f".{self.extension}")
 
-    def get_expected_max_value(self) -> Union[float, int]:
+    def get_expected_max_value(self) -> float | int:
         """Returns max value of image `MimeType` format and raises an error if it is not an image format
 
         :return: A maximum value of specified image format
@@ -387,4 +388,4 @@ class SHConstants:
     """Common constants used in various requests."""
 
     LATEST = "latest"
-    HEADERS = {"User-Agent": f"sentinelhub-py/v{__version__}"}
+    HEADERS: ClassVar[dict[str, str]] = {"User-Agent": f"sentinelhub-py/v{__version__}"}

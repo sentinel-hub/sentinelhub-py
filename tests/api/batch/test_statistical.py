@@ -1,6 +1,7 @@
 """
 A module that tests an interface for Sentinel Hub Batch processing
 """
+
 import pytest
 from requests_mock import Mocker
 

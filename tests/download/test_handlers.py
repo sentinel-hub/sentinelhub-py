@@ -1,6 +1,7 @@
 """
 Unit tests for download handlers
 """
+
 import pytest
 from requests import Response
 from requests.exceptions import ChunkedEncodingError, ConnectionError, HTTPError, InvalidJSONError, Timeout
@@ -31,7 +32,7 @@ def _build_http_error(status_code: int) -> HTTPError:
 
 
 @pytest.mark.parametrize(
-    "exception, is_expected_handling",
+    ("exception", "is_expected_handling"),
     [
         (ConnectionError("No connection"), True),
         (Timeout(), True),
@@ -61,7 +62,7 @@ def test_retry_temporary_errors(exception: Exception, is_expected_handling: bool
 
 
 @pytest.mark.parametrize(
-    "exception, is_expected_handling",
+    ("exception", "is_expected_handling"),
     [
         (_build_http_error(400), True),
         (_build_http_error(404), True),
@@ -93,7 +94,7 @@ def test_fail_user_errors(exception: Exception, is_expected_handling: bool) -> N
 
 
 @pytest.mark.parametrize(
-    "exception, is_expected_handling",
+    ("exception", "is_expected_handling"),
     [
         (_build_http_error(400), False),
         (_build_http_error(404), True),

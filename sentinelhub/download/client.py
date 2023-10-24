@@ -1,13 +1,16 @@
 """
 Module implementing the main download client class
 """
+
+from __future__ import annotations
+
 import json
 import logging
 import os
 import warnings
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from contextlib import nullcontext
-from typing import Any, Iterable, List, Optional, Union
+from typing import Any, Iterable
 from xml.etree import ElementTree
 
 import requests
@@ -41,9 +44,7 @@ class DownloadClient:
     - reads and writes locally stored/cached data
     """
 
-    def __init__(
-        self, *, redownload: bool = False, raise_download_errors: bool = True, config: Optional[SHConfig] = None
-    ):
+    def __init__(self, *, redownload: bool = False, raise_download_errors: bool = True, config: SHConfig | None = None):
         """
         :param redownload: If `True` the data will always be downloaded again. By default, this is set to `False` and
             the data that has already been downloaded and saved to an expected location will be read from the
@@ -60,10 +61,10 @@ class DownloadClient:
     def download(
         self,
         download_requests: Iterable[DownloadRequest],
-        max_threads: Optional[int] = None,
+        max_threads: int | None = None,
         decode_data: bool = True,
         show_progress: bool = False,
-    ) -> List[Any]:
+    ) -> list[Any]:
         """Download one or multiple requests, provided as a request list.
 
         :param download_requests: A list of requests to be executed.
@@ -76,13 +77,11 @@ class DownloadClient:
         """
         if isinstance(download_requests, DownloadRequest):
             warnings.warn(
-                (
-                    "The parameter `download_requests` should be a sequence of requests. In future versions download of"
-                    " single requests will only be supported if provided as a singelton tuple or list."
-                ),
+                "The parameter `download_requests` should be a sequence of requests. In future versions download of"
+                " single requests will only be supported if provided as a singelton tuple or list.",
                 category=SHDeprecationWarning,
             )
-            requests_list: List[DownloadRequest] = [download_requests]
+            requests_list: list[DownloadRequest] = [download_requests]
         else:
             requests_list = list(download_requests)
 
@@ -117,7 +116,7 @@ class DownloadClient:
         response = self._single_download(request)
         return None if response is None else response.decode()
 
-    def _single_download(self, request: DownloadRequest) -> Optional[DownloadResponse]:
+    def _single_download(self, request: DownloadRequest) -> DownloadResponse | None:
         """Method for downloading a single request."""
         request.raise_if_invalid()
         if not (request.save_response or request.return_data):
@@ -174,7 +173,7 @@ class DownloadClient:
         return DownloadResponse.from_response(response, request)
 
     @staticmethod
-    def _check_cached_request_is_matching(request: DownloadRequest, request_path: Optional[str]) -> None:
+    def _check_cached_request_is_matching(request: DownloadRequest, request_path: str | None) -> None:
         """Ensures that the cached request matches the current one. Serves as protection against hash collisions"""
         if not request_path:
             return
@@ -204,11 +203,11 @@ class DownloadClient:
     def get_json(
         self,
         url: str,
-        post_values: Optional[JsonDict] = None,
-        headers: Optional[JsonDict] = None,
-        request_type: Optional[RequestType] = None,
+        post_values: JsonDict | None = None,
+        headers: JsonDict | None = None,
+        request_type: RequestType | None = None,
         **kwargs: Any,
-    ) -> Union[JsonDict, list, str, None]:
+    ) -> JsonDict | list | str | None:
         """Download request as JSON data type
 
         :param url: A URL from where the data will be downloaded
@@ -238,7 +237,7 @@ class DownloadClient:
 
         return self._single_download_decoded(request)
 
-    def get_json_dict(self, url: str, *args: Any, extract_key: Optional[str] = None, **kwargs: Any) -> JsonDict:
+    def get_json_dict(self, url: str, *args: Any, extract_key: str | None = None, **kwargs: Any) -> JsonDict:
         """Download request as JSON data type, failing if the result is not a dictionary
 
         For other parameters see `get_json` method.

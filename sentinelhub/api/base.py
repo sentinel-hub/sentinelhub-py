@@ -1,15 +1,17 @@
 """
 Module implementing some utility functions not suitable for other utility modules
 """
+
+# ruff: noqa: FA100
+# do not use `from __future__ import annotations`, it clashes with `dataclass_json`
 from abc import ABCMeta, abstractmethod
 from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any, Dict, Iterable, Optional, Protocol, Union
 from urllib.parse import urlencode
 
-from dataclasses_json import CatchAll, LetterCase, Undefined
+from dataclasses_json import CatchAll, LetterCase, Undefined, dataclass_json
 from dataclasses_json import config as dataclass_config
-from dataclasses_json import dataclass_json
 
 from ..base import FeatureIterator
 from ..config import SHConfig
@@ -67,7 +69,7 @@ class SentinelHubFeatureIterator(FeatureIterator[JsonDict]):
         if new_features is None:
             raise MissingDataInRequestException(self.exception_message)
 
-        self.next = json_response["links"].get("nextToken")
+        self.next = json_response.get("links", {}).get("nextToken")
         self.finished = self.next is None or not new_features
 
         return new_features

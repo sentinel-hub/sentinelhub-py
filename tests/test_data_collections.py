@@ -1,7 +1,10 @@
 """
 Unit tests for data_collections module
 """
-from typing import Any, Dict
+
+from __future__ import annotations
+
+from typing import Any
 
 import pytest
 
@@ -10,7 +13,7 @@ from sentinelhub.data_collections import DataCollectionDefinition
 
 
 @pytest.mark.parametrize(
-    "data_colection_def, derive_attributes, expected_attributes",
+    ("data_colection_def", "derive_attributes", "expected_attributes"),
     [
         (DataCollectionDefinition(), {}, {"api_id": None}),
         (
@@ -22,7 +25,7 @@ from sentinelhub.data_collections import DataCollectionDefinition
     ],
 )
 def test_derive(
-    data_colection_def: DataCollectionDefinition, derive_attributes: Dict[str, Any], expected_attributes: Dict[str, Any]
+    data_colection_def: DataCollectionDefinition, derive_attributes: dict[str, Any], expected_attributes: dict[str, Any]
 ) -> None:
     derived_definition = data_colection_def.derive(**derive_attributes)
 
@@ -31,7 +34,7 @@ def test_derive(
 
 
 @pytest.mark.parametrize(
-    "definition_input, expected",
+    ("definition_input", "expected"),
     [
         ({}, "DataCollectionDefinition(\n  is_timeless: False\n  has_cloud_coverage: False\n)"),
         (
@@ -44,12 +47,12 @@ def test_derive(
         ),
     ],
 )
-def test_collection_repr(definition_input: Dict[str, Any], expected: str) -> None:
+def test_collection_repr(definition_input: dict[str, Any], expected: str) -> None:
     assert repr(DataCollectionDefinition(**definition_input)) == expected
 
 
 @pytest.mark.parametrize(
-    "test_definition, equal_definition",
+    ("test_definition", "equal_definition"),
     [
         ({"api_id": "X", "_name": "A"}, {"api_id": "X", "_name": "A"}),
         ({"api_id": "X", "_name": "A"}, {"api_id": "X", "_name": "B"}),
@@ -57,21 +60,21 @@ def test_collection_repr(definition_input: Dict[str, Any], expected: str) -> Non
         ({"api_id": "X", "is_timeless": False}, {"api_id": "X"}),
     ],
 )
-def test_collection_definitions_equal(test_definition: Dict[str, Any], equal_definition: Dict[str, Any]) -> None:
+def test_collection_definitions_equal(test_definition: dict[str, Any], equal_definition: dict[str, Any]) -> None:
     def1 = DataCollectionDefinition(**test_definition)
     def2 = DataCollectionDefinition(**equal_definition)
     assert def1 == def2
 
 
 @pytest.mark.parametrize(
-    "test_definition, equal_definition",
+    ("test_definition", "equal_definition"),
     [
         ({"api_id": "X", "_name": "A"}, {"api_id": "Y", "_name": "A"}),
         ({"api_id": "X", "is_timeless": True}, {"api_id": "X"}),
         ({"api_id": "X", "wfs_id": 2132342143454364}, {"api_id": "X"}),
     ],
 )
-def test_collection_definitions_not_equal(test_definition: Dict[str, Any], equal_definition: Dict[str, Any]) -> None:
+def test_collection_definitions_not_equal(test_definition: dict[str, Any], equal_definition: dict[str, Any]) -> None:
     def1 = DataCollectionDefinition(**test_definition)
     def2 = DataCollectionDefinition(**equal_definition)
     assert def1 != def2
@@ -145,7 +148,7 @@ def test_attributes_empty_fail() -> None:
 
 
 @pytest.mark.parametrize(
-    "test_collection, expected",
+    ("test_collection", "expected"),
     [
         (DataCollection.SENTINEL2_L1C, False),
         (DataCollection.SENTINEL1_EW, True),
@@ -157,7 +160,7 @@ def test_is_sentinel1(test_collection: DataCollection, expected: bool) -> None:
 
 
 @pytest.mark.parametrize(
-    "collection, direction, expected",
+    ("collection", "direction", "expected"),
     [
         ("SENTINEL1_IW_ASC", "ascending", True),
         ("SENTINEL1_IW_ASC", "descending", False),

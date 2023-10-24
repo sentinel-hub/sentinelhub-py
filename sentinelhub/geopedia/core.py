@@ -1,11 +1,12 @@
 """
 The core module for Geopedia interactions
 """
+
 from __future__ import annotations
 
 import datetime
 import hashlib
-from typing import TYPE_CHECKING, Any, Iterable, Iterator, List, Literal, Optional, Union, overload
+from typing import TYPE_CHECKING, Any, Iterable, Iterator, Literal, overload
 
 from shapely.geometry import shape as geo_shape
 from shapely.geometry.base import BaseGeometry
@@ -25,7 +26,7 @@ if TYPE_CHECKING:
 class GeopediaService:
     """The class for Geopedia OGC services"""
 
-    def __init__(self, config: Optional[SHConfig] = None):
+    def __init__(self, config: SHConfig | None = None):
         """
         :param config: A custom instance of config class to override parameters from the saved configuration.
         """
@@ -34,16 +35,14 @@ class GeopediaService:
 
 
 @overload
-def _parse_geopedia_layer(layer: Union[int, str], return_wms_name: Literal[False] = False) -> int:
-    ...
+def _parse_geopedia_layer(layer: int | str, return_wms_name: Literal[False] = False) -> int: ...
 
 
 @overload
-def _parse_geopedia_layer(layer: Union[int, str], return_wms_name: Literal[True]) -> str:
-    ...
+def _parse_geopedia_layer(layer: int | str, return_wms_name: Literal[True]) -> str: ...
 
 
-def _parse_geopedia_layer(layer: Union[int, str], return_wms_name: bool = False) -> Union[int, str]:
+def _parse_geopedia_layer(layer: int | str, return_wms_name: bool = False) -> int | str:
     """Helper function for parsing Geopedia layer name. If WMS name is required and wrong form is given it will
     return a string with 'ttl' at the beginning. (WMS name can also start with something else, e.g. only 't'
     instead 'ttl', therefore anything else is also allowed.) Otherwise, it will parse it into a number.
@@ -81,9 +80,9 @@ class GeopediaSession(GeopediaService):
     def __init__(
         self,
         *,
-        username: Optional[str] = None,
-        password: Optional[str] = None,
-        password_md5: Optional[str] = None,
+        username: str | None = None,
+        password: str | None = None,
+        password_md5: str | None = None,
         is_global: bool = False,
         **kwargs: Any,
     ):
@@ -109,8 +108,8 @@ class GeopediaSession(GeopediaService):
                 "Either both username and password have to be specified or neither of them, only one found"
             )
 
-        self._session_info: Optional[dict] = None
-        self._session_start: Optional[datetime.datetime] = None
+        self._session_info: dict | None = None
+        self._session_start: datetime.datetime | None = None
 
         self.provide_session()
 
@@ -155,7 +154,7 @@ class GeopediaSession(GeopediaService):
         """
         return self._parse_user_id(self.provide_session())
 
-    def restart(self) -> "GeopediaSession":
+    def restart(self) -> GeopediaSession:
         """Method that restarts Geopedia Session
 
         :return: It returns the object itself, with new session
@@ -236,7 +235,7 @@ class GeopediaWmsService(GeopediaService, OgcImageService):
 
         self._base_url = self.config.geopedia_wms_url
 
-    def get_request(self, request: OgcRequest) -> List[DownloadRequest]:
+    def get_request(self, request: OgcRequest) -> list[DownloadRequest]:
         """Get a list of DownloadRequests for all data that are under the given field in the table of a Geopedia layer.
 
         :return: list of items which have to be downloaded
@@ -245,7 +244,7 @@ class GeopediaWmsService(GeopediaService, OgcImageService):
 
         return super().get_request(request)
 
-    def get_dates(self, _: OgcRequest) -> List[Optional[datetime.datetime]]:
+    def get_dates(self, _: OgcRequest) -> list[datetime.datetime | None]:
         """Geopedia does not support date queries
 
         :param request: OGC-type request
@@ -268,9 +267,9 @@ class GeopediaImageService(GeopediaService):
         """
         super().__init__(**kwargs)
 
-        self.gpd_iterator: Optional[GeopediaFeatureIterator] = None
+        self.gpd_iterator: GeopediaFeatureIterator | None = None
 
-    def get_request(self, request: GeopediaImageRequest) -> List[DownloadRequest]:
+    def get_request(self, request: GeopediaImageRequest) -> list[DownloadRequest]:
         """Get a list of DownloadRequests for all data that are under the given field in the table of a Geopedia layer.
 
         :return: list of items which have to be downloaded
@@ -307,17 +306,17 @@ class GeopediaImageService(GeopediaService):
         return items
 
     @staticmethod
-    def _get_url(item: dict) -> Optional[str]:
+    def _get_url(item: dict) -> str | None:
         return item.get("objectPath")
 
     @staticmethod
-    def _get_filename(request: GeopediaImageRequest, item: dict) -> Optional[str]:
+    def _get_filename(request: GeopediaImageRequest, item: dict) -> str | None:
         """Creates a filename"""
         if request.keep_image_names:
             return item["niceName"]
         return None
 
-    def get_gpd_iterator(self) -> Optional[GeopediaFeatureIterator]:
+    def get_gpd_iterator(self) -> GeopediaFeatureIterator | None:
         """Returns iterator over info about data used for the `GeopediaVectorRequest`
 
         :return: Iterator of dictionaries containing info about data used in the request.
@@ -333,12 +332,12 @@ class GeopediaFeatureIterator(FeatureIterator[JsonDict]):
 
     def __init__(
         self,
-        layer: Union[str, int],
-        bbox: Optional[BBox] = None,
-        query_filter: Optional[str] = None,
+        layer: str | int,
+        bbox: BBox | None = None,
+        query_filter: str | None = None,
         offset: int = 0,
-        gpd_session: Optional[GeopediaSession] = None,
-        config: Optional[SHConfig] = None,
+        gpd_session: GeopediaSession | None = None,
+        config: SHConfig | None = None,
     ):
         """
         :param layer: Geopedia layer which contains requested data
@@ -362,9 +361,9 @@ class GeopediaFeatureIterator(FeatureIterator[JsonDict]):
         super().__init__(client, url, params)
         self.next = f"{url}?offset={offset}&limit={self.MAX_FEATURES_PER_REQUEST}"
 
-        self.layer_size: Optional[int] = None
+        self.layer_size: int | None = None
 
-    def _build_request_params(self, bbox: Optional[BBox], query_filter: Optional[str]) -> dict:
+    def _build_request_params(self, bbox: BBox | None, query_filter: str | None) -> dict:
         """Builds payload parameters for requests to Geopedia"""
         params = {}
         if bbox is not None:

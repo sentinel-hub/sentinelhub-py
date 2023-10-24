@@ -1,7 +1,9 @@
 """ Contains information about data collections used by SH """
+
+from __future__ import annotations
+
 from dataclasses import dataclass
 from enum import Enum
-from typing import Tuple
 
 import numpy as np
 
@@ -39,8 +41,8 @@ class Band:
     """
 
     name: str
-    units: Tuple[Unit, ...]
-    output_types: Tuple[type, ...]
+    units: tuple[Unit, ...]
+    output_types: tuple[type, ...]
 
 
 class Bands:
@@ -163,6 +165,7 @@ class MetaBands:
         Band("HUMIDITY", (Unit.PERCENT,), (np.float32,)),
         Band("SEA_LEVEL_PRESSURE", (Unit.HECTOPASCALS,), (np.float32,)),
         *(Band(name, (Unit.KG_M2,), (np.float32,)) for name in ["TOTAL_COLUMN_OZONE", "TOTAL_COLUMN_WATER_VAPOUR"]),
+        Band("QUALITY_FLAGS", (Unit.DN,), (np.uint32,)),
         Band("dataMask", (Unit.DN,), (bool,)),
     )
     SENTINEL3_SLSTR = (Band("dataMask", (Unit.DN,), (bool,)),)

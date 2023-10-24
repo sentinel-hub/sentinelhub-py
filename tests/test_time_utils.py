@@ -1,8 +1,11 @@
 """
 Unit tests for time utility functions
 """
+
+from __future__ import annotations
+
 import datetime as dt
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any
 
 import dateutil.tz
 import pytest
@@ -19,7 +22,7 @@ TEST_DATETIME_2017 = TEST_DATETIME.replace(year=2017)
 
 
 @pytest.mark.parametrize(
-    "time_input,is_valid",
+    ("time_input", "is_valid"),
     [("2017-01-32", False), ("2017-13-01", False), ("2017-02-29", False), ("2020-02-29", True), ("2020-02-30", False)],
 )
 def test_is_valid_time(time_input: str, is_valid: bool) -> None:
@@ -27,7 +30,7 @@ def test_is_valid_time(time_input: str, is_valid: bool) -> None:
 
 
 @pytest.mark.parametrize(
-    "time_input,params,expected_output",
+    ("time_input", "params", "expected_output"),
     [
         ("2015.4.12", {}, TEST_DATE),
         ("2015.4.12T12:32:14", {}, TEST_DATETIME),
@@ -44,12 +47,12 @@ def test_is_valid_time(time_input: str, is_valid: bool) -> None:
         (TEST_DATE, {"force_datetime": True}, dt.datetime(year=2015, month=4, day=12)),
     ],
 )
-def test_parse_time(time_input: Any, params: Dict[str, Any], expected_output: Optional[dt.date]) -> None:
+def test_parse_time(time_input: Any, params: dict[str, Any], expected_output: dt.date | None) -> None:
     assert time_utils.parse_time(time_input, **params) == expected_output
 
 
 @pytest.mark.parametrize(
-    "time_input,params,expected_output",
+    ("time_input", "params", "expected_output"),
     [
         ("2015.4.12", {}, (TEST_TIME_START, TEST_TIME_END)),
         ("2015.4.12T12:32:14", {}, (TEST_DATETIME, TEST_DATETIME)),
@@ -66,13 +69,13 @@ def test_parse_time(time_input: Any, params: Dict[str, Any], expected_output: Op
     ],
 )
 def test_parse_time_interval(
-    time_input: Any, params: Dict[str, Any], expected_output: Tuple[Optional[dt.datetime], Optional[dt.datetime]]
+    time_input: Any, params: dict[str, Any], expected_output: tuple[dt.datetime | None, dt.datetime | None]
 ) -> None:
     assert time_utils.parse_time_interval(time_input, **params) == expected_output
 
 
 @pytest.mark.parametrize(
-    "time_input,params,expected_output",
+    ("time_input", "params", "expected_output"),
     [
         (None, {}, ".."),
         ((None, None), {}, ("..", "..")),
@@ -90,15 +93,15 @@ def test_parse_time_interval(
         (TEST_DATETIME_TZ, {"use_tz": True}, "2015-04-12T12:32:14Z"),
     ],
 )
-def test_serialize_time(time_input: Any, params: Dict[str, Any], expected_output: Union[str, Tuple[str, ...]]) -> None:
+def test_serialize_time(time_input: Any, params: dict[str, Any], expected_output: str | tuple[str, ...]) -> None:
     assert time_utils.serialize_time(time_input, **params) == expected_output
 
 
 @pytest.mark.parametrize(
-    "input_date,input_time,expected_output",
+    ("input_date", "input_time", "expected_output"),
     [(TEST_DATE, None, TEST_TIME_START), (TEST_DATE, dt.time(hour=12, minute=32, second=14), TEST_DATETIME)],
 )
-def test_date_to_datetime(input_date: dt.date, input_time: Optional[dt.time], expected_output: dt.datetime) -> None:
+def test_date_to_datetime(input_date: dt.date, input_time: dt.time | None, expected_output: dt.datetime) -> None:
     assert time_utils.date_to_datetime(input_date, time=input_time) == expected_output
 
 
@@ -106,7 +109,7 @@ TIMES = [dt.datetime(year=2005, month=12, day=16, hour=0) + idx * dt.timedelta(h
 
 
 @pytest.mark.parametrize(
-    "input_timestamps,time_difference,expected_result",
+    ("input_timestamps", "time_difference", "expected_result"),
     [
         ([TIMES[0], TIMES[1]], dt.timedelta(0), [TIMES[0], TIMES[1]]),
         ([TIMES[0]], dt.timedelta(hours=5), [TIMES[0]]),
@@ -117,5 +120,5 @@ TIMES = [dt.datetime(year=2005, month=12, day=16, hour=0) + idx * dt.timedelta(h
         ([TIMES[0], TIMES[2], TIMES[5]], dt.timedelta(days=1), [TIMES[0], TIMES[5]]),
     ],
 )
-def test_filter_times(input_timestamps: Any, time_difference: dt.timedelta, expected_result: List[dt.date]) -> None:
+def test_filter_times(input_timestamps: Any, time_difference: dt.timedelta, expected_result: list[dt.date]) -> None:
     assert time_utils.filter_times(input_timestamps, time_difference) == expected_result

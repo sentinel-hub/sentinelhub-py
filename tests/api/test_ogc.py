@@ -1,6 +1,7 @@
+from __future__ import annotations
+
 import datetime
 from dataclasses import dataclass
-from typing import List, Optional, Type, Union
 
 import numpy as np
 import pytest
@@ -27,7 +28,7 @@ pytestmark = pytest.mark.sh_integration
 @dataclass
 class OgcTestCase:
     name: str
-    constructor: Union[Type[OgcRequest], Type[WcsRequest], Type[WmsRequest]]
+    constructor: type[OgcRequest] | type[WcsRequest] | type[WmsRequest]
     kwargs: dict
     result_len: int
     img_min: float
@@ -35,9 +36,9 @@ class OgcTestCase:
     img_mean: float
     img_median: float
     img_std: float = 1
-    tile_num: Optional[int] = None
-    data_filter: Optional[List[int]] = None
-    date_check: Optional[datetime.datetime] = None
+    tile_num: int | None = None
+    data_filter: list[int] | None = None
+    date_check: datetime.datetime | None = None
     save_data: bool = False
 
     def initialize_request(self, output_folder: str) -> OgcRequest:

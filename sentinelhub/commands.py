@@ -2,6 +2,8 @@
 Module that implements command line interface for the package
 """
 
+from __future__ import annotations
+
 import json
 from typing import Any, Callable, TypeVar
 
@@ -68,7 +70,7 @@ def config(show: bool, profile: str, **params: Any) -> None:
 
     for param, value in sh_config.to_dict(mask_credentials=False).items():
         if value != getattr(old_config, param):
-            click.echo(f"The value of parameter `{param}` was updated to {repr(value)}")
+            click.echo(f"The value of parameter `{param}` was updated to {value!r}")
 
     if show:
         unmasked_str_repr = json.dumps(sh_config.to_dict(mask_credentials=False), indent=2)

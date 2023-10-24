@@ -4,9 +4,12 @@ Module for communication with Sentinel Hub Opensearch service.
 For more search parameters check
 `service description <http://opensearch.sentinel-hub.com/resto/api/collections/Sentinel2/describe.xml>`__.
 """
+
+from __future__ import annotations
+
 import datetime as dt
 import logging
-from typing import Iterable, Iterator, List, Optional, Union
+from typing import Iterable, Iterator
 from urllib.parse import urlencode
 
 from ..config import SHConfig
@@ -43,8 +46,8 @@ def get_tile_info_id(tile_id: str) -> JsonDict:
 
 
 def get_tile_info(
-    tile: str, time: Union[RawTimeType, RawTimeIntervalType], aws_index: Optional[int] = None, all_tiles: bool = False
-) -> Union[JsonDict, List[JsonDict]]:
+    tile: str, time: RawTimeType | RawTimeIntervalType, aws_index: int | None = None, all_tiles: bool = False
+) -> JsonDict | list[JsonDict]:
     """Get basic information about image tile
 
     :param tile: tile name (e.g. ``'T10UEV'``)
@@ -78,7 +81,7 @@ def get_tile_info(
     return candidates[0]
 
 
-def get_area_info(bbox: BBox, date_interval: RawTimeIntervalType, maxcc: Optional[float] = None) -> List[JsonDict]:
+def get_area_info(bbox: BBox, date_interval: RawTimeIntervalType, maxcc: float | None = None) -> list[JsonDict]:
     """Get information about all images from specified area and time range
 
     :param bbox: bounding box of requested area
@@ -92,7 +95,7 @@ def get_area_info(bbox: BBox, date_interval: RawTimeIntervalType, maxcc: Optiona
     return list(result_list)
 
 
-def get_area_dates(bbox: BBox, date_interval: RawTimeIntervalType, maxcc: Optional[float] = None) -> List[dt.date]:
+def get_area_dates(bbox: BBox, date_interval: RawTimeIntervalType, maxcc: float | None = None) -> list[dt.date]:
     """Get list of times of existing images from specified area and time range
 
     :param bbox: bounding box of requested area
@@ -105,7 +108,7 @@ def get_area_dates(bbox: BBox, date_interval: RawTimeIntervalType, maxcc: Option
     return sorted({parse_time(tile_info["properties"]["startDate"]) for tile_info in area_info})
 
 
-def reduce_by_maxcc(result_list: Iterable[JsonDict], maxcc: float) -> List[JsonDict]:
+def reduce_by_maxcc(result_list: Iterable[JsonDict], maxcc: float) -> list[JsonDict]:
     """Filter list image tiles by maximum cloud coverage
 
     :param result_list: list of dictionaries containing info provided by Opensearch REST service
@@ -116,12 +119,12 @@ def reduce_by_maxcc(result_list: Iterable[JsonDict], maxcc: float) -> List[JsonD
 
 
 def search_iter(
-    tile_id: Optional[str] = None,
-    bbox: Optional[BBox] = None,
-    start_date: Optional[RawTimeType] = None,
-    end_date: Optional[RawTimeType] = None,
-    absolute_orbit: Optional[int] = None,
-    config: Optional[SHConfig] = None,
+    tile_id: str | None = None,
+    bbox: BBox | None = None,
+    start_date: RawTimeType | None = None,
+    end_date: RawTimeType | None = None,
+    absolute_orbit: int | None = None,
+    config: SHConfig | None = None,
 ) -> Iterator[JsonDict]:
     """A generator function that implements OpenSearch search queries and returns results
 
@@ -165,11 +168,11 @@ def search_iter(
 
 
 def _prepare_url_params(
-    tile_id: Optional[str],
-    bbox: Optional[BBox],
-    end_date: Optional[dt.date],
-    start_date: Optional[dt.date],
-    absolute_orbit: Optional[int],
+    tile_id: str | None,
+    bbox: BBox | None,
+    end_date: dt.date | None,
+    start_date: dt.date | None,
+    absolute_orbit: int | None,
 ) -> JsonDict:
     """Constructs dict with URL params
 

@@ -1,10 +1,13 @@
 """
 Implementation of base interface classes of this package.
 """
+
+from __future__ import annotations
+
 import copy
 import os
 from abc import ABCMeta, abstractmethod
-from typing import Any, Callable, Generic, Iterable, List, Optional, Tuple, TypeVar
+from typing import Any, Callable, Generic, Iterable, TypeVar
 
 from .config import SHConfig
 from .download import DownloadClient, DownloadRequest
@@ -21,7 +24,7 @@ class DataRequest(metaclass=ABCMeta):
     """
 
     def __init__(
-        self, download_client_class: Callable, *, data_folder: Optional[str] = None, config: Optional[SHConfig] = None
+        self, download_client_class: Callable, *, data_folder: str | None = None, config: SHConfig | None = None
     ):
         """
         :param download_client_class: A class implementing a download client
@@ -32,15 +35,15 @@ class DataRequest(metaclass=ABCMeta):
         self.data_folder = data_folder
         self.config = config or SHConfig()
 
-        self.download_list: List[DownloadRequest] = []
-        self.folder_list: List[str] = []
+        self.download_list: list[DownloadRequest] = []
+        self.folder_list: list[str] = []
         self.create_request()
 
     @abstractmethod
     def create_request(self) -> None:
         """An abstract method for logic of creating download requests"""
 
-    def get_download_list(self) -> List[DownloadRequest]:
+    def get_download_list(self) -> list[DownloadRequest]:
         """
         Returns a list of download requests for requested data.
 
@@ -48,7 +51,7 @@ class DataRequest(metaclass=ABCMeta):
         """
         return self.download_list
 
-    def get_filename_list(self) -> List[str]:
+    def get_filename_list(self) -> list[str]:
         """Returns a list of file names (or paths relative to `data_folder`) where the requested data will be saved
         or read from, if it has already been downloaded and saved.
 
@@ -56,7 +59,7 @@ class DataRequest(metaclass=ABCMeta):
         """
         return [request.get_relative_paths()[1] for request in self.download_list]
 
-    def get_url_list(self) -> List[Optional[str]]:
+    def get_url_list(self) -> list[str | None]:
         """
         Returns a list of urls for requested data.
 
@@ -78,12 +81,12 @@ class DataRequest(metaclass=ABCMeta):
         *,
         save_data: bool = False,
         redownload: bool = False,
-        data_filter: Optional[List[int]] = None,
-        max_threads: Optional[int] = None,
+        data_filter: list[int] | None = None,
+        max_threads: int | None = None,
         decode_data: bool = True,
         raise_download_errors: bool = True,
         show_progress: bool = False,
-    ) -> List[Any]:
+    ) -> list[Any]:
         """Get requested data either by downloading it or by reading it from the disk (if it
         was previously downloaded and saved).
 
@@ -118,9 +121,9 @@ class DataRequest(metaclass=ABCMeta):
     def save_data(
         self,
         *,
-        data_filter: Optional[List[int]] = None,
+        data_filter: list[int] | None = None,
         redownload: bool = False,
-        max_threads: Optional[int] = None,
+        max_threads: int | None = None,
         raise_download_errors: bool = False,
         show_progress: bool = False,
     ) -> None:
@@ -142,13 +145,13 @@ class DataRequest(metaclass=ABCMeta):
 
     def _execute_data_download(
         self,
-        data_filter: Optional[List[int]] = None,
+        data_filter: list[int] | None = None,
         redownload: bool = False,
-        max_threads: Optional[int] = None,
+        max_threads: int | None = None,
         raise_download_errors: bool = False,
         decode_data: bool = True,
         show_progress: bool = False,
-    ) -> List[Any]:
+    ) -> list[Any]:
         """Calls download module and executes the download process
 
         :param data_filter: Used to specify which items will be returned by the method and in which order. E.g. with
@@ -190,7 +193,7 @@ class DataRequest(metaclass=ABCMeta):
         return data_list
 
     @staticmethod
-    def _filter_repeating_items(download_list: List[DownloadRequest]) -> Tuple[List[DownloadRequest], List[int]]:
+    def _filter_repeating_items(download_list: list[DownloadRequest]) -> tuple[list[DownloadRequest], list[int]]:
         """Because of data_filter some requests in download list might be the same. In order not to download them again
         this method will reduce the list of requests. It will also return a mapping list which can be used to
         reconstruct the previous list of download requests.
@@ -200,7 +203,7 @@ class DataRequest(metaclass=ABCMeta):
         """
         unique_requests_map = {}
         mapping_list = []
-        unique_download_list: List[DownloadRequest] = []
+        unique_download_list: list[DownloadRequest] = []
         for download_request in download_list:
             if download_request not in unique_requests_map:
                 unique_requests_map[download_request] = len(unique_download_list)
@@ -243,7 +246,7 @@ class FeatureIterator(Generic[_T], metaclass=ABCMeta):
       features again.
     """
 
-    def __init__(self, client: DownloadClient, url: str, params: Optional[JsonDict] = None):
+    def __init__(self, client: DownloadClient, url: str, params: JsonDict | None = None):
         """
         :param client: An instance of a download client object
         :param url: A URL where requests will be made
@@ -254,10 +257,10 @@ class FeatureIterator(Generic[_T], metaclass=ABCMeta):
         self.params = params or {}
 
         self.index = 0
-        self.features: List[_T] = []
+        self.features: list[_T] = []
         self.finished = False
 
-    def __iter__(self) -> "FeatureIterator[_T]":
+    def __iter__(self) -> FeatureIterator[_T]:
         """Method called at the beginning of a new iteration
 
         :return: It returns the iterator class itself

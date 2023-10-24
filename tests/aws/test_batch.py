@@ -1,9 +1,12 @@
 """
 Tests for AWS batch module
 """
+
+from __future__ import annotations
+
 import json
 from enum import Enum
-from typing import Optional, Sequence
+from typing import Sequence
 
 import boto3
 import pytest
@@ -48,11 +51,11 @@ def _create_mocked_bucket_and_upload_data(bucket_name: str, paths: Sequence[str]
 @mock_s3
 @pytest.mark.parametrize("batch_input_type", list(BatchInputType))
 @pytest.mark.parametrize("use_feature_ids", [True, False])
-@pytest.mark.parametrize("config, show_progress", [(None, False), (SHConfig(), True)])
+@pytest.mark.parametrize(("config", "show_progress"), [(None, False), (SHConfig(), True)])
 def test_aws_batch_results(
     batch_input_type: BatchInputType,
     use_feature_ids: bool,
-    config: Optional[SHConfig],
+    config: SHConfig | None,
     show_progress: bool,
     mocker: MockerFixture,
 ) -> None:

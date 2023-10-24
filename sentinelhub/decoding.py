@@ -1,13 +1,16 @@
 """
 Module for data decoding
 """
+
+from __future__ import annotations
+
 import json
 import struct
 import tarfile
 import warnings
 from io import BytesIO
 from json import JSONDecodeError
-from typing import IO, Any, Dict, Union
+from typing import IO, Any
 from xml.etree import ElementTree
 
 import numpy as np
@@ -71,7 +74,7 @@ def decode_image(data: bytes, image_type: MimeType) -> np.ndarray:
     return image
 
 
-def decode_image_with_pillow(stream: Union[IO, str]) -> np.ndarray:
+def decode_image_with_pillow(stream: IO | str) -> np.ndarray:
     """Decodes an image using `Pillow` package and handles potential warnings.
 
     :param stream: A binary stream format or a filename.
@@ -94,7 +97,7 @@ def decode_jp2_image(stream: IO) -> np.ndarray:
     return fix_jp2_image(image, bit_depth)
 
 
-def decode_tar(data: Union[bytes, BytesIO]) -> Dict[str, object]:
+def decode_tar(data: bytes | BytesIO) -> dict[str, object]:
     """A decoder to convert response bytes into a dictionary of {filename: value}
 
     :param data: Data to decode

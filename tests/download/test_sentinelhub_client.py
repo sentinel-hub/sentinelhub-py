@@ -1,4 +1,4 @@
-from typing import Type, Union
+from __future__ import annotations
 
 import pytest
 from requests_mock import Mocker
@@ -10,12 +10,12 @@ from sentinelhub import (
     SHConfig,
     __version__,
 )
-from sentinelhub.constants import RequestType
 
 FAST_SH_ENDPOINT = "https://services.sentinel-hub.com/api/v1/catalog/collections"
+# ruff: noqa: SLF001
 
 
-@pytest.mark.sh_integration
+@pytest.mark.sh_integration()
 def test_client_with_fixed_session(session: SentinelHubSession) -> None:
     blank_config = SHConfig(use_defaults=True)
     client = SentinelHubDownloadClient(session=session, config=blank_config)
@@ -30,9 +30,8 @@ def test_client_with_fixed_session(session: SentinelHubSession) -> None:
         SentinelHubDownloadClient(session=blank_config, config=blank_config)  # type: ignore[arg-type]
 
 
-@pytest.mark.sh_integration
-@pytest.mark.parametrize("request_type", [RequestType.GET, RequestType.POST, RequestType.PUT])
-def test_client_headers(request_type: RequestType, session: SentinelHubSession, requests_mock: Mocker) -> None:
+@pytest.mark.sh_integration()
+def test_client_headers(session: SentinelHubSession, requests_mock: Mocker) -> None:
     """Makes sure user agent headers are always sent by the client."""
     blank_config = SHConfig(use_defaults=True)
     client = SentinelHubDownloadClient(session=session, config=blank_config)
@@ -40,9 +39,7 @@ def test_client_headers(request_type: RequestType, session: SentinelHubSession, 
     requests_mock.get(url="/fake-endpoint")
     fake_url = "https://xyz.sentinel-hub.com/fake-endpoint"
 
-    client.get_json(
-        fake_url,
-    )
+    client.get_json(fake_url)
 
     assert len(requests_mock.request_history) == 1
     mocked_request = requests_mock.request_history[0]
@@ -51,23 +48,23 @@ def test_client_headers(request_type: RequestType, session: SentinelHubSession, 
     assert mocked_request.headers["User-Agent"] == f"sentinelhub-py/v{__version__}"
 
 
-@pytest.mark.sh_integration
+@pytest.mark.sh_integration()
 @pytest.mark.parametrize("client_object", [SentinelHubDownloadClient, SentinelHubDownloadClient()])
 def test_session_caching_and_clearing(
-    client_object: Union[SentinelHubDownloadClient, Type[SentinelHubDownloadClient]], session: SentinelHubSession
+    client_object: SentinelHubDownloadClient | type[SentinelHubDownloadClient], session: SentinelHubSession
 ) -> None:
     client_object.clear_cache()
-    assert SentinelHubDownloadClient._CACHED_SESSIONS == {}
+    assert {} == SentinelHubDownloadClient._CACHED_SESSIONS
 
     client_object.cache_session(session)
     assert len(SentinelHubDownloadClient._CACHED_SESSIONS) == 1
     assert list(SentinelHubDownloadClient._CACHED_SESSIONS.values()) == [session]
 
     client_object.clear_cache()
-    assert SentinelHubDownloadClient._CACHED_SESSIONS == {}
+    assert {} == SentinelHubDownloadClient._CACHED_SESSIONS
 
 
-@pytest.mark.sh_integration
+@pytest.mark.sh_integration()
 def test_double_session_caching(session: SentinelHubSession) -> None:
     another_session = SentinelHubSession()
 
@@ -85,7 +82,7 @@ def test_double_session_caching(session: SentinelHubSession) -> None:
     assert client_with_fixed_session.get_session() is session
 
 
-@pytest.mark.sh_integration
+@pytest.mark.sh_integration()
 def test_session_caching_on_subclass(session: SentinelHubSession) -> None:
     statistical_client = SentinelHubStatisticalDownloadClient()
     statistical_client.cache_session(session)
@@ -98,7 +95,7 @@ def test_session_caching_on_subclass(session: SentinelHubSession) -> None:
     assert obtained_session is session
 
 
-@pytest.mark.sh_integration
+@pytest.mark.sh_integration()
 def test_universal_session_caching(session: SentinelHubSession) -> None:
     SentinelHubDownloadClient.clear_cache()
 

@@ -1,8 +1,11 @@
 """
 Test for Sentinel Hub WFS
 """
+
+from __future__ import annotations
+
 import datetime
-from typing import Any, Dict
+from typing import Any
 
 import pytest
 from shapely.geometry import MultiPolygon
@@ -13,7 +16,7 @@ pytestmark = pytest.mark.sh_integration
 
 
 @pytest.mark.parametrize(
-    "args, kwargs, expected_len",
+    ("args", "kwargs", "expected_len"),
     [
         (
             [
@@ -30,7 +33,7 @@ pytestmark = pytest.mark.sh_integration
         ),
     ],
 )
-def test_wfs(args: list, kwargs: Dict[str, Any], expected_len: int) -> None:
+def test_wfs(args: list, kwargs: dict[str, Any], expected_len: int) -> None:
     iterator = WebFeatureService(*args, **kwargs)
     features = list(iterator)
     dates = iterator.get_dates()
