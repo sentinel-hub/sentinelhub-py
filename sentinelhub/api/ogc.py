@@ -2,6 +2,7 @@
 Module for working with Sentinel Hub OGC services
 `Sentinel Hub OGC services <https://www.sentinel-hub.com/develop/api/ogc/standard-parameters/>`__.
 """
+
 from __future__ import annotations
 
 import datetime

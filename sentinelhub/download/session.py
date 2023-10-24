@@ -1,14 +1,15 @@
 """
 Module implementing Sentinel Hub session object
 """
+
 from __future__ import annotations
 
 import base64
 import json
 import logging
-import sys
 import time
 import warnings
+from multiprocessing.shared_memory import SharedMemory
 from threading import Event, Thread
 from typing import Any, ClassVar
 
@@ -24,12 +25,6 @@ from ..download.handlers import fail_user_errors, retry_temporary_errors
 from ..download.models import DownloadRequest
 from ..exceptions import SHUserWarning
 from ..types import JsonDict
-
-if sys.version_info < (3, 8):
-    from shared_memory import SharedMemory
-else:
-    from multiprocessing.shared_memory import SharedMemory
-
 
 LOGGER = logging.getLogger(__name__)
 

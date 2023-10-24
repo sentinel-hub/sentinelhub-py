@@ -1,6 +1,7 @@
 """
 Implementation of base interface classes of this package.
 """
+
 from __future__ import annotations
 
 import copy

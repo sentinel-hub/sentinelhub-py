@@ -1,6 +1,7 @@
 """
 Module for data decoding
 """
+
 from __future__ import annotations
 
 import json

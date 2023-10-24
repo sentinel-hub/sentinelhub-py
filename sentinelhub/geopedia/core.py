@@ -1,6 +1,7 @@
 """
 The core module for Geopedia interactions
 """
+
 from __future__ import annotations
 
 import datetime
@@ -34,13 +35,11 @@ class GeopediaService:
 
 
 @overload
-def _parse_geopedia_layer(layer: int | str, return_wms_name: Literal[False] = False) -> int:
-    ...
+def _parse_geopedia_layer(layer: int | str, return_wms_name: Literal[False] = False) -> int: ...
 
 
 @overload
-def _parse_geopedia_layer(layer: int | str, return_wms_name: Literal[True]) -> str:
-    ...
+def _parse_geopedia_layer(layer: int | str, return_wms_name: Literal[True]) -> str: ...
 
 
 def _parse_geopedia_layer(layer: int | str, return_wms_name: bool = False) -> int | str:
@@ -200,8 +199,8 @@ class GeopediaSession(GeopediaService):
             self._make_login(self._session_info)
 
         if self.is_global:
-            GeopediaSession._global_session_info = self._session_info  # noqa: SLF001
-            GeopediaSession._global_session_start = self._session_start  # noqa: SLF001
+            GeopediaSession._global_session_info = self._session_info
+            GeopediaSession._global_session_start = self._session_start
 
     def _make_login(self, session_info: dict) -> None:
         """Private method that makes login"""

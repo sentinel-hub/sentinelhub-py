@@ -1,6 +1,7 @@
 """
 Utility tools for writing unit tests for packages which rely on `sentinelhub-py`
 """
+
 from __future__ import annotations
 
 import os

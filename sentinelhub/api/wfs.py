@@ -2,6 +2,7 @@
 Interface of
 `Sentinel Hub Web Feature Service (WFS) <https://www.sentinel-hub.com/develop/api/ogc/standard-parameters/wfs/>`__.
 """
+
 from __future__ import annotations
 
 import datetime as dt

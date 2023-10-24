@@ -1,6 +1,7 @@
 """
 Implementation of `Sentinel Hub Process API interface <https://docs.sentinel-hub.com/api/latest/api/process/>`__.
 """
+
 from __future__ import annotations
 
 from typing import Any, Iterable

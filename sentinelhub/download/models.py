@@ -1,6 +1,7 @@
 """
 Module implementing model classes to store download-related parameters and data.
 """
+
 from __future__ import annotations
 
 import datetime as dt

@@ -1,6 +1,7 @@
 """
 Unit tests for DownloadRequest object
 """
+
 from __future__ import annotations
 
 import datetime as dt

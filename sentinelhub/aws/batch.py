@@ -1,6 +1,7 @@
 """
 Module implementing utilities for collecting data, produced with Sentinel Hub Statistical Batch API, from an S3 bucket.
 """
+
 from typing import List, Optional, Sequence, Union
 
 from ..api.batch.statistical import BatchStatisticalRequest, BatchStatisticalRequestType, SentinelHubBatchStatistical

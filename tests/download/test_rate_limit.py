@@ -1,6 +1,7 @@
 """
 Tests for utilities that implement rate-limiting in the package
 """
+
 from __future__ import annotations
 
 import concurrent.futures

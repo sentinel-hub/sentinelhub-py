@@ -1,6 +1,7 @@
 """
 The part of the package that implements interface with Sentinel Hub services.
 """
+
 from .batch import (
     BatchCollection,
     BatchRequest,

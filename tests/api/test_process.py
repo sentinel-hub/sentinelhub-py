@@ -1,5 +1,6 @@
 """ Tests for the Process API requests
 """
+
 from __future__ import annotations
 
 import json

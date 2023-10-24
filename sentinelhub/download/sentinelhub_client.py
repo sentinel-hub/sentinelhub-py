@@ -1,6 +1,7 @@
 """
 Module implementing a rate-limited multithreaded download client for downloading from Sentinel Hub service
 """
+
 from __future__ import annotations
 
 import logging

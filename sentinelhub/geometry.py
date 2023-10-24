@@ -1,4 +1,5 @@
 """Module implementing geometry classes."""
+
 from __future__ import annotations
 
 import contextlib

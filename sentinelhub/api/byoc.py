@@ -2,6 +2,7 @@
 Module implementing an interface with
 `Sentinel Hub Bring Your Own COG API <https://docs.sentinel-hub.com/api/latest/api/byoc/>`__.
 """
+
 # ruff: noqa: FA100
 # do not use `from __future__ import annotations`, it clashes with `dataclass_json`
 from dataclasses import dataclass, field

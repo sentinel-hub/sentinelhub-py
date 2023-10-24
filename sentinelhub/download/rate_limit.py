@@ -1,6 +1,7 @@
 """
 Module implementing rate limiting logic for Sentinel Hub service
 """
+
 import time
 from enum import Enum
 

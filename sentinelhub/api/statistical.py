@@ -2,6 +2,7 @@
 Implementation of
 `Sentinel Hub Statistical API interface <https://docs.sentinel-hub.com/api/latest/api/statistical/>`__.
 """
+
 from __future__ import annotations
 
 from typing import Any, Sequence

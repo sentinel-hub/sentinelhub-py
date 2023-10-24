@@ -1,6 +1,7 @@
 """
 Test for Sentinel Hub WFS
 """
+
 from __future__ import annotations
 
 import datetime

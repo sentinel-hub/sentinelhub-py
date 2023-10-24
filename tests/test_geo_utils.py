@@ -1,6 +1,7 @@
 """
 Test for geo_utils module and correctness of geographical transformations
 """
+
 from __future__ import annotations
 
 import pytest
