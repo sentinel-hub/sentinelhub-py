@@ -1,6 +1,7 @@
 """
 Module implementing some utility functions not suitable for other utility modules
 """
+
 # ruff: noqa: FA100
 # do not use `from __future__ import annotations`, it clashes with `dataclass_json`
 from abc import ABCMeta, abstractmethod

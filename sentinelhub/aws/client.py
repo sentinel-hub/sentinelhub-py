@@ -1,6 +1,7 @@
 """
 Module implementing a download client that is adjusted to download from AWS
 """
+
 import logging
 import warnings
 from typing import Any, Dict, Optional

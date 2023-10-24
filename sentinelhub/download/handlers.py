@@ -1,6 +1,7 @@
 """
 Module implementing error handlers which can occur during download procedure
 """
+
 from __future__ import annotations
 
 import functools

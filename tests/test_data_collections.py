@@ -1,6 +1,7 @@
 """
 Unit tests for data_collections module
 """
+
 from __future__ import annotations
 
 from typing import Any

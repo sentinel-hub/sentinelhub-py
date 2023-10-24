@@ -1,6 +1,7 @@
 """
 Module for working with Sentinel Hub FIS service
 """
+
 from __future__ import annotations
 
 import datetime

@@ -1,6 +1,7 @@
 """
 Tests for sh_utils.py module
 """
+
 from __future__ import annotations
 
 import math

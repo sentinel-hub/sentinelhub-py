@@ -7,6 +7,7 @@ how many interactions with Sentinel Hub service they make, how much time they sl
 Because of that the tests are very strict. If you break them make sure to understand what is happening before either
 changing the code or the tests.
 """
+
 from __future__ import annotations
 
 import random

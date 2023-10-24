@@ -1,6 +1,7 @@
 """
 Tests for the module with a special download client for Statistical API
 """
+
 import pytest
 from requests_mock import Mocker
 

@@ -1,6 +1,7 @@
 """
 Tests for the module with Catalog API interface
 """
+
 from __future__ import annotations
 
 import datetime as dt

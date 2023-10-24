@@ -1,6 +1,7 @@
 """
 Tests for Sentinel Hub Opensearch service interface
 """
+
 from sentinelhub import CRS, BBox, get_area_dates, get_tile_info
 
 

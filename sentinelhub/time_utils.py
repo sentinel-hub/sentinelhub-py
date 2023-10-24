@@ -1,6 +1,7 @@
 """
 Module with useful time/date functions
 """
+
 from __future__ import annotations
 
 import datetime as dt
@@ -34,29 +35,25 @@ def parse_time(
     force_datetime: Literal[False] = False,
     allow_undefined: Literal[False] = False,
     **kwargs: Any,
-) -> dt.date:
-    ...
+) -> dt.date: ...
 
 
 @overload
 def parse_time(
     time_input: RawTimeType, *, force_datetime: Literal[True], allow_undefined: Literal[False] = False, **kwargs: Any
-) -> dt.datetime:
-    ...
+) -> dt.datetime: ...
 
 
 @overload
 def parse_time(
     time_input: RawTimeType, *, force_datetime: Literal[False] = False, allow_undefined: bool = False, **kwargs: Any
-) -> dt.date | None:
-    ...
+) -> dt.date | None: ...
 
 
 @overload
 def parse_time(
     time_input: RawTimeType, *, force_datetime: Literal[True], allow_undefined: bool = False, **kwargs: Any
-) -> dt.datetime | None:
-    ...
+) -> dt.datetime | None: ...
 
 
 def parse_time(
@@ -140,13 +137,11 @@ def parse_time_interval(
 
 
 @overload
-def serialize_time(timestamp_input: dt.date | None, *, use_tz: bool = False) -> str:
-    ...
+def serialize_time(timestamp_input: dt.date | None, *, use_tz: bool = False) -> str: ...
 
 
 @overload
-def serialize_time(timestamp_input: Iterable[dt.date | None], *, use_tz: bool = False) -> tuple[str, ...]:
-    ...
+def serialize_time(timestamp_input: Iterable[dt.date | None], *, use_tz: bool = False) -> tuple[str, ...]: ...
 
 
 def serialize_time(

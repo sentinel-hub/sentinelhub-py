@@ -1,6 +1,7 @@
 """
 A module that tests an interface for Sentinel Hub Batch processing
 """
+
 import os
 from datetime import datetime
 

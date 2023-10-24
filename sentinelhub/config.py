@@ -1,6 +1,7 @@
 """
 Module for managing configuration data from `config.toml`
 """
+
 from __future__ import annotations
 
 import copy

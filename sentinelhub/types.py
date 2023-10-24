@@ -1,4 +1,5 @@
 """Module with custom types and utilities used in sentinelhub-py."""
+
 import datetime as dt
 from typing import Any, Dict, Tuple, Union
 

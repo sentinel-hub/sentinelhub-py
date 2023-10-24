@@ -1,6 +1,7 @@
 """
 Module for working with large geographical areas
 """
+
 from __future__ import annotations
 
 import itertools

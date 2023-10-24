@@ -1,6 +1,7 @@
 """
 Module with global fixtures
 """
+
 import logging
 import os
 import shutil

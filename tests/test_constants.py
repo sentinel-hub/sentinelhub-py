@@ -17,7 +17,6 @@ from sentinelhub.exceptions import SHUserWarning
         (13, 46, CRS("32633")),
         (13, 0, CRS("32633")),
         (13, -45, CRS("32733")),
-        (13, 0, CRS("32633")),
         (13, -0.0001, CRS("32733")),
         (13, -46, CRS("32733")),
     ],

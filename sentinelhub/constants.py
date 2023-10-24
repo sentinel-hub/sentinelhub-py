@@ -1,6 +1,7 @@
 """
 Module defining constants and enumerate types used in the package
 """
+
 from __future__ import annotations
 
 import functools
@@ -104,7 +105,7 @@ class CRSMeta(EnumMeta):
         if isinstance(value, dict) and "init" in value:
             value = value["init"]
         if hasattr(value, "to_epsg"):
-            if value == CRSMeta._UNSUPPORTED_CRS:  # noqa: SLF001
+            if value == CRSMeta._UNSUPPORTED_CRS:
                 message = (
                     "sentinelhub-py supports only WGS 84 coordinate reference system with "
                     "coordinate order lng-lat. Given pyproj.CRS(4326) has coordinate order lat-lng. Be careful "

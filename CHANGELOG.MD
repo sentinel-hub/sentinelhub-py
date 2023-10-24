@@ -1,3 +1,10 @@
+## [Version 3.9.2] - 2023-10-24
+
+- Adjusted how user credentials are passed to the OAuth service.
+- Added `QUALITY_FLAGS` band to `S3_OLCI`
+- Batch statistical API now supports IAM role style credentials.
+- Various minor improvements
+
 ## [Version 3.9.1] - 2023-05-04
 
 - The parameter `sh_auth_base_url` has been replaced with `sh_token_url` to allow authentication on endpoints with suffixes other than `oauth/token`. For the new parameter the address must be provided in full, e.g. `https://services.sentinel-hub.com/oauth/token` instead of `https://services.sentinel-hub.com`. The change only affects users who manually adjusted this field.

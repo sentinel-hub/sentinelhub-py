@@ -1,6 +1,7 @@
 """
 Module implementing utilities for working with batch jobs.
 """
+
 from __future__ import annotations
 
 import logging

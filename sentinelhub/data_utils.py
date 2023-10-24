@@ -1,6 +1,7 @@
 """
 Module with statistics to dataframe transformation.
 """
+
 from __future__ import annotations
 
 from typing import Any, Iterable

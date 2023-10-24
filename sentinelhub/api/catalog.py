@@ -1,6 +1,7 @@
 """
 A client interface for `Sentinel Hub Catalog API <https://docs.sentinel-hub.com/api/latest/api/catalog>`__.
 """
+
 from __future__ import annotations
 
 import datetime as dt

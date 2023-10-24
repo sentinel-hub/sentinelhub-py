@@ -4,6 +4,7 @@ Module for communication with Sentinel Hub Opensearch service.
 For more search parameters check
 `service description <http://opensearch.sentinel-hub.com/resto/api/collections/Sentinel2/describe.xml>`__.
 """
+
 from __future__ import annotations
 
 import datetime as dt

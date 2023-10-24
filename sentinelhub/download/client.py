@@ -1,6 +1,7 @@
 """
 Module implementing the main download client class
 """
+
 from __future__ import annotations
 
 import json

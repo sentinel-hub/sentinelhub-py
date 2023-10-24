@@ -1,6 +1,7 @@
 """
 Module that implements command line interface for the package
 """
+
 from __future__ import annotations
 
 import json

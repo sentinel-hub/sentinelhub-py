@@ -1,6 +1,7 @@
 """
 Module that implements command line interface for AWS package functionalities
 """
+
 from typing import Optional, Tuple
 
 import click

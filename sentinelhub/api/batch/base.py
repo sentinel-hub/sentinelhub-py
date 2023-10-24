@@ -1,6 +1,7 @@
 """
 Module containing shared code of Batch Process API and Batch Statistical API
 """
+
 # ruff: noqa: FA100
 # do not use `from __future__ import annotations`, it clashes with `dataclass_json` (even through inheritance)
 from abc import ABCMeta

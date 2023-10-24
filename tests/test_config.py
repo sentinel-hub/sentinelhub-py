@@ -1,6 +1,7 @@
 """
 Unit tests for config.py module
 """
+
 import os
 import shutil
 from typing import Generator

@@ -1,4 +1,5 @@
 """Module defining custom package exceptions."""
+
 from __future__ import annotations
 
 import functools

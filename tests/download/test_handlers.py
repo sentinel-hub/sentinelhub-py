@@ -1,6 +1,7 @@
 """
 Unit tests for download handlers
 """
+
 import pytest
 from requests import Response
 from requests.exceptions import ChunkedEncodingError, ConnectionError, HTTPError, InvalidJSONError, Timeout
