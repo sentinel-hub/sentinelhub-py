@@ -146,6 +146,7 @@ class SentinelHubSession:
                 client_id=self.config.sh_client_id,
                 client_secret=self.config.sh_client_secret,
                 headers={**self.DEFAULT_HEADERS, **SHConstants.HEADERS},
+                include_client_id=True,
             )
 
     @staticmethod
