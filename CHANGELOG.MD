@@ -2,7 +2,7 @@
 
 - Adjusted how user credentials are passed to the OAuth service.
 - Added `QUALITY_FLAGS` band to `S3_OLCI`
-- Batch statistical API now supports IAM role style credentials
+- Batch statistical API now supports IAM role style credentials.
 - Various minor improvements
 
 ## [Version 3.9.1] - 2023-05-04
