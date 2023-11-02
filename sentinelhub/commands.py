@@ -9,7 +9,7 @@ from typing import Any, Callable, TypeVar
 
 import click
 
-from .config import DEFAULT_PROFILE, SHConfig
+from .config import SHConfig
 from .download import DownloadClient, DownloadRequest
 
 FC = TypeVar("FC", bound=Callable[..., Any])
@@ -40,9 +40,9 @@ def _config_options(func: FC) -> FC:
 
 @click.command()
 @click.option("--show", is_flag=True, default=False, help="Show current configuration")
-@click.option("--profile", default=DEFAULT_PROFILE, help="Selects profile to show/configure.")
+@click.option("--profile", default=None, help="Selects profile to show/configure.")
 @_config_options
-def config(show: bool, profile: str, **params: Any) -> None:
+def config(show: bool, profile: str | None, **params: Any) -> None:
     """Inspect and configure parameters in your local sentinelhub configuration file
 
     \b
@@ -65,8 +65,6 @@ def config(show: bool, profile: str, **params: Any) -> None:
                     value = False
             if getattr(sh_config, param) != value:
                 setattr(sh_config, param, value)
-
-    sh_config.save(profile=profile)
 
     for param, value in sh_config.to_dict(mask_credentials=False).items():
         if value != getattr(old_config, param):
