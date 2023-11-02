@@ -149,13 +149,13 @@ class SHConfig(_SHConfig):
         """
         filename = cls.get_config_location()
         if not os.path.exists(filename):
-            cls(use_defaults=True).save(profile)  # store default configuration to standard location
+            cls(use_defaults=True).save()  # store default configuration to standard location
 
         with open(filename, "rb") as cfg_file:
             configurations_dict = tomli.load(cfg_file)
 
         if profile not in configurations_dict:
-            raise KeyError(f"Profile {profile} not found in configuration file.")
+            raise KeyError(f"Profile `{profile}` not found in configuration file.")
 
         return cls(use_defaults=True, **configurations_dict[profile])
 

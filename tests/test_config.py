@@ -136,6 +136,20 @@ def test_profiles() -> None:
 
 @pytest.mark.dependency(depends=["test_user_config_is_masked"])
 @pytest.mark.usefixtures("_restore_config_file")
+def test_initialize_nondefault_profile() -> None:
+    """Since there is no config, loading a non-default profile should fail."""
+    config = SHConfig()
+    os.remove(config.get_config_location())
+
+    SHConfig()  # works for default
+
+    os.remove(config.get_config_location())
+    with pytest.raises(KeyError):
+        SHConfig("mr_president")
+
+
+@pytest.mark.dependency(depends=["test_user_config_is_masked"])
+@pytest.mark.usefixtures("_restore_config_file")
 def test_profiles_from_env(monkeypatch: pytest.MonkeyPatch) -> None:
     """We use `monkeypatch` to avoid modifying global environment."""
     config = SHConfig()
