@@ -66,6 +66,8 @@ def config(show: bool, profile: str | None, **params: Any) -> None:
             if getattr(sh_config, param) != value:
                 setattr(sh_config, param, value)
 
+    sh_config.save(profile=profile)
+
     for param, value in sh_config.to_dict(mask_credentials=False).items():
         if value != getattr(old_config, param):
             click.echo(f"The value of parameter `{param}` was updated to {value!r}")
