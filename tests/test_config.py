@@ -136,6 +136,20 @@ def test_profiles() -> None:
 
 @pytest.mark.dependency(depends=["test_user_config_is_masked"])
 @pytest.mark.usefixtures("_restore_config_file")
+def test_initialize_nondefault_profile() -> None:
+    """Since there is no config, loading a non-default profile should fail."""
+    config = SHConfig()
+    os.remove(config.get_config_location())
+
+    SHConfig()  # works for default
+
+    os.remove(config.get_config_location())
+    with pytest.raises(KeyError):
+        SHConfig("mr_president")
+
+
+@pytest.mark.dependency(depends=["test_user_config_is_masked"])
+@pytest.mark.usefixtures("_restore_config_file")
 def test_profiles_from_env(monkeypatch: pytest.MonkeyPatch) -> None:
     """We use `monkeypatch` to avoid modifying global environment."""
     config = SHConfig()
@@ -147,7 +161,15 @@ def test_profiles_from_env(monkeypatch: pytest.MonkeyPatch) -> None:
 
     monkeypatch.setenv(SH_PROFILE_ENV_VAR, "beekeeper")
     assert SHConfig().instance_id == "bee", "Environment profile is not used."
+    assert SHConfig.load().instance_id == "bee", "The load method does not respect the environment profile."
     assert SHConfig(profile=DEFAULT_PROFILE).instance_id == "", "Explicit profile overrides environment."
+
+    config = SHConfig()
+    config.instance_id = "many bee"
+    config.save()
+
+    assert SHConfig(profile="beekeeper").instance_id == "many bee", "Save method does not respect the env profile."
+    assert SHConfig(profile=DEFAULT_PROFILE).instance_id == "", "Saving with env profile changed default profile."
 
 
 def test_loading_unknown_profile_fails() -> None:
