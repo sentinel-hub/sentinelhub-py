@@ -1,9 +1,17 @@
+## [Version 3.9.3] - 2023-11-03
+
+- `SHConfig` now correctly initializes a default profile in the file even if the first initialization call is done with a custom profile.
+- Save and load methods of `SHConfig` adjusted to work with the environmental variable `SH_PROFILE`
+- CLI command `sentinelhub.config --show` works with the environmental variable `SH_PROFILE`
+
+
 ## [Version 3.9.2] - 2023-10-24
 
 - Adjusted how user credentials are passed to the OAuth service.
 - Added `QUALITY_FLAGS` band to `S3_OLCI`
 - Batch statistical API now supports IAM role style credentials.
 - Various minor improvements
+
 
 ## [Version 3.9.1] - 2023-05-04
 
