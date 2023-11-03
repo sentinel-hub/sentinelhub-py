@@ -114,8 +114,7 @@ class SHConfig(_SHConfig):
         :param use_defaults: Does not load the configuration file, returns config object with defaults only.
         :param kwargs: Any fields of `SHConfig` to be updated. Overrides settings from `config.toml` and environment.
         """
-        if profile is None:
-            profile = os.environ.get(SH_PROFILE_ENV_VAR, default=DEFAULT_PROFILE)
+        profile = self._get_profile(profile)
 
         if not use_defaults:
             env_kwargs = {
@@ -141,12 +140,17 @@ class SHConfig(_SHConfig):
         content = ",\n  ".join(f"{key}={value!r}" for key, value in config_dict.items())
         return f"{self.__class__.__name__}(\n  {content},\n)"
 
+    @staticmethod
+    def _get_profile(profile: str | None) -> str:
+        return profile if profile is not None else os.environ.get(SH_PROFILE_ENV_VAR, default=DEFAULT_PROFILE)
+
     @classmethod
-    def load(cls, profile: str = DEFAULT_PROFILE) -> SHConfig:
+    def load(cls, profile: str | None = None) -> SHConfig:
         """Loads configuration parameters from the config file at `SHConfig.get_config_location()`.
 
         :param profile: Which profile to load from the configuration file.
         """
+        profile = cls._get_profile(profile)
         filename = cls.get_config_location()
         if not os.path.exists(filename):
             cls(use_defaults=True).save()  # store default configuration to standard location
@@ -159,11 +163,12 @@ class SHConfig(_SHConfig):
 
         return cls(use_defaults=True, **configurations_dict[profile])
 
-    def save(self, profile: str = DEFAULT_PROFILE) -> None:
+    def save(self, profile: str | None = None) -> None:
         """Saves configuration parameters to the config file at `SHConfig.get_config_location()`.
 
         :param profile: Under which profile to save the configuration.
         """
+        profile = self._get_profile(profile)
         file_path = Path(self.get_config_location())
         file_path.parent.mkdir(parents=True, exist_ok=True)
 

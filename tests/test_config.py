@@ -161,7 +161,15 @@ def test_profiles_from_env(monkeypatch: pytest.MonkeyPatch) -> None:
 
     monkeypatch.setenv(SH_PROFILE_ENV_VAR, "beekeeper")
     assert SHConfig().instance_id == "bee", "Environment profile is not used."
+    assert SHConfig.load().instance_id == "bee", "The load method does not respect the environment profile."
     assert SHConfig(profile=DEFAULT_PROFILE).instance_id == "", "Explicit profile overrides environment."
+
+    config = SHConfig()
+    config.instance_id = "many bee"
+    config.save()
+
+    assert SHConfig(profile="beekeeper").instance_id == "many bee", "Save method does not respect the env profile."
+    assert SHConfig(profile=DEFAULT_PROFILE).instance_id == "", "Saving with env profile changed default profile."
 
 
 def test_loading_unknown_profile_fails() -> None:
