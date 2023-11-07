@@ -1,6 +1,9 @@
 name: trigger
 
 on:
+  push:
+    branches:
+      - "add-gitlab-trigger-api-job"
   release:
     types:
       - published
