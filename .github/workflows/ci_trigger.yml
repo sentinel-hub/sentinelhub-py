@@ -12,9 +12,6 @@ jobs:
   trigger:
     runs-on: ubuntu-latest
     steps:
-      - name: Install requirements
-        run: apt install -y curl
-
       - name: Trigger API
         run: >
           curl -X POST --fail \
