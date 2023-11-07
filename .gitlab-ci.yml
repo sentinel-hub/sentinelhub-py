@@ -1,7 +1,6 @@
 stages:
   - update
   - test
-  - build
 
 update_base_image:
   stage: update
@@ -24,17 +23,3 @@ run_sh_integration_tests:
   script:
     - pip install -e .[AWS,DEV]
     - pytest -m "sh_integration"
-
-build_docker_image:
-  stage: build
-  needs: []
-  rules:
-    - if: $CI_COMMIT_TAG # run only on releases
-      when: always
-      variables:
-        CUSTOM_RUN_TAG: auto # this will create images with the latest tag and the version tag
-        LAYER_NAME: dotai-eo
-    - when: manual
-  trigger:
-    project: eo/infra/docker
-  allow_failure: true
