@@ -3,7 +3,7 @@ name: trigger
 on:
   push:
     branches:
-      - "add-gitlab-trigger-api-job"
+      - "add-docker-image-build-trigger-job"
   release:
     types:
       - published
