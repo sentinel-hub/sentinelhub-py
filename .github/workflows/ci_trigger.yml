@@ -1,9 +1,6 @@
 name: trigger
 
 on:
-  push:
-    branches:
-      - "add-docker-image-build-trigger-job"
   release:
     types:
       - published
