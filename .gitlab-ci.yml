@@ -1,6 +1,7 @@
 stages:
   - update
   - test
+  - build
 
 update_base_image:
   stage: update
@@ -15,11 +16,25 @@ update_base_image:
 run_sh_integration_tests:
   stage: test
   image: "$BASE_IMAGE"
-  dependencies: [ ]
-  needs: [ ]
+  dependencies: []
+  needs: []
   rules:
     - when: always
       if: '$UPDATE_BASE_IMAGE != "true"'
   script:
     - pip install -e .[AWS,DEV]
     - pytest -m "sh_integration"
+
+build_docker_image:
+  stage: build
+  needs: []
+  rules:
+    - if: $CI_COMMIT_TAG # run only on releases
+      when: always
+      variables:
+        CUSTOM_RUN_TAG: auto # this will create images with the latest tag and the version tag
+        LAYER_NAME: dotai-eo
+    - when: manual
+  trigger:
+    project: teams/eor/dotai/infra
+  allow_failure: true
