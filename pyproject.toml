@@ -156,6 +156,7 @@ ignore = [
     "C408",   # complains about `dict()` calls, we use them to avoid too many " in the code
     "SIM108", # tries to aggresively inline `if`, not always readable
     "COM812", # trailing comma missing, fights with black
+    "PD011",  # suggests `.to_numpy` instead of `.values`, also does this for non-pandas objects...
     # # potentially fixable
     "N818",  # we use the 'Exception' suffix but PEP suggests 'Error'
     "B904",  # want `raise ... from None` instead of just `raise ...`
