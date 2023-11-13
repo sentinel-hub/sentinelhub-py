@@ -7,13 +7,14 @@ import os
 import warnings
 from abc import ABCMeta, abstractmethod
 from typing import Any, List, Optional, Tuple, Union
+from typing_extensions import deprecated
 
 from ..api.opensearch import get_tile_info, get_tile_info_id
 from ..config import SHConfig
 from ..constants import MimeType
 from ..data_collections import DataCollection
 from ..download import DownloadRequest
-from ..exceptions import AwsDownloadFailedException, SHUserWarning, deprecated, SHDeprecationWarning
+from ..exceptions import AwsDownloadFailedException, SHUserWarning, SHDeprecationWarning
 from ..time_utils import parse_time
 from .client import AwsDownloadClient
 from .constants import AwsConstants, EsaSafeType
