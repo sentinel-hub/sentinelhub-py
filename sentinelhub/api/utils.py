@@ -21,7 +21,7 @@ datetime_config = dataclass_config(
     letter_case=LetterCase.CAMEL,
 )
 
-geometry_config = dataclass_config(  # type: ignore[misc]
+geometry_config = dataclass_config(
     encoder=Geometry.get_geojson,
     decoder=lambda geojson: Geometry.from_geojson(geojson) if geojson else None,
     exclude=lambda geojson: geojson is None,
@@ -31,7 +31,7 @@ geometry_config = dataclass_config(  # type: ignore[misc]
 
 def enum_config(enum_class: Type[Enum]) -> Dict[str, dict]:
     """Given an Enum class it provide an object for serialization/deserialization"""
-    return dataclass_config(  # type: ignore[misc]
+    return dataclass_config(
         encoder=lambda enum_item: enum_item.value,
         decoder=lambda item: enum_class(item) if item else None,
         exclude=lambda item: item is None,

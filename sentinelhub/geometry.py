@@ -6,7 +6,7 @@ import contextlib
 import warnings
 from abc import ABCMeta, abstractmethod
 from math import ceil
-from typing import Callable, Dict, Iterator, Tuple, TypeVar, Union, cast
+from typing import Callable, Dict, Iterator, Tuple, TypeVar, Union
 
 import shapely.geometry
 import shapely.geometry.base
@@ -159,9 +159,9 @@ class BBox(_BaseGeometry):
         :raises: TypeError
         """
         if len(bbox) == 4:
-            min_x, min_y, max_x, max_y = cast(Tuple[float, float, float, float], bbox)
+            min_x, min_y, max_x, max_y = bbox
         else:
-            (min_x, min_y), (max_x, max_y) = cast(Tuple[Tuple[float, float], Tuple[float, float]], bbox)
+            (min_x, min_y), (max_x, max_y) = bbox
         return float(min_x), float(min_y), float(max_x), float(max_y)
 
     @staticmethod
