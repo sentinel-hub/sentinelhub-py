@@ -9,7 +9,7 @@ from typing_extensions import deprecated
 
 from ..base import DataRequest
 from ..data_collections import DataCollection
-from ..exceptions import deprecated_class, SHDeprecationWarning
+from ..exceptions import SHDeprecationWarning
 from .client import AwsDownloadClient
 from .data import REQUESTER_PAYS_PARAMS, AwsProduct, AwsTile
 from .data_safe import SafeProduct, SafeTile
