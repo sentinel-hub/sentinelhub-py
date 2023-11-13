@@ -308,7 +308,7 @@ def get_async_running_status(ids: Iterable[str], config: SHConfig | None = None)
             client.get_json_dict(f"{config.sh_base_url}/api/v1/async/process/{request_id}", use_session=True)
             # A successful request means it's running
             result[request_id] = True
-        except DownloadFailedException as exception:
+        except DownloadFailedException as exception:  # noqa: PERF203
             # A 404 means it's not running
             if exception.request_exception is not None and exception.request_exception.response is not None:
                 if exception.request_exception.response.status_code == requests.status_codes.codes.NOT_FOUND:

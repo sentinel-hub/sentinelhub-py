@@ -220,13 +220,11 @@ class SentinelHubBYOC(SentinelHubService):
         headers = {"Content-Type": MimeType.JSON.get_string()}
 
         _tile = self._to_dict(tile)
-        updates = remove_undefined(
-            {
-                "path": _tile["path"],
-                "coverGeometry": _tile.get("coverGeometry"),
-                "sensingTime": _tile.get("sensingTime"),
-            }
-        )
+        updates = remove_undefined({
+            "path": _tile["path"],
+            "coverGeometry": _tile.get("coverGeometry"),
+            "sensingTime": _tile.get("sensingTime"),
+        })
 
         return self.client.get_json(
             url=url, request_type=RequestType.PUT, post_values=updates, headers=headers, use_session=True
