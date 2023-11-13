@@ -69,11 +69,6 @@ A high-level overview of the main functionalities:
   * data collection objects,
   * IO tools,
 
-- download Sentinel-2 data from public [AWS S3 buckets](https://registry.opendata.aws/sentinel-2/) (required `[AWS]` package extension)
-  * restoration of .SAFE format,
-  * L1C and L2A data,
-  * command line interface,
-
 - [Geopedia](https://portal.geopedia.world/) WMS and REST API.
 
 
