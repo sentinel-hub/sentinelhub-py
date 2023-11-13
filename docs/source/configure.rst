@@ -96,31 +96,6 @@ Batch, BYOC, and other APIs). There is "OAuth clients" frame where we can create
     For detailed instructions on how to obtain credentials, you can see the `Sentinel Hub webinar`_.
 
 
-
-Amazon S3 Configuration
-***********************
-
-The package enables downloading Sentinel-2 L1C and L2A data from `Amazon S3`_ storage buckets. The data is contained in
-Requester Pays buckets, therefore `AWS credentials`_ are required to use these capabilities. The credentials
-can be set in the package configuration file with parameters ``aws_access_key_id`` and ``aws_secret_access_key``.
-
-In case the credentials are not set, the package will instead automatically try to use **locally stored AWS credentials**,
-if they were configured according to `AWS configuration instructions`_. Any other configuration parameters (e.g. region)
-will also be collected in the same way.
-
-The AWS account must have correct permissions set up to be able to download data from S3 buckets.
-That can be configured in AWS IAM console. There are many ways how to configure sufficient permission, one of them
-is setting them to *AmazonS3ReadOnlyAccess*.
-
-.. warning::
-
-    Because Sentinel-2 satellite data on S3 is contained in Requester Pays buckets Amazon will charge users for
-    download according to `Amazon S3 Pricing`_. In this case users are charged for amount of data downloaded and
-    the number of requests. The *sentinelhub* package will make at most one GET request for each file downloaded.
-    Files *metadata.xml*, *tileInfo.json* and *productInfo.json* will be obtained without any charge from
-    `Sentinel Hub public repository`_.
-
-
 Other configuration options
 ***************************
 
