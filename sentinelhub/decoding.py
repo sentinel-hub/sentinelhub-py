@@ -183,7 +183,7 @@ def fix_jp2_image(image: np.ndarray, bit_depth: int) -> np.ndarray:
         try:
             return image >> 1
         except TypeError as exception:
-            raise IOError(
+            raise OSError(
                 "Failed to read JPEG2000 image correctly. Most likely reason is that Pillow did not "
                 "install OpenJPEG library correctly. Try reinstalling Pillow from a wheel"
             ) from exception

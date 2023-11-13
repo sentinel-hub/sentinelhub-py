@@ -109,10 +109,9 @@ def _tile_status_counts_to_tiles(tile_status_counts: dict[BatchTileStatus, int])
     Each payload should be approximately what Sentinel Hub service returns but because we don't need all parameters we
     just return status. At the end we randomly shuffle the list just to make it more general.
     """
-    tiles: list[dict[str, str]] = []
-    for tile_status, count in tile_status_counts.items():
-        for _ in range(count):
-            tiles.append({"status": tile_status.value})
+    tiles: list[dict[str, str]] = [
+        {"status": tile_status.value} for tile_status, count in tile_status_counts.items() for _ in range(count)
+    ]
 
     random.shuffle(tiles)
     return tiles

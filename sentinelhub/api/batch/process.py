@@ -150,19 +150,17 @@ class SentinelHubBatch(BaseBatchClient):
         :param kwargs: Any other arguments to be added to a dictionary of parameters
         :return: A dictionary of output parameters
         """
-        return remove_undefined(
-            {
-                "defaultTilePath": default_tile_path,
-                "overwrite": overwrite,
-                "skipExisting": skip_existing,
-                "cogOutput": cog_output,
-                "cogParameters": cog_parameters,
-                "createCollection": create_collection,
-                "collectionId": collection_id,
-                "responses": responses,
-                **kwargs,
-            }
-        )
+        return remove_undefined({
+            "defaultTilePath": default_tile_path,
+            "overwrite": overwrite,
+            "skipExisting": skip_existing,
+            "cogOutput": cog_output,
+            "cogParameters": cog_parameters,
+            "createCollection": create_collection,
+            "collectionId": collection_id,
+            "responses": responses,
+            **kwargs,
+        })
 
     def iter_tiling_grids(self, **kwargs: Any) -> SentinelHubFeatureIterator:
         """An iterator over tiling grids

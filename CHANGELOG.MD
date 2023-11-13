@@ -1,3 +1,8 @@
+## [Version 3.9.4] - 2023-11-13
+
+- Fixed a problem with `dataclasses_json 0.6.2` that broke BYOC functionalities
+- Removed AWS examples from the docs since the functionality is no longer maintained.
+
 ## [Version 3.9.3] - 2023-11-03
 
 - `SHConfig` now correctly initializes a default profile in the file even if the first initialization call is done with a custom profile.

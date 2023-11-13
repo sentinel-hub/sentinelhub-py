@@ -572,7 +572,7 @@ class UtmGridSplitter(BaseUtmSplitter):
         utm_grid_filename = os.path.join(os.path.dirname(__file__), ".utmzones.geojson")
 
         if not os.path.isfile(utm_grid_filename):
-            raise IOError(f"UTM grid definition file does not exist: {os.path.abspath(utm_grid_filename)}")
+            raise OSError(f"UTM grid definition file does not exist: {os.path.abspath(utm_grid_filename)}")
 
         with open(utm_grid_filename) as utm_grid_file:
             utm_grid = json.load(utm_grid_file)["features"]
@@ -606,17 +606,14 @@ class UtmZoneSplitter(BaseUtmSplitter):
         utm_geom_list = []
         for lat in [(self.LAT_EQ, self.LAT_MAX), (self.LAT_MIN, self.LAT_EQ)]:
             for lng in range(self.LNG_MIN, self.LNG_MAX, self.LNG_UTM):
-                points = []
                 # A new point is added per each degree - this is inline with geometries used by UtmGridSplitter
                 # In the future the number of points will be calculated according to bbox_size parameter
-                for degree in range(lat[0], lat[1]):
-                    points.append((lng, degree))
-                for degree in range(lng, lng + self.LNG_UTM):
-                    points.append((degree, lat[1]))
-                for degree in range(lat[1], lat[0], -1):
-                    points.append((lng + self.LNG_UTM, degree))
-                for degree in range(lng + self.LNG_UTM, lng, -1):
-                    points.append((degree, lat[0]))
+                points = (
+                    [(lng, degree) for degree in range(lat[0], lat[1])]
+                    + [(degree, lat[1]) for degree in range(lng, lng + self.LNG_UTM)]
+                    + [(lng + self.LNG_UTM, degree) for degree in range(lat[1], lat[0], -1)]
+                    + [(degree, lat[0]) for degree in range(lng + self.LNG_UTM, lng, -1)]
+                )
 
                 utm_geom_list.append(Polygon(points))
 

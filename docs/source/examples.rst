@@ -14,5 +14,3 @@ Basic examples
     examples/byoc_request.ipynb
     examples/statistical_request.ipynb
     examples/fis_request.ipynb
-    examples/aws_request.ipynb
-    aws_cli
