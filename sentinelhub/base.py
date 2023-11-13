@@ -214,8 +214,8 @@ class DataRequest(metaclass=ABCMeta):
     def _preprocess_request(self, save_data: bool, return_data: bool) -> None:
         """Prepares requests for download and creates empty folders
 
-        :param save_data: Tells whether to save data or not
-        :param return_data: Tells whether to return data or not
+        :param save_data: Save data
+        :param return_data: Return data
         """
         if not self.is_valid_request():
             raise ValueError("Cannot obtain data because request is invalid")

@@ -109,8 +109,8 @@ def write_data(  # noqa: C901
     :param filename: name of file to write data to
     :param data: image data to write to file
     :param data_format: format of output file. Default is `None`
-    :param compress: whether to compress data or not. Default is `False`
-    :param add: whether to append to existing file or not. Only supported for TXT. Default is `False`
+    :param compress: Compress data. Default is `False`
+    :param add: Append to existing file. Only supported for TXT. Default is `False`
     :raises: exception if numpy format is not supported or file cannot be written
     """
     _create_parent_folder(filename)
