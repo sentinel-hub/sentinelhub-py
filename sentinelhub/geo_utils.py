@@ -137,7 +137,7 @@ def utm_to_pixel(
     :param east: east coordinate of point
     :param north: north coordinate of point
     :param transform: georeferencing transform of the image, e.g. `(x_upper_left, res_x, 0, y_upper_left, 0, -res_y)`
-    :param truncate: Whether to truncate pixel coordinates. Default is `True`
+    :param truncate: Truncate pixel coordinates. Default is `True`
     :return: row and column pixel image coordinates
     """
     column = (east - transform[0]) / transform[1]
@@ -171,7 +171,7 @@ def wgs84_to_pixel(
     :param lat: latitude of point
     :param transform: georeferencing transform of the image, e.g. `(x_upper_left, res_x, 0, y_upper_left, 0, -res_y)`
     :param utm_epsg: UTM coordinate reference system enum constants
-    :param truncate: Whether to truncate pixel coordinates. Default is `True`
+    :param truncate: Truncate pixel coordinates. Default is `True`
     :return: row and column pixel image coordinates
     """
     east, north = wgs84_to_utm(lng, lat, utm_epsg)
