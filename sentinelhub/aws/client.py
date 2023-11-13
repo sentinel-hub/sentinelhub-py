@@ -5,6 +5,7 @@ Module implementing a download client that is adjusted to download from AWS
 import logging
 import warnings
 from typing import Any, Dict, Optional
+from typing_extensions import deprecated
 
 try:
     from boto3 import Session
@@ -18,12 +19,15 @@ from ..config import SHConfig
 from ..download.client import DownloadClient
 from ..download.handlers import fail_missing_file
 from ..download.models import DownloadRequest, DownloadResponse
-from ..exceptions import AwsDownloadFailedException, deprecated_class
+from ..exceptions import AwsDownloadFailedException, SHDeprecationWarning
 
 LOGGER = logging.getLogger(__name__)
 
 
-@deprecated_class(message_suffix="It will remain in the codebase for now, but won't be actively maintained.")
+@deprecated(
+    "AWS functionality will remain in the codebase for now, but won't be actively maintained.",
+    category=SHDeprecationWarning,
+)
 class AwsDownloadClient(DownloadClient):
     """An AWS download client class"""
 
