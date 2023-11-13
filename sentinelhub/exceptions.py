@@ -7,7 +7,6 @@ import warnings
 from typing import Any, Callable
 
 import requests
-from typing_extensions import deprecated
 
 
 class BaseSentinelHubException(Exception):
@@ -64,7 +63,7 @@ warnings.simplefilter("always", SHRuntimeWarning)
 warnings.simplefilter("always", SHRateLimitWarning)
 
 
-@deprecated("Ironic, is it not? Use `typing_extensions.deprecated`.", category=SHDeprecationWarning)
+# THIS SHOULD BE REMOVED IN THE FUTURE, after rest of libraries transition away.
 def deprecated_function(
     category: type[DeprecationWarning] = SHDeprecationWarning, message_suffix: str | None = None
 ) -> Callable[[Callable], Callable]:
@@ -88,7 +87,7 @@ def deprecated_function(
     return deco
 
 
-@deprecated("Ironic, is it not? Use `typing_extensions.deprecated`.", category=SHDeprecationWarning)
+# THIS SHOULD BE REMOVED IN THE FUTURE, after rest of libraries transition away.
 def deprecated_class(
     category: type[DeprecationWarning] = SHDeprecationWarning, message_suffix: str | None = None
 ) -> Callable[[type], type]:
