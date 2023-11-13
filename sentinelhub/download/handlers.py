@@ -66,7 +66,7 @@ def retry_temporary_errors(
             try:
                 return download_func(self, request)
 
-            except requests.RequestException as exception:
+            except requests.RequestException as exception:  # noqa: PERF203
                 attempts_left = download_attempts - (attempt_idx + 1)
                 if not (
                     _is_temporary_problem(exception)
