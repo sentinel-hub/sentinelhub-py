@@ -12,8 +12,9 @@ from typing import Any, Optional, Sequence, Union
 
 from dataclasses_json import CatchAll, LetterCase, Undefined, dataclass_json
 from dataclasses_json import config as dataclass_config
+from typing_extensions import deprecated
 
-from ...exceptions import deprecated_function
+from ...exceptions import SHDeprecationWarning
 from ...types import Json, JsonDict
 from ..base_request import InputDataDict
 from ..statistical import SentinelHubStatistical
@@ -140,7 +141,7 @@ class SentinelHubBatchStatistical(BaseBatchClient["BatchStatisticalRequest"]):
         """
         return self._call_job(batch_request, "start")
 
-    @deprecated_function(message_suffix="The service endpoint will be removed soon. Please use `stop_job` instead.")
+    @deprecated("The method `cancel_job` has been replaced with use `stop_job`.", category=SHDeprecationWarning)
     def cancel_job(self, batch_request: BatchStatisticalRequestType) -> Json:
         """Cancels a batch job
 

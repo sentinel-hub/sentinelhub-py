@@ -47,7 +47,7 @@ class ByocCollectionAdditionalData:
     other_data: CatchAll = field(default_factory=dict)
 
 
-@dataclass_json(letter_case=LetterCase.CAMEL, undefined=Undefined.INCLUDE)
+@dataclass_json(letter_case=LetterCase.CAMEL)
 @dataclass
 class ByocCollection(BaseCollection):
     """Dataclass to hold BYOC collection data"""

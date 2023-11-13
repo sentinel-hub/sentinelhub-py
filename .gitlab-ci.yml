@@ -15,8 +15,8 @@ update_base_image:
 run_sh_integration_tests:
   stage: test
   image: "$BASE_IMAGE"
-  dependencies: [ ]
-  needs: [ ]
+  dependencies: []
+  needs: []
   rules:
     - when: always
       if: '$UPDATE_BASE_IMAGE != "true"'
