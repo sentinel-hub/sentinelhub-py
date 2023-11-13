@@ -109,8 +109,4 @@ $ sentinelhub.config --help
 .. _`Sentinel Hub Dashboard`: https://apps.sentinel-hub.com/dashboard/
 .. _`Sentinel Hub services`: https://www.sentinel-hub.com/develop/documentation/api/ogc_api/
 .. _`Sentinel Hub webinar`: https://www.youtube.com/watch?v=CBIlTOl2po4&t=1760s
-.. _`Amazon S3`: https://aws.amazon.com/s3/
-.. _`AWS credentials`: https://docs.aws.amazon.com/general/latest/gr/aws-security-credentials.html
-.. _`AWS configuration instructions`: https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-getting-started.html
-.. _`Amazon S3 Pricing`: https://aws.amazon.com/s3/pricing/?p=ps
 .. _`Sentinel Hub public repository`: https://roda.sentinel-hub.com/sentinel-s2-l1c/
