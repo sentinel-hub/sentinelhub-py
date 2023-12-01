@@ -8,7 +8,7 @@ from abc import ABCMeta, abstractmethod
 from typing import Any
 
 from ..base import DataRequest
-from ..constants import MimeType, MosaickingOrder, RequestType, ResamplingType
+from ..constants import MimeType, MosaickingOrder, RequestType, ResamplingType, ServiceUrl
 from ..data_collections import DataCollection, OrbitDirection
 from ..download import DownloadRequest
 from ..geometry import BBox, Geometry
@@ -140,6 +140,9 @@ class SentinelHubBaseApiRequest(DataRequest, metaclass=ABCMeta):
             if isinstance(input_data_dict, InputDataDict) and input_data_dict.service_url is not None
         })
         config_base_url = self.config.sh_base_url.rstrip("/")
+
+        if config_base_url == ServiceUrl.CDSE:
+            return config_base_url
 
         if not data_collection_urls:
             return config_base_url

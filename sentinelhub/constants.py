@@ -28,6 +28,7 @@ class ServiceUrl:
     CREODIAS = "https://creodias.sentinel-hub.com"
     MUNDI = "https://shservices.mundiwebservices.com"
     CODE_DE = "https://code-de.sentinel-hub.com"
+    CDSE = "https://sh.dataspace.copernicus.eu"
 
 
 class ServiceType(Enum):

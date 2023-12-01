@@ -27,9 +27,14 @@ def pytest_configure() -> None:
     shconfig.save()
 
 
-@pytest.fixture(name="config")
+@pytest.fixture(name="sh_config", scope="session")
 def config_fixture() -> SHConfig:
     return SHConfig()
+
+
+@pytest.fixture(name="cdse_config", scope="session")
+def cdse_config_fixture() -> SHConfig:
+    return SHConfig("cdse")
 
 
 @pytest.fixture(name="input_folder", scope="session")

@@ -8,7 +8,7 @@ from typing import Any
 
 import pytest
 
-from sentinelhub import CRS, BBox, DataCollection, Geometry, SentinelHubStatistical
+from sentinelhub import CRS, BBox, DataCollection, Geometry, SentinelHubStatistical, SHConfig
 from sentinelhub.types import JsonDict
 
 EVALSCRIPT = """
@@ -57,9 +57,9 @@ GEOMETRY = Geometry(BBOX.geometry, crs=BBOX.crs)
 @pytest.mark.parametrize(
     argnames=(
         "evalscript, bbox, geometry, time_interval, resolution, aggregation_interval, data_collection, "
-        "data_filters, calculations, results"
+        "data_filters, calculations, results, config"
     ),
-    ids=["bbox", "geometry_no_calculations"],
+    ids=["sh_bbox", "sh_geometry_no_calculations", "cdse_bbox", "cdse_geometry_no_calculations"],
     argvalues=[
         (
             EVALSCRIPT,
@@ -72,6 +72,7 @@ GEOMETRY = Geometry(BBOX.geometry, crs=BBOX.crs)
             {"maxcc": 1},
             CALCULATIONS,
             {"n_aggregations": 1, "n_indices": 2, "n_bands": {"index": 1, "bands": 2}},
+            "sh_config",
         ),
         (
             EVALSCRIPT,
@@ -84,6 +85,33 @@ GEOMETRY = Geometry(BBOX.geometry, crs=BBOX.crs)
             {},
             None,
             {"n_aggregations": 1, "n_indices": 2, "n_bands": {"index": 1, "bands": 2}},
+            "sh_config",
+        ),
+        (
+            EVALSCRIPT,
+            BBOX,
+            None,
+            ("2021-04-01", "2021-04-10"),
+            (10, 10),
+            "P1D",
+            DataCollection.SENTINEL2_L1C,
+            {"maxcc": 1},
+            CALCULATIONS,
+            {"n_aggregations": 1, "n_indices": 2, "n_bands": {"index": 1, "bands": 2}},
+            "cdse_config",
+        ),
+        (
+            EVALSCRIPT,
+            None,
+            GEOMETRY,
+            ("2021-04-01", "2021-04-10"),
+            (10, 10),
+            "P1D",
+            DataCollection.SENTINEL2_L2A,
+            {},
+            None,
+            {"n_aggregations": 1, "n_indices": 2, "n_bands": {"index": 1, "bands": 2}},
+            "cdse_config",
         ),
     ],
 )
@@ -98,6 +126,8 @@ def test_statistical_api(
     data_filters: dict[str, Any],
     calculations: JsonDict | None,
     results: JsonDict,
+    config: SHConfig,
+    request,
 ) -> None:
     aggregation = SentinelHubStatistical.aggregation(
         evalscript=evalscript,
@@ -108,7 +138,12 @@ def test_statistical_api(
     input_data = SentinelHubStatistical.input_data(data_collection, **data_filters)
 
     stats = SentinelHubStatistical(
-        aggregation=aggregation, calculations=calculations, input_data=[input_data], bbox=bbox, geometry=geometry
+        aggregation=aggregation,
+        calculations=calculations,
+        input_data=[input_data],
+        bbox=bbox,
+        geometry=geometry,
+        config=request.getfixturevalue(config),
     )
     res = stats.get_data()[0]
 

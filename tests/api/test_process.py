@@ -29,7 +29,11 @@ from sentinelhub.testing_utils import assert_statistics_match
 pytestmark = pytest.mark.sh_integration
 
 
-def test_single_jpg() -> None:
+@pytest.mark.parametrize(
+    "config",
+    ["sh_config", "cdse_config"],
+)
+def test_single_jpg(config: SHConfig, request) -> None:
     """Test downloading three bands of L1C"""
     evalscript = """
         //VERSION=3
@@ -63,6 +67,7 @@ def test_single_jpg() -> None:
         responses=[SentinelHubRequest.output_response("default", MimeType.JPG)],
         bbox=BBox(bbox=[46.16, -16.15, 46.51, -15.58], crs=CRS.WGS84),
         size=(512, 856),
+        config=request.getfixturevalue(config),
     )
 
     img = request.get_data(max_threads=3)[0]
