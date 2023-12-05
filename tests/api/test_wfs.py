@@ -10,9 +10,7 @@ from typing import Any
 import pytest
 from shapely.geometry import MultiPolygon
 
-from sentinelhub import CRS, BBox, DataCollection, WebFeatureService
-
-pytestmark = pytest.mark.sh_integration
+from sentinelhub import CRS, BBox, DataCollection, SHConfig, WebFeatureService
 
 
 @pytest.mark.parametrize(
@@ -33,8 +31,9 @@ pytestmark = pytest.mark.sh_integration
         ),
     ],
 )
-def test_wfs(args: list, kwargs: dict[str, Any], expected_len: int) -> None:
-    iterator = WebFeatureService(*args, **kwargs)
+@pytest.mark.parametrize("config", ["sh_config", "cdse_config"])
+def test_wfs(args: list, kwargs: dict[str, Any], config: SHConfig, expected_len: int, request) -> None:
+    iterator = WebFeatureService(config=request.getfixturevalue(config), *args, **kwargs)
     features = list(iterator)
     dates = iterator.get_dates()
     geometries = iterator.get_geometries()

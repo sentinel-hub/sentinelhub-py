@@ -53,13 +53,12 @@ BBOX = BBox((460750.0, 5092550.0, 461250.0, 5093050.0), crs=CRS.UTM_33N)
 GEOMETRY = Geometry(BBOX.geometry, crs=BBOX.crs)
 
 
-@pytest.mark.sh_integration()
 @pytest.mark.parametrize(
     argnames=(
         "evalscript, bbox, geometry, time_interval, resolution, aggregation_interval, data_collection, "
-        "data_filters, calculations, results, config"
+        "data_filters, calculations, results"
     ),
-    ids=["sh_bbox", "sh_geometry_no_calculations", "cdse_bbox", "cdse_geometry_no_calculations"],
+    ids=["bbox", "geometry_no_calculations"],
     argvalues=[
         (
             EVALSCRIPT,
@@ -72,7 +71,6 @@ GEOMETRY = Geometry(BBOX.geometry, crs=BBOX.crs)
             {"maxcc": 1},
             CALCULATIONS,
             {"n_aggregations": 1, "n_indices": 2, "n_bands": {"index": 1, "bands": 2}},
-            "sh_config",
         ),
         (
             EVALSCRIPT,
@@ -85,36 +83,10 @@ GEOMETRY = Geometry(BBOX.geometry, crs=BBOX.crs)
             {},
             None,
             {"n_aggregations": 1, "n_indices": 2, "n_bands": {"index": 1, "bands": 2}},
-            "sh_config",
-        ),
-        (
-            EVALSCRIPT,
-            BBOX,
-            None,
-            ("2021-04-01", "2021-04-10"),
-            (10, 10),
-            "P1D",
-            DataCollection.SENTINEL2_L1C,
-            {"maxcc": 1},
-            CALCULATIONS,
-            {"n_aggregations": 1, "n_indices": 2, "n_bands": {"index": 1, "bands": 2}},
-            "cdse_config",
-        ),
-        (
-            EVALSCRIPT,
-            None,
-            GEOMETRY,
-            ("2021-04-01", "2021-04-10"),
-            (10, 10),
-            "P1D",
-            DataCollection.SENTINEL2_L2A,
-            {},
-            None,
-            {"n_aggregations": 1, "n_indices": 2, "n_bands": {"index": 1, "bands": 2}},
-            "cdse_config",
         ),
     ],
 )
+@pytest.mark.parametrize("config", ["sh_config", "cdse_config"])
 def test_statistical_api(
     evalscript: str,
     bbox: BBox | None,

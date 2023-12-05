@@ -6,14 +6,14 @@ Interface of
 from __future__ import annotations
 
 import datetime as dt
-from typing import Iterable
+from typing import Iterable, Union
 from urllib.parse import urlencode
 
 import shapely.geometry
 
 from ..base import FeatureIterator
 from ..config import SHConfig
-from ..constants import CRS, MimeType, ServiceType, SHConstants
+from ..constants import CRS, MimeType, ServiceType, ServiceUrl, SHConstants
 from ..data_collections import DataCollection
 from ..download import SentinelHubDownloadClient
 from ..geometry import BBox
@@ -77,8 +77,9 @@ class WebFeatureService(FeatureIterator[JsonDict]):
     def _build_service_url(self) -> str:
         """Creates a base URL for WFS service"""
         base_url = f"{self.config.sh_base_url}/ogc"
+        cdse_base_url = f"{ServiceUrl.CDSE}/ogc"
 
-        if self.data_collection.service_url:
+        if base_url != cdse_base_url and self.data_collection.service_url:
             base_url = base_url.replace(self.config.sh_base_url, self.data_collection.service_url)
 
         return f"{base_url}/{ServiceType.WFS.value}/{self.config.instance_id}"
@@ -143,22 +144,34 @@ class WebFeatureService(FeatureIterator[JsonDict]):
         """
         return [shapely.geometry.shape(tile_info["geometry"]) for tile_info in self]
 
-    def get_tiles(self) -> list[tuple[str, str, int]]:
+    def get_tiles(self) -> list[Union[tuple[str, str, int], tuple[str, str]]]:
         """Returns list of tiles with tile name, date and AWS index
 
         :return: List of tiles in form of (tile_name, date, aws_index)
         """
-        return [self._parse_tile_url(tile_info["properties"]["path"]) for tile_info in self]
+        if self.url.startswith(ServiceUrl.CDSE):
+            return [self._parse_creo_tile_url(tile_info["properties"]["path"]) for tile_info in self]
+        return [self._parse_aws_tile_url(tile_info["properties"]["path"]) for tile_info in self]
 
     @staticmethod
-    def _parse_tile_url(tile_url: str) -> tuple[str, str, int]:
+    def _parse_aws_tile_url(tile_url: str) -> tuple[str, str, int]:
         """Extracts tile name, data and AWS index from tile URL
 
         :param tile_url: Location of tile at AWS
         :return: Tuple in a form (tile_name, date, aws_index)
         """
-        props = tile_url.rsplit("/", 7)
-        return "".join(props[1:4]), "-".join(props[4:7]), int(props[7])
+        props = tile_url.removeprefix("s3://").split("/")
+        return "".join(props[2:5]), "-".join(props[5:8]), int(props[8])
+
+    @staticmethod
+    def _parse_creo_tile_url(tile_url: str) -> tuple[str, str]:
+        """Extracts tile name, data and AWS index from tile URL
+
+        :param tile_url: Location of tile at AWS
+        :return: Tuple in a form (tile_name, date)
+        """
+        props = tile_url.removeprefix("creo://").split("/")
+        return props[7].split("_")[5][1:], "-".join(props[4:7])
 
     def _sentinel1_product_check(self, tile_info: JsonDict) -> bool:
         """Checks if Sentinel-1 tile info match the data collection definition"""

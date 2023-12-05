@@ -4,10 +4,10 @@
 from __future__ import annotations
 
 import json
-from typing import Any
+from typing import Any, Union
 
 import pytest
-from oauthlib.oauth2.rfc6749.errors import CustomOAuth2Error
+from oauthlib.oauth2.rfc6749.errors import CustomOAuth2Error, InvalidClientError
 from shapely.geometry import Polygon
 
 from sentinelhub import (
@@ -25,8 +25,6 @@ from sentinelhub import (
 )
 from sentinelhub.api.base_request import InputDataDict
 from sentinelhub.testing_utils import assert_statistics_match
-
-pytestmark = pytest.mark.sh_integration
 
 
 @pytest.mark.parametrize(
@@ -84,7 +82,11 @@ def test_single_jpg(config: SHConfig, request) -> None:
     )
 
 
-def test_other_args(config: SHConfig, output_folder: str) -> None:
+@pytest.mark.parametrize(
+    "config",
+    ["sh_config", "cdse_config"],
+)
+def test_other_args(config: SHConfig, output_folder: str, request) -> None:
     """Test downloading three bands of L1C"""
     evalscript = """
         //VERSION=3
@@ -117,7 +119,7 @@ def test_other_args(config: SHConfig, output_folder: str) -> None:
         responses=[SentinelHubRequest.output_response("default", "tiff")],
         bbox=BBox(bbox=[46.16, -16.15, 46.51, -15.58], crs=CRS.WGS84),
         size=(512, 856),
-        config=config,
+        config=request.getfixturevalue(config),
         data_folder=output_folder,
     )
 
@@ -135,7 +137,11 @@ def test_other_args(config: SHConfig, output_folder: str) -> None:
     )
 
 
-def test_preview_mode() -> None:
+@pytest.mark.parametrize(
+    "config",
+    ["sh_config", "cdse_config"],
+)
+def test_preview_mode(config: SHConfig, request) -> None:
     """Test downloading three bands of L1C"""
     evalscript = """
         //VERSION=3
@@ -171,6 +177,7 @@ def test_preview_mode() -> None:
         responses=[SentinelHubRequest.output_response("default", MimeType.TIFF)],
         bbox=BBox(bbox=[1155360.393335921, 5285081.168940068, 1156965.063795706, 5286609.808304847], crs=CRS.POP_WEB),
         resolution=(260.0, 260.0),
+        config=request.getfixturevalue(config),
     )
 
     img = request.get_data(max_threads=3)[0]
@@ -187,7 +194,11 @@ def test_preview_mode() -> None:
     )
 
 
-def test_resolution_parameter() -> None:
+@pytest.mark.parametrize(
+    "config",
+    ["sh_config", "cdse_config"],
+)
+def test_resolution_parameter(config: SHConfig, request) -> None:
     """Test downloading three bands of L1C"""
     evalscript = """
         //VERSION=3
@@ -222,6 +233,7 @@ def test_resolution_parameter() -> None:
         responses=[SentinelHubRequest.output_response("default", MimeType.TIFF)],
         bbox=BBox(bbox=[1155360.393335921, 5285081.168940068, 1156965.063795706, 5286609.808304847], crs=CRS.POP_WEB),
         resolution=(10.0, 10.0),
+        config=request.getfixturevalue(config),
     )
 
     img = request.get_data(max_threads=3)[0]
@@ -238,7 +250,11 @@ def test_resolution_parameter() -> None:
     )
 
 
-def test_multipart_tar() -> None:
+@pytest.mark.parametrize(
+    "config",
+    ["sh_config", "cdse_config"],
+)
+def test_multipart_tar(config: SHConfig, request) -> None:
     """Test downloading multiple outputs, packed into a TAR file"""
     evalscript = """
         //VERSION=3
@@ -280,6 +296,7 @@ def test_multipart_tar() -> None:
         ],
         bbox=BBox(bbox=[46.16, -16.15, 46.51, -15.58], crs=CRS.WGS84),
         size=(512, 856),
+        config=request.getfixturevalue(config),
     )
 
     tar = request.get_data(max_threads=3)[0]
@@ -306,7 +323,11 @@ def test_multipart_tar() -> None:
     assert json_data["norm_factor"] == 0.0001
 
 
-def test_multipart_geometry() -> None:
+@pytest.mark.parametrize(
+    "config",
+    ["sh_config", "cdse_config"],
+)
+def test_multipart_geometry(config: SHConfig, request) -> None:
     evalscript = """
         //VERSION=3
 
@@ -421,7 +442,7 @@ def test_multipart_geometry() -> None:
         input_data=[
             SentinelHubRequest.input_data(
                 data_collection=DataCollection.SENTINEL2_L1C,
-                time_interval=("2017-11-15T07:12:03", "2017-12-15T07:12:04"),
+                time_interval=("2017-12-12T08:23:24", "2017-12-12T08:23:29"),
             )
         ],
         responses=[
@@ -430,6 +451,7 @@ def test_multipart_geometry() -> None:
         ],
         geometry=geo,
         size=size,
+        config=request.getfixturevalue(config),
     )
 
     tar = request.get_data(max_threads=3)[0]
@@ -455,7 +477,11 @@ def test_multipart_geometry() -> None:
     assert json_data["rgb_ratios"] == pytest.approx(expected_ratios)
 
 
-def test_bad_credentials() -> None:
+@pytest.mark.parametrize(
+    "config, err_cls",
+    [("sh_config", CustomOAuth2Error), ("cdse_config", InvalidClientError)],
+)
+def test_bad_credentials(config: SHConfig, err_cls: Union[CustomOAuth2Error, InvalidClientError], request) -> None:
     evalscript = """
                 //VERSION=3
 
@@ -484,11 +510,11 @@ def test_bad_credentials() -> None:
         size=(512, 856),
     )
 
-    bad_credentials_config = SHConfig()
+    bad_credentials_config = request.getfixturevalue(config)
     bad_credentials_config.sh_client_id = "test"
 
     request = SentinelHubRequest(**request_params, config=bad_credentials_config)
-    with pytest.raises(CustomOAuth2Error):
+    with pytest.raises(err_cls):
         request.get_data()
 
     missing_credentials_config = SHConfig()
@@ -499,81 +525,160 @@ def test_bad_credentials() -> None:
         request.get_data()
 
 
-def test_data_fusion(config: SHConfig) -> None:
-    evalscript = """
-    //VERSION=3
-    function setup() {
-      return {
-        input: [{
-            datasource: "ls8",
-            bands: ["B02", "B03", "B04", "B05", "B08"]
-          },
-          {
-            datasource: "l2a",
-            bands: ["B02", "B03", "B04", "B08", "B11"]
-          }
-        ],
-        output: [{
-          bands: 3
-        }]
-      }
+AWS_FUSION_EVALSCRIPT = """
+//VERSION=3
+function setup() {
+    return {
+    input: [{
+        datasource: "ls8",
+        bands: ["B02", "B03", "B04", "B05", "B08"]
+        },
+        {
+        datasource: "l2a",
+        bands: ["B02", "B03", "B04", "B08", "B11"]
+        }
+    ],
+    output: [{
+        bands: 3
+    }]
     }
-    let minVal = 0.0
-    let maxVal = 0.4
-    let viz = new DefaultVisualizer(minVal, maxVal)
+}
+let minVal = 0.0
+let maxVal = 0.4
+let viz = new DefaultVisualizer(minVal, maxVal)
 
-    function evaluatePixel(samples, inputData, inputMetadata, customData, outputMetadata) {
-      var sample = samples.ls8[0]
-      var sample2 = samples.l2a[0]
-      // Use weighted arithmetic average of S2.B02 - S2.B04 for pan-sharpening
-      let sudoPanW3 = (sample.B04 + sample.B03 + sample.B02) / 3
-      let s2PanR3 = (sample2.B04 + sample2.B03 + sample2.B02) / 3
-      let s2ratioWR3 = s2PanR3 / sudoPanW3
-      let val = [sample.B04 * s2ratioWR3, sample.B03 * s2ratioWR3, sample.B02 * s2ratioWR3]
-      return viz.processList(val)
-    }
-    """
-    config.sh_base_url = ServiceUrl.MAIN
+function evaluatePixel(samples, inputData, inputMetadata, customData, outputMetadata) {
+    var sample = samples.ls8[0]
+    var sample2 = samples.l2a[0]
+    // Use weighted arithmetic average of S2.B02 - S2.B04 for pan-sharpening
+    let sudoPanW3 = (sample.B04 + sample.B03 + sample.B02) / 3
+    let s2PanR3 = (sample2.B04 + sample2.B03 + sample2.B02) / 3
+    let s2ratioWR3 = s2PanR3 / sudoPanW3
+    let val = [sample.B04 * s2ratioWR3, sample.B03 * s2ratioWR3, sample.B02 * s2ratioWR3]
+    return viz.processList(val)
+}
+"""
+CREO_FUSION_EVALSCRIPT = """
+function setup() {
+  return {
+    input: [{
+        datasource: "s2l1c",
+        bands: ["B02", "B03", "B04"]
+      }, {
+        datasource: "s3olci",
+        bands: ["B04", "B06", "B08"]
+      }
+    ],
+    output: [{
+      bands: 3
+    }]
+  }
+}
+
+function evaluatePixel(samples, inputData, inputMetadata, customData, outputMetadata) {
+  let s3 = samples.s3olci[0]
+  let s2 = samples.s2l1c[0]
+  let amount_s2 = 0.5
+  let gain = 3.00
+  return [
+    gain * (s3.B08 * (1 - amount_s2) + s2.B04 * amount_s2),
+    gain * (s3.B06 * (1 - amount_s2) + s2.B03 * amount_s2),
+    gain * (s3.B04 * (1 - amount_s2) + s2.B02 * amount_s2)
+  ]
+}
+"""
+
+
+@pytest.mark.parametrize(
+    argnames=(
+        "evalscript, data_collection_1, data_collection_2, identifier_1, identifier_2, "
+        "time_interval, config, expected_stats"
+    ),
+    ids=["sh", "cdse"],
+    argvalues=[
+        (
+            AWS_FUSION_EVALSCRIPT,
+            DataCollection.LANDSAT_OT_L1,
+            DataCollection.SENTINEL2_L2A,
+            "ls8",
+            "l2a",
+            ("2020-05-21", "2020-05-23"),
+            "sh_config",
+            dict(
+                exp_shape=(100, 100, 3),
+                exp_min=23,
+                exp_max=255,
+                exp_mean=98.128,
+                exp_median=92,
+                exp_std=37.487,
+                rel_delta=1e-4,
+            ),
+        ),
+        (
+            CREO_FUSION_EVALSCRIPT,
+            DataCollection.SENTINEL3_OLCI,
+            DataCollection.SENTINEL2_L1C,
+            "s3olci",
+            "s2l1c",
+            ("2020-05-22", "2020-05-22"),
+            "cdse_config",
+            dict(
+                exp_shape=(100, 100, 3),
+                exp_min=82,
+                exp_max=223,
+                exp_mean=121.668,
+                exp_median=118,
+                exp_std=19.003,
+                rel_delta=1e-4,
+            ),
+        ),
+    ],
+)
+def test_data_fusion(
+    evalscript: str,
+    data_collection_1: DataCollection,
+    data_collection_2: DataCollection,
+    identifier_1: str,
+    identifier_2: str,
+    time_interval: tuple[str, str],
+    config: SHConfig,
+    expected_stats: dict[str, float],
+    request,
+) -> None:
+    fusion_config = request.getfixturevalue(config)
+    if fusion_config.sh_base_url != ServiceUrl.CDSE:
+        fusion_config.sh_base_url = ServiceUrl.MAIN
     request = SentinelHubRequest(
         evalscript=evalscript,
         input_data=[
             SentinelHubRequest.input_data(
-                data_collection=DataCollection.LANDSAT_OT_L1,
-                identifier="ls8",
-                time_interval=("2020-05-21", "2020-05-23"),
+                data_collection=data_collection_1,
+                identifier=identifier_1,
+                time_interval=time_interval,
             ),
             SentinelHubRequest.input_data(
-                data_collection=DataCollection.SENTINEL2_L2A,
-                identifier="l2a",
-                time_interval=("2020-05-21", "2020-05-23"),
+                data_collection=data_collection_2,
+                identifier=identifier_2,
+                time_interval=time_interval,
             ),
         ],
         responses=[SentinelHubRequest.output_response("default", MimeType.TIFF)],
         bbox=BBox((2.195, 41.395, 2.20, 41.40), CRS.WGS84),
         size=(100, 100),
-        config=config,
+        config=fusion_config,
     )
     image = request.get_data()[0]
 
-    assert_statistics_match(
-        image,
-        exp_shape=(100, 100, 3),
-        exp_min=23,
-        exp_max=255,
-        exp_mean=98.128,
-        exp_median=92,
-        exp_std=37.487,
-        rel_delta=1e-4,
-    )
+    assert_statistics_match(image, **expected_stats)
 
-    assert request.download_list[0].url == f"{ServiceUrl.MAIN}/api/v1/process"
+    assert request.download_list[0].url == f"{fusion_config.sh_base_url}/api/v1/process"
 
 
-def test_conflicting_service_url_restrictions(config: SHConfig) -> None:
+def test_conflicting_service_url_restrictions(sh_config: SHConfig) -> None:
     """This data fusion attempt is expected to raise an error because config URL is not one of the URLs of data
     collections.
     """
-    config.sh_base_url = ServiceUrl.MAIN
+    sh_config.sh_base_url = ServiceUrl.MAIN
     request_params: dict[str, Any] = dict(
         evalscript="",
         input_data=[
@@ -583,14 +688,18 @@ def test_conflicting_service_url_restrictions(config: SHConfig) -> None:
         responses=[SentinelHubRequest.output_response("default", "tiff")],
         bbox=BBox(bbox=[46.16, -16.15, 46.51, -15.58], crs=CRS.WGS84),
         size=(512, 856),
-        config=config,
+        config=sh_config,
     )
 
     with pytest.raises(ValueError):
         SentinelHubRequest(**request_params)
 
 
-def test_bbox_geometry() -> None:
+@pytest.mark.parametrize(
+    "config",
+    ["sh_config", "cdse_config"],
+)
+def test_bbox_geometry(config: SHConfig, request) -> None:
     """Test intersection between bbox and geometry"""
     evalscript = """
         //VERSION=3
@@ -630,6 +739,7 @@ def test_bbox_geometry() -> None:
         geometry=geometry,
         bbox=bbox_translated,
         size=(512, 856),
+        config=request.getfixturevalue(config),
     )
 
     img = request.get_data(max_threads=3)[0]
