@@ -25,7 +25,7 @@ from .utils import datetime_config, remove_undefined
 class SentinelHubService(metaclass=ABCMeta):
     """A base class for classes interacting with different Sentinel Hub APIs"""
 
-    _DEFAULT_RETRY_TIME = 0
+    _DEFAULT_RETRY_TIME = 30
 
     def __init__(self, config: Optional[SHConfig] = None):
         """

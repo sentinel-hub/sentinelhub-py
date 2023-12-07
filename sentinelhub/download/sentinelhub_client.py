@@ -34,7 +34,7 @@ class SentinelHubDownloadClient(DownloadClient):
     _CACHED_SESSIONS: ClassVar[dict[tuple[str, str], SentinelHubSession]] = {}
     _UNIVERSAL_CACHE_KEY = "universal-user", "default-url"
 
-    def __init__(self, *, session: SentinelHubSession | None = None, default_retry_time: float = 0, **kwargs: Any):
+    def __init__(self, *, session: SentinelHubSession | None = None, default_retry_time: float = 30, **kwargs: Any):
         """
         :param session: If a session object is provided here then this client instance will always use only the
             provided session. Otherwise, it will either use a cached session or create a new session and cache
