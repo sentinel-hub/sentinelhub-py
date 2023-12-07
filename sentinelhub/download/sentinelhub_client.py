@@ -39,8 +39,8 @@ class SentinelHubDownloadClient(DownloadClient):
         :param session: If a session object is provided here then this client instance will always use only the
             provided session. Otherwise, it will either use a cached session or create a new session and cache
             it.
-        :param default_retry_time: The default waiting time when retrying after getting a TOO_MANY_REQUESTS response
-            without appropriate retry headers.
+        :param default_retry_time: The default waiting time (in seconds) when retrying after getting a TOO_MANY_REQUESTS
+            response without appropriate retry headers.
         :param kwargs: Optional parameters from DownloadClient
         """
         super().__init__(**kwargs)
@@ -51,7 +51,7 @@ class SentinelHubDownloadClient(DownloadClient):
                 f"{session} was given"
             )
         self.session = session
-        self.default_retry_time = default_retry_time
+        self.default_retry_time = default_retry_time * 1000  # rescale to milliseconds
 
         self.rate_limit = SentinelHubRateLimit(num_processes=self.config.number_of_download_processes)
         self.lock: Lock | None = None
