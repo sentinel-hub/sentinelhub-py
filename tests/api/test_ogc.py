@@ -16,13 +16,12 @@ from sentinelhub import (
     MimeType,
     ResamplingType,
     ServiceType,
+    SHConfig,
     WcsRequest,
     WmsRequest,
 )
 from sentinelhub.api.ogc import OgcImageService, OgcRequest
 from sentinelhub.testing_utils import assert_statistics_match
-
-pytestmark = pytest.mark.sh_integration
 
 
 @dataclass
@@ -41,8 +40,8 @@ class OgcTestCase:
     date_check: datetime.datetime | None = None
     save_data: bool = False
 
-    def initialize_request(self, output_folder: str) -> OgcRequest:
-        return self.constructor(**self.kwargs, data_folder=output_folder)
+    def initialize_request(self, output_folder: str, config: SHConfig) -> OgcRequest:
+        return self.constructor(**self.kwargs, data_folder=output_folder, config=config)
 
     def collect_data(self, request: OgcRequest) -> list:
         if self.save_data:
@@ -469,9 +468,10 @@ TEST_CASES = [
 
 
 @pytest.mark.parametrize("test_case", TEST_CASES)
-def test_ogc(test_case: OgcTestCase, output_folder: str) -> None:
+@pytest.mark.parametrize("config", ["sh_config", "cdse_config"])
+def test_ogc(test_case: OgcTestCase, output_folder: str, config: SHConfig, request) -> None:
     # Run data collection
-    request = test_case.initialize_request(output_folder)
+    request = test_case.initialize_request(output_folder, config=request.getfixturevalue(config))
     data = test_case.collect_data(request)
 
     assert isinstance(data, list)

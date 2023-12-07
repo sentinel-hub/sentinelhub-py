@@ -14,7 +14,7 @@ from urllib.parse import urlencode
 
 from ..base import DataRequest
 from ..config import SHConfig
-from ..constants import CRS, MimeType, ResamplingType, ServiceType
+from ..constants import CRS, MimeType, ResamplingType, ServiceType, ServiceUrl
 from ..data_collections import DataCollection
 from ..download import DownloadRequest, SentinelHubDownloadClient
 from ..geo_utils import get_image_dimension
@@ -379,7 +379,7 @@ class OgcImageService:
         """
         url = f"{self._base_url}/{request.service_type.value}"  # type: ignore[union-attr]
 
-        if hasattr(request, "data_collection") and request.data_collection.service_url:
+        if not self._base_url.startswith(ServiceUrl.CDSE) and hasattr(request, "data_collection") and request.data_collection.service_url:
             url = url.replace(self.config.sh_base_url, request.data_collection.service_url)
 
         return url

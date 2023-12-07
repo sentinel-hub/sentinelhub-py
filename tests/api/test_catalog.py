@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import datetime as dt
 from functools import partial
+from typing import List
 
 import dateutil.tz
 import numpy as np
@@ -13,66 +14,89 @@ import pytest
 
 from sentinelhub import CRS, BBox, DataCollection, Geometry, SentinelHubCatalog, SHConfig, parse_time
 from sentinelhub.api.catalog import CatalogSearchIterator, get_available_timestamps
+from sentinelhub.constants import ServiceUrl
+
 
 TEST_BBOX = BBox((46.16, -16.15, 46.51, -15.58), CRS.WGS84)
 
-pytestmark = pytest.mark.sh_integration
+
+@pytest.fixture(name="sh_catalog")
+def sh_catalog_fixture(request) -> SentinelHubCatalog:
+    return SentinelHubCatalog(config=request.getfixturevalue("sh_config"))
 
 
-@pytest.fixture(name="catalog")
-def catalog_fixture(config: SHConfig) -> SentinelHubCatalog:
-    return SentinelHubCatalog(config=config)
+@pytest.fixture(name="cdse_catalog")
+def cdse_catalog_fixture(request) -> SentinelHubCatalog:
+    return SentinelHubCatalog(config=request.getfixturevalue("cdse_config"))
 
 
 @pytest.mark.parametrize(
-    "data_collection", [DataCollection.SENTINEL2_L2A, DataCollection.LANDSAT_TM_L1, DataCollection.SENTINEL3_OLCI]
+    "config, data_collection, doc_href",
+    [
+        ("sh_config", DataCollection.SENTINEL2_L2A,"https://docs.sentinel-hub.com"),
+        ("sh_config", DataCollection.LANDSAT_TM_L1, "https://docs.sentinel-hub.com"),
+        ("sh_config", DataCollection.SENTINEL3_OLCI, "https://docs.sentinel-hub.com"),
+        ("cdse_config", DataCollection.SENTINEL2_L2A, "https://documentation.dataspace.copernicus.eu"),
+    ]
 )
-def test_info_with_different_deployments(config: SHConfig, data_collection: DataCollection) -> None:
+def test_info_with_different_deployments(config: SHConfig, data_collection: List[DataCollection], doc_href: str, request) -> None:
     """Test if basic interaction works with different data collections on different deployments"""
-    config.sh_base_url = data_collection.service_url or config.sh_base_url
+    config = request.getfixturevalue(config)
+    if config.sh_base_url != ServiceUrl.CDSE:
+        config.sh_base_url = data_collection.service_url or config.sh_base_url
     catalog = SentinelHubCatalog(config=config)
     info = catalog.get_info()
 
     assert isinstance(info, dict)
     for link in info["links"]:
-        assert link["href"].startswith(config.sh_base_url) or link["href"].startswith("https://docs.sentinel-hub.com")
+        assert link["href"].startswith(config.sh_base_url) or link["href"].startswith(doc_href)
 
 
-def test_conformance(catalog: SentinelHubCatalog) -> None:
+@pytest.mark.parametrize("catalog", ["sh_catalog", "cdse_catalog"])
+def test_conformance(catalog: SentinelHubCatalog, request) -> None:
     """Test conformance endpoint"""
-    conformance = catalog.get_conformance()
+    conformance = request.getfixturevalue(catalog).get_conformance()
     assert isinstance(conformance, dict)
 
 
-def test_get_collections(catalog: SentinelHubCatalog) -> None:
+@pytest.mark.parametrize("catalog", ["sh_catalog", "cdse_catalog"])
+def test_get_collections(catalog: SentinelHubCatalog, request) -> None:
     """Tests collections endpoint"""
-    collections = catalog.get_collections()
+    collections = request.getfixturevalue(catalog).get_collections()
 
     assert isinstance(collections, list)
     assert len(collections) >= 3
 
 
 @pytest.mark.parametrize("collection_input", ["sentinel-2-l1c", DataCollection.SENTINEL1_IW])
-def test_get_collection(catalog: SentinelHubCatalog, collection_input: DataCollection | str) -> None:
+@pytest.mark.parametrize("catalog", ["sh_catalog", "cdse_catalog"])
+def test_get_collection(catalog: SentinelHubCatalog, collection_input: DataCollection | str, request) -> None:
     """Test endpoint for a single collection info"""
-    collection_info = catalog.get_collection(collection_input)
+    collection_info = request.getfixturevalue(catalog).get_collection(collection_input)
     assert isinstance(collection_info, dict)
 
 
-def test_get_feature(catalog: SentinelHubCatalog) -> None:
+@pytest.mark.parametrize(
+    "catalog, feature_id",
+    [
+        ("sh_catalog", "S2A_MSIL2A_20231206T100401_N0509_R122_T33TTG_20231206T123051"),
+        ("cdse_catalog", "S2A_MSIL2A_20231206T100401_N0509_R122_T33TTG_20231206T123051.SAFE")
+    ]
+)
+def test_get_feature(catalog: SentinelHubCatalog, feature_id: str, request) -> None:
     """Test endpoint for a single feature info"""
-    feature_id = "S2B_MSIL2A_20200318T120639_N0214_R080_T24FWD_20200318T135608"
-    feature_info = catalog.get_feature(DataCollection.SENTINEL2_L2A, feature_id)
+    feature_info = request.getfixturevalue(catalog).get_feature(DataCollection.SENTINEL2_L2A, feature_id)
 
     assert isinstance(feature_info, dict)
     assert feature_info["id"] == feature_id
 
 
-def test_search_bbox(catalog: SentinelHubCatalog) -> None:
+@pytest.mark.parametrize("catalog", ["sh_catalog", "cdse_catalog"])
+def test_search_bbox(catalog: SentinelHubCatalog, request) -> None:
     """Tests search with bounding box"""
     time_interval = "2021-01-01T00:00:00", "2021-01-15T00:00:10"
 
-    search_iterator = catalog.search(
+    search_iterator = request.getfixturevalue(catalog).search(
         collection=DataCollection.SENTINEL2_L1C,
         time=time_interval,
         bbox=TEST_BBOX.transform(CRS.POP_WEB),
@@ -86,7 +110,14 @@ def test_search_bbox(catalog: SentinelHubCatalog) -> None:
         assert time_interval[0] <= result["properties"]["datetime"] <= time_interval[1]
 
 
-def test_search_filter(catalog: SentinelHubCatalog) -> None:
+@pytest.mark.parametrize(
+    "catalog, exp_unbounded_len, exp_filtered_len",
+    [
+        ("sh_catalog", 6, 4),
+        ("cdse_catalog", 6, 2)
+    ]
+)
+def test_search_filter(catalog: SentinelHubCatalog, exp_unbounded_len: int, exp_filtered_len: int, request) -> None:
     time_interval = "2021-01-01T00:00:00", "2021-01-31T00:00:10"
     min_cc, max_cc = 10, 20
     common_kwargs = dict(
@@ -95,9 +126,9 @@ def test_search_filter(catalog: SentinelHubCatalog) -> None:
         bbox=TEST_BBOX.transform(CRS.POP_WEB),
         limit=2,
     )
-
+    catalog = request.getfixturevalue(catalog)
     unbounded_search_iterator = catalog.search(**common_kwargs)
-    assert len(list(unbounded_search_iterator)) == 6
+    assert len(list(unbounded_search_iterator)) == exp_unbounded_len
 
     text_filter_iterator = catalog.search(
         filter=f"eo:cloud_cover>{min_cc} AND eo:cloud_cover<{max_cc}",
@@ -105,7 +136,7 @@ def test_search_filter(catalog: SentinelHubCatalog) -> None:
     )
     text_filtered = list(text_filter_iterator)
 
-    assert len(text_filtered) == 4
+    assert len(text_filtered) == exp_filtered_len
     assert all(min_cc < result["properties"]["eo:cloud_cover"] < max_cc for result in text_filtered)
 
     json_filter_iterator = catalog.search(
@@ -123,11 +154,26 @@ def test_search_filter(catalog: SentinelHubCatalog) -> None:
     assert text_filtered == list(json_filter_iterator)
 
 
-def test_search_geometry_and_iterator_methods(catalog: SentinelHubCatalog) -> None:
+@pytest.mark.parametrize(
+    "catalog, id, timestamp",
+    [
+        (
+            "sh_catalog",
+            "S2A_MSIL1C_20210103T071211_N0209_R020_T38LPH_20210103T083459",
+            dt.datetime(2021, 1, 3, 7, 14, 7, tzinfo=dateutil.tz.tzutc())
+        ),
+        (
+            "cdse_catalog",
+            "S2A_MSIL1C_20210103T071211_N0500_R020_T38LPH_20230228T175137.SAFE",
+            dt.datetime(2021, 1, 3, 7, 14, 7, 540000, tzinfo=dateutil.tz.tzutc())
+        ,)
+    ]
+)
+def test_search_geometry_and_iterator_methods(catalog: SentinelHubCatalog, id: str, timestamp: dt.datetime, request) -> None:
     """Tests search with a geometry and test methods of CatalogSearchIterator"""
     search_geometry = Geometry(TEST_BBOX.geometry, crs=TEST_BBOX.crs)
 
-    search_iterator = catalog.search(
+    search_iterator = request.getfixturevalue(catalog).search(
         collection=DataCollection.SENTINEL2_L1C,
         time=("2021-01-01", "2021-01-5"),
         geometry=search_geometry,
@@ -136,8 +182,8 @@ def test_search_geometry_and_iterator_methods(catalog: SentinelHubCatalog) -> No
     results = list(search_iterator)
 
     assert len(results) == 1
-    assert search_iterator.get_timestamps() == [dt.datetime(2021, 1, 3, 7, 14, 7, tzinfo=dateutil.tz.tzutc())]
-    assert search_iterator.get_ids() == ["S2A_MSIL1C_20210103T071211_N0209_R020_T38LPH_20210103T083459"]
+    assert search_iterator.get_timestamps() == [timestamp]
+    assert search_iterator.get_ids() == [id]
 
     geometries = search_iterator.get_geometries()
     assert len(geometries) == 1
