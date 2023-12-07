@@ -25,6 +25,8 @@ from .utils import datetime_config, remove_undefined
 class SentinelHubService(metaclass=ABCMeta):
     """A base class for classes interacting with different Sentinel Hub APIs"""
 
+    _DEFAULT_RETRY_TIME = 0
+
     def __init__(self, config: Optional[SHConfig] = None):
         """
         :param config: A configuration object with required parameters `sh_client_id`, `sh_client_secret`, and
@@ -36,7 +38,7 @@ class SentinelHubService(metaclass=ABCMeta):
         base_url = self.config.sh_base_url.rstrip("/")
         self.service_url = self._get_service_url(base_url)
 
-        self.client = SentinelHubDownloadClient(config=self.config)
+        self.client = SentinelHubDownloadClient(config=self.config, default_retry_time=self._DEFAULT_RETRY_TIME)
 
     @staticmethod
     @abstractmethod
