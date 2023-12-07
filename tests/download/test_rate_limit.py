@@ -185,7 +185,7 @@ def run_interaction(
             rate_limit_hits += 1
             logger.info("Process %d: rate limit hit %s", index, response_headers)
 
-        rate_limit.update(response_headers)
+        rate_limit.update(response_headers, default=0)
 
     return rate_limit_hits
 

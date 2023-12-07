@@ -34,11 +34,13 @@ class SentinelHubDownloadClient(DownloadClient):
     _CACHED_SESSIONS: ClassVar[dict[tuple[str, str], SentinelHubSession]] = {}
     _UNIVERSAL_CACHE_KEY = "universal-user", "default-url"
 
-    def __init__(self, *, session: SentinelHubSession | None = None, **kwargs: Any):
+    def __init__(self, *, session: SentinelHubSession | None = None, default_retry_time: float = 30, **kwargs: Any):
         """
         :param session: If a session object is provided here then this client instance will always use only the
             provided session. Otherwise, it will either use a cached session or create a new session and cache
             it.
+        :param default_retry_time: The default waiting time when retrying after getting a TOO_MANY_REQUESTS response
+            without appropriate retry headers.
         :param kwargs: Optional parameters from DownloadClient
         """
         super().__init__(**kwargs)
@@ -49,6 +51,7 @@ class SentinelHubDownloadClient(DownloadClient):
                 f"{session} was given"
             )
         self.session = session
+        self.default_retry_time = default_retry_time
 
         self.rate_limit = SentinelHubRateLimit(num_processes=self.config.number_of_download_processes)
         self.lock: Lock | None = None
@@ -84,10 +87,9 @@ class SentinelHubDownloadClient(DownloadClient):
                 )
                 response = self._do_download(request)
 
-                self._execute_thread_safe(self.rate_limit.update, response.headers)
-
                 if response.status_code == requests.status_codes.codes.TOO_MANY_REQUESTS:
                     warnings.warn("Download rate limit hit", category=SHRateLimitWarning)
+                    self._execute_thread_safe(self.rate_limit.update, response.headers, default=self.default_retry_time)
                     continue
 
                 response.raise_for_status()

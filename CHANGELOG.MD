@@ -1,3 +1,8 @@
+## [Version 3.9.5] - 2023-12-07
+
+- The `SentinelHubDownloadClient` class now has a `default_retry_time` parameter, which allows control over the waiting time when a request gets a 429 TOO_MANY_REQUESTS response without a specific retry time in the headers. The default value for this behavior has been changed from 0s to 30s to avoid edge-cases where SH services were bombarded with requests.
+
+
 ## [Version 3.9.4] - 2023-11-13
 
 - Fixed a problem with `dataclasses_json 0.6.2` that broke BYOC functionalities
