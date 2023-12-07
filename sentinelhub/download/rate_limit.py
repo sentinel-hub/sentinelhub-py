@@ -51,7 +51,12 @@ class SentinelHubRateLimit:
         return wait_time
 
     def update(self, headers: dict, *, default: float) -> None:
-        """Update the next possible download time if the service has responded with the rate limit"""
+        """Update the next possible download time if the service has responded with the rate limit.
+
+        :param headers: The headers that (may) contain information about waiting times.
+        :param default: The default waiting time (in milliseconds) when retrying after getting a
+            TOO_MANY_REQUESTS response without appropriate retry headers.
+        """
         retry_after: float = int(headers.get(self.RETRY_HEADER, default))  # can be a string representation of a number
         retry_after = retry_after / 1000
 
