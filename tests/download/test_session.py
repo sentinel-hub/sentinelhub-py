@@ -5,7 +5,7 @@ from concurrent.futures import ProcessPoolExecutor
 from typing import Any
 
 import pytest
-from oauthlib.oauth2.rfc6749.errors import CustomOAuth2Error
+from oauthlib.oauth2.rfc6749.errors import CustomOAuth2Error, InvalidClientError
 from requests_mock import Mocker
 
 from sentinelhub import SentinelHubSession, SHConfig, __version__
@@ -48,15 +48,12 @@ def test_session(session: SentinelHubSession) -> None:
 
 @pytest.mark.sh_integration()
 def test_token_info(session: SentinelHubSession) -> None:
-    info = session.info()
-
-    for key in ["sub", "aud", "jti", "exp", "name", "email", "sid", "org", "did", "aid", "d"]:
-        assert key in info
+    assert "azp" in session.info()
 
 
 def test_session_content_and_headers(fake_config: SHConfig, fake_token: dict[str, Any], requests_mock: Mocker) -> None:
     """Make sure correct content and headers are passed to the service."""
-    requests_mock.post(url="/oauth/token", response_list=[{"json": fake_token}])
+    requests_mock.post(url=fake_config.sh_token_url, response_list=[{"json": fake_token}])
     call_time = time.time()
     token = SentinelHubSession(config=fake_config).token
     # "expires_at" is derived from "expires_in"  and not read from the response field "expires_at"
@@ -108,7 +105,7 @@ def test_refreshing_procedure(fake_token: JsonDict, fake_config: SHConfig) -> No
         assert session.token == fake_token
 
     session = SentinelHubSession(config=fake_config, refresh_before_expiry=500, _token=fake_token)
-    with pytest.raises(CustomOAuth2Error):
+    with pytest.raises(InvalidClientError):
         _ = session.token
 
 
@@ -128,11 +125,7 @@ def test_oauth_compliance_hook_4xx(
     expected_exception: type[Exception],
     fake_config: SHConfig,
 ) -> None:
-    requests_mock.post(
-        "https://services.sentinel-hub.com/oauth/token",
-        json=response_payload,
-        status_code=status_code,
-    )
+    requests_mock.post(fake_config.sh_token_url, json=response_payload, status_code=status_code)
 
     with pytest.raises(expected_exception):
         SentinelHubSession(config=fake_config)
@@ -151,11 +144,7 @@ def test_oauth_compliance_hook_4xx(
 def test_oauth_compliance_hook_5xx(
     requests_mock: Mocker, status_code: int, response_payload: JsonDict | None, fake_config: SHConfig
 ) -> None:
-    requests_mock.post(
-        "https://services.sentinel-hub.com/oauth/token",
-        json=response_payload,
-        status_code=status_code,
-    )
+    requests_mock.post(fake_config.sh_token_url, json=response_payload, status_code=status_code)
 
     fake_config.max_download_attempts = 10
     fake_config.download_sleep_time = 0
