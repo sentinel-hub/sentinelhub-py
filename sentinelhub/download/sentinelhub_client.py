@@ -194,7 +194,7 @@ class SentinelHubDownloadClient(DownloadClient):
             base_url = config_or_session.config.sh_base_url
 
             # If session was generated from token then config_or_session.config.sh_client_id could have wrong client id.
-            sh_client_id = config_or_session.info().get("aud", "")
+            sh_client_id = config_or_session.info().get("azp", "")
             if not sh_client_id:
                 warnings.warn(
                     "Failed to read client ID from OAuth token. Session caching might not work correctly.",

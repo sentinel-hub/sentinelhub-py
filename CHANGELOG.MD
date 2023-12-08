@@ -1,3 +1,7 @@
+## [Version 3.10.0] - 2023-12-07
+
+- Adjust session caching to mirror changes to the core services. Older version might no longer correctly cache sessions.
+
 ## [Version 3.9.5] - 2023-12-07
 
 - The `SentinelHubDownloadClient` class now has a `default_retry_time` parameter, which allows control over the waiting time when a request gets a 429 TOO_MANY_REQUESTS response without a specific retry time in the headers. The default value for this behavior has been changed from 0s to 30s to avoid edge-cases where SH services were bombarded with requests.
