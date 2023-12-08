@@ -5,7 +5,7 @@ from concurrent.futures import ProcessPoolExecutor
 from typing import Any
 
 import pytest
-from oauthlib.oauth2.rfc6749.errors import CustomOAuth2Error
+from oauthlib.oauth2.rfc6749.errors import CustomOAuth2Error, InvalidClientError
 from requests_mock import Mocker
 
 from sentinelhub import SentinelHubSession, SHConfig, __version__
@@ -50,7 +50,7 @@ def test_session(session: SentinelHubSession) -> None:
 def test_token_info(session: SentinelHubSession) -> None:
     info = session.info()
 
-    for key in ["sub", "aud", "jti", "exp", "name", "email", "sid", "org", "did", "aid", "d"]:
+    for key in ["exp", "iat", "jti", "iss", "sub", "typ", "azp", "scope", "account"]:
         assert key in info
 
 
@@ -108,7 +108,7 @@ def test_refreshing_procedure(fake_token: JsonDict, fake_config: SHConfig) -> No
         assert session.token == fake_token
 
     session = SentinelHubSession(config=fake_config, refresh_before_expiry=500, _token=fake_token)
-    with pytest.raises(CustomOAuth2Error):
+    with pytest.raises(InvalidClientError):
         _ = session.token
 
 

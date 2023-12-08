@@ -7,7 +7,7 @@ import json
 from typing import Any
 
 import pytest
-from oauthlib.oauth2.rfc6749.errors import CustomOAuth2Error
+from oauthlib.oauth2.rfc6749.errors import InvalidClientError
 from shapely.geometry import Polygon
 
 from sentinelhub import (
@@ -483,7 +483,7 @@ def test_bad_credentials() -> None:
     bad_credentials_config.sh_client_id = "test"
 
     request = SentinelHubRequest(**request_params, config=bad_credentials_config)
-    with pytest.raises(CustomOAuth2Error):
+    with pytest.raises(InvalidClientError):
         request.get_data()
 
     missing_credentials_config = SHConfig()
