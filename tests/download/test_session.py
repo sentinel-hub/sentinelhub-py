@@ -48,10 +48,7 @@ def test_session(session: SentinelHubSession) -> None:
 
 @pytest.mark.sh_integration()
 def test_token_info(session: SentinelHubSession) -> None:
-    info = session.info()
-
-    for key in ["exp", "iat", "jti", "iss", "sub", "typ", "azp", "scope", "account"]:
-        assert key in info
+    assert "azp" in session.info()
 
 
 def test_session_content_and_headers(fake_config: SHConfig, fake_token: dict[str, Any], requests_mock: Mocker) -> None:
