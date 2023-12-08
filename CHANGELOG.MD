@@ -1,6 +1,8 @@
 ## [Version 3.10.0] - 2023-12-07
 
 - Adjust session caching to mirror changes to the core services. Older version might no longer correctly cache sessions.
+- Switch default auth endpoint to the new address.
+
 
 ## [Version 3.9.5] - 2023-12-07
 
