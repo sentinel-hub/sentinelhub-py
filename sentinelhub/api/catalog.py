@@ -9,6 +9,7 @@ from typing import Any, Iterable, Literal
 
 from ..base import FeatureIterator
 from ..config import SHConfig
+from ..constants import ServiceUrl
 from ..data_collections import DataCollection, OrbitDirection
 from ..geometry import CRS, BBox, Geometry
 from ..time_utils import filter_times, parse_time, parse_time_interval, serialize_time
@@ -303,7 +304,8 @@ def get_available_timestamps(
 
     if data_collection.service_url is not None:
         config = config.copy() if config else SHConfig()
-        config.sh_base_url = data_collection.service_url
+        if config.sh_base_url != ServiceUrl.CDSE:
+            config.sh_base_url = data_collection.service_url
 
     catalog = SentinelHubCatalog(config=config)
     search_iterator = catalog.search(

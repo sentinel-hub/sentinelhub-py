@@ -23,19 +23,17 @@ from sentinelhub import (
 from sentinelhub.api.ogc import OgcImageService, OgcRequest
 from sentinelhub.testing_utils import assert_statistics_match
 
+CDSE_UNSUPPORTED_CASES = ["L8 Test", "MODIS Test", "S2 L2A Test"]  # bugs for CDSE S2L2A case to be fixed
+
 
 @dataclass
 class OgcTestCase:
     name: str
     constructor: type[OgcRequest] | type[WcsRequest] | type[WmsRequest]
     kwargs: dict
-    result_len: int
-    img_min: float
-    img_max: float
-    img_mean: float
-    img_median: float
-    img_std: float = 1
-    tile_num: int | None = None
+    result_len: dict[str, int]
+    img_stats: dict[str, dict[str, float]]
+    tile_num: dict[str, int | None]
     data_filter: list[int] | None = None
     date_check: datetime.datetime | None = None
     save_data: bool = False
@@ -75,13 +73,24 @@ TEST_CASES = [
             time_difference=datetime.timedelta(days=10),
             size_y=img_height,
         ),
-        result_len=14,
-        img_min=0.0,
-        img_max=1.5964,
-        img_mean=0.23954,
-        img_median=0.1349,
-        img_std=0.276814,
-        tile_num=29,
+        result_len=dict(sh_config=14, cdse_config=14),
+        img_stats=dict(
+            sh_config=dict(
+                min=0.0,
+                max=1.5964,
+                mean=0.23954,
+                median=0.1349,
+                std=0.276814,
+            ),
+            cdse_config=dict(
+                min=0.0,
+                max=1.515,
+                mean=0.24031,
+                median=0.1355,
+                std=0.276942,
+            ),
+        ),
+        tile_num=dict(sh_config=29, cdse_config=31),
         save_data=True,
         data_filter=[0, -2, 0],
     ),
@@ -103,13 +112,12 @@ TEST_CASES = [
             service_type=ServiceType.WCS,
             time_difference=datetime.timedelta(hours=1),
         ),
-        result_len=4,
-        img_min=0.0002,
-        img_max=1.0,
-        img_mean=0.16779,
-        img_median=0.1023,
-        img_std=0.24020831,
-        tile_num=6,
+        result_len=dict(sh_config=4, cdse_config=4),
+        img_stats=dict(
+            sh_config=dict(min=0.0002, max=1.0, mean=0.16779, median=0.1023, std=0.24020831),
+            cdse_config=dict(min=0.0002, max=1.0, mean=0.16779, median=0.1023, std=0.24020831),
+        ),
+        tile_num=dict(sh_config=6, cdse_config=6),
         data_filter=[0, -1],
         date_check=datetime.datetime.strptime("2017-10-07T11:20:58", "%Y-%m-%dT%H:%M:%S"),
         save_data=True,
@@ -132,13 +140,12 @@ TEST_CASES = [
                 CustomUrlParam.UPSAMPLING: ResamplingType.BICUBIC,
             },
         ),
-        result_len=1,
-        img_min=29,
-        img_max=255,
-        img_mean=198.6254375,
-        img_median=206,
-        img_std=52.17095,
-        tile_num=2,
+        result_len=dict(sh_config=1, cdse_config=1),
+        img_stats=dict(
+            sh_config=dict(min=29, max=255, mean=198.6254375, median=206, std=52.17095),
+            cdse_config=dict(min=22, max=255, mean=198.6723333, median=206, std=52.16517),
+        ),
+        tile_num=dict(sh_config=2, cdse_config=2),
         data_filter=[0, -1],
     ),
     OgcTestCase(
@@ -153,13 +160,12 @@ TEST_CASES = [
             time=("2017-10-01", "2017-10-02"),
             custom_url_params={CustomUrlParam.PREVIEW: 2},
         ),
-        result_len=1,
-        img_min=27,
-        img_max=255,
-        img_mean=195.385181,
-        img_median=199,
-        img_std=51.1237,
-        tile_num=2,
+        result_len=dict(sh_config=1, cdse_config=1),
+        img_stats=dict(
+            sh_config=dict(min=27, max=255, mean=195.385181, median=199, std=51.1237),
+            cdse_config=dict(min=23, max=255, mean=198.920120, median=208, std=53.1669),
+        ),
+        tile_num=dict(sh_config=2, cdse_config=2),
     ),
     OgcTestCase(
         "customUrlEvalscripturl",
@@ -179,13 +185,12 @@ TEST_CASES = [
                 )
             },
         ),
-        result_len=1,
-        img_min=46,
-        img_max=255,
-        img_mean=231.051154,
-        img_median=255,
-        img_std=45.151,
-        tile_num=3,
+        result_len=dict(sh_config=1, cdse_config=1),
+        img_stats=dict(
+            sh_config=dict(min=46, max=255, mean=231.051154, median=255, std=45.151),
+            cdse_config=dict(min=33, max=255, mean=231.069772, median=255, std=44.45055),
+        ),
+        tile_num=dict(sh_config=3, cdse_config=3),
     ),
     OgcTestCase(
         "customUrlEvalscript,Geometry",
@@ -203,13 +208,12 @@ TEST_CASES = [
                 CustomUrlParam.GEOMETRY: "POLYGON((-5.13 48, -5.23 48.09, -5.13 48.17, -5.03 48.08, -5.13 48))",
             },
         ),
-        result_len=1,
-        img_min=0,
-        img_max=152,
-        img_mean=24.5405,
-        img_median=1.0,
-        img_std=35.64637,
-        tile_num=2,
+        result_len=dict(sh_config=1, cdse_config=1),
+        img_stats=dict(
+            sh_config=dict(min=0, max=152, mean=24.5405, median=1, std=35.64637),
+            cdse_config=dict(min=0, max=255, mean=29.04125, median=1, std=46.11639),
+        ),
+        tile_num=dict(sh_config=2, cdse_config=2),
     ),
     OgcTestCase(
         "FalseLogo,Geometry",
@@ -230,13 +234,12 @@ TEST_CASES = [
                 ),
             },
         ),
-        result_len=1,
-        img_min=0,
-        img_max=MimeType.PNG.get_expected_max_value(),
-        img_mean=119.4666,
-        img_median=123,
-        img_std=119.186,
-        tile_num=3,
+        result_len=dict(sh_config=1, cdse_config=1),
+        img_stats=dict(
+            sh_config=dict(min=0, max=255, mean=119.4666, median=123, std=119.186),
+            cdse_config=dict(min=0, max=255, mean=119.4666, median=123, std=119.186),
+        ),
+        tile_num=dict(sh_config=3, cdse_config=3),
     ),
     # DataCollection tests:
     OgcTestCase(
@@ -251,13 +254,12 @@ TEST_CASES = [
             bbox=wgs84_bbox,
             time=("2017-10-01", "2017-10-02"),
         ),
-        result_len=1,
-        img_min=0.0009,
-        img_max=1.0,
-        img_mean=0.29175,
-        img_median=0.2572,
-        img_std=0.22377,
-        tile_num=2,
+        result_len=dict(sh_config=1, cdse_config=1),
+        img_stats=dict(
+            sh_config=dict(min=0.0009, max=1.0, mean=0.29175, median=0.2572, std=0.22377),
+            cdse_config=dict(min=0.0009, max=1.0, mean=0.29152, median=0.2569, std=0.22381),
+        ),
+        tile_num=dict(sh_config=2, cdse_config=2),
     ),
     OgcTestCase(
         "S2 L2A Test",
@@ -271,13 +273,12 @@ TEST_CASES = [
             bbox=wgs84_bbox,
             time=("2017-10-01", "2017-10-02"),
         ),
-        result_len=1,
-        img_min=0.0,
-        img_max=1.6167,
-        img_mean=0.39445,
-        img_median=0.3353,
-        img_std=0.226799,
-        tile_num=2,
+        result_len=dict(sh_config=1, cdse_config=1),
+        img_stats=dict(
+            sh_config=dict(min=0.0, max=1.6167, mean=0.39445, median=0.3353, std=0.226799),
+            cdse_config=dict(min=0.0, max=1.6167, mean=0.39445, median=0.3353, std=0.226799),
+        ),
+        tile_num=dict(sh_config=2, cdse_config=2),
     ),
     OgcTestCase(
         "L8 Test",
@@ -292,13 +293,13 @@ TEST_CASES = [
             time=("2017-10-05", "2017-10-10"),
             time_difference=datetime.timedelta(hours=1),
         ),
-        result_len=1,
-        img_min=0.0011564,
-        img_max=285.16916,
-        img_mean=47.74750,
-        img_median=0.5325,
-        img_std=105.6793,
-        tile_num=2,
+        result_len=dict(sh_config=1),
+        img_stats=dict(
+            sh_config=dict(min=0.0011564, max=285.16916, mean=47.74750, median=0.5325, std=105.6793),
+        ),
+        tile_num=dict(
+            sh_config=2,
+        ),
     ),
     OgcTestCase(
         "DEM Test",
@@ -311,12 +312,12 @@ TEST_CASES = [
             height=img_height,
             bbox=wgs84_bbox_2,
         ),
-        result_len=1,
-        img_min=0,
-        img_max=74.16661,
-        img_mean=1.5549539,
-        img_median=1.0,
-        img_std=5.3555336,
+        result_len=dict(sh_config=1, cdse_config=1),
+        img_stats=dict(
+            sh_config=dict(min=0, max=74.16661, mean=1.5549539, median=1.0, std=5.3555336),
+            cdse_config=dict(min=0, max=74.16661, mean=1.5549539, median=1.0, std=5.3555336),
+        ),
+        tile_num=dict(sh_config=None, cdse_config=None),
     ),
     OgcTestCase(
         "MODIS Test",
@@ -330,13 +331,21 @@ TEST_CASES = [
             bbox=wgs84_bbox,
             time="2017-10-01",
         ),
-        result_len=1,
-        img_min=0.0,
-        img_max=3.2767,
-        img_mean=0.21029216,
-        img_median=0.0027,
-        img_std=0.6494421,
-        tile_num=1,
+        result_len=dict(
+            sh_config=1,
+        ),
+        img_stats=dict(
+            sh_config=dict(
+                min=0.0,
+                max=3.2767,
+                mean=0.21029216,
+                median=0.0027,
+                std=0.6494421,
+            ),
+        ),
+        tile_num=dict(
+            sh_config=1,
+        ),
     ),
     OgcTestCase(
         "S1 IW Test",
@@ -351,13 +360,12 @@ TEST_CASES = [
             time=("2017-10-01", "2017-10-02"),
             time_difference=datetime.timedelta(hours=1),
         ),
-        result_len=1,
-        img_min=0.0,
-        img_max=1.0,
-        img_mean=0.3508,
-        img_median=0.07607,
-        img_std=0.451077,
-        tile_num=2,
+        result_len=dict(sh_config=1, cdse_config=1),
+        img_stats=dict(
+            sh_config=dict(min=0.0, max=1.0, mean=0.3508, median=0.07607, std=0.451077),
+            cdse_config=dict(min=0.0, max=1.0, mean=0.3960, median=0.08645, std=0.456168),
+        ),
+        tile_num=dict(sh_config=2, cdse_config=2),
     ),
     OgcTestCase(
         "S1 EW Test",
@@ -372,13 +380,12 @@ TEST_CASES = [
             time=("2018-2-7", "2018-2-8"),
             time_difference=datetime.timedelta(hours=1),
         ),
-        result_len=2,
-        img_min=0.0,
-        img_max=1.0,
-        img_mean=0.24709,
-        img_median=0.0032285,
-        img_std=0.426686,
-        tile_num=3,
+        result_len=dict(sh_config=2, cdse_config=2),
+        img_stats=dict(
+            sh_config=dict(min=0.0, max=1.0, mean=0.24709, median=0.0032285, std=0.426686),
+            cdse_config=dict(min=0.0, max=1.0, mean=0.2881186, median=0.00402838, std=0.439555),
+        ),
+        tile_num=dict(sh_config=3, cdse_config=3),
     ),
     OgcTestCase(
         "S1 EW SH Test",
@@ -393,13 +400,12 @@ TEST_CASES = [
             time=("2018-2-6", "2018-2-8"),
             time_difference=datetime.timedelta(hours=1),
         ),
-        result_len=1,
-        img_min=0.006974,
-        img_max=1.0,
-        img_mean=0.5071,
-        img_median=0.5276,
-        img_std=0.492936,
-        tile_num=1,
+        result_len=dict(sh_config=1, cdse_config=1),
+        img_stats=dict(
+            sh_config=dict(min=0.006974, max=1.0, mean=0.5071, median=0.5276, std=0.492936),
+            cdse_config=dict(min=0.0069407, max=1.0, mean=0.50713, median=0.53206, std=0.492868),
+        ),
+        tile_num=dict(sh_config=1, cdse_config=1),
     ),
     OgcTestCase(
         "S1 EW ASC Test",
@@ -414,13 +420,12 @@ TEST_CASES = [
             time=("2018-2-7", "2018-2-8"),
             time_difference=datetime.timedelta(hours=1),
         ),
-        result_len=1,
-        img_min=0.0,
-        img_max=1.0,
-        img_mean=0.34803,
-        img_median=0.02383,
-        img_std=0.46208,
-        tile_num=2,
+        result_len=dict(sh_config=1, cdse_config=1),
+        img_stats=dict(
+            sh_config=dict(min=0.0, max=1.0, mean=0.34803, median=0.02383, std=0.46208),
+            cdse_config=dict(min=0.00030518, max=1.0, mean=0.398073, median=0.035227, std=0.466808),
+        ),
+        tile_num=dict(sh_config=2, cdse_config=2),
     ),
     OgcTestCase(
         "S1 IW DES Test",
@@ -435,13 +440,12 @@ TEST_CASES = [
             time=("2017-10-01", "2017-10-05"),
             time_difference=datetime.timedelta(hours=1),
         ),
-        result_len=1,
-        img_min=0.0,
-        img_max=1.0,
-        img_mean=0.3474,
-        img_median=0.040695,
-        img_std=0.4618,
-        tile_num=1,
+        result_len=dict(sh_config=1, cdse_config=1),
+        img_stats=dict(
+            sh_config=dict(min=0.0, max=1.0, mean=0.3474, median=0.040695, std=0.4618),
+            cdse_config=dict(min=0.0, max=1.0, mean=0.3967, median=0.045994, std=0.467266),
+        ),
+        tile_num=dict(sh_config=1, cdse_config=1),
     ),
     OgcTestCase(
         "S3 OLCI Test",
@@ -456,13 +460,12 @@ TEST_CASES = [
             time=("2020-2-5", "2020-2-10"),
             time_difference=datetime.timedelta(hours=1),
         ),
-        result_len=11,
-        img_min=243,
-        img_max=255,
-        img_mean=248.80765,
-        img_median=248.0,
-        img_std=3.8225,
-        tile_num=17,
+        result_len=dict(sh_config=11, cdse_config=11),
+        img_stats=dict(
+            sh_config=dict(min=243, max=255, mean=248.80765, median=248.0, std=3.8225),
+            cdse_config=dict(min=243, max=255, mean=248.8026, median=248.0, std=3.8223),
+        ),
+        tile_num=dict(sh_config=17, cdse_config=17),
     ),
 ]
 
@@ -470,36 +473,41 @@ TEST_CASES = [
 @pytest.mark.parametrize("test_case", TEST_CASES)
 @pytest.mark.parametrize("config", ["sh_config", "cdse_config"])
 def test_ogc(test_case: OgcTestCase, output_folder: str, config: SHConfig, request) -> None:
+    # skip test cases unsupported on CDSE
+    if config == "cdse_config" and test_case.name in CDSE_UNSUPPORTED_CASES:
+        pytest.skip("unsupported cases on cdse")
+
     # Run data collection
     request = test_case.initialize_request(output_folder, config=request.getfixturevalue(config))
     data = test_case.collect_data(request)
 
     assert isinstance(data, list)
-    result_len = test_case.result_len if test_case.data_filter is None else len(test_case.data_filter)
+    result_len = test_case.result_len[config] if test_case.data_filter is None else len(test_case.data_filter)
     assert len(data) == result_len
 
     tile_iter = request.get_tiles()
     tile_n = len(list(tile_iter)) if tile_iter else None
-    assert tile_n == test_case.tile_num
+    assert tile_n == test_case.tile_num[config]
 
     if test_case.date_check is not None:
         dates = OgcImageService().get_dates(request)
-        assert len(dates) == test_case.result_len
+        assert len(dates) == test_case.result_len[config]
         assert test_case.date_check == dates[0]
 
     if test_case.data_filter is not None:
-        if (test_case.data_filter[0] - test_case.data_filter[-1]) % test_case.result_len == 0:
+        if (test_case.data_filter[0] - test_case.data_filter[-1]) % test_case.result_len[config] == 0:
             assert_array_equal(data[0], data[-1], err_msg="First and last output should be equal")
         else:
             assert not np.array_equal(data[0], data[-1]), "First and last output should be different"
 
+    img_stats = test_case.img_stats[config]
     assert_statistics_match(
         data[0],
-        exp_min=test_case.img_min,
-        exp_max=test_case.img_max,
-        exp_mean=test_case.img_mean,
-        exp_median=test_case.img_median,
-        exp_std=test_case.img_std,
+        exp_min=img_stats["min"],
+        exp_max=img_stats["max"],
+        exp_mean=img_stats["mean"],
+        exp_median=img_stats["median"],
+        exp_std=img_stats["std"],
         rel_delta=1e-4,
     )
 

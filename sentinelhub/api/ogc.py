@@ -379,7 +379,11 @@ class OgcImageService:
         """
         url = f"{self._base_url}/{request.service_type.value}"  # type: ignore[union-attr]
 
-        if not self._base_url.startswith(ServiceUrl.CDSE) and hasattr(request, "data_collection") and request.data_collection.service_url:
+        if (
+            not self._base_url.startswith(ServiceUrl.CDSE)
+            and hasattr(request, "data_collection")
+            and request.data_collection.service_url
+        ):
             url = url.replace(self.config.sh_base_url, request.data_collection.service_url)
 
         return url

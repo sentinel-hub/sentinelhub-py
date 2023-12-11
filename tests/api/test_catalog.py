@@ -6,7 +6,6 @@ from __future__ import annotations
 
 import datetime as dt
 from functools import partial
-from typing import List
 
 import dateutil.tz
 import numpy as np
@@ -16,8 +15,8 @@ from sentinelhub import CRS, BBox, DataCollection, Geometry, SentinelHubCatalog,
 from sentinelhub.api.catalog import CatalogSearchIterator, get_available_timestamps
 from sentinelhub.constants import ServiceUrl
 
-
 TEST_BBOX = BBox((46.16, -16.15, 46.51, -15.58), CRS.WGS84)
+CDSE_UNSUPPORTED_COLLECTIONS = [DataCollection.LANDSAT_OT_L1, DataCollection.LANDSAT_OT_L2, DataCollection.MODIS]
 
 
 @pytest.fixture(name="sh_catalog")
@@ -33,13 +32,15 @@ def cdse_catalog_fixture(request) -> SentinelHubCatalog:
 @pytest.mark.parametrize(
     "config, data_collection, doc_href",
     [
-        ("sh_config", DataCollection.SENTINEL2_L2A,"https://docs.sentinel-hub.com"),
+        ("sh_config", DataCollection.SENTINEL2_L2A, "https://docs.sentinel-hub.com"),
         ("sh_config", DataCollection.LANDSAT_TM_L1, "https://docs.sentinel-hub.com"),
         ("sh_config", DataCollection.SENTINEL3_OLCI, "https://docs.sentinel-hub.com"),
         ("cdse_config", DataCollection.SENTINEL2_L2A, "https://documentation.dataspace.copernicus.eu"),
-    ]
+    ],
 )
-def test_info_with_different_deployments(config: SHConfig, data_collection: List[DataCollection], doc_href: str, request) -> None:
+def test_info_with_different_deployments(
+    config: SHConfig, data_collection: list[DataCollection], doc_href: str, request
+) -> None:
     """Test if basic interaction works with different data collections on different deployments"""
     config = request.getfixturevalue(config)
     if config.sh_base_url != ServiceUrl.CDSE:
@@ -80,8 +81,8 @@ def test_get_collection(catalog: SentinelHubCatalog, collection_input: DataColle
     "catalog, feature_id",
     [
         ("sh_catalog", "S2A_MSIL2A_20231206T100401_N0509_R122_T33TTG_20231206T123051"),
-        ("cdse_catalog", "S2A_MSIL2A_20231206T100401_N0509_R122_T33TTG_20231206T123051.SAFE")
-    ]
+        ("cdse_catalog", "S2A_MSIL2A_20231206T100401_N0509_R122_T33TTG_20231206T123051.SAFE"),
+    ],
 )
 def test_get_feature(catalog: SentinelHubCatalog, feature_id: str, request) -> None:
     """Test endpoint for a single feature info"""
@@ -110,13 +111,7 @@ def test_search_bbox(catalog: SentinelHubCatalog, request) -> None:
         assert time_interval[0] <= result["properties"]["datetime"] <= time_interval[1]
 
 
-@pytest.mark.parametrize(
-    "catalog, exp_unbounded_len, exp_filtered_len",
-    [
-        ("sh_catalog", 6, 4),
-        ("cdse_catalog", 6, 2)
-    ]
-)
+@pytest.mark.parametrize("catalog, exp_unbounded_len, exp_filtered_len", [("sh_catalog", 6, 4), ("cdse_catalog", 6, 2)])
 def test_search_filter(catalog: SentinelHubCatalog, exp_unbounded_len: int, exp_filtered_len: int, request) -> None:
     time_interval = "2021-01-01T00:00:00", "2021-01-31T00:00:10"
     min_cc, max_cc = 10, 20
@@ -160,16 +155,18 @@ def test_search_filter(catalog: SentinelHubCatalog, exp_unbounded_len: int, exp_
         (
             "sh_catalog",
             "S2A_MSIL1C_20210103T071211_N0209_R020_T38LPH_20210103T083459",
-            dt.datetime(2021, 1, 3, 7, 14, 7, tzinfo=dateutil.tz.tzutc())
+            dt.datetime(2021, 1, 3, 7, 14, 7, tzinfo=dateutil.tz.tzutc()),
         ),
         (
             "cdse_catalog",
             "S2A_MSIL1C_20210103T071211_N0500_R020_T38LPH_20230228T175137.SAFE",
-            dt.datetime(2021, 1, 3, 7, 14, 7, 540000, tzinfo=dateutil.tz.tzutc())
-        ,)
-    ]
+            dt.datetime(2021, 1, 3, 7, 14, 7, 540000, tzinfo=dateutil.tz.tzutc()),
+        ),
+    ],
 )
-def test_search_geometry_and_iterator_methods(catalog: SentinelHubCatalog, id: str, timestamp: dt.datetime, request) -> None:
+def test_search_geometry_and_iterator_methods(
+    catalog: SentinelHubCatalog, id: str, timestamp: dt.datetime, request
+) -> None:
     """Tests search with a geometry and test methods of CatalogSearchIterator"""
     search_geometry = Geometry(TEST_BBOX.geometry, crs=TEST_BBOX.crs)
 
@@ -194,33 +191,74 @@ def test_search_geometry_and_iterator_methods(catalog: SentinelHubCatalog, id: s
 @pytest.mark.parametrize(
     ("data_collection", "feature_id"),
     [
-        (DataCollection.SENTINEL2_L1C, "S2A_MSIL1C_20210113T071211_N0209_R020_T38LPH_20210113T075941"),
-        ("sentinel-2-l1c", "S2A_MSIL1C_20210113T071211_N0209_R020_T38LPH_20210113T075941"),
-        (DataCollection.SENTINEL2_L2A, "S2A_MSIL2A_20210113T071211_N0214_R020_T38LPH_20210113T083244"),
-        (DataCollection.SENTINEL1_IW, "S1A_IW_GRDH_1SDV_20210113T022710_20210113T022735_036113_043BC9_2981"),
-        (DataCollection.LANDSAT_OT_L1, "LC08_L1TP_160071_20210113_20210308_02_T1"),
-        (DataCollection.LANDSAT_OT_L2, "LC08_L2SP_160071_20210113_20210308_02_T1"),
-        (DataCollection.MODIS, "MCD43A4.006/22/10/2021014/MCD43A4.A2021014.h22v10.006.2021025214119"),
+        (
+            DataCollection.SENTINEL2_L1C,
+            dict(
+                sh="S2A_MSIL1C_20210113T071211_N0209_R020_T38LPH_20210113T075941",
+                cdse="S2A_MSIL1C_20210113T071211_N0500_R020_T38LPH_20230520T010221.SAFE",
+            ),
+        ),
+        (
+            "sentinel-2-l1c",
+            dict(
+                sh="S2A_MSIL1C_20210113T071211_N0209_R020_T38LPH_20210113T075941",
+                cdse="S2A_MSIL1C_20210113T071211_N0500_R020_T38LPH_20230520T010221.SAFE",
+            ),
+        ),
+        (
+            DataCollection.SENTINEL2_L2A,
+            dict(
+                sh="S2A_MSIL2A_20210113T071211_N0214_R020_T38LPH_20210113T083244",
+                cdse="S2A_MSIL2A_20210113T071211_N0500_R020_T38LPH_20230520T064324.SAFE",
+            ),
+        ),
+        (
+            DataCollection.SENTINEL1_IW,
+            dict(
+                sh="S1A_IW_GRDH_1SDV_20210113T022710_20210113T022735_036113_043BC9_2981",
+                cdse="S1A_IW_GRDH_1SDV_20210113T022710_20210113T022735_036113_043BC9_E7C4_COG.SAFE",
+            ),
+        ),
+        (DataCollection.LANDSAT_OT_L1, dict(sh="LC08_L1TP_160071_20210113_20210308_02_T1")),
+        (DataCollection.LANDSAT_OT_L2, dict(sh="LC08_L2SP_160071_20210113_20210308_02_T1")),
+        (DataCollection.MODIS, dict(sh="MCD43A4.006/22/10/2021014/MCD43A4.A2021014.h22v10.006.2021025214119")),
         (
             DataCollection.SENTINEL3_OLCI,
-            "S3A_OL_1_EFR____20210114T063914_20210114T064214_20210115T095516_0179_067_191_3240_LN1_O_NT_002.SEN3",
+            dict(
+                sh="S3A_OL_1_EFR____20210114T063914_20210114T064214_20210115T095516_0179_067_191_3240_LN1_O_NT_002.SEN3",
+                cdse="S3A_OL_1_EFR____20210114T063914_20210114T064214_20210115T095516_0179_067_191_3240_LN1_O_NT_002.SEN3",
+            ),
         ),
         (
             DataCollection.SENTINEL3_SLSTR,
-            "S3A_SL_1_RBT____20210114T190809_20210114T191109_20210116T001252_0179_067_198_5760_LN2_O_NT_004.SEN3",
+            dict(
+                sh="S3A_SL_1_RBT____20210114T190809_20210114T191109_20210116T001252_0179_067_198_5760_LN2_O_NT_004.SEN3",
+                cdse="S3A_SL_1_RBT____20210114T190809_20210114T191109_20210116T001252_0179_067_198_5760_LN2_O_NT_004.SEN3",
+            ),
         ),
         (
             DataCollection.SENTINEL5P,
-            "S5P_NRTI_L2__AER_AI_20210114T100354_20210114T100854_16869_01_010400_20210114T104450",
+            dict(
+                sh="S5P_NRTI_L2__AER_AI_20210114T100354_20210114T100854_16869_01_010400_20210114T104450",
+                cdse="S5P_NRTI_L2__AER_AI_20210114T100354_20210114T100854_16869_01_010400_20210114T104450.nc",
+            ),
         ),
     ],
 )
-def test_search_for_data_collection(config: SHConfig, data_collection: DataCollection | str, feature_id: str) -> None:
+@pytest.mark.parametrize("config", ["sh_config", "cdse_config"])
+def test_search_for_data_collection(
+    config: SHConfig, data_collection: DataCollection | str, feature_id: dict[str, str], request
+) -> None:
     """Tests search functionality for each data collection to confirm compatibility between DataCollection parameters
     and Catalog API
     """
+    if config == "cdse_config" and data_collection in CDSE_UNSUPPORTED_COLLECTIONS:
+        pytest.skip("Unsupported collections on CDSE")
     collection_base_url = data_collection.service_url if isinstance(data_collection, DataCollection) else None
-    config.sh_base_url = collection_base_url or config.sh_base_url
+    endpoint = config.split("_")[0]
+    config = request.getfixturevalue(config)
+    if endpoint != "cdse":
+        config.sh_base_url = collection_base_url or config.sh_base_url
     catalog = SentinelHubCatalog(config=config)
 
     search_iterator = catalog.search(
@@ -231,16 +269,28 @@ def test_search_for_data_collection(config: SHConfig, data_collection: DataColle
     )
     result = next(search_iterator)
     assert isinstance(result, dict)
-    assert result["id"] == feature_id
+    assert result["id"] == feature_id[endpoint]
 
 
-def test_search_with_ids(config: SHConfig) -> None:
+@pytest.mark.parametrize(
+    "config, data_collection, tile_id",
+    [
+        ("sh_config", DataCollection.LANDSAT_ETM_L1, "LE07_L1TP_160071_20170110_20201008_02_T1"),
+        (
+            "cdse_config",
+            DataCollection.SENTINEL5P,
+            "S5P_NRTI_L2__AER_AI_20210114T100354_20210114T100854_16869_01_010400_20210114T104450.nc",
+        ),
+    ],
+)
+def test_search_with_ids(config: SHConfig, data_collection: DataCollection, tile_id: str, request) -> None:
     """Tests a search without time and bbox parameters"""
-    tile_id = "LE07_L1TP_160071_20170110_20201008_02_T1"
-    config.sh_base_url = DataCollection.LANDSAT_ETM_L1.service_url
+    config = request.getfixturevalue(config)
+    if config.sh_base_url != ServiceUrl.CDSE:
+        config.sh_base_url = data_collection.service_url
     catalog = SentinelHubCatalog(config=config)
 
-    search_iterator = catalog.search(collection=DataCollection.LANDSAT_ETM_L1, ids=[tile_id])
+    search_iterator = catalog.search(collection=data_collection, ids=[tile_id])
     results = list(search_iterator)
     assert len(results) == 1
     assert results[0]["id"] == tile_id
@@ -255,8 +305,14 @@ def test_search_with_ids(config: SHConfig) -> None:
         (DataCollection.SENTINEL2_L1C.define_from("COLLECTION_WITHOUT_URL", service_url=None), -1, None, 10),
     ],
 )
+@pytest.mark.parametrize("config", ["sh_config", "cdse_config"])
 def test_get_available_timestamps(
-    data_collection: DataCollection, time_difference_hours: int, maxcc: int, n_timestamps: int
+    data_collection: DataCollection,
+    time_difference_hours: int,
+    maxcc: int,
+    n_timestamps: int,
+    config: SHConfig,
+    request,
 ) -> None:
     interval_start, interval_end = "2019-04-20", "2019-06-09"
     get_test_timestamps = partial(
@@ -266,6 +322,7 @@ def test_get_available_timestamps(
         time_difference=dt.timedelta(hours=time_difference_hours),
         time_interval=(interval_start, interval_end),
         maxcc=maxcc,
+        config=request.getfixturevalue(config),
     )
 
     timestamps = get_test_timestamps(ignore_tz=True)
