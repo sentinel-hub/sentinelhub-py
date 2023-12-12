@@ -25,6 +25,8 @@ from sentinelhub.testing_utils import assert_statistics_match
 
 CDSE_UNSUPPORTED_CASES = ["L8 Test", "MODIS Test", "S2 L2A Test"]  # bugs for CDSE S2L2A case to be fixed
 
+pytestmark = pytest.mark.sh_integration
+
 
 @dataclass
 class OgcTestCase:

@@ -12,6 +12,8 @@ from shapely.geometry import MultiPolygon
 
 from sentinelhub import CRS, BBox, DataCollection, SHConfig, WebFeatureService
 
+pytestmark = pytest.mark.sh_integration
+
 
 @pytest.mark.parametrize(
     ("args", "kwargs", "expected_len"),

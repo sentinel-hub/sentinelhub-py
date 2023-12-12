@@ -19,7 +19,7 @@ from shapely.geometry.base import BaseGeometry
 
 from .api import BatchRequest, SentinelHubBatch, SentinelHubCatalog
 from .config import SHConfig
-from .constants import CRS
+from .constants import CRS, ServiceUrl
 from .data_collections import DataCollection
 from .geo_utils import transform_point
 from .geometry import BBox, Geometry, _BaseGeometry
@@ -357,7 +357,7 @@ class TileSplitter(AreaSplitter):
         self.data_collection = data_collection
 
         sh_config = config or SHConfig()
-        if data_collection.service_url:
+        if sh_config.sh_base_url != ServiceUrl.CDSE and data_collection.service_url:
             sh_config = sh_config.copy()
             sh_config.sh_base_url = data_collection.service_url
         self.catalog = SentinelHubCatalog(config=sh_config)

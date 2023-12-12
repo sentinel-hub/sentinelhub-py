@@ -15,6 +15,7 @@ from sentinelhub import (
     DataCollection,
     Geometry,
     OsmSplitter,
+    SHConfig,
     TileSplitter,
     UtmGridSplitter,
     UtmZoneSplitter,
@@ -62,8 +63,16 @@ BBOX_GRID = [
         ),
     ],
 )
-def test_return_type(constructor: type[AreaSplitter], args: list, kwargs: dict[str, Any], bbox_len: int) -> None:
-    splitter = constructor(*args, **kwargs)
+@pytest.mark.parametrize("config", ["sh_config", "cdse_config"])
+def test_return_type(
+    constructor: type[AreaSplitter], args: list, kwargs: dict[str, Any], bbox_len: int, config: SHConfig, request
+) -> None:
+    if config == "cdse_config" and constructor == TileSplitter:
+        if kwargs["data_collection"] == DataCollection.LANDSAT_OT_L2:
+            pytest.skip("Unsupported Collections on CDSE")
+        splitter = constructor(*args, **kwargs, config=request.getfixturevalue(config))
+    else:
+        splitter = constructor(*args, **kwargs)
 
     return_lists: list[tuple[list, type | tuple[type, ...]]] = [
         (splitter.get_bbox_list(buffer=0.2), BBox),

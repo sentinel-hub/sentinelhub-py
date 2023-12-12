@@ -4,10 +4,10 @@
 from __future__ import annotations
 
 import json
-from typing import Any, Union
+from typing import Any
 
 import pytest
-from oauthlib.oauth2.rfc6749.errors import CustomOAuth2Error, InvalidClientError
+from oauthlib.oauth2.rfc6749.errors import InvalidClientError
 from shapely.geometry import Polygon
 
 from sentinelhub import (
@@ -25,6 +25,8 @@ from sentinelhub import (
 )
 from sentinelhub.api.base_request import InputDataDict
 from sentinelhub.testing_utils import assert_statistics_match
+
+pytestmark = pytest.mark.sh_integration
 
 
 @pytest.mark.parametrize(
@@ -478,10 +480,10 @@ def test_multipart_geometry(config: SHConfig, request) -> None:
 
 
 @pytest.mark.parametrize(
-    "config, err_cls",
-    [("sh_config", CustomOAuth2Error), ("cdse_config", InvalidClientError)],
+    "config",
+    ["sh_config", "cdse_config"],
 )
-def test_bad_credentials(config: SHConfig, err_cls: Union[CustomOAuth2Error, InvalidClientError], request) -> None:
+def test_bad_credentials(config: SHConfig, request) -> None:
     evalscript = """
                 //VERSION=3
 
@@ -514,7 +516,7 @@ def test_bad_credentials(config: SHConfig, err_cls: Union[CustomOAuth2Error, Inv
     bad_credentials_config.sh_client_id = "test"
 
     request = SentinelHubRequest(**request_params, config=bad_credentials_config)
-    with pytest.raises(err_cls):
+    with pytest.raises(InvalidClientError):
         request.get_data()
 
     missing_credentials_config = SHConfig()

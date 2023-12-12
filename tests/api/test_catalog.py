@@ -18,6 +18,8 @@ from sentinelhub.constants import ServiceUrl
 TEST_BBOX = BBox((46.16, -16.15, 46.51, -15.58), CRS.WGS84)
 CDSE_UNSUPPORTED_COLLECTIONS = [DataCollection.LANDSAT_OT_L1, DataCollection.LANDSAT_OT_L2, DataCollection.MODIS]
 
+pytestmark = pytest.mark.sh_integration
+
 
 @pytest.fixture(name="sh_catalog")
 def sh_catalog_fixture(request) -> SentinelHubCatalog:
