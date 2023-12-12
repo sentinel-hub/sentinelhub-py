@@ -30,10 +30,10 @@ def pytest_configure() -> None:
     shconfig.save("sh")
 
     # cdse configuration
-    cdse_env_variable = ["CDSE_CLIENT_ID", "CDSE_CLIENT_SECRET"]
-    for var in cdse_env_variable:
-        attr = var.replace("CDSE", "SH").lower()
-        setattr(cdseconfig, attr, os.environ.get(var))
+    for param in cdseconfig.to_dict():
+        cdse_env_variable = param.upper().replace("SH", "CDSE") if "sh" in param else "CDSE_" + param.upper()
+        if os.environ.get(cdse_env_variable):
+            setattr(cdseconfig, param, os.environ.get(cdse_env_variable))
     cdseconfig.sh_base_url = "https://sh.dataspace.copernicus.eu"
     cdseconfig.sh_token_url = "https://identity.dataspace.copernicus.eu/auth/realms/CDSE/protocol/openid-connect/token"
     cdseconfig.save("cdse")
