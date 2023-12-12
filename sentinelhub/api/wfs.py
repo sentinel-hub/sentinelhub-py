@@ -161,7 +161,7 @@ class WebFeatureService(FeatureIterator[JsonDict]):
         :param tile_url: Location of tile at AWS
         :return: Tuple in a form (tile_name, date, aws_index)
         """
-        props = tile_url.removeprefix("s3://").split("/")
+        props = tile_url.split("://")[-1].split("/")
         return "".join(props[2:5]), "-".join(props[5:8]), int(props[8])
 
     @staticmethod
@@ -171,7 +171,7 @@ class WebFeatureService(FeatureIterator[JsonDict]):
         :param tile_url: Location of tile at AWS
         :return: Tuple in a form (tile_name, date)
         """
-        props = tile_url.removeprefix("creo://").split("/")
+        props = tile_url.split("://")[-1].split("/")
         return props[7].split("_")[5][1:], "-".join(props[4:7])
 
     def _sentinel1_product_check(self, tile_info: JsonDict) -> bool:
