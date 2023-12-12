@@ -147,7 +147,8 @@ class WebFeatureService(FeatureIterator[JsonDict]):
     def get_tiles(self) -> list[Union[tuple[str, str, int], tuple[str, str]]]:
         """Returns list of tiles with tile name, date and AWS index
 
-        :return: List of tiles in form of (tile_name, date, aws_index)
+        :return: List of tiles in form of (tile_name, date, aws_index).
+            The aws_index exists only if Sentinel Hub deployment is configured.
         """
         if self.url.startswith(ServiceUrl.CDSE):
             return [self._parse_creo_tile_url(tile_info["properties"]["path"]) for tile_info in self]
