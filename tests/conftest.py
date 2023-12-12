@@ -18,17 +18,18 @@ INPUT_FOLDER = get_input_folder(__file__)
 OUTPUT_FOLDER = get_output_folder(__file__)
 
 
-def sh_pytest_configure() -> None:
+def pytest_configure() -> None:
     shconfig = SHConfig()
+    cdseconfig = SHConfig()
+
+    # sh configuration
     for param in shconfig.to_dict():
         env_variable = param.upper()
         if os.environ.get(env_variable):
             setattr(shconfig, param, os.environ.get(env_variable))
     shconfig.save("sh")
 
-
-def cdse_pytest_configure() -> None:
-    cdseconfig = SHConfig()
+    # cdse configuration
     env_variable = ["CDSE_CLIENT_ID", "CDSE_CLIENT_SECRET"]
     for var in env_variable:
         attr = var.replace("CDSE", "SH").lower()
