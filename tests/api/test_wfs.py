@@ -35,7 +35,7 @@ pytestmark = pytest.mark.sh_integration
 )
 @pytest.mark.parametrize("config", ["sh_config", "cdse_config"])
 def test_wfs(args: list, kwargs: dict[str, Any], config: SHConfig, expected_len: int, request) -> None:
-    iterator = WebFeatureService(config=request.getfixturevalue(config), *args, **kwargs)
+    iterator = WebFeatureService(*args, config=request.getfixturevalue(config), **kwargs)
     features = list(iterator)
     dates = iterator.get_dates()
     geometries = iterator.get_geometries()

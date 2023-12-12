@@ -32,7 +32,7 @@ def cdse_catalog_fixture(request) -> SentinelHubCatalog:
 
 
 @pytest.mark.parametrize(
-    "config, data_collection, doc_href",
+    ("config", "data_collection", "doc_href"),
     [
         ("sh_config", DataCollection.SENTINEL2_L2A, "https://docs.sentinel-hub.com"),
         ("sh_config", DataCollection.LANDSAT_TM_L1, "https://docs.sentinel-hub.com"),
@@ -80,7 +80,7 @@ def test_get_collection(catalog: SentinelHubCatalog, collection_input: DataColle
 
 
 @pytest.mark.parametrize(
-    "catalog, feature_id",
+    ("catalog", "feature_id"),
     [
         ("sh_catalog", "S2A_MSIL2A_20231206T100401_N0509_R122_T33TTG_20231206T123051"),
         ("cdse_catalog", "S2A_MSIL2A_20231206T100401_N0509_R122_T33TTG_20231206T123051.SAFE"),
@@ -113,7 +113,9 @@ def test_search_bbox(catalog: SentinelHubCatalog, request) -> None:
         assert time_interval[0] <= result["properties"]["datetime"] <= time_interval[1]
 
 
-@pytest.mark.parametrize("catalog, exp_unbounded_len, exp_filtered_len", [("sh_catalog", 6, 4), ("cdse_catalog", 6, 2)])
+@pytest.mark.parametrize(
+    ("catalog", "exp_unbounded_len", "exp_filtered_len"), [("sh_catalog", 6, 4), ("cdse_catalog", 6, 2)]
+)
 def test_search_filter(catalog: SentinelHubCatalog, exp_unbounded_len: int, exp_filtered_len: int, request) -> None:
     time_interval = "2021-01-01T00:00:00", "2021-01-31T00:00:10"
     min_cc, max_cc = 10, 20
@@ -152,7 +154,7 @@ def test_search_filter(catalog: SentinelHubCatalog, exp_unbounded_len: int, exp_
 
 
 @pytest.mark.parametrize(
-    "catalog, id, timestamp",
+    ("catalog", "feature_id", "timestamp"),
     [
         (
             "sh_catalog",
@@ -167,7 +169,7 @@ def test_search_filter(catalog: SentinelHubCatalog, exp_unbounded_len: int, exp_
     ],
 )
 def test_search_geometry_and_iterator_methods(
-    catalog: SentinelHubCatalog, id: str, timestamp: dt.datetime, request
+    catalog: SentinelHubCatalog, feature_id: str, timestamp: dt.datetime, request
 ) -> None:
     """Tests search with a geometry and test methods of CatalogSearchIterator"""
     search_geometry = Geometry(TEST_BBOX.geometry, crs=TEST_BBOX.crs)
@@ -182,7 +184,7 @@ def test_search_geometry_and_iterator_methods(
 
     assert len(results) == 1
     assert search_iterator.get_timestamps() == [timestamp]
-    assert search_iterator.get_ids() == [id]
+    assert search_iterator.get_ids() == [feature_id]
 
     geometries = search_iterator.get_geometries()
     assert len(geometries) == 1
@@ -275,7 +277,7 @@ def test_search_for_data_collection(
 
 
 @pytest.mark.parametrize(
-    "config, data_collection, tile_id",
+    ("config", "data_collection", "tile_id"),
     [
         ("sh_config", DataCollection.LANDSAT_ETM_L1, "LE07_L1TP_160071_20170110_20201008_02_T1"),
         (

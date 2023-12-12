@@ -6,7 +6,7 @@ Interface of
 from __future__ import annotations
 
 import datetime as dt
-from typing import Iterable, Union
+from typing import Iterable
 from urllib.parse import urlencode
 
 import shapely.geometry
@@ -144,7 +144,7 @@ class WebFeatureService(FeatureIterator[JsonDict]):
         """
         return [shapely.geometry.shape(tile_info["geometry"]) for tile_info in self]
 
-    def get_tiles(self) -> list[Union[tuple[str, str, int], tuple[str, str]]]:
+    def get_tiles(self) -> list[tuple[str, str, int] | tuple[str, str]]:
         """Returns list of tiles with tile name, date and AWS index
 
         :return: List of tiles in form of (tile_name, date, aws_index).
