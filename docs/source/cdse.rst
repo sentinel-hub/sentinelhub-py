@@ -8,3 +8,4 @@ Copernicus Data Space Ecosystem tutorials
     examples/data_search_cdse.ipynb
     examples/ogc_request_cdse.ipynb
     examples/large_area_utilities_cdse.ipynb
+    examples/statistical_request_cdse.ipynb
