@@ -96,6 +96,32 @@ Batch, BYOC, and other APIs). There is "OAuth clients" frame where we can create
     For detailed instructions on how to obtain credentials, you can see the `Sentinel Hub webinar`_.
 
 
+Copernicus Data Space Ecosystem Configuration
+*********************************************
+
+
+For Copernicus Data Space Ecosystem users, please follow the `Sentinel Hub Services Authentication instructions`_ to
+register an OAuth client using the `Sentinel Hub Services Dashboard`_.
+
+With the registered OAuth client, a valid Copernicus Data Space Ecosystem configuration should be configured as below:
+
+.. code-block:: python
+
+    from sentinelhub import SHConfig
+
+    config = SHConfig()
+    config.sh_client_id = 'oauth-client-id'
+    config.sh_client_secret = 'oauth-client-secret'
+    config.sh_base_url = 'https://sh.dataspace.copernicus.eu'
+    config.sh_token_url = 'https://identity.dataspace.copernicus.eu/auth/realms/CDSE/protocol/openid-connect/token'
+
+
+.. admonition:: Supported Data Collections
+
+    With the Copernicus Data Space Ecosystem Configuration, please find the available data collections on
+    `Copernicus Data Space Ecosystem indexed in Sentinel Hub`_.
+
+
 Other configuration options
 ***************************
 
@@ -110,3 +136,6 @@ $ sentinelhub.config --help
 .. _`Sentinel Hub services`: https://www.sentinel-hub.com/develop/documentation/api/ogc_api/
 .. _`Sentinel Hub webinar`: https://www.youtube.com/watch?v=CBIlTOl2po4&t=1760s
 .. _`Sentinel Hub public repository`: https://roda.sentinel-hub.com/sentinel-s2-l1c/
+.. _`Sentinel Hub Services Authentication instructions`: https://documentation.dataspace.copernicus.eu/APIs/SentinelHub/Overview/Authentication.html
+.. _`Sentinel Hub Services Dashboard`: https://shapps.dataspace.copernicus.eu/dashboard/#/
+.. _`Copernicus Data Space Ecosystem indexed in Sentinel Hub`: https://documentation.dataspace.copernicus.eu/APIs/SentinelHub/Data.html
