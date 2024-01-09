@@ -1,5 +1,5 @@
-Advanced tutorials
-==================
+Sentinel Hub advanced tutorials
+===============================
 
 .. toctree::
     :maxdepth: 4

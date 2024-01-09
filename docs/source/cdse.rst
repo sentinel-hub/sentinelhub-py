@@ -1,5 +1,6 @@
-Copernicus Data Space Ecosystem tutorials
-=========================================
+.. _cdse_tutorials:
+Copernicus Data Space Ecosystem examples
+========================================
 
 .. toctree::
     :maxdepth: 4

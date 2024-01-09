@@ -11,6 +11,4 @@ Documentation of `sentinelhub` Python package
     configure
     logging
     examples
-    tutorials
-    cdse
     reference/sentinelhub

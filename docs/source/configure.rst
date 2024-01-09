@@ -119,7 +119,7 @@ With the registered OAuth client, a valid Copernicus Data Space Ecosystem config
 .. admonition:: Supported Data Collections
 
     With the Copernicus Data Space Ecosystem Configuration, please find the available data collections on
-    `Copernicus Data Space Ecosystem indexed in Sentinel Hub`_.
+    `Copernicus Data Space Ecosystem indexed in Sentinel Hub`_. See the :ref:`cdse_tutorials` on how to configure them for direct use in `sentinelhub-py`.
 
 
 Other configuration options
