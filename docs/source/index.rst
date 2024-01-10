@@ -11,5 +11,4 @@ Documentation of `sentinelhub` Python package
     configure
     logging
     examples
-    tutorials
     reference/sentinelhub

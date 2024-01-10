@@ -1,6 +1,14 @@
-## [Version 3.10.0] - 2023-12-07
+## [Version 3.10.1] - 2024-01-10
+
+- Improved documentation for Copernicus Data Space Ecosystem.
+- Restrict numpy version to <2 in anticipation of numpy 2.0 release.
+
+
+## [Version 3.10.0] - 2023-12-08
 
 - Adjust session caching to mirror changes to the core services. Older version might no longer correctly cache sessions.
+- Switch default auth endpoint to the new address.
+
 
 ## [Version 3.9.5] - 2023-12-07
 
@@ -11,6 +19,7 @@
 
 - Fixed a problem with `dataclasses_json 0.6.2` that broke BYOC functionalities
 - Removed AWS examples from the docs since the functionality is no longer maintained.
+
 
 ## [Version 3.9.3] - 2023-11-03
 
