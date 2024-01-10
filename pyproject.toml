@@ -40,7 +40,7 @@ dependencies = [
     "aenum>=2.1.4",
     "click",
     "dataclasses-json",
-    "numpy",
+    "numpy<2",
     "oauthlib",
     "pillow>=9.2.0",
     "pyproj>=2.2.0",
