@@ -67,23 +67,21 @@ def test_create_and_run_batch_request(batch_client: SentinelHubBatch, requests_m
     request_id = "mocked-id"
     requests_mock.post(
         "/api/v1/batch/process",
-        [
-            {
-                "json": {
-                    "id": request_id,
-                    "processRequest": {
-                        "input": {
-                            "bounds": {
-                                "bbox": list(bbox),
-                                "properties": {"crs": "http://www.opengis.net/def/crs/OGC/1.3/CRS84"},
-                            }
+        [{
+            "json": {
+                "id": request_id,
+                "processRequest": {
+                    "input": {
+                        "bounds": {
+                            "bbox": list(bbox),
+                            "properties": {"crs": "http://www.opengis.net/def/crs/OGC/1.3/CRS84"},
                         }
-                    },
-                    "tileCount": 42,
-                    "status": "CREATED",
-                }
+                    }
+                },
+                "tileCount": 42,
+                "status": "CREATED",
             }
-        ],
+        }],
     )
 
     batch_request = batch_client.create(

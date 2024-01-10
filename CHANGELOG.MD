@@ -1,3 +1,9 @@
+## [Version 3.10.1] - 2024-01-10
+
+- Improved documentation for Copernicus Data Space Ecosystem.
+- Restrict numpy version to <2 in anticipation of numpy 2.0 release.
+
+
 ## [Version 3.10.0] - 2023-12-08
 
 - Adjust session caching to mirror changes to the core services. Older version might no longer correctly cache sessions.
