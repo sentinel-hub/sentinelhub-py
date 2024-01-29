@@ -10,7 +10,7 @@ from typing import Sequence
 
 import boto3
 import pytest
-from moto import mock_s3
+from moto import mock_aws
 from pytest_mock import MockerFixture
 
 from sentinelhub import BatchRequestStatus, BatchStatisticalRequest, SHConfig
@@ -25,7 +25,7 @@ class BatchInputType(Enum):
     OBJECT = "batch_object"
 
 
-@mock_s3
+@mock_aws
 def _create_mocked_bucket_and_upload_data(bucket_name: str, paths: Sequence[str], data: Sequence[JsonDict]) -> str:
     """Creates a new empty mocked s3 bucket. If one such bucket already exists it deletes it first.
 
@@ -48,7 +48,7 @@ def _create_mocked_bucket_and_upload_data(bucket_name: str, paths: Sequence[str]
     return bucket_name
 
 
-@mock_s3
+@mock_aws
 @pytest.mark.parametrize("batch_input_type", list(BatchInputType))
 @pytest.mark.parametrize("use_feature_ids", [True, False])
 @pytest.mark.parametrize(("config", "show_progress"), [(None, False), (SHConfig(), True)])
