@@ -73,7 +73,7 @@ dev = [
     "click>=8.0.0",
     "fs",
     "mypy>=0.990",
-    "moto[s3]",
+    "moto[s3]>=5.0.0",
     "pandas",
     "pre-commit",
     "pylint>=2.14.0",
