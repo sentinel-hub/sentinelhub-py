@@ -34,7 +34,6 @@ def byoc_fixture(config: SHConfig) -> SentinelHubBYOC:
 def collection_fixture() -> JsonDict:
     return {
         "id": "7453e962-0ee5-4f74-8227-89759fbe9ba9",
-        "userId": "1b639ce6-eb3e-494c-9cb4-2eab3569b121",
         "name": "SI LULC Reference",
         "s3Bucket": "eo-learn.sentinel-hub.com",
         "additionalData": {
