@@ -165,7 +165,7 @@ def test_search_geometry_and_iterator_methods(catalog: SentinelHubCatalog) -> No
         ),
         (
             DataCollection.SENTINEL5P,
-            "S5P_NRTI_L2__AER_AI_20210114T100354_20210114T100854_16869_01_010400_20210114T104450",
+            "S5P_NRTI_L2__SO2____20210114T100354_20210114T100854_16869_01_020104_20210114T105704",
         ),
     ],
 )
