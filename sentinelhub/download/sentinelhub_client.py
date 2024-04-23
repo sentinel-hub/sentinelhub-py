@@ -15,7 +15,7 @@ from requests import Response
 
 from ..config import SHConfig
 from ..constants import SHConstants
-from ..exceptions import SHRateLimitWarning, SHRuntimeWarning
+from ..exceptions import OutOfRequestsException, SHRateLimitWarning, SHRuntimeWarning
 from ..types import JsonDict
 from .client import DownloadClient
 from .handlers import fail_user_errors, retry_temporary_errors
@@ -75,10 +75,12 @@ class SentinelHubDownloadClient(DownloadClient):
         """
         Executes the download with a single thread and uses a rate limit object, which is shared between all threads
         """
+        download_attempts = 0
         while True:
             sleep_time = self._execute_thread_safe(self.rate_limit.register_next)
 
             if sleep_time == 0:
+                download_attempts += 1
                 LOGGER.debug(
                     "Sending %s request to %s. Hash of sent request is %s",
                     request.request_type.value,
@@ -89,6 +91,12 @@ class SentinelHubDownloadClient(DownloadClient):
 
                 if response.status_code == requests.status_codes.codes.TOO_MANY_REQUESTS:
                     warnings.warn("Download rate limit hit", category=SHRateLimitWarning)
+                    if (
+                        self.config.max_rate_limit_retries is not None
+                        and download_attempts >= self.config.max_rate_limit_retries
+                    ):
+                        raise OutOfRequestsException("Maximum number of download attempts reached")
+
                     self._execute_thread_safe(self.rate_limit.update, response.headers, default=self.default_retry_time)
                     continue
 

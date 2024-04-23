@@ -46,6 +46,7 @@ class _SHConfig:
     download_sleep_time: float = 5.0
     download_timeout_seconds: float = 120.0
     number_of_download_processes: int = 1
+    max_rate_limit_retries: int | None = None
 
     def __post_init__(self) -> None:
         if self.sh_auth_base_url is not None:
@@ -94,6 +95,7 @@ class SHConfig(_SHConfig):
           attempt this number exponentially increases with factor `3`.
         - `download_timeout_seconds`: Maximum number of seconds before download attempt is canceled.
         - `number_of_download_processes`: Number of download processes, used to calculate rate-limit sleep time.
+        - `max_rate_limit_retries`: Maximum number of retries caused by rate limits until an exception is raised.
 
     The location of `config.toml` for manual modification can be found with `SHConfig.get_config_location()`.
     """
