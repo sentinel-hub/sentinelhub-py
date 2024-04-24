@@ -91,10 +91,7 @@ class SentinelHubDownloadClient(DownloadClient):
 
                 if response.status_code == requests.status_codes.codes.TOO_MANY_REQUESTS:
                     warnings.warn("Download rate limit hit", category=SHRateLimitWarning)
-                    if (
-                        self.config.max_rate_limit_retries is not None
-                        and download_attempts >= self.config.max_rate_limit_retries
-                    ):
+                    if self.config.max_retries is not None and download_attempts >= self.config.max_retries:
                         raise OutOfRequestsException("Maximum number of download attempts reached")
 
                     self._execute_thread_safe(self.rate_limit.update, response.headers, default=self.default_retry_time)

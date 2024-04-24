@@ -118,9 +118,9 @@ def test_universal_session_caching(session: SentinelHubSession) -> None:
 
 
 @pytest.mark.sh_integration()
-def test_client_with_max_rate_limit_retries(session: SentinelHubSession) -> None:
+def test_client_with_max_retries(session: SentinelHubSession) -> None:
     blank_config = SHConfig(use_defaults=True)
-    blank_config.max_rate_limit_retries = 1
+    blank_config.max_retries = 1
     client = SentinelHubDownloadClient(session=session, config=blank_config)
 
     class MockResponse:
