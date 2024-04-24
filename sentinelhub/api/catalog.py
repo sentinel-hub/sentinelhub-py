@@ -140,20 +140,22 @@ class SentinelHubCatalog(SentinelHubService):
         if geometry and geometry.crs is not CRS.WGS84:
             geometry = geometry.transform(CRS.WGS84)
 
-        payload = remove_undefined({
-            "collections": [collection_id],
-            "datetime": f"{start_time}/{end_time}" if time else None,
-            "bbox": list(bbox) if bbox else None,
-            "intersects": geometry.get_geojson(with_crs=False) if geometry else None,
-            "ids": ids,
-            "filter": self._prepare_filters(filter, collection, filter_lang),
-            "filter-lang": filter_lang,
-            "filter-crs": filter_crs,
-            "fields": fields,
-            "distinct": distinct,
-            "limit": limit,
-            **kwargs,
-        })
+        payload = remove_undefined(
+            {
+                "collections": [collection_id],
+                "datetime": f"{start_time}/{end_time}" if time else None,
+                "bbox": list(bbox) if bbox else None,
+                "intersects": geometry.get_geojson(with_crs=False) if geometry else None,
+                "ids": ids,
+                "filter": self._prepare_filters(filter, collection, filter_lang),
+                "filter-lang": filter_lang,
+                "filter-crs": filter_crs,
+                "fields": fields,
+                "distinct": distinct,
+                "limit": limit,
+                **kwargs,
+            }
+        )
 
         return CatalogSearchIterator(self.client, url, payload)
 

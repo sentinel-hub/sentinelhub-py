@@ -1,4 +1,4 @@
-""" Contains information about data collections used by SH """
+"""Contains information about data collections used by SH"""
 
 from __future__ import annotations
 

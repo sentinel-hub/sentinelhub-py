@@ -52,7 +52,7 @@ def fail_user_errors(download_func: Callable[[Self, DownloadRequest], T]) -> Cal
 
 
 def retry_temporary_errors(
-    download_func: Callable[[SelfWithConfig, DownloadRequest], T]
+    download_func: Callable[[SelfWithConfig, DownloadRequest], T],
 ) -> Callable[[SelfWithConfig, DownloadRequest], T]:
     """Decorator function for handling server and connection errors"""
     backoff_coefficient = 3

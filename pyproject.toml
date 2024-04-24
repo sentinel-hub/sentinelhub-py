@@ -63,7 +63,7 @@ docs = [
     "matplotlib",
     "nbsphinx",
     "sphinx==7.1.2",
-    "sphinx_mdinclude",
+    "sphinx_mdinclude==0.5.4",  # version fixed because 0.6.0 didnt work at release time of 3.10.2
     "sphinx_rtd_theme==1.3.0",
 ]
 dev = [
