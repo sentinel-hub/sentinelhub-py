@@ -1,5 +1,4 @@
-""" Tests for the Async Process API requests
-"""
+"""Tests for the Async Process API requests"""
 
 import datetime as dt
 

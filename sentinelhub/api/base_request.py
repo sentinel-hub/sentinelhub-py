@@ -134,11 +134,13 @@ class SentinelHubBaseApiRequest(DataRequest, metaclass=ABCMeta):
         settings from config object. In case different collections have different restrictions then
         `SHConfig.sh_base_url` breaks the tie in case it matches one of the data collection URLs.
         """
-        data_collection_urls = tuple({
-            input_data_dict.service_url.rstrip("/")
-            for input_data_dict in self.payload["input"]["data"]
-            if isinstance(input_data_dict, InputDataDict) and input_data_dict.service_url is not None
-        })
+        data_collection_urls = tuple(
+            {
+                input_data_dict.service_url.rstrip("/")
+                for input_data_dict in self.payload["input"]["data"]
+                if isinstance(input_data_dict, InputDataDict) and input_data_dict.service_url is not None
+            }
+        )
         config_base_url = self.config.sh_base_url.rstrip("/")
 
         if not data_collection_urls:

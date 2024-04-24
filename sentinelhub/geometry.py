@@ -150,7 +150,7 @@ class BBox(_BaseGeometry):
 
     @staticmethod
     def _tuple_from_list_or_tuple(
-        bbox: tuple[float, float, float, float] | tuple[tuple[float, float], tuple[float, float]]
+        bbox: tuple[float, float, float, float] | tuple[tuple[float, float], tuple[float, float]],
     ) -> tuple[float, float, float, float]:
         """Converts a list or tuple representation of a bbox into a flat tuple representation.
 

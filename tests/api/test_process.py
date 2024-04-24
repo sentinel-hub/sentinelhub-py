@@ -1,5 +1,4 @@
-""" Tests for the Process API requests
-"""
+"""Tests for the Process API requests"""
 
 from __future__ import annotations
 
