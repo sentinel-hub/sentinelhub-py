@@ -24,7 +24,7 @@ SH_CLIENT_SECRET_ENV_VAR = "SH_CLIENT_SECRET"
 
 
 @dataclass(repr=False)
-class _SHConfig:
+class _SHConfig:  # pylint: disable=too-many-instance-attributes
     instance_id: str = ""
     sh_client_id: str = ""
     sh_client_secret: str = ""
@@ -46,6 +46,7 @@ class _SHConfig:
     download_sleep_time: float = 5.0
     download_timeout_seconds: float = 120.0
     number_of_download_processes: int = 1
+    max_retries: int | None = None
 
     def __post_init__(self) -> None:
         if self.sh_auth_base_url is not None:
@@ -94,6 +95,7 @@ class SHConfig(_SHConfig):
           attempt this number exponentially increases with factor `3`.
         - `download_timeout_seconds`: Maximum number of seconds before download attempt is canceled.
         - `number_of_download_processes`: Number of download processes, used to calculate rate-limit sleep time.
+        - `max_retries`: Maximum number of retries until an exception is raised.
 
     The location of `config.toml` for manual modification can be found with `SHConfig.get_config_location()`.
     """

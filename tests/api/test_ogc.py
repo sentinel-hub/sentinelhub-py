@@ -418,9 +418,9 @@ TEST_CASES = [
         result_len=1,
         img_min=0.0,
         img_max=1.0,
-        img_mean=0.34803,
+        img_mean=0.34748,
         img_median=0.02383,
-        img_std=0.46208,
+        img_std=0.46185,
         tile_num=2,
     ),
     OgcTestCase(

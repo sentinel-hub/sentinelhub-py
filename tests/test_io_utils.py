@@ -6,7 +6,6 @@ from xml.etree import ElementTree
 import numpy as np
 import pytest
 from fs.tempfs import TempFS
-from pytest_lazyfixture import lazy_fixture
 
 from sentinelhub import read_data, write_data
 
@@ -39,7 +38,6 @@ def test_read_tar_with_folder(input_folder: str) -> None:
     assert data == {"tar-folder/simple.json": {"message": "test"}}
 
 
-@pytest.fixture()
 def xml_testcase():
     xml_root = ElementTree.Element("EOPatch")
     xml_data = ElementTree.SubElement(xml_root, "data")
@@ -57,7 +55,7 @@ def xml_testcase():
         ("img-15bit.jp2", BASIC_IMAGE),
         ("img-16bit.jp2", BASIC_IMAGE),
         ("test-string.txt", "sentinelhub-py is often shortened to sh-py"),
-        ("test-xml.xml", lazy_fixture("xml_testcase")),
+        ("test-xml.xml", xml_testcase()),
     ],
 )
 def test_write_read(filename: str, data: str | np.ndarray | ElementTree.ElementTree) -> None:

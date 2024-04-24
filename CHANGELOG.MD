@@ -1,3 +1,8 @@
+## [Version 3.10.2] - 2024-24-04
+
+- Added `max_retries` parameter to `SHConfig` class. It controls how many times the client will attempt to re-download before raising `OutOfRequestsException`. It is set to `None` by default, in which case it never stops trying. Contributed by @Regan-Koopmans.
+
+
 ## [Version 3.10.1] - 2024-01-10
 
 - Improved documentation for Copernicus Data Space Ecosystem.

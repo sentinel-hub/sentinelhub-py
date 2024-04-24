@@ -69,13 +69,15 @@ def test_statistical_client_runs_out_of_retries(download_request: DownloadReques
 
     requests_mock.post(
         url="/api/v1/statistics",
-        response_list=[{
-            "json": {
-                "data": [
-                    {"interval": {"from": "2020-01-20", "to": "2020-01-20"}, "error": {"type": "EXECUTION_ERROR"}},
-                ]
+        response_list=[
+            {
+                "json": {
+                    "data": [
+                        {"interval": {"from": "2020-01-20", "to": "2020-01-20"}, "error": {"type": "EXECUTION_ERROR"}},
+                    ]
+                }
             }
-        }],
+        ],
     )
 
     with pytest.raises(DownloadFailedException) as exception_info:

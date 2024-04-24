@@ -1,15 +1,18 @@
 from __future__ import annotations
 
 import pytest
+import requests
 from requests_mock import Mocker
 
 from sentinelhub import (
+    DownloadRequest,
     SentinelHubDownloadClient,
     SentinelHubSession,
     SentinelHubStatisticalDownloadClient,
     SHConfig,
     __version__,
 )
+from sentinelhub.exceptions import OutOfRequestsException
 
 FAST_SH_ENDPOINT = "https://services.sentinel-hub.com/api/v1/catalog/collections"
 # ruff: noqa: SLF001
@@ -112,3 +115,18 @@ def test_universal_session_caching(session: SentinelHubSession) -> None:
     SentinelHubDownloadClient.cache_session(session, universal=True)
     cached_session = client.get_session()
     assert cached_session is session
+
+
+@pytest.mark.sh_integration()
+def test_client_with_max_retries(session: SentinelHubSession) -> None:
+    blank_config = SHConfig(use_defaults=True)
+    blank_config.max_retries = 1
+    client = SentinelHubDownloadClient(session=session, config=blank_config)
+
+    class MockResponse:
+        def __init__(self):
+            self.status_code = requests.status_codes.codes.TOO_MANY_REQUESTS
+
+    client._do_download = lambda _: MockResponse()
+    with pytest.raises(OutOfRequestsException):
+        client.download(download_requests=[DownloadRequest()])
