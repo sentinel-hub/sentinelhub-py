@@ -24,7 +24,7 @@ SH_CLIENT_SECRET_ENV_VAR = "SH_CLIENT_SECRET"
 
 
 @dataclass(repr=False)
-class _SHConfig:
+class _SHConfig:  # pylint: disable=too-many-instance-attributes
     instance_id: str = ""
     sh_client_id: str = ""
     sh_client_secret: str = ""
