@@ -1,3 +1,10 @@
+default:
+  tags:
+    - sinergise-lju
+
+variables:
+  BASE_IMAGE: $CI_REGISTRY_IMAGE/python-3.9-base:latest
+
 stages:
   - update
   - test
@@ -6,20 +13,21 @@ update_base_image:
   stage: update
   image: docker:latest
   rules:
-    - if: '$UPDATE_BASE_IMAGE == "true"'
+    - if: $UPDATE_BASE_IMAGE == "true"
+
   script:
-    - docker login -u gitlab-ci-token -p "$CI_JOB_TOKEN" "$CI_REGISTRY"
-    - docker build --file=".gitlab/docker/Dockerfile" --tag="$BASE_IMAGE" .
-    - docker push "$BASE_IMAGE"
+    - echo $CI_JOB_TOKEN | docker login $CI_REGISTRY -u $CI_REGISTRY_USER --password-stdin
+    - docker build -f docker/Dockerfile -t $BASE_IMAGE .
+    - docker push $BASE_IMAGE
 
 run_sh_integration_tests:
   stage: test
-  image: "$BASE_IMAGE"
+  image: $BASE_IMAGE
   dependencies: []
   needs: []
   rules:
     - when: always
-      if: '$UPDATE_BASE_IMAGE != "true"'
+      if: $UPDATE_BASE_IMAGE != "true"
   script:
     - pip install -e .[AWS,DEV]
     - pytest -m "sh_integration"
