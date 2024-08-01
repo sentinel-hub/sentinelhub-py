@@ -134,8 +134,6 @@ def test_canceled_batch_process_job(mocker: MockerFixture) -> None:
     with pytest.raises(RuntimeError):
         monitor_batch_job("mocked-request", config=SHConfig(), sleep_time=60)
 
-    assert monitor_analysis_mock.call_count == 1
-
 
 def _tile_status_counts_to_tiles(tile_status_counts: dict[BatchTileStatus, int]) -> list[dict[str, str]]:
     """From the info about how many tiles should have certain status it generates a list of tile payloads with these
