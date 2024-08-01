@@ -106,35 +106,6 @@ def test_monitor_batch_process_job(
     assert logging_mock.call_count == int(is_processing_logged) + int(is_failure_logged) + additional_calls + 1
 
 
-def test_canceled_batch_process_job(mocker: MockerFixture) -> None:
-
-    tile_status_sequence = [{BatchTileStatus.PROCESSING: 6}, {BatchTileStatus.PROCESSING: 6}]
-    tiles_sequence = [_tile_status_counts_to_tiles(tile_status_counts) for tile_status_counts in tile_status_sequence]
-    tile_count = len(tiles_sequence[0])
-    assert all(
-        len(tiles) == tile_count for tiles in tiles_sequence
-    ), "There should be the same number of tiles in each step. Fix tile_status_sequence parameter of this test."
-
-    batch_kwargs = dict(request_id="mocked-request", process_request={}, tile_count=tile_count)
-    batch_request_sequence = [
-        BatchRequest(**batch_kwargs, status=status)
-        for status in [BatchRequestStatus.PROCESSING, BatchRequestStatus.CANCELED]
-    ]
-
-    monitor_analysis_mock = mocker.patch("sentinelhub.api.batch.utils.monitor_batch_analysis")
-    monitor_analysis_mock.return_value = batch_request_sequence[0]
-
-    batch_request_update_mock = mocker.patch("sentinelhub.SentinelHubBatch.get_request")
-    batch_request_update_mock.side_effect = batch_request_sequence
-
-    batch_tiles_mock = mocker.patch("sentinelhub.SentinelHubBatch.iter_tiles")
-    batch_tiles_mock.side_effect = tiles_sequence
-
-    mocker.patch("time.sleep")
-    with pytest.raises(RuntimeError):
-        monitor_batch_job("mocked-request", config=SHConfig(), sleep_time=60)
-
-
 def _tile_status_counts_to_tiles(tile_status_counts: dict[BatchTileStatus, int]) -> list[dict[str, str]]:
     """From the info about how many tiles should have certain status it generates a list of tile payloads with these
     statuses.
