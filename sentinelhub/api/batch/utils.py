@@ -93,6 +93,13 @@ def monitor_batch_job(
     failed_tiles_num = finished_count - success_count
     if failed_tiles_num:
         LOGGER.info("Batch job failed for %d tiles", failed_tiles_num)
+
+    LOGGER.info("Waiting on batch job status update.")
+    while batch_request.status is BatchRequestStatus.PROCESSING:
+        time.sleep(sleep_time)
+        batch_request = batch_client.get_request(batch_request)
+
+    LOGGER.info("Batch job finished with status %s", batch_request.status.value)
     return tiles_per_status
 
 
