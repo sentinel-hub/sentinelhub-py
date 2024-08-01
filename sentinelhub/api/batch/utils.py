@@ -97,8 +97,8 @@ def monitor_batch_job(
     if failed_tiles_num:
         LOGGER.info("Batch job failed for %d tiles", failed_tiles_num)
 
-    LOGGER.info("Waiting on batch job status update.")
     while batch_request.status is BatchRequestStatus.PROCESSING:
+        LOGGER.info("Waiting on batch job status update.")
         time.sleep(sleep_time)
         batch_request = batch_client.get_request(batch_request)
 
