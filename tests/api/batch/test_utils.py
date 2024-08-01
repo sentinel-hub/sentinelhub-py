@@ -67,15 +67,17 @@ def test_monitor_batch_process_job(
         len(tiles) == tile_count for tiles in tiles_sequence
     ), "There should be the same number of tiles in each step. Fix tile_status_sequence parameter of this test."
 
-    batch_request = BatchRequest(
-        request_id="mocked-request", process_request={}, tile_count=tile_count, status=batch_status
-    )
+    batch_kwargs = dict(request_id="mocked-request", process_request={}, tile_count=tile_count)
+    batch_request = BatchRequest(**batch_kwargs, status=batch_status)
+    updated_batch_request = BatchRequest(**batch_kwargs, status=BatchRequestStatus.DONE)
+
     monitor_analysis_mock = mocker.patch("sentinelhub.api.batch.utils.monitor_batch_analysis")
     monitor_analysis_mock.return_value = batch_request
 
-    updated_batch_request = BatchRequest.from_dict({**batch_request.to_dict(), "status": BatchRequestStatus.DONE})
+    # keep returning the same batch request until the last step (simulate batch job status update)
+    progress_loop_counts = len(tile_status_sequence) - 1
     batch_request_update_mock = mocker.patch("sentinelhub.SentinelHubBatch.get_request")
-    batch_request_update_mock.return_value = updated_batch_request
+    batch_request_update_mock.side_effect = progress_loop_counts * [batch_request] + [updated_batch_request]
 
     batch_tiles_mock = mocker.patch("sentinelhub.SentinelHubBatch.iter_tiles")
     batch_tiles_mock.side_effect = tiles_sequence
@@ -92,13 +94,11 @@ def test_monitor_batch_process_job(
         assert len(results[tile_status]) == tile_status_sequence[-1].get(tile_status, 0)
 
     assert monitor_analysis_mock.call_count == 1
-
-    progress_loop_counts = len(tile_status_sequence) - 1
-
     assert batch_tiles_mock.call_count == progress_loop_counts + 1
     assert all(call.args == (batch_request,) and call.kwargs == {} for call in batch_tiles_mock.mock_calls)
 
-    assert sleep_mock.call_count == progress_loop_counts + batch_request_update_mock.call_count
+    additional_calls = 1 if batch_status is BatchRequestStatus.PROCESSING else 0
+    assert sleep_mock.call_count == progress_loop_counts + additional_calls
     assert all(call.args == (sleep_time,) and call.kwargs == {} for call in sleep_mock.mock_calls)
 
     is_processing_logged = batch_status is BatchRequestStatus.PROCESSING
