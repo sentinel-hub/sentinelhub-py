@@ -103,7 +103,7 @@ def test_monitor_batch_process_job(
 
     is_processing_logged = batch_status is BatchRequestStatus.PROCESSING
     is_failure_logged = BatchTileStatus.FAILED in tile_status_sequence[-1]
-    assert logging_mock.call_count == int(is_processing_logged) + int(is_failure_logged) + 2
+    assert logging_mock.call_count == int(is_processing_logged) + int(is_failure_logged) + additional_calls + 1
 
 
 def test_canceled_batch_process_job(mocker: MockerFixture) -> None:
