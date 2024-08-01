@@ -77,6 +77,9 @@ def monitor_batch_job(
         while finished_count < batch_request.tile_count:
             time.sleep(sleep_time)
 
+            batch_request = batch_client.get_request(batch_request)
+            batch_request.raise_for_status(status=[BatchRequestStatus.CANCELED])
+
             tiles_per_status = _get_batch_tiles_per_status(batch_request, batch_client)
             new_success_count = len(tiles_per_status[BatchTileStatus.PROCESSED])
             new_finished_count = new_success_count + len(tiles_per_status[BatchTileStatus.FAILED])
