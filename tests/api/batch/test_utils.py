@@ -73,6 +73,10 @@ def test_monitor_batch_process_job(
     monitor_analysis_mock = mocker.patch("sentinelhub.api.batch.utils.monitor_batch_analysis")
     monitor_analysis_mock.return_value = batch_request
 
+    updated_batch_request = BatchRequest.from_dict({**batch_request.to_dict(), "status": BatchRequestStatus.DONE})
+    batch_request_update_mock = mocker.patch("sentinelhub.SentinelHubBatch.get_request")
+    batch_request_update_mock.return_value = updated_batch_request
+
     batch_tiles_mock = mocker.patch("sentinelhub.SentinelHubBatch.iter_tiles")
     batch_tiles_mock.side_effect = tiles_sequence
 
@@ -94,12 +98,12 @@ def test_monitor_batch_process_job(
     assert batch_tiles_mock.call_count == progress_loop_counts + 1
     assert all(call.args == (batch_request,) and call.kwargs == {} for call in batch_tiles_mock.mock_calls)
 
-    assert sleep_mock.call_count == progress_loop_counts
+    assert sleep_mock.call_count == progress_loop_counts + batch_request_update_mock.call_count
     assert all(call.args == (sleep_time,) and call.kwargs == {} for call in sleep_mock.mock_calls)
 
     is_processing_logged = batch_status is BatchRequestStatus.PROCESSING
     is_failure_logged = BatchTileStatus.FAILED in tile_status_sequence[-1]
-    assert logging_mock.call_count == int(is_processing_logged) + int(is_failure_logged)
+    assert logging_mock.call_count == int(is_processing_logged) + int(is_failure_logged) + 2
 
 
 def _tile_status_counts_to_tiles(tile_status_counts: dict[BatchTileStatus, int]) -> list[dict[str, str]]:
