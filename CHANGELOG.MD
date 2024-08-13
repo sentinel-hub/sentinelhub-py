@@ -1,3 +1,9 @@
+## [Version 3.10.3] - 2024-13-08
+
+- Monitoring a batch job now concludes if the batch job is cancelled.
+- When monitoring a batch job it now waits for the status of the job to change (even if all tiles have completed) before finalization in order to return the correct status.
+
+
 ## [Version 3.10.2] - 2024-24-04
 
 - Added `max_retries` parameter to `SHConfig` class. It controls how many times the client will attempt to re-download before raising `OutOfRequestsException`. It is set to `None` by default, in which case it never stops trying. Contributed by @Regan-Koopmans.
