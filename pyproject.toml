@@ -110,7 +110,7 @@ preview = true
 [tool.ruff]
 line-length = 120
 target-version = "py38"
-select = [
+lint.select = [
     "F",    # pyflakes
     "E",    # pycodestyle
     "W",    # pycodestyle
@@ -143,7 +143,7 @@ select = [
     "RUF",  # ruff rules
 ]
 fix = true
-fixable = [
+lint.fixable = [
     "I",     # sort imports
     "F401",  # remove redundant imports
     "UP007", # use new-style union type annotations
@@ -151,7 +151,7 @@ fixable = [
     "UP037", # remove quotes around types when not necessary
     "FA100", # import future annotations where necessary (not autofixable ATM)
 ]
-ignore = [
+lint.ignore = [
     "C408",   # complains about `dict()` calls, we use them to avoid too many " in the code
     "SIM108", # tries to aggresively inline `if`, not always readable
     "COM812", # trailing comma missing, fights with black
@@ -162,11 +162,11 @@ ignore = [
     "B028",  # always demands a stacklevel argument when warning
     "PT011", # complains for `pytest.raises(ValueError)` but we use it a lot
 ]
-per-file-ignores = { "__init__.py" = ["F401"], "conf.py" = ["FA100"] }
+lint.per-file-ignores = { "__init__.py" = ["F401"], "conf.py" = ["FA100"] }
 exclude = [".git", "__pycache__", "build", "dist", "sentinelhub/aws/*"]
 
 
-[tool.ruff.isort]
+[tool.ruff.lint.isort]
 section-order = [
     "future",
     "standard-library",
