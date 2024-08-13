@@ -57,14 +57,14 @@ def test_session_caching_and_clearing(
     client_object: SentinelHubDownloadClient | type[SentinelHubDownloadClient], session: SentinelHubSession
 ) -> None:
     client_object.clear_cache()
-    assert {} == SentinelHubDownloadClient._CACHED_SESSIONS
+    assert SentinelHubDownloadClient._CACHED_SESSIONS == {}
 
     client_object.cache_session(session)
     assert len(SentinelHubDownloadClient._CACHED_SESSIONS) == 1
     assert list(SentinelHubDownloadClient._CACHED_SESSIONS.values()) == [session]
 
     client_object.clear_cache()
-    assert {} == SentinelHubDownloadClient._CACHED_SESSIONS
+    assert SentinelHubDownloadClient._CACHED_SESSIONS == {}
 
 
 @pytest.mark.sh_integration()
