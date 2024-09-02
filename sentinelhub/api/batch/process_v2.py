@@ -12,13 +12,14 @@ from typing import Any, Dict, Iterator, List, Optional, Tuple, Union
 
 from dataclasses_json import CatchAll, LetterCase, Undefined, dataclass_json
 from dataclasses_json import config as dataclass_config
+from typing_extensions import Literal
 
 from ...constants import RequestType
 from ...geometry import CRS, BBox, Geometry
 from ...types import Json, JsonDict
 from ..base import SentinelHubFeatureIterator
 from ..process import SentinelHubRequest
-from ..utils import datetime_config, enum_config, remove_undefined
+from ..utils import datetime_config, enum_config, remove_undefined, s3_specification
 from .base import BaseBatchClient, BaseBatchRequest, BatchRequestStatus, BatchUserAction
 
 LOGGER = logging.getLogger(__name__)
@@ -29,39 +30,63 @@ BatchRequestType = Union[str, dict, "BatchRequest"]
 class SentinelHubBatch(BaseBatchClient):
     """An interface class for Sentinel Hub Batch API version 2."""
 
+    s3_specification = s3_specification
+
     # pylint: disable=too-many-public-methods
     @staticmethod
     def _get_service_url(base_url: str) -> str:
         """Provides URL to Catalog API"""
-        return f"{base_url}/api/v1/batch"
+        return f"{base_url}/api/v2/batch"
+
+    def _get_processing_url(self, request_id: Optional[str] = None) -> str:
+        """Creates a URL for process endpoint"""
+        url = f"{self.service_url}/process"
+        if request_id is None:
+            return url
+        return f"{url}/{request_id}"
 
     def create(
         self,
-        sentinelhub_request: Union[SentinelHubRequest, JsonDict],
-        tiling_grid: Dict[str, Any],
+        process_request: Union[SentinelHubRequest, JsonDict],
+        input: Dict[str, Any],  # noqa: A002
         output: Optional[Dict[str, Any]] = None,
-        bucket_name: Optional[str] = None,
+        instance_type: Literal["normal", "large"] = "normal",
         description: Optional[str] = None,
         **kwargs: Any,
     ) -> "BatchRequest":
         """Create a new batch request
 
-        :param sentinelhub_request: An instance of SentinelHubRequest class containing all request parameters.
+        :param process_request: An instance of SentinelHubRequest class containing all request parameters.
             Alternatively, it can also be just a payload dictionary for Process API request
-        :param tiling_grid: A dictionary with tiling grid parameters. It can be built with `tiling_grid` method
-        :param output: A dictionary with output parameters. It can be built with `output` method. Alternatively, one
-            can set `bucket_name` parameter instead.
-        :param bucket_name: A name of an S3 bucket where to save data. Alternatively, one can set `output` parameter
-            to specify more output parameters.
+        :param input: A dictionary with input parameters. It can be built with `tiling_grid_input` or `geopackage_input`
+            methods.
+        :param output: A dictionary with output parameters. It can be built with `raster_output` or `zarr_output`
+            methods.
+        :param instance_type": Specifies which size of instances to use for the request.
         :param description: A description of a batch request
         :param kwargs: Any other arguments to be added to a dictionary of parameters.
-        :return: An instance of `SentinelHubBatch` object that represents a newly created batch request.
         """
 
-        if isinstance(sentinelhub_request, SentinelHubRequest):
-            request_dict = sentinelhub_request.download_list[0].post_values
+        payload = remove_undefined(
+            {
+                "processRequest": self._parse_process_request(process_request),
+                "input": input,
+                "output": output,
+                "instance_type": instance_type,
+                "description": description,
+                **kwargs,
+            }
+        )
+
+        request_info = self.client.get_json_dict(self._get_processing_url(), post_values=payload, use_session=True)
+
+        return BatchRequest.from_dict(request_info)
+
+    def _parse_process_request(self, process_request: Union[SentinelHubRequest, JsonDict]) -> dict:
+        if isinstance(process_request, SentinelHubRequest):
+            request_dict = process_request.download_list[0].post_values
         else:
-            request_dict = sentinelhub_request
+            request_dict = process_request
 
         if not isinstance(request_dict, dict):
             raise ValueError(
@@ -69,23 +94,12 @@ class SentinelHubBatch(BaseBatchClient):
                 "dictionary with a request payload"
             )
 
-        payload = {
-            "processRequest": request_dict,
-            "tilingGrid": tiling_grid,
-            "output": output,
-            "bucketName": bucket_name,
-            "description": description,
-            **kwargs,
-        }
-        payload = remove_undefined(payload)
+        return request_dict
 
-        url = self._get_processing_url()
-        request_info = self.client.get_json_dict(url, post_values=payload, use_session=True)
-
-        return BatchRequest.from_dict(request_info)
+    def geopackage_input(): ...
 
     @staticmethod
-    def tiling_grid(
+    def tiling_grid_input(
         grid_id: int, resolution: float, buffer: Optional[Tuple[int, int]] = None, **kwargs: Any
     ) -> JsonDict:
         """A helper method to build a dictionary with tiling grid parameters
@@ -103,7 +117,7 @@ class SentinelHubBatch(BaseBatchClient):
         return payload
 
     @staticmethod
-    def output(
+    def raster_output(
         *,
         default_tile_path: Optional[str] = None,
         overwrite: Optional[bool] = None,
@@ -144,6 +158,8 @@ class SentinelHubBatch(BaseBatchClient):
             }
         )
 
+    def zarr_output(): ...
+
     def iter_requests(
         self, user_id: Optional[str] = None, search: Optional[str] = None, sort: Optional[str] = None, **kwargs: Any
     ) -> Iterator["BatchRequest"]:
@@ -168,26 +184,17 @@ class SentinelHubBatch(BaseBatchClient):
         request_info = self.client.get_json_dict(url=self._get_processing_url(request_id), use_session=True)
         return BatchRequest.from_dict(request_info)
 
-    def update_request(
-        self,
-        batch_request: BatchRequestType,
-        output: Optional[Dict[str, Any]] = None,
-        description: Optional[str] = None,
-        **kwargs: Any,
-    ) -> Json:
-        """Update batch job request parameters
+    def update_request(self, batch_request: BatchRequestType, description: str) -> Json:
+        """Update certain batch job request parameters. Can only update requests that are not currently being processed.
 
-        :param batch_request: It could be a batch request object, a raw batch request payload or only a batch
-            request ID.
-        :param output: A dictionary with output parameters to be updated.
+        :param batch_request: Batch request ID, a dictionary containing an "ID" field, or a BatchRequest object.
         :param description: A description of a batch request to be updated.
-        :param kwargs: Any other arguments to be added to a dictionary of parameters.
         """
         request_id = self._parse_request_id(batch_request)
-        payload = remove_undefined({"output": output, "description": description, **kwargs})
+
         return self.client.get_json(
             url=self._get_processing_url(request_id),
-            post_values=payload,
+            post_values={"description": description},
             request_type=RequestType.PUT,
             use_session=True,
         )
@@ -195,33 +202,45 @@ class SentinelHubBatch(BaseBatchClient):
     def start_analysis(self, batch_request: BatchRequestType) -> Json:
         """Starts analysis of a batch job request
 
-        :param batch_request: It could be a batch request object, a raw batch request payload or only a batch
-            request ID.
+        :param batch_request: Batch request ID, a dictionary containing an "ID" field, or a BatchRequest object.
         """
         return self._call_job(batch_request, "analyse")
 
     def start_job(self, batch_request: BatchRequestType) -> Json:
         """Starts running a batch job
 
-        :param batch_request: It could be a batch request object, a raw batch request payload or only a batch
-            request ID.
+        :param batch_request: Batch request ID, a dictionary containing an "ID" field, or a BatchRequest object.
         """
         return self._call_job(batch_request, "start")
 
     def stop_job(self, batch_request: BatchRequestType) -> Json:
-        """Cancels a batch job
+        """Stops a batch job
 
-        :param batch_request: It could be a batch request object, a raw batch request payload or only a batch
-            request ID.
+        :param batch_request: Batch request ID, a dictionary containing an "ID" field, or a BatchRequest object.
         """
         return self._call_job(batch_request, "cancel")
 
-    def _get_processing_url(self, request_id: Optional[str] = None) -> str:
-        """Creates a URL for process endpoint"""
-        url = f"{self.service_url}/process"
-        if request_id is None:
-            return url
-        return f"{url}/{request_id}"
+    def iter_tiling_grids(self, **kwargs: Any) -> SentinelHubFeatureIterator:
+        """An iterator over tiling grids
+
+        :param kwargs: Any other request query parameters
+        :return: An iterator over tiling grid definitions
+        """
+        return SentinelHubFeatureIterator(
+            client=self.client,
+            url=f"{self._get_service_url()}/tilinggrids",
+            params=remove_undefined(kwargs),
+            exception_message="Failed to obtain information about available tiling grids",
+        )
+
+    def get_tiling_grid(self, grid_id: int) -> JsonDict:
+        """Provides a single tiling grid
+
+        :param grid_id: An ID of a requested tiling grid
+        :return: A tiling grid definition
+        """
+        url = f"{self._get_service_url()}/tilinggrids/{grid_id}"
+        return self.client.get_json_dict(url=url, use_session=True)
 
 
 @dataclass_json(letter_case=LetterCase.CAMEL, undefined=Undefined.INCLUDE)
