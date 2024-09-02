@@ -142,7 +142,7 @@ class SentinelHubBatch(BaseBatchClient):
         collection_id: Optional[str] = None,
         **kwargs: Any,
     ) -> Dict[str, Any]:
-        """A helper method to build a dictionary with tiling grid parameters
+        """A helper method to build a dictionary specifying raster output
 
         :param delivery: A path or a template on an s3 bucket where to store results. See documentation for more info.
         :param overwrite: A flag specifying if a request should overwrite existing outputs without failing
@@ -153,7 +153,6 @@ class SentinelHubBatch(BaseBatchClient):
         :param create_collection: If True the results will be written in COGs and a batch collection will be created
         :param collection_id: If True results will be added to an existing collection
         :param kwargs: Any other arguments to be added to a dictionary of parameters
-        :return: A dictionary of output parameters
         """
         return remove_undefined(
             {
@@ -169,7 +168,36 @@ class SentinelHubBatch(BaseBatchClient):
             }
         )
 
-    def zarr_output(): ...
+    @staticmethod
+    def zarr_output(
+        delivery: str,
+        group: Optional[Dict[str, Any]] = None,
+        array_parameters: Optional[Dict[str, Any]] = None,
+        array_overrides: Optional[Dict[str, Any]] = None,
+        **kwargs: Any,
+    ) -> JsonDict:
+        """A helper method to build a dictionary specifying Zarr output. See documentation for more information on
+        each field.
+
+        `Batch Processing V2 <https://docs.sentinel-hub.com/api/latest/api/batchv2/>`__
+
+        :param delivery: A path or a template on an s3 bucket where to store results. See documentation for more info.
+        :param group: Zarr group level parameters
+        :param array_parameters: Parameters that will be used for all output arrays, except where overriden with
+            `array_overrides`. Required unless `array_overrides` includes all required fields for all output arrays.
+        :param array_overrides: Overrides the values of `array_arameters` for individual arrays.
+        :param kwargs: Any other arguments to be added to a dictionary of parameters
+        """
+        return remove_undefined(
+            {
+                "type": "zarr",
+                "delivery": delivery,
+                "group": group,
+                "arrayParameter": array_parameters,
+                "arrayOverrides": array_overrides,
+                **kwargs,
+            }
+        )
 
     def iter_requests(
         self, user_id: Optional[str] = None, search: Optional[str] = None, sort: Optional[str] = None, **kwargs: Any
