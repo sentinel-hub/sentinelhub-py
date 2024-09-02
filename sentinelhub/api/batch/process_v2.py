@@ -1,6 +1,6 @@
 """
 Module implementing an interface with
-`Sentinel Hub Batch Processing API <https://docs.sentinel-hub.com/api/latest/api/batch/>`__.
+`Batch Processing V2 <https://docs.sentinel-hub.com/api/latest/api/batchv2/>`__.
 """
 
 # ruff: noqa: FA100
@@ -28,7 +28,10 @@ BatchRequestType = Union[str, dict, "BatchRequest"]
 
 
 class SentinelHubBatch(BaseBatchClient):
-    """An interface class for Sentinel Hub Batch API version 2."""
+    """An interface class for Sentinel Hub Batch API version 2.
+
+    `Batch Processing API <https://docs.sentinel-hub.com/api/latest/api/batchv2/>`__
+    """
 
     s3_specification = s3_specification
 
@@ -55,6 +58,8 @@ class SentinelHubBatch(BaseBatchClient):
         **kwargs: Any,
     ) -> "BatchRequest":
         """Create a new batch request
+
+        `Batch Processing V2 <https://docs.sentinel-hub.com/api/latest/api/batchv2/>`__
 
         :param process_request: An instance of SentinelHubRequest class containing all request parameters.
             Alternatively, it can also be just a payload dictionary for Process API request
@@ -128,41 +133,38 @@ class SentinelHubBatch(BaseBatchClient):
     @staticmethod
     def raster_output(
         *,
-        default_tile_path: Optional[str] = None,
+        delivery: str,
         overwrite: Optional[bool] = None,
         skip_existing: Optional[bool] = None,
         cog_output: Optional[bool] = None,
         cog_parameters: Optional[Dict[str, Any]] = None,
         create_collection: Optional[bool] = None,
         collection_id: Optional[str] = None,
-        responses: Optional[List[str]] = None,
         **kwargs: Any,
     ) -> Dict[str, Any]:
         """A helper method to build a dictionary with tiling grid parameters
 
-        :param default_tile_path: A path or a template on an s3 bucket where to store results. More info at Batch API
-            documentation
+        :param delivery: A path or a template on an s3 bucket where to store results. See documentation for more info.
         :param overwrite: A flag specifying if a request should overwrite existing outputs without failing
         :param skip_existing: A flag specifying if existing outputs should be overwritten
-        :param cog_output: A flag specifying if outputs should be written in COGs (cloud-optimized GeoTIFFs )or
+        :param cog_output: A flag specifying if outputs should be written in COGs (cloud-optimized GeoTIFFs) or
             normal GeoTIFFs
-        :param cog_parameters: A dictionary specifying COG creation parameters
+        :param cog_parameters: A dictionary specifying COG creation parameters. See documentation for more info.
         :param create_collection: If True the results will be written in COGs and a batch collection will be created
         :param collection_id: If True results will be added to an existing collection
-        :param responses: Specification of path template for individual outputs/responses
         :param kwargs: Any other arguments to be added to a dictionary of parameters
         :return: A dictionary of output parameters
         """
         return remove_undefined(
             {
-                "defaultTilePath": default_tile_path,
+                "type": "raster",
+                "delivery": delivery,
                 "overwrite": overwrite,
                 "skipExisting": skip_existing,
                 "cogOutput": cog_output,
                 "cogParameters": cog_parameters,
                 "createCollection": create_collection,
                 "collectionId": collection_id,
-                "responses": responses,
                 **kwargs,
             }
         )
@@ -173,6 +175,8 @@ class SentinelHubBatch(BaseBatchClient):
         self, user_id: Optional[str] = None, search: Optional[str] = None, sort: Optional[str] = None, **kwargs: Any
     ) -> Iterator["BatchRequest"]:
         """Iterate existing batch requests
+
+        `Batch Processing V2 <https://docs.sentinel-hub.com/api/latest/api/batchv2/>`__
 
         :param user_id: Filter requests by a user id who defined a request
         :param search: A search query to filter requests
@@ -188,13 +192,18 @@ class SentinelHubBatch(BaseBatchClient):
             yield BatchRequest.from_dict(request_info)
 
     def get_request(self, batch_request: BatchRequestType) -> "BatchRequest":
-        """Collects information about a single batch request."""
+        """Collects information about a single batch request.
+
+        `Batch Processing V2 <https://docs.sentinel-hub.com/api/latest/api/batchv2/>`__
+        """
         request_id = self._parse_request_id(batch_request)
         request_info = self.client.get_json_dict(url=self._get_processing_url(request_id), use_session=True)
         return BatchRequest.from_dict(request_info)
 
     def update_request(self, batch_request: BatchRequestType, description: str) -> Json:
         """Update certain batch job request parameters. Can only update requests that are not currently being processed.
+
+        `Batch Processing V2 <https://docs.sentinel-hub.com/api/latest/api/batchv2/>`__
 
         :param batch_request: Batch request ID, a dictionary containing an "ID" field, or a BatchRequest object.
         :param description: A description of a batch request to be updated.
@@ -232,6 +241,8 @@ class SentinelHubBatch(BaseBatchClient):
     def iter_tiling_grids(self, **kwargs: Any) -> SentinelHubFeatureIterator:
         """An iterator over tiling grids
 
+        `Batch Processing V2 <https://docs.sentinel-hub.com/api/latest/api/batchv2/>`__
+
         :param kwargs: Any other request query parameters
         :return: An iterator over tiling grid definitions
         """
@@ -244,6 +255,8 @@ class SentinelHubBatch(BaseBatchClient):
 
     def get_tiling_grid(self, grid_id: int) -> JsonDict:
         """Provides a single tiling grid
+
+        `Batch Processing V2 <https://docs.sentinel-hub.com/api/latest/api/batchv2/>`__
 
         :param grid_id: An ID of a requested tiling grid
         :return: A tiling grid definition
