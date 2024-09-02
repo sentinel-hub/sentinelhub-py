@@ -8,19 +8,18 @@ Module implementing an interface with
 import datetime as dt
 import logging
 from dataclasses import dataclass, field
-from typing import Any, Dict, Iterator, List, Optional, Tuple, Union
+from typing import Any, Dict, Iterator, Optional, Union
 
 from dataclasses_json import CatchAll, LetterCase, Undefined, dataclass_json
 from dataclasses_json import config as dataclass_config
 from typing_extensions import Literal
 
 from ...constants import RequestType
-from ...geometry import CRS, BBox, Geometry
 from ...types import Json, JsonDict
 from ..base import SentinelHubFeatureIterator
 from ..process import SentinelHubRequest
 from ..utils import AccessSpecification, datetime_config, enum_config, remove_undefined, s3_specification
-from .base import BaseBatchClient, BaseBatchRequest, BatchRequestStatus, BatchUserAction
+from .base import BaseBatchClient, BaseBatchRequest, BatchRequestStatus, BatchUserAction, StoppedStatusReason
 
 LOGGER = logging.getLogger(__name__)
 
@@ -302,67 +301,20 @@ class BatchRequest(BaseBatchRequest):  # pylint: disable=abstract-method
     # pylint: disable=duplicate-code
 
     request_id: str = field(metadata=dataclass_config(field_name="id"))
-    process_request: dict
-    tile_count: int
+    request: dict
+    domain_account_id: str
     status: BatchRequestStatus = field(metadata=enum_config(BatchRequestStatus))
-    user_id: Optional[str] = None
-    created: Optional[dt.datetime] = field(metadata=datetime_config, default=None)
-    tiling_grid: dict = field(default_factory=dict)
-    output: dict = field(default_factory=dict)
-    bucket_name: Optional[str] = None
-    description: Optional[str] = None
-    value_estimate: Optional[float] = None
-    tile_width_px: Optional[int] = None
-    tile_height_px: Optional[int] = None
-    user_action: Optional[BatchUserAction] = field(metadata=enum_config(BatchUserAction), default=None)
-    user_action_updated: Optional[str] = field(metadata=datetime_config, default=None)
     error: Optional[str] = None
-    other_data: CatchAll = field(default_factory=dict)
-
-    _REPR_PARAM_NAMES = (
-        "request_id",
-        "description",
-        "bucket_name",
-        "created",
-        "status",
-        "user_action",
-        "value_estimate",
-        "tile_count",
+    user_action: Optional[BatchUserAction] = field(metadata=enum_config(BatchUserAction), default=None)
+    user_action_updated: Optional[dt.datetime] = field(metadata=datetime_config, default=None)
+    created: Optional[dt.datetime] = field(metadata=datetime_config, default=None)
+    completion_percentage: float = 0
+    last_updated: Optional[dt.datetime] = field(metadata=datetime_config, default=None)
+    cost_PU: Optional[float] = field(metadata=dataclass_config(field_name="costPU"), default=None)  # noqa: N815
+    stopped_status_reason: Optional[StoppedStatusReason] = field(
+        metadata=enum_config(StoppedStatusReason), default=None
     )
 
-    @property
-    def evalscript(self) -> str:
-        """Provides an evalscript used by a batch request
+    other_data: CatchAll = field(default_factory=dict)
 
-        :return: An evalscript
-        """
-        return self.process_request["evalscript"]
-
-    @property
-    def bbox(self) -> Optional[BBox]:
-        """Provides a bounding box used by a batch request
-
-        :return: An area bounding box together with CRS
-        :raises: ValueError
-        """
-        bbox, _, crs = self._parse_bounds_payload()
-        return None if bbox is None else BBox(bbox, crs)  # type: ignore[arg-type]
-
-    @property
-    def geometry(self) -> Optional[Geometry]:
-        """Provides a geometry used by a batch request
-
-        :return: An area geometry together with CRS
-        :raises: ValueError
-        """
-        _, geometry, crs = self._parse_bounds_payload()
-        return None if geometry is None else Geometry(geometry, crs)
-
-    def _parse_bounds_payload(self) -> Tuple[Optional[List[float]], Optional[list], CRS]:
-        """Parses bbox, geometry and crs from batch request payload. If bbox or geometry don't exist it returns None
-        instead.
-        """
-        bounds_definition = self.process_request["input"]["bounds"]
-        crs = CRS(bounds_definition["properties"]["crs"].rsplit("/", 1)[-1])
-
-        return bounds_definition.get("bbox"), bounds_definition.get("geometry"), crs
+    _REPR_PARAM_NAMES = ("request_id", "created", "status", "completion_percentage", "user_action", "cost_PU")
