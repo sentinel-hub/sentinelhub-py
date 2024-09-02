@@ -19,7 +19,7 @@ from ...geometry import CRS, BBox, Geometry
 from ...types import Json, JsonDict
 from ..base import SentinelHubFeatureIterator
 from ..process import SentinelHubRequest
-from ..utils import datetime_config, enum_config, remove_undefined, s3_specification
+from ..utils import AccessSpecification, datetime_config, enum_config, remove_undefined, s3_specification
 from .base import BaseBatchClient, BaseBatchRequest, BatchRequestStatus, BatchUserAction
 
 LOGGER = logging.getLogger(__name__)
@@ -67,9 +67,20 @@ class SentinelHubBatch(BaseBatchClient):
         :param kwargs: Any other arguments to be added to a dictionary of parameters.
         """
 
+        if isinstance(process_request, SentinelHubRequest):
+            request_dict = process_request.download_list[0].post_values
+        else:
+            request_dict = process_request
+
+        if not isinstance(request_dict, dict):
+            raise ValueError(
+                "Parameter sentinelhub_request should be an instance of SentinelHubRequest or a "
+                "dictionary with a request payload"
+            )
+
         payload = remove_undefined(
             {
-                "processRequest": self._parse_process_request(process_request),
+                "processRequest": request_dict,
                 "input": input,
                 "output": output,
                 "instance_type": instance_type,
@@ -82,39 +93,37 @@ class SentinelHubBatch(BaseBatchClient):
 
         return BatchRequest.from_dict(request_info)
 
-    def _parse_process_request(self, process_request: Union[SentinelHubRequest, JsonDict]) -> dict:
-        if isinstance(process_request, SentinelHubRequest):
-            request_dict = process_request.download_list[0].post_values
-        else:
-            request_dict = process_request
+    @staticmethod
+    def geopackage_input(geopackage_specification: AccessSpecification) -> JsonDict:
+        """A helper method to build a suitable dictionary for the `input` field.
 
-        if not isinstance(request_dict, dict):
-            raise ValueError(
-                "Parameter sentinelhub_request should be an instance of SentinelHubRequest or a "
-                "dictionary with a request payload"
-            )
-
-        return request_dict
-
-    def geopackage_input(): ...
+        :param geopackage_specification: A specification of the S3 path for the Geopackage. Can be built using the
+            `s3_specification` helper method.
+        """
+        return {"type": "geopackage", "features": geopackage_specification}
 
     @staticmethod
     def tiling_grid_input(
-        grid_id: int, resolution: float, buffer: Optional[Tuple[int, int]] = None, **kwargs: Any
+        grid_id: int, resolution: float, buffer_x: Optional[int] = None, buffer_y: Optional[int] = None, **kwargs: Any
     ) -> JsonDict:
         """A helper method to build a dictionary with tiling grid parameters
 
         :param grid_id: An ID of a tiling grid
         :param resolution: A grid resolution
-        :param buffer: Optionally, a buffer around each tile can be defined. It can be defined with a tuple of integers
-            `(buffer_x, buffer_y)`, which specifies a number of buffer pixels in horizontal and vertical directions.
+        :param buffer_x: Will expand each output tile horizontally (left and right) by specified number of pixels.
+        :param buffer_y: Will expand each output tile vertically (up and down) by specified number of pixels.
         :param kwargs: Any other arguments to be added to a dictionary of parameters
-        :return: A dictionary with parameters
         """
-        payload = {"id": grid_id, "resolution": resolution, **kwargs}
-        if buffer:
-            payload = {**payload, "bufferX": buffer[0], "bufferY": buffer[1]}
-        return payload
+        return remove_undefined(
+            {
+                "type": "tiling-grid",
+                "id": grid_id,
+                "resolution": resolution,
+                "bufferX": buffer_x,
+                "bufferY": buffer_y,
+                **kwargs,
+            }
+        )
 
     @staticmethod
     def raster_output(
