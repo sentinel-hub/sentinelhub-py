@@ -32,7 +32,7 @@ class BatchProcessClient(BaseBatchClient):
     `Batch Process API <https://docs.sentinel-hub.com/api/latest/api/batchv2/>`__
     """
 
-    s3_specification = s3_specification
+    s3_specification = staticmethod(s3_specification)
 
     # pylint: disable=too-many-public-methods
     @staticmethod
@@ -131,8 +131,8 @@ class BatchProcessClient(BaseBatchClient):
 
     @staticmethod
     def raster_output(
+        delivery: AccessSpecification,
         *,
-        delivery: str,
         overwrite: Optional[bool] = None,
         skip_existing: Optional[bool] = None,
         cog_output: Optional[bool] = None,
@@ -143,7 +143,9 @@ class BatchProcessClient(BaseBatchClient):
     ) -> Dict[str, Any]:
         """A helper method to build a dictionary specifying raster output
 
-        :param delivery: A path or a template on an s3 bucket where to store results. See documentation for more info.
+        :param delivery: An S3 access specification containing a path or a template on an s3 bucket where to store
+            results. You can use the `s3_specification` method for construction. For more information on templates see
+            documentation.
         :param overwrite: A flag specifying if a request should overwrite existing outputs without failing
         :param skip_existing: A flag specifying if existing outputs should be overwritten
         :param cog_output: A flag specifying if outputs should be written in COGs (cloud-optimized GeoTIFFs) or
@@ -169,7 +171,8 @@ class BatchProcessClient(BaseBatchClient):
 
     @staticmethod
     def zarr_output(
-        delivery: str,
+        delivery: AccessSpecification,
+        *,
         group: Optional[Dict[str, Any]] = None,
         array_parameters: Optional[Dict[str, Any]] = None,
         array_overrides: Optional[Dict[str, Any]] = None,
@@ -180,7 +183,9 @@ class BatchProcessClient(BaseBatchClient):
 
         `Batch Process V2 <https://docs.sentinel-hub.com/api/latest/api/batchv2/>`__
 
-        :param delivery: A path or a template on an s3 bucket where to store results. See documentation for more info.
+        :param delivery: An S3 access specification containing a path or a template on an s3 bucket where to store
+            results. You can use the `s3_specification` method for construction. For more information on templates see
+            documentation.
         :param group: Zarr group level parameters
         :param array_parameters: Parameters that will be used for all output arrays, except where overriden with
             `array_overrides`. Required unless `array_overrides` includes all required fields for all output arrays.
