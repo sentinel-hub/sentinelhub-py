@@ -23,10 +23,10 @@ from .base import BaseBatchClient, BaseBatchRequest, BatchRequestStatus, BatchUs
 
 LOGGER = logging.getLogger(__name__)
 
-BatchRequestType = Union[str, dict, "BatchRequest"]
+BatchRequestType = Union[str, dict, "BatchProcessingRequest"]
 
 
-class SentinelHubBatch(BaseBatchClient):
+class BatchProcessingClient(BaseBatchClient):
     """An interface class for Sentinel Hub Batch API version 2.
 
     `Batch Processing API <https://docs.sentinel-hub.com/api/latest/api/batchv2/>`__
@@ -55,7 +55,7 @@ class SentinelHubBatch(BaseBatchClient):
         instance_type: Literal["normal", "large"] = "normal",
         description: Optional[str] = None,
         **kwargs: Any,
-    ) -> "BatchRequest":
+    ) -> "BatchProcessingRequest":
         """Create a new batch request
 
         `Batch Processing V2 <https://docs.sentinel-hub.com/api/latest/api/batchv2/>`__
@@ -95,7 +95,7 @@ class SentinelHubBatch(BaseBatchClient):
 
         request_info = self.client.get_json_dict(self._get_processing_url(), post_values=payload, use_session=True)
 
-        return BatchRequest.from_dict(request_info)
+        return BatchProcessingRequest.from_dict(request_info)
 
     @staticmethod
     def geopackage_input(geopackage_specification: AccessSpecification) -> JsonDict:
@@ -200,7 +200,7 @@ class SentinelHubBatch(BaseBatchClient):
 
     def iter_requests(
         self, user_id: Optional[str] = None, search: Optional[str] = None, sort: Optional[str] = None, **kwargs: Any
-    ) -> Iterator["BatchRequest"]:
+    ) -> Iterator["BatchProcessingRequest"]:
         """Iterate existing batch requests
 
         `Batch Processing V2 <https://docs.sentinel-hub.com/api/latest/api/batchv2/>`__
@@ -216,23 +216,23 @@ class SentinelHubBatch(BaseBatchClient):
             client=self.client, url=self._get_processing_url(), params=params, exception_message="No requests found"
         )
         for request_info in feature_iterator:
-            yield BatchRequest.from_dict(request_info)
+            yield BatchProcessingRequest.from_dict(request_info)
 
-    def get_request(self, batch_request: BatchRequestType) -> "BatchRequest":
+    def get_request(self, batch_request: BatchRequestType) -> "BatchProcessingRequest":
         """Collects information about a single batch request.
 
         `Batch Processing V2 <https://docs.sentinel-hub.com/api/latest/api/batchv2/>`__
         """
         request_id = self._parse_request_id(batch_request)
         request_info = self.client.get_json_dict(url=self._get_processing_url(request_id), use_session=True)
-        return BatchRequest.from_dict(request_info)
+        return BatchProcessingRequest.from_dict(request_info)
 
     def update_request(self, batch_request: BatchRequestType, description: str) -> Json:
         """Update certain batch job request parameters. Can only update requests that are not currently being processed.
 
         `Batch Processing V2 <https://docs.sentinel-hub.com/api/latest/api/batchv2/>`__
 
-        :param batch_request: Batch request ID, a dictionary containing an "ID" field, or a BatchRequest object.
+        :param batch_request: Batch request ID, a dictionary containing an "ID" field, or a BatchProcessingRequest.
         :param description: A description of a batch request to be updated.
         """
         request_id = self._parse_request_id(batch_request)
@@ -247,23 +247,23 @@ class SentinelHubBatch(BaseBatchClient):
     def start_analysis(self, batch_request: BatchRequestType) -> Json:
         """Starts analysis of a batch job request
 
-        :param batch_request: Batch request ID, a dictionary containing an "ID" field, or a BatchRequest object.
+        :param batch_request: Batch request ID, a dictionary containing an "ID" field, or a BatchProcessingRequest.
         """
         return self._call_job(batch_request, "analyse")
 
     def start_job(self, batch_request: BatchRequestType) -> Json:
         """Starts running a batch job
 
-        :param batch_request: Batch request ID, a dictionary containing an "ID" field, or a BatchRequest object.
+        :param batch_request: Batch request ID, a dictionary containing an "ID" field, or a BatchProcessingRequest.
         """
         return self._call_job(batch_request, "start")
 
     def stop_job(self, batch_request: BatchRequestType) -> Json:
         """Stops a batch job
 
-        :param batch_request: Batch request ID, a dictionary containing an "ID" field, or a BatchRequest object.
+        :param batch_request: Batch request ID, a dictionary containing an "ID" field, or a BatchProcessingRequest.
         """
-        return self._call_job(batch_request, "cancel")
+        return self._call_job(batch_request, "stop")
 
     def iter_tiling_grids(self, **kwargs: Any) -> SentinelHubFeatureIterator:
         """An iterator over tiling grids
@@ -275,7 +275,7 @@ class SentinelHubBatch(BaseBatchClient):
         """
         return SentinelHubFeatureIterator(
             client=self.client,
-            url=f"{self._get_service_url()}/tilinggrids",
+            url=f"{self._get_service_url(self.service_url)}/tilinggrids",
             params=remove_undefined(kwargs),
             exception_message="Failed to obtain information about available tiling grids",
         )
@@ -288,13 +288,13 @@ class SentinelHubBatch(BaseBatchClient):
         :param grid_id: An ID of a requested tiling grid
         :return: A tiling grid definition
         """
-        url = f"{self._get_service_url()}/tilinggrids/{grid_id}"
+        url = f"{self._get_service_url(self.service_url)}/tilinggrids/{grid_id}"
         return self.client.get_json_dict(url=url, use_session=True)
 
 
 @dataclass_json(letter_case=LetterCase.CAMEL, undefined=Undefined.INCLUDE)
 @dataclass(repr=False)
-class BatchRequest(BaseBatchRequest):  # pylint: disable=abstract-method
+class BatchProcessingRequest(BaseBatchRequest):  # pylint: disable=abstract-method
     """A dataclass object that holds information about a batch request"""
 
     # dataclass_json doesn't handle parameter inheritance correctly
