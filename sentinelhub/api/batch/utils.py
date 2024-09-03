@@ -107,7 +107,7 @@ def monitor_batch_job(
     return tiles_per_status
 
 
-def monitor_batch_processing_job(
+def monitor_batch_process_job(
     request: BatchProcessRequest,
     client: BatchProcessClient,
     sleep_time: int = _DEFAULT_SLEEP_TIME,
@@ -131,25 +131,23 @@ def monitor_batch_processing_job(
     if sleep_time < _MIN_SLEEP_TIME:
         raise ValueError(f"To avoid making too many service requests please set sleep_time>={_MIN_SLEEP_TIME}")
 
-    batch_request: BatchProcessRequest = monitor_batch_processing_analysis(
-        request, client, sleep_time=analysis_sleep_time
-    )
+    batch_request: BatchProcessRequest = monitor_batch_process_analysis(request, client, sleep_time=analysis_sleep_time)
     if batch_request.status is BatchRequestStatus.PROCESSING:
         LOGGER.info("Batch job is running")
 
     completion = batch_request.completion_percentage
-    progress_bar = tqdm(total=batch_request.tile_count, initial=completion, desc="Completion percentage")
+    progress_bar = tqdm(total=100, initial=completion, desc="Completion percentage")
 
     monitoring_status = [BatchRequestStatus.ANALYSIS_DONE, BatchRequestStatus.PROCESSING]
     with progress_bar:
-        while batch_request.completion_percentage < 100 and batch_request.status in monitoring_status:
+        while completion < 100 and batch_request.status in monitoring_status:
             time.sleep(sleep_time)
             batch_request = client.get_request(batch_request)
             progress_bar.update(batch_request.completion_percentage - completion)
             completion = batch_request.completion_percentage
 
-    while batch_request.status is BatchRequestStatus.PROCESSING:
-        LOGGER.info("Waiting on batch job status update.")
+    while batch_request.status in monitoring_status:
+        LOGGER.info(f"Waiting on batch job status update, currently {batch_request.status}.")
         time.sleep(sleep_time)
         batch_request = client.get_request(batch_request)
 
@@ -251,7 +249,7 @@ def monitor_batch_analysis(
     return batch_request
 
 
-def monitor_batch_processing_analysis(
+def monitor_batch_process_analysis(
     request: BatchProcessRequest,
     client: BatchProcessClient,
     sleep_time: int = _DEFAULT_ANALYSIS_SLEEP_TIME,
