@@ -50,7 +50,7 @@ class BatchProcessClient(BaseBatchClient):
     def create(
         self,
         process_request: Union[SentinelHubRequest, JsonDict],
-        input: Dict[str, Any],  # noqa: A002
+        input: Dict[str, Any],  # noqa: A002  #pylint: disable=redefined-builtin
         output: Optional[Dict[str, Any]] = None,
         instance_type: Literal["normal", "large"] = "normal",
         description: Optional[str] = None,
@@ -303,7 +303,7 @@ class BatchProcessRequest(BaseBatchRequest):  # pylint: disable=abstract-method
     """A dataclass object that holds information about a batch request"""
 
     # dataclass_json doesn't handle parameter inheritance correctly
-    # pylint: disable=duplicate-code
+    # pylint: disable=invalid-name
 
     request_id: str = field(metadata=dataclass_config(field_name="id"))
     request: dict

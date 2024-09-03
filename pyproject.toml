@@ -192,6 +192,7 @@ disable = [
     "unspecified-encoding",
     "unnecessary-ellipsis",
     "use-dict-literal",
+    "R0801",
 ]
 
 [tool.pylint.design]

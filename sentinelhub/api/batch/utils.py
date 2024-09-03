@@ -147,7 +147,7 @@ def monitor_batch_process_job(
             completion = batch_request.completion_percentage
 
     while batch_request.status in monitoring_status:
-        LOGGER.info(f"Waiting on batch job status update, currently {batch_request.status}.")
+        LOGGER.info("Waiting on batch job status update, currently %s", batch_request.status)
         time.sleep(sleep_time)
         batch_request = client.get_request(batch_request)
 
