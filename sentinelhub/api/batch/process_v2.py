@@ -275,7 +275,7 @@ class BatchProcessingClient(BaseBatchClient):
         """
         return SentinelHubFeatureIterator(
             client=self.client,
-            url=f"{self._get_service_url(self.service_url)}/tilinggrids",
+            url=f"{self.service_url}/tilinggrids",
             params=remove_undefined(kwargs),
             exception_message="Failed to obtain information about available tiling grids",
         )
@@ -288,7 +288,7 @@ class BatchProcessingClient(BaseBatchClient):
         :param grid_id: An ID of a requested tiling grid
         :return: A tiling grid definition
         """
-        url = f"{self._get_service_url(self.service_url)}/tilinggrids/{grid_id}"
+        url = f"{self.service_url}/tilinggrids/{grid_id}"
         return self.client.get_json_dict(url=url, use_session=True)
 
 
