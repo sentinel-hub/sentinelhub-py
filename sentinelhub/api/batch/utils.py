@@ -15,6 +15,7 @@ from ...config import SHConfig
 from ...types import JsonDict
 from .base import BatchRequestStatus
 from .process import BatchRequest, BatchTileStatus, SentinelHubBatch
+from .process_v2 import BatchProcessingClient, BatchProcessingRequest
 from .statistical import BatchStatisticalRequest, SentinelHubBatchStatistical
 
 LOGGER = logging.getLogger(__name__)
@@ -106,6 +107,56 @@ def monitor_batch_job(
     return tiles_per_status
 
 
+def monitor_batch_processing_job(
+    request: BatchProcessingRequest,
+    client: BatchProcessingClient,
+    sleep_time: int = _DEFAULT_SLEEP_TIME,
+    analysis_sleep_time: int = _DEFAULT_ANALYSIS_SLEEP_TIME,
+) -> BatchProcessingRequest:
+    """A utility function that keeps checking the progress of the batch processing job. Returns an updated version of
+    the request
+
+    Notes:
+
+      - Before calling this function make sure to start a batch job by calling `BatchProcessingClient.start_job` method.
+        In case a batch job is still being analysed this function will wait until the analysis ends.
+      - This function will be continuously collecting information from Sentinel Hub service. To avoid making too many
+        requests please make sure to adjust `sleep_time` parameter.
+
+    :param request: The request to monitor.
+    :param client: A batch processing client with appropriate configuration that is used to monitor the batch job.
+    :param sleep_time: Number of seconds to sleep between consecutive progress bar updates.
+    :param analysis_sleep_time: Number of seconds between consecutive status updates during analysis phase.
+    """
+    if sleep_time < _MIN_SLEEP_TIME:
+        raise ValueError(f"To avoid making too many service requests please set sleep_time>={_MIN_SLEEP_TIME}")
+
+    batch_request: BatchProcessingRequest = monitor_batch_processing_analysis(
+        request, client, sleep_time=analysis_sleep_time
+    )
+    if batch_request.status is BatchRequestStatus.PROCESSING:
+        LOGGER.info("Batch job is running")
+
+    completion = batch_request.completion_percentage
+    progress_bar = tqdm(total=batch_request.tile_count, initial=completion, desc="Completion percentage")
+
+    monitoring_status = [BatchRequestStatus.ANALYSIS_DONE, BatchRequestStatus.PROCESSING]
+    with progress_bar:
+        while batch_request.completion_percentage < 100 and batch_request.status in monitoring_status:
+            time.sleep(sleep_time)
+            batch_request = client.get_request(batch_request)
+            progress_bar.update(batch_request.completion_percentage - completion)
+            completion = batch_request.completion_percentage
+
+    while batch_request.status is BatchRequestStatus.PROCESSING:
+        LOGGER.info("Waiting on batch job status update.")
+        time.sleep(sleep_time)
+        batch_request = client.get_request(batch_request)
+
+    LOGGER.info("Batch job finished with status %s", batch_request.status.value)
+    return batch_request
+
+
 def _get_batch_tiles_per_status(
     batch_request: BatchRequest, batch_client: SentinelHubBatch
 ) -> defaultdict[BatchTileStatus, list[dict]]:
@@ -195,6 +246,33 @@ def monitor_batch_analysis(
         LOGGER.info("Batch job has a status %s, sleeping for %d seconds", batch_request.status.value, sleep_time)
         time.sleep(sleep_time)
         batch_request = batch_client.get_request(batch_request)
+
+    batch_request.raise_for_status(status=[BatchRequestStatus.FAILED, BatchRequestStatus.CANCELED])
+    return batch_request
+
+
+def monitor_batch_processing_analysis(
+    request: BatchProcessingRequest,
+    client: BatchProcessingClient,
+    sleep_time: int = _DEFAULT_ANALYSIS_SLEEP_TIME,
+) -> BatchProcessingRequest:
+    """A utility function that is waiting until analysis phase of a batch job finishes and regularly checks its status.
+    In case analysis phase failed it raises an error at the end.
+
+    :param request: The request to monitor.
+    :param client: A batch processing client with appropriate configuration that is used to monitor the batch job.
+    :param sleep_time: Number of seconds between consecutive status updates during analysis phase.
+    """
+    if sleep_time < _MIN_ANALYSIS_SLEEP_TIME:
+        raise ValueError(
+            f"To avoid making too many service requests please set analysis sleep time >={_MIN_ANALYSIS_SLEEP_TIME}"
+        )
+
+    batch_request = client.get_request(request)
+    while batch_request.status in [BatchRequestStatus.CREATED, BatchRequestStatus.ANALYSING]:
+        LOGGER.info("Batch job has a status %s, sleeping for %d seconds", batch_request.status.value, sleep_time)
+        time.sleep(sleep_time)
+        batch_request = client.get_request(batch_request)
 
     batch_request.raise_for_status(status=[BatchRequestStatus.FAILED, BatchRequestStatus.CANCELED])
     return batch_request
