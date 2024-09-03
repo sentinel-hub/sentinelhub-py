@@ -15,7 +15,7 @@ from ...config import SHConfig
 from ...types import JsonDict
 from .base import BatchRequestStatus
 from .process import BatchRequest, BatchTileStatus, SentinelHubBatch
-from .process_v2 import BatchProcessingClient, BatchProcessingRequest
+from .process_v2 import BatchProcessClient, BatchProcessRequest
 from .statistical import BatchStatisticalRequest, SentinelHubBatchStatistical
 
 LOGGER = logging.getLogger(__name__)
@@ -108,11 +108,11 @@ def monitor_batch_job(
 
 
 def monitor_batch_processing_job(
-    request: BatchProcessingRequest,
-    client: BatchProcessingClient,
+    request: BatchProcessRequest,
+    client: BatchProcessClient,
     sleep_time: int = _DEFAULT_SLEEP_TIME,
     analysis_sleep_time: int = _DEFAULT_ANALYSIS_SLEEP_TIME,
-) -> BatchProcessingRequest:
+) -> BatchProcessRequest:
     """A utility function that keeps checking the progress of the batch processing job. Returns an updated version of
     the request
 
@@ -131,7 +131,7 @@ def monitor_batch_processing_job(
     if sleep_time < _MIN_SLEEP_TIME:
         raise ValueError(f"To avoid making too many service requests please set sleep_time>={_MIN_SLEEP_TIME}")
 
-    batch_request: BatchProcessingRequest = monitor_batch_processing_analysis(
+    batch_request: BatchProcessRequest = monitor_batch_processing_analysis(
         request, client, sleep_time=analysis_sleep_time
     )
     if batch_request.status is BatchRequestStatus.PROCESSING:
@@ -252,10 +252,10 @@ def monitor_batch_analysis(
 
 
 def monitor_batch_processing_analysis(
-    request: BatchProcessingRequest,
-    client: BatchProcessingClient,
+    request: BatchProcessRequest,
+    client: BatchProcessClient,
     sleep_time: int = _DEFAULT_ANALYSIS_SLEEP_TIME,
-) -> BatchProcessingRequest:
+) -> BatchProcessRequest:
     """A utility function that is waiting until analysis phase of a batch job finishes and regularly checks its status.
     In case analysis phase failed it raises an error at the end.
 

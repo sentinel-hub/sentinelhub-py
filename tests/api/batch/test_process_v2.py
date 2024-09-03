@@ -9,30 +9,30 @@ import pytest
 from requests_mock import Mocker
 
 from sentinelhub import CRS, BBox, DataCollection, MimeType, SentinelHubRequest, SHConfig
-from sentinelhub.api.batch.process_v2 import BatchProcessingClient, BatchProcessingRequest
+from sentinelhub.api.batch.process_v2 import BatchProcessClient, BatchProcessRequest
 
 pytestmark = pytest.mark.sh_integration
 
 
 @pytest.fixture(name="batch_client")
-def batch_client_fixture(config: SHConfig) -> BatchProcessingClient:
-    return BatchProcessingClient(config=config)
+def batch_client_fixture(config: SHConfig) -> BatchProcessClient:
+    return BatchProcessClient(config=config)
 
 
-def test_iter_tiling_grids(batch_client: BatchProcessingClient) -> None:
+def test_iter_tiling_grids(batch_client: BatchProcessClient) -> None:
     tiling_grids = list(batch_client.iter_tiling_grids())
 
     assert len(tiling_grids) >= 1
     assert all(isinstance(item, dict) for item in tiling_grids)
 
 
-def test_single_tiling_grid(batch_client: BatchProcessingClient) -> None:
+def test_single_tiling_grid(batch_client: BatchProcessClient) -> None:
     tiling_grid = batch_client.get_tiling_grid(0)
 
     assert isinstance(tiling_grid, dict)
 
 
-def test_create_and_run_batch_request(batch_client: BatchProcessingClient, requests_mock: Mocker) -> None:
+def test_create_and_run_batch_request(batch_client: BatchProcessClient, requests_mock: Mocker) -> None:
     """A test that mocks creation and execution of a new batch request"""
     evalscript = "some evalscript"
     time_interval = dt.date(year=2020, month=6, day=1), dt.date(year=2020, month=6, day=10)
@@ -81,7 +81,7 @@ def test_create_and_run_batch_request(batch_client: BatchProcessingClient, reque
         description="Test batch job",
     )
 
-    assert isinstance(batch_request, BatchProcessingRequest)
+    assert isinstance(batch_request, BatchProcessRequest)
     assert batch_request.request_id == request_id
     assert request_id in repr(batch_request)
 
@@ -98,6 +98,6 @@ def test_create_and_run_batch_request(batch_client: BatchProcessingClient, reque
         assert requests_mock.request_history[index - len(full_endpoints)].url.endswith(full_endpoint)
 
 
-def test_iter_requests(batch_client: BatchProcessingClient) -> None:
+def test_iter_requests(batch_client: BatchProcessClient) -> None:
     batch_requests = list(it.islice(batch_client.iter_requests(), 10))
-    assert all(isinstance(request, BatchProcessingRequest) for request in batch_requests)
+    assert all(isinstance(request, BatchProcessRequest) for request in batch_requests)
