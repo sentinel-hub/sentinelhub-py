@@ -8,8 +8,16 @@ import itertools as it
 import pytest
 from requests_mock import Mocker
 
-from sentinelhub import CRS, BBox, DataCollection, MimeType, SentinelHubRequest, SHConfig
-from sentinelhub.api.batch.process_v2 import BatchProcessClient, BatchProcessRequest
+from sentinelhub import (
+    CRS,
+    BatchProcessClient,
+    BatchProcessRequest,
+    BBox,
+    DataCollection,
+    MimeType,
+    SentinelHubRequest,
+    SHConfig,
+)
 
 pytestmark = pytest.mark.sh_integration
 

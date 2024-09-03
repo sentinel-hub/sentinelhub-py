@@ -18,6 +18,8 @@ import pytest
 from pytest_mock import MockerFixture
 
 from sentinelhub import (
+    BatchProcessClient,
+    BatchProcessRequest,
     BatchRequest,
     BatchRequestStatus,
     BatchStatisticalRequest,
@@ -25,11 +27,11 @@ from sentinelhub import (
     SHConfig,
     monitor_batch_analysis,
     monitor_batch_job,
+    monitor_batch_process_analysis,
+    monitor_batch_process_job,
     monitor_batch_statistical_analysis,
     monitor_batch_statistical_job,
 )
-from sentinelhub.api.batch.process_v2 import BatchProcessClient, BatchProcessRequest
-from sentinelhub.api.batch.utils import monitor_batch_process_analysis, monitor_batch_process_job
 
 
 @pytest.mark.parametrize(
@@ -331,7 +333,7 @@ def test_monitor_batch_process_job(
     monitor_analysis_mock = mocker.patch("sentinelhub.api.batch.utils.monitor_batch_process_analysis")
     monitor_analysis_mock.return_value = batch_request
 
-    get_status_mock = mocker.patch("sentinelhub.api.batch.process_v2.BatchProcessClient.get_request")
+    get_status_mock = mocker.patch("sentinelhub.BatchProcessClient.get_request")
     returned_requests = [
         BatchProcessRequest(
             request_id="mocked-request",
@@ -388,7 +390,7 @@ def test_monitor_batch_process_analysis(
 
     client = BatchProcessClient()
 
-    batch_mock = mocker.patch("sentinelhub.api.batch.process_v2.BatchProcessClient.get_request")
+    batch_mock = mocker.patch("sentinelhub.BatchProcessClient.get_request")
     batch_mock.side_effect = requests
     sleep_mock = mocker.patch("time.sleep")
     logging_mock = mocker.patch("logging.Logger.info")
