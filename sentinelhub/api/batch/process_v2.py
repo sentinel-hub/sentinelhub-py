@@ -51,7 +51,7 @@ class BatchProcessClient(BaseBatchClient):
         self,
         process_request: Union[SentinelHubRequest, JsonDict],
         input: Dict[str, Any],  # noqa: A002  #pylint: disable=redefined-builtin
-        output: Optional[Dict[str, Any]] = None,
+        output: Dict[str, Any],
         instance_type: Literal["normal", "large"] = "normal",
         description: Optional[str] = None,
         **kwargs: Any,
