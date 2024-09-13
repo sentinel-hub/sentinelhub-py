@@ -110,7 +110,7 @@ class BatchProcessClient(BaseBatchClient):
     def tiling_grid_input(
         grid_id: int, resolution: float, buffer_x: Optional[int] = None, buffer_y: Optional[int] = None, **kwargs: Any
     ) -> JsonDict:
-        """A helper method to build a dictionary with tiling grid parameters
+        """A helper method to build a dictionary with tiling grid parameters for the `input` field.
 
         :param grid_id: An ID of a tiling grid
         :param resolution: A grid resolution
@@ -179,7 +179,7 @@ class BatchProcessClient(BaseBatchClient):
         **kwargs: Any,
     ) -> JsonDict:
         """A helper method to build a dictionary specifying Zarr output. See documentation for more information on
-        each field.
+        each parameter.
 
         `Batch Process V2 <https://docs.sentinel-hub.com/api/latest/api/batchv2/>`__
 
