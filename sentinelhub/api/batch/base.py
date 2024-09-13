@@ -41,6 +41,14 @@ class BatchUserAction(Enum):
     STOP = "STOP"
 
 
+class StoppedStatusReason(Enum):
+    """Description of why job status is STOPPED"""
+
+    OUT_OF_PU = "OUT_OF_PU"
+    USER_ACTION = "USER_ACTION"
+    UNHEALTHY = "UNHEALTHY"
+
+
 class BaseBatchClient(SentinelHubService, Generic[BatchRequestType], metaclass=ABCMeta):
     """Class containing common methods and helper functions for Batch Client classes"""
 

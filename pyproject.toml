@@ -152,6 +152,7 @@ lint.fixable = [
     "FA100", # import future annotations where necessary (not autofixable ATM)
 ]
 lint.ignore = [
+    "G004",   # f-strings in logging
     "C408",   # complains about `dict()` calls, we use them to avoid too many " in the code
     "SIM108", # tries to aggresively inline `if`, not always readable
     "COM812", # trailing comma missing, fights with black
@@ -191,6 +192,7 @@ disable = [
     "unspecified-encoding",
     "unnecessary-ellipsis",
     "use-dict-literal",
+    "R0801",
 ]
 
 [tool.pylint.design]
