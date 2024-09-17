@@ -33,7 +33,7 @@ class SentinelHubBatchStatistical(BaseBatchClient["BatchStatisticalRequest"]):
     information.
     """
 
-    s3_specification = s3_specification
+    s3_specification = staticmethod(s3_specification)
 
     @staticmethod
     def _get_service_url(base_url: str) -> str:

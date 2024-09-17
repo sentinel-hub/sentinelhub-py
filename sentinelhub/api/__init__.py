@@ -4,6 +4,8 @@ The part of the package that implements interface with Sentinel Hub services.
 
 from .batch import (
     BatchCollection,
+    BatchProcessClient,
+    BatchProcessRequest,
     BatchRequest,
     BatchRequestStatus,
     BatchStatisticalRequest,
@@ -13,6 +15,8 @@ from .batch import (
     SentinelHubBatchStatistical,
     monitor_batch_analysis,
     monitor_batch_job,
+    monitor_batch_process_analysis,
+    monitor_batch_process_job,
     monitor_batch_statistical_analysis,
     monitor_batch_statistical_job,
 )

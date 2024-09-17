@@ -205,7 +205,7 @@ class AsyncProcessRequest(SentinelHubBaseApiRequest):
 
         super().__init__(SentinelHubDownloadClient, **kwargs)
 
-    s3_specification = s3_specification
+    s3_specification = staticmethod(s3_specification)
 
     @property
     def mime_type(self) -> MimeType:

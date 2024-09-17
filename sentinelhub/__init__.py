@@ -6,6 +6,8 @@ from ._version import __version__
 from .api import (
     AsyncProcessRequest,
     BatchCollection,
+    BatchProcessClient,
+    BatchProcessRequest,
     BatchRequest,
     BatchRequestStatus,
     BatchStatisticalRequest,
@@ -28,6 +30,8 @@ from .api import (
     get_async_running_status,
     monitor_batch_analysis,
     monitor_batch_job,
+    monitor_batch_process_analysis,
+    monitor_batch_process_job,
     monitor_batch_statistical_analysis,
     monitor_batch_statistical_job,
     opensearch,
