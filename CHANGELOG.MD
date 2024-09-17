@@ -1,3 +1,7 @@
+## [Version 3.11.0] - 2024-17-09
+
+- Support for Batch Process API Version 2.
+
 ## [Version 3.10.3] - 2024-13-08
 
 - Monitoring a batch job now concludes if the batch job is cancelled.
