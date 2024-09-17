@@ -49,6 +49,8 @@ extensions = [
     "sphinx_rtd_theme",
 ]
 
+nbsphinx_execute = "never"
+
 # Include typehints in descriptions
 autodoc_typehints = "description"
 
