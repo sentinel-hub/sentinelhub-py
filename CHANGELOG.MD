@@ -1,6 +1,12 @@
+## [Version 3.11.1] - 2024-27-09
+
+- Remove `numpy<2` restriction.
+
+
 ## [Version 3.11.0] - 2024-17-09
 
 - Support for Batch Process API Version 2.
+
 
 ## [Version 3.10.3] - 2024-13-08
 
