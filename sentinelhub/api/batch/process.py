@@ -11,7 +11,7 @@ import time
 from dataclasses import dataclass, field
 from enum import Enum
 from functools import wraps
-from typing import Any, Callable, Dict, Iterator, List, Optional, Tuple, Union
+from typing import Any, Callable, Dict, Iterator, List, Optional, Tuple, TypeVar, Union
 
 from dataclasses_json import CatchAll, LetterCase, Undefined, dataclass_json
 from dataclasses_json import config as dataclass_config
@@ -27,13 +27,15 @@ from .base import BaseBatchClient, BaseBatchRequest, BatchRequestStatus, BatchUs
 
 LOGGER = logging.getLogger(__name__)
 
+T = TypeVar("T", bound="SentinelHubBatch")
+
 BatchRequestType = Union[str, dict, "BatchRequest"]
 BatchCollectionType = Union[str, dict, "BatchCollection"]
 
 
 def batch_user_action_wait_for_status_change(func: Callable) -> Callable:
     @wraps(func)
-    def retrying_func(self: SentinelHubBatch, batch_request: BatchRequest) -> Json:
+    def retrying_func(self: T, batch_request: "BatchRequest") -> Json:
         status = batch_request.status
         output = func(self, batch_request)
         for wait_time in [1, 2, 5, 10, 20, 100]:
