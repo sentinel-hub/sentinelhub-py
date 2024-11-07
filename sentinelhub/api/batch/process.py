@@ -33,7 +33,7 @@ BatchCollectionType = Union[str, dict, "BatchCollection"]
 
 def batch_user_action_wait_for_status_change(func: Callable) -> Callable:
     @wraps(func)
-    def retrying_func(self, batch_request: Union[str, dict, BaseBatchRequest]):
+    def retrying_func(self: SentinelHubBatch, batch_request: BatchRequest) -> Json:
         status = batch_request.status
         output = func(self, batch_request)
         for wait_time in [1, 2, 5, 10, 20, 100]:
