@@ -34,6 +34,8 @@ BatchCollectionType = Union[str, dict, "BatchCollection"]
 
 
 def batch_user_action_wait_for_status_change(func: Callable) -> Callable:
+    """Decorator function for waiting for a status change after a user action."""
+
     @wraps(func)
     def retrying_func(self: T, batch_request: "BatchRequest") -> Json:
         status = batch_request.status
@@ -44,7 +46,9 @@ def batch_user_action_wait_for_status_change(func: Callable) -> Callable:
             if new_status != status:
                 return output
 
-        LOGGER.warning(f"Status of batch request {batch_request.request_id} did not change from {status} in time!")
+        LOGGER.warning(
+            "Status of batch request %s did not change from %s in time!", batch_request.request_id, status.value
+        )
         return output
 
     return retrying_func
