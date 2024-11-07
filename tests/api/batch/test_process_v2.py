@@ -12,6 +12,7 @@ from sentinelhub import (
     CRS,
     BatchProcessClient,
     BatchProcessRequest,
+    BatchRequestStatus,
     BBox,
     DataCollection,
     MimeType,
@@ -40,6 +41,10 @@ def test_single_tiling_grid(batch_client: BatchProcessClient) -> None:
     assert isinstance(tiling_grid, dict)
 
 
+def count_batch_get_requests(requests_list: list, request_id: str) -> int:
+    return len([r for r in requests_list if r.url.endswith(request_id)])
+
+
 def test_create_and_run_batch_request(batch_client: BatchProcessClient, requests_mock: Mocker) -> None:
     """A test that mocks creation and execution of a new batch request"""
     evalscript = "some evalscript"
@@ -61,26 +66,20 @@ def test_create_and_run_batch_request(batch_client: BatchProcessClient, requests
 
     requests_mock.post("/oauth/token", real_http=True)
     request_id = "mocked-id"
-    requests_mock.post(
-        "/api/v2/batch/process",
-        [
-            {
-                "json": {
-                    "id": request_id,
-                    "domainAccountId": 0,
-                    "request": {
-                        "input": {
-                            "bounds": {
-                                "bbox": list(bbox),
-                                "properties": {"crs": "http://www.opengis.net/def/crs/OGC/1.3/CRS84"},
-                            }
-                        }
-                    },
-                    "status": "CREATED",
+    request_payload = {
+        "id": request_id,
+        "domainAccountId": 0,
+        "request": {
+            "input": {
+                "bounds": {
+                    "bbox": list(bbox),
+                    "properties": {"crs": "http://www.opengis.net/def/crs/OGC/1.3/CRS84"},
                 }
             }
-        ],
-    )
+        },
+        "status": "CREATED",
+    }
+    requests_mock.post("/api/v2/batch/process", [{"json": request_payload}])
 
     batch_request = batch_client.create(
         sentinelhub_request,
@@ -98,12 +97,45 @@ def test_create_and_run_batch_request(batch_client: BatchProcessClient, requests
     for full_endpoint in full_endpoints:
         requests_mock.post(full_endpoint, [{"json": ""}])
 
+    # test start analysis
+    batch_request.status = BatchRequestStatus.CREATED
+    requests_mock.get(
+        f"/api/v2/batch/process/{request_id}",
+        [
+            {"json": {**request_payload, "status": "CREATED"}},
+            {"json": {**request_payload, "status": "ANALYSIS_DONE"}},
+        ],
+    )
     batch_client.start_analysis(batch_request)
-    batch_client.start_job(batch_request)
-    batch_client.stop_job(batch_request)
+    assert count_batch_get_requests(requests_mock.request_history, request_id) == 2
 
+    # test start job
+    batch_request.status = BatchRequestStatus.ANALYSIS_DONE
+    requests_mock.get(
+        f"/api/v2/batch/process/{request_id}",
+        [
+            {"json": {**request_payload, "status": "ANALYSIS_DONE"}},
+            {"json": {**request_payload, "status": "PROCESSING"}},
+        ],
+    )
+    batch_client.start_job(batch_request)
+    assert count_batch_get_requests(requests_mock.request_history, request_id) == 4
+
+    # test stop job
+    batch_request.status = BatchRequestStatus.PROCESSING
+    requests_mock.get(
+        f"/api/v2/batch/process/{request_id}",
+        [
+            {"json": {**request_payload, "status": "PROCESSING"}},
+            {"json": {**request_payload, "status": "STOPPED"}},
+        ],
+    )
+    batch_client.stop_job(batch_request)
+    assert count_batch_get_requests(requests_mock.request_history, request_id) == 6
+
+    requests_history = [r for r in requests_mock.request_history if not r.url.endswith(request_id)]
     for index, full_endpoint in enumerate(full_endpoints):
-        assert requests_mock.request_history[index - len(full_endpoints)].url.endswith(full_endpoint)
+        assert requests_history[index - len(full_endpoints)].url.endswith(full_endpoint)
 
 
 def test_iter_requests(batch_client: BatchProcessClient) -> None:

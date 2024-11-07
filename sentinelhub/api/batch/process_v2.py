@@ -20,6 +20,7 @@ from ..base import SentinelHubFeatureIterator
 from ..process import SentinelHubRequest
 from ..utils import AccessSpecification, datetime_config, enum_config, remove_undefined, s3_specification
 from .base import BaseBatchClient, BaseBatchRequest, BatchRequestStatus, BatchUserAction, StoppedStatusReason
+from .process import batch_user_action_wait_for_status_change
 
 LOGGER = logging.getLogger(__name__)
 
@@ -249,6 +250,7 @@ class BatchProcessClient(BaseBatchClient):
             use_session=True,
         )
 
+    @batch_user_action_wait_for_status_change
     def start_analysis(self, batch_request: BatchRequestType) -> Json:
         """Starts analysis of a batch job request
 
@@ -256,6 +258,7 @@ class BatchProcessClient(BaseBatchClient):
         """
         return self._call_job(batch_request, "analyse")
 
+    @batch_user_action_wait_for_status_change
     def start_job(self, batch_request: BatchRequestType) -> Json:
         """Starts running a batch job
 
@@ -263,6 +266,7 @@ class BatchProcessClient(BaseBatchClient):
         """
         return self._call_job(batch_request, "start")
 
+    @batch_user_action_wait_for_status_change
     def stop_job(self, batch_request: BatchRequestType) -> Json:
         """Stops a batch job
 
