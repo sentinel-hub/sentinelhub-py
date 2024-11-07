@@ -7,9 +7,11 @@ Module implementing an interface with
 # do not use `from __future__ import annotations`, it clashes with `dataclass_json`
 import datetime as dt
 import logging
+import time
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Dict, Iterator, List, Optional, Tuple, Union
+from functools import wraps
+from typing import Any, Callable, Dict, Iterator, List, Optional, Tuple, Union
 
 from dataclasses_json import CatchAll, LetterCase, Undefined, dataclass_json
 from dataclasses_json import config as dataclass_config
@@ -27,6 +29,23 @@ LOGGER = logging.getLogger(__name__)
 
 BatchRequestType = Union[str, dict, "BatchRequest"]
 BatchCollectionType = Union[str, dict, "BatchCollection"]
+
+
+def _batch_user_action_wait_for_status_change(func: Callable) -> Callable:
+    @wraps(func)
+    def retrying_func(self, batch_request: BatchRequestType):
+        status = batch_request.status
+        output = func(self, batch_request)
+        for wait_time in [1, 2, 5, 10, 20, 100]:
+            time.sleep(wait_time)
+            new_status = self.get_request(batch_request).status
+            if new_status != status:
+                return output
+
+        LOGGER.warning(f"Status of batch request {batch_request.request_id} did not change from {status} in time!")
+        return output
+
+    return retrying_func
 
 
 class BatchTileStatus(Enum):
@@ -280,6 +299,7 @@ class SentinelHubBatch(BaseBatchClient):
             url=self._get_processing_url(request_id), request_type=RequestType.DELETE, use_session=True
         )
 
+    @_batch_user_action_wait_for_status_change
     def start_analysis(self, batch_request: BatchRequestType) -> Json:
         """Starts analysis of a batch job request
 
@@ -290,6 +310,7 @@ class SentinelHubBatch(BaseBatchClient):
         """
         return self._call_job(batch_request, "analyse")
 
+    @_batch_user_action_wait_for_status_change
     def start_job(self, batch_request: BatchRequestType) -> Json:
         """Starts running a batch job
 
@@ -300,6 +321,7 @@ class SentinelHubBatch(BaseBatchClient):
         """
         return self._call_job(batch_request, "start")
 
+    @_batch_user_action_wait_for_status_change
     def cancel_job(self, batch_request: BatchRequestType) -> Json:
         """Cancels a batch job
 
@@ -311,6 +333,7 @@ class SentinelHubBatch(BaseBatchClient):
         """
         return self._call_job(batch_request, "cancel")
 
+    @_batch_user_action_wait_for_status_change
     def restart_job(self, batch_request: BatchRequestType) -> Json:
         """Restarts only those parts of a job that failed
 
