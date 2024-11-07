@@ -31,9 +31,9 @@ BatchRequestType = Union[str, dict, "BatchRequest"]
 BatchCollectionType = Union[str, dict, "BatchCollection"]
 
 
-def _batch_user_action_wait_for_status_change(func: Callable) -> Callable:
+def batch_user_action_wait_for_status_change(func: Callable) -> Callable:
     @wraps(func)
-    def retrying_func(self, batch_request: BatchRequestType):
+    def retrying_func(self, batch_request: Union[str, dict, BaseBatchRequest]):
         status = batch_request.status
         output = func(self, batch_request)
         for wait_time in [1, 2, 5, 10, 20, 100]:
@@ -299,7 +299,7 @@ class SentinelHubBatch(BaseBatchClient):
             url=self._get_processing_url(request_id), request_type=RequestType.DELETE, use_session=True
         )
 
-    @_batch_user_action_wait_for_status_change
+    @batch_user_action_wait_for_status_change
     def start_analysis(self, batch_request: BatchRequestType) -> Json:
         """Starts analysis of a batch job request
 
@@ -310,7 +310,7 @@ class SentinelHubBatch(BaseBatchClient):
         """
         return self._call_job(batch_request, "analyse")
 
-    @_batch_user_action_wait_for_status_change
+    @batch_user_action_wait_for_status_change
     def start_job(self, batch_request: BatchRequestType) -> Json:
         """Starts running a batch job
 
@@ -321,7 +321,7 @@ class SentinelHubBatch(BaseBatchClient):
         """
         return self._call_job(batch_request, "start")
 
-    @_batch_user_action_wait_for_status_change
+    @batch_user_action_wait_for_status_change
     def cancel_job(self, batch_request: BatchRequestType) -> Json:
         """Cancels a batch job
 
@@ -333,7 +333,7 @@ class SentinelHubBatch(BaseBatchClient):
         """
         return self._call_job(batch_request, "cancel")
 
-    @_batch_user_action_wait_for_status_change
+    @batch_user_action_wait_for_status_change
     def restart_job(self, batch_request: BatchRequestType) -> Json:
         """Restarts only those parts of a job that failed
 
