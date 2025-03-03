@@ -123,7 +123,7 @@ jobs:
       - name: Mirror + trigger CI
         uses: SvanBoxel/gitlab-mirror-and-ci-action@master
         with:
-          args: "https://hello.planet.com/code/eo/code/sentinelhub-py-dev/"
+          args: "https://hello.planet.com/code/solution-enablement/eo/code/sentinelhub-py-dev/"
         env:
           FOLLOW_TAGS: "true"
           GITLAB_HOSTNAME: "hello.planet.com/code"
