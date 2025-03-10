@@ -46,6 +46,7 @@ BBOX_GRID = [
         (UtmGridSplitter, ([AREA], CRS.WGS84), dict(bbox_size=(1200, 1200)), 16),
         (UtmZoneSplitter, ([AREA], CRS.WGS84), dict(bbox_size=(1000, 1000)), 19),
         (UtmZoneSplitter, ([AREA], CRS.WGS84), dict(bbox_size=(1000, 1000), offset=(500, 500)), 21),
+        (UtmZoneSplitter, ([shapely.box(0, 0, 1, 1)], CRS.WGS84), dict(bbox_size=(10000, 10000)), 144),
         pytest.param(
             TileSplitter,
             ([AREA], CRS.WGS84, ("2017-10-01", "2018-03-01")),

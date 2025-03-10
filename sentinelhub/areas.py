@@ -534,7 +534,7 @@ class BaseUtmSplitter(AreaSplitter, metaclass=ABCMeta):
                     geo_object for geo_object in intersection if isinstance(geo_object, (Polygon, MultiPolygon))
                 )
 
-            if not intersection.is_empty:
+            if intersection.area > 0:
                 intersection = Geometry(intersection, CRS.WGS84).transform(utm_crs)
 
                 bbox_partition = self._align_bbox_to_size(intersection.bbox).get_partition(size_x=size_x, size_y=size_y)
