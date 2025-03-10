@@ -63,6 +63,7 @@ warnings.simplefilter("always", SHRuntimeWarning)
 warnings.simplefilter("always", SHRateLimitWarning)
 
 
+# THIS SHOULD BE REMOVED IN THE FUTURE, after rest of libraries transition away.
 def deprecated_function(
     category: type[DeprecationWarning] = SHDeprecationWarning, message_suffix: str | None = None
 ) -> Callable[[Callable], Callable]:
@@ -86,6 +87,7 @@ def deprecated_function(
     return deco
 
 
+# THIS SHOULD BE REMOVED IN THE FUTURE, after rest of libraries transition away.
 def deprecated_class(
     category: type[DeprecationWarning] = SHDeprecationWarning, message_suffix: str | None = None
 ) -> Callable[[type], type]:
