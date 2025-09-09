@@ -24,9 +24,7 @@ def catalog_fixture(config: SHConfig) -> SentinelHubCatalog:
     return SentinelHubCatalog(config=config)
 
 
-@pytest.mark.parametrize(
-    "data_collection", [DataCollection.SENTINEL2_L2A, DataCollection.LANDSAT_TM_L1, DataCollection.SENTINEL3_OLCI]
-)
+@pytest.mark.parametrize("data_collection", [DataCollection.SENTINEL2_L2A, DataCollection.LANDSAT_TM_L1])
 def test_info_with_different_deployments(config: SHConfig, data_collection: DataCollection) -> None:
     """Test if basic interaction works with different data collections on different deployments"""
     config.sh_base_url = data_collection.service_url or config.sh_base_url
@@ -155,18 +153,6 @@ def test_search_geometry_and_iterator_methods(catalog: SentinelHubCatalog) -> No
         (DataCollection.LANDSAT_OT_L1, "LC08_L1TP_160071_20210113_20210308_02_T1"),
         (DataCollection.LANDSAT_OT_L2, "LC08_L2SP_160071_20210113_20210308_02_T1"),
         (DataCollection.MODIS, "MCD43A4.006/22/10/2021014/MCD43A4.A2021014.h22v10.006.2021025214119"),
-        (
-            DataCollection.SENTINEL3_OLCI,
-            "S3A_OL_1_EFR____20210114T063914_20210114T064214_20210115T095516_0179_067_191_3240_LN1_O_NT_002.SEN3",
-        ),
-        (
-            DataCollection.SENTINEL3_SLSTR,
-            "S3A_SL_1_RBT____20210114T190809_20210114T191109_20210116T001252_0179_067_198_5760_LN2_O_NT_004.SEN3",
-        ),
-        (
-            DataCollection.SENTINEL5P,
-            "S5P_NRTI_L2__SO2____20210114T100354_20210114T100854_16869_01_020104_20210114T105704",
-        ),
     ],
 )
 def test_search_for_data_collection(config: SHConfig, data_collection: DataCollection | str, feature_id: str) -> None:

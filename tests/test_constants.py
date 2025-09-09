@@ -48,7 +48,8 @@ def test_crs_input(crs_input: object, expected: CRS) -> None:
 def test_crs_input_warn() -> None:
     with pytest.warns(SHUserWarning):
         parsed_result = CRS(pyproj.CRS(4326))
-        assert parsed_result == CRS.WGS84
+
+    assert parsed_result == CRS.WGS84
 
 
 @pytest.mark.parametrize("bad_input", ["string", "12", -1, 999, None, 3035.5])
