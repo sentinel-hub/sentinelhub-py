@@ -10,7 +10,6 @@ from .batch import (
     BatchRequestStatus,
     BatchStatisticalRequest,
     BatchUserAction,
-    SentinelHubBatch,
     SentinelHubBatchStatistical,
     monitor_batch_process_analysis,
     monitor_batch_process_job,

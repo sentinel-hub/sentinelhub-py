@@ -17,7 +17,6 @@ from .api import (
     ByocCollectionBand,
     ByocTile,
     FisRequest,
-    SentinelHubBatch,
     SentinelHubBatchStatistical,
     SentinelHubBYOC,
     SentinelHubCatalog,
