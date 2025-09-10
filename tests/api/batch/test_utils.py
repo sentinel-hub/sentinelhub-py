@@ -10,7 +10,7 @@ changing the code or the tests.
 
 from __future__ import annotations
 
-from typing import Callable, Sequence
+from typing import Sequence
 
 import pytest
 from pytest_mock import MockerFixture
@@ -26,7 +26,6 @@ from sentinelhub import (
     monitor_batch_statistical_analysis,
     monitor_batch_statistical_job,
 )
-
 
 
 @pytest.mark.parametrize("batch_status", [BatchRequestStatus.PROCESSING, BatchRequestStatus.ANALYSIS_DONE])
@@ -81,8 +80,6 @@ def test_monitor_batch_statistical_job(
 
     is_processing_logged = batch_status is BatchRequestStatus.PROCESSING
     assert logging_mock.call_count == int(is_processing_logged)
-
-
 
 
 @pytest.mark.parametrize(

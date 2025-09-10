@@ -13,7 +13,7 @@ from tqdm.auto import tqdm
 from ...config import SHConfig
 from ...types import JsonDict
 from .base import BatchRequestStatus
-from .process import BatchRequest,  SentinelHubBatch
+from .process import BatchRequest
 from .process_v2 import BatchProcessClient, BatchProcessRequest
 from .statistical import BatchStatisticalRequest, SentinelHubBatchStatistical
 
@@ -29,7 +29,6 @@ _MIN_STAT_SLEEP_TIME = 15
 _DEFAULT_STAT_SLEEP_TIME = 30
 _MIN_ANALYSIS_SLEEP_TIME = 5
 _DEFAULT_ANALYSIS_SLEEP_TIME = 10
-
 
 
 def monitor_batch_process_job(
@@ -80,8 +79,6 @@ def monitor_batch_process_job(
     return batch_request
 
 
-
-
 def monitor_batch_statistical_job(
     batch_request: BatchStatisticalRequestSpec,
     config: SHConfig | None = None,
@@ -125,8 +122,6 @@ def monitor_batch_statistical_job(
             progress_bar.update(new_progress - progress)
             progress = new_progress
     return request_status
-
-
 
 
 def monitor_batch_process_analysis(

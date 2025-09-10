@@ -17,13 +17,12 @@ import shapely.ops
 from shapely.geometry import GeometryCollection, MultiPolygon, Polygon
 from shapely.geometry.base import BaseGeometry
 
-from .api import BatchRequest, SentinelHubBatch, SentinelHubCatalog
+from .api import SentinelHubCatalog
 from .config import SHConfig
 from .constants import CRS
 from .data_collections import DataCollection
 from .geo_utils import transform_point
 from .geometry import BBox, Geometry, _BaseGeometry
-from .types import JsonDict
 
 T = TypeVar("T", float, int)
 
@@ -622,8 +621,6 @@ class UtmZoneSplitter(BaseUtmSplitter):
         ]
 
         return list(zip(utm_geom_list, utm_prop_list))
-
-
 
 
 def _parse_to_pair(parameter: T | tuple[T, T], allowed_types: tuple[type, ...], param_name: str = "") -> tuple[T, T]:
