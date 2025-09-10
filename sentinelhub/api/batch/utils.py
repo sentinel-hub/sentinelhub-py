@@ -145,7 +145,7 @@ def monitor_batch_process_analysis(
         time.sleep(sleep_time)
         batch_request = client.get_request(batch_request)
 
-    batch_request.raise_for_status(status=[BatchRequestStatus.FAILED, BatchRequestStatus.CANCELED])
+    batch_request.raise_for_status(status=[BatchRequestStatus.FAILED, BatchRequestStatus.STOPPED])
     return batch_request
 
 
@@ -178,5 +178,5 @@ def monitor_batch_statistical_analysis(
         request_status = BatchRequestStatus(batch_client.get_status(batch_request)["status"])
 
     batch_request = batch_client.get_request(batch_request)
-    batch_request.raise_for_status(status=[BatchRequestStatus.FAILED, BatchRequestStatus.CANCELED])
+    batch_request.raise_for_status(status=[BatchRequestStatus.FAILED, BatchRequestStatus.STOPPED])
     return batch_request

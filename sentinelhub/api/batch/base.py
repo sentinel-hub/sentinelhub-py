@@ -26,8 +26,6 @@ class BatchRequestStatus(Enum):
     PROCESSING = "PROCESSING"
     DONE = "DONE"
     FAILED = "FAILED"
-    PARTIAL = "PARTIAL"
-    CANCELED = "CANCELED"
     STOPPED = "STOPPED"
 
 
@@ -36,8 +34,6 @@ class BatchUserAction(Enum):
 
     START = "START"
     ANALYSE = "ANALYSE"
-    NONE = "NONE"
-    CANCEL = "CANCEL"
     STOP = "STOP"
 
 

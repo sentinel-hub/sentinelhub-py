@@ -87,7 +87,7 @@ def test_monitor_batch_statistical_job(
     [
         (BatchRequestStatus.CREATED, BatchRequestStatus.ANALYSING, BatchRequestStatus.ANALYSIS_DONE),
         (BatchRequestStatus.DONE,),
-        (BatchRequestStatus.ANALYSING, BatchRequestStatus.CANCELED),
+        (BatchRequestStatus.ANALYSING, BatchRequestStatus.STOPPED),
         (BatchRequestStatus.FAILED,),
     ],
 )
@@ -116,7 +116,7 @@ def test_monitor_batch_statistical_analysis(
     sleep_mock = mocker.patch("time.sleep")
     logging_mock = mocker.patch("logging.Logger.info")
 
-    if status_sequence[-1] in [BatchRequestStatus.CANCELED, BatchRequestStatus.FAILED]:
+    if status_sequence[-1] in [BatchRequestStatus.STOPPED, BatchRequestStatus.FAILED]:
         with pytest.raises(RuntimeError):
             monitor_batch_statistical_analysis("mocked-request", config=config, sleep_time=sleep_time)
     else:
@@ -204,7 +204,7 @@ def test_monitor_batch_process_job(
     [
         (BatchRequestStatus.CREATED, BatchRequestStatus.ANALYSING, BatchRequestStatus.ANALYSIS_DONE),
         (BatchRequestStatus.DONE,),
-        (BatchRequestStatus.ANALYSING, BatchRequestStatus.CANCELED),
+        (BatchRequestStatus.ANALYSING, BatchRequestStatus.STOPPED),
         (BatchRequestStatus.FAILED,),
     ],
 )
@@ -232,7 +232,7 @@ def test_monitor_batch_process_analysis(
     sleep_mock = mocker.patch("time.sleep")
     logging_mock = mocker.patch("logging.Logger.info")
 
-    if status_sequence[-1] in [BatchRequestStatus.CANCELED, BatchRequestStatus.FAILED]:
+    if status_sequence[-1] in [BatchRequestStatus.STOPPED, BatchRequestStatus.FAILED]:
         with pytest.raises(RuntimeError):
             monitor_batch_process_analysis("mocked-request", client, sleep_time=sleep_time)
     else:
