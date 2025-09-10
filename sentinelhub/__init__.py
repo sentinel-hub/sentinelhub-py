@@ -37,7 +37,6 @@ from .api.fis import HistogramType
 from .api.ogc import CustomUrlParam
 from .api.opensearch import get_area_dates, get_area_info, get_tile_info, get_tile_info_id
 from .areas import (
-    BatchSplitter,
     BBoxSplitter,
     CustomGridSplitter,
     OsmSplitter,
