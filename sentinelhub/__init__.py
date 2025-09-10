@@ -5,10 +5,8 @@ This module lists all externally useful classes and functions
 from ._version import __version__
 from .api import (
     AsyncProcessRequest,
-    BatchCollection,
     BatchProcessClient,
     BatchProcessRequest,
-    BatchRequest,
     BatchRequestStatus,
     BatchStatisticalRequest,
     BatchUserAction,

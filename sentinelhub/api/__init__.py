@@ -3,10 +3,8 @@ The part of the package that implements interface with Sentinel Hub services.
 """
 
 from .batch import (
-    BatchCollection,
     BatchProcessClient,
     BatchProcessRequest,
-    BatchRequest,
     BatchRequestStatus,
     BatchStatisticalRequest,
     BatchUserAction,
