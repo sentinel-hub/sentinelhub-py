@@ -35,6 +35,7 @@ class BatchUserAction(Enum):
     START = "START"
     ANALYSE = "ANALYSE"
     STOP = "STOP"
+    NONE = "NONE"
 
 
 class StoppedStatusReason(Enum):
