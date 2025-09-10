@@ -62,7 +62,7 @@ def collection_fixture() -> JsonDict:
 @pytest.fixture(name="tile")
 def tile_fixture() -> JsonDict:
     return {
-        "id": "8ac6e49c-996b-49cc-a0d4-ff67491b7a97",
+        "id": "7be8a8de-c396-44ac-b528-692f9b595ebd",
         "path": "maps/si_(BAND).tiff",
         "status": "INGESTED",
         "tileGeometry": {
