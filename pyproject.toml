@@ -233,6 +233,7 @@ disallow_untyped_decorators = true
 warn_unreachable = true
 strict_equality = true
 pretty = true
+files=["sentinelhub"]
 
 [tool.nbqa.addopts]
 ruff = ["--extend-ignore=E402,T201,B015,B018,NPY002,UP,FA"]
