@@ -13,7 +13,7 @@ from tqdm.auto import tqdm
 from ...config import SHConfig
 from ...types import JsonDict
 from .base import BatchRequestStatus
-from .process_v2 import BatchProcessClient, BatchProcessRequest
+from .process import BatchProcessClient, BatchProcessRequest
 from .statistical import BatchStatisticalRequest, SentinelHubBatchStatistical
 
 LOGGER = logging.getLogger(__name__)
