@@ -14,7 +14,7 @@ from sentinelhub import (
 )
 from sentinelhub.exceptions import OutOfRequestsException
 
-FAST_SH_ENDPOINT = "https://services.sentinel-hub.com/api/v1/catalog/collections"
+FAST_SH_ENDPOINT = "https://services.sentinel-hub.com/api/v1/catalog/1.0.0/collections"
 # ruff: noqa: SLF001
 
 

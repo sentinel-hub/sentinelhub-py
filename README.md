@@ -60,7 +60,6 @@ A high-level overview of the main functionalities:
   * [BYOC API](https://docs.sentinel-hub.com/api/latest/api/byoc/),
   * [Statistical API](https://docs.sentinel-hub.com/api/latest/api/statistical/),
   * [OGC services (WMS/WCS/WFS)](https://docs.sentinel-hub.com/api/latest/api/ogc/),
-  * [FIS](https://www.sentinel-hub.com/develop/api/ogc/fis-request/),
   * authentication and rate-limit handling,
 
 - geospatial utilities
