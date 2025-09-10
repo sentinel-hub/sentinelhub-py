@@ -127,36 +127,6 @@ def monitor_batch_statistical_job(
     return request_status
 
 
-def monitor_batch_analysis(
-    batch_request: BatchProcessRequestSpec,
-    config: SHConfig | None = None,
-    sleep_time: int = _DEFAULT_ANALYSIS_SLEEP_TIME,
-) -> BatchRequest:
-    """A utility function that is waiting until analysis phase of a batch job finishes and regularly checks its status.
-    In case analysis phase failed it raises an error at the end.
-
-    :param batch_request: An object with information about a batch request. Alternatively, it could only be a batch
-        request id or a payload.
-    :param config: A configuration object with required parameters `sh_client_id`, `sh_client_secret`, and
-        `sh_auth_base_url` which is used for authentication and `sh_base_url` which defines the service deployment
-        where Batch API will be called.
-    :param sleep_time: Number of seconds between consecutive status updates during analysis phase.
-    :return: Batch request info
-    """
-    if sleep_time < _MIN_ANALYSIS_SLEEP_TIME:
-        raise ValueError(
-            f"To avoid making too many service requests please set analysis sleep time >={_MIN_ANALYSIS_SLEEP_TIME}"
-        )
-
-    batch_client = SentinelHubBatch(config=config)
-    batch_request = batch_client.get_request(batch_request)
-    while batch_request.status in [BatchRequestStatus.CREATED, BatchRequestStatus.ANALYSING]:
-        LOGGER.info("Batch job has a status %s, sleeping for %d seconds", batch_request.status.value, sleep_time)
-        time.sleep(sleep_time)
-        batch_request = batch_client.get_request(batch_request)
-
-    batch_request.raise_for_status(status=[BatchRequestStatus.FAILED, BatchRequestStatus.CANCELED])
-    return batch_request
 
 
 def monitor_batch_process_analysis(

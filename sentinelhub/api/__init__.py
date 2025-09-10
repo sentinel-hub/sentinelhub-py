@@ -12,7 +12,6 @@ from .batch import (
     BatchUserAction,
     SentinelHubBatch,
     SentinelHubBatchStatistical,
-    monitor_batch_analysis,
     monitor_batch_process_analysis,
     monitor_batch_process_job,
     monitor_batch_statistical_analysis,
