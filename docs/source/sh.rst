@@ -14,4 +14,3 @@ Sentinel Hub examples
     examples/batch_statistical.ipynb
     examples/byoc_request.ipynb
     examples/statistical_request.ipynb
-    examples/fis_request.ipynb
