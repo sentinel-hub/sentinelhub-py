@@ -11,7 +11,6 @@ from .api import (
     BatchRequest,
     BatchRequestStatus,
     BatchStatisticalRequest,
-    BatchTileStatus,
     BatchUserAction,
     ByocCollection,
     ByocCollectionAdditionalData,

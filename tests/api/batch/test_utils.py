@@ -10,8 +10,6 @@ changing the code or the tests.
 
 from __future__ import annotations
 
-import random
-from collections import defaultdict
 from typing import Callable, Sequence
 
 import pytest
@@ -23,7 +21,6 @@ from sentinelhub import (
     BatchRequest,
     BatchRequestStatus,
     BatchStatisticalRequest,
-    BatchTileStatus,
     SHConfig,
     monitor_batch_analysis,
     monitor_batch_process_analysis,

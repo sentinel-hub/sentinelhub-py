@@ -9,7 +9,6 @@ from .batch import (
     BatchRequest,
     BatchRequestStatus,
     BatchStatisticalRequest,
-    BatchTileStatus,
     BatchUserAction,
     SentinelHubBatch,
     SentinelHubBatchStatistical,

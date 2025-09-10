@@ -6,7 +6,6 @@ from __future__ import annotations
 
 import logging
 import time
-from collections import defaultdict
 from typing import Union
 
 from tqdm.auto import tqdm
@@ -14,7 +13,7 @@ from tqdm.auto import tqdm
 from ...config import SHConfig
 from ...types import JsonDict
 from .base import BatchRequestStatus
-from .process import BatchRequest, BatchTileStatus, SentinelHubBatch
+from .process import BatchRequest,  SentinelHubBatch
 from .process_v2 import BatchProcessClient, BatchProcessRequest
 from .statistical import BatchStatisticalRequest, SentinelHubBatchStatistical
 
@@ -81,21 +80,6 @@ def monitor_batch_process_job(
     return batch_request
 
 
-def _get_batch_tiles_per_status(
-    batch_request: BatchRequest, batch_client: SentinelHubBatch
-) -> defaultdict[BatchTileStatus, list[dict]]:
-    """A helper function that queries information about batch tiles and returns information about tiles, grouped by
-    tile status.
-
-    :return: A dictionary mapping a tile status to a list of tile payloads.
-    """
-    tiles_per_status = defaultdict(list)
-
-    for tile in batch_client.iter_tiles(batch_request):
-        status = BatchTileStatus(tile["status"])
-        tiles_per_status[status].append(tile)
-
-    return tiles_per_status
 
 
 def monitor_batch_statistical_job(
