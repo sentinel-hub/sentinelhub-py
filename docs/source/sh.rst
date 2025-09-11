@@ -9,7 +9,6 @@ Sentinel Hub examples
     examples/data_search.ipynb
     examples/ogc_request.ipynb
     examples/large_area_utilities.ipynb
-    examples/batch_processing_v2.ipynb
     examples/batch_processing.ipynb
     examples/batch_statistical.ipynb
     examples/byoc_request.ipynb
