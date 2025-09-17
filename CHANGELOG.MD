@@ -1,3 +1,11 @@
+## [Version 3.11.2] - 2025-09-17
+
+- Remove support for Batch Process API Version 1
+- Remove FIS use case
+- Enable support for config folder XDG_CONFIG_HOME location
+- Fix bug in BaseUtmSplitter
+- Fix failing tests in development
+
 ## [Version 3.11.1] - 2024-09-27
 
 - Remove `numpy<2` restriction.
