@@ -216,5 +216,5 @@ class SHConfig(_SHConfig):
     @classmethod
     def get_config_location(cls) -> str:
         """Returns the default location of the user configuration file on disk."""
-        user_folder = os.path.expanduser("~")
-        return os.path.join(user_folder, ".config", "sentinelhub", "config.toml")
+        config_folder = os.getenv("XDG_CONFIG_HOME", os.path.expanduser("~/.config"))
+        return os.path.join(config_folder, "sentinelhub", "config.toml")

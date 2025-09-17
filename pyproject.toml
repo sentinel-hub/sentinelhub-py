@@ -63,7 +63,7 @@ docs = [
     "matplotlib",
     "nbsphinx",
     "sphinx==7.1.2",
-    "sphinx_mdinclude==0.5.4",  # version fixed because 0.6.0 didnt work at release time of 3.10.2
+    "sphinx_mdinclude==0.5.4", # version fixed because 0.6.0 didnt work at release time of 3.10.2
     "sphinx_rtd_theme==1.3.0",
 ]
 dev = [
@@ -199,6 +199,7 @@ max-args = 10
 max-attributes = 21
 max-locals = 20
 min-public-methods = 0
+max-positional-arguments = 10
 
 [tool.pylint.similarities]
 min-similarity-lines = 5
@@ -232,6 +233,7 @@ disallow_untyped_decorators = true
 warn_unreachable = true
 strict_equality = true
 pretty = true
+files=["sentinelhub"]
 
 [tool.nbqa.addopts]
 ruff = ["--extend-ignore=E402,T201,B015,B018,NPY002,UP,FA"]

@@ -5,20 +5,16 @@ This module lists all externally useful classes and functions
 from ._version import __version__
 from .api import (
     AsyncProcessRequest,
-    BatchCollection,
     BatchProcessClient,
     BatchProcessRequest,
-    BatchRequest,
     BatchRequestStatus,
     BatchStatisticalRequest,
-    BatchTileStatus,
     BatchUserAction,
     ByocCollection,
     ByocCollectionAdditionalData,
     ByocCollectionBand,
     ByocTile,
     FisRequest,
-    SentinelHubBatch,
     SentinelHubBatchStatistical,
     SentinelHubBYOC,
     SentinelHubCatalog,
@@ -28,8 +24,6 @@ from .api import (
     WebFeatureService,
     WmsRequest,
     get_async_running_status,
-    monitor_batch_analysis,
-    monitor_batch_job,
     monitor_batch_process_analysis,
     monitor_batch_process_job,
     monitor_batch_statistical_analysis,
@@ -40,7 +34,6 @@ from .api.fis import HistogramType
 from .api.ogc import CustomUrlParam
 from .api.opensearch import get_area_dates, get_area_info, get_tile_info, get_tile_info_id
 from .areas import (
-    BatchSplitter,
     BBoxSplitter,
     CustomGridSplitter,
     OsmSplitter,
