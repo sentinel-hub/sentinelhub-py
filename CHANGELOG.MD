@@ -1,14 +1,18 @@
+## [Version 3.11.3] - 2025-10-07
+
+- Fixed camel case instead of snake case for SH propagation in Batch V2
+
 ## [Version 3.11.2] - 2025-09-17
 
-- Remove support for Batch Process API Version 1
-- Remove FIS use case
-- Enable support for config folder XDG_CONFIG_HOME location
-- Fix bug in BaseUtmSplitter
-- Fix failing tests in development
+- Removed support for Batch Process API Version 1
+- Removed FIS use case
+- Enabled support for config folder XDG_CONFIG_HOME location
+- Fixed bug in BaseUtmSplitter
+- Fixd failing tests in development
 
 ## [Version 3.11.1] - 2024-09-27
 
-- Remove `numpy<2` restriction.
+- Removed `numpy<2` restriction.
 
 
 ## [Version 3.11.0] - 2024-09-17
