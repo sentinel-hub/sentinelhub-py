@@ -87,7 +87,7 @@ class BatchProcessClient(BaseBatchClient):
                 "processRequest": request_dict,
                 "input": input,
                 "output": output,
-                "instance_type": instance_type,
+                "instanceType": instance_type,
                 "description": description,
                 **kwargs,
             }
