@@ -1,3 +1,7 @@
+## [Version 3.11.4] - 2026-02-04
+
+- Remove API for deprecated FIS service
+
 ## [Version 3.11.3] - 2025-10-07
 
 - Fixed camel case instead of snake case for SH propagation in Batch V2
