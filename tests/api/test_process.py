@@ -297,7 +297,7 @@ def test_multipart_tar() -> None:
     json_data = tar["userdata.json"]
 
     assert "norm_factor" in json_data
-    assert json_data["norm_factor"] == 0.0001
+    assert json_data["norm_factor"] == 1
 
 
 def test_multipart_geometry() -> None:

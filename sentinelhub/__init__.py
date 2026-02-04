@@ -14,7 +14,6 @@ from .api import (
     ByocCollectionAdditionalData,
     ByocCollectionBand,
     ByocTile,
-    FisRequest,
     SentinelHubBatchStatistical,
     SentinelHubBYOC,
     SentinelHubCatalog,
@@ -30,7 +29,6 @@ from .api import (
     monitor_batch_statistical_job,
     opensearch,
 )
-from .api.fis import HistogramType
 from .api.ogc import CustomUrlParam
 from .api.opensearch import get_area_dates, get_area_info, get_tile_info, get_tile_info_id
 from .areas import (

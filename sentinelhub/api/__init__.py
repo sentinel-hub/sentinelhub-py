@@ -16,7 +16,6 @@ from .batch import (
 )
 from .byoc import ByocCollection, ByocCollectionAdditionalData, ByocCollectionBand, ByocTile, SentinelHubBYOC
 from .catalog import SentinelHubCatalog
-from .fis import FisRequest
 from .ogc import WcsRequest, WmsRequest
 from .process import AsyncProcessRequest, SentinelHubRequest, get_async_running_status
 from .statistical import SentinelHubStatistical

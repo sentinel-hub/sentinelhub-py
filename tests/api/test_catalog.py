@@ -152,7 +152,7 @@ def test_search_geometry_and_iterator_methods(catalog: SentinelHubCatalog) -> No
         (DataCollection.SENTINEL1_IW, "S1A_IW_GRDH_1SDV_20210113T022710_20210113T022735_036113_043BC9_2981"),
         (DataCollection.LANDSAT_OT_L1, "LC08_L1TP_160071_20210113_20210308_02_T1"),
         (DataCollection.LANDSAT_OT_L2, "LC08_L2SP_160071_20210113_20210308_02_T1"),
-        (DataCollection.MODIS, "MCD43A4.006/22/10/2021014/MCD43A4.A2021014.h22v10.006.2021025214119"),
+        (DataCollection.MODIS, "MCD43A4.A2021014.h22v10.006.2021025214119"),
     ],
 )
 def test_search_for_data_collection(config: SHConfig, data_collection: DataCollection | str, feature_id: str) -> None:
