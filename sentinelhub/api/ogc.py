@@ -19,7 +19,7 @@ from ..data_collections import DataCollection
 from ..download import DownloadRequest, SentinelHubDownloadClient
 from ..geo_utils import get_image_dimension
 from ..geometry import BBox, Geometry
-from ..time_utils import RawTimeIntervalType, RawTimeType, filter_times, parse_time_interval, serialize_time
+from ..time_utils import RawTimeIntervalType, RawTimeType, filter_times, serialize_time
 from .wfs import WebFeatureService
 
 LOGGER = logging.getLogger(__name__)
@@ -146,9 +146,6 @@ class OgcRequest(DataRequest):
         for param in self.custom_url_params:
             if param not in CustomUrlParam:
                 raise ValueError(f"Parameter {param} is not a valid custom url parameter. Please check and fix.")
-
-        if self.service_type is ServiceType.FIS and CustomUrlParam.GEOMETRY in self.custom_url_params:
-            raise ValueError(f"{CustomUrlParam.GEOMETRY} should not be a custom url parameter of a FIS request")
 
     def create_request(self, reset_wfs_iterator: bool = False) -> None:
         """Set download requests
@@ -346,7 +343,6 @@ class OgcImageService:
         date: datetime.datetime | None = None,
         size_x: None | str | int = None,
         size_y: None | str | int = None,
-        geometry: None | BBox | Geometry = None,
     ) -> str:
         """Returns url to Sentinel Hub's OGC service for the product specified by the OgcRequest and date.
 
@@ -366,8 +362,6 @@ class OgcImageService:
             params = {**params, **self._get_wms_url_parameters(request, size_x, size_y)}  # type: ignore[arg-type]
         elif request.service_type is ServiceType.WCS:
             params = {**params, **self._get_wcs_url_parameters(request, size_x, size_y)}  # type: ignore[arg-type]
-        elif request.service_type is ServiceType.FIS:
-            params = {**params, **self._get_fis_parameters(request, geometry)}  # type: ignore[arg-type]
 
         return f"{url}/{authority}?{urlencode(params)}"
 
@@ -386,7 +380,7 @@ class OgcImageService:
 
     @staticmethod
     def _get_common_url_parameters(request: OgcRequest) -> dict[str, Any]:
-        """Returns parameters common dictionary for WMS, WCS and FIS request.
+        """Returns parameters common dictionary for WMS, and WCS request.
 
         :param request: OGC-type request with specified bounding box, cloud coverage for specific product.
         :return: dictionary with parameters
@@ -476,43 +470,6 @@ class OgcImageService:
         :return: dictionary with parameters
         """
         return {"RESX": size_x, "RESY": size_y, "COVERAGE": request.layer, "REQUEST": "GetCoverage", "VERSION": "1.1.2"}
-
-    @staticmethod
-    def _get_fis_parameters(request: OgcRequest, geometry: BBox | Geometry) -> dict[str, Any]:
-        """Returns parameters dictionary for FIS request.
-
-        :param request: OGC-type request with specified bounding box, cloud coverage for specific product.
-        :param geometry: list of bounding boxes or geometries
-        :return: dictionary with parameters
-        """
-        start_time, end_time = serialize_time(parse_time_interval(request.time), use_tz=True)
-
-        params = {
-            "CRS": CRS.ogc_string(geometry.crs),
-            "LAYER": request.layer,
-            "RESOLUTION": request.resolution,  # type: ignore[attr-defined]
-            "TIME": f"{start_time}/{end_time}",
-        }
-
-        if not isinstance(geometry, (BBox, Geometry)):
-            raise ValueError(
-                f"Each geometry must be an instance of sentinelhub.{BBox.__name__} or "
-                f"sentinelhub.{Geometry.__name__} but {geometry} found"
-            )
-        if geometry.crs is CRS.WGS84:
-            geometry = geometry.reverse()
-        if isinstance(geometry, Geometry):
-            params["GEOMETRY"] = geometry.wkt
-        else:
-            params["BBOX"] = str(geometry)
-
-        if request.bins:  # type: ignore[attr-defined]
-            params["BINS"] = request.bins  # type: ignore[attr-defined]
-
-        if request.histogram_type:  # type: ignore[attr-defined]
-            params["TYPE"] = request.histogram_type.value  # type: ignore[attr-defined]
-
-        return params
 
     def get_dates(self, request: OgcRequest) -> list[datetime.datetime | None]:
         """Get available Sentinel-2 acquisitions at least time_difference apart

@@ -41,7 +41,6 @@ class ServiceType(Enum):
     WFS = "wfs"
     AWS = "aws"
     IMAGE = "image"
-    FIS = "fis"
     PROCESSING_API = "processing"
 
 
