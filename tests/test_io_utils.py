@@ -5,7 +5,6 @@ from xml.etree import ElementTree
 
 import numpy as np
 import pytest
-from fs.tempfs import TempFS
 
 from sentinelhub import read_data, write_data
 
@@ -58,24 +57,22 @@ def xml_testcase():
         ("test-xml.xml", xml_testcase()),
     ],
 )
-def test_write_read(filename: str, data: str | np.ndarray | ElementTree.ElementTree) -> None:
-    with TempFS() as filesystem:
-        file_path = filesystem.getsyspath(filename)
-        write_data(file_path, data)
-        assert filesystem.exists(filename)
-        new_data = read_data(file_path)
+def test_write_read(filename: str, data: str | np.ndarray | ElementTree.ElementTree, tmp_path) -> None:
+    file_path = tmp_path / filename
+    write_data(str(file_path), data)
+    assert file_path.exists()
+    new_data = read_data(str(file_path))
 
-        if isinstance(data, np.ndarray):
-            assert np.array_equal(data, new_data), "Original and saved image are not the same"
-        elif isinstance(data, ElementTree.ElementTree):
-            assert set(data.getroot().itertext()) == set(new_data.getroot().itertext())
-        else:
-            assert data == new_data
+    if isinstance(data, np.ndarray):
+        assert np.array_equal(data, new_data), "Original and saved image are not the same"
+    elif isinstance(data, ElementTree.ElementTree):
+        assert set(data.getroot().itertext()) == set(new_data.getroot().itertext())
+    else:
+        assert data == new_data
 
 
 @pytest.mark.parametrize("filename", ["img.jpg"])
-def test_img_write_jpg(filename: str) -> None:
+def test_img_write_jpg(filename: str, tmp_path) -> None:
     # Cannot verify that data is written correctly because JPG is not a lossless format
-    with TempFS() as filesystem:
-        file_path = filesystem.getsyspath(filename)
-        write_data(file_path, BASIC_IMAGE)
+    file_path = str(tmp_path / filename)
+    write_data(file_path, BASIC_IMAGE)
