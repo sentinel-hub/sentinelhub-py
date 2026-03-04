@@ -82,6 +82,7 @@ dev = [
     "pytest-mock",
     "ray[default]",
     "requests-mock",
+    "setuptools>=65.5.0",
     "twine",
     "types-python-dateutil",
     "types-requests",
