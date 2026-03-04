@@ -1,9 +1,3 @@
-## [Version 3.11.5] - 2026-03-04
-
-### Documentation
-
-- Added warning to `instance_type` parameter documentation for `BatchProcessClient.create()`. This parameter is for internal use only and is subject to change without notice.
-
 ## [Version 3.11.4] - 2026-02-04
 
 - Remove API for deprecated FIS service
