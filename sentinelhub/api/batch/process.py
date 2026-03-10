@@ -66,7 +66,7 @@ class BatchProcessClient(BaseBatchClient):
             methods.
         :param output: A dictionary with output parameters. It can be built with `raster_output` or `zarr_output`
             methods.
-        :param instance_type": Specifies which size of instances to use for the request.
+        :param instance_type: Internal use only. Subject to change without notice.
         :param description: A description of a batch request
         :param kwargs: Any other arguments to be added to a dictionary of parameters.
         """
