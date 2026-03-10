@@ -1,4 +1,4 @@
-## [Version 3.11.4] - 2026-03-10
+## [Version 3.11.5] - 2026-03-10
 
 - Update documentation for BatchProcess
 
