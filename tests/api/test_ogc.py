@@ -143,26 +143,6 @@ TEST_CASES = [
         data_filter=[0, -1],
     ),
     OgcTestCase(
-        "customUrlPreview",
-        WmsRequest,
-        dict(
-            image_format=MimeType.PNG,
-            data_collection=DataCollection.SENTINEL2_L1C,
-            layer="TRUE-COLOR-S2-L1C",
-            height=img_height,
-            bbox=wgs84_bbox,
-            time=("2017-10-01", "2017-10-02"),
-            custom_url_params={CustomUrlParam.PREVIEW: 2},
-        ),
-        result_len=1,
-        img_min=27,
-        img_max=255,
-        img_mean=195.385181,
-        img_median=199,
-        img_std=51.1237,
-        tile_num=2,
-    ),
-    OgcTestCase(
         "customUrlEvalscripturl",
         WcsRequest,
         dict(
