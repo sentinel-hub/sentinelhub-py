@@ -1,7 +1,3 @@
-## [Unreleased]
-
-- Removed deprecated `CustomUrlParam.PREVIEW` parameter, which is no longer supported by Sentinel Hub OGC services
-
 ## [Version 3.11.5] - 2026-03-10
 
 - Update documentation for BatchProcess
