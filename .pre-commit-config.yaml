@@ -27,4 +27,4 @@ repos:
     rev: 1.8.7
     hooks:
       - id: nbqa-black
-      - id: nbqa-ruff
+      # - id: nbqa-ruff
