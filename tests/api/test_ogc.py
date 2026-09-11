@@ -427,7 +427,7 @@ TEST_CASES = [
 ]
 
 
-@pytest.mark.parametrize("test_case", TEST_CASES)
+@pytest.mark.parametrize("test_case", TEST_CASES, ids=[test_case.name for test_case in TEST_CASES])
 def test_ogc(test_case: OgcTestCase, output_folder: str) -> None:
     # Run data collection
     request = test_case.initialize_request(output_folder)
