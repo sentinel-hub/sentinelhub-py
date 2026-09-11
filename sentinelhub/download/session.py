@@ -9,6 +9,7 @@ import json
 import logging
 import time
 import warnings
+from contextlib import suppress
 from multiprocessing.shared_memory import SharedMemory
 from threading import Event, Thread
 from typing import Any, ClassVar
@@ -211,6 +212,7 @@ class SessionSharingThread(Thread):
 
         self._stop_event = Event()
         self._is_memory_shared_event = Event()
+        self._memory: SharedMemory | None = None
 
     def start(self) -> None:
         """Start running the thread.
@@ -237,40 +239,52 @@ class SessionSharingThread(Thread):
         """A token is encoded into bytes and written into a shared memory block."""
         encoded_token = json.dumps(token).encode()
         memory = self._get_shared_memory(encoded_token)
-
-        try:
-            memory.buf[:] = encoded_token + _NULL_MEMORY_VALUE * (memory.size - len(encoded_token))
-        finally:
-            memory.close()
+        memory.buf[:] = encoded_token + _NULL_MEMORY_VALUE * (memory.size - len(encoded_token))
 
     def _get_shared_memory(self, encoded_token: bytes) -> SharedMemory:
-        """Provides a shared memory object.
+        """Provides a shared memory object that is kept open for as long as the thread is running.
+
+        The object cannot be closed after each token update because on Windows a shared memory block is destroyed
+        as soon as the last handle to it is closed.
 
         The method also handles a case where a shared memory with the same name would be left unclosed from before.
         Because the memory can be persistent and requires low-level knowledge of `multiprocessing.shared_memory` to
         close it manually this method will close it automatically and inform users about the problem.
         """
-        if self._is_memory_shared_event.is_set():
-            return SharedMemory(name=self.memory_name)
+        if self._memory is not None:
+            return self._memory
 
         try:
             memory = self._create_shared_memory(encoded_token)
         except FileExistsError:
             warnings.warn(
                 f"A shared memory with a name `{self.memory_name}` already exists. It will be removed and allocated"
-                f" anew. Please make sure that every {self.__class__.__name__} instance is joined at the end. If"
-                " you are using multiple threads then specify different 'memory_name' parameter for each of them.",
+                f" anew, or reused if it cannot be removed. Please make sure that every {self.__class__.__name__}"
+                " instance is joined at the end. If you are using multiple threads then specify different"
+                " 'memory_name' parameter for each of them.",
                 category=SHUserWarning,
             )
 
-            memory = SharedMemory(name=self.memory_name)
-            memory.unlink()
-            memory.close()
+            memory = self._take_over_shared_memory(encoded_token)
 
-            memory = self._create_shared_memory(encoded_token)
-
+        self._memory = memory
         self._is_memory_shared_event.set()
         return memory
+
+    def _take_over_shared_memory(self, encoded_token: bytes) -> SharedMemory:
+        """Removes a pre-existing shared memory block and allocates a new one in its place.
+
+        On Windows a named block cannot be removed while another process or thread keeps it open, therefore the
+        existing block is reused in such cases.
+        """
+        memory = SharedMemory(name=self.memory_name)
+        memory.unlink()
+        memory.close()
+
+        try:
+            return self._create_shared_memory(encoded_token)
+        except FileExistsError:
+            return SharedMemory(name=self.memory_name)
 
     def _create_shared_memory(self, encoded_token: bytes) -> SharedMemory:
         """Create a new shared memory space.
@@ -292,14 +306,11 @@ class SessionSharingThread(Thread):
         self._stop_event.set()
         super().join(timeout=timeout)
 
-        if self._is_memory_shared_event.is_set():
-            try:
-                memory = SharedMemory(name=self.memory_name)
-                memory.unlink()
-                memory.close()
-            except FileNotFoundError:
-                pass
-
+        if self._memory is not None:
+            with suppress(FileNotFoundError):
+                self._memory.unlink()
+            self._memory.close()
+            self._memory = None
             self._is_memory_shared_event.clear()
 
 
