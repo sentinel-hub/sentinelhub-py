@@ -112,7 +112,7 @@ class SHConfig(_SHConfig):
     def __init__(self, profile: str | None = None, *, use_defaults: bool = False, **kwargs: Any):
         """
         :param profile: Specifies which profile to load from the configuration file. Has precedence over the environment
-            variable `SH_USER_PROFILE`.
+            variable `SH_PROFILE`.
         :param use_defaults: Does not load the configuration file, returns config object with defaults only.
         :param kwargs: Any fields of `SHConfig` to be updated. Overrides settings from `config.toml` and environment.
         """
