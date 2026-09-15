@@ -91,3 +91,25 @@ def test_bbox_splitter_by_size(args: list, kwargs: dict[str, Any], bbox_len: int
     splitter = BBoxSplitter(*args, **kwargs)
     assert len(splitter.get_geometry_list()) == bbox_len
     assert all(splitter.crs == bbox.crs for bbox in splitter.get_bbox_list())
+
+
+def test_utm_zone_splitter_handles_aoi_edge_on_utm_zone_boundary() -> None:
+    """An AOI edge sitting exactly on a whole-degree meridian (-120.0, the UTM 10N/11N boundary) makes
+    `BaseUtmSplitter._make_split`'s cell/AOI intersection degenerate into a `GeometryCollection`. Under Shapely 2.x
+    this used to crash with `TypeError: 'GeometryCollection' object is not iterable`.
+    """
+    aoi = shapely.geometry.Polygon(
+        [
+            (-119.88407893561258, 38.80275318581519),
+            (-120.27090861997894, 38.87128634501982),
+            (-120.21964208812597, 39.05118447995007),
+            (-120.0, 39.01295795304536),
+            (-120.0, 39.0),
+            (-119.85673118984727, 38.89328207809853),
+            (-119.88407893561258, 38.80275318581519),
+        ]
+    )
+
+    splitter = UtmZoneSplitter([aoi], CRS.WGS84, bbox_size=(3360, 3360))
+
+    assert {bbox.crs for bbox in splitter.get_bbox_list()} == {CRS("32610"), CRS("32611")}
