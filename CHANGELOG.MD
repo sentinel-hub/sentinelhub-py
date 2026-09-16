@@ -1,3 +1,9 @@
+## [Version 3.12.0] - 2026-09-16
+
+- Remove deprecated `CustomUrlParam.PREVIEW` for OGC
+- Correct env variable name in SHConfig docstring, contributed by @dajiaohuang
+- Fix problem in BaseUtmSplitter
+
 ## [Version 3.11.5] - 2026-03-10
 
 - Update documentation for BatchProcess

@@ -28,8 +28,8 @@ LOGGER = logging.getLogger(__name__)
 class CustomUrlParam(Enum):
     """Enum class to represent supported custom url parameters of OGC services
 
-    Supported parameters are `SHOWLOGO`, `EVALSCRIPT`, `EVALSCRIPTURL`, `PREVIEW`, `QUALITY`, `UPSAMPLING`,
-    `DOWNSAMPLING`, `GEOMETRY` and `WARNINGS`.
+    Supported parameters are `SHOWLOGO`, `EVALSCRIPT`, `EVALSCRIPTURL`, `QUALITY`, `UPSAMPLING`, `DOWNSAMPLING`,
+    `GEOMETRY` and `MINQA`.
 
     See `documentation <https://www.sentinel-hub.com/develop/api/ogc/custom-parameters/>`__ for more information.
     """
@@ -37,7 +37,6 @@ class CustomUrlParam(Enum):
     SHOWLOGO = "ShowLogo"
     EVALSCRIPT = "EvalScript"
     EVALSCRIPTURL = "EvalScriptUrl"
-    PREVIEW = "Preview"
     QUALITY = "Quality"
     UPSAMPLING = "Upsampling"
     DOWNSAMPLING = "Downsampling"

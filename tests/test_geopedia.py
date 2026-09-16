@@ -18,7 +18,10 @@ from sentinelhub import (
 )
 from sentinelhub.testing_utils import assert_statistics_match
 
-pytestmark = pytest.mark.geopedia_integration
+pytestmark = [
+    pytest.mark.geopedia_integration,
+    pytest.mark.skip(reason="Avoids merge problems when geopedia is not stable"),
+]
 
 
 def test_global_session() -> None:

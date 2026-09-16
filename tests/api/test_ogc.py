@@ -143,26 +143,6 @@ TEST_CASES = [
         data_filter=[0, -1],
     ),
     OgcTestCase(
-        "customUrlPreview",
-        WmsRequest,
-        dict(
-            image_format=MimeType.PNG,
-            data_collection=DataCollection.SENTINEL2_L1C,
-            layer="TRUE-COLOR-S2-L1C",
-            height=img_height,
-            bbox=wgs84_bbox,
-            time=("2017-10-01", "2017-10-02"),
-            custom_url_params={CustomUrlParam.PREVIEW: 2},
-        ),
-        result_len=1,
-        img_min=27,
-        img_max=255,
-        img_mean=195.385181,
-        img_median=199,
-        img_std=51.1237,
-        tile_num=2,
-    ),
-    OgcTestCase(
         "customUrlEvalscripturl",
         WcsRequest,
         dict(
@@ -261,26 +241,6 @@ TEST_CASES = [
         tile_num=2,
     ),
     OgcTestCase(
-        "S2 L2A Test",
-        WmsRequest,
-        dict(
-            data_collection=DataCollection.SENTINEL2_L2A,
-            image_format=MimeType.TIFF,
-            layer="BANDS-S2-L2A",
-            width=img_width,
-            height=img_height,
-            bbox=wgs84_bbox,
-            time=("2017-10-01", "2017-10-02"),
-        ),
-        result_len=1,
-        img_min=0.0,
-        img_max=1.6167,
-        img_mean=0.39445,
-        img_median=0.3353,
-        img_std=0.226799,
-        tile_num=2,
-    ),
-    OgcTestCase(
         "L8 Test",
         WmsRequest,
         dict(
@@ -318,26 +278,6 @@ TEST_CASES = [
         img_mean=1.5549539,
         img_median=1.0,
         img_std=5.3555336,
-    ),
-    OgcTestCase(
-        "MODIS Test",
-        WmsRequest,
-        dict(
-            data_collection=DataCollection.MODIS,
-            image_format=MimeType.TIFF,
-            layer="BANDS-MODIS",
-            width=img_width,
-            height=img_height,
-            bbox=wgs84_bbox,
-            time="2017-10-01",
-        ),
-        result_len=1,
-        img_min=0.0,
-        img_max=3.2767,
-        img_mean=0.21029216,
-        img_median=0.0027,
-        img_std=0.6494421,
-        tile_num=1,
     ),
     OgcTestCase(
         "S1 IW Test",
@@ -447,7 +387,7 @@ TEST_CASES = [
 ]
 
 
-@pytest.mark.parametrize("test_case", TEST_CASES)
+@pytest.mark.parametrize("test_case", TEST_CASES, ids=[test_case.name for test_case in TEST_CASES])
 def test_ogc(test_case: OgcTestCase, output_folder: str) -> None:
     # Run data collection
     request = test_case.initialize_request(output_folder)

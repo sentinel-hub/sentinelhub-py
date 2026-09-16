@@ -530,7 +530,7 @@ class BaseUtmSplitter(AreaSplitter, metaclass=ABCMeta):
 
             if not intersection.is_empty and isinstance(intersection, GeometryCollection):
                 intersection = MultiPolygon(
-                    geo_object for geo_object in intersection if isinstance(geo_object, (Polygon, MultiPolygon))
+                    geo_object for geo_object in intersection.geoms if isinstance(geo_object, (Polygon, MultiPolygon))
                 )
 
             if intersection.area > 0:
