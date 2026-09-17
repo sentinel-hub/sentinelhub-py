@@ -1,11 +1,13 @@
 from __future__ import annotations
 
+import itertools
 import time
 from concurrent.futures import ProcessPoolExecutor
 from typing import Any
 
 import pytest
 from oauthlib.oauth2.rfc6749.errors import CustomOAuth2Error, InvalidClientError
+from pytest_mock import MockerFixture
 from requests_mock import Mocker
 
 from sentinelhub import SentinelHubSession, SHConfig, __version__
@@ -205,6 +207,34 @@ def test_session_sharing_object(fake_token: JsonDict, fake_config: SHConfig, mem
 
     with pytest.raises(FileNotFoundError):
         collect_shared_session(**kwargs)
+
+
+def test_session_sharing_across_token_refresh(fake_config: SHConfig, mocker: MockerFixture) -> None:
+    """The shared memory block has to stay available while the thread keeps writing refreshed tokens into it."""
+    refreshed_tokens = itertools.count()
+
+    def collect_new_token() -> JsonDict:
+        # Tokens expire a second after the session is set to refresh them, which makes the thread share them again
+        return {"access_token": f"token-{next(refreshed_tokens)}", "expires_in": 1000, "expires_at": time.time() + 101}
+
+    mocker.patch.object(SentinelHubSession, "_collect_new_token", side_effect=collect_new_token)
+
+    initial_token = {"access_token": "token-initial", "expires_in": 1000, "expires_at": time.time() + 101}
+    session = SentinelHubSession(config=fake_config, refresh_before_expiry=100, _token=initial_token)
+
+    thread = SessionSharingThread(session)
+    thread.start()
+
+    try:
+        collected_tokens = set()
+        deadline = time.time() + 15
+        while time.time() < deadline and len(collected_tokens) < 2:
+            collected_tokens.add(collect_shared_session().token["access_token"])
+            time.sleep(0.01)
+
+        assert len(collected_tokens) >= 2, "The thread hasn't shared a refreshed token"
+    finally:
+        thread.join()
 
 
 def test_handling_of_unclosed_memory(fake_token: JsonDict, fake_config: SHConfig) -> None:
