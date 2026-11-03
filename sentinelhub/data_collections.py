@@ -32,7 +32,6 @@ class _CollectionType:
     LANDSAT5 = "Landsat 5"
     LANDSAT_ETM = "Landsat 7 ETM+"
     LANDSAT_OT = "Landsat 8 OLI and TIRS"
-    MODIS = "MODIS"
     ENVISAT_MERIS = "Envisat Meris"
     DEM = "DEM"
     BYOC = "BYOC"
@@ -277,16 +276,6 @@ class DataCollection(Enum, metaclass=_DataCollectionMeta):
     )
     DEM_COPERNICUS_90 = DEM.derive(
         dem_instance="COPERNICUS_90",
-    )
-
-    MODIS = DataCollectionDefinition(
-        api_id="modis",
-        catalog_id="modis",
-        wfs_id="DSS5",
-        service_url=ServiceUrl.USWEST,
-        collection_type=_CollectionType.MODIS,
-        bands=Bands.MODIS,
-        metabands=MetaBands.MODIS,
     )
 
     LANDSAT_MSS_L1 = DataCollectionDefinition(

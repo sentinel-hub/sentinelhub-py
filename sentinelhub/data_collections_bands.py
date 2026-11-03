@@ -129,7 +129,6 @@ class Bands:
         Band("ThermalInfrared1", (Unit.BRIGHTNESS_TEMPERATURE, Unit.DN), (np.float32, np.uint16)),
         Band("ThermalInfrared2", (Unit.BRIGHTNESS_TEMPERATURE, Unit.DN), (np.float32, np.uint16)),
     )
-    MODIS = tuple(Band(f"B0{index}", (Unit.REFLECTANCE,), (np.float32,)) for index in range(1, 8))
     DEM = (Band("DEM", (Unit.METERS,), (np.float32,)),)
 
 
@@ -235,5 +234,4 @@ class MetaBands:
         *(Band(name, (Unit.DEGREES, Unit.DN), (np.float32, np.uint16)) for name in ["VAA", "VZA", "SAA", "SZA"]),
         Band("dataMask", (Unit.DN,), (bool,)),
     )
-    MODIS = (Band("dataMask", (Unit.DN,), (bool,)),)
     DEM = (Band("dataMask", (Unit.DN,), (bool,)),)
