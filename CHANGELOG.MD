@@ -1,3 +1,7 @@
+## [Version 3.12.1] - 2026-11-06
+
+- Remove `DataCollection.MODIS` as MODIS data is no longer available on Sentinel Hub
+
 ## [Version 3.12.0] - 2026-09-16
 
 - Remove deprecated `CustomUrlParam.PREVIEW` for OGC
