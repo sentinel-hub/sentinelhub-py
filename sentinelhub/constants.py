@@ -129,7 +129,7 @@ class CRSMeta(EnumMeta):
             return str(value)
         if isinstance(value, str):
             if "urn:ogc:def:crs" in value.lower():
-                crs_template = re.compile(r"urn:ogc:def:crs:.+::(?P<code>.+)", re.IGNORECASE)
+                crs_template = re.compile(r"urn:ogc:def:crs:[^:]+:[^:]*:(?P<code>.+)", re.IGNORECASE)
                 match = crs_template.match(value)
                 if match is None:
                     raise ValueError(f"The value {value} could not be parsed to a CRS.")

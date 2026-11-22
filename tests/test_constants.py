@@ -37,7 +37,12 @@ def test_utm_from_wgs84(lng: float, lat: float, expected_crs: CRS) -> None:
         (pyproj.CRS("+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs"), CRS.WGS84),
         (pyproj.CRS(CRS.WGS84.pyproj_crs().to_wkt()), CRS.WGS84),
         ("urn:ogc:def:crs:epsg::32631", CRS.UTM_31N),
+        ("urn:ogc:def:crs:EPSG::4326", CRS.WGS84),
+        ("urn:ogc:def:crs:EPSG:6.6:4326", CRS.WGS84),
+        ("urn:ogc:def:crs:EPSG:9.9.1:32633", CRS.UTM_33N),
         ("urn:ogc:def:crs:OGC::CRS84", CRS.WGS84),
+        ("urn:ogc:def:crs:OGC:1.3:CRS84", CRS.WGS84),
+        ("URN:OGC:DEF:CRS:OGC:1.3:CRS84", CRS.WGS84),
         (pyproj.CRS(3857), CRS.POP_WEB),
     ],
 )
@@ -52,7 +57,9 @@ def test_crs_input_warn() -> None:
     assert parsed_result == CRS.WGS84
 
 
-@pytest.mark.parametrize("bad_input", ["string", "12", -1, 999, None, 3035.5])
+@pytest.mark.parametrize(
+    "bad_input", ["string", "12", -1, 999, None, 3035.5, "urn:ogc:def:crs:EPSG:4326", "urn:ogc:def:crs:EPSG::"]
+)
 def test_crs_faulty_input(bad_input: object) -> None:
     with pytest.raises(ValueError):
         CRS(bad_input)

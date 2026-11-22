@@ -209,6 +209,23 @@ def test_geometry_geojson_reconstructible(geometry: Geometry) -> None:
     assert geometry == Geometry.from_geojson(geometry.geojson)
 
 
+@pytest.mark.parametrize(
+    ("crs_urn", "expected_crs"),
+    [
+        ("urn:ogc:def:crs:EPSG::32633", CRS.UTM_33N),
+        ("urn:ogc:def:crs:EPSG:6.6:32633", CRS.UTM_33N),
+        ("urn:ogc:def:crs:OGC::CRS84", CRS.WGS84),
+        ("urn:ogc:def:crs:OGC:1.3:CRS84", CRS.WGS84),
+    ],
+)
+def test_geometry_from_geojson_crs_urn(crs_urn: str, expected_crs: CRS) -> None:
+    geojson = {"crs": {"type": "name", "properties": {"name": crs_urn}}, **GEOMETRY1.get_geojson(with_crs=False)}
+    geometry = Geometry.from_geojson(geojson)
+
+    assert geometry.crs is expected_crs
+    assert geometry.geometry.equals(GEOMETRY1.geometry)
+
+
 def test_geometry_wkt() -> None:
     for geometry in [GEOMETRY1, GEOMETRY2]:
         assert geometry == Geometry(geometry.wkt, geometry.crs)
